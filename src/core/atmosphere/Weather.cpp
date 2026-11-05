@@ -260,4 +260,12 @@ float rainLevel(float levelRain, float urGhastRain, bool fancy) { return std::ma
 
 int splashCount(float level, bool decreasedParticles) { return static_cast<int>(100.0f * level * level) / (decreasedParticles ? 2 : 1); }
 
+float fluidHeight(int depth, bool sameAbove) {
+    if (sameAbove) return 1.0f;
+    int amount = depth >= 8 ? 8 : 8 - std::clamp(depth, 0, 7);
+    return static_cast<float>(amount) / 9.0f;
+}
+
+std::int64_t rainTickSeed(int ticks) { return static_cast<std::int64_t>(ticks) * 312987231LL; }
+
 } // namespace gf::core::atmosphere

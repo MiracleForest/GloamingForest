@@ -40,6 +40,19 @@ struct ColourVertex {
 [[nodiscard]] mce::MaterialPtr const* particleBlendMaterial();
 /// A resource pack texture (cached for the process).
 [[nodiscard]] mce::TexturePtr const* texture(std::string const& path);
+/// A material of the engine by name (the common group, else the switchable one; null when there is
+/// none), cached for the process.
+[[nodiscard]] mce::MaterialPtr const* materialNamed(char const* name);
+/// The far plane of the screen's camera (0 when unknown).
+[[nodiscard]] float farPlane(ScreenContext& screen);
+/// Graphics options of the client: Vibrant Visuals, fancy graphics (Java's fancy weather).
+[[nodiscard]] bool vibrantVisuals();
+[[nodiscard]] bool fancyGraphics();
+
+/// Draws quads (4 vertices each) with `material`, the colour and alpha of every vertex interpolated
+/// across the quad; with `tex` the material samples it at its centre (a white texture keeps the
+/// vertex colours; the uv of every vertex is set in the tessellator's next-vertex state).
+void drawSmoothQuads(ScreenContext& screen, mce::MaterialPtr const& material, mce::TexturePtr const* tex, std::vector<ColourVertex> const& quads);
 
 /// Draws quads (4 vertices each, colours per vertex) with `material` (no texture).
 void drawColouredQuads(ScreenContext& screen, mce::MaterialPtr const& material, std::vector<ColourVertex> const& quads);

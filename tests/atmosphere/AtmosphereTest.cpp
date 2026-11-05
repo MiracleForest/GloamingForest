@@ -3,6 +3,7 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cmath>
 #include <set>
 
@@ -302,4 +303,73 @@ TEST(Atmosphere, AuroraShader) {
         }
     EXPECT_GT(lit, 0);
     EXPECT_FLOAT_EQ(auroraFragment(2000, 0, u).alpha, 0.0f);
+}
+
+TEST(Atmosphere, CloudColour) {
+    // ClientLevel#getCloudColor at the fixed time 13000: the daylight-darkened white, no sunset tint
+    float tod = timeOfDay(kFixedTime);
+    Rgb   c   = cloudColor(tod, 0, 0);
+    float f1  = std::clamp(std::cos(tod * 6.2831853f) * 2.0f + 0.5f, 0.0f, 1.0f);
+    EXPECT_NEAR(c.r, f1 * 0.9f + 0.1f, 1e-5f);
+    EXPECT_FLOAT_EQ(c.r, c.g);
+    EXPECT_NEAR(c.b, f1 * 0.85f + 0.15f, 1e-5f);
+    EXPECT_NEAR(c.r, 0.44f, 0.02f);
+    Rgb noon = cloudColor(timeOfDay(6000), 0, 0);
+    EXPECT_FLOAT_EQ(noon.r, 1.0f);
+    Rgb rainy = cloudColor(timeOfDay(6000), 1, 0);
+    EXPECT_NEAR(rainy.r, 0.05f + 0.6f * 0.95f, 1e-4f);
+    Rgb storm = cloudColor(timeOfDay(6000), 1, 1);
+    EXPECT_LT(storm.r, rainy.r);
+}
+
+TEST(Atmosphere, VoidPlate) {
+    auto q = voidPlateQuads();
+    ASSERT_EQ(q.size(), 8u);
+    for (auto const& quad : q)
+        for (auto const& v : quad) EXPECT_FLOAT_EQ(v.y, -4.0f);
+    EXPECT_NEAR(q[0][1].x, 512.0f, 1e-3f); // -180 degrees: -512 * cos(-pi)
+    EXPECT_TRUE(drawsVoidPlate(-33.0, -32));
+    EXPECT_FALSE(drawsVoidPlate(-31.0, -32));
+}
+
+TEST(Atmosphere, ResourceLocations) {
+    EXPECT_EQ(parseResourceLocation("twilightforest:glacier"), "twilightforest:glacier");
+    EXPECT_EQ(parseResourceLocation("plains"), "minecraft:plains");
+    EXPECT_EQ(parseResourceLocation("my.mod-x:some/path_1"), "my.mod-x:some/path_1");
+    EXPECT_FALSE(parseResourceLocation("bad/ns:path"));
+    EXPECT_FALSE(parseResourceLocation("Upper:case"));
+    EXPECT_FALSE(parseResourceLocation("a:b:c"));
+    EXPECT_FALSE(parseResourceLocation(""));
+    EXPECT_EQ(bedrockBiomeName("minecraft:plains"), "plains");
+    EXPECT_EQ(bedrockBiomeName("twilightforest:glacier"), "twilightforest:glacier");
+}
+
+TEST(Atmosphere, RainSplashes) {
+    EXPECT_FLOAT_EQ(fluidHeight(0, false), 8.0f / 9.0f);
+    EXPECT_FLOAT_EQ(fluidHeight(3, false), 5.0f / 9.0f);
+    EXPECT_FLOAT_EQ(fluidHeight(8, false), 8.0f / 9.0f);
+    EXPECT_FLOAT_EQ(fluidHeight(2, true), 1.0f);
+    EXPECT_EQ(rainTickSeed(10), 3129872310LL);
+    EXPECT_EQ(splashCount(1.0f, true), 50);
+    EXPECT_FLOAT_EQ(rainLevel(0.2f, 0.8f, false), 0.4f);
+}
+
+TEST(Atmosphere, AuroraMesh) {
+    auto m = auroraMesh(156.0f, 192.0f, 128, 256);
+    EXPECT_FLOAT_EQ(m.extent, 528.0f);
+    auto c = auroraMeshPoint(m, 0, 17);
+    EXPECT_FLOAT_EQ(c.first, 0.0f);
+    auto e = auroraMeshPoint(m, 128, 0);
+    EXPECT_NEAR(e.first, 528.0f, 0.05f);
+    EXPECT_NEAR(e.second, 0.0f, 1e-3f);
+    // cells keep their angular size: the radial step grows outwards, the inner cells are fine
+    float r1 = auroraMeshPoint(m, 1, 0).first, r2 = auroraMeshPoint(m, 2, 0).first;
+    float rn = auroraMeshPoint(m, 128, 0).first, rn1 = auroraMeshPoint(m, 127, 0).first;
+    EXPECT_LT(r1, 2.0f);
+    EXPECT_GT(rn - rn1, r2 - r1);
+    // independent of the render distance near the zenith
+    auto far = auroraMesh(156.0f, 800.0f, 128, 256);
+    EXPECT_LT(auroraMeshPoint(far, 1, 0).first, 2.0f);
+    auto above = auroraMesh(-40.0f, 192.0f, 128, 256); // camera above y 256
+    EXPECT_NEAR(auroraMeshPoint(above, 128, 64).second, 528.0f, 0.05f);
 }

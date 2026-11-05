@@ -12,18 +12,27 @@
 //
 // U15 (atmosphere), client mod: the Twilight Forest's DimensionSpecialEffects ("twilightforest:
 // renderer") through F12's sky provider (gf::client::sky::setProvider for the TF dimension):
-// - sky: the vanilla sky dome in the biome's sky colour, no sun and no moon (the level renderer's
-//   sun / moon meshes are swapped for an empty one while the player is in the Twilight Forest), and
-//   TF's 3000-try star field (seed 10842) at full brightness instead of the vanilla stars;
+// - sky: the vanilla sky dome in the biome's sky colour, no sun, no moon and no sunrise colour (the
+//   level renderer's sun / moon meshes are swapped for an empty one while the player is in the
+//   Twilight Forest; the sunrise band through the view override of ext/atmosphere/SkyView.h), TF's
+//   3000-try star field (seed 10842) at full brightness instead of the vanilla stars, and the void
+//   plate (the dark disc) when the camera is below the dimension's floor;
 // - fog: FogHandler's smoothed planes (the spooky forest halves them, the dark forests below y 20
-//   use the near fog) in the fog colour of getBrightnessDependentFogColor;
-// - clouds at y 128;
+//   and a boss bar asking for world fog use the near fog) in the colour of
+//   getBrightnessDependentFogColor;
+// - clouds at y 128 in ClientLevel#getCloudColor's colour (no sunset tint);
 // - weather: TFWeatherRenderer's locked-biome columns (blizzard, mosquitoes, ashes, dark streams,
-//   big rain) and the sparkles in protected structure pieces; vanilla weather still renders;
-// - the aurora (ClientGameEvents#renderAurora) in the biomes of the config's auroraBiomes, the
-//   shader evaluated on the CPU into a vertex-coloured grid drawn with the sky;
+//   big rain) and the sparkles in protected structure pieces, 10 columns around the camera with
+//   fancy graphics and 5 without; vanilla weather still renders;
+// - the aurora (ClientGameEvents#renderAurora) in the biomes of the config's auroraBiomes, in any
+//   dimension: the shader evaluated per vertex of a fine polar mesh (cells of about half a degree
+//   seen from the camera) on worker threads, the colours interpolated across the cells;
 // - tickRain's Ur-Ghast rain: splashes and rain sounds while the Ur-Ghast is in its tantrum
 //   ("atmosphere.ur_ghast").
+// Graphics modes: in Classic the stars, the void plate and the aurora draw in the sky pass (the
+// terrain and the clouds then draw over them, as the depth test does in Java); Vibrant Visuals
+// paints its own sky after that pass, so there they draw in the world pass (depth tested, at the
+// far plane), and the provider's fog is thinned so the VV sky stays visible through it.
 // Client config: section "atmosphere" (feature/atmosphere/Atmosphere.h).
 
 #ifdef GF_CLIENT
@@ -39,7 +48,6 @@
 #include <map>
 #include <mutex>
 #include <optional>
-#include <random>
 #include <thread>
 #include <unordered_map>
 #include <unordered_set>
@@ -55,10 +63,11 @@
 #include "mc/client/renderer/game/LevelRenderer.h"
 #include "mc/client/renderer/game/LevelRendererPlayer.h"
 #include "mc/client/sound/SoundEngine.h"
-#include "mc/deps/audio/ServerSoundHandle.h"
 #include "mc/comprehensive/ParticleType.h"
+#include "mc/deps/audio/ServerSoundHandle.h"
 #include "mc/deps/core/string/HashedString.h"
 #include "mc/deps/minecraft_renderer/renderer/Mesh.h"
+#include "mc/world/actor/Actor.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
@@ -66,16 +75,22 @@
 #include "mc/world/level/Tick.h"
 #include "mc/world/level/Weather.h"
 #include "mc/world/level/biome/Biome.h"
+#include "mc/world/level/biome/registry/BiomeRegistry.h"
 #include "mc/world/level/block/Block.h"
+#include "mc/world/level/block/BlockType.h"
 #include "mc/world/level/dimension/Dimension.h"
+#include "mc/world/phys/AABB.h"
 
 #include "client/Client.h"
 #include "client/atmosphere/AtmosphereClient.h"
 #include "client/atmosphere/Draw.h"
 #include "client/world/Sky.h"
 #include "core/atmosphere/Atmosphere.h"
+#include "core/jrand/JRand.h"
 #include "feature/atmosphere/Atmosphere.h"
 #include "feature/dimension/World.h"
+#include "feature/ext/atmosphere/SkyView.h"
+#include "feature/ext/entity/EntityClientExt.h"
 #include "feature/ext/landmark/LandmarkExt.h"
 #include "feature/ext/ui/Client.h"
 #include "feature/net/Net.h"
@@ -91,46 +106,58 @@ namespace gf::client::atmosphere {
 namespace ca  = core::atmosphere;
 namespace at  = feature::atmosphere;
 namespace net = feature::net;
+namespace vx  = feature::ext::atmosphere::client;
 using Json    = nlohmann::json;
 
 namespace {
 
 // ---- state ------------------------------------------------------------------------------------------------
 
+/// How the aurora / stars are drawn (Pass, material). Auto picks by graphics mode and dimension; the
+/// others are the e2e calibration's previews.
+enum class AuroraMode { Auto = 0, SkyUi = 1, WorldBlend = 2, SkyStars = 3, WorldWire = 4, SkyBlend = 5 };
+enum class StarsMode { Auto = 0, SkyStars = 1, WorldBlend = 2, WorldStars = 3 };
+
 /// A development preview ("atmosphere.preview").
 struct Preview {
-    std::optional<std::string>                                    biome;   ///< every biome lookup answers this
-    bool                                                          locked = false; ///< the preview biome is locked
-    std::optional<std::vector<std::pair<core::BlockBox, bool>>>   boxes;   ///< protected boxes instead of F6's
-    bool                                                          urGhast = false;
-    int                                                           winding = 0; ///< 0 one side, 1 the other, 2 both
-    int                                                           auroraMode = 0; ///< 0 the blend material, 1 the stars material
+    std::optional<std::string>                                  biome;          ///< every biome lookup answers this
+    bool                                                        locked = false; ///< the preview biome is locked
+    std::optional<std::vector<std::pair<core::BlockBox, bool>>> boxes;          ///< protected boxes instead of F6's
+    bool                                                        urGhast    = false;
+    int                                                         winding    = 0; ///< 0 one side, 1 the other, 2 both
+    AuroraMode                                                  auroraMode = AuroraMode::Auto;
+    StarsMode                                                   starsMode  = StarsMode::Auto;
+    float                                                       vvFog      = 0; ///< VV fog thinning (0: the default)
+    bool                                                        voidPlate  = false; ///< draw the void plate anyway
+    bool                                                        bossFog    = false; ///< a boss bar with world fog
 };
 
-/// The aurora grid the worker computed: camera-relative positions (at `cam`) and colours.
+/// The aurora mesh the worker computed: camera-relative positions (at `cam`) and colours.
 struct AuroraGrid {
     double                    camX = 0, camY = 0, camZ = 0;
-    int                       n    = 0; ///< cells per side
-    std::vector<ColourVertex> vertices; ///< (n + 1)^2, alpha before the colour modulator
+    ca::AuroraMesh            mesh;
+    std::vector<ColourVertex> vertices; ///< (rings + 1) x segments, alpha before the colour modulator
 };
 
 struct Shared {
     std::mutex mutex;
     // client tick
-    int         ticks = 0;
+    int         ticks  = 0;
     int         aurora = 0, lastAurora = 0;
-    float       urGhastRain = 0;
+    float       urGhastRain   = 0;
     bool        urGhastActive = false;
     std::string cameraBiome;
     bool        inTwilight = false;
+    int         playerDim  = -1;
+    bool        bossFog    = false;
     // locked-biome weather: enforcement per column of the (2 * 15 + 1)^2 square around (cx, cz)
     bool                     nearLocked = false;
     int                      cx = 0, cz = 0;
     std::vector<std::string> enforcement;
+    int                      scanX = 0, scanZ = 0, scanTick = -1000, scanGen = -1;
     // aurora
     std::shared_ptr<AuroraGrid const> grid;
     ca::AuroraUniforms                uniforms;
-    float                             auroraScale = 0;
     bool                              uniformsValid = false;
     // fog (render thread)
     ca::FogSmoother                       fog;
@@ -138,6 +165,7 @@ struct Shared {
     std::optional<ca::FogPlanes>          fogPlanes;
     float                                 renderDistance = 192;
     Preview                               preview;
+    int                                   previewGen = 0;
 };
 Shared& shared() {
     static Shared s;
@@ -170,27 +198,80 @@ void logOnce(std::string const& key, std::string const& line) {
 // ---- config -----------------------------------------------------------------------------------------------
 
 struct AtmosphereConfigView {
-    std::vector<std::string> auroraBiomes;
-    bool                     sky, fog, weather, aurora;
+    std::vector<std::string> auroraBiomes; ///< parsed resource locations, as Bedrock names them
+    bool                     sky = true, fog = true, weather = true, aurora = true;
 };
 
+/// The ids of auroraBiomes no biome of the current world has (warned once each, skipped).
+struct UnknownBiomes {
+    std::mutex                      mutex;
+    std::unordered_set<std::string> unknown, checked;
+};
+UnknownBiomes& unknownBiomes() {
+    static UnknownBiomes u;
+    return u;
+}
+
 /// TFConfig#getValidAuroraBiomes: the configured ids that parse as resource locations (an invalid
-/// one is warned about once and skipped).
-AtmosphereConfigView config() {
-    auto const&          c = gf::config::get<at::AtmosphereConfig>();
-    AtmosphereConfigView v{{}, c.sky, c.fog, c.weather, c.aurora};
+/// one is warned about once and skipped; so is one that names no biome of the world, once the
+/// world's biomes are known). Parsed again only when the config section changes.
+std::shared_ptr<AtmosphereConfigView const> config() {
+    struct Cache {
+        std::mutex                                  mutex;
+        bool                                        init = false;
+        std::vector<std::string>                    raw;
+        std::array<bool, 4>                         flags{};
+        std::shared_ptr<AtmosphereConfigView const> view;
+    };
+    static Cache cache;
+    auto const&  c = gf::config::get<at::AtmosphereConfig>();
+    std::array<bool, 4> flags{c.sky, c.fog, c.weather, c.aurora};
+    std::lock_guard     lock(cache.mutex);
+    if (cache.init && cache.raw == c.auroraBiomes && cache.flags == flags) return cache.view;
+    auto v = std::make_shared<AtmosphereConfigView>();
+    v->sky = c.sky, v->fog = c.fog, v->weather = c.weather, v->aurora = c.aurora;
     for (auto const& id : c.auroraBiomes) {
-        auto colon = id.find(':');
-        bool ok    = !id.empty() && std::all_of(id.begin(), id.end(), [](char ch) {
-            return (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '_' || ch == '-' || ch == '.' || ch == '/' || ch == ':';
-        }) && std::count(id.begin(), id.end(), ':') <= 1 && colon != 0;
-        if (!ok) {
+        auto rl = ca::parseResourceLocation(id);
+        if (!rl) {
             if (onceFlag("aurora_invalid:" + id)) log().warn("Biome {} in Twilight Forest's validAuroraBiomes config option is not a valid biome. Skipping!", id);
             continue;
         }
-        v.auroraBiomes.push_back(colon == std::string::npos ? "minecraft:" + id : id);
+        v->auroraBiomes.push_back(ca::bedrockBiomeName(*rl));
     }
-    return v;
+    cache.init  = true;
+    cache.raw   = c.auroraBiomes;
+    cache.flags = flags;
+    cache.view  = v;
+    {
+        std::lock_guard l2(unknownBiomes().mutex);
+        unknownBiomes().checked.clear(); // check the new list against the world's biomes again
+    }
+    return cache.view;
+}
+
+/// The second half of getValidAuroraBiomes: ids the world has no biome of are warned about once and
+/// skipped (TF's own biomes always count, the client may not have their definitions yet).
+void checkAuroraBiomes(Level& level, AtmosphereConfigView const& cfg) {
+    std::lock_guard lock(unknownBiomes().mutex);
+    for (auto const& name : cfg.auroraBiomes) {
+        if (!unknownBiomes().checked.insert(name).second) continue;
+        bool known = ca::biomeLook(name).has_value();
+        if (!known) {
+            auto const& reg = std::as_const(level).getBiomeRegistry();
+            known           = reg.lookupByName(name) != nullptr || reg.lookupByName("minecraft:" + name) != nullptr;
+        }
+        if (known) unknownBiomes().unknown.erase(name);
+        else {
+            unknownBiomes().unknown.insert(name);
+            log().warn("Biome {} in Twilight Forest's validAuroraBiomes config option is not a valid biome. Skipping!", name);
+        }
+    }
+}
+
+bool auroraBiome(AtmosphereConfigView const& cfg, std::string const& biome) {
+    if (biome.empty() || std::find(cfg.auroraBiomes.begin(), cfg.auroraBiomes.end(), biome) == cfg.auroraBiomes.end()) return false;
+    std::lock_guard lock(unknownBiomes().mutex);
+    return !unknownBiomes().unknown.contains(biome);
 }
 
 // ---- restrictions (TF's Restriction registry: <mod>/data/<ns>/twilight/restrictions/<biome>.json) ----------
@@ -242,39 +323,63 @@ std::string lockedEnforcement(std::string const& biome, Preview const& preview) 
 
 bool inTwilight(LocalPlayer const& p) { return gDimension.load() >= 0 && static_cast<int>(p.getDimensionId()) == gDimension.load(); }
 
+BlockPos blockPosOf(Vec3 const& pos) { return {static_cast<int>(std::floor(pos.x)), static_cast<int>(std::floor(pos.y)), static_cast<int>(std::floor(pos.z))}; }
+
 // ---- client tick -----------------------------------------------------------------------------------------------
 
-std::mt19937& rng() {
-    static std::mt19937 r{std::random_device{}()};
-    return r;
-}
-
-/// tickRain's splashes and rain sounds of the Ur-Ghast rain (the level's own rain is the game's).
-void urGhastSplashes(LocalPlayer& p, float level, int& rainSoundTime) {
+/// tickRain's splashes and rain sounds of the Ur-Ghast rain (the level's own rain is the game's):
+/// the random of RandomSource.create(ticks * 312987231), columns of biomes with precipitation that
+/// are warm enough to rain, the splash at the top of the block's collision shape or fluid.
+void urGhastSplashes(LocalPlayer& p, float level, int ticks, int& rainSoundTime) {
     if (level <= 0.0f) return;
-    auto&       region = p.getDimensionBlockSource();
-    auto const& pos    = p.getPosition();
-    BlockPos    at{static_cast<int>(std::floor(pos.x)), static_cast<int>(std::floor(pos.y)), static_cast<int>(std::floor(pos.z))};
-    int         n = ca::splashCount(level, false);
-    std::uniform_int_distribution<int>     d21(0, 20);
-    std::uniform_real_distribution<double> unit(0.0, 1.0);
-    std::optional<BlockPos>                splash;
-    auto&                                  lvl = p.getLevel();
-    int const                              minY = p.getDimension().mHeightRange->mMin;
+    auto&                   region = p.getDimensionBlockSource();
+    BlockPos const          at     = blockPosOf(p.getPosition());
+    core::jrand::LegacyRandom random(ca::rainTickSeed(ticks));
+    int const               n    = ca::splashCount(level, false); // Bedrock has no "decreased particles" option
+    auto&                   lvl  = p.getLevel();
+    int const               minY = p.getDimension().mHeightRange->mMin;
+    std::optional<BlockPos> splash;
     for (int j = 0; j < n; ++j) {
-        BlockPos column{at.x + d21(rng()) - 10, 0, at.z + d21(rng()) - 10};
+        int      k = random.nextInt(21) - 10;
+        int      l = random.nextInt(21) - 10;
+        BlockPos column{at.x + k, 0, at.z + l};
         if (!region.hasChunksAt(column, 0, false)) continue;
         BlockPos top = region.getHeightmapPos(column);
         if (top.y <= minY || top.y > at.y + 10 || top.y < at.y - 10) continue;
+        Biome const& biome = region.getBiome(top);
+        if (!biome.mRain || biome.getTemperature(region, top) < 0.15f) continue; // hasPrecipitation, warmEnoughToRain
         BlockPos below{top.x, top.y - 1, top.z};
         splash          = below;
-        auto const& id  = game::blockId(region.getBlock(below));
-        bool        hot = id == "minecraft:lava" || id == "minecraft:flowing_lava" || id == "minecraft:magma" || id == "minecraft:campfire" || id == "minecraft:soul_campfire";
-        Vec3        where{static_cast<float>(below.x + unit(rng())), static_cast<float>(below.y + 1.0), static_cast<float>(below.z + unit(rng()))};
+        double      d0  = random.nextDouble();
+        double      d1  = random.nextDouble();
+        auto const& b   = region.getBlock(below);
+        auto const  id  = game::blockId(b);
+        auto const& liq = region.getLiquidBlock(below);
+        auto const  lid = game::blockId(liq);
+        bool const  lava = id == "minecraft:lava" || id == "minecraft:flowing_lava" || lid == "minecraft:lava" || lid == "minecraft:flowing_lava";
+        bool const  water = id == "minecraft:water" || id == "minecraft:flowing_water" || lid == "minecraft:water" || lid == "minecraft:flowing_water";
+        bool        campfire = id == "minecraft:campfire" || id == "minecraft:soul_campfire";
+        bool const  litCampfire = campfire && game::statesOf(b)["extinguished"] != "true"; // CampfireBlock#isLitCampfire
+        bool const  hot = lava || id == "minecraft:magma" || litCampfire;
+        // VoxelShape#max(Y) of the collision shape, FluidState#getHeight
+        double shapeTop = 0.0;
+        try {
+            AABB box = b.getBlockType().getCollisionShape(b, region, below, {});
+            if (box.max.y > box.min.y) shapeTop = std::clamp(static_cast<double>(box.max.y) - below.y, 0.0, 1.5);
+        } catch (...) {}
+        double fluidTop = 0.0;
+        if (lava || water) {
+            auto const& fluid  = (lid == "minecraft:air" || lid.empty()) ? b : liq;
+            auto const  aboveL = game::blockId(region.getLiquidBlock(top));
+            auto const  aboveB = game::blockId(region.getBlock(top));
+            bool        same   = lava ? (aboveL.find("lava") != std::string::npos || aboveB.find("lava") != std::string::npos)
+                                      : (aboveL.find("water") != std::string::npos || aboveB.find("water") != std::string::npos);
+            fluidTop           = ca::fluidHeight(game::intState(fluid, "liquid_depth").value_or(0), same);
+        }
+        Vec3 where{static_cast<float>(below.x + d0), static_cast<float>(below.y + std::max(shapeTop, fluidTop)), static_cast<float>(below.z + d1)};
         lvl.addParticle(hot ? ParticleType::Smoke : ParticleType::RainSplash, where, Vec3{}, 0, nullptr, false);
     }
-    std::uniform_int_distribution<int> d4(0, 3);
-    if (splash && d4(rng()) < rainSoundTime++) {
+    if (splash && random.nextInt(4) < rainSoundTime++) {
         rainSoundTime = 0;
         auto* c       = currentClient();
         if (!c) return;
@@ -285,6 +390,23 @@ void urGhastSplashes(LocalPlayer& p, float level, int& rainSoundTime) {
     }
 }
 
+/// BossOverlay#shouldCreateWorldFog: a boss bar the player sees asks for world fog (the companion's
+/// TFBossBarPacket state; Bedrock's own BossEventPacket has no such flag).
+bool bossWorldFog(LocalPlayer& p) {
+    auto const& pos = p.getPosition();
+    for (Actor* a : p.getLevel().getRuntimeActorList()) {
+        if (!a || a->getDimensionId() != p.getDimensionId()) continue;
+        auto const& ap = a->getPosition();
+        float       dx = ap.x - pos.x, dz = ap.z - pos.z;
+        if (dx * dx + dz * dz > 160.0f * 160.0f) continue;
+        if (auto bar = entity::bossBar(a->getOrCreateUniqueID().rawID); bar && bar->fog) return true;
+    }
+    return false;
+}
+
+void installProviderFor(int dim);
+void clearProviderFor(int dim);
+
 void clientTick() {
     auto* p = currentPlayer();
     // the TF dimension's engine id: the local server's registry, or (a remote server) the dimension
@@ -294,39 +416,47 @@ void clientTick() {
     else if (dim < 0)
         if (auto tf = ::gf::world::twilight()) dim = static_cast<int>(*tf);
     if (dim >= 0 && dim != gDimension.load()) {
-        gDimension = dim;
-        installProvider();
+        int old = gDimension.exchange(dim);
+        if (old >= 0) clearProviderFor(old);
+        installProviderFor(dim);
     }
     auto& s = shared();
-    if (!p || !inTwilight(*p)) {
+    if (!p) {
         std::lock_guard lock(s.mutex);
         s.inTwilight = false;
         s.aurora = s.lastAurora = 0;
         s.nearLocked            = false;
         s.urGhastRain           = 0;
+        s.playerDim             = -1;
         return;
     }
     auto const cfg = config();
-    Preview    preview;
+    checkAuroraBiomes(p->getLevel(), *cfg);
+    Preview preview;
+    int     previewGen = 0, scanX = 0, scanZ = 0, scanTick = 0, scanGen = 0, ticks = 0;
     {
         std::lock_guard lock(s.mutex);
-        preview = s.preview;
+        preview    = s.preview;
+        previewGen = s.previewGen;
+        scanX = s.scanX, scanZ = s.scanZ, scanTick = s.scanTick, scanGen = s.scanGen, ticks = s.ticks + 1;
     }
-    auto&       region = p->getDimensionBlockSource();
-    auto const& pos    = p->getPosition();
-    BlockPos    bp{static_cast<int>(std::floor(pos.x)), static_cast<int>(std::floor(pos.y)), static_cast<int>(std::floor(pos.z))};
-    std::string camera = biomeAt(region, bp, preview);
+    bool const  twilight = inTwilight(*p);
+    auto&       region   = p->getDimensionBlockSource();
+    BlockPos    bp       = blockPosOf(p->getPosition());
+    std::string camera   = biomeAt(region, bp, preview);
 
-    // aurora counter (ClientGameEvents#clientTick)
-    bool inAurora = cfg.aurora && std::find(cfg.auroraBiomes.begin(), cfg.auroraBiomes.end(), camera) != cfg.auroraBiomes.end();
+    // aurora counter (ClientGameEvents#clientTick): every dimension, by the camera's biome
+    bool inAurora = cfg->aurora && auroraBiome(*cfg, camera);
 
-    // locked-biome weather: the columns around the player (isNearLockedBiome at y 0)
-    std::vector<std::string> enforcement;
-    bool                     near = false;
-    bool const gameMode = !p->isCreative() && !p->isSpectator();
-    if (cfg.weather && (preview.locked || (progression::client::enforced() && gameMode))) {
+    // locked-biome weather: the columns around the player (isNearLockedBiome at y 0), scanned again
+    // when the player's block column or the preview changes, and every second (progression)
+    std::optional<std::vector<std::string>> enforcement;
+    bool                                    near     = false;
+    bool const                              gameMode = !p->isCreative() && !p->isSpectator();
+    bool const                              scan     = twilight && cfg->weather && (preview.locked || (progression::client::enforced() && gameMode));
+    if (scan && (bp.x != scanX || bp.z != scanZ || previewGen != scanGen || ticks - scanTick >= 20)) {
         constexpr int r = ca::kLockedBiomeScan;
-        enforcement.assign(static_cast<std::size_t>((2 * r + 1) * (2 * r + 1)), std::string{});
+        enforcement.emplace(static_cast<std::size_t>((2 * r + 1) * (2 * r + 1)), std::string{});
         std::unordered_map<std::string, std::string> memo;
         for (int dz = -r; dz <= r; ++dz)
             for (int dx = -r; dx <= r; ++dx) {
@@ -334,9 +464,10 @@ void clientTick() {
                 auto it    = memo.find(biome);
                 if (it == memo.end()) it = memo.emplace(biome, lockedEnforcement(biome, preview)).first;
                 if (!it->second.empty()) near = true;
-                enforcement[static_cast<std::size_t>((dz + r) * (2 * r + 1) + dx + r)] = it->second;
+                (*enforcement)[static_cast<std::size_t>((dz + r) * (2 * r + 1) + dx + r)] = it->second;
             }
     }
+    bool const bossFog = preview.bossFog || (twilight && ticks % 10 == 0 ? bossWorldFog(*p) : false);
 
     static int rainSoundTime = 0;
     float      urRain        = 0;
@@ -344,28 +475,39 @@ void clientTick() {
     if (auto* w = p->getDimension().mWeather.get()) levelRain = w->mRainLevel;
     {
         std::lock_guard lock(s.mutex);
-        s.inTwilight  = true;
-        s.ticks++;
-        s.lastAurora  = s.aurora;
-        s.aurora      = ca::tickAurora(s.aurora, inAurora, cfg.auroraBiomes.empty() || !cfg.aurora);
+        s.ticks      = ticks;
+        s.inTwilight = twilight;
+        s.playerDim  = static_cast<int>(p->getDimensionId());
+        s.lastAurora = s.aurora;
+        s.aurora     = ca::tickAurora(s.aurora, inAurora, cfg->auroraBiomes.empty() || !cfg->aurora);
         s.cameraBiome = camera;
-        s.nearLocked  = near;
-        s.cx          = bp.x;
-        s.cz          = bp.z;
-        s.enforcement = std::move(enforcement);
-        s.urGhastRain = ca::tickUrGhastRain(s.urGhastRain, s.urGhastActive || preview.urGhast);
+        if (!scan) s.nearLocked = false;
+        else if (enforcement) {
+            s.nearLocked  = near;
+            s.cx          = bp.x;
+            s.cz          = bp.z;
+            s.enforcement = std::move(*enforcement);
+            s.scanX = bp.x, s.scanZ = bp.z, s.scanTick = ticks, s.scanGen = previewGen;
+        }
+        near = s.nearLocked;
+        if (!twilight) s.bossFog = false;
+        else if (preview.bossFog || ticks % 10 == 0) s.bossFog = bossFog;
+        s.urGhastRain = twilight ? ca::tickUrGhastRain(s.urGhastRain, s.urGhastActive || preview.urGhast) : 0.0f;
         urRain        = s.urGhastRain;
     }
     if (inAurora) logOnce("aurora_in:" + camera, "atmosphere: aurora fading in (" + camera + ")");
     if (near) logOnce("locked_near", "atmosphere: near a locked biome, its weather is drawn");
     // tickRain: the Ur-Ghast's rain where it is stronger than the level's own (that one is the game's)
-    if (urRain > levelRain) {
-        urGhastSplashes(*p, ca::rainLevel(levelRain, urRain, true), rainSoundTime);
+    if (twilight && urRain > levelRain) {
+        urGhastSplashes(*p, ca::rainLevel(levelRain, urRain, fancyGraphics()), ticks, rainSoundTime);
         logOnce("ur_ghast_rain", "atmosphere: Ur-Ghast rain splashes");
     }
 }
 
 // ---- aurora worker -------------------------------------------------------------------------------------------
+
+constexpr int kAuroraRings    = 160; ///< about 0.45 degrees a ring seen from the camera
+constexpr int kAuroraSegments = 320; ///< 1.1 degrees a segment
 
 class AuroraWorker {
 public:
@@ -389,36 +531,38 @@ private:
         while (true) {
             {
                 std::unique_lock lock(mMutex);
-                mWake.wait_for(lock, std::chrono::milliseconds(50), [this] { return mStop; });
+                mWake.wait_for(lock, std::chrono::milliseconds(80), [this] { return mStop; });
                 if (mStop) return;
             }
             ca::AuroraUniforms u;
-            float              scale = 0;
             {
                 auto&           s = shared();
                 std::lock_guard lock(s.mutex);
-                if (!s.inTwilight || (s.aurora == 0 && s.lastAurora == 0) || !s.uniformsValid) {
+                if ((s.aurora == 0 && s.lastAurora == 0) || !s.uniformsValid) {
                     if (s.aurora == 0 && s.lastAurora == 0) s.grid.reset();
                     continue;
                 }
-                u     = s.uniforms;
-                scale = s.auroraScale;
+                u = s.uniforms;
             }
-            constexpr int n      = 96; // about 11 blocks a cell at a 192-block fog end
-            float const   extent = std::min(scale, std::max(u.fogEnd, 1.0f) * 2.75f);
-            auto          grid   = std::make_shared<AuroraGrid>();
-            grid->camX           = u.camX;
-            grid->camY           = u.camY;
-            grid->camZ           = u.camZ;
-            grid->n              = n;
-            grid->vertices.reserve(static_cast<std::size_t>((n + 1) * (n + 1)));
-            for (int j = 0; j <= n; ++j)
-                for (int i = 0; i <= n; ++i) {
-                    float px = -extent + 2.0f * extent * static_cast<float>(i) / n;
-                    float pz = -extent + 2.0f * extent * static_cast<float>(j) / n;
-                    auto  f  = ca::auroraFragment(px, pz, u);
-                    grid->vertices.push_back({px, 0.0f, pz, f.color.r, f.color.g, f.color.b, f.alpha});
-                }
+            auto grid  = std::make_shared<AuroraGrid>();
+            grid->camX = u.camX;
+            grid->camY = u.camY;
+            grid->camZ = u.camZ;
+            grid->mesh = ca::auroraMesh(ca::auroraHeight(u.camY), u.fogEnd, kAuroraRings, kAuroraSegments);
+            int const rows = grid->mesh.rings + 1, segs = grid->mesh.segments;
+            grid->vertices.resize(static_cast<std::size_t>(rows * segs));
+            // two threads: about 30 ms for the 51 k vertices (17 noise samples each)
+            auto part = [&](int from, int to) {
+                for (int r = from; r < to; ++r)
+                    for (int k = 0; k < segs; ++k) {
+                        auto [px, pz] = ca::auroraMeshPoint(grid->mesh, r, k);
+                        auto f        = ca::auroraFragment(px, pz, u);
+                        grid->vertices[static_cast<std::size_t>(r * segs + k)] = {px, 0.0f, pz, f.color.r, f.color.g, f.color.b, f.alpha};
+                    }
+            };
+            std::thread helper(part, rows / 2, rows);
+            part(0, rows / 2);
+            helper.join();
             auto&           s = shared();
             std::lock_guard lock(s.mutex);
             s.grid = std::move(grid);
@@ -431,6 +575,7 @@ private:
     bool                    mStop = false;
 };
 AuroraWorker& auroraWorker() {
+    shared(); // constructed first, so destroyed after the worker (an exit without uninstall)
     static AuroraWorker w;
     return w;
 }
@@ -440,7 +585,7 @@ AuroraWorker& auroraWorker() {
 /// The sun, moon and star meshes of the level renderer while the player is in the Twilight Forest
 /// (TFSkyRenderer: no sun, no moon; TF's own stars are drawn by the stars callback).
 struct SkyMeshes {
-    LevelRenderer*                            owner = nullptr;
+    LevelRenderer*                            owner   = nullptr;
     bool                                      swapped = false;
     std::shared_ptr<mce::Mesh>                hidden;
     std::shared_ptr<mce::Mesh>                sun, stars;
@@ -492,25 +637,27 @@ void restoreVanillaSky() {
 
 // ---- providers (render thread) ----------------------------------------------------------------------------------
 
+/// The render distance in blocks (LevelRendererCamera::mRenderDistance is in blocks: 16 x the
+/// chunks of the video option; the e2e logs it next to the view area for the record).
 float renderDistanceBlocks() {
     auto* lr = levelRenderer();
     if (!lr || !lr->mLevelRendererPlayer.get()) return 192.0f;
-    float rd = lr->mLevelRendererPlayer.get()->mRenderDistance;
-    logOnce("render_distance", fmt::format("atmosphere: level renderer render distance {:.1f}", rd));
-    if (rd <= 0) return 192.0f;
-    return rd < 64.0f ? rd * 16.0f : rd; // chunks or blocks
+    auto& player = *lr->mLevelRendererPlayer.get();
+    float rd     = player.mRenderDistance;
+    logOnce("render_distance", fmt::format("atmosphere: level renderer render distance {:.1f} blocks (view area {}, far chunks {:.1f})", rd, player.mViewAreaDistance, player.mFarChunksDistance));
+    return rd > 0 ? rd : 192.0f;
 }
 
 /// FogHandler: one step of the smoothed fog planes for the camera's biome (by the time since the
 /// last step, in frames of 1/60 s), returns the terrain planes to use.
 std::optional<ca::FogPlanes> stepFog(std::string const& biome, double y, bool chunkLoaded) {
-    auto&       s     = shared();
-    float const rd    = renderDistanceBlocks();
-    auto const  now   = std::chrono::steady_clock::now();
-    bool const  foggy = ca::isFoggyAt(biome, y);
+    auto&       s   = shared();
+    float const rd  = renderDistanceBlocks();
+    auto const  now = std::chrono::steady_clock::now();
     bool const  spook = ca::isSpooky(biome);
     std::lock_guard lock(s.mutex);
-    float frames = 1.0f;
+    bool const      foggy  = ca::isFoggyAt(biome, y) || s.bossFog; // isFoggyAt || BossOverlay#shouldCreateWorldFog
+    float           frames = 1.0f;
     if (s.fogStepped.time_since_epoch().count() != 0) frames = std::chrono::duration<float>(now - s.fogStepped).count() * 60.0f;
     s.fogStepped = now;
     frames       = std::clamp(frames, 0.0f, 600.0f);
@@ -529,41 +676,71 @@ ca::Rgb fogColourOf(std::string const& biome) {
     return ca::fogColor(ca::rgbOf(look->fog), ca::rgbOf(look->sky), ca::daylight(ca::timeOfDay(ca::kFixedTime)), chunks);
 }
 
-std::string previewBiomeOr(std::string const& biome) {
+Preview previewNow() {
     std::lock_guard lock(shared().mutex);
-    return shared().preview.biome ? *shared().preview.biome : biome;
+    return shared().preview;
 }
 
+/// The fog thinning under Vibrant Visuals: F12 turns the provider's far plane into a uniform air fog
+/// (extinction 3 / end); Vibrant Visuals fogs its sky with it too, so at TF's planes the sky is the
+/// fog colour. The planes are stretched by this factor there (the fog colour stays TF's).
+constexpr float kVibrantFogStretch = 8.0f;
+
 std::optional<sky::FogSpec> fogFor(std::string const& playerBiome) {
-    if (!config().fog) return std::nullopt;
+    auto cfg = config();
+    if (!cfg->fog) return std::nullopt;
     auto* p = currentPlayer();
     if (!p) return std::nullopt;
-    std::string biome = previewBiomeOr(playerBiome);
+    auto const  preview = previewNow();
+    std::string biome   = preview.biome ? *preview.biome : playerBiome;
     if (!ca::biomeLook(biome)) return std::nullopt; // not a TF biome: the game's own fog
-    auto const& pos   = p->getPosition();
-    BlockPos    bp{static_cast<int>(std::floor(pos.x)), static_cast<int>(std::floor(pos.y)), static_cast<int>(std::floor(pos.z))};
-    auto        planes = stepFog(biome, pos.y, p->getDimensionBlockSource().hasChunksAt(bp, 0, false));
+    auto const& pos    = p->getPosition();
+    auto        planes = stepFog(biome, pos.y, p->getDimensionBlockSource().hasChunksAt(blockPosOf(pos), 0, false));
     if (!planes) return std::nullopt;
     auto c = fogColourOf(biome);
     logOnce("fog:" + biome, fmt::format("atmosphere: fog of {} {:.1f}..{:.1f}", biome, planes->start, planes->end));
+    if (vibrantVisuals()) {
+        float k = preview.vvFog > 0 ? preview.vvFog : kVibrantFogStretch;
+        logOnce("fog_vv", fmt::format("atmosphere: Vibrant Visuals fog stretched x{:.1f}", k));
+        return sky::FogSpec{{c.r, c.g, c.b}, planes->start * k, planes->end * k};
+    }
     return sky::FogSpec{{c.r, c.g, c.b}, planes->start, planes->end};
 }
 
-/// The stars (TFSkyRenderer#createStars, rotated as renderSky does at the fixed time).
+/// The stars (TFSkyRenderer#createStars, rotated as renderSky does at the fixed time), radius 100.
 std::vector<ColourVertex> const& starVertices() {
     static std::vector<ColourVertex> const v = [] {
         std::vector<ColourVertex> out;
         float const               tod = ca::timeOfDay(ca::kFixedTime);
         for (auto const& q : ca::starQuads()) {
             std::array<ca::Vec3f, 4> r{};
-            for (int i = 0; i < 4; ++i) r[static_cast<std::size_t>(i)] = ca::rotateStar(q[static_cast<std::size_t>(i)], tod);
+            for (std::size_t i = 0; i < 4; ++i) r[i] = ca::rotateStar(q[i], tod);
             // both windings: the stars face the camera whatever the material culls
-            for (int i : {0, 1, 2, 3}) out.push_back({r[static_cast<std::size_t>(i)].x, r[static_cast<std::size_t>(i)].y, r[static_cast<std::size_t>(i)].z, 1, 1, 1, 1});
-            for (int i : {3, 2, 1, 0}) out.push_back({r[static_cast<std::size_t>(i)].x, r[static_cast<std::size_t>(i)].y, r[static_cast<std::size_t>(i)].z, 1, 1, 1, 1});
+            for (std::size_t i : {0u, 1u, 2u, 3u}) out.push_back({r[i].x, r[i].y, r[i].z, 1, 1, 1, 1});
+            for (std::size_t i : {3u, 2u, 1u, 0u}) out.push_back({r[i].x, r[i].y, r[i].z, 1, 1, 1, 1});
         }
         return out;
     }();
     return v;
+}
+
+/// The void plate (both windings), black, radius 512 at y -4.
+std::vector<ColourVertex> const& voidPlateVertices() {
+    static std::vector<ColourVertex> const v = [] {
+        std::vector<ColourVertex> out;
+        for (auto const& q : ca::voidPlateQuads()) {
+            for (std::size_t i : {0u, 1u, 2u, 3u}) out.push_back({q[i].x, q[i].y, q[i].z, 0, 0, 0, 1});
+            for (std::size_t i : {3u, 2u, 1u, 0u}) out.push_back({q[i].x, q[i].y, q[i].z, 0, 0, 0, 1});
+        }
+        return out;
+    }();
+    return v;
+}
+
+std::vector<ColourVertex> scaled(std::vector<ColourVertex> const& in, float k) {
+    std::vector<ColourVertex> out(in);
+    for (auto& v : out) v.x *= k, v.y *= k, v.z *= k;
+    return out;
 }
 
 /// Pushes one quad of four vertices with the preview's winding (0: as given, 1: reversed, 2: both).
@@ -572,65 +749,106 @@ void pushQuad(std::vector<ColourVertex>& out, ColourVertex const& a, ColourVerte
     if (winding != 0) out.insert(out.end(), {d, c, b, a});
 }
 
-void drawAurora(render::RenderContext& ctx, float partial) {
+AuroraMode auroraModeFor(Preview const& preview, bool inTwilightSky) {
+    if (preview.auroraMode != AuroraMode::Auto) return preview.auroraMode;
+    // the sky pass exists only in the TF provider's dimension and only Classic shows it
+    return inTwilightSky && !vibrantVisuals() ? AuroraMode::SkyUi : AuroraMode::WorldBlend;
+}
+StarsMode starsModeFor(Preview const& preview) {
+    if (preview.starsMode != StarsMode::Auto) return preview.starsMode;
+    return vibrantVisuals() ? StarsMode::WorldBlend : StarsMode::SkyStars;
+}
+bool skyPass(AuroraMode m) { return m == AuroraMode::SkyUi || m == AuroraMode::SkyStars || m == AuroraMode::SkyBlend; }
+
+/// Draws the aurora in the sky pass (`sky`) or the world pass; only the mode's own pass draws.
+void drawAurora(render::RenderContext& ctx, float partial, bool sky) {
     std::shared_ptr<AuroraGrid const> grid;
-    int                               last = 0, cur = 0, winding = 0, mode = 0;
+    int                               last = 0, cur = 0;
+    Preview                           preview;
+    bool                              twilight = false;
     {
         auto&           s = shared();
         std::lock_guard lock(s.mutex);
-        grid    = s.grid;
-        last    = s.lastAurora;
-        cur     = s.aurora;
-        winding = s.preview.winding;
-        mode    = s.preview.auroraMode;
+        grid     = s.grid;
+        last     = s.lastAurora;
+        cur      = s.aurora;
+        preview  = s.preview;
+        twilight = s.inTwilight;
     }
     if (!grid || (cur == 0 && last == 0)) return;
-    // TF blends the aurora over the sky (SRC_ALPHA, 1 - SRC_ALPHA): the particle engine's blend
-    // material with a white texture; the stars material (additive, no alpha) needs premultiplied
-    // colours (preview auroraMode 1, the e2e calibration)
-    auto const* mat = mode == 1 ? starsMaterial() : particleBlendMaterial();
-    auto const* tex = texture("textures/atmosphere/white");
-    if (!mat || (mode != 1 && !tex)) return;
+    AuroraMode const mode = auroraModeFor(preview, twilight && config()->sky);
+    if (skyPass(mode) != sky) return;
+    mce::MaterialPtr const* mat = nullptr;
+    mce::TexturePtr const*  tex = nullptr;
+    char const*             name = "";
+    switch (mode) {
+    case AuroraMode::SkyUi: mat = materialNamed(name = "ui_fill_gradient"); break;
+    case AuroraMode::SkyStars: mat = starsMaterial(), name = "stars"; break;
+    case AuroraMode::WorldWire: mat = materialNamed(name = "wireframe"); break;
+    case AuroraMode::SkyBlend:
+    case AuroraMode::WorldBlend:
+    default:
+        mat  = particleBlendMaterial();
+        tex  = texture("textures/atmosphere/white");
+        name = "particles blend";
+        if (!tex) return;
+        break;
+    }
+    if (!mat) {
+        logOnce(std::string("aurora_material:") + name, std::string("atmosphere: no ") + name + " material for the aurora");
+        return;
+    }
     float const mod = ca::auroraAlpha(last, cur, partial);
-    // the grid moved with the camera since the worker computed it; the plane is at y 256 and is drawn
-    // scaled towards the camera (1/8: the same picture, inside the sky's depth range)
-    float const k  = 0.125f;
+    // the mesh moved with the camera since the worker computed it; the plane stays at y 256
     float const ox = static_cast<float>(grid->camX - ctx.camera.x), oz = static_cast<float>(grid->camZ - ctx.camera.z);
-    float const y  = ca::auroraHeight(ctx.camera.y) * k;
-    int const   n  = grid->n;
-    std::vector<ColourVertex> quads;
-    quads.reserve(static_cast<std::size_t>(n * n * 4));
-    auto vtx = [&](int i, int j) {
-        ColourVertex v = grid->vertices[static_cast<std::size_t>(j * (n + 1) + i)];
+    float const y  = ca::auroraHeight(ctx.camera.y);
+    // the sky pass draws without depth: scaled towards the camera (the same picture) to within the
+    // stars' 100 blocks; the world pass draws at the real place unless it is beyond the far plane
+    float const maxDist = std::sqrt(grid->mesh.extent * grid->mesh.extent + y * y) + std::hypot(ox, oz);
+    float       k       = 1.0f;
+    if (sky) k = 100.0f / std::max(maxDist, 1.0f);
+    else if (float far = farPlane(ctx.screen); far > 0) {
+        k = std::min(1.0f, 0.9f * far / std::max(maxDist, 1.0f));
+        logOnce("aurora_far", fmt::format("atmosphere: world pass far plane {:.0f}, aurora scaled x{:.3f}", far, k));
+    }
+    bool const premultiply = mode == AuroraMode::SkyStars; // the stars material ignores vertex alpha
+    int const  rings = grid->mesh.rings, segs = grid->mesh.segments;
+    auto       vtx = [&](int r, int sIdx) {
+        ColourVertex v = grid->vertices[static_cast<std::size_t>(r * segs + (sIdx % segs))];
         v.x            = (v.x + ox) * k;
         v.z            = (v.z + oz) * k;
-        v.y            = y;
+        v.y            = y * k;
         v.a            = std::clamp(v.a * mod, 0.0f, 1.0f);
-        if (mode == 1) v = ColourVertex{v.x, v.y, v.z, v.r * v.a, v.g * v.a, v.b * v.a, v.a};
+        if (premultiply) v = ColourVertex{v.x, v.y, v.z, v.r * v.a, v.g * v.a, v.b * v.a, 1.0f};
         return v;
     };
-    for (int j = 0; j < n; ++j)
-        for (int i = 0; i < n; ++i) {
-            auto a = vtx(i, j), b = vtx(i + 1, j), c = vtx(i + 1, j + 1), d = vtx(i, j + 1);
-            if (a.a <= 0.002f && b.a <= 0.002f && c.a <= 0.002f && d.a <= 0.002f) continue;
-            pushQuad(quads, a, b, c, d, winding);
+    std::vector<ColourVertex> quads;
+    quads.reserve(static_cast<std::size_t>(rings * segs * 2));
+    for (int r = 0; r < rings; ++r)
+        for (int sIdx = 0; sIdx < segs; ++sIdx) {
+            auto a = vtx(r, sIdx), b = vtx(r, sIdx + 1), c = vtx(r + 1, sIdx + 1), d = vtx(r + 1, sIdx);
+            auto lit = [premultiply](ColourVertex const& v) { return premultiply ? (v.r + v.g + v.b) > 0.004f : v.a > 0.002f; };
+            if (!lit(a) && !lit(b) && !lit(c) && !lit(d)) continue;
+            pushQuad(quads, a, b, c, d, preview.winding);
         }
-    if (mode == 1) drawColouredQuads(ctx.screen, *mat, quads);
-    else drawTintedQuads(ctx.screen, *mat, *tex, quads);
-    logOnce("aurora_drawn", fmt::format("atmosphere: aurora drawn ({} quads, alpha {:.2f}, {})", quads.size() / 4, mod, mode == 1 ? "stars material" : "blend material"));
+    drawSmoothQuads(ctx.screen, *mat, tex, quads);
+    logOnce("aurora_drawn", fmt::format("atmosphere: aurora drawn ({} quads, alpha {:.2f}, {} pass, {})", quads.size() / 4, mod, sky ? "sky" : "world", name));
 }
 
 /// Publishes the aurora shader's uniforms for the worker (render thread, once per frame).
 void publishAuroraUniforms(render::RenderContext const& ctx) {
-    auto* c     = currentClient();
-    auto* level = c ? c->getLevel() : nullptr;
-    if (!level) return;
-    auto& s = shared();
+    auto* p = currentPlayer();
+    if (!p) return;
+    auto& level = p->getLevel();
+    auto& s     = shared();
     float fogEnd = 192.0f, fogStart = 0.0f;
     std::string biome;
+    bool        twilight = false;
     {
         std::lock_guard lock(s.mutex);
-        if (s.fogPlanes) {
+        if (s.aurora == 0 && s.lastAurora == 0) return;
+        twilight = s.inTwilight;
+        if (twilight && s.fogPlanes) {
             fogStart = s.fogPlanes->start;
             fogEnd   = s.fogPlanes->end;
         } else {
@@ -638,55 +856,105 @@ void publishAuroraUniforms(render::RenderContext const& ctx) {
             fogStart = v.start;
             fogEnd   = v.end;
         }
-        biome = s.cameraBiome;
+        biome = s.preview.biome ? *s.preview.biome : s.cameraBiome;
     }
-    auto               fc = fogColourOf(biome);
     ca::AuroraUniforms u;
-    u.seed     = ca::auroraSeed(static_cast<std::int64_t>(level->getLevelSeed64().mValue));
+    u.seed     = ca::auroraSeed(static_cast<std::int64_t>(level.getLevelSeed64().mValue));
     u.camX     = static_cast<float>(ctx.camera.x);
     u.camY     = static_cast<float>(ctx.camera.y);
     u.camZ     = static_cast<float>(ctx.camera.z);
-    auto tick  = level->getCurrentTick().tickID;
+    auto tick  = level.getCurrentTick().tickID;
     u.gameTime = (static_cast<float>(tick % 24000) + ctx.partialTicks) / 24000.0f;
     u.fogStart = fogStart;
     u.fogEnd   = fogEnd;
-    u.fogColor = fc;
+    u.fogColor = fogColourOf(biome); // outside TF's biomes: black (the aurora is faded out there anyway)
     std::lock_guard lock(s.mutex);
     s.uniforms      = u;
-    s.auroraScale   = ca::auroraScale(renderDistanceBlocks());
     s.uniformsValid = true;
 }
 
+/// Stars and the void plate in the world pass (Vibrant Visuals: its sky covers the sky pass), at 90 %
+/// of the far plane.
+void drawWorldSky(render::RenderContext& ctx, bool stars, bool voidPlate, StarsMode mode) {
+    float far = farPlane(ctx.screen);
+    float r   = far > 0 ? std::min(0.9f * far, 2000.0f) : 400.0f;
+    if (stars) {
+        if (mode == StarsMode::WorldStars) {
+            if (auto const* mat = starsMaterial()) drawColouredQuads(ctx.screen, *mat, scaled(starVertices(), r / 100.0f));
+        } else if (auto const* mat = particleBlendMaterial(); mat && texture("textures/atmosphere/white")) {
+            drawSmoothQuads(ctx.screen, *mat, texture("textures/atmosphere/white"), scaled(starVertices(), r / 100.0f));
+        }
+        logOnce("stars_world", fmt::format("atmosphere: TF stars drawn in the world pass (radius {:.0f})", r));
+    }
+    if (voidPlate)
+        if (auto const* mat = particleBlendMaterial(); mat && texture("textures/atmosphere/white")) {
+            drawSmoothQuads(ctx.screen, *mat, texture("textures/atmosphere/white"), scaled(voidPlateVertices(), r / 512.0f));
+            logOnce("void_plate_world", "atmosphere: void plate drawn in the world pass");
+        }
+}
+
+bool drawsVoidPlate(Preview const& preview) {
+    auto* p = currentPlayer();
+    if (!p) return false;
+    return preview.voidPlate || ca::drawsVoidPlate(p->getPosition().y, p->getDimension().mHeightRange->mMin); // getPosition: the eyes
+}
+
 bool skyFrame(render::RenderContext& ctx, float) {
-    auto cfg = config();
-    if (cfg.sky) hideVanillaSky(ctx.screen);
+    if (config()->sky) hideVanillaSky(ctx.screen);
     else restoreVanillaSky();
-    publishAuroraUniforms(ctx);
     return false; // the vanilla sky dome (biome sky colour) stays
 }
 
 void starsFrame(render::RenderContext& ctx, float partial) {
-    auto cfg = config();
-    if (cfg.sky) {
-        if (auto const* mat = starsMaterial()) {
-            drawColouredQuads(ctx.screen, *mat, starVertices());
-            logOnce("stars", fmt::format("atmosphere: TF stars drawn ({} quads)", starVertices().size() / 8));
-        }
+    auto       cfg     = config();
+    auto const preview = previewNow();
+    if (cfg->sky && !vibrantVisuals()) {
+        if (starsModeFor(preview) == StarsMode::SkyStars)
+            if (auto const* mat = starsMaterial()) {
+                drawColouredQuads(ctx.screen, *mat, starVertices());
+                logOnce("stars", fmt::format("atmosphere: TF stars drawn ({} quads)", starVertices().size() / 8));
+            }
+        if (drawsVoidPlate(preview))
+            if (auto const* mat = starsMaterial()) {
+                drawColouredQuads(ctx.screen, *mat, scaled(voidPlateVertices(), 100.0f / 512.0f));
+                logOnce("void_plate", "atmosphere: void plate drawn");
+            }
+    } else if (cfg->sky) {
+        logOnce("stars", "atmosphere: TF stars drawn (world pass under Vibrant Visuals)");
     }
-    if (cfg.aurora) drawAurora(ctx, partial);
+    if (cfg->aurora) drawAurora(ctx, partial, true);
+}
+
+/// The world pass of every dimension: the aurora's uniforms and its world-pass drawing; in the
+/// Twilight Forest under Vibrant Visuals (or a calibration preview) the stars and the void plate.
+void worldFrame(render::RenderContext& ctx, float partial) {
+    auto* p = currentPlayer();
+    if (!p || !inTwilight(*p)) restoreVanillaSky();
+    if (!p) return;
+    auto cfg = config();
+    if (cfg->aurora) {
+        publishAuroraUniforms(ctx);
+        drawAurora(ctx, partial, false);
+    }
+    if (inTwilight(*p) && cfg->sky) {
+        auto const preview = previewNow();
+        StarsMode  mode    = starsModeFor(preview);
+        bool const stars   = mode == StarsMode::WorldBlend || mode == StarsMode::WorldStars;
+        bool const plate   = vibrantVisuals() && drawsVoidPlate(preview);
+        if (stars || plate) drawWorldSky(ctx, stars, plate, mode);
+    }
 }
 
 /// TFWeatherRenderer#renderSnowAndRain: the locked-biome columns and the protected structure sparkles.
 bool weatherFrame(render::RenderContext& ctx, float partial) {
-    auto cfg = config();
-    if (!cfg.weather) return false;
+    if (!config()->weather) return false;
     auto* p = currentPlayer();
     if (!p) return false;
-    std::vector<std::string>                           enforcement;
-    bool                                               near = false;
-    int                                                cx = 0, cz = 0, ticks = 0, winding = 0;
+    std::vector<std::string>                                    enforcement;
+    bool                                                        near = false;
+    int                                                         cx = 0, cz = 0, ticks = 0, winding = 0;
     std::optional<std::vector<std::pair<core::BlockBox, bool>>> boxes;
-    bool                                               previewLocked = false;
+    bool                                                        previewLocked = false;
     {
         auto&           s = shared();
         std::lock_guard lock(s.mutex);
@@ -704,7 +972,7 @@ bool weatherFrame(render::RenderContext& ctx, float partial) {
     if (!previewLocked && !(progression::client::enforced() && gameMode)) return false;
     auto const* mat = particleBlendMaterial();
     if (!mat) return false;
-    int const    range = ca::weatherRange(true);
+    int const    range = ca::weatherRange(fancyGraphics());
     double const camX = ctx.camera.x, camY = ctx.camera.y, camZ = ctx.camera.z;
     int const    px = static_cast<int>(std::floor(camX)), py = static_cast<int>(std::floor(camY)), pz = static_cast<int>(std::floor(camZ));
     int const    minBuild = p->getDimension().mHeightRange->mMin;
@@ -721,7 +989,7 @@ bool weatherFrame(render::RenderContext& ctx, float partial) {
         if (winding != 1) b.push_back(c);
         if (winding != 0) b.push_back(flipped(c));
     };
-    if (near) {
+    if (near && !enforcement.empty()) {
         constexpr int r    = ca::kLockedBiomeScan;
         auto          span = ca::lockedSpan(py, range, minBuild);
         for (int z = pz - range; span && z <= pz + range; ++z)
@@ -762,31 +1030,57 @@ bool weatherFrame(render::RenderContext& ctx, float partial) {
         auto const* tex = texture(ca::textureOf(effect));
         if (!tex) continue;
         drawColumns(ctx.screen, *mat, *tex, cols, 1.0f);
-        logOnce(std::string("weather:") + ca::nameOf(effect), fmt::format("atmosphere: {} weather drawn ({} columns)", ca::nameOf(effect), cols.size()));
+        logOnce(std::string("weather:") + ca::nameOf(effect), fmt::format("atmosphere: {} weather drawn ({} columns, range {})", ca::nameOf(effect), cols.size(), range));
     }
     return false; // TF renders the normal weather anyway
 }
 
 std::optional<float> cloudsAt() { return ca::kCloudHeight; }
 
-} // namespace
+/// The frame's view override in the Twilight Forest: getCloudColor at the fixed time with the level's
+/// rain and thunder, and no sunrise colour (TwilightForestRenderInfo#getSunriseColor is null).
+std::optional<vx::ViewOverride> viewOverride() {
+    if (!config()->sky) return std::nullopt;
+    auto* p = currentPlayer();
+    if (!p) return std::nullopt;
+    float rain = 0, thunder = 0;
+    if (auto* w = p->getDimension().mWeather.get()) rain = w->mRainLevel, thunder = w->mLightningLevel;
+    auto c = ca::cloudColor(ca::timeOfDay(ca::kFixedTime), rain, thunder);
+    logOnce("clouds_colour", fmt::format("atmosphere: clouds {:.2f} {:.2f} {:.2f}, no sunrise colour", c.r, c.g, c.b));
+    return vx::ViewOverride{.cloud = std::array<float, 3>{c.r, c.g, c.b}, .noSunrise = true};
+}
 
-void installProvider() {
-    int dim = gDimension.load();
+void installProviderFor(int dim) {
     if (dim < 0) return;
     sky::setProvider(dim, sky::SkyProvider{.sky = skyFrame, .stars = starsFrame, .fog = fogFor, .clouds = cloudsAt, .weather = weatherFrame});
+    vx::setViewOverride(dim, viewOverride);
     log().info("atmosphere: sky provider set for dimension {}", dim);
 }
+
+void clearProviderFor(int dim) {
+    if (dim < 0) return;
+    sky::clearProvider(dim);
+    vx::clearViewOverride(dim);
+    log().info("atmosphere: sky provider of dimension {} cleared", dim);
+}
+
+} // namespace
+
+void installProvider() { installProviderFor(gDimension.load()); }
 
 namespace {
 
 void applyPreview(Json const& msg) {
     Preview p;
     if (msg.contains("biome") && msg["biome"].is_string()) p.biome = msg["biome"].get<std::string>();
-    p.locked  = msg.value("locked", false);
-    p.urGhast = msg.value("urGhast", false);
-    p.winding = msg.value("winding", 0);
-    p.auroraMode = msg.value("auroraMode", 0);
+    p.locked     = msg.value("locked", false);
+    p.urGhast    = msg.value("urGhast", false);
+    p.winding    = msg.value("winding", 0);
+    p.auroraMode = static_cast<AuroraMode>(std::clamp(msg.value("auroraMode", 0), 0, 5));
+    p.starsMode  = static_cast<StarsMode>(std::clamp(msg.value("starsMode", 0), 0, 3));
+    p.vvFog      = msg.value("vvFog", 0.0f);
+    p.voidPlate  = msg.value("voidPlate", false);
+    p.bossFog    = msg.value("bossFog", false);
     if (msg.contains("protected") && msg["protected"].is_array()) {
         std::vector<std::pair<core::BlockBox, bool>> boxes;
         for (auto const& b : msg["protected"])
@@ -796,14 +1090,16 @@ void applyPreview(Json const& msg) {
     {
         std::lock_guard lock(shared().mutex);
         shared().preview = p;
+        shared().previewGen++;
     }
-    forgetOnce({"fog:", "weather:", "aurora_drawn", "aurora_in:", "locked_near", "ur_ghast_rain"});
+    forgetOnce({"fog:", "fog_vv", "weather:", "aurora_drawn", "aurora_in:", "locked_near", "ur_ghast_rain", "stars", "void_plate", "aurora_far"});
     log().info("atmosphere: preview {}", msg.dump());
 }
 
 class AtmosphereClientModule {
 public:
     void install() {
+        shared(); // before the worker (static destruction order)
         auto& bus = ll::event::EventBus::getInstance();
         mTick     = bus.emplaceListener<ll::event::ClientLevelTickEvent>([](auto&) {
             try {
@@ -813,18 +1109,31 @@ public:
             }
         });
         mExit = bus.emplaceListener<ll::event::ClientExitLevelEvent>([](auto&) {
-            auto&           s = shared();
-            std::lock_guard lock(s.mutex);
-            s.fog.reset(); // FogHandler#unloadFog
-            s.fogStepped    = {};
-            s.fogPlanes.reset();
-            s.preview       = {};
-            s.aurora = s.lastAurora = 0;
-            s.grid.reset();
-            s.uniformsValid = false;
-            s.urGhastActive = false;
-            s.urGhastRain   = 0;
-            s.inTwilight    = false;
+            {
+                auto&           s = shared();
+                std::lock_guard lock(s.mutex);
+                s.fog.reset(); // FogHandler#unloadFog
+                s.fogStepped = {};
+                s.fogPlanes.reset();
+                s.preview = {};
+                s.previewGen++;
+                s.aurora = s.lastAurora = 0;
+                s.grid.reset();
+                s.uniformsValid = false;
+                s.urGhastActive = false;
+                s.urGhastRain   = 0;
+                s.inTwilight    = false;
+                s.nearLocked    = false;
+                s.bossFog       = false;
+                s.playerDim     = -1;
+            }
+            // the next world may number the Twilight Forest differently (a remote server)
+            clearProviderFor(gDimension.exchange(-1));
+            {
+                std::lock_guard lock(unknownBiomes().mutex);
+                unknownBiomes().unknown.clear();
+                unknownBiomes().checked.clear();
+            }
             // the swapped sky meshes stay recorded: the next frame outside the Twilight Forest puts
             // them back if the level renderer survives the level (restoreVanillaSky)
         });
@@ -837,11 +1146,8 @@ public:
             log().info("atmosphere: Ur-Ghast tantrum {}", active ? "on" : "off");
         });
         net::client::on(at::kChannelPreview, applyPreview);
-        // the sun and moon come back outside the Twilight Forest (render thread)
-        render::onWorld([](render::RenderContext&, float) {
-            auto* p = currentPlayer();
-            if (!p || !inTwilight(*p)) restoreVanillaSky();
-        });
+        // the world pass: the aurora anywhere, the sun and moon back outside the Twilight Forest
+        render::onWorld([](render::RenderContext& ctx, float partial) { worldFrame(ctx, partial); });
         auroraWorker().start();
         if (auto tf = ::gf::world::twilight()) {
             gDimension = static_cast<int>(*tf);
@@ -853,7 +1159,7 @@ public:
         auto& bus = ll::event::EventBus::getInstance();
         bus.removeListener(mTick);
         bus.removeListener(mExit);
-        if (int dim = gDimension.load(); dim >= 0) sky::clearProvider(dim);
+        clearProviderFor(gDimension.exchange(-1));
     }
 
 private:
@@ -873,6 +1179,14 @@ AtmosphereState state() {
 void setPreview(Json const& msg) { applyPreview(msg); }
 
 std::optional<sky::FogSpec> fogForTest(std::string const& biome) { return fogFor(biome); }
+
+std::vector<std::string> validAuroraBiomes() {
+    auto cfg = config();
+    std::vector<std::string> out;
+    for (auto const& b : cfg->auroraBiomes)
+        if (auroraBiome(*cfg, b)) out.push_back(b);
+    return out;
+}
 
 } // namespace gf::client::atmosphere
 

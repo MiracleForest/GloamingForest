@@ -12,7 +12,10 @@
 #include "client/world/Sky.h"
 #include "core/atmosphere/Atmosphere.h"
 #include "feature/atmosphere/Atmosphere.h"
+#include "feature/ext/atmosphere/SkyView.h"
 #include "feature/ext/ui/Client.h"
+#include "feature/progression/Progression.h"
+#include "mc/client/player/LocalPlayer.h"
 #include "mod/Config.h"
 #include "selftest/SelfTest.h"
 
@@ -92,6 +95,56 @@ GF_REGISTER_SELFTEST("atmosphere.client_weather", [](Context& ctx) -> ll::coro::
     co_await ctx.ticks(10);
     float after = atc::state().urGhastRain;
     ctx.check(after < 0.95f && after > 0.6f, "and it falls by 0.02 a tick after (" + std::to_string(after) + ")");
+});
+
+GF_REGISTER_SELFTEST("atmosphere.client_config", [](Context& ctx) {
+    // getValidAuroraBiomes: the default glacier is valid (a TF biome) whatever the world knows
+    auto valid = atc::validAuroraBiomes();
+    ctx.check(std::find(valid.begin(), valid.end(), "twilightforest:glacier") != valid.end(), "the glacier is a valid aurora biome");
+    ctx.check(ca::parseResourceLocation("plains") == std::optional<std::string>("minecraft:plains"), "a bare path reads as minecraft:");
+    ctx.check(!ca::parseResourceLocation("not/a:valid id"), "an invalid id is skipped");
+});
+
+GF_REGISTER_SELFTEST("atmosphere.client_clouds", [](Context& ctx) -> ll::coro::CoroTask<> {
+    if (!atc::state().inTwilight) {
+        ctx.info("the local player is not in the Twilight Forest: the cloud colour not checked");
+        co_return;
+    }
+    auto before = gf::feature::ext::atmosphere::client::viewOverrideFrames();
+    co_await ctx.ticks(10);
+    auto after = gf::feature::ext::atmosphere::client::viewOverrideFrames();
+    ctx.check(after > before, "the clouds take getCloudColor and the sunrise colour is off in the Twilight Forest (" + std::to_string(after - before) + " frames)");
+    auto c = ca::cloudColor(ca::timeOfDay(ca::kFixedTime), 0, 0);
+    ctx.check(c.r < 0.5f && c.r == c.g && c.b > c.r, "the clouds at 13000 are a darkened grey, no sunset tint");
+});
+
+GF_REGISTER_SELFTEST("atmosphere.client_weather_real", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // the real locked-biome data: U14's restrictions and F10's progression (no preview lock)
+    if (!atc::state().inTwilight) {
+        ctx.info("the local player is not in the Twilight Forest: real locked weather not checked");
+        co_return;
+    }
+    if (!gf::progression::client::enforced()) {
+        ctx.info("tfEnforcedProgression is off: the biomes are not locked");
+        co_return;
+    }
+    auto* lp = gf::client::currentPlayer();
+    if (!lp) co_return;
+    bool const creative = lp->isCreative();
+    (void)gf::selftest::runServerCommand("tag @a add gf_atmosphere_real");
+    (void)gf::selftest::runServerCommand("gamemode survival @a[tag=gf_atmosphere_real]");
+    bool const locked = gf::progression::client::biomeLocked("twilightforest:snowy_forest");
+    atc::setPreview({{"biome", "twilightforest:snowy_forest"}});
+    co_await ctx.ticks(25);
+    bool const near = atc::state().nearLocked;
+    ctx.info(std::string("snowy forest locked by progression: ") + (locked ? "yes" : "no") + ", weather drawn: " + (near ? "yes" : "no"));
+    ctx.check(near == locked, "the snowy forest's real restriction draws its weather exactly when progression locks it");
+    atc::setPreview({{"biome", "twilightforest:forest"}});
+    co_await ctx.ticks(25);
+    ctx.check(!atc::state().nearLocked, "the forest has no restriction");
+    atc::setPreview(nlohmann::json::object());
+    if (creative) (void)gf::selftest::runServerCommand("gamemode creative @a[tag=gf_atmosphere_real]");
+    (void)gf::selftest::runServerCommand("tag @a remove gf_atmosphere_real");
 });
 
 } // namespace

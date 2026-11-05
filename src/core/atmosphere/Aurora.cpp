@@ -157,6 +157,19 @@ float rayMarch(V3 origin, V3 direction, AuroraUniforms const& u) {
 
 } // namespace
 
+AuroraMesh auroraMesh(float planeHeight, float fogEnd, int rings, int segments) {
+    return AuroraMesh{std::max(rings, 1), std::max(segments, 3), planeHeight, std::max(fogEnd, 1.0f) * 2.75f};
+}
+
+std::pair<float, float> auroraMeshPoint(AuroraMesh const& m, int ring, int segment) {
+    float const h        = std::max(std::abs(m.height), 8.0f);
+    float const maxAngle = std::atan(m.extent / h);
+    int const   rr       = std::clamp(ring, 0, m.rings);
+    float const r        = std::min(m.extent, h * std::tan(maxAngle * static_cast<float>(rr) / static_cast<float>(m.rings)));
+    float const a        = 6.28318530718f * static_cast<float>(((segment % m.segments) + m.segments) % m.segments) / static_cast<float>(m.segments);
+    return {r * std::cos(a), r * std::sin(a)};
+}
+
 AuroraFragment auroraFragment(float px, float pz, AuroraUniforms const& u) {
     float ux = px * 2.0f - 1.0f, uy = pz * 2.0f - 1.0f; // uv = pixelPos.xz * 2.0 - 1.0
     float noise      = rayMarch({ux, 0.0f, uy}, {ux, 1.0f, uy}, u);

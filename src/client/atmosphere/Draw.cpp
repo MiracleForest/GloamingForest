@@ -20,7 +20,12 @@
 #include "mc/client/game/ClientInstance.h"
 #include "mc/client/gui/screens/ScreenContext.h"
 #include "mc/client/particle/ParticleEngine.h"
+#include "mc/client/renderer/RenderMaterialGroup.h"
 #include "mc/client/renderer/SupplementaryFieldAutoGenerationMode.h"
+#include "mc/deps/core/string/HashedString.h"
+#include "mc/deps/renderer/Camera.h"
+#include "mc/client/options/IOptionRegistry.h"
+#include "mc/options/GraphicsMode.h"
 #include "mc/client/renderer/Tessellator.h"
 #include "mc/client/renderer/TextureGroup.h"
 #include "mc/client/renderer/game/LevelRenderer.h"
@@ -79,6 +84,33 @@ mce::TexturePtr const* texture(std::string const& path) {
     return t;
 }
 
+mce::MaterialPtr const* materialNamed(char const* name) {
+    static std::mutex                               m;
+    static std::unordered_map<std::string, mce::MaterialPtr*> cache; // kept for the process
+    std::lock_guard                                 lock(m);
+    auto&                                           slot = cache[name];
+    if (!slot) {
+        slot = new mce::MaterialPtr(mce::RenderMaterialGroup::common(), HashedString(name));
+        if (!slot->mRenderMaterialInfoPtr.get()) slot = new mce::MaterialPtr(mce::RenderMaterialGroup::switchable(), HashedString(name));
+    }
+    return slot->mRenderMaterialInfoPtr.get() ? slot : nullptr;
+}
+
+float farPlane(ScreenContext& screen) {
+    float f = screen.camera.mZFar;
+    return std::isfinite(f) && f > 0 ? f : 0.0f;
+}
+
+bool vibrantVisuals() {
+    auto* c = currentClient();
+    return c && c->getOptions().getGraphicsMode() == GraphicsMode::Advanced;
+}
+
+bool fancyGraphics() {
+    auto* c = currentClient();
+    return !c || c->getOptions().getGraphicsMode() != GraphicsMode::Simple;
+}
+
 namespace {
 
 /// The screen's shader colour set to white for our draws and put back after.
@@ -112,6 +144,24 @@ void drawColouredQuads(ScreenContext& screen, mce::MaterialPtr const& material, 
         tess.vertex(v.x, v.y, v.z);
     }
     MeshHelpers::renderMeshImmediately(screen, tess, material, OffscreenCaptureDescription{});
+}
+
+void drawSmoothQuads(ScreenContext& screen, mce::MaterialPtr const& material, mce::TexturePtr const* tex, std::vector<ColourVertex> const& quads) {
+    if (quads.size() < 4) return;
+    Tessellator&      tess = screen.tessellator;
+    WhiteShaderColour white(screen);
+    tess.begin(Tessellator::DebugContextCallback{}, mce::PrimitiveMode::QuadList, static_cast<int>(quads.size()), false);
+    for (auto const& v : quads) {
+        tess.color(v.r, v.g, v.b, v.a);
+        if (tex) tess.mNextUV[0] = glm::vec2{0.5f, 0.5f};
+        tess.vertex(v.x, v.y, v.z);
+    }
+    if (tex) {
+        std::variant<std::monostate, mce::TexturePtr, mce::ClientTexture, mce::ServerTexture> variant{*tex};
+        MeshHelpers::renderMeshImmediately(screen, tess, material, variant, OffscreenCaptureDescription{});
+    } else {
+        MeshHelpers::renderMeshImmediately(screen, tess, material, OffscreenCaptureDescription{});
+    }
 }
 
 void drawTintedQuads(ScreenContext& screen, mce::MaterialPtr const& material, mce::TexturePtr const& tex, std::vector<ColourVertex> const& quads) {

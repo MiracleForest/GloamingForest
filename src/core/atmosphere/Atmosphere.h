@@ -73,6 +73,21 @@ inline constexpr long long kFixedTime = 13000;
 /// forest and its center at y <= 20.
 [[nodiscard]] bool isFoggyAt(std::string_view biomeId, double playerY);
 [[nodiscard]] bool isSpooky(std::string_view biomeId);
+/// ClientLevel#getCloudColor at a celestial angle (`timeOfDay`), rain level and thunder level:
+/// white darkened by the daylight (TwilightForestRenderInfo has no sunrise colour, so the clouds
+/// get no sunset tint).
+[[nodiscard]] Rgb cloudColor(float timeOfDay, float rainLevel, float thunderLevel);
+/// The void plate of TFSkyRenderer (LevelRenderer's dark buffer: buildSkyDisc(-16) moved up by 12):
+/// a triangle fan around (0, y, 0), y = -4 relative to the camera, radius 512, as quads (the last
+/// corner repeated), corners at -180, -135, ..., 180 degrees.
+[[nodiscard]] std::vector<std::array<Vec3f, 4>> voidPlateQuads();
+
+/// ResourceLocation#tryParse as TFConfig#getValidAuroraBiomes reads an id: "namespace:path" (or
+/// "path" in "minecraft"), the namespace of [a-z0-9_.-], the path of [a-z0-9_.-/]; nullopt when
+/// invalid.
+[[nodiscard]] std::optional<std::string> parseResourceLocation(std::string_view id);
+/// The same biome id as Bedrock spells it: vanilla biomes have no "minecraft:" prefix there.
+[[nodiscard]] std::string bedrockBiomeName(std::string_view resourceLocation);
 
 /// ClientGameEvents#customizeSplashes: "Happy <ordinal> birthday to the Twilight Forest!" for
 /// `year` (year - 2011, ordinal as Java's RuleBasedNumberFormat ORDINAL in English: 1st, 2nd, 11th).
@@ -195,6 +210,11 @@ using Interval = std::pair<int, int>;
 [[nodiscard]] float rainLevel(float levelRain, float urGhastRain, bool fancy);
 /// The splash particle count of tickRain: (int)(100 * level^2), halved with decreased particles.
 [[nodiscard]] int splashCount(float rainLevel, bool decreasedParticles);
+/// FluidState#getHeight of a Bedrock liquid block with `liquidDepth` (0 source, 1..7 flowing, 8 and
+/// up falling): 1 under the same fluid, else amount / 9 (amount 8 - depth, 8 when falling).
+[[nodiscard]] float fluidHeight(int liquidDepth, bool sameFluidAbove);
+/// tickRain's random (RandomSource.create(ticks * 312987231)).
+[[nodiscard]] std::int64_t rainTickSeed(int ticks);
 
 // ---- aurora (ClientGameEvents#renderAurora, aurora.fsh) ---------------------------------------------------
 
@@ -231,6 +251,18 @@ struct AuroraFragment {
     float alpha = 0;
 };
 [[nodiscard]] AuroraFragment auroraFragment(float px, float pz, AuroraUniforms const& u);
+/// The aurora's mesh (the shader runs per pixel; RenderDragon has no custom shaders, so the shader
+/// runs per vertex of a fine polar mesh and the colours are interpolated): ring r of `rings` at the
+/// angle atan(extent / h) * r / rings from the zenith (h = the plane's distance above or below the
+/// camera, at least 8), segment s of `segments` around it; the camera-relative x / z of a vertex.
+/// The cells keep about the same angular size from the camera whatever the render distance.
+struct AuroraMesh {
+    int   rings = 0, segments = 0;
+    float height = 0; ///< plane height relative to the camera
+    float extent = 0; ///< radius covered (2.75 x the fog end: the shader fades the aurora out by then)
+};
+[[nodiscard]] AuroraMesh auroraMesh(float planeHeight, float fogEnd, int rings, int segments);
+[[nodiscard]] std::pair<float, float> auroraMeshPoint(AuroraMesh const& mesh, int ring, int segment);
 /// fog.glsl's linear_fog_fade / smoothstep.
 [[nodiscard]] float linearFogFade(float distance, float fogStart, float fogEnd);
 

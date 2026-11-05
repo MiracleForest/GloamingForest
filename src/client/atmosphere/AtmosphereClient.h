@@ -7,6 +7,7 @@
 
 #include <optional>
 #include <string>
+#include <vector>
 
 #include "nlohmann/json.hpp"
 
@@ -31,6 +32,9 @@ void setPreview(nlohmann::json const& msg);
 [[nodiscard]] std::optional<sky::FogSpec> fogForTest(std::string const& biome);
 /// Sets TF's sky provider for the Twilight Forest dimension (once it is known).
 void installProvider();
+/// TFConfig#getValidAuroraBiomes now: the config's biomes that parse and that the world knows (as
+/// Bedrock names them: vanilla ones without "minecraft:").
+[[nodiscard]] std::vector<std::string> validAuroraBiomes();
 
 } // namespace gf::client::atmosphere
 

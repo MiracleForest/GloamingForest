@@ -96,6 +96,64 @@ Rgb fogColor(Rgb biomeFog, Rgb biomeSky, float d, int renderDistanceChunks) {
 
 bool isSpooky(std::string_view biomeId) { return biomeId == "twilightforest:spooky_forest"; }
 
+Rgb cloudColor(float tod, float rain, float thunder) {
+    float f1 = std::clamp(std::cos(tod * (kPi * 2.0f)) * 2.0f + 0.5f, 0.0f, 1.0f);
+    float r = 1.0f, g = 1.0f, b = 1.0f;
+    if (rain > 0.0f) {
+        float grey = (r * 0.3f + g * 0.59f + b * 0.11f) * 0.6f;
+        float keep = 1.0f - rain * 0.95f;
+        r          = r * keep + grey * (1.0f - keep);
+        g          = g * keep + grey * (1.0f - keep);
+        b          = b * keep + grey * (1.0f - keep);
+    }
+    r *= f1 * 0.9f + 0.1f;
+    g *= f1 * 0.9f + 0.1f;
+    b *= f1 * 0.85f + 0.15f;
+    if (thunder > 0.0f) {
+        float grey = (r * 0.3f + g * 0.59f + b * 0.11f) * 0.2f;
+        float keep = 1.0f - thunder * 0.95f;
+        r          = r * keep + grey * (1.0f - keep);
+        g          = g * keep + grey * (1.0f - keep);
+        b          = b * keep + grey * (1.0f - keep);
+    }
+    return {r, g, b};
+}
+
+std::vector<std::array<Vec3f, 4>> voidPlateQuads() {
+    // LevelRenderer#buildSkyDisc(-16): x by signum(y) * 512, z by 512, the fan's centre at (0, y, 0);
+    // TFSkyRenderer draws it 12 higher
+    constexpr float                   y = -16.0f + 12.0f;
+    constexpr float                   f = -512.0f;
+    std::vector<std::array<Vec3f, 4>> out;
+    Vec3f                             prev{};
+    bool                              first = true;
+    for (int i = -180; i <= 180; i += 45) {
+        float a = static_cast<float>(i) * (kPi / 180.0f);
+        Vec3f p{f * std::cos(a), y, 512.0f * std::sin(a)};
+        if (!first) out.push_back({Vec3f{0.0f, y, 0.0f}, prev, p, p});
+        prev  = p;
+        first = false;
+    }
+    return out;
+}
+
+std::optional<std::string> parseResourceLocation(std::string_view id) {
+    auto             colon = id.find(':');
+    std::string_view ns    = colon == std::string_view::npos ? std::string_view{"minecraft"} : id.substr(0, colon);
+    std::string_view path  = colon == std::string_view::npos ? id : id.substr(colon + 1);
+    if (ns.empty()) ns = "minecraft"; // ":path" reads as minecraft:path
+    auto nsOk   = [](char c) { return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_' || c == '-' || c == '.'; };
+    auto pathOk = [&](char c) { return nsOk(c) || c == '/'; };
+    if (id.empty()) return std::nullopt;
+    if (!std::all_of(ns.begin(), ns.end(), nsOk) || !std::all_of(path.begin(), path.end(), pathOk)) return std::nullopt;
+    return std::string(ns) + ":" + std::string(path);
+}
+
+std::string bedrockBiomeName(std::string_view rl) {
+    constexpr std::string_view mc = "minecraft:";
+    return std::string(rl.starts_with(mc) ? rl.substr(mc.size()) : rl);
+}
+
 bool isFoggyAt(std::string_view biomeId, double playerY) {
     bool spooky = isSpooky(biomeId);
     if (playerY > 20 && !spooky) return false; // above the dark forest canopy

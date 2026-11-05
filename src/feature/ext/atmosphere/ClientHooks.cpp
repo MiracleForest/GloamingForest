@@ -8,8 +8,11 @@
 // U15 contract extension (rule R18: a new file, to be folded into F12's client.ui by A8). Client
 // build only. Two client UI events no W0 contract covers:
 // - killVignette: the HUD vignette (HudVignetteRenderer) is not drawn while the local player is in
-//   the Twilight Forest (Java sets Gui.vignetteBrightness to 0 there, which leaves the vignette
-//   without effect);
+//   the Twilight Forest (Java sets Gui.vignetteBrightness to 0 there, which leaves the darkening
+//   vignette without effect). Java's vignette also carries the world border warning tint, which
+//   that leaves alone; Bedrock has no world border and its HudVignetteRenderer is the darkening
+//   vignette only (its state is mLastVignetteOpacity / mLastAB, no warning term), so skipping it
+//   is the same as zeroing the brightness term;
 // - customizeSplashes: on August 19 the title screen splash (SplashTextRenderer) reads "Happy
 //   <ordinal> birthday to the Twilight Forest!" (year - 2011, core/Holiday.h).
 

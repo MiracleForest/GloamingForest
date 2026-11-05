@@ -148,7 +148,21 @@ GF_REGISTER_SELFTEST("atmosphere.show_forest", [](Context& ctx) { preview(ctx, {
 GF_REGISTER_SELFTEST("atmosphere.show_spooky", [](Context& ctx) { preview(ctx, {{"biome", "twilightforest:spooky_forest"}}); });
 GF_REGISTER_SELFTEST("atmosphere.show_dark_forest", [](Context& ctx) { preview(ctx, {{"biome", "twilightforest:dark_forest"}}); });
 GF_REGISTER_SELFTEST("atmosphere.show_glacier", [](Context& ctx) { preview(ctx, {{"biome", "twilightforest:glacier"}}); });
-GF_REGISTER_SELFTEST("atmosphere.show_glacier_stars_material", [](Context& ctx) { preview(ctx, {{"biome", "twilightforest:glacier"}, {"auroraMode", 1}}); });
+// calibration of the e2e (GF_ATMOSPHERE_CALIBRATE=1): the aurora and the stars through every pass and
+// material the client can use (auroraMode 1 sky + ui_fill_gradient, 2 world + particle blend, 3 sky +
+// stars, 4 world + wireframe, 5 sky + particle blend; starsMode 1 sky + stars, 2 world + particle
+// blend, 3 world + stars), the Vibrant Visuals fog stretch, the void plate and the boss world fog
+GF_REGISTER_SELFTEST("atmosphere.show_glacier_stars_material", [](Context& ctx) { preview(ctx, {{"biome", "twilightforest:glacier"}, {"auroraMode", 3}}); });
+GF_REGISTER_SELFTEST("atmosphere.show_aurora_sky_ui", [](Context& ctx) { preview(ctx, {{"biome", "twilightforest:glacier"}, {"auroraMode", 1}}); });
+GF_REGISTER_SELFTEST("atmosphere.show_aurora_world_blend", [](Context& ctx) { preview(ctx, {{"biome", "twilightforest:glacier"}, {"auroraMode", 2}}); });
+GF_REGISTER_SELFTEST("atmosphere.show_aurora_world_wire", [](Context& ctx) { preview(ctx, {{"biome", "twilightforest:glacier"}, {"auroraMode", 4}}); });
+GF_REGISTER_SELFTEST("atmosphere.show_aurora_sky_blend", [](Context& ctx) { preview(ctx, {{"biome", "twilightforest:glacier"}, {"auroraMode", 5}}); });
+GF_REGISTER_SELFTEST("atmosphere.show_stars_world_blend", [](Context& ctx) { preview(ctx, {{"biome", "twilightforest:forest"}, {"starsMode", 2}}); });
+GF_REGISTER_SELFTEST("atmosphere.show_stars_world_stars", [](Context& ctx) { preview(ctx, {{"biome", "twilightforest:forest"}, {"starsMode", 3}}); });
+GF_REGISTER_SELFTEST("atmosphere.show_vv_fog_1", [](Context& ctx) { preview(ctx, {{"biome", "twilightforest:glacier"}, {"vvFog", 1.0}}); });
+GF_REGISTER_SELFTEST("atmosphere.show_vv_fog_24", [](Context& ctx) { preview(ctx, {{"biome", "twilightforest:glacier"}, {"vvFog", 24.0}}); });
+GF_REGISTER_SELFTEST("atmosphere.show_void_plate", [](Context& ctx) { preview(ctx, {{"biome", "twilightforest:forest"}, {"voidPlate", true}}); });
+GF_REGISTER_SELFTEST("atmosphere.show_boss_fog", [](Context& ctx) { preview(ctx, {{"biome", "twilightforest:forest"}, {"bossFog", true}}); });
 GF_REGISTER_SELFTEST("atmosphere.show_blizzard", [](Context& ctx) { preview(ctx, {{"biome", "twilightforest:snowy_forest"}, {"locked", true}}); });
 GF_REGISTER_SELFTEST("atmosphere.show_mosquitoes", [](Context& ctx) { preview(ctx, {{"biome", "twilightforest:swamp"}, {"locked", true}}); });
 GF_REGISTER_SELFTEST("atmosphere.show_ashes", [](Context& ctx) { preview(ctx, {{"biome", "twilightforest:fire_swamp"}, {"locked", true}}); });

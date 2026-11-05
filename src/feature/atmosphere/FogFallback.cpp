@@ -23,6 +23,7 @@
 
 #include "ll/api/event/EventBus.h"
 #include "ll/api/event/player/PlayerDisconnectEvent.h"
+#include "ll/api/event/player/PlayerRespawnEvent.h"
 #include "ll/api/event/world/ServerLevelTickEvent.h"
 #include "ll/api/service/Bedrock.h"
 
@@ -75,6 +76,7 @@ struct FogState {
     std::mutex                                                      mutex;
     std::unordered_map<std::int64_t, std::vector<std::string>>      sent;   ///< by unique id
     std::unordered_map<std::int64_t, std::string>                   pinned; ///< pinFogBiome
+    std::unordered_map<std::int64_t, int>                           dims;   ///< the dimension of the last update
 };
 FogState& fogState() {
     static FogState s;
@@ -121,7 +123,11 @@ bool updateFog(Player& player, std::optional<std::string> const& biomeOverride) 
     }
     {
         std::lock_guard lock(fogState().mutex);
-        auto            it = fogState().sent.find(keyOf(player));
+        // a vanilla client resets its fog stack on a dimension change: send again after one
+        int const dim = static_cast<int>(player.getDimensionId());
+        if (auto d = fogState().dims.find(keyOf(player)); d != fogState().dims.end() && d->second != dim) fogState().sent.erase(keyOf(player));
+        fogState().dims[keyOf(player)] = dim;
+        auto it                        = fogState().sent.find(keyOf(player));
         if (it == fogState().sent.end() ? stack.empty() : it->second == stack) return false;
         fogState().sent[keyOf(player)] = stack;
     }
@@ -140,6 +146,7 @@ std::optional<std::vector<std::string>> sentFogStack(Player const& player) {
 void forgetFog(Player const& player) {
     std::lock_guard lock(fogState().mutex);
     fogState().sent.erase(keyOf(player));
+    fogState().dims.erase(keyOf(player));
 }
 
 void pinFogBiome(Player const& player, std::optional<std::string> biome) {
@@ -170,17 +177,23 @@ public:
             forgetFog(ev.self());
             pinFogBiome(ev.self(), std::nullopt);
         });
+        // a respawned vanilla client starts from its default fog stack: the next update sends again
+        mRespawn = bus.emplaceListener<ll::event::PlayerRespawnEvent>([](auto& ev) {
+            forgetFog(ev.self());
+            log().info("atmosphere: fog of {} resent after the respawn", ev.self().getRealName());
+        });
     }
     void uninstall() {
         auto& bus = ll::event::EventBus::getInstance();
         bus.removeListener(mTick);
         bus.removeListener(mLeave);
+        bus.removeListener(mRespawn);
         std::lock_guard lock(fogState().mutex);
         fogState().sent.clear();
     }
 
 private:
-    ll::event::ListenerPtr mTick, mLeave;
+    ll::event::ListenerPtr mTick, mLeave, mRespawn;
     std::uint64_t          mTicks = 0;
 };
 
