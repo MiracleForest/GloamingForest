@@ -99,6 +99,22 @@ std::atomic<int>& skylightFlag() { // -1 unknown, 0 / 1
     return v;
 }
 
+/// The Twilight Forest chunks this session generated before the world's preset was known: the
+/// saved-chunk check must not take them (saved already, perhaps) for an older world's.
+std::mutex& provisionalChunksMutex() {
+    static std::mutex m;
+    return m;
+}
+std::unordered_set<std::int64_t>& provisionalChunks() {
+    static std::unordered_set<std::int64_t> s;
+    return s;
+}
+std::int64_t chunkKey(int x, int z) { return (static_cast<std::int64_t>(x) << 32) | static_cast<std::uint32_t>(z); }
+bool         isProvisionalChunk(int x, int z) {
+    std::lock_guard lock(provisionalChunksMutex());
+    return provisionalChunks().contains(chunkKey(x, z));
+}
+
 std::atomic<bool>& installed() {
     static std::atomic<bool> v{false};
     return v;
@@ -629,6 +645,10 @@ void terrainProvider(worldgen::Chunk& chunk) {
     StageTimer timer;
     auto       s = state();
     if (!s) return;
+    if (skylightFlag().load() < 0) {
+        std::lock_guard lock(provisionalChunksMutex());
+        provisionalChunks().insert(chunkKey(chunk.chunkX(), chunk.chunkZ()));
+    }
     ChunkColumns cols(*s, chunk.chunkX(), chunk.chunkZ());
     // the beardifier: Beardifier#forStructuresInChunk (NeoForge: each piece's
     // PieceBeardifierModifier, else its box with the structure's adaptation) plus
@@ -722,6 +742,7 @@ std::optional<SavedChunkProbe> findSavedChunks(int dim, bool fullScan) {
     SavedChunkProbe r;
     auto            saved = [&](int x, int z) {
         ++r.probed;
+        if (isProvisionalChunk(x, z)) return false; // this session's, not an older world's
         for (auto const& k : core::terrain::chunkVersionKeys(x, z, dim))
             if (db.hasKey(k, DBHelpers::Category::Chunk)) return true;
         return false;
@@ -748,7 +769,15 @@ std::optional<SavedChunkProbe> findSavedChunks(int dim, bool fullScan) {
     r.scanned = true;
     db.forEachKeyWithPrefix("", DBHelpers::Category::Chunk, [&](std::string_view key, std::string_view) {
         if (r.found) return;
-        if (auto d = core::terrain::chunkVersionKeyDimension(key); d && *d == dim) r.found = true;
+        if (auto d = core::terrain::chunkVersionKeyDimension(key); d && *d == dim) {
+            auto int32At = [&](std::size_t at) {
+                std::uint32_t v = 0;
+                for (int i = 3; i >= 0; --i)
+                    v = (v << 8) | static_cast<unsigned char>(key[at + static_cast<std::size_t>(i)]);
+                return static_cast<int>(static_cast<std::int32_t>(v));
+            };
+            if (!isProvisionalChunk(int32At(0), int32At(4))) r.found = true;
+        }
     });
     return r;
 }
@@ -974,6 +1003,10 @@ struct TerrainModule {
         game::db::onWorldClosed([] {
             skylightFlag()    = -1;
             provisionalFlag() = -1;
+            {
+                std::lock_guard lock(provisionalChunksMutex());
+                provisionalChunks().clear();
+            }
             clearBeardCache();
             std::lock_guard lock(stateMutex());
             cachedState().reset();

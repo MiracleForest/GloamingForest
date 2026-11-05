@@ -985,6 +985,12 @@ GF_REGISTER_SELFTEST("terrain.saved_chunks", [](Context& ctx) -> ll::coro::CoroT
     constexpr int kBound = 3 * (2 * kSavedChunkProbeRadius + 1) * (2 * kSavedChunkProbeRadius + 1);
     auto          level  = ll::service::getLevel();
     ctx.require(level != nullptr, "a level");
+    auto key = core::terrain::chunkVersionKeys(5, -3, kDim)[0];
+    // a record an interrupted earlier run left behind goes first
+    (void)level->getLevelStorage().deleteData(key, DBHelpers::Category::Chunk);
+    co_await ctx.ticks(2);
+    level = ll::service::getLevel();
+    ctx.require(level != nullptr, "a level");
     auto empty = findSavedChunks(kDim, false);
     ctx.require(empty.has_value(), "the world DB is readable");
     ctx.check(!empty->found, "a dimension without chunks has no saved chunk");
@@ -992,7 +998,6 @@ GF_REGISTER_SELFTEST("terrain.saved_chunks", [](Context& ctx) -> ll::coro::CoroT
         !empty->scanned && empty->probed > 0 && empty->probed <= static_cast<std::size_t>(kBound),
         "the probe stays bounded (" + std::to_string(empty->probed) + " positions)"
     );
-    auto key = core::terrain::chunkVersionKeys(5, -3, kDim)[0];
     (void)level->getLevelStorage().saveData(key, std::string(1, '\x28'), DBHelpers::Category::Chunk);
     std::optional<SavedChunkProbe> hit;
     for (int i = 0; i < 100 && !(hit && hit->found); ++i) {

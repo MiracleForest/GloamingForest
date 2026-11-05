@@ -3,6 +3,7 @@
 // internals (feature/worldgen/Internal.h).
 #include "feature/ext/terrain/Pipeline.h"
 
+#include <algorithm>
 #include <atomic>
 #include <limits>
 
@@ -160,7 +161,9 @@ bool indexOrderVerified(LevelChunk& lc, int chunkMinY, int chunkMaxY) {
     int          checked = 0, wrong = 0;
     bool         varied  = false; // the probed positions themselves hold different blocks
     Block const* first   = nullptr;
-    for (int y = chunkMinY; y < chunkMaxY && checked < 64; y += 3)
+    // 16 rows of 4 probes spread over the chunk's whole height
+    int const step = std::max(1, (chunkMaxY - chunkMinY) / 16);
+    for (int y = chunkMinY; y < chunkMaxY && checked < 64; y += step)
         for (int k = 0; k < 4; ++k) {
             int lx = (y * 7 + k * 5) & 15, lz = (y * 3 + k * 11) & 15, ly = 0;
             auto const* st = layerOf(lc, chunkMinY, y, 0, &ly);
