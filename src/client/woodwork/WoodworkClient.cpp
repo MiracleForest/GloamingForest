@@ -23,6 +23,7 @@
 #ifdef GF_CLIENT
 
 #include <atomic>
+#include <chrono>
 #include <cstdlib>
 #include <cmath>
 #include <filesystem>
@@ -171,7 +172,7 @@ bool isRackDisplay(Actor const& a) {
 // onto it, measured in game (tools/e2e/client/scenarios/woodwork.ps1, the rack close-ups). For
 // measuring only: with the environment variable GF_WOODWORK_RACK_CALIBRATION=1 the development file
 // <mod>/woodwork_rack_calibration.json {"item": {"scale", "offset": [x, y, z], "rotation": [x, y, z]},
-// "block": {...}} replaces them, read once when the module installs (never on the render thread).
+// "block": {...}} replaces them, re-read every second while the flag is set (release use never touches the file).
 
 struct Calibration {
     float     scale = 1.0f;
@@ -206,10 +207,15 @@ Calibration calibrationOf(Json const& j, Calibration fallback) {
     return c;
 }
 
-/// The development override (GF_WOODWORK_RACK_CALIBRATION=1), once at install.
+/// Whether the development override is on (GF_WOODWORK_RACK_CALIBRATION=1, read at install).
+std::atomic<bool> gCalibrating{false};
+
+/// The development override: the file, at most once a second.
 void loadCalibrationOverride() {
-    char const* flag = std::getenv("GF_WOODWORK_RACK_CALIBRATION");
-    if (!flag || std::string(flag) != "1") return;
+    static auto last = std::chrono::steady_clock::time_point{};
+    auto        now  = std::chrono::steady_clock::now();
+    if (now - last < std::chrono::seconds(1)) return;
+    last = now;
     try {
         auto path = gf::Mod::getInstance().getSelf().getModDir() / "woodwork_rack_calibration.json";
         if (!std::filesystem::exists(path)) return;
@@ -218,7 +224,7 @@ void loadCalibrationOverride() {
         auto&         cal = calibrations();
         cal.item          = calibrationOf(doc.value("item", Json()), cal.item);
         cal.block         = calibrationOf(doc.value("block", Json()), cal.block);
-        log().info("woodwork: drying rack calibration override loaded from {}", path.string());
+
     } catch (...) {}
 }
 glm::mat4 apply(glm::mat4 m, Calibration const& c) {
@@ -269,6 +275,7 @@ void drawRack(render::RenderContext& ctx, BlockPos const& pos, Block const&, flo
     // scale 0.5
     if (!block) m = glm::rotate(m, glm::radians(180.0f), glm::vec3{0, 1, 0});
     m = glm::scale(m, glm::vec3{0.5f});
+    if (gCalibrating.load(std::memory_order_relaxed)) loadCalibrationOverride();
     auto const& cal = calibrations();
     m               = apply(m, block ? cal.block : cal.item);
     // the light at the rack (BlockEntityRenderer's packedLight)
@@ -293,15 +300,35 @@ bool climbableLog(std::string const& id) {
 }
 
 std::atomic<bool> gCrawled{false};
+/// HorizontalHollowLogBlock#useWithoutItem set the swimming pose ("woodwork.crawl"): the local player
+/// keeps it while inside a horizontal hollow log (Player#updatePlayerPose: no room to stand or crouch
+/// under the 14 px ceiling), and leaves it outside.
+std::atomic<bool> gCrawlPose{false};
+
+void onCrawl(Json const&) { gCrawlPose = true; }
+
+void keepCrawlPose(Player& player, std::string const& id) {
+    if (!gCrawlPose.load(std::memory_order_relaxed)) return;
+    auto const* set    = ww::hollowLogOf(id);
+    bool        inside = set && set->horizontal == id;
+    if (inside) {
+        if (!player.isSwimming() && !player.isCrawling()) player.startSwimming();
+    } else {
+        gCrawlPose = false;
+        if (player.isSwimming() && !player.isInWater()) player.stopSwimming();
+    }
+}
 
 void watchClimb(movement::MoveState& s) {
-    if (gClimbed.load(std::memory_order_relaxed) && gCrawled.load(std::memory_order_relaxed)) return;
+    bool crawlPose = gCrawlPose.load(std::memory_order_relaxed);
+    if (!crawlPose && gClimbed.load(std::memory_order_relaxed) && gCrawled.load(std::memory_order_relaxed)) return;
     auto* player = currentPlayer();
     if (!player) return;
     auto     feet = player->getFeetPos();
     BlockPos at{static_cast<int>(std::floor(feet.x)), static_cast<int>(std::floor(feet.y + 0.1f)), static_cast<int>(std::floor(feet.z))};
     auto&    region = player->getDimensionBlockSource();
     auto     id     = game::blockId(region.getBlock(at));
+    if (crawlPose) keepCrawlPose(*player, id);
     if (!gClimbed.load(std::memory_order_relaxed) && s.velocity.y > 0.05f && climbableLog(id) && !gClimbed.exchange(true))
         log().info("woodwork: the local player climbs a climbable hollow log ({}) at y {:.2f}, moving up {:.3f}", id, feet.y, s.velocity.y);
     // the crawling pose in a horizontal hollow log (Java: Pose.SWIMMING from the sneak-click)
@@ -313,8 +340,12 @@ void watchClimb(movement::MoveState& s) {
 class WoodworkClientModule {
 public:
     void install() {
-        loadCalibrationOverride();
+        if (char const* flag = std::getenv("GF_WOODWORK_RACK_CALIBRATION"); flag && std::string(flag) == "1") {
+            gCalibrating = true;
+            log().info("woodwork: drying rack calibration override on (development)");
+        }
         net::client::on("woodwork.rack", onRacks);
+        net::client::on("woodwork.crawl", onCrawl);
         mJoin = ll::event::EventBus::getInstance().emplaceListener<ll::event::ClientJoinLevelEvent>([](auto&) { clearRacks(); });
         mExit = ll::event::EventBus::getInstance().emplaceListener<ll::event::ClientExitLevelEvent>([](auto&) { clearRacks(); });
         for (auto const& id : ww::dryingRackIds()) render::registerBlockRenderer(id, drawRack);

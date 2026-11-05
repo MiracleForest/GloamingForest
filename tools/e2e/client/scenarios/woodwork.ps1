@@ -226,8 +226,8 @@ Start-Sleep -Milliseconds 1500
 Save-Screenshot 'woodwork-crawl' | Out-Null
 [BsE2E.Native]::Key([uint16]0x57, $true)
 [BsE2E.Native]::Key([uint16]0x10, $true)
-try { Wait-LogLine 'woodwork: \S+ crawls into twilightforest:hollow_oak_log_horizontal' 10 -Since $mark | Out-Null; Write-Step 'the sneak-click moved the player into the hollow log' }
-catch { Write-Step 'warning: no crawl click seen by the server' }
+Wait-LogLine 'woodwork: \S+ crawls into twilightforest:hollow_oak_log_horizontal' 10 -Since $mark | Out-Null
+Write-Step 'the sneak-click moved the player into the hollow log'
 if ($script:Mode -ne 'remote-vanilla') {
     try { Wait-LogLine '^(?!\[host\]).*woodwork: the local player crawls in a horizontal hollow log' 5 -Since $mark | Out-Null; Write-Step 'the local player crawls in the hollow log' }
     catch { Write-Step 'warning: the local player did not crawl in the hollow log (the game crawls only where it allows it)' }

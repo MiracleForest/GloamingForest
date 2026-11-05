@@ -32,6 +32,7 @@
 #include "mc/world/level/block/Block.h"
 
 #include "feature/common/Interactions.h"
+#include "feature/net/Net.h"
 #include "feature/movement/Movement.h"
 #include "game/Blocks.h"
 #include "game/Items.h"
@@ -189,9 +190,10 @@ ia::Result onUseHorizontal(ia::UseOnContext const& c) {
     }
     // useWithoutItem: sneaking with an empty hand inside the log, facing along it, at its height,
     // within 0.81 of its bottom centre: Java sets the swimming (crawling) pose. Bedrock's pose is
-    // the client's own (PlayerAuthInput StartCrawling): the server cannot set it. The click moves
-    // the player into the tunnel along the log (gf::movement::applyMotion) instead, where the game
-    // crawls under the 14 px ceiling by itself (docs/units/woodwork.md).
+    // the client's own (PlayerAuthInput): the server cannot set it. The click moves the player into
+    // the tunnel along the log (gf::movement::applyMotion); the client mod's local player takes the
+    // swimming pose there ("woodwork.crawl", src/client/woodwork), a vanilla client crawls only
+    // where the game itself does (docs/units/woodwork.md).
     if (c.itemId.empty() && c.sneaking) {
         int  look   = lookFace(c.player);
         bool along  = axis == ((look == 4 || look == 5) ? "x" : "z");
@@ -202,6 +204,8 @@ ia::Result onUseHorizontal(ia::UseOnContext const& c) {
         if (along && static_cast<int>(std::floor(feet.y)) == pos.y && near && !c.player.isGliding()) {
             auto step = faceStep(look);
             movement::applyMotion(c.player, Vec3{0.3f * step[0], 0.0f, 0.3f * step[2]});
+            // the client mod puts its local player into the swimming (crawling) pose itself
+            if (net::isCompanion(c.player)) net::send(c.player, "woodwork.crawl", Json{{"pos", {c.pos.dim, c.pos.x, c.pos.y, c.pos.z}}});
             log().info("woodwork: {} crawls into {}", c.player.getRealName(), c.blockId);
         }
     }

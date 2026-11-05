@@ -210,10 +210,15 @@ GF_REGISTER_SELFTEST("woodwork.boat_chest_contents", [](Context& ctx) -> ll::cor
     ctx.require(!own.empty(), "the boat's wood is known");
     // the chest: a vanilla oak boat, and the very item the game drops for this boat
     std::string sel = "@e[type=twilightforest:chest_boat,x=" + std::to_string(c.x) + ",y=" + std::to_string(c.y) + ",z=" + std::to_string(c.z) + ",r=4,c=1]";
-    r = gf::selftest::runServerCommand("replaceitem entity " + sel + " slot.inventory 0 minecraft:oak_boat 1", ctx.dimension());
-    ctx.require(r.ok, "an oak boat in the chest: " + r.messages);
-    r = gf::selftest::runServerCommand("replaceitem entity " + sel + " slot.inventory 1 " + own + " 1", ctx.dimension());
-    ctx.require(r.ok, "a " + own + " in the chest: " + r.messages);
+    auto put = [&](int slot, std::string const& item) {
+        auto res = gf::selftest::runServerCommand("replaceitem entity " + sel + " slot.container " + std::to_string(slot) + " " + item + " 1", ctx.dimension());
+        if (!res.ok || res.successCount == 0) res = gf::selftest::runServerCommand("replaceitem entity " + sel + " slot.inventory " + std::to_string(slot) + " " + item + " 1", ctx.dimension());
+        return res;
+    };
+    r = put(0, "minecraft:oak_boat");
+    ctx.require(r.ok && r.successCount > 0, "an oak boat in the chest: " + r.messages);
+    r = put(1, own);
+    ctx.require(r.ok && r.successCount > 0, "a " + own + " in the chest: " + r.messages);
     // the player breaks it from 3 blocks and steps away before anything is picked up
     auto& sp = simPlayer(ctx);
     sp.teleport(Vec3{c.x + 0.5f, float(c.y), c.z + 3.5f}, sp.getDimensionId());
