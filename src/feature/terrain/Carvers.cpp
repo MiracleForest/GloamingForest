@@ -62,7 +62,14 @@ std::uint16_t flagsOf(State const& s, Block const& b) {
     std::uint16_t f  = 0;
     auto          id = kit::javaId(b);
     if (kit::isAir(b)) f |= kAir;
-    if (kit::isWater(b)) f |= kWater | kFluid;
+    // BlockState#getFluidState: water and lava (still and flowing), and the blocks whose fluid state
+    // is always water (bubble columns and the underwater plants Java builds waterlogged). A
+    // waterlogged block keeps its water in Bedrock's liquid layer, which F5's worldgen::Chunk does not
+    // expose; at the carver step TF's chunk holds only noise, surface rule and blanket blocks, none of
+    // them waterloggable, so Java's getFluidState and this test agree there
+    if (kit::isWater(b) || id == "minecraft:bubble_column" || id == "minecraft:kelp" || id == "minecraft:kelp_plant" || id == "minecraft:seagrass" ||
+        id == "minecraft:tall_seagrass")
+        f |= kWater | kFluid;
     if (kit::isLava(b)) f |= kFluid;
     if (kit::hasTag(b, "twilightforest:carver_replaceables")) f |= kReplace;
     if (id == "minecraft:ice" || id == "minecraft:packed_ice" || id == "minecraft:blue_ice" || id == "minecraft:frosted_ice" || kit::hasTag(b, "minecraft:ice")) f |= kIce;

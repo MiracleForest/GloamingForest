@@ -13,9 +13,11 @@
 
 #include "nlohmann/json.hpp"
 
+#include "core/terrain/Beard.h"
 #include "core/terrain/Density.h"
 #include "core/terrain/Functions.h"
 #include "core/terrain/Surface.h"
+#include "feature/ext/landmark/LandmarkExt.h"
 #include "feature/ext/worldgen/Carving.h"
 #include "feature/worldgen/Worldgen.h"
 
@@ -24,6 +26,7 @@ class Block;
 namespace gf::feature::terrain {
 
 using namespace gf::core::terrain;
+using core::BlockBox;
 
 /// Config section "terrain" (rule R13; docs/spec/config.md).
 struct TerrainConfig {
@@ -121,5 +124,32 @@ void recordChunkMs(double ms);
 /// Adds to the terrain time of the chunk being generated on this thread (the carvers).
 void addChunkMs(double ms);
 [[nodiscard]] std::vector<double> chunkTimes();
+/// How many chunk times were recorded since the world loaded (chunkTimes keeps the last 4096).
+[[nodiscard]] std::uint64_t chunkTimesRecorded();
+
+// ---- the beardifier (Beardifier#forStructuresInChunk as NeoForge runs it) ------------------------------
+
+/// A piece's Rigid with the piece's bounding box (isCloseToChunk tests that box).
+struct PieceRigid {
+    BlockBox     pieceBox;
+    beard::Rigid rigid;
+};
+/// The Rigids of a start's pieces (ext::pieceBeard per piece; nothing for NONE pieces) for a
+/// structure with terrain adaptation `structure`.
+[[nodiscard]] std::vector<PieceRigid> rigidsOfPieces(std::vector<gf::landmark::ext::StartPiece> const& pieces, beard::TerrainAdjustment structure);
+/// The Rigids the beardifier sums in chunk (chunkX, chunkZ) of `dim`: the valid starts referencing
+/// it whose structure has a terrain adaptation, their pieces within 12 blocks (cached per start).
+[[nodiscard]] std::vector<beard::Rigid> beardRigids(int dim, int chunkX, int chunkZ);
+void clearBeardCache();
+/// Bumped by every ext::registerPieceBeard (feature/ext/terrain/PieceBeard.cpp).
+[[nodiscard]] std::uint64_t pieceBeardVersion();
+
+/// ChunkAccess#getAllReferences contains a start of one of `structures` (the canopy's
+/// avoid_structures): valid starts only, F6's reserved sites are none.
+[[nodiscard]] bool chunkReferences(int dim, int chunkX, int chunkZ, std::vector<std::string> const& structures);
+
+/// The stage before handed this thread's chunk its grid (0: noise, 1: surface) and the chunk still
+/// holds it where the next stage looks: moves it into `out`.
+[[nodiscard]] bool takeHandedGrid(State const& s, worldgen::Chunk& chunk, int stage, Grid& out);
 
 } // namespace gf::feature::terrain

@@ -9,12 +9,21 @@
 #include <set>
 #include <unordered_map>
 
+#include "ll/api/service/Bedrock.h"
+#include "mc/deps/core/math/Vec3.h"
+#include "mc/world/actor/player/Player.h"
 #include "mc/world/level/BlockPos.h"
+#include "mc/world/level/Level.h"
+#include "mc/world/level/dimension/DimensionType.h"
 #include "mc/world/level/block/Block.h"
 
 #include "core/jrand/BiomeManager.h"
 #include "core/jrand/JRand.h"
+#include "feature/dimension/World.h"
 #include "feature/ext/landmark/LandmarkExt.h"
+#include "feature/ext/landmark/LandmarkTest.h"
+#include "feature/ext/terrain/PieceBeard.h"
+#include "feature/landmark/Landmark.h"
 #include "feature/ext/worldgen/Carving.h"
 #include "feature/ext/worldgen/FeatureKit.h"
 #include "feature/ext/worldgen/Generation.h"
@@ -314,20 +323,60 @@ GF_REGISTER_SELFTEST("terrain.glacier_blanket", [](Context& ctx) {
     ctx.check(idOf(*s, g.get(5, 35, 9)) == "minecraft:ice", "capped with ice");
 });
 
+// The Skylight preset over the goldens' real biomes (the fingerprint's main biome grid of 3 seeds):
+// islands of stone where the island noise is high, in a band around the biome terrain's height,
+// floating over air (no sea), stone exactly where the density is above 0.
 GF_REGISTER_SELFTEST("terrain.skylight_option", [](Context& ctx) {
-    auto sky = makeState(42, true);
-    ctx.require(sky->gen != nullptr, "the skylight generator builds (" + sky->error + ")");
-    ctx.check(sky->gen->defaultFluid() == code::Air, "skylight: no sea (default fluid air)");
-    int water = 0, solid = 0;
-    for (int cx = 0; cx < 3; ++cx) {
-        Grid g(-32, 288);
-        sky->gen->fillNoise(cx, 0, [](int, int) { return DensityData{0.1, 1.25}; }, {}, g);
-        for (auto c : g.cells) water += c == code::Water, solid += c == code::DefaultBlock;
+    int scanned = 0, islandColumns = 0, chunks = 0, solid = 0, fluid = 0, disagree = 0, floating = 0;
+    for (auto const& fp : kFingerprints) {
+        auto sky = makeState(fp.seed, true);
+        ctx.require(sky->gen != nullptr, "the skylight generator builds (" + sky->error + ")");
+        ctx.check(sky->gen->defaultFluid() == code::Air, "skylight: no sea (default fluid air)");
+        GoldenWorld w{fp, sky, sky->grid, core::biome::obfuscateSeed(fp.seed)};
+        auto        sampler = w.sampler();
+        int         minY    = sky->gen->shape().minY;
+        std::vector<std::pair<int, int>> found;
+        // the columns whose sampleTerrain neighbourhood (3 quarts) lies inside the biome grid
+        for (int x = (fp.qx0 + 4) * 4; x < (fp.qx0 + fp.qw - 4) * 4; x += 16)
+            for (int z = (fp.qz0 + 4) * 4; z < (fp.qz0 + fp.qh - 4) * 4; z += 16) {
+                ++scanned;
+                if (sky->gen->baseHeight(x, z, false, sampler) > minY) found.emplace_back(x, z);
+            }
+        islandColumns += static_cast<int>(found.size());
+        for (std::size_t k = 0; k < std::min<std::size_t>(found.size(), 3); ++k) {
+            auto [x, z] = found[found.size() * k / 3];
+            Grid g(minY, sky->gen->shape().height);
+            sky->gen->fillNoise(x >> 4, z >> 4, sampler, {}, g);
+            std::vector<double> d;
+            sky->gen->density().fillChunk(x >> 4, z >> 4, sampler, d);
+            if (d.size() != g.cells.size()) {
+                ctx.fail("the density and the noise fill disagree in size");
+                return;
+            }
+            for (std::size_t i = 0; i < g.cells.size(); ++i) {
+                solid += g.cells[i] == code::DefaultBlock;
+                fluid += g.cells[i] == code::Water || g.cells[i] == code::Lava;
+                disagree += (g.cells[i] == code::DefaultBlock) != (d[i] > 0.0);
+            }
+            int lowest = minY - 1;
+            for (int y = minY; y < minY + g.height && lowest < minY; ++y)
+                if (g.get(x & 15, y, z & 15) != code::Air) lowest = y;
+            floating += lowest > minY + 8;
+            ++chunks;
+        }
     }
-    ctx.check(water == 0, "skylight: no water");
-    ctx.info("skylight sample: " + std::to_string(solid) + " solid blocks in 3 chunks");
-    ctx.check(game::db::get("gf:terrain:skylight").has_value(), "the world keeps its preset (gf:terrain:skylight)");
-    ctx.check(skylightWorld() == game::db::get("gf:terrain:skylight").value_or(false).get<bool>(), "the preset in use is the world's");
+    ctx.info("skylight: " + std::to_string(islandColumns) + " of " + std::to_string(scanned) + " columns hold an island; " + std::to_string(chunks) + " island chunks, " +
+             std::to_string(solid) + " stone");
+    gf::log().info("terrain: skylight islands in {} of {} columns, {} chunks checked", islandColumns, scanned, chunks);
+    ctx.check(islandColumns > 0 && islandColumns * 2 < scanned, "skylight: islands, and mostly void");
+    ctx.check(chunks > 0 && solid > 0, "island chunks hold stone");
+    ctx.check(fluid == 0, "skylight: no water or lava anywhere");
+    ctx.check(disagree == 0, "stone exactly where the skylight density is above 0");
+    ctx.check(floating == chunks, "every island floats (air down to the bottom below it)");
+    // the world's preset
+    auto stored = game::db::get("gf:terrain:skylight");
+    ctx.check(stored && stored->is_boolean(), "the world keeps its preset (gf:terrain:skylight)");
+    if (stored && stored->is_boolean()) ctx.check(skylightWorld() == stored->get<bool>(), "the preset in use is the world's");
 });
 
 GF_REGISTER_SELFTEST("terrain.chunk_pipeline", [](Context& ctx) {
@@ -344,7 +393,7 @@ GF_REGISTER_SELFTEST("terrain.chunk_pipeline", [](Context& ctx) {
     int top = c->height(worldgen::Heightmap::WorldSurfaceWg, 8, 8);
     ctx.info("chunk (0, 0) surface " + std::to_string(top) + ": " + kit::javaId(c->getBlock(8, top, 8)));
     // the landmark height provider answers the same terrain
-    auto lh = landmark::ext::firstOccupiedHeight(-1, 8, 8);
+    auto lh = gf::landmark::ext::firstOccupiedHeight(-1, 8, 8);
     ctx.check(!lh || *lh >= -32, "the landmark height provider answers");
 });
 
@@ -505,7 +554,9 @@ GF_REGISTER_SELFTEST("terrain.showcase", [](Context& ctx) -> ll::coro::CoroTask<
                         game::setBlock(*bs, BlockPos{box.minX + cx * 16 + x, box.minY + dy, box.minZ + cz * 16 + z}, *b);
                     }
         }
-        int vx = box.minX - 14, vy = box.minY + (maxTop - yBase) + 12, vz = box.minZ + 24;
+        // the viewpoint: over the flat area's east edge (dx 247, inside U2's dx 200..299), looking
+        // west over the sample
+        int vx = box.minX + 47, vy = box.minY + (maxTop - yBase) + 14, vz = box.minZ + 24;
         // a glass block to stand on at the viewpoint (restored by the test)
         ctx.setBlock(core::GlobalPos{ctx.dimension(), vx, vy - 1, vz}, "minecraft:glass");
         gf::log().info("terrain showcase {} ready at {} {} {} (generated surface {}..{})", name, vx, vy, vz, minTop, maxTop);
@@ -516,6 +567,236 @@ GF_REGISTER_SELFTEST("terrain.showcase", [](Context& ctx) -> ll::coro::CoroTask<
             for (int z = box.minZ; z < box.minZ + 48; ++z)
                 for (int dy = 0; dy < height; ++dy) game::setBlock(*bs, BlockPos{x, box.minY + dy, z}, *s->block(code::Air));
     }
+});
+
+// ---- the beardifier ---------------------------------------------------------------------------------------
+
+/// Beardifier#compute for one Rigid written out (Minecraft 1.21.1), to compare with.
+double javaRigid(BlockBox const& b, beard::TerrainAdjustment a, int delta, int x, int y, int z) {
+    using A = beard::TerrainAdjustment;
+    int i1 = std::max(0, std::max(b.minX - x, x - b.maxX));
+    int j1 = std::max(0, std::max(b.minZ - z, z - b.maxZ));
+    int k1 = b.minY + delta;
+    int l1 = y - k1;
+    int i2 = a == A::Bury || a == A::BeardThin ? l1
+           : a == A::BeardBox                  ? std::max(0, std::max(k1 - y, y - b.maxY))
+           : a == A::Encapsulate               ? std::max(0, std::max(b.minY - y, y - b.maxY))
+                                               : 0;
+    switch (a) {
+    case A::Bury:
+        return core::landmark::buryContribution(i1, i2 / 2.0, j1);
+    case A::BeardThin:
+    case A::BeardBox:
+        return core::landmark::beardContribution(i1, i2, j1, l1) * 0.8;
+    case A::Encapsulate:
+        return core::landmark::buryContribution(i1 / 2.0, i2 / 2.0, j1 / 2.0) * 0.8;
+    default:
+        return 0.0;
+    }
+}
+
+gf::landmark::ext::StartPiece testPiece(std::string const& type, BlockBox const& box, Json tag = Json::object()) {
+    tag["id"] = type;
+    tag["BB"] = Json::array({box.minX, box.minY, box.minZ, box.maxX, box.maxY, box.maxZ});
+    return gf::landmark::ext::StartPiece{type, box, tag, true, -1};
+}
+
+// NeoForge's Beardifier#forStructuresInChunk per piece: a fake start whose pieces are a
+// TFStructureComponentOld (NONE), a CourtyardTerrace (BEARD_BOX, ground delta 3), a protected
+// stronghold piece (BURY), a plain template piece (the structure's beard_thin), a TwilightJigsawPiece
+// (its tag's ENCAPSULATE, delta 2) and a type registered through ext::registerPieceBeard; the
+// densities against Beardifier's arithmetic; the labyrinth (bury, every maze piece NONE) and the
+// dark tower (beard_thin, only its entrance BEARD_BOX).
+GF_REGISTER_SELFTEST("terrain.beardifier", [](Context& ctx) {
+    using A = beard::TerrainAdjustment;
+    namespace te = gf::terrain::ext;
+    BlockBox a{0, 10, 0, 8, 16, 8}, b{20, 10, 0, 28, 16, 8}, c{0, 10, 20, 8, 16, 28}, d{20, 10, 20, 28, 16, 28}, e{40, 10, 0, 48, 16, 8}, f{40, 10, 20, 48, 16, 28};
+    te::registerPieceBeard("gf_test:beard_piece", [](gf::landmark::ext::StartPiece const& p) { return te::PieceBeard{true, "bury", p.box, 1}; });
+    struct Unregister {
+        Unregister()                             = default;
+        Unregister(Unregister const&)            = delete;
+        Unregister& operator=(Unregister const&) = delete;
+        ~Unregister() { te::registerPieceBeard("gf_test:beard_piece", {}); }
+    } unregister;
+    std::vector<gf::landmark::ext::StartPiece> pieces{testPiece("twilightforest:TFMMC", a),
+                                                  testPiece("twilightforest:TFNCTe", b),
+                                                  testPiece("twilightforest:TFSSH", c),
+                                                  testPiece("twilightforest:TFQuest1", d),
+                                                  testPiece("twilightforest:TFJigsawTemplate", e, {{"terrain_adaptation", "ENCAPSULATE"}, {"ground_offset", 2}}),
+                                                  testPiece("gf_test:beard_piece", f)};
+    auto rigids = rigidsOfPieces(pieces, A::BeardThin);
+    ctx.require(rigids.size() == 5, "five Rigids: the NONE piece adds none (" + std::to_string(rigids.size()) + ")");
+    struct Expected {
+        BlockBox box;
+        A        adj;
+        int      delta;
+    };
+    std::vector<Expected> expected{{b, A::BeardBox, 3}, {c, A::Bury, 0}, {d, A::BeardThin, 0}, {e, A::Encapsulate, 2}, {f, A::Bury, 1}};
+    for (std::size_t i = 0; i < expected.size(); ++i) {
+        auto const& r = rigids[i].rigid;
+        ctx.check(r.box == expected[i].box && r.adjustment == expected[i].adj && r.groundLevelDelta == expected[i].delta,
+                  "Rigid " + std::to_string(i) + " has the piece's own box, adjustment and ground delta");
+    }
+    std::vector<beard::Rigid> plain;
+    for (auto const& pr : rigids) plain.push_back(pr.rigid);
+    int points = 0, bad = 0;
+    for (int x = -12; x <= 60; x += 3)
+        for (int y = 0; y <= 30; y += 2)
+            for (int z = -12; z <= 40; z += 4) {
+                double want = 0.0;
+                for (auto const& ex : expected) want += javaRigid(ex.box, ex.adj, ex.delta, x, y, z);
+                ++points;
+                if (beard::beardifierDensity(plain, x, y, z) != want) ++bad;
+            }
+    ctx.check(bad == 0, "the beardifier density equals Beardifier#compute at " + std::to_string(points) + " points (" + std::to_string(bad) + " differ)");
+    // a piece 12 blocks from a chunk still counts (StructurePiece#isCloseToChunk), 13 does not
+    ctx.check(beard::isCloseToChunk({-12, 0, 0, -12, 4, 4}, 0, 0) && !beard::isCloseToChunk({-13, 0, 0, -13, 4, 4}, 0, 0), "isCloseToChunk(12)");
+    auto maze = rigidsOfPieces({testPiece("twilightforest:TFMMaze", a), testPiece("twilightforest:TFMMC", b), testPiece("twilightforest:TFMMRB", c)}, A::Bury);
+    ctx.check(maze.empty(), "the labyrinth (structure bury): its TFStructureComponentOld pieces add no beard");
+    auto tower = rigidsOfPieces({testPiece("twilightforest:TFDTMai", a), testPiece("twilightforest:TFDTEnt", b), testPiece("twilightforest:TFDTWin", c)}, A::BeardThin);
+    ctx.check(tower.size() == 1 && tower[0].rigid.adjustment == A::BeardBox && tower[0].rigid.groundLevelDelta == 1 && tower[0].rigid.box == b,
+              "the dark tower (structure beard_thin): one BEARD_BOX at its entrance, ground delta 1");
+    // a piece of no known type (a start the store does not hold): the structure's adaptation
+    auto unknown = rigidsOfPieces({gf::landmark::ext::StartPiece{"", a, Json{{"BB", Json::array({a.minX, a.minY, a.minZ, a.maxX, a.maxY, a.maxZ})}}, false, -1}}, A::Bury);
+    ctx.check(unknown.size() == 1 && unknown[0].rigid.adjustment == A::Bury && unknown[0].rigid.box == a, "an untyped piece takes the structure's adaptation");
+});
+
+// The canopy's avoid_structures (ChunkAccess#getAllReferences): a valid start clears the chunk, F6's
+// reserved site (a structure without its generator yet: the clearance square, no pieces) does not.
+GF_REGISTER_SELFTEST("terrain.canopy_avoid", [](Context& ctx) {
+    auto s = anyState();
+    ctx.require(s != nullptr, "generator");
+    auto row = ctx.testPos(260);
+    // far from every test row and from F5's forced starts: no chunk there is loaded, nothing is placed
+    core::GlobalPos center{row.dim, ((row.x + 300000) & ~15) + 8, 64, (row.z & ~15) + 6};
+    constexpr char  kOpen[]  = "gf_test:landmark_fixture_open";
+    constexpr char  kTower[] = "twilightforest:dark_tower";
+    {
+        gf::landmark::ext::ScopedStart open(kOpen, center);
+        ctx.require(open && open->generated, "F6 forced its open fixture landmark");
+        ctx.check(chunkReferences(center.dim, center.x >> 4, center.z >> 4, {kOpen}), "a valid start is a reference of its chunk");
+        ctx.check(!chunkReferences(center.dim, center.x >> 4, center.z >> 4, {kTower}), "only the listed structures count");
+    }
+    core::GlobalPos towerAt{row.dim, center.x + 160, 64, center.z};
+    gf::landmark::ext::ScopedStart tower(kTower, towerAt);
+    ctx.require(static_cast<bool>(tower), "F6 forced a dark tower start");
+    int  tcx = towerAt.x >> 4, tcz = towerAt.z >> 4;
+    auto listed = gf::landmark::startsIntersecting(towerAt.dim, {tcx, tcz});
+    ctx.check(std::any_of(listed.begin(), listed.end(), [&](gf::landmark::Start const& st) { return st.key == kTower; }), "startsIntersecting lists the dark tower start");
+    bool valid = tower->generated && !tower->pieceBoxes.empty();
+    bool refs  = chunkReferences(towerAt.dim, tcx, tcz, {kTower});
+    ctx.check(refs == valid, valid ? "the dark tower (with pieces) is a reference of its chunk" : "the reserved dark tower site (no pieces before U26) is no reference");
+    // the canopy blanket over that chunk, with the provider's avoid test
+    static std::string const dark = "twilightforest:dark_forest";
+    Grid g(-32, 288);
+    for (int x = 0; x < 16; ++x)
+        for (int z = 0; z < 16; ++z)
+            for (int y = -32; y <= 4; ++y) g.set(x, y, z, code::DefaultBlock);
+    s->blankets.apply(tcx, tcz, g, s->table, {dark}, [](int, int, int) -> std::string const& { return dark; },
+                      [&](std::vector<std::string> const& avoid) { return chunkReferences(towerAt.dim, tcx, tcz, avoid); });
+    int leaves = 0;
+    for (int y = 4 + 14 - 2; y < 4 + 14 - 2 + 5; ++y)
+        if (idOf(*s, g.get(towerAt.x & 15, y, towerAt.z & 15)) == "twilightforest:hardened_dark_leaves") ++leaves;
+    ctx.check(valid ? leaves == 0 : leaves == 5, valid ? "no canopy over the dark tower's chunk" : "the canopy stays over a reserved site (" + std::to_string(leaves) + " leaves)");
+});
+
+// ---- real generation ----------------------------------------------------------------------------------------
+
+// The per-chunk budget on chunks the game generates in the Twilight Forest (noise, surface, blankets,
+// carvers through F5's pipeline into Bedrock chunks, with F6's starts and terraformers): the test
+// moves into the dimension, loads chunks no run generated before and checks the p95 of their times.
+GF_REGISTER_SELFTEST("terrain.timing_world", [](Context& ctx) -> ll::coro::CoroTask<> {
+    if (!gf::world::twilight()) {
+        ctx.info("the Twilight Forest dimension is not registered (F4)");
+        co_return;
+    }
+    ctx.require(co_await ctx.inTwilight(), "the test moves into the Twilight Forest");
+    std::uint64_t before = chunkTimesRecorded();
+    // fresh chunks: a place picked by the clock, far from every other test and trip
+    auto stamp = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    int  x     = 2000000 + static_cast<int>(stamp % 40000) * 96;
+    int  z     = -2000000 - static_cast<int>((stamp / 40000) % 1000) * 96;
+    ctx.require(co_await ctx.ensureLoaded(core::GlobalPos{ctx.dimension(), x, 64, z}), "fresh Twilight Forest chunks load");
+    for (int i = 0; i < 40 && chunkTimesRecorded() - before < 25; ++i) co_await ctx.ticks(5);
+    std::uint64_t n   = chunkTimesRecorded() - before;
+    auto          all = chunkTimes();
+    ctx.require(n > 0, "the game generated Twilight Forest chunks through the terrain providers");
+    std::vector<double> ms(all.end() - static_cast<std::ptrdiff_t>(std::min<std::uint64_t>(n, all.size())), all.end());
+    std::sort(ms.begin(), ms.end());
+    double p95    = ms[std::min(ms.size() - 1, ms.size() * 95 / 100)];
+    double budget = config::get<TerrainConfig>().chunkBudgetMs;
+    char   buf[200];
+    std::snprintf(buf, sizeof buf, "world chunk p50 %.2f ms, p95 %.2f ms over %zu chunks (budget %.0f ms)", ms[ms.size() / 2], p95, ms.size(), budget);
+    ctx.info(buf);
+    gf::log().info("terrain: {}", buf);
+    ctx.check(p95 <= budget, "generated chunks' p95 within the budget");
+});
+
+Player* taggedPlayer(char const* tag) {
+    Player* found = nullptr;
+    if (auto level = ll::service::getLevel())
+        level->forEachPlayer([&](Player& p) {
+            if (p.hasTag(tag)) found = &p;
+            return found == nullptr;
+        });
+    return found;
+}
+
+/// Where terrain.live_view took the tagged player from.
+struct LiveView {
+    bool active = false;
+    int  dim    = 0;
+    Vec3 back{};
+};
+LiveView& liveView() {
+    static LiveView v;
+    return v;
+}
+
+// The client e2e's look at real Twilight Forest terrain: sends the player tagged gf_terrain_live to
+// chunks no one generated before, above the terrain height the generator gives there (the biomes
+// are U1's biome source, the forest's column until it registers). terrain.live_view_restore brings
+// the player back.
+GF_REGISTER_SELFTEST("terrain.live_view", [](Context& ctx) {
+    auto twilight = gf::world::twilight();
+    if (!twilight) {
+        ctx.info("the Twilight Forest dimension is not registered (F4)");
+        return;
+    }
+    Player* shown = taggedPlayer("gf_terrain_live");
+    if (!shown) {
+        ctx.info("no player tagged gf_terrain_live");
+        return;
+    }
+    auto& v = liveView();
+    if (!v.active) {
+        v.back   = shown->getFeetPos();
+        v.dim    = static_cast<int>(shown->getDimensionId());
+        v.active = true;
+    }
+    auto stamp = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    int  x     = 60000 + static_cast<int>(stamp % 20000) * 64 + 8;
+    int  z     = 60000 + 8;
+    int  dim   = static_cast<int>(*twilight);
+    auto h     = gf::landmark::ext::firstOccupiedHeight(dim, x, z, worldgen::Heightmap::WorldSurfaceWg);
+    int  y     = (h ? *h : 32) + 24;
+    ctx.check(gf::world::teleport(*shown, *twilight, Vec3{static_cast<float>(x) + 0.5F, static_cast<float>(y), static_cast<float>(z) + 0.5F}, 0.0F),
+              "the player is sent into new Twilight Forest chunks");
+    gf::log().info("terrain live view at {} {} {} (terrain height {}, biome {})", x, y, z, h ? *h : -999, worldgen::mainBiomeAt(x, z));
+});
+
+GF_REGISTER_SELFTEST("terrain.live_view_restore", [](Context& ctx) {
+    auto& v = liveView();
+    if (!v.active) {
+        ctx.info("nothing to restore");
+        return;
+    }
+    v.active = false;
+    if (Player* shown = taggedPlayer("gf_terrain_live")) {
+        shown->removeTag("gf_terrain_live");
+        (void)gf::world::teleport(*shown, DimensionType(v.dim), v.back, 0.0F);
+    }
+    gf::log().info("terrain live view: the player is back");
 });
 
 } // namespace

@@ -6,10 +6,7 @@
     "targets": [
       {
         "state": {
-          "Name": "minecraft:redstone_ore",
-          "Properties": {
-            "lit": "false"
-          }
+          "Name": "minecraft:redstone_ore"
         },
         "target": {
           "predicate_type": "minecraft:tag_match",

@@ -7,10 +7,13 @@
 #include <cmath>
 #include <cstring>
 #include <iostream>
+#include <map>
 #include <sstream>
 
 #include "TerrainHarness.h"
+#include "core/jrand/JRand.h"
 #include "core/landmark/Landmark.h"
+#include "core/landmark/Placement.h"
 
 namespace gf::tests::terrain {
 namespace {
@@ -192,15 +195,103 @@ TEST(TerrainGolden, BaseHeightsMatch) {
 
 constexpr int kLandmarkRadius = 48;
 
-/// Areas of the oracle's surface grid where a structure start off the landmark grid terraforms the
-/// ground (F6 starts are not part of gf-core; the game adds their beardifier / terraformers):
-/// seed 123456789 around (22, -100), seed -8346138912345678901 around (122, 120).
-bool inStructure(std::int64_t seed, int x, int z) {
-    // and one off-by-one column at the grid's corner (126, 120), most likely a structure just outside
-    // the grid (not verified: the oracle's surface dump has no structure list)
-    if (seed == 123456789) return (x >= -8 && x <= 64 && z >= -128 && z <= -56) || (x >= 120 && z >= 112);
-    if (seed == -8346138912345678901LL) return x >= 96 && z >= 92;
-    return false;
+namespace pl = core::landmark::placement;
+
+/// A rectangle of block columns (inclusive) the oracle's chunks may have terraformed.
+struct Reach {
+    std::string what;
+    int         minX, minZ, maxX, maxZ;
+    [[nodiscard]] bool holds(int x, int z) const { return x >= minX && x <= maxX && z >= minZ && z <= maxZ; }
+};
+
+json structureSet(std::string const& unit, std::string const& id) { return golden::readJson(imported(unit) / "worldgen/structure_set" / (id + ".json")); }
+std::vector<std::string> biomeTag(std::string const& id) {
+    json t = golden::readJson(imported("biomes") / "tags/worldgen/biome" / (id + ".json"));
+    return t.is_object() ? t.at("values").get<std::vector<std::string>>() : std::vector<std::string>{};
+}
+
+/// The structures off the landmark grid that reach the noise terrain of the oracle's surface chunks,
+/// computed from their structure sets and Java's generation points (the oracle's dump has no
+/// structure list):
+/// - twilightforest:fallen_trunk (avoid_landmark_grid, salt 1275623845, kept a chunk away from
+///   hollow_tree start chunks): FallenTrunkStructure#findGenerationPoint (its own
+///   RandomSource.create(seed + chunkX * 14413411 + chunkZ * 43387781): position, radius, length,
+///   the biome tests of isValidNoiseBiome and hasInvalidNearbyBiome, orientation) gives the trunk's
+///   box; its terraformer (a BEARD_THIN Rigid of the box, TrunkUnderDensityFunction's flattening
+///   within TERRAFORM_PIECE_SIZE 10 and the mounds on the trunk's sides) reaches at most 12 blocks
+///   from the box, and only inside the chunks the start references (terrain adaptation NONE: the
+///   chunks of the box inflated by 10, FallenTrunkPiece#addChildren's terraforming UtilityPiece);
+/// - twilightforest:camp (salt 701432212, beard_box jigsaw pieces): CampStructure#findGenerationPoint's
+///   center (the Structure.GenerationContext random), tested against #valid_camp_biomes; its pieces
+///   stay within 32 blocks of the center, their beard reaches 12 more.
+/// hollow_tree has no terraformer (its pieces are placed after the oracle's surface status).
+std::vector<Reach> structureReach(World const& w, int x0, int z0, int x1, int z1) {
+    std::vector<Reach>                    out;
+    std::map<std::string, pl::Placement> sets;
+    for (auto const& [unit, id] : std::vector<std::pair<std::string, std::string>>{{"minorlandmarks", "fallen_trunk"}, {"minorlandmarks", "hollow_tree"}, {"questcamps", "camp"}})
+        sets["twilightforest:" + id] = pl::Placement::fromJson(structureSet(unit, id).at("placement"));
+    pl::SetLookup lookup = [&](std::string const& id) -> pl::Placement const* {
+        auto it = sets.find(id);
+        return it == sets.end() ? nullptr : &it->second;
+    };
+    pl::VarietyFn variety     = [](int, int) { return std::string(); };
+    auto          trunkBiomes = biomeTag("valid_hollow_tree_biomes"), campBiomes = biomeTag("valid_camp_biomes");
+    auto          in          = [](std::vector<std::string> const& set, std::string const* b) { return b && std::find(set.begin(), set.end(), *b) != set.end(); };
+    auto          sampler     = w.sampler();
+    // fallen trunks: at most 28 long, so start chunks up to 2 chunks around the grid reach it
+    for (int cx = (x0 >> 4) - 3; cx <= (x1 >> 4) + 3; ++cx)
+        for (int cz = (z0 >> 4) - 3; cz <= (z1 >> 4) + 3; ++cz) {
+            if (!pl::isStructureChunk(sets["twilightforest:fallen_trunk"], w.seed, cx, cz, variety, lookup)) continue;
+            core::jrand::LegacyRandom r(w.seed + cx * 14413411LL + cz * 43387781LL);
+            int                  x = cx * 16 + r.nextInt(16), z = cz * 16 + r.nextInt(16);
+            static constexpr int kRadiuses[] = {1, 2, 4};
+            int                  radius      = kRadiuses[r.nextInt(3)];
+            int                  length      = radius == 4 ? r.nextInt(28 - 22 + 1) + 22 : r.nextInt(24 - 17 + 1) + 17;
+            bool                 known       = w.biomes.samplable(x, z);
+            if (known) {
+                int worldY = w.gen->baseHeight(x, z, false, sampler) - 1;
+                if (!in(trunkBiomes, w.noiseBiome(x >> 2, worldY >> 2, z >> 2))) continue; // isValidNoiseBiome
+                // hasInvalidNearbyBiome: findBiomeHorizontal(x, worldY, z, 24, 1, invalid, findClosest
+                // false) walks the square ring of quart radius 6; any hit ends the attempt
+                bool invalid = false, outside = false;
+                for (int dz = -6; dz <= 6 && !invalid; ++dz)
+                    for (int dx = -6; dx <= 6 && !invalid; ++dx) {
+                        auto const* b = w.noiseBiome((x >> 2) + dx, worldY >> 2, (z >> 2) + dz);
+                        if (!b) outside = true;
+                        else if (!in(trunkBiomes, b)) invalid = true;
+                    }
+                if (invalid) continue;
+                known = !outside;
+            }
+            int dir = r.nextInt(4); // Direction.Plane.HORIZONTAL: NORTH, EAST, SOUTH, WEST
+            int xy = radius > 1 ? radius * 2 + 1 : 4, zs = length - 1;
+            // BoundingBox#orientBox(x, y, z, 0, 0, 0, xy, xy, zs, dir), horizontally
+            int bx0 = x, bx1 = x + xy - 1, bz0 = z, bz1 = z + zs - 1;
+            if (dir == 0) bz0 = z - zs + 1, bz1 = z;
+            else if (dir == 1) bx0 = x, bx1 = x + zs - 1, bz0 = z, bz1 = z + xy - 1;
+            else if (dir == 3) bx0 = x - zs + 1, bx1 = x, bz0 = z, bz1 = z + xy - 1;
+            out.push_back({"fallen_trunk at chunk " + std::to_string(cx) + ", " + std::to_string(cz) + (known ? "" : " (biomes partly unknown)"), std::max(bx0 - 12, ((bx0 - 10) >> 4) * 16),
+                           std::max(bz0 - 12, ((bz0 - 10) >> 4) * 16), std::min(bx1 + 12, ((bx1 + 10) >> 4) * 16 + 15), std::min(bz1 + 12, ((bz1 + 10) >> 4) * 16 + 15)});
+        }
+    // camps
+    for (int cx = (x0 >> 4) - 4; cx <= (x1 >> 4) + 4; ++cx)
+        for (int cz = (z0 >> 4) - 4; cz <= (z1 >> 4) + 4; ++cz) {
+            if (!pl::isStructureChunk(sets["twilightforest:camp"], w.seed, cx, cz, variety, lookup)) continue;
+            core::jrand::WorldgenRandom r(std::make_unique<core::jrand::LegacyRandom>(0));
+            r.setLargeFeatureSeed(w.seed, cx, cz);
+            // Mth.lerpDiscrete(nextFloat, chunk min, chunk max)
+            auto lerp = [](float d, int a, int b) { return a + static_cast<int>(std::floor(d * static_cast<float>(b - a - 1))) + (d > 0.0F ? 1 : 0); };
+            int  x    = lerp(r.nextFloat(), cx * 16, cx * 16 + 15);
+            int  z    = lerp(r.nextFloat(), cz * 16, cz * 16 + 15);
+            if (w.biomes.samplable(x, z)) {
+                int  y     = w.gen->baseHeight(x, z, false, sampler);
+                bool valid = false; // Structure#isValidBiome at the stub (y near the surface)
+                for (int qy = (y >> 2) - 1; qy <= (y >> 2) + 1; ++qy) valid = valid || in(campBiomes, w.noiseBiome(x >> 2, qy, z >> 2));
+                if (!valid) continue;
+            }
+            out.push_back({"camp at chunk " + std::to_string(cx) + ", " + std::to_string(cz), x - 44, z - 44, x + 44, z + 44});
+        }
+    return out;
 }
 
 TEST(TerrainGolden, SurfaceGridMatches) {
@@ -215,8 +306,10 @@ TEST(TerrainGolden, SurfaceGridMatches) {
         auto sampler = w->sampler();
         auto biome   = w->blockBiome();
         // [variant][0 = height mismatches, 1 = top mismatches]
-        int bad[2][2] = {}, checked = 0, nearLandmark = 0;
+        int bad[2][2] = {}, checked = 0, nearLandmark = 0, nearStructure = 0;
         std::vector<std::string> samples[2];
+        auto reaches = structureReach(*w, x0, z0, x0 + n * step - 1, z0 + n * step - 1);
+        for (auto const& r : reaches) std::cout << "[ terrain  ] " << seedFile(seed) << ": " << r.what << " reaches x " << r.minX << ".." << r.maxX << ", z " << r.minZ << ".." << r.maxZ << "\n";
         for (int cx = x0 >> 4; cx < (x0 + n * step) >> 4; ++cx)
             for (int cz = z0 >> 4; cz < (z0 + n * step) >> 4; ++cz) {
                 Grid grid(-32, 288);
@@ -234,8 +327,12 @@ TEST(TerrainGolden, SurfaceGridMatches) {
                         // the oracle's chunks carry the landmark terraforming (F6 starts, not in gf-core):
                         // leave out the cells near a landmark center
                         auto lc = core::landmark::nearestCenter(cx, cz);
-                        if ((bx - lc.x) * (bx - lc.x) + (bz - lc.z) * (bz - lc.z) < kLandmarkRadius * kLandmarkRadius || inStructure(seed, bx, bz)) {
+                        if ((bx - lc.x) * (bx - lc.x) + (bz - lc.z) * (bz - lc.z) < kLandmarkRadius * kLandmarkRadius) {
                             ++nearLandmark;
+                            continue;
+                        }
+                        if (std::any_of(reaches.begin(), reaches.end(), [&](Reach const& r) { return r.holds(bx, bz); })) {
+                            ++nearStructure;
                             continue;
                         }
                         ++checked;
@@ -255,10 +352,67 @@ TEST(TerrainGolden, SurfaceGridMatches) {
                     }
             }
         int v = bad[0][0] + bad[0][1] <= bad[1][0] + bad[1][1] ? 0 : 1;
-        std::cout << "[ terrain  ] surface " << seedFile(seed) << ": " << checked << " cells (" << nearLandmark << " near a landmark left out), z-major " << v << ", height mismatches " << bad[v][0] << ", top mismatches " << bad[v][1] << "\n";
+        std::cout << "[ terrain  ] surface " << seedFile(seed) << ": " << checked << " cells (" << nearLandmark << " near a landmark, " << nearStructure << " in a structure's reach left out), z-major " << v << ", height mismatches " << bad[v][0] << ", top mismatches " << bad[v][1] << "\n";
         for (auto const& line : samples[v]) std::cout << "             " << line << "\n";
         EXPECT_EQ(bad[v][0] + bad[v][1], 0) << seedFile(seed);
     }
+}
+
+// ---- the Skylight preset ----------------------------------------------------------------------------------
+
+/// skylight_noise_gen over the goldens' real biomes: floating islands where the island noise is high,
+/// held in a band around the biome terrain's height (sqrt(clamp(interpolated(...))) with flat_cache
+/// inside, minus the distance to raw_biome_terrain), with air (the default fluid) everywhere else.
+TEST(TerrainSkylight, FloatingIslandsOverTheVoid) {
+    int islands = 0, chunks = 0;
+    for (auto seed : seeds()) {
+        auto w = loadWorld(seed, "skylight_noise_gen");
+        ASSERT_TRUE(w->gen) << w->error;
+        EXPECT_EQ(w->gen->defaultFluid(), code::Air);
+        auto sampler = w->sampler();
+        int  minY    = w->gen->shape().minY;
+        std::vector<std::pair<int, int>> found;
+        int  bx0 = w->biomes.x0 * 4, bz0 = w->biomes.z0 * 4, bx1 = (w->biomes.x0 + w->biomes.width) * 4, bz1 = (w->biomes.z0 + w->biomes.height) * 4;
+        int  scanned = 0;
+        for (int x = bx0; x < bx1; x += 8)
+            for (int z = bz0; z < bz1; z += 8) {
+                if (!w->biomes.samplable(x, z)) continue;
+                ++scanned;
+                if (w->gen->baseHeight(x, z, false, sampler) > minY) found.emplace_back(x, z);
+            }
+        std::cout << "[ terrain  ] skylight " << seedFile(seed) << ": " << found.size() << " of " << scanned << " columns hold an island\n";
+        ASSERT_FALSE(found.empty()) << seedFile(seed) << ": no island in " << scanned << " columns";
+        // islands are the exception over the void
+        EXPECT_LT(found.size() * 2, static_cast<std::size_t>(scanned)) << seedFile(seed);
+        islands += static_cast<int>(found.size());
+        for (int k = 0; k < 6; ++k) {
+            auto [x, z] = found[found.size() * static_cast<std::size_t>(k) / 6];
+            int  cx = x >> 4, cz = z >> 4;
+            Grid g(minY, w->gen->shape().height);
+            w->gen->fillNoise(cx, cz, sampler, {}, g);
+            std::vector<double> d;
+            w->gen->density().fillChunk(cx, cz, sampler, d);
+            ASSERT_EQ(d.size(), g.cells.size());
+            int solid = 0, water = 0, disagree = 0;
+            for (std::size_t i = 0; i < g.cells.size(); ++i) {
+                auto c = g.cells[i];
+                water += c == code::Water || c == code::Lava;
+                solid += c == code::DefaultBlock;
+                disagree += (c == code::DefaultBlock) != (d[i] > 0.0);
+            }
+            EXPECT_EQ(water, 0) << "chunk " << cx << ", " << cz;
+            EXPECT_GT(solid, 0) << "chunk " << cx << ", " << cz;
+            EXPECT_EQ(disagree, 0) << "stone exactly where the density is above 0";
+            // the island floats: the column's lowest block is far above the bottom, air below it
+            int lx = x & 15, lz = z & 15, lowest = minY - 1;
+            for (int y = minY; y < minY + g.height && lowest < minY; ++y)
+                if (g.get(lx, y, lz) != code::Air) lowest = y;
+            EXPECT_GT(lowest, minY + 8) << "island column (" << x << ", " << z << ")";
+            ++chunks;
+        }
+    }
+    EXPECT_GT(islands, 0);
+    EXPECT_EQ(chunks, 18);
 }
 
 } // namespace
