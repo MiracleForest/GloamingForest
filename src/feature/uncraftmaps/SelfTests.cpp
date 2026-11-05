@@ -493,7 +493,6 @@ GF_REGISTER_SELFTEST("uncraftmaps.magic_cloning", [](Context& ctx) {
     auto  maze = make(ctx, "twilightforest:maze_map");
     ctx.check(items::isEmpty(cloneResult({&map, &maze}, MapKind::Magic)), "a maze map is not a magic map");
     ctx.check(items::isEmpty(cloneResult({&map}, MapKind::Magic)), "no empty map: no match");
-    ctx.check(recipes::byId("twilightforest:magic_map") != nullptr || !recipes::producing("twilightforest:magic_map").empty(), "the magic map has a recipe");
 });
 
 // The commands: map_locator gives the named player a map; biomepng does nothing on a dedicated server

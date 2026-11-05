@@ -40,6 +40,7 @@
 #include "mc/deps/core/math/Color.h"
 #include "mc/deps/core/math/Vec3.h"
 #include "mc/deps/nbt/CompoundTag.h"
+#include "mc/deps/nbt/Int64Tag.h"
 #include "mc/legacy/ActorUniqueID.h"
 #include "mc/network/MinecraftPackets.h"
 #include "mc/network/Packet.h"
@@ -431,13 +432,10 @@ MapItemSavedData* createData(Player& player, int centerX, int centerZ, int scale
 
 /// The filled map tags of a map item (MapItem::setItemInstanceInfo's: the id, its scale, initialised,
 /// player markers shown), written through the stack's user data as game::items::setData does.
-void writeMapTags(ItemStack& stack, MapItemSavedData const& data) {
-    auto tag = stack.mUserData ? stack.mUserData->clone() : std::make_unique<CompoundTag>();
-    tag->putInt64(MapItem::TAG_MAP_UUID(), data.mMapId.get().rawID);
-    tag->putInt(MapItem::TAG_MAP_SCALE(), static_cast<int>(data.mScale));
-    tag->putByte(MapItem::TAG_MAP_INIT(), 1);
-    tag->putByte(MapItem::TAG_MAP_PLAYER_DISPLAY(), 1);
-    stack.setUserData(std::move(tag));
+void writeMapTags(ItemStack& stack, MapItemSavedData& data) {
+    // MapItem::setItemInstanceInfo writes into the stack's user data, which must exist
+    if (!stack.mUserData) stack.setUserData(std::make_unique<CompoundTag>());
+    MapItem::setItemInstanceInfo(stack, data);
 }
 
 ItemStack stackFor(Player& player, MapItemSavedData& data, MapKind kind) {
@@ -503,9 +501,12 @@ std::optional<MapKind> mapKindOf(ItemStack const& stack) {
 }
 
 std::int64_t mapIdOf(ItemStack const& stack) {
+    // the map_uuid tag (MapItem::getMapId reads more than it needs and is not safe on every tag)
     auto const* tag = items::userData(stack);
-    if (!tag) return 0;
-    return MapItem::getMapId(tag).rawID;
+    if (!tag || !tag->contains(MapItem::TAG_MAP_UUID())) return 0;
+    auto const& v = (*tag)[MapItem::TAG_MAP_UUID()];
+    if (!v.hold<Int64Tag>()) return 0;
+    return static_cast<std::int64_t>(v.get<Int64Tag>());
 }
 
 MapItemSavedData* mapData(std::int64_t mapId) {
