@@ -99,12 +99,18 @@ if ($remote) { Wait-LogLine '\[host\].*tgmove: .* sidestepped left' 20 -Since $m
 
 # ---- gradual glide (SHIFT held while falling) ----
 try {
+# land on a glass platform high up, hold SHIFT there, then break the platform away under the player
+Invoke-Teleport '/tp @s 300.5 -60 310.5 0 0'
+Invoke-Chat '/setblock 300 -26 310 glass'
 Invoke-Teleport '/tp @s 300.5 -25 310.5 0 0'
-Start-Sleep -Milliseconds 500
+Start-Sleep -Milliseconds 800
 Focus-Game
 $mark = Get-LogMark
 [BsE2E.Native]::Key([uint16]$VK_SHIFT, $false)
 try {
+Start-Sleep -Milliseconds 400
+Invoke-Chat '/setblock 300 -26 310 air'
+Focus-Game
 Start-Sleep -Milliseconds 1500
 Save-Screenshot 'glide' | Out-Null
 $glide = Wait-LogLine "${client}tgmove: glide ended after (\d+) ticks, sink ([0-9.]+) blocks per tick" 20 -Since $mark
@@ -118,8 +124,8 @@ if ($sink -lt 0.25 -or $sink -gt 0.40) { Add-Failure "glide sink $sink blocks pe
 
 # ---- water walk ----
 try {
-Invoke-Teleport '/tp @s 312.5 -59 301.5 0 0'
 $mark = Get-LogMark
+Invoke-Teleport '/tp @s 312.5 -59 301.5 0 0'
 $ww = Wait-LogLine "${client}tgmove: walking on water at y (-?[0-9.]+)" 10 -Since $mark
 if ($ww -notmatch 'at y (-?[0-9.]+)') { throw "no water walk line in '$ww'" }
 $y = [double]$Matches[1]
@@ -137,6 +143,7 @@ Invoke-Teleport '/tp @s 305.5 -60 298.5 0 0'
 Start-Sleep -Seconds 1
 Focus-Game
 $mark = Get-LogMark
+Start-Sleep -Milliseconds 200
 Hold-Key $VK_W 1200
 $step = Wait-LogLine "${client}tgmove: stepped up ([0-9.]+) blocks" 10 -Since $mark
 if ($step -notmatch 'stepped up ([0-9.]+)') { throw "no step up line in '$step'" }

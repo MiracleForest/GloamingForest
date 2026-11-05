@@ -27,6 +27,7 @@
 
 #include "ll/api/event/EventBus.h"
 #include "ll/api/event/player/PlayerDisconnectEvent.h"
+#include "ll/api/event/player/PlayerRespawnEvent.h"
 #include "ll/api/event/world/ServerLevelTickEvent.h"
 #include "ll/api/service/Bedrock.h"
 
@@ -49,6 +50,7 @@
 #include "mc/world/actor/player/LayeredAbilities.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/attribute/AttributeInstance.h"
+#include "mc/world/attribute/AttributeInstanceConstRef.h"
 #include "mc/world/attribute/AttributeInstanceRef.h"
 #include "mc/world/attribute/AttributeModifier.h"
 #include "mc/world/attribute/AttributeModifierOperation.h"
@@ -512,11 +514,10 @@ void tickPlayer(Player& player) {
             auto attr = player.getMutableAttribute(SharedAttributes::MOVEMENT_SPEED());
             if (auto* inst = attr.mInstance->mPtr) {
                 auto uuid = mce::UUID::fromStringHash(kStraightName);
+                inst->removeModifier(uuid, attr.mContext); // idempotent: never twice, whatever st says
                 if (want) {
                     AttributeModifier mod(uuid, kStraightName, static_cast<float>(tg::kStraightAheadMultiplier - 1), AttributeModifierOperation::OperationMultiplyTotal, AttributeOperands::OperandCurrent, false);
                     inst->addModifier(mod, attr.mContext);
-                } else {
-                    inst->removeModifier(uuid, attr.mContext);
                 }
                 st.straightAhead = want;
             }
@@ -578,7 +579,11 @@ void tickPlayer(Player& player) {
         float  e     = 0;
         if (player.isSwimming() || inWater) e = static_cast<float>(0.01 * std::sqrt(dx * dx + dy * dy + dz * dz));
         else if (onGround && player.isSprinting()) e = static_cast<float>(0.1 * horiz);
-        if (e > 0 && e < 1) player.causeFoodExhaustion(-e / 2.0f); // remove the half the divisor saves
+        // remove the half the divisor saves, never below 0 (the engine's exhaustion has no floor of its own)
+        float have = 0;
+        if (auto ex = player.getAttribute(Player::EXHAUSTION()); ex.mPtr) have = ex.mPtr->mCurrentValue;
+        float take = std::min(e / 2.0f, have);
+        if (e < 1 && take > 0) player.causeFoodExhaustion(-take);
     }
     st.lastX = pos.x, st.lastY = pos.y, st.lastZ = pos.z, st.hasLast = true;
 
@@ -642,6 +647,12 @@ public:
             }
         });
         mDisconnect = bus.emplaceListener<ll::event::PlayerDisconnectEvent>([](ll::event::PlayerDisconnectEvent& ev) { forget(ev.self()); });
+        // a respawned player starts afresh (its components and attributes are new)
+        mRespawn = bus.emplaceListener<ll::event::PlayerRespawnEvent>([](ll::event::PlayerRespawnEvent& ev) {
+            auto attr = ev.self().getMutableAttribute(SharedAttributes::MOVEMENT_SPEED());
+            if (auto* inst = attr.mInstance->mPtr) inst->removeModifier(mce::UUID::fromStringHash(kStraightName), attr.mContext);
+            forget(ev.self());
+        });
 
         net::on("tgmove.double_jump", [](Player& p, Json const&) {
             if (!performDoubleJump(p, false)) (void)handleAbuse(p, false);
@@ -687,6 +698,7 @@ public:
         auto& bus = ll::event::EventBus::getInstance();
         bus.removeListener(mTick);
         bus.removeListener(mDisconnect);
+        bus.removeListener(mRespawn);
         net::off("tgmove.double_jump");
         net::off("tgmove.sidestep");
         net::off("tgmove.gradual_glide");
@@ -697,6 +709,7 @@ public:
 private:
     ll::event::ListenerPtr mTick;
     ll::event::ListenerPtr mDisconnect;
+    ll::event::ListenerPtr mRespawn;
 };
 
 } // namespace

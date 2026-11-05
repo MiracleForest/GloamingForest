@@ -39,6 +39,7 @@
 #include "mc/entity/components/BlockMovementSlowdownImmunityComponent.h"
 #include "mc/entity/components/ItemUseSlowdownModifierComponent.h"
 #include "mc/entity/components/MoveInputComponent.h"
+#include "mc/input/MoveInputState.h"
 #include "mc/entity/components/WaterWalkSpeedEnchantComponent.h"
 #include "mc/world/actor/ActorFlags.h"
 #include "mc/world/actor/player/AbilitiesIndex.h"
@@ -96,8 +97,6 @@ struct Local {
     // measurements for the e2e scenario
     std::optional<double> jumpBaseY;  ///< double jump: the y it started at
     double                jumpPeakY = 0;
-    std::string           jumpTrace;
-    int                   jumpTraceTicks = 0;
     std::optional<Vec3>   stepStart;  ///< sidestep: where it started
     int                   stepTicks = 0;
     int                   glideTicks = 0;
@@ -204,8 +203,6 @@ void tick(movement::MoveState& s) {
                 l.hasDoubleJump = false;
                 l.jumpBaseY     = feet.y;
                 l.jumpPeakY     = feet.y;
-                l.jumpTrace.clear();
-                l.jumpTraceTicks = 0;
                 log().info("tgmove: double jump at y {:.2f} (vy {:.3f})", feet.y, v.y);
                 if (connected()) net::client::send("tgmove.double_jump", Json::object());
             }
@@ -228,6 +225,13 @@ void tick(movement::MoveState& s) {
     // ---- gradual glide (updateGradualGlideState, travellersWingsGradualGlide) ----
     bool glideActive = active(*p, Mod::GradualGlide);
     bool sneak       = s.sneakHeld || p->isSneaking();
+    if (auto in = ctx.tryGetComponent<MoveInputComponent>()) { // the raw key, also in the air
+        auto held = [](MoveInputState const& st) {
+            return st.mFlagValues->test(static_cast<std::size_t>(MoveInputState::Flag::SneakDown))
+                || st.mFlagValues->test(static_cast<std::size_t>(MoveInputState::Flag::SneakInputCurrentlyDown));
+        };
+        sneak = sneak || held(in->mInputState.get()) || held(in->mRawInputState.get());
+    }
     bool glide       = glideActive && tg::wantsGlide(cfg.travellersWingsGradualGlide, sneak, s.velocity.y, s.onGround);
     if (glide != l.gliding) {
         l.gliding = glide;
@@ -294,10 +298,6 @@ void tick(movement::MoveState& s) {
     // ---- measurements (one line per action) ----
     if (l.jumpBaseY) {
         l.jumpPeakY = std::max(l.jumpPeakY, static_cast<double>(feet.y));
-        if (l.jumpTraceTicks < 8) {
-            l.jumpTrace += " " + std::to_string(s.velocity.y) + "/" + std::to_string(feet.y);
-            if (++l.jumpTraceTicks == 8) log().info("tgmove: double jump trace vy/y{}", l.jumpTrace);
-        }
         if (s.onGround && tickCount > l.lastJumpKeyPressTime + 2) {
             log().info("tgmove: double jump peak {:.2f} blocks above its start", l.jumpPeakY - *l.jumpBaseY);
             l.jumpBaseY.reset();
