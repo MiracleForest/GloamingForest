@@ -5,10 +5,16 @@
 
 #include <string>
 
+#include "ll/api/command/SoftEnum.h"
+
 namespace gf::feature::tgear {
 
+/// The soft enum of <modifier>: the keys of the twilightforest:travellers_modifiers registry (TF's
+/// ResourceKeyArgument suggestions), filled when the command is registered.
+enum class TravellersModifierKey {};
+
 struct TravellersGearParams {
-    std::string modifier;
+    ll::command::SoftEnum<TravellersModifierKey> modifier;
 };
 
 } // namespace gf::feature::tgear

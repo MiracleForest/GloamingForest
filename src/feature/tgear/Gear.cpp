@@ -170,14 +170,14 @@ std::vector<std::string> modifiersWhere(ItemStack const& stack, bool ability) {
 std::vector<std::string> insertableModifiers(ItemStack const& stack) { return modifiersWhere(stack, false); }
 std::vector<std::string> abilityModifiers(ItemStack const& stack) { return modifiersWhere(stack, true); }
 
-bool isActiveOn(Player const& player, ItemStack const& stack, std::string const& rawId) {
+bool isActiveOn(Actor const& player, ItemStack const& stack, std::string const& rawId) {
     auto id = fullId(rawId);
     if (!modifier(id) || !hasModifier(stack, id)) return false;
     if (player.isSpectator()) return false;
     return id == ids::kAutoRepair || !isBroken(stack);
 }
 
-bool isActive(Player const& player, std::string const& rawId) {
+bool isActive(Actor const& player, std::string const& rawId) {
     auto id = fullId(rawId);
     auto m  = modifier(id);
     if (!m) return false;
@@ -190,6 +190,15 @@ bool isActive(Player const& player, std::string const& rawId) {
     if (slot < 0) return false;
     auto const& stack = player.getArmor(static_cast<SharedTypes::Legacy::ArmorSlot>(slot));
     return !items::isEmpty(stack) && isActiveOn(player, stack, id);
+}
+
+int armorPointsOf(std::string const& itemId) {
+    // TFArmorMaterials.TRAVELLERS defense: helmet 2, chestplate 4, leggings 3, boots 2 (the BP items'
+    // minecraft:wearable protection); the gloves and the belt are cosmetic (0)
+    if (itemId == ids::kGoggles || itemId == ids::kBoots) return 2;
+    if (itemId == ids::kVest) return 4;
+    if (itemId == ids::kWings) return 3;
+    return 0;
 }
 
 double numberOf(std::string const& id, double fallback) {

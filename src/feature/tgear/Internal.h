@@ -9,9 +9,13 @@
 
 #include "nlohmann/json.hpp"
 
+#include "mc/deps/core/math/Vec3.h"
+
 #include "feature/recipes/Recipes.h"
 
 class Actor;
+class BlockPos;
+class BlockSource;
 class ItemStack;
 class Player;
 
@@ -40,24 +44,43 @@ bool cycleMapSlot(Player& player);
 bool displayInsert(ItemStack& goggles, ItemStack& source, ItemStack& replaced);
 /// Removes the first stored item into `out`; false when the display is empty.
 bool displayRemoveFirst(ItemStack& goggles, ItemStack& out);
+/// The sound event of the last map cycle (selftests).
+[[nodiscard]] std::string lastCycleSound();
 /// Ticks the active map of worn goggles (GogglesItem#inventoryTick).
 void tickDisplayMap(Player& player);
+/// The client mod's secondary click on slot `index` of `collection` (the player's inventory, armour or
+/// off-hand) with the cursor (PlayerUIContainer slot 0): TravellersGogglesItem's bundle-style insert /
+/// remove. False when nothing changed.
+bool displaySlotClick(Player& player, std::string const& collection, int index);
 /// The vanilla fallback screen of the item display (sneak-use the goggles).
 void openDisplayForm(Player& player);
 
-// ---- Effects.cpp -------------------------------------------------------------------------------------
-/// The game time of the player's last armour damage (TFDataAttachments.LAST_DAMAGE_ARMOR_TIME).
-[[nodiscard]] std::int64_t lastArmorDamageTime(Player const& player);
-void                       setLastArmorDamageTime(Player const& player, std::int64_t time);
+// ---- Module.cpp ----------------------------------------------------------------------------------------
+/// The game time of the wearer's last armour damage (TFDataAttachments.LAST_DAMAGE_ARMOR_TIME).
+[[nodiscard]] std::int64_t lastArmorDamageTime(Actor const& wearer);
+void                       setLastArmorDamageTime(Actor const& wearer, std::int64_t time);
 /// Seeds the modifier rolls (selftests: perfect dodge, auto repair).
 void seedRandom(std::uint64_t seed);
-/// TravellersGearLogic#travellersGearAutoRepair for one player at `gameTime`; the pieces repaired.
-int autoRepair(Player& player, std::int64_t gameTime);
+/// Replaces the perfect dodge probability (selftests; nullopt: the modifier's).
+void setDodgeProbabilityForTest(std::optional<float> probability);
+/// TravellersGearLogic#travellersGearAutoRepair for one wearer at `gameTime`; the pieces repaired.
+int autoRepair(Actor& wearer, std::int64_t gameTime);
+/// Successful perfect dodges so far (selftests).
+[[nodiscard]] int dodgeCount();
 /// One perfect dodge roll for a projectile hitting `victim` (combat handler; selftests).
 bool rollPerfectDodge(Actor& victim, Actor* projectile);
 /// Zoom state of a player (is_using_goggles_zoom_modifier).
 [[nodiscard]] bool usingZoom(Player const& player);
 void               setZoom(Player& player, bool zoom);
+/// MultifaceBlock#canAttachTo: the neighbour on `face` (FacingID) of `pos` has a full face towards it.
+[[nodiscard]] bool canAttachRedThread(BlockSource& region, BlockPos const& pos, int face);
+/// TFDataAttachments.TRAVELLERS_GOGGLES_RED_THREAD_VISION of a player (default true, kept on death,
+/// stored in gf:tgear:red_thread_vision); the toggle needs the active modifier.
+[[nodiscard]] bool redThreadVision(Player const& player);
+bool               toggleRedThreadVision(Player& player);
+/// PlayerSpawnPhantomsEvent DENY: the nearest player to a natural phantom spawn wears active
+/// all-night goggles.
+[[nodiscard]] bool deniesPhantomAt(int dim, Vec3 const& pos);
 
 // ---- Command.cpp -------------------------------------------------------------------------------------
 struct CommandOutcome {
@@ -66,5 +89,7 @@ struct CommandOutcome {
 };
 /// TravellersGearCommand for `player` (nullptr: not a player) and `modifierId` as typed.
 CommandOutcome runCommand(Player* player, bool add, std::string const& modifierId);
+/// sendSuccess(..., true): the other operators get "[<source>: <message>]" (gray, italic).
+void broadcastToOps(Player* source, std::string const& message);
 
 } // namespace gf::feature::tgear

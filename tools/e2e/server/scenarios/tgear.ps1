@@ -4,7 +4,10 @@
 # /twilightforest travellers_gear in TF's check order, haste / stealth / broken pieces, efficient eater
 # (movement exhaustion halved), auto repair (none within 200 ticks of armour damage), perfect dodge
 # (seeded, about 30%), never-break, the belt swap (a belt in the hotbar stays; the companion channel),
-# the item display rules, the zoom channel and the red thread's multiface placement.
+# the item display rules and the map cycle (0 -> 1 -> -1 with its sounds), the zoom channel, the red thread's
+# MultifaceBlock rules (looking-direction placement, use-on, loot per face, unsupported faces drop), the
+# all-night goggles (phantom spawns denied, the rest counter runs on), the stealth target filter, a real
+# arrow dodged through the combat contract and arrow magnetism (an arrow stuck before the vest stays).
 Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
 
 $log = Get-ServerLog
@@ -12,9 +15,9 @@ if (-not ($log | Select-String -Pattern 'tgear: 26 travellers modifier recipes r
 
 $r = Invoke-SelfTest 'tgear.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) tgear selftest(s) failed: $($r.Failed -join ', ')" }
-if ($r.Pass -lt 16) { throw "expected at least 16 tgear selftests to pass, got $($r.Pass)" }
+if ($r.Pass -lt 21) { throw "expected at least 21 tgear selftests to pass, got $($r.Pass)" }
 
 # the log lines the tests leave
-foreach ($line in 'tgear: .+ added twilightforest:item_display', 'tgear: .+ swapped the hotbar', "tgear: .+'s twilightforest:travellers_goggles is broken", 'tgear: .+ dodged a projectile') {
+foreach ($line in 'tgear: .+ added twilightforest:item_display', 'tgear: .+ swapped the hotbar', "tgear: .+'s twilightforest:travellers_goggles is broken", 'tgear: .+ dodged a projectile', 'tgear: .+ magnetized back') {
     if (-not (Get-ServerLog | Select-String -Pattern $line -Quiet)) { throw "missing log line '$line'" }
 }

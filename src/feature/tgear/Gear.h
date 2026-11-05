@@ -30,6 +30,7 @@
 
 #include "core/tgear/Logic.h"
 
+class Actor;
 class ItemStack;
 class Player;
 
@@ -99,10 +100,13 @@ struct ModifierInfo {
 [[nodiscard]] std::vector<std::string> abilityModifiers(ItemStack const& stack);
 
 /// TravellersModifier#isActive on a stack: the stack has it, the wearer is no spectator and the stack
-/// is not broken (auto_repair is ALWAYS_ACTIVE).
-[[nodiscard]] bool isActiveOn(Player const& player, ItemStack const& stack, std::string const& id);
+/// is not broken (auto_repair is ALWAYS_ACTIVE). The wearer is any LivingEntity (a player, a mob, an
+/// armour stand).
+[[nodiscard]] bool isActiveOn(Actor const& wearer, ItemStack const& stack, std::string const& id);
 /// isModifierActive(LivingEntity, key): the stack of the group's single armour slot.
-[[nodiscard]] bool isActive(Player const& player, std::string const& id);
+[[nodiscard]] bool isActive(Actor const& wearer, std::string const& id);
+/// The armour points of a gear item (its BP wearable protection; TF's TFArmorMaterials.TRAVELLERS).
+[[nodiscard]] int armorPointsOf(std::string const& itemId);
 /// The modifier's component default as a number (probabilities, amplifiers), `fallback` without one.
 [[nodiscard]] double numberOf(std::string const& id, double fallback);
 

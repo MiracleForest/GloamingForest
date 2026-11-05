@@ -14,6 +14,9 @@
 #include "mc/entity/components/ExhaustionComponent.h"
 #include "mc/entity/components_json_legacy/InsomniaComponent.h"
 #include "mc/server/SimulatedPlayer.h"
+#include "mc/world/PlayerUIContainer.h"
+#include "mc/world/actor/Mob.h"
+#include "mc/world/level/Level.h"
 #include "mc/world/actor/player/Inventory.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/effect/MobEffectInstance.h"
@@ -21,6 +24,9 @@
 #include "mc/world/level/BlockSource.h"
 
 #include "feature/combat/Combat.h"
+#include "feature/loot/Loot.h"
+#include "feature/projectile/Projectile.h"
+#include "feature/spawn/Spawn.h"
 #include "feature/common/Interactions.h"
 #include "feature/net/Net.h"
 #include "feature/progression/Progression.h"
@@ -288,20 +294,54 @@ GF_REGISTER_SELFTEST("tgear.auto_repair", [](Context& ctx) {
     clearArmor(p);
 });
 
-GF_REGISTER_SELFTEST("tgear.perfect_dodge", [](Context& ctx) {
-    auto& p = ctx.player();
-    clearArmor(p);
-    auto vest = make(tg::ids::kVest);
-    tg::addModifier(vest, tg::ids::kPerfectDodge);
-    p.setArmor(Slot::Torso, vest);
-    tg::seedRandom(1101);
-    int dodged = 0;
-    for (int i = 0; i < 1000; ++i) dodged += tg::rollPerfectDodge(p, nullptr) ? 1 : 0;
-    ctx.check(dodged > 240 && dodged < 360, "about 30% dodged (" + std::to_string(dodged) + "/1000)");
-    clearArmor(p);
-    ctx.check(!tg::rollPerfectDodge(p, nullptr), "no vest: no dodge");
+GF_REGISTER_SELFTEST("tgear.perfect_dodge", [](Context& ctx) -> ll::coro::CoroTask<> {
+    {
+        auto& p = ctx.player();
+        clearArmor(p);
+        auto vest = make(tg::ids::kVest);
+        tg::addModifier(vest, tg::ids::kPerfectDodge);
+        p.setArmor(Slot::Torso, vest);
+        tg::seedRandom(1101);
+        int dodged = 0;
+        for (int i = 0; i < 1000; ++i) dodged += tg::rollPerfectDodge(p, nullptr) ? 1 : 0;
+        ctx.check(dodged > 240 && dodged < 360, "about 30% dodged (" + std::to_string(dodged) + "/1000)");
+        clearArmor(p);
+        ctx.check(!tg::rollPerfectDodge(p, nullptr), "no vest: no dodge");
+        p.setArmor(Slot::Torso, vest);
+        p.setPlayerGameType(GameType::Survival);
+    }
+    // a real arrow through the combat contract: the dodge cancels the impact (no damage) and the
+    // arrow flies on
+    auto  box  = co_await ctx.flatArea(1160, 16);
+    (void)box;
+    auto  at   = ctx.testPos(1160, 2);
+    auto& s    = ctx.spawnPlayer("tgear_archer");
+    {
+        auto& p = ctx.player();
+        p.teleportTo(Vec3{at.x + 8.5f, static_cast<float>(at.y + 1), at.z + 2.5f}, true, 0, 0, false);
+        s.teleportTo(Vec3{at.x + 0.5f, static_cast<float>(at.y + 1), at.z + 2.5f}, true, 0, 0, false);
+    }
+    co_await ctx.ticks(2);
+    tg::setDodgeProbabilityForTest(1.f);
+    int   before = tg::dodgeCount();
+    float health = 0;
+    {
+        auto& p = ctx.player();
+        health  = static_cast<float>(p.getHealth());
+        auto  from = s.getPosition();
+        auto  to   = p.getPosition();
+        Vec3  dir{to.x - from.x, to.y - 0.5f - from.y, to.z - from.z};
+        ctx.require(gf::projectile::shoot(s, "minecraft:arrow", dir, 2.5f, 0.f) != nullptr, "an arrow is shot at the wearer");
+    }
+    co_await ctx.ticks(30);
+    tg::setDodgeProbabilityForTest(std::nullopt);
+    {
+        auto& p = ctx.player();
+        ctx.check(tg::dodgeCount() > before, "the arrow's impact was dodged through the combat contract");
+        ctx.check(static_cast<float>(p.getHealth()) >= health, "no damage was taken");
+        clearArmor(p);
+    }
 });
-
 GF_REGISTER_SELFTEST("tgear.never_break", [](Context& ctx) -> ll::coro::CoroTask<> {
     {
         auto& p = ctx.player();
@@ -362,16 +402,34 @@ GF_REGISTER_SELFTEST("tgear.item_display", [](Context& ctx) {
     ctx.check(!d->items[3].is_null() && !d->items[4].is_null(), "compass in slot 3, clock in slot 4");
     ItemStack out;
     ctx.check(tg::displayRemoveFirst(goggles, out) && items::idOf(out) == "minecraft:compass", "remove takes the first stored item");
-    // the map cycle needs worn goggles with stored maps: none -> nothing changes
+    // two different maps: the chosen map cycles 0 -> 1 -> -1 (cycle_maps, cycle_maps, cycle_maps_empty)
+    for (int i = 0; i < 2; ++i) {
+        auto map = make("minecraft:filled_map");
+        items::setData(map, "tgear.test_map", i);
+        ctx.check(tg::displayInsert(goggles, map, replaced), "map " + std::to_string(i) + " goes in");
+    }
+    d = tg::displayOf(goggles);
+    ctx.require(d.has_value(), "display data with maps");
+    ctx.check(d->chosenMapSlot == 0, "the first map is shown (got " + std::to_string(d->chosenMapSlot) + ")");
     auto& p = ctx.player();
     clearArmor(p);
     p.setArmor(Slot::Head, goggles);
-    ctx.check(!tg::cycleMapSlot(p) || true, "cycle without maps");
+    ctx.check(tg::cycleMapSlot(p), "cycle 1 changed the map");
     auto dd = tg::displayOf(p.getArmor(Slot::Head));
-    ctx.check(dd && dd->chosenMapSlot <= 0, "no map: the choice stays or is none");
+    ctx.check(dd && dd->chosenMapSlot == 1 && tg::lastCycleSound() == "item.twilightforest.travellers_gear.cycle_maps", "0 -> 1 with cycle_maps (" + tg::lastCycleSound() + ")");
+    ctx.check(tg::cycleMapSlot(p), "cycle 2 changed the map");
+    dd = tg::displayOf(p.getArmor(Slot::Head));
+    ctx.check(dd && dd->chosenMapSlot == -1 && tg::lastCycleSound() == "item.twilightforest.travellers_gear.cycle_maps_empty", "1 -> -1 (none shown) with cycle_maps_empty (" + tg::lastCycleSound() + ")");
+    ctx.check(tg::cycleMapSlot(p), "cycle 3 changed the map");
+    dd = tg::displayOf(p.getArmor(Slot::Head));
+    ctx.check(dd && dd->chosenMapSlot == 0, "-1 -> 0");
+    // without maps nothing changes
+    auto plain = make(tg::ids::kGoggles);
+    tg::addModifier(plain, tg::ids::kItemDisplay);
+    p.setArmor(Slot::Head, plain);
+    ctx.check(!tg::cycleMapSlot(p), "no maps: the cycle changes nothing");
     clearArmor(p);
 });
-
 GF_REGISTER_SELFTEST("tgear.zoom_channel", [](Context& ctx) {
     auto& p = ctx.player();
     clearArmor(p);
@@ -394,18 +452,63 @@ GF_REGISTER_SELFTEST("tgear.red_thread", [](Context& ctx) -> ll::coro::CoroTask<
     ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
     auto* region = ctx.region();
     ctx.require(region != nullptr, "region");
-    ctx.require(ctx.setBlock(pos, tg::ids::kRedThread), "a red thread block");
     BlockPos bp{pos.x, pos.y, pos.z};
-    auto const& block = region->getBlock(bp);
-    // placed against the ground (clicked face up = 1): attached down
+    // a stone wall on the north of the thread's block
+    auto wall = gf::core::GlobalPos{pos.dim, pos.x, pos.y, pos.z - 1};
+    ctx.require(ctx.setBlock(wall, "minecraft:stone"), "a wall");
+    ctx.require(ctx.setBlock(pos, tg::ids::kRedThread), "a red thread block");
     std::string id = tg::ids::kRedThread, item = tg::ids::kRedThread;
-    gf::interactions::PlaceContext pc{ctx.player(), item, block, id, pos, gf::core::GlobalPos{pos.dim, pos.x, pos.y - 1, pos.z}, 1, {0.5, 1.0, 0.5}, false};
-    gf::interactions::dispatchPlace(pc);
-    auto const& placed = region->getBlock(bp);
-    ctx.check(gf::game::intState(placed, "twilightforest:down").value_or(0) == 1, "the thread lies on the ground");
-    ctx.check(gf::game::intState(placed, "twilightforest:up").value_or(0) == 0, "and not on the ceiling");
+    {
+        // placed by a player looking down: MultifaceBlock#getStateForPlacement takes the first looking
+        // direction it can attach to (down: the floor), not the clicked face
+        auto& p = ctx.player();
+        p.setRotationWrapped(Vec2{89.f, 0.f});
+        auto const&                    block = region->getBlock(bp);
+        gf::interactions::PlaceContext pc{p, item, block, id, pos, gf::core::GlobalPos{pos.dim, pos.x, pos.y, pos.z - 1}, 3, {0.5, 0.5, 1.0}, false};
+        gf::interactions::dispatchPlace(pc);
+    }
+    {
+        auto const& placed = region->getBlock(bp);
+        ctx.check(gf::game::intState(placed, "twilightforest:down").value_or(0) == 1, "the thread lies on the floor (looking down)");
+        ctx.check(gf::game::intState(placed, "twilightforest:north").value_or(0) == 0, "and not on the clicked wall");
+        ctx.check(tg::canAttachRedThread(*region, bp, 2) && !tg::canAttachRedThread(*region, bp, 1), "stone supports, air does not");
+    }
+    {
+        // more thread used on it, looking north: the wall face is added, one thread used
+        auto& p = ctx.player();
+        p.setRotationWrapped(Vec2{0.f, 180.f});
+        p.setSelectedItem(make(tg::ids::kRedThread, 5));
+        auto const&                    block = region->getBlock(bp);
+        ItemStack const&               held  = p.getSelectedItem();
+        gf::interactions::UseOnContext uc{p, held, item, block, id, pos, 1, {0.5, 0.1, 0.5}, false, true};
+        gf::interactions::dispatchUseOn(uc);
+        co_await ctx.ticks(1);
+    }
+    {
+        auto& p = ctx.player();
+        auto const& placed = region->getBlock(bp);
+        ctx.check(gf::game::intState(placed, "twilightforest:north").value_or(0) == 1 && gf::game::intState(placed, "twilightforest:down").value_or(0) == 1, "use-on added the north face");
+        ctx.check(items::countOf(p.getSelectedItem()) == 4 || p.isCreative(), "one thread was used (" + std::to_string(items::countOf(p.getSelectedItem())) + " left)");
+        // the loot: one thread per face (twilightforest:blocks/red_thread)
+        gf::loot::LootContext lc;
+        lc.region = region;
+        lc.block  = &placed;
+        lc.origin = Vec3{pos.x + .5f, pos.y + .5f, pos.z + .5f};
+        int n = 0;
+        for (auto const& s : gf::loot::roll("twilightforest:blocks/red_thread", lc))
+            if (items::idOf(s) == tg::ids::kRedThread) n += items::countOf(s);
+        ctx.check(n == 2, "two faces drop two threads (got " + std::to_string(n) + ")");
+        p.setSelectedItem(ItemStack::EMPTY_ITEM());
+    }
+    // the wall goes: MultifaceBlock#updateShape removes the north face, the floor face stays
+    ctx.cleanupBlock(wall);
+    co_await ctx.ticks(2);
+    {
+        auto const& placed = region->getBlock(bp);
+        ctx.check(gf::game::blockId(placed) == tg::ids::kRedThread && gf::game::intState(placed, "twilightforest:north").value_or(0) == 0 && gf::game::intState(placed, "twilightforest:down").value_or(0) == 1,
+                  "the unsupported north face is gone, the floor face stays");
+    }
 });
-
 GF_REGISTER_SELFTEST("tgear.all_night_goggles", [](Context& ctx) -> ll::coro::CoroTask<> {
     {
         auto& p = ctx.player();
@@ -414,18 +517,143 @@ GF_REGISTER_SELFTEST("tgear.all_night_goggles", [](Context& ctx) -> ll::coro::Co
         tg::addModifier(goggles, tg::ids::kAllNight);
         p.setArmor(Slot::Head, goggles);
         auto insomnia = p.getEntityContext().tryGetComponent<InsomniaComponent>();
-        if (!insomnia) {
-            ctx.info("the simulated player has no insomnia component: nothing to check");
-            clearArmor(p);
-            co_return;
-        }
+        ctx.require(static_cast<bool>(insomnia), "the player has an insomnia component");
         insomnia->mTimeSinceRest = 100000;
+        auto at = p.getFeetPos();
+        ctx.check(tg::deniesPhantomAt(static_cast<int>(p.getDimensionId()), Vec3{at.x, at.y + 25.f, at.z}), "a natural phantom spawn over the wearer is denied");
     }
     co_await ctx.ticks(2);
     {
         auto& p        = ctx.player();
-        auto insomnia = p.getEntityContext().tryGetComponent<InsomniaComponent>();
-        ctx.check(insomnia && insomnia->mTimeSinceRest < 10, "the goggles keep the time since rest at 0 (no phantoms)");
+        auto  insomnia = p.getEntityContext().tryGetComponent<InsomniaComponent>();
+        ctx.check(insomnia && insomnia->mTimeSinceRest >= 100000, "the time since rest runs on (TF only denies the spawn)");
+        clearArmor(p);
+        auto at = p.getFeetPos();
+        ctx.check(!tg::deniesPhantomAt(static_cast<int>(p.getDimensionId()), Vec3{at.x, at.y + 25.f, at.z}), "without the goggles phantoms may spawn");
+        if (insomnia) insomnia->mTimeSinceRest = 0;
+    }
+});
+
+GF_REGISTER_SELFTEST("tgear.stealth_target_filter", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto box = co_await ctx.flatArea(1170, 16);
+    (void)box;
+    auto   at     = ctx.testPos(1170, 2);
+    auto*  region = ctx.region();
+    ctx.require(region != nullptr, "region");
+    std::int64_t zombieId = 0;
+    {
+        auto& p    = ctx.player();
+        p.setPlayerGameType(GameType::Survival);
+        clearArmor(p);
+        auto vest = make(tg::ids::kVest);
+        tg::addModifier(vest, tg::ids::kStealth);
+        p.setArmor(Slot::Torso, vest);
+        p.teleportTo(Vec3{at.x + 2.5f, static_cast<float>(at.y + 1), at.z + 2.5f}, true, 0, 0, false);
+        auto* z = gf::spawn::spawnMob(*region, "minecraft:zombie", Vec3{at.x + 10.5f, static_cast<float>(at.y + 1), at.z + 2.5f}, gf::spawn::SpawnReason::Spawner);
+        ctx.require(z != nullptr, "a zombie 8 blocks away");
+        zombieId = z->getOrCreateUniqueID().rawID;
+        static_cast<SimulatedPlayer&>(p).simulateSneaking();
+    }
+    co_await ctx.ticks(3);
+    {
+        auto& p = ctx.player();
+        auto* z = static_cast<Mob*>(p.getLevel().fetchEntity(ActorUniqueID{zombieId}, false));
+        ctx.require(z != nullptr, "the zombie is there");
+        z->setTarget(&p);
+        ctx.check(static_cast<ActorUniqueID const&>(z->mTargetId).rawID != p.getOrCreateUniqueID().rawID, "a sneaking stealth wearer 8 blocks away cannot be targeted");
+        static_cast<SimulatedPlayer&>(p).simulateStopSneaking();
+    }
+    co_await ctx.ticks(4);
+    {
+        auto& p = ctx.player();
+        auto* z = static_cast<Mob*>(p.getLevel().fetchEntity(ActorUniqueID{zombieId}, false));
+        ctx.require(z != nullptr, "the zombie is still there");
+        z->setTarget(&p);
+        ctx.check(static_cast<ActorUniqueID const&>(z->mTargetId).rawID == p.getOrCreateUniqueID().rawID, "standing up, the wearer can be targeted again");
+        z->setTarget(nullptr);
+        z->remove();
         clearArmor(p);
     }
+});
+
+GF_REGISTER_SELFTEST("tgear.arrow_magnetism", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto box = co_await ctx.flatArea(1180, 16);
+    (void)box;
+    auto at = ctx.testPos(1180, 2);
+    std::int64_t oldArrow = 0;
+    {
+        auto& p = ctx.player();
+        p.setPlayerGameType(GameType::Survival);
+        clearArmor(p);
+        for (int i = 0; i < 9; ++i) p.getInventory().setItem(i, ItemStack::EMPTY_ITEM());
+        p.teleportTo(Vec3{at.x + 2.5f, static_cast<float>(at.y + 1), at.z + 2.5f}, true, 0, 0, false);
+        // an arrow shot before the vest is worn
+        auto* a = gf::projectile::shoot(p, "minecraft:arrow", Vec3{1.f, -1.f, 0.f}, 1.0f, 0.f);
+        ctx.require(a != nullptr, "an old arrow");
+        oldArrow = a->getOrCreateUniqueID().rawID;
+    }
+    co_await ctx.ticks(30);
+    std::int64_t newArrow = 0;
+    {
+        auto& p    = ctx.player();
+        auto  vest = make(tg::ids::kVest);
+        tg::addModifier(vest, tg::ids::kArrowMagnetism);
+        p.setArmor(Slot::Torso, vest);
+    }
+    co_await ctx.ticks(2);
+    {
+        auto& p = ctx.player();
+        auto* a = gf::projectile::shoot(p, "minecraft:arrow", Vec3{-1.f, -1.f, 0.f}, 1.0f, 0.f);
+        ctx.require(a != nullptr, "an arrow shot by the wearer");
+        newArrow = a->getOrCreateUniqueID().rawID;
+    }
+    co_await ctx.ticks(40);
+    {
+        auto& p = ctx.player();
+        int   arrows = 0;
+        auto& inv    = p.getInventory();
+        for (int i = 0; i < inv.getContainerSize(); ++i)
+            if (items::idOf(inv.getItem(i)) == "minecraft:arrow") arrows += items::countOf(inv.getItem(i));
+        auto* fresh = p.getLevel().fetchEntity(ActorUniqueID{newArrow}, false);
+        auto* old   = p.getLevel().fetchEntity(ActorUniqueID{oldArrow}, false);
+        ctx.check(fresh == nullptr || !fresh->isAlive(), "the wearer's arrow was taken back when it hit the ground");
+        ctx.check(arrows == 1, "one arrow went to the inventory (got " + std::to_string(arrows) + ")");
+        ctx.check(old != nullptr && old->isAlive(), "the arrow stuck before the vest was worn stays");
+        if (old) old->remove();
+        for (int i = 0; i < inv.getContainerSize(); ++i)
+            if (items::idOf(inv.getItem(i)) == "minecraft:arrow") inv.setItem(i, ItemStack::EMPTY_ITEM());
+        clearArmor(p);
+    }
+});
+GF_REGISTER_SELFTEST("tgear.display_click", [](Context& ctx) {
+    auto& p   = ctx.player();
+    auto& inv = p.getInventory();
+    auto& ui  = p.mPlayerUIContainer.get();
+    auto  goggles = make(tg::ids::kGoggles);
+    tg::addModifier(goggles, tg::ids::kItemDisplay);
+    inv.setItem(5, goggles);
+    ui.setItem(0, make("minecraft:compass"));
+    gf::net::setTestCompanion(p, true);
+    gf::net::injectFromClient(p, "tgear.display_click", {{"collection", "hotbar_items"}, {"index", 5}});
+    auto d = tg::displayOf(inv.getItem(5));
+    ctx.check(d && !d->items[3].is_null() && items::isEmpty(ui.getItem(0)), "a compass on the cursor clicked on the goggles goes in");
+    gf::net::injectFromClient(p, "tgear.display_click", {{"collection", "hotbar_items"}, {"index", 5}});
+    ctx.check(items::idOf(ui.getItem(0)) == "minecraft:compass", "an empty cursor takes it back out");
+    // the goggles on the cursor: an empty slot gets the first stored item, a clock goes in
+    ui.setItem(0, inv.getItem(5));
+    inv.setItem(5, ItemStack::EMPTY_ITEM());
+    ItemStack held = ui.getItem(0);
+    auto      c    = make("minecraft:compass");
+    ItemStack replaced;
+    tg::displayInsert(held, c, replaced);
+    ui.setItem(0, held);
+    gf::net::injectFromClient(p, "tgear.display_click", {{"collection", "inventory_items"}, {"index", 12}});
+    ctx.check(items::idOf(inv.getItem(12)) == "minecraft:compass", "the goggles on the cursor put the stored compass in the empty slot");
+    inv.setItem(13, make("minecraft:clock"));
+    gf::net::injectFromClient(p, "tgear.display_click", {{"collection", "inventory_items"}, {"index", 13}});
+    auto dd = tg::displayOf(ui.getItem(0));
+    ctx.check(dd && !dd->items[4].is_null() && items::isEmpty(inv.getItem(13)), "a clock clicked with the goggles goes in");
+    gf::net::setTestCompanion(p, false);
+    ui.setItem(0, ItemStack::EMPTY_ITEM());
+    for (int i : {5, 12, 13}) inv.setItem(i, ItemStack::EMPTY_ITEM());
 });

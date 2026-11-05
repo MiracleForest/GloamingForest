@@ -3,14 +3,34 @@
   "minecraft:block": {
     "description": {
       "identifier": "twilightforest:red_thread",
-      "menu_category": { "category": "items" },
+      "menu_category": {
+        "category": "items"
+      },
       "states": {
-        "twilightforest:down": [false, true],
-        "twilightforest:east": [false, true],
-        "twilightforest:north": [false, true],
-        "twilightforest:south": [false, true],
-        "twilightforest:up": [false, true],
-        "twilightforest:west": [false, true]
+        "twilightforest:down": [
+          false,
+          true
+        ],
+        "twilightforest:east": [
+          false,
+          true
+        ],
+        "twilightforest:north": [
+          false,
+          true
+        ],
+        "twilightforest:south": [
+          false,
+          true
+        ],
+        "twilightforest:up": [
+          false,
+          true
+        ],
+        "twilightforest:west": [
+          false,
+          true
+        ]
       }
     },
     "components": {
@@ -26,15 +46,1119 @@
         }
       },
       "minecraft:material_instances": {
-        "*": { "texture": "tf_tgear_red_thread", "render_method": "alpha_test", "ambient_occlusion": false, "face_dimming": false }
+        "*": {
+          "texture": "tf_tgear_red_thread",
+          "render_method": "alpha_test",
+          "ambient_occlusion": false,
+          "face_dimming": false
+        }
       },
-      "minecraft:destructible_by_mining": { "seconds_to_destroy": 0 },
-      "minecraft:destructible_by_explosion": { "explosion_resistance": 0 },
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 0
+      },
       "minecraft:map_color": "#ff0000",
       "minecraft:collision_box": false,
-      "minecraft:selection_box": { "origin": [-8, 0, -8], "size": [16, 16, 16] },
+      "minecraft:selection_box": {
+        "origin": [
+          -8,
+          0,
+          -8
+        ],
+        "size": [
+          16,
+          1,
+          16
+        ]
+      },
       "minecraft:light_dampening": 0,
-      "minecraft:movable": { "movement_type": "popped" }
-    }
+      "minecraft:movable": {
+        "movement_type": "popped"
+      },
+      "minecraft:liquid_detection": {
+        "detection_rules": [
+          {
+            "liquid_type": "water",
+            "can_contain_liquid": true,
+            "on_liquid_touches": "no_reaction"
+          }
+        ]
+      }
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('twilightforest:down') && !q.block_state('twilightforest:up') && !q.block_state('twilightforest:north') && !q.block_state('twilightforest:south') && !q.block_state('twilightforest:west') && !q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              1,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:down') && q.block_state('twilightforest:up') && !q.block_state('twilightforest:north') && !q.block_state('twilightforest:south') && !q.block_state('twilightforest:west') && !q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              15,
+              -8
+            ],
+            "size": [
+              16,
+              1,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:down') && q.block_state('twilightforest:up') && !q.block_state('twilightforest:north') && !q.block_state('twilightforest:south') && !q.block_state('twilightforest:west') && !q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:down') && !q.block_state('twilightforest:up') && q.block_state('twilightforest:north') && !q.block_state('twilightforest:south') && !q.block_state('twilightforest:west') && !q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:down') && !q.block_state('twilightforest:up') && q.block_state('twilightforest:north') && !q.block_state('twilightforest:south') && !q.block_state('twilightforest:west') && !q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:down') && q.block_state('twilightforest:up') && q.block_state('twilightforest:north') && !q.block_state('twilightforest:south') && !q.block_state('twilightforest:west') && !q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:down') && q.block_state('twilightforest:up') && q.block_state('twilightforest:north') && !q.block_state('twilightforest:south') && !q.block_state('twilightforest:west') && !q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:down') && !q.block_state('twilightforest:up') && !q.block_state('twilightforest:north') && q.block_state('twilightforest:south') && !q.block_state('twilightforest:west') && !q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              7
+            ],
+            "size": [
+              16,
+              16,
+              1
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:down') && !q.block_state('twilightforest:up') && !q.block_state('twilightforest:north') && q.block_state('twilightforest:south') && !q.block_state('twilightforest:west') && !q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:down') && q.block_state('twilightforest:up') && !q.block_state('twilightforest:north') && q.block_state('twilightforest:south') && !q.block_state('twilightforest:west') && !q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:down') && q.block_state('twilightforest:up') && !q.block_state('twilightforest:north') && q.block_state('twilightforest:south') && !q.block_state('twilightforest:west') && !q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:down') && !q.block_state('twilightforest:up') && q.block_state('twilightforest:north') && q.block_state('twilightforest:south') && !q.block_state('twilightforest:west') && !q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:down') && !q.block_state('twilightforest:up') && q.block_state('twilightforest:north') && q.block_state('twilightforest:south') && !q.block_state('twilightforest:west') && !q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:down') && q.block_state('twilightforest:up') && q.block_state('twilightforest:north') && q.block_state('twilightforest:south') && !q.block_state('twilightforest:west') && !q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:down') && q.block_state('twilightforest:up') && q.block_state('twilightforest:north') && q.block_state('twilightforest:south') && !q.block_state('twilightforest:west') && !q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:down') && !q.block_state('twilightforest:up') && !q.block_state('twilightforest:north') && !q.block_state('twilightforest:south') && q.block_state('twilightforest:west') && !q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              1,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:down') && !q.block_state('twilightforest:up') && !q.block_state('twilightforest:north') && !q.block_state('twilightforest:south') && q.block_state('twilightforest:west') && !q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:down') && q.block_state('twilightforest:up') && !q.block_state('twilightforest:north') && !q.block_state('twilightforest:south') && q.block_state('twilightforest:west') && !q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:down') && q.block_state('twilightforest:up') && !q.block_state('twilightforest:north') && !q.block_state('twilightforest:south') && q.block_state('twilightforest:west') && !q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:down') && !q.block_state('twilightforest:up') && q.block_state('twilightforest:north') && !q.block_state('twilightforest:south') && q.block_state('twilightforest:west') && !q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:down') && !q.block_state('twilightforest:up') && q.block_state('twilightforest:north') && !q.block_state('twilightforest:south') && q.block_state('twilightforest:west') && !q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:down') && q.block_state('twilightforest:up') && q.block_state('twilightforest:north') && !q.block_state('twilightforest:south') && q.block_state('twilightforest:west') && !q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:down') && q.block_state('twilightforest:up') && q.block_state('twilightforest:north') && !q.block_state('twilightforest:south') && q.block_state('twilightforest:west') && !q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:down') && !q.block_state('twilightforest:up') && !q.block_state('twilightforest:north') && q.block_state('twilightforest:south') && q.block_state('twilightforest:west') && !q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:down') && !q.block_state('twilightforest:up') && !q.block_state('twilightforest:north') && q.block_state('twilightforest:south') && q.block_state('twilightforest:west') && !q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:down') && q.block_state('twilightforest:up') && !q.block_state('twilightforest:north') && q.block_state('twilightforest:south') && q.block_state('twilightforest:west') && !q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:down') && q.block_state('twilightforest:up') && !q.block_state('twilightforest:north') && q.block_state('twilightforest:south') && q.block_state('twilightforest:west') && !q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:down') && !q.block_state('twilightforest:up') && q.block_state('twilightforest:north') && q.block_state('twilightforest:south') && q.block_state('twilightforest:west') && !q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:down') && !q.block_state('twilightforest:up') && q.block_state('twilightforest:north') && q.block_state('twilightforest:south') && q.block_state('twilightforest:west') && !q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:down') && q.block_state('twilightforest:up') && q.block_state('twilightforest:north') && q.block_state('twilightforest:south') && q.block_state('twilightforest:west') && !q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:down') && q.block_state('twilightforest:up') && q.block_state('twilightforest:north') && q.block_state('twilightforest:south') && q.block_state('twilightforest:west') && !q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:down') && !q.block_state('twilightforest:up') && !q.block_state('twilightforest:north') && !q.block_state('twilightforest:south') && !q.block_state('twilightforest:west') && q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              7,
+              0,
+              -8
+            ],
+            "size": [
+              1,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:down') && !q.block_state('twilightforest:up') && !q.block_state('twilightforest:north') && !q.block_state('twilightforest:south') && !q.block_state('twilightforest:west') && q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:down') && q.block_state('twilightforest:up') && !q.block_state('twilightforest:north') && !q.block_state('twilightforest:south') && !q.block_state('twilightforest:west') && q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:down') && q.block_state('twilightforest:up') && !q.block_state('twilightforest:north') && !q.block_state('twilightforest:south') && !q.block_state('twilightforest:west') && q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:down') && !q.block_state('twilightforest:up') && q.block_state('twilightforest:north') && !q.block_state('twilightforest:south') && !q.block_state('twilightforest:west') && q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:down') && !q.block_state('twilightforest:up') && q.block_state('twilightforest:north') && !q.block_state('twilightforest:south') && !q.block_state('twilightforest:west') && q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:down') && q.block_state('twilightforest:up') && q.block_state('twilightforest:north') && !q.block_state('twilightforest:south') && !q.block_state('twilightforest:west') && q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:down') && q.block_state('twilightforest:up') && q.block_state('twilightforest:north') && !q.block_state('twilightforest:south') && !q.block_state('twilightforest:west') && q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:down') && !q.block_state('twilightforest:up') && !q.block_state('twilightforest:north') && q.block_state('twilightforest:south') && !q.block_state('twilightforest:west') && q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:down') && !q.block_state('twilightforest:up') && !q.block_state('twilightforest:north') && q.block_state('twilightforest:south') && !q.block_state('twilightforest:west') && q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:down') && q.block_state('twilightforest:up') && !q.block_state('twilightforest:north') && q.block_state('twilightforest:south') && !q.block_state('twilightforest:west') && q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:down') && q.block_state('twilightforest:up') && !q.block_state('twilightforest:north') && q.block_state('twilightforest:south') && !q.block_state('twilightforest:west') && q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:down') && !q.block_state('twilightforest:up') && q.block_state('twilightforest:north') && q.block_state('twilightforest:south') && !q.block_state('twilightforest:west') && q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:down') && !q.block_state('twilightforest:up') && q.block_state('twilightforest:north') && q.block_state('twilightforest:south') && !q.block_state('twilightforest:west') && q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:down') && q.block_state('twilightforest:up') && q.block_state('twilightforest:north') && q.block_state('twilightforest:south') && !q.block_state('twilightforest:west') && q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:down') && q.block_state('twilightforest:up') && q.block_state('twilightforest:north') && q.block_state('twilightforest:south') && !q.block_state('twilightforest:west') && q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:down') && !q.block_state('twilightforest:up') && !q.block_state('twilightforest:north') && !q.block_state('twilightforest:south') && q.block_state('twilightforest:west') && q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:down') && !q.block_state('twilightforest:up') && !q.block_state('twilightforest:north') && !q.block_state('twilightforest:south') && q.block_state('twilightforest:west') && q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:down') && q.block_state('twilightforest:up') && !q.block_state('twilightforest:north') && !q.block_state('twilightforest:south') && q.block_state('twilightforest:west') && q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:down') && q.block_state('twilightforest:up') && !q.block_state('twilightforest:north') && !q.block_state('twilightforest:south') && q.block_state('twilightforest:west') && q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:down') && !q.block_state('twilightforest:up') && q.block_state('twilightforest:north') && !q.block_state('twilightforest:south') && q.block_state('twilightforest:west') && q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:down') && !q.block_state('twilightforest:up') && q.block_state('twilightforest:north') && !q.block_state('twilightforest:south') && q.block_state('twilightforest:west') && q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:down') && q.block_state('twilightforest:up') && q.block_state('twilightforest:north') && !q.block_state('twilightforest:south') && q.block_state('twilightforest:west') && q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:down') && q.block_state('twilightforest:up') && q.block_state('twilightforest:north') && !q.block_state('twilightforest:south') && q.block_state('twilightforest:west') && q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:down') && !q.block_state('twilightforest:up') && !q.block_state('twilightforest:north') && q.block_state('twilightforest:south') && q.block_state('twilightforest:west') && q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:down') && !q.block_state('twilightforest:up') && !q.block_state('twilightforest:north') && q.block_state('twilightforest:south') && q.block_state('twilightforest:west') && q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:down') && q.block_state('twilightforest:up') && !q.block_state('twilightforest:north') && q.block_state('twilightforest:south') && q.block_state('twilightforest:west') && q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:down') && q.block_state('twilightforest:up') && !q.block_state('twilightforest:north') && q.block_state('twilightforest:south') && q.block_state('twilightforest:west') && q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:down') && !q.block_state('twilightforest:up') && q.block_state('twilightforest:north') && q.block_state('twilightforest:south') && q.block_state('twilightforest:west') && q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:down') && !q.block_state('twilightforest:up') && q.block_state('twilightforest:north') && q.block_state('twilightforest:south') && q.block_state('twilightforest:west') && q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:down') && q.block_state('twilightforest:up') && q.block_state('twilightforest:north') && q.block_state('twilightforest:south') && q.block_state('twilightforest:west') && q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:down') && q.block_state('twilightforest:up') && q.block_state('twilightforest:north') && q.block_state('twilightforest:south') && q.block_state('twilightforest:west') && q.block_state('twilightforest:east')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          }
+        }
+      }
+    ]
   }
 }

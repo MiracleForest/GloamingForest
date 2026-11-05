@@ -15,6 +15,7 @@
 #include "mc/world/item/ItemStack.h"
 
 #include "feature/item/Item.h"
+#include "feature/net/Net.h"
 #include "feature/tgear/Config.h"
 #include "feature/tgear/Gear.h"
 #include "game/Items.h"
@@ -35,8 +36,11 @@ std::string t(Player const* viewer, std::string_view key, std::string_view fallb
 }
 
 void gearLines(ItemStack const& stack, std::vector<std::string>& lines, Player const* viewer) {
+    // a player with the client mod gets TF's tooltip from the client (Shift descriptions under each
+    // modifier, client/tgear): no lore for it
+    if (viewer && net::isCompanion(*viewer)) return;
     auto locale = localeFor(viewer);
-    if (isBroken(stack)) lines.push_back("§7" + t(viewer, "travellers_gear.broken", " (Broken)"));
+    // the broken mark is part of the name (Module.cpp, TravellersArmorItem#getName)
     auto abilities = abilityModifiers(stack);
     for (auto const& id : abilities)
         lines.push_back("§6" + core::formatMessageArgs(t(viewer, "travellers_gear.ability", "Ability: %s"), "§7" + modifierName(id, locale) + "§6"));

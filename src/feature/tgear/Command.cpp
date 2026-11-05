@@ -14,11 +14,14 @@
 #include "feature/tgear/Command.h"
 
 #include "ll/api/command/CommandHandle.h"
+#include "ll/api/command/CommandRegistrar.h"
+#include "ll/api/service/Bedrock.h"
 
 #include "mc/server/commands/CommandOrigin.h"
 #include "mc/server/commands/CommandOutput.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/ItemStack.h"
+#include "mc/world/level/Level.h"
 
 #include "feature/tgear/Gear.h"
 #include "feature/tgear/Internal.h"
@@ -62,20 +65,44 @@ CommandOutcome runCommand(Player* player, bool add, std::string const& typed) {
     return {true, text};
 }
 
+void broadcastToOps(Player* source, std::string const& message) {
+    auto level = ll::service::getLevel();
+    if (!level) return;
+    std::string who = source ? source->getRealName() : std::string("Server");
+    level->forEachPlayer([&](Player& p) {
+        if (&p == source || p.isClientSide() || p.getCommandPermissionLevel() < CommandPermissionLevel::GameDirectors) return true;
+        p.sendMessage("§7§o[" + who + ": " + message + "]");
+        return true;
+    });
+}
+
 } // namespace gf::feature::tgear
 
 GF_REGISTER_SUBCOMMAND([](ll::command::CommandHandle& cmd) {
     namespace tg = gf::feature::tgear;
+    // the registry keys as suggestions (ResourceKeyArgument); a key that is not in the list fails the
+    // parse like a malformed ResourceLocation
+    {
+        std::vector<std::string> keys;
+        for (auto const& m : tg::allModifiers()) keys.push_back(m.id);
+        auto& registrar = ll::command::CommandRegistrar::getServerInstance();
+        auto  name      = ll::command::enum_name_v<ll::command::SoftEnum<tg::TravellersModifierKey>>;
+        if (!registrar.tryRegisterSoftEnum(name, keys)) registrar.setSoftEnumValues(name, keys);
+    }
     for (bool add : {true, false}) {
         cmd.overload<tg::TravellersGearParams>()
             .text("travellers_gear")
             .text(add ? "add_modifier" : "remove_modifier")
             .required("modifier")
             .execute([add](CommandOrigin const& origin, CommandOutput& output, tg::TravellersGearParams const& p) {
+                // TF: requires(permission 2); /twilightforest itself is open to everyone (center, info)
                 if (!gf::commands::isAdmin(origin)) return output.error("You need operator permission.");
-                auto r = tg::runCommand(gf::commands::playerOf(origin), add, p.modifier);
-                if (r.ok) output.success(r.message);
-                else output.error(r.message);
+                auto* player = gf::commands::playerOf(origin);
+                auto  r      = tg::runCommand(player, add, std::string(p.modifier));
+                if (!r.ok) return output.error(r.message);
+                output.success(r.message);
+                // CommandSourceStack#sendSuccess(..., true): the other operators see "[<name>: <message>]"
+                tg::broadcastToOps(player, r.message);
             });
     }
 });

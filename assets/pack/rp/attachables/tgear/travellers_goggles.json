@@ -1,0 +1,26 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:attachable": {
+    "description": {
+      "identifier": "twilightforest:travellers_goggles",
+      "materials": {
+        "default": "armor",
+        "enchanted": "armor_enchanted"
+      },
+      "textures": {
+        "default": "textures/twilightforest/models/armor/travellers_layer_1",
+        "down": "textures/twilightforest/models/armor/travellers_layer_1_down",
+        "enchanted": "textures/misc/enchanted_item_glint"
+      },
+      "geometry": {
+        "default": "geometry.twilightforest.travellers_armor.goggles"
+      },
+      "scripts": {
+        "parent_setup": "variable.helmet_layer_visible = 0.0;"
+      },
+      "render_controllers": [
+        "controller.render.twilightforest.tgear_goggles"
+      ]
+    }
+  }
+}

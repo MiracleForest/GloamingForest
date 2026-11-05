@@ -53,7 +53,7 @@ GF_REGISTER_SELFTEST("tgear.real_arm", [](Context& ctx) {
         auto goggles = make(tg::ids::kGoggles);
         tg::addModifier(goggles, tg::ids::kItemDisplay);
         tg::addModifier(goggles, tg::ids::kRedThreadVision);
-        for (auto const* id : {"minecraft:compass", "minecraft:clock", "twilightforest:moon_dial"}) {
+        for (auto const* id : {"minecraft:filled_map", "minecraft:compass", "minecraft:clock", "twilightforest:moon_dial"}) {
             auto      s = make(id);
             ItemStack replaced;
             if (!items::isEmpty(s)) tg::displayInsert(goggles, s, replaced);
@@ -63,13 +63,24 @@ GF_REGISTER_SELFTEST("tgear.real_arm", [](Context& ctx) {
         tg::setGloves(vest, true);
         tg::addModifier(vest, tg::ids::kHaste);
         p.setArmor(Slot::Torso, vest);
-        p.setArmor(Slot::Legs, make(tg::ids::kBelt));
-        p.setArmor(Slot::Feet, make(tg::ids::kBoots));
+        // the wings with swap_hotbar (TravellersWingsModel draws the belt on them)
+        auto wings = make(tg::ids::kWings);
+        tg::addModifier(wings, tg::ids::kSwapHotbar);
+        p.setArmor(Slot::Legs, wings);
+        auto boots = make(tg::ids::kBoots);
+        tg::addModifier(boots, tg::ids::kAutoRepair);
+        p.setArmor(Slot::Feet, boots);
         auto& inv = p.getInventory();
         for (int i = 0; i < 9; ++i) inv.setItem(i, ItemStack::EMPTY_ITEM());
         inv.setItem(0, make("minecraft:stone", 16));
         inv.setItem(1, make("minecraft:torch", 8));
         inv.setItem(2, make(tg::ids::kRedThread, 32));
+        // a broken vest with modifiers (its icon: travellers_vest_broken and the broken overlays)
+        auto broken = make(tg::ids::kVest);
+        tg::addModifier(broken, tg::ids::kStealth);
+        tg::setGloves(broken, true);
+        broken.setDamageValue(static_cast<short>(tg::maxDamageOf(broken) - 1));
+        inv.setItem(3, broken);
         p.sendInventory(false);
         gf::log().info("tgear: armed {}", p.getRealName());
     });

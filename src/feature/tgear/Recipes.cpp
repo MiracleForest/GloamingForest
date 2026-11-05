@@ -22,13 +22,18 @@
 // gives the assembler no player, so the result carries the new ids ("gf:tgear.crafted") and the
 // first inventory change that sees the stack fires the triggers and drops the mark.
 #include <algorithm>
+#include <optional>
 #include <set>
 #include <string>
 #include <vector>
 
+#include "ll/api/service/Bedrock.h"
+
+#include "mc/world/PlayerUIContainer.h"
 #include "mc/world/actor/player/Inventory.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/ItemStack.h"
+#include "mc/world/level/Level.h"
 
 #include "feature/ext/item/Recipes.h"
 #include "feature/progression/Progression.h"
@@ -44,6 +49,36 @@ namespace {
 
 namespace items = game::items;
 constexpr char kCraftedKey[] = "tgear.crafted";
+
+/// The player crafting with `gear` in the grid (fireCraftingModifierTrigger's ServerPlayer): the
+/// assembler sees the grid stacks, which live in the crafter's UI container (Bedrock's crafting
+/// inputs); nullopt when no single player has them there.
+std::optional<std::int64_t> crafterOf(ItemStack const& gear) {
+    auto level = ll::service::getLevel();
+    if (!level) return std::nullopt;
+    std::optional<std::int64_t> byAddress, byContent;
+    int                         contentMatches = 0;
+    level->forEachPlayer([&](Player& p) {
+        if (p.isClientSide()) return true;
+        auto& ui = p.mPlayerUIContainer.get();
+        for (int i = 0; i < ui.getContainerSize(); ++i) {
+            auto const& s = ui.getItem(i);
+            if (&s == &gear) {
+                byAddress = p.getOrCreateUniqueID().rawID;
+                return false;
+            }
+            if (!items::isEmpty(s) && items::sameItemSameData(s, gear)) {
+                byContent = p.getOrCreateUniqueID().rawID;
+                ++contentMatches;
+                break;
+            }
+        }
+        return true;
+    });
+    if (byAddress) return byAddress;
+    if (contentMatches == 1) return byContent;
+    return std::nullopt;
+}
 
 /// getModifiableArmor: the first stack that is TravellersModifiable with modifier slots.
 ItemStack const* modifiableArmor(recipes::CraftingGrid const& grid) {
@@ -102,7 +137,11 @@ std::optional<ItemStack> modifierRecipeAssemble(std::string const& modifierId, r
     Json fresh  = Json::array();
     for (auto const& id : insertableModifiers(out))
         if (std::find(before.begin(), before.end(), id) == before.end()) fresh.push_back(id);
-    if (!fresh.empty()) items::setData(out, kCraftedKey, fresh);
+    if (!fresh.empty()) {
+        Json mark = {{"modifiers", fresh}};
+        if (auto by = crafterOf(*gear)) mark["by"] = *by;
+        items::setData(out, kCraftedKey, mark);
+    }
     return out;
 }
 
@@ -168,13 +207,15 @@ void fireCraftedTriggers(Player& player) {
     for (int i = 0; i < size; ++i) {
         auto const& s = inv.getItem(i);
         if (items::isEmpty(s) || !isGear(items::idOf(s))) continue;
-        auto fresh = items::getData(s, kCraftedKey);
-        if (!fresh.is_array()) continue;
+        auto mark = items::getData(s, kCraftedKey);
+        if (!mark.is_object()) continue;
         ItemStack copy = s;
         items::setData(copy, kCraftedKey, nullptr);
         inv.setItem(i, copy);
         changed = true;
-        for (auto const& id : fresh)
+        // only the crafter is credited (another player who picks the stack up just clears the mark)
+        if (mark.contains("by") && mark["by"].is_number_integer() && mark["by"].get<std::int64_t>() != player.getOrCreateUniqueID().rawID) continue;
+        for (auto const& id : mark.value("modifiers", Json::array()))
             if (id.is_string()) progression::trigger(player, "twilightforest:add_modifier", {{"modifier", id.get<std::string>()}});
     }
     if (changed) player.sendInventory(false);

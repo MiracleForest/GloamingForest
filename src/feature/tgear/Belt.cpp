@@ -72,7 +72,7 @@ bool trySwapHotbar(Player& player) {
     player.setArmor(SharedTypes::Legacy::ArmorSlot::Legs, legs);
     player.sendInventory(false);
     if (plan.changed) {
-        fx::sound(player.getDimension(), "item.twilightforest.travellers_gear.swap_hotbar", player.getPosition(), 1.f, 1.f);
+        fx::sound(player.getDimension(), "item.twilightforest.travellers_gear.swap_hotbar", player.getFeetPos(), 1.f, 1.f);
         log().info("tgear: {} swapped the hotbar", player.getRealName());
     }
     return plan.changed;
