@@ -42,12 +42,21 @@
 #include "mc/entity/components/CanStandOnPowderSnowComponent.h"
 #include "mc/entity/components/ExhaustionComponent.h"
 #include "mc/entity/components/FreezingImmuneComponent.h"
+#include "mc/entity/components_json_legacy/InsomniaComponent.h"
 #include "mc/entity/components_json_legacy/ProjectileComponent.h"
+#include "mc/deps/core/math/EasingType.h"
+#include "mc/deps/minecraft_camera/camera_instruction_options/FovInstruction.h"
+#include "mc/network/MinecraftPacketIds.h"
+#include "mc/network/MinecraftPackets.h"
+#include "mc/network/packet/CameraInstructionPacket.h"
 #include "mc/world/actor/ActorCategory.h"
 #include "mc/world/actor/ActorDefinitionIdentifier.h"
 #include "mc/world/actor/Mob.h"
 #include "mc/world/actor/player/Inventory.h"
 #include "mc/world/actor/player/Player.h"
+#include "mc/world/attribute/AttributeInstance.h"
+#include "mc/world/attribute/AttributeInstanceConstRef.h"
+#include "mc/world/attribute/SharedAttributes.h"
 #include "mc/world/actor/projectile/AbstractArrow.h"
 #include "mc/world/effect/EffectDuration.h"
 #include "mc/world/effect/MobEffectInstance.h"
@@ -62,6 +71,7 @@
 #include "feature/common/Interactions.h"
 #include "feature/dimension/World.h"
 #include "feature/entity/Entity.h"
+#include "feature/ext/tgear/CraftHooks.h"
 #include "feature/ext/tgear/PlayerHooks.h"
 #include "feature/families/BlockEvents.h"
 #include "feature/fx/Fx.h"
@@ -103,6 +113,7 @@ struct State {
     };
     std::unordered_map<std::int64_t, Arrow>  arrows;  ///< arrows of wearers, by unique id
     std::map<std::string, bool>              vision;  ///< player uuid -> red thread vision (default on)
+    std::vector<std::pair<std::pair<std::int64_t, std::int64_t>, std::int64_t>> dodgedImpacts; ///< (victim, projectile), tick
     std::optional<float>                     dodgeOverride;
     int                                      dodges = 0;
 };
@@ -300,12 +311,59 @@ void tickWearer(Actor& wearer, std::int64_t now) {
     applySnowFlags(wearer);
 }
 
+/// ComputeFovModifierEvent (FOV x zoom) on the zooming player's own camera: Bedrock's world projection
+/// comes from the vanilla camera (its FOV component), which a camera FOV instruction sets
+/// (CameraInstructionPacket: "camera <player> fov_set <fov>" / "fov_clear", no easing). `fov` is the
+/// client's FOV times the zoom (the client sends it with the zoom state).
+void sendZoomFov(Player& player, bool zoom, float fov) {
+    if (player.isSimulatedPlayer()) return;
+    auto  packet = MinecraftPackets::createPacket(MinecraftPacketIds::CameraInstruction);
+    auto& pkt    = static_cast<CameraInstructionPacket&>(*packet);
+    CameraInstructionOptions::FovInstruction f{};
+    f.mFov         = zoom ? std::clamp(fov, 1.f, 179.f) : 0.f;
+    f.mFovClear    = !zoom;
+    f.mFovEaseTime = 0.f;
+    f.mFovEaseType = EasingType::Linear;
+    pkt.mCameraInstruction->mFieldOfView = f;
+    pkt.sendTo(player);
+}
+
+void applyZoom(Player& player, bool zoom, float fov) {
+    sendZoomFov(player, zoom, fov > 0 ? fov : 70.f * static_cast<float>(numberOf(ids::kZoom, 0.3)));
+    log().info("tgear: {} zoom {} (fov {})", player.getRealName(), zoom ? "in" : "out", zoom ? fov : 0.f);
+    // the client plays the sound to itself (player.playSound), the server to the others around
+    fx::sound(player.getDimension(), zoom ? "item.twilightforest.travellers_goggles.zoom_in" : "item.twilightforest.travellers_goggles.zoom_out", feetOf(player), 1.f, 1.f);
+    // the trackers (the goggles' "down" texture)
+    auto level = ll::service::getLevel();
+    if (!level) return;
+    auto uid = uidOf(player);
+    level->forEachPlayer([&](Player& other) {
+        if (&other != &player && !other.isClientSide()) net::send(other, "tgear.goggles_zoom", {{"player", uid}, {"zoom", zoom}});
+        return true;
+    });
+}
+
+/// A zooming player whose zoom ability is gone (goggles off or broken) stops zooming.
+void clearZoomIfInactive(Player& player) {
+    {
+        std::lock_guard lock(state().mutex);
+        auto            it = state().zoom.find(uidOf(player));
+        if (it == state().zoom.end() || !it->second) return;
+    }
+    if (isActive(player, ids::kZoom)) return;
+    {
+        std::lock_guard lock(state().mutex);
+        state().zoom[uidOf(player)] = false;
+    }
+    applyZoom(player, false, 0.f);
+}
 void tickPlayer(Player& player, std::int64_t now) {
     if (!player.isAlive()) return;
     // travellersStealth (PlayerTickEvent): crouching -> Invisibility (2 ticks, hidden)
     if (isActive(player, ids::kStealth) && player.isSneaking()) hiddenEffect(player, kInvisibilityEffect, 0);
     tickDisplayMap(player);
     applyEfficientEater(player);
+    clearZoomIfInactive(player);
     // the broken names, once a second per player (staggered)
     if ((now + uidOf(player)) % 20 == 0) refreshBrokenNames(player);
 }
@@ -487,7 +545,24 @@ combat::Verdict onIncoming(combat::DamageInfo& d) {
     for (Actor* a : {d.direct, d.attacker})
         if (!projectile && a && a != &d.victim && a->getEntityContext().tryGetComponent<ProjectileComponent>()) projectile = a;
     if (projectile) {
-        if (rollPerfectDodge(d.victim, projectile)) {
+        auto key = std::make_pair(uidOf(d.victim), uidOf(*projectile));
+        {
+            // TF cancels the whole impact: the explosion a dodged fireball / skull would cause on that
+            // impact (the same tick, the same victim) is cancelled with it
+            std::lock_guard lock(state().mutex);
+            auto&           dodged = state().dodgedImpacts;
+            auto            now    = gameTime();
+            std::erase_if(dodged, [now](auto const& e) { return e.second < now; });
+            for (auto const& e : dodged)
+                if (e.first == key) return combat::Verdict::Cancel;
+        }
+        // only the projectile's own impact (ProjectileImpactEvent with an EntityHitResult on the wearer),
+        // never the explosion, fire or magic damage a projectile causes
+        if (core::tgear::isProjectileImpactType(d.type) && rollPerfectDodge(d.victim, projectile)) {
+            {
+                std::lock_guard lock(state().mutex);
+                state().dodgedImpacts.push_back({key, gameTime()});
+            }
             auto  id  = projectile->getOrCreateUniqueID();
             Vec3  v   = projectile->getPosDelta();
             Vec3  at  = projectile->getPosition();
@@ -517,7 +592,7 @@ combat::Verdict onIncoming(combat::DamageInfo& d) {
             if (!items::isEmpty(s) && isGear(items::idOf(s)) && isBroken(s)) broken += armorPointsOf(items::idOf(s));
         }
         if (broken > 0 && d.victim.hasCategory(ActorCategory::Mob)) {
-            int total = std::min(static_cast<Mob&>(d.victim).getArmorValue(), 24);
+            int total = std::min(static_cast<Mob&>(d.victim).getArmorValue(), 20); // Bedrock caps the reduction at 20 points
             int left  = std::max(total - broken, 0);
             d.amount *= (25.f - static_cast<float>(left)) / (25.f - static_cast<float>(total));
         }
@@ -555,7 +630,9 @@ bool targetFilter(Mob& attacker, Actor& candidate) {
     // blocks)
     if (candidate.isSneaking() && isActive(candidate, ids::kStealth) && !hurtBy(attacker, candidate)) {
         float cover = std::max(0.1f, static_cast<float>(armorCover(candidate)) / 4.f);
-        float range = std::max(32.f * 0.8f * 0.7f * cover, 2.f);
+        auto  attr  = attacker.getAttribute(SharedAttributes::FOLLOW_RANGE());
+        float follow = attr.mPtr ? attr.mPtr->mCurrentValue : 16.f; // the attacker's follow range (Mob#getAttributeValue(FOLLOW_RANGE))
+        float range = std::max(follow * 0.8f * 0.7f * cover, 2.f);
         auto  a = feetOf(attacker), c = feetOf(candidate);
         float dx = a.x - c.x, dy = a.y - c.y, dz = a.z - c.z;
         if (dx * dx + dy * dy + dz * dz > range * range) return false;
@@ -741,25 +818,18 @@ bool usingZoom(Player const& player) {
     return it != state().zoom.end() && it->second;
 }
 
-void setZoom(Player& player, bool zoom) {
-    // GogglesZoomPacket#handle on the server: only with an active zoom ability
-    if (zoom && !isActive(player, ids::kZoom)) return;
+void setZoom(Player& player, bool zoom, float fov) {
+    // GogglesZoomPacket#handle on the server: ignored entirely without an active zoom ability (the
+    // state of a wearer who loses the ability is cleared by the tick: clearZoomIfInactive)
+    if (!isActive(player, ids::kZoom)) return;
     {
         std::lock_guard lock(state().mutex);
-        state().zoom[uidOf(player)] = zoom;
+        auto&           cur = state().zoom[uidOf(player)];
+        if (cur == zoom && !zoom) return;
+        cur = zoom;
     }
-    // the client plays the sound to itself (player.playSound), the server to the others around
-    fx::sound(player.getDimension(), zoom ? "item.twilightforest.travellers_goggles.zoom_in" : "item.twilightforest.travellers_goggles.zoom_out", feetOf(player), 1.f, 1.f);
-    // the trackers (the goggles' "down" texture)
-    auto level = ll::service::getLevel();
-    if (!level) return;
-    auto uid = uidOf(player);
-    level->forEachPlayer([&](Player& other) {
-        if (&other != &player && !other.isClientSide()) net::send(other, "tgear.goggles_zoom", {{"player", uid}, {"zoom", zoom}});
-        return true;
-    });
+    applyZoom(player, zoom, fov);
 }
-
 bool redThreadVision(Player const& player) {
     std::lock_guard lock(state().mutex);
     auto            it = state().vision.find(uuidOf(player));
@@ -786,6 +856,7 @@ class TgearModule {
 public:
     void install() {
         gf::ext::tgear::installHooks();
+        gf::ext::tgear::installCraftHooks();
         static bool once = false;
         if (!once) {
             once = true;
@@ -804,12 +875,13 @@ public:
             });
             net::on("tgear.swap_hotbar", [](Player& p, Json const&) { trySwapHotbar(p); });
             net::on("tgear.cycle_map_slot", [](Player& p, Json const&) { cycleMapSlot(p); });
-            net::on("tgear.goggles_zoom", [](Player& p, Json const& msg) { setZoom(p, msg.value("zoom", false)); });
+            net::on("tgear.goggles_zoom", [](Player& p, Json const& msg) { setZoom(p, msg.value("zoom", false), msg.value("fov", 0.f)); });
             net::on("tgear.display_click", [](Player& p, Json const& msg) { displaySlotClick(p, msg.value("collection", std::string()), msg.value("index", -1)); });
             net::on("tgear.thread_vision_toggle", [](Player& p, Json const&) { toggleRedThreadVision(p); });
             net::onCompanionJoined([](Player& p) { sendVision(p); });
             blockevents::onNeighborChanged(ids::kRedThread, [](BlockSource& region, BlockPos const& pos, BlockPos const&) { updateRedThread(region, pos); });
             registerInteractions();
+            registerMachines();
             // BDS enables mods after the world is ready (onWorldReady has fired already): register for
             // this world now; the client's worlds come later through onWorldReady
             if (game::db::available()) {
@@ -836,6 +908,7 @@ public:
     }
     void uninstall() {
         gf::ext::tgear::uninstallHooks();
+        gf::ext::tgear::uninstallCraftHooks();
         ll::event::EventBus::getInstance().removeListener(mTick);
         ll::event::EventBus::getInstance().removeListener(mLeave);
         ll::event::EventBus::getInstance().removeListener(mPhantom);
@@ -910,10 +983,15 @@ private:
 } // namespace
 
 bool deniesPhantomAt(int dim, Vec3 const& pos) {
+    // PlayerSpawnPhantomsEvent is per insomniac player: Bedrock spawns the phantoms of an insomniac
+    // player around it. The spawn is denied only when every player who could own it (an insomniac
+    // player of the dimension within 64 blocks; without one, the nearest player) wears active
+    // all-night goggles, so a nearby insomniac player without them still gets its phantoms.
     auto level = ll::service::getLevel();
     if (!level) return false;
-    Player* nearest = nullptr;
-    float   best    = std::numeric_limits<float>::max();
+    std::vector<Player*> owners;
+    Player*              nearest = nullptr;
+    float                best    = std::numeric_limits<float>::max();
     level->forEachPlayer([&](Player& p) {
         if (p.isClientSide() || static_cast<int>(p.getDimensionId()) != dim) return true;
         auto  f  = p.getFeetPos();
@@ -922,11 +1000,18 @@ bool deniesPhantomAt(int dim, Vec3 const& pos) {
             best    = d2;
             nearest = &p;
         }
+        float h2 = (f.x - pos.x) * (f.x - pos.x) + (f.z - pos.z) * (f.z - pos.z);
+        if (h2 > 64.f * 64.f) return true;
+        if (auto ins = p.getEntityContext().tryGetComponent<InsomniaComponent>()) {
+            int since = ins->mTimeSinceRest, until = ins->mTicksUntilInsomnia;
+            if (until > 0 && since >= until) owners.push_back(&p);
+        }
         return true;
     });
-    return nearest && isActive(*nearest, ids::kAllNight);
+    if (owners.empty() && nearest) owners.push_back(nearest);
+    if (owners.empty()) return false;
+    return std::all_of(owners.begin(), owners.end(), [](Player* p) { return isActive(*p, ids::kAllNight); });
 }
-
 } // namespace gf::feature::tgear
 
 GF_REGISTER_MODULE(gf::feature::tgear::TgearModule);

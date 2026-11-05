@@ -29,6 +29,7 @@
 
 #include "ll/api/service/Bedrock.h"
 
+#include "mc/deps/shared_types/legacy/actor/ArmorSlot.h"
 #include "mc/world/PlayerUIContainer.h"
 #include "mc/world/actor/player/Inventory.h"
 #include "mc/world/actor/player/Player.h"
@@ -201,23 +202,32 @@ void registerRecipes() {
 }
 
 void fireCraftedTriggers(Player& player) {
-    auto& inv     = player.getInventory();
-    int   size    = inv.getContainerSize();
-    bool  changed = false;
-    for (int i = 0; i < size; ++i) {
-        auto const& s = inv.getItem(i);
-        if (items::isEmpty(s) || !isGear(items::idOf(s))) continue;
+    bool changed = false;
+    // one marked stack: the mark cleared, the crafter credited
+    auto visit = [&](ItemStack const& s, auto&& set) {
+        if (items::isEmpty(s) || !isGear(items::idOf(s))) return;
         auto mark = items::getData(s, kCraftedKey);
-        if (!mark.is_object()) continue;
+        if (!mark.is_object()) return;
         ItemStack copy = s;
         items::setData(copy, kCraftedKey, nullptr);
-        inv.setItem(i, copy);
+        set(copy);
         changed = true;
         // only the crafter is credited (another player who picks the stack up just clears the mark)
-        if (mark.contains("by") && mark["by"].is_number_integer() && mark["by"].get<std::int64_t>() != player.getOrCreateUniqueID().rawID) continue;
+        if (mark.contains("by") && mark["by"].is_number_integer() && mark["by"].get<std::int64_t>() != player.getOrCreateUniqueID().rawID) return;
         for (auto const& id : mark.value("modifiers", Json::array()))
             if (id.is_string()) progression::trigger(player, "twilightforest:add_modifier", {{"modifier", id.get<std::string>()}});
+    };
+    // the inventory, the armour, the off-hand and the cursor (a crafted piece placed from the cursor
+    // straight into an armour slot or the off-hand)
+    auto& inv = player.getInventory();
+    for (int i = 0; i < inv.getContainerSize(); ++i) visit(inv.getItem(i), [&](ItemStack const& c) { inv.setItem(i, c); });
+    for (int i = 0; i < 4; ++i) {
+        auto slot = static_cast<SharedTypes::Legacy::ArmorSlot>(i);
+        visit(player.getArmor(slot), [&](ItemStack const& c) { player.setArmor(slot, c); });
     }
+    visit(player.getOffhandSlot(), [&](ItemStack const& c) { player.setOffhandSlot(c); });
+    auto& ui = player.mPlayerUIContainer.get();
+    visit(ui.getItem(0), [&](ItemStack const& c) { ui.setItem(0, c); }); // PlayerUISlot::CursorSelected
     if (changed) player.sendInventory(false);
 }
 

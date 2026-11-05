@@ -113,3 +113,10 @@ TEST(TgearTooltip, Interpolate) {
     EXPECT_EQ(interpolate("a ${tfkeybinds/x} b ${other/y} c", name), "a Nonexistent key b ${other/y} c");
     EXPECT_EQ(interpolate("plain", name), "plain");
 }
+
+TEST(TgearDodge, OnlyAProjectilesOwnImpactIsDodged) {
+    for (auto const* t : {"minecraft:arrow", "minecraft:trident", "minecraft:thrown", "minecraft:mob_projectile", "minecraft:fireball", "minecraft:wither_skull"})
+        EXPECT_TRUE(isProjectileImpactType(t)) << t;
+    for (auto const* t : {"minecraft:explosion", "minecraft:player_explosion", "minecraft:fireworks", "minecraft:in_fire", "minecraft:magic", "minecraft:indirect_magic", ""})
+        EXPECT_FALSE(isProjectileImpactType(t)) << t;
+}

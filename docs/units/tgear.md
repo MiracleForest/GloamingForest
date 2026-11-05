@@ -14,7 +14,9 @@ its vanilla fallbacks and its deviations from TF 4.8 (for A8's deviation list).
 | `src/feature/tgear/Module.cpp` | Ticks of every wearer (haste, auto repair, powder snow / freezing; players: stealth, the item display's map, efficient eater, broken names), arrow magnetism, perfect dodge, never-break, the broken pieces' armour, all-night goggles (phantoms, ender mask), piglins, the stealth target filter, net channels, vanilla fallbacks, the red thread's MultifaceBlock rules, red thread vision (`gf:tgear:red_thread_vision`) |
 | `src/feature/tgear/{Belt,Display,Tooltips}.cpp` | Hotbar swap, item display storage / cycle / secondary clicks / lodestone / TF map ticking / form, lore tooltips for vanilla players; config section `tgear` |
 | `src/feature/ext/tgear/PlayerHooks.{h,cpp}` | Contract extension: the armour damage hook of mobs and players, before and after the game (R18) |
-| `src/feature/ext/tgear/ClientHooks.{h,cpp}` | Contract extension (client): the world FOV (`LevelRendererPlayer::getFov`), the local turn (`LocalPlayer::localPlayerTurn`) and secondary clicks in container screens (`ContainerScreenController::_handlePlaceOne / _handleTakeHalf`) (R18) |
+| `src/feature/ext/tgear/ClientHooks.{h,cpp}` | Contract extension (client): the local turn (`LocalPlayer::localPlayerTurn`, an R8 exception for A8 to fold into F12's movement / camera contract) and secondary clicks in container screens (`ContainerScreenController::_handlePlaceOne / _handleTakeHalf`) (R18) |
+| `src/feature/ext/tgear/CraftHooks.{h,cpp}` | Contract extension: the grindstone result and take (`CraftHandlerGrindstone::getResultItem / _handleCraftAction`), the anvil refusal (`AnvilContainerScreenValidator::getCraftResult`) and the storage refusal of shulker boxes / bundles (`ShulkerBoxContainerValidation / DynamicContainerValidation::isItemAllowedInSlot`, `ShulkerBoxBlockActor::canPushInItem`) (R18) |
+| `src/feature/tgear/Machines.cpp` | TF's grindstone, anvil and canFitInsideContainerItems rules |
 | `src/client/tgear/TgearClient.cpp` | Keys, zoom FOV and turn, item display HUD, red thread (RedThreadRenderer: connections, corners, glow), worn model state, item icon overlays, TF's tooltip with Shift descriptions |
 | `assets/pack/bp/items/tgear`, `assets/pack/bp/recipes/tgear`, `assets/pack/bp/blocks/tgear` | Wearable gear items, 35 BP recipes (one per potion variant), the red thread multiface block (thin per-face selection boxes, waterloggable) |
 | `assets/pack/rp/{models/blocks,particles}/tgear`, `assets/pack/rp/terrain_texture.d/tgear.json` | Red thread block geometry (RedThreadModel's centre piece), the perfect dodge particle (PortalParticle path) |
@@ -58,10 +60,16 @@ its vanilla fallbacks and its deviations from TF 4.8 (for A8's deviation list).
   ProjectileComponent is in the ground is its impact (within 200 ticks of the first sighting). Arrows
   stuck before (shot earlier, loaded from disk) never count. Bedrock's creative / infinity arrows count as
   CREATIVE_ONLY.
-- Perfect dodge: the combat contract cancels the damage; a tick later the projectile gets the motion it hit
-  with back, one step further along (TF cancels the impact, so the projectile flies on).
-- All-night goggles: a natural phantom spawn (LeviLamina's SpawningMobEvent) whose nearest player wears
-  them is cancelled; the time since rest runs on, as in TF. The ender mask and the piglins' neutrality
+- Perfect dodge: only a projectile's own impact (arrow, trident, thrown, mob projectile, fireball, wither
+  skull, wind charge, spit damage) is dodged, never the explosion, fire or magic damage a projectile causes;
+  the explosion of the dodged impact itself (same projectile, same victim, same tick) is cancelled with it,
+  as TF cancels the whole impact. The combat contract cancels the damage; a tick later the projectile gets
+  the motion it hit with back, one step further along (TF cancels the impact, so the projectile flies on;
+  Bedrock removes an arrow that hit an entity before units see it, so an arrow may still vanish).
+- All-night goggles: a natural phantom spawn (LeviLamina's SpawningMobEvent) is cancelled when every player
+  who could own it wears active goggles: the insomniac players of the dimension within 64 blocks
+  (InsomniaComponent), else the nearest player (Bedrock does not tell which player a phantom spawn is
+  for; TF denies per insomniac player). The time since rest runs on, as in TF. The ender mask and the piglins' neutrality
   are target filters (F8's `addTargetFilter`): an enderman never targets the wearer unless the wearer hurt
   it (Bedrock's gaze check is the vanilla enderman's data-driven filter); a piglin never targets a player
   in the goggles or the wings unless hurt by them (Java piglins also anger at chest opening and gold
@@ -69,36 +77,58 @@ its vanilla fallbacks and its deviations from TF 4.8 (for A8's deviation list).
 - Powder snow and freezing: the boots give the wearer Bedrock's CanStandOnPowderSnowComponent and the
   boots / vest its FreezingImmuneComponent (the entity flags Bedrock reads; its leather armour sets their
   `FromEquipment` twins from a hard-coded item check).
-- Item display: the HUD map background is Bedrock's `textures/map/map_background` (Java's
-  `map_background_checkerboard` is a Java resource Bedrock does not ship); the map decorations are drawn
+- Item display: the map decorations are drawn
   upright (F12's canvas has no rotated blit). TF's own maps (magic, maze, ore) tick from the goggles through
   F9's item behaviour registry (`gf::item::internal::behaviourOf`, the owner's inventory tick as the
   selected item). `twentyFourHourFormat` follows the client's locale while `itemDisplay.followLocale` is on
   (TF's `use24HourTimeDefault`).
-- Tooltip images (TravellersBeltTooltipComponent, ItemDisplayTooltipComponent): Bedrock's hover text is a
-  string (`ItemStackBase::getFormattedHovertext`, drawn by the JSON UI's hover text label); there is no
-  per-item tooltip image to hook. The stored items are listed as lines.
 - Item icons: Bedrock item icons are static per item (`minecraft:icon`). With the client mod the slot
   renderer (F12's `registerItemRenderer`, Gui) draws TravellersGearItemModel's layers over the icon: the
   `*_broken` texture, then one overlay per modifier and the gloves overlay (from `broken/` while
   broken). Without the mod the base icon shows.
-- Zoom FOV: NOT ACHIEVED. Three hooks were tried and none narrows the drawn view: F12's
-  `camera::addFovModifier` (`LocalPlayer::getFieldOfViewModifier`), `LevelRendererPlayer::getFov` (called
-  ~250 times a second, base 70, its result multiplied by 0.3) and `CameraAPI::tryGetFOV` (ext/tgear
-  ClientHooks); zoom.png and zoom-off.png still differ only in the HUD (4 % of the pixels). The world
-  projection of 1.26.51 must come from another path (the vanilla camera ECS); routed to F12 / A8. The
-  zoom state, its sound, its channel and the turn slowdown (`LocalPlayer::localPlayerTurn`, TF's
-  slowZoomSensitivity at Java's default sensitivity) work.
+- Zoom FOV: the client mod sends the zoom state with its FOV times the zoom (`LevelRendererPlayer::getFov`
+  without the variable modifiers, x 0.3); the server narrows that player's camera with a camera FOV
+  instruction (`CameraInstructionPacket`, the `camera fov_set` / `fov_clear` of the vanilla camera, no
+  easing). Java's ComputeFovModifierEvent multiplies the FOV every frame; on Bedrock the world projection
+  comes from the vanilla camera's FOV component, which neither F12's `camera::addFovModifier`
+  (`LocalPlayer::getFieldOfViewModifier`) nor `LevelRendererPlayer::getFov` / `CameraAPI::tryGetFOV`
+  reach (rounds 1-2). The turn slowdown (`LocalPlayer::localPlayerTurn`, TF's slowZoomSensitivity at
+  Java's default sensitivity) stays a client hook. Speed / sprint FOV changes during a zoom keep the
+  zoomed FOV (the instruction fixes the camera FOV).
 - Worn models (gloves on the vest, slim gloves, the belt on swap-hotbar wings, the goggles' "down"
-  texture while zooming): NOT ACHIEVED. Bedrock attachables cannot read per-stack item data, and attachable
-  molang cannot read the wearer's variables: `c.owning_entity->v.x` fails ("unknown variable
-  context.owning_entity") and `v.x` fails ("unknown variable", even with the wearer's parent_setup
-  defining it) - content log of the round 2 client runs. The client mod still sets
-  `variable.tgear_gloves / tgear_belt / tgear_zoom / tgear_glove_overlay` on every player for a future
-  render hook (an F12 entity renderer posed on the arm bones); the first-person glove overlay depends on it.
-- Item icon overlays: drawn through F12's Gui item renderer, but no overlay was visible in round 2's
-  inventory.png (F12's Gui renderer path is unverified for blits); routed to F12.
-- Red thread: the block model draws TF's 2 x 2 centre piece per face for everyone; the client mod draws the
+  texture while zooming, the first-person glove overlay): NOT ACHIEVED. Bedrock attachables cannot read
+  per-stack item data, and attachable molang cannot read the wearer's variables: `c.owning_entity->v.x`
+  fails ("unknown variable context.owning_entity") and `v.x` fails ("unknown variable", even with the
+  wearer's parent_setup defining it) - content log of round 2. The client mod could draw the parts only
+  posed on the player's arm / leg / head bones, and the bone poses of a rendered player are not offered by
+  F12's entity renderer contract (`registerEntityRenderer` gets the actor and the camera, no bone
+  matrices); hooking the actor renderer for them is F12's (R8). Closest workaround in place: the F2
+  attachables draw the vest, wings, goggles and boots themselves. Routed to F12 / A8: an entity layer with
+  the posed bone matrices (Java's RenderLayer) would let U11 draw TravellersGearModels /
+  TravellersWingsModel's belt / the goggles' down texture with drawGeo. The client already tracks the
+  other players' zoom (`tgear.goggles_zoom`).
+- Item icon overlays: drawn through F12's Gui item renderer (InventoryItemRenderer::render, after the slot
+  batch) with the slot's absolute position and no translation of another control; the client logs the
+  first draws ("tgear: gear icon ... drawn at").
+- Tooltip images (TravellersBeltTooltipComponent, ItemDisplayTooltipComponent: the bundle background, the
+  slot sprites, the *_display.png placeholders): Bedrock's hover text is one string
+  (`ItemStackBase::getFormattedHovertext`, drawn by the JSON UI's hover text label); F12's `tooltip::add`
+  adds lines and there is no hover-panel image hook in the client contracts (drawing one means hooking the
+  hover text renderer, F12's). The stored items are listed as lines (with the client mod and as lore).
+- Item display HUD: the overlay draws at (screenOffsetX, screenOffsetY) x screenScale in GUI pixels with
+  the UI's world matrix minus any translation another control left (the chat panel did in round 2) and the
+  full clipping rectangle. The map background is Bedrock's `textures/map/map_background`: Java's
+  `map_background_checkerboard` is a Mojang Java Edition resource that Bedrock does not ship and that
+  GloamingForest cannot redistribute.
+- Grindstone and anvil (TravellersGearEvents): one piece with insertable modifiers comes out of the
+  grindstone without them (Bedrock's grindstone result is replaced on the server); two pieces or a piece
+  without modifiers get no result; the swap_hotbar container and the item display's contents are given
+  to the player once the result is taken (the next tick, after the item stack request). The anvil never
+  combines two pieces, and a survival player gets no result for a piece and an enchanted book (Java drops
+  every unsupported book enchantment, leaving no result); a vanilla client may still preview a result,
+  which the server refuses when it is taken.
+- Belts and storage (canFitInsideContainerItems): a belt with its container is refused by shulker box
+  slots, a shulker box's hopper input and bundles (server-side validation).- Red thread: the block model draws TF's 2 x 2 centre piece per face for everyone; the client mod draws the
   connections (same block, next thread, round the corner unless a full face is in the way) with the
   cutout material at the block's light, and while red thread is held or the vision is on, everything full
   bright through walls (the UI textured material: no depth test). MultifaceSpreader: TF's red thread is not
@@ -107,8 +137,8 @@ its vanilla fallbacks and its deviations from TF 4.8 (for A8's deviation list).
   one box per state (63 permutations; the union of the 1 px face slabs: Bedrock has a single selection
   box per block).
 - Wing visuals: the per-state wing animation is U12's (`tgmove`, TravellersWingsModel's animation).
-- Item display HUD map: the client e2e has no real map to show (a `minecraft:filled_map` without map data
-  has no view), so the map widget is not screenshotted.
+- Item display HUD map: the client e2e makes a real map (an empty map used in the hand) that
+  `tgear.real_arm` stores, so the map widget is screenshotted with its colours.
 - Keys are keyboard bindings of the client mod (`tgear.zoom` Z, `tgear.swap_hotbar` V,
   `tgear.item_display_map_cycle` C, `tgear.red_thread_vision` unbound), TF's defaults. Bedrock's own keyboard
   binding of Z also opens a screen over the view: remap one of the two in the controls to zoom without it.

@@ -7,8 +7,8 @@
 #    with its time.png icon, moon dial with moon.png): out/tgear/hud-item-display.png; the inventory with
 #    the worn gear (gloves on the vest's arms, the belt on the wings) and the item icons (modifier
 #    overlays, the broken vest): out/tgear/inventory.png;
-# 2. the zoom key (Z) held: the client logs "tgear: zoom in", the FOV narrows to 0.3: out/tgear/zoom.png
-#    must differ from out/tgear/zoom-off.png (taken after the release);
+# 2. the zoom key (Z) held: the client logs "tgear: zoom in", the server narrows the camera FOV to 0.3 (a
+#    camera FOV instruction): out/tgear/zoom.png must differ from out/tgear/zoom-off.png by 5 % or more;
 # 3. the map cycle key (C): the client sends tgear.cycle_map_slot;
 # 4. red thread on the floor, round a corner and on a wall, and more behind a stone wall: seen through
 #    the wall while holding red thread (the glow): out/tgear/red-thread.png; close up, holding stone (the
@@ -42,10 +42,22 @@ Invoke-Teleport '/tp @s 40.5 -60 40.5 0 10'
 Invoke-Chat '/time set 1000'
 Invoke-Chat '/fill 38 -61 38 46 -61 46 stone'
 Invoke-Chat '/fill 38 -60 38 46 -55 46 air'
+# a real map for the item display: an empty map used in the hand (the game fills it around the player);
+# tgear.real_arm stores it in the goggles
+Invoke-Chat '/replaceitem entity @s slot.weapon.mainhand 0 empty_map'
+Start-Sleep -Milliseconds 800
+Focus-Game
+[BsE2E.Native]::MouseButton(1, $false); Start-Sleep -Milliseconds 120; [BsE2E.Native]::MouseButton(1, $true)
+Start-Sleep -Seconds 2
+$mark = Get-LogMark
 $r = Invoke-SelfTest 'tgear.real_arm'
 if ($r.Fail -gt 0) { throw 'tgear.real_arm failed' }
 Wait-LogLine "${hostPrefix}tgear: armed " 20 | Out-Null
-Start-Sleep -Seconds 3
+if ($script:Mode -ne 'remote-vanilla') {
+    try { Wait-LogLine "${hostPrefix}tgear: storing .+'s map " 5 -Since $mark | Out-Null } catch { throw 'the empty map was not turned into a real map to store' }
+}
+# let the chat lines fade, then the HUD with the map widget (the map fills in as the wearer carries it)
+Start-Sleep -Seconds 10
 Save-Screenshot 'hud-item-display' | Out-Null
 
 Open-Inventory
@@ -62,6 +74,8 @@ if ($script:Mode -ne 'remote-vanilla') {
         Start-Sleep -Milliseconds 600
         # Bedrock's own binding of Z opens a screen over the view: close it while Z stays held
         if ((Get-ClientScreen) -ne 'hud_screen') { Press-Key ESC; Start-Sleep -Milliseconds 600 }
+        Wait-LogLine "${hostPrefix}tgear: .+ zoom in \(fov" 10 -Since $mark | Out-Null
+        Start-Sleep -Milliseconds 600
         $zoomShot = Save-Screenshot 'zoom'
     } finally { [BsE2E.Native]::Key([uint16]0x5A, $true) }
     Wait-LogLine 'tgear: zoom out' 10 -Since $mark | Out-Null
@@ -70,7 +84,7 @@ if ($script:Mode -ne 'remote-vanilla') {
     $offShot = Save-Screenshot 'zoom-off'
     $diff = Get-ImageDiff $zoomShot $offShot
     Write-Host "zoom vs zoom-off: $([Math]::Round($diff * 100, 1)) % of the pixels differ"
-    if ($diff -lt 0.05) { Write-Host "warning: the zoom did not narrow the FOV (known deviation, docs/units/tgear.md): $diff" }
+    if ($diff -lt 0.05) { throw "the zoom did not narrow the FOV: zoom.png and zoom-off.png differ by $([Math]::Round($diff * 100, 1)) % (< 5 %)" }
 
     # 3. map cycle key
     $mark = Get-LogMark

@@ -111,6 +111,13 @@ inline constexpr std::int64_t kAutoRepairQuietTicks = 10 * 20;
 /// MoonDialDisplay's icon of moon phase k: (k % 4 * 8, k / 4 % 2 * 8) of moon.png (32 x 16).
 [[nodiscard]] std::array<int, 2> moonIconUv(int phase);
 
+// ---- perfect dodge (TravellersGearEvents#performPerfectDodge) -----------------------------------------
+
+/// Whether a damage type is a projectile's own impact on an entity (ProjectileImpactEvent with an
+/// EntityHitResult): arrows, tridents, thrown items, mob projectiles, fireballs, wither skulls, wind
+/// charges, llama spit. Explosions, fire, magic and the rest are not.
+[[nodiscard]] bool isProjectileImpactType(std::string const& damageType);
+
 // ---- TooltipStringInterpolator -------------------------------------------------------------------
 
 /// Replaces every ${tfkeybinds/<key name>} in `text` with `keyName(<key name>)`. Other forms are

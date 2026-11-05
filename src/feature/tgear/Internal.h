@@ -71,7 +71,8 @@ int autoRepair(Actor& wearer, std::int64_t gameTime);
 bool rollPerfectDodge(Actor& victim, Actor* projectile);
 /// Zoom state of a player (is_using_goggles_zoom_modifier).
 [[nodiscard]] bool usingZoom(Player const& player);
-void               setZoom(Player& player, bool zoom);
+/// GogglesZoomPacket#handle: `fov` is the client's FOV times the zoom (0: 70 x the zoom).
+void               setZoom(Player& player, bool zoom, float fov = 0.f);
 /// MultifaceBlock#canAttachTo: the neighbour on `face` (FacingID) of `pos` has a full face towards it.
 [[nodiscard]] bool canAttachRedThread(BlockSource& region, BlockPos const& pos, int face);
 /// TFDataAttachments.TRAVELLERS_GOGGLES_RED_THREAD_VISION of a player (default true, kept on death,
@@ -81,6 +82,18 @@ bool               toggleRedThreadVision(Player& player);
 /// PlayerSpawnPhantomsEvent DENY: the nearest player to a natural phantom spawn wears active
 /// all-night goggles.
 [[nodiscard]] bool deniesPhantomAt(int dim, Vec3 const& pos);
+
+// ---- Machines.cpp ------------------------------------------------------------------------------------
+/// removeModifiersFromTravellersGear: nullopt for no travellers piece (the game's result), an empty stack
+/// when refused (two pieces, no insertable modifier), else the piece without its insertable modifiers.
+[[nodiscard]] std::optional<ItemStack> grindstoneResult(ItemStack const& top, ItemStack const& bottom);
+/// extractItemsFromSwapHotbarModifier: the stacks the grindstone gives back on take.
+[[nodiscard]] std::vector<ItemStack> grindstoneReturns(ItemStack const& top, ItemStack const& bottom);
+/// cancelCombiningTravellersGear and the book rule of a survival player.
+[[nodiscard]] bool anvilRefuses(ItemStack const& input, ItemStack const& material, bool creative);
+/// TravellersArmorBeltItem#canFitInsideContainerItems(stack) false: a belt with its container.
+[[nodiscard]] bool storageRefuses(ItemStack const& item);
+void               registerMachines();
 
 // ---- Command.cpp -------------------------------------------------------------------------------------
 struct CommandOutcome {

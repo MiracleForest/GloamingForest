@@ -40,8 +40,18 @@
 #include "mc/client/renderer/RenderMaterialGroup.h"
 #include "mc/client/renderer/Tessellator.h"
 #include "mc/client/renderer/TextureGroup.h"
+#include "mc/client/renderer/screen/MinecraftUIRenderContext.h"
+#include "mc/deps/renderer/Camera.h"
+#include "mc/deps/renderer/MatrixStack.h"
+#include "mc/deps/core/math/Matrix.h"
 #include "mc/client/renderer/blockactor/BlockActorRenderDispatcher.h"
+#include "mc/client/renderer/block/BlockGraphics.h"
 #include "mc/client/renderer/blockactor/MovingBlockActorRenderer.h"
+#include "mc/client/renderer/texture/TextureUVCoordinateSet.h"
+#include "mc/deps/core/math/Color.h"
+#include "mc/deps/renderer/ShaderColor.h"
+#include "mc/client/renderer/game/LevelRenderer.h"
+#include "mc/client/renderer/game/LevelRendererPlayer.h"
 #include "mc/common/client/renderer/helpers/MeshHelpers.h"
 #include "mc/deps/core/math/Vec2.h"
 #include "mc/deps/core/string/HashedString.h"
@@ -130,21 +140,37 @@ float zoomTurnScale(float zoom) {
     return static_cast<float>(turn / normal);
 }
 
+/// The client's FOV without the variable (sprint / speed) modifiers: LevelRendererPlayer#getFov.
+float baseFov() {
+    try {
+        auto* c = currentClient();
+        auto* r = c ? c->getLevelRenderer() : nullptr;
+        if (r) {
+            auto const& lrp = r->mLevelRendererPlayer.get();
+            if (lrp) {
+                float f = lrp->getFov(1.f, false);
+                if (f > 1.f && f < 179.f) return f;
+            }
+        }
+    } catch (...) {}
+    return 70.f;
+}
+
 /// TravellersClientEvents#updateZoomState, per client tick: the key held (not scoping) with an
-/// active zoom ability; a change is sent to the server, which plays the sound for everyone. The FOV
-/// (ComputeFovModifierEvent: x zoom) and the turn follow the state.
+/// active zoom ability; a change is sent to the server, which plays the sound for everyone and narrows
+/// this player's camera FOV (ComputeFovModifierEvent: x zoom) through the vanilla camera. The turn
+/// follows the state here.
 void tickZoom(Player& player) {
     auto const& head = player.getArmor(Slot::Head);
     bool        zoom = keys::down(kZoomKey) && !player.isScoping() && tg::isActiveOn(player, head, tg::ids::kZoom);
     float       z    = static_cast<float>(tg::numberOf(tg::ids::kZoom, 0.3));
-    ext::tgear::client::setFovFactor(zoom ? z : 1.f);
     ext::tgear::client::setTurnScale(zoom ? zoomTurnScale(z) : 1.f);
     if (zoom == st().zooming.load()) return;
     st().zooming = zoom;
-    feature::net::client::send("tgear.goggles_zoom", {{"zoom", zoom}});
-    log().info("tgear: zoom {} (fov x{}, base fov {}, world fov calls {})", zoom ? "in" : "out", zoom ? z : 1.f, ext::tgear::client::lastBaseFov(), ext::tgear::client::fovCalls());
+    float fov    = baseFov() * z;
+    feature::net::client::send("tgear.goggles_zoom", {{"zoom", zoom}, {"fov", fov}});
+    log().info("tgear: zoom {} (fov x{} = {})", zoom ? "in" : "out", zoom ? z : 1.f, zoom ? fov : 0.f);
 }
-
 bool holdingThread(Player const& player) {
     return items::idOf(player.getSelectedItem()) == tg::ids::kRedThread || items::idOf(player.getOffhandSlot()) == tg::ids::kRedThread;
 }
@@ -154,47 +180,26 @@ void tickThreads(Player& player) {
     st().showThreads = holdingThread(player) || vision;
 }
 
-// ---- worn models (molang variables of each player, read by the attachables) ------------------------------
+// ---- stealth (TravellersClientEvents#handleStealth) -------------------------------------------------------
 
-bool slimSkin(Player const& player) {
-    try {
-        auto const& ref = player.mSkin.get();
-        if (!ref) return false;
-        auto const& impl = ref->mSkinImpl.get();
-        if (!impl) return false;
-        return static_cast<SharedTypes::persona::ArmSizeType const&>(impl->mObject.mArmSizeType) == SharedTypes::persona::ArmSizeType::Slim;
-    } catch (...) {
-        return false;
-    }
-}
-
-void setVar(Actor& actor, char const* name, float value) { actor.mMolangVariables->setMolangVariable(HashedString(name), MolangScriptArg(value)); }
-
-/// TravellersGearModels (gloves on a vest with has_travellers_gloves, slim for slim skins),
-/// TravellersWingsModel (the belt on wings with swap_hotbar), the goggles' travellers_layer_1_down while
-/// zooming (the local player's own state, the others' from GogglesZoomPacket) and the client config's
-/// firstPersonGloveOverlay (TravellersClientEvents#renderGlovesInFirstPerson).
-void tickWornModels(Player& local) {
-    bool overlay = gf::config::get<tg::TgearConfig>().firstPersonGloveOverlay;
-    std::unordered_map<std::int64_t, bool> zooms;
-    {
-        std::lock_guard lock(st().mutex);
-        zooms = st().trackedZoom;
-    }
+/// Every frame TF makes each crouching stealth wearer invisible on the client at once (the server's
+/// hidden Invisibility follows). Per client tick here: the players of the client's level that crouch with
+/// active stealth are made invisible; once they stop, their invisibility goes back to their effects.
+void tickStealth(Player& local) {
+    static std::unordered_map<std::int64_t, bool> hidden; // client thread
+    std::unordered_map<std::int64_t, bool>        now;
     local.getLevel().forEachPlayer([&](Player& p) {
-        auto const& chest = p.getArmor(Slot::Torso);
-        auto const& legs  = p.getArmor(Slot::Legs);
-        bool        gloves = !items::isEmpty(chest) && items::idOf(chest) == tg::ids::kVest && tg::hasGloves(chest);
-        bool        belt   = !items::isEmpty(legs) && items::idOf(legs) == tg::ids::kWings && tg::hasModifier(legs, tg::ids::kSwapHotbar);
-        bool        zoom   = &p == &local ? st().zooming.load() : zooms[p.getOrCreateUniqueID().rawID];
-        setVar(p, "variable.tgear_gloves", gloves ? (slimSkin(p) ? 2.f : 1.f) : 0.f);
-        setVar(p, "variable.tgear_belt", belt ? 1.f : 0.f);
-        setVar(p, "variable.tgear_zoom", zoom ? 1.f : 0.f);
-        setVar(p, "variable.tgear_glove_overlay", overlay ? 1.f : 0.f);
+        auto uid = p.getOrCreateUniqueID().rawID;
+        if (p.isSneaking() && tg::isActive(p, tg::ids::kStealth)) {
+            if (!p.isInvisible()) p.setInvisible(true);
+            now[uid] = true;
+        } else if (hidden.contains(uid)) {
+            p.updateInvisibilityStatus();
+        }
         return true;
     });
+    hidden.swap(now);
 }
-
 // ---- keys ----------------------------------------------------------------------------------------------
 
 void registerKeys() {
@@ -308,8 +313,34 @@ std::string compassText(Player const& player, nlohmann::json const& item) {
     return std::to_string(feet.x) + ", " + std::to_string(feet.y) + ", " + std::to_string(feet.z);
 }
 
+void drawWidgets(screen::Canvas& canvas);
+
+/// ItemDisplayOverlay at (screenOffsetX, screenOffsetY) in GUI pixels, whatever the HUD drew before it:
+/// the HUD layers run after the whole hud_screen, and a control drawn last (the chat panel with its
+/// lines) can leave its translation on the UI's world matrix and its clipping rectangle (round 2: the
+/// overlay drew over the chat at about (30, 132) GUI pixels). The overlay draws with the UI's own
+/// world matrix without a translation and the full clipping rectangle, and its text is flushed inside them.
 void drawHud(screen::Canvas& canvas, float) {
     if (hud::guiHidden()) return;
+    auto&          ui    = canvas.context();
+    ScreenContext& sc    = ui.mScreenContext;
+    auto&          world = sc.camera.worldMatrixStack.get();
+    auto           ref   = world.push(false);
+    auto&          m     = ref.mat->_m.get();
+    static std::atomic<bool> logged{false};
+    if ((m[3][0] != 0.f || m[3][1] != 0.f) && !logged.exchange(true))
+        log().info("tgear: the HUD's world matrix was offset by ({}, {}) when the item display drew", m[3][0], m[3][1]);
+    m[3][0] = m[3][1] = m[3][2] = 0.f; // no translation left over from another control
+    ui.saveCurrentClippingRectangle();
+    ui.setFullClippingRectangle();
+    {
+        screen::Canvas own(ui); // flushes its text here, inside that matrix
+        drawWidgets(own);
+    }
+    ui.restoreSavedClippingRectangle();
+}
+
+void drawWidgets(screen::Canvas& canvas) {
     auto* player = currentPlayer();
     if (!player) return;
     auto const& goggles = player->getArmor(Slot::Head);
@@ -442,19 +473,28 @@ Vec3 placeOnFace(int face, Vec3 const& m) {
 
 using TextureVariant = std::variant<std::monostate, mce::TexturePtr, mce::ClientTexture, mce::ServerTexture>;
 
-mce::TexturePtr* threadTexture() {
-    static mce::TexturePtr* tex = nullptr;
-    if (tex) return tex;
-    auto* c = currentClient();
-    if (!c) return nullptr;
-    auto group = c->getTextureGroup();
-    if (!group) return nullptr;
-    tex = new mce::TexturePtr(group->getTexture(render::textureLocation("textures/twilightforest/entity/red_thread"), false, std::nullopt, cg::TextureSetLayerType::Color));
-    return tex;
+/// The moving-block renderer: its alpha-test material (entityCutout) and the terrain atlas, which holds
+/// textures/twilightforest/entity/red_thread (terrain_texture.d/tgear.json: "tf_tgear_red_thread"), so
+/// the texture is always loaded (round 2: a texture of its own drew black).
+MovingBlockActorRenderer* movingRenderer(render::RenderContext& ctx) {
+    if (!ctx.actors) return nullptr;
+    BlockActorRenderDispatcher& dispatcher = ctx.actors->mBlockEntityRenderDispatcher;
+    return static_cast<MovingBlockActorRenderer*>(dispatcher.mRenderers->operator[](BlockActorRendererId::MovingBlock).get());
 }
 
-/// The GLOW render type: depth test "always", full bright, the red_thread texture with cutout: the UI
-/// textured material (no depth test, unlit).
+/// The red thread's rectangle in the terrain atlas (u0, v0, u1, v1).
+std::optional<std::array<float, 4>> threadAtlasUv() {
+    static std::optional<std::array<float, 4>> uv;
+    if (uv) return uv;
+    auto const& t = BlockGraphics::getTextureUVCoordinateSet("tf_tgear_red_thread", 0, 0);
+    if (t._u0 == t._u1 || t._v0 == t._v1) return std::nullopt;
+    uv = std::array<float, 4>{t._u0, t._v0, t._u1, t._v1};
+    return uv;
+}
+
+/// The GLOW render type: depth test "always", full bright, the red_thread texture with cutout. Bedrock has
+/// no world cutout material without a depth test: the UI textured material (no depth test, unlit: the
+/// texture times the vertex colour times the screen's shader colour, set to white for the draw).
 mce::MaterialPtr const* glowMaterial() {
     static mce::MaterialPtr* m = nullptr;
     if (m) return m->mRenderMaterialInfoPtr.get() ? m : nullptr;
@@ -463,16 +503,6 @@ mce::MaterialPtr const* glowMaterial() {
     if (!m->mRenderMaterialInfoPtr.get()) log().warn("tgear: no ui_textured material: red thread glow drawn depth tested");
     return m->mRenderMaterialInfoPtr.get() ? m : nullptr;
 }
-
-/// entityCutout(TEXTURE): the moving-block alpha-test material, as F12's drawGeo uses.
-mce::MaterialPtr const* cutoutMaterial(render::RenderContext& ctx) {
-    if (!ctx.actors) return nullptr;
-    BlockActorRenderDispatcher& dispatcher = ctx.actors->mBlockEntityRenderDispatcher;
-    auto* moving = static_cast<MovingBlockActorRenderer*>(dispatcher.mRenderers->operator[](BlockActorRendererId::MovingBlock).get());
-    if (!moving) return nullptr;
-    return &moving->mBlockMaterials[static_cast<int>(BlockRenderLayer::RenderlayerAlphatest)].get();
-}
-
 bool threadFace(BlockSource& region, BlockPos const& p, int face) {
     auto const& b = region.getBlock(p);
     return game::blockId(b) == tg::ids::kRedThread && game::intState(b, kFaceStates[face]).value_or(0) != 0;
@@ -493,25 +523,27 @@ void drawThread(render::RenderContext& ctx, BlockPos const& pos, Block const& bl
     if (!player) return;
     bool  glow   = st().showThreads.load();
     auto& region = player->getDimensionBlockSource();
-    auto* tex    = threadTexture();
-    if (!tex) return;
+    auto* moving = movingRenderer(ctx);
+    auto  atlas  = threadAtlasUv();
+    if (!moving || !atlas) return;
     mce::MaterialPtr const* material = glow ? glowMaterial() : nullptr;
     bool                    lit      = !material;
-    if (!material) material = cutoutMaterial(ctx);
-    if (!material) return;
-    auto&        tess  = ctx.screen.tessellator;
-    bool         begun = false;
+    if (!material) material = &moving->mBlockMaterials[static_cast<int>(BlockRenderLayer::RenderlayerAlphatest)].get();
+    auto&         tess  = ctx.screen.tessellator;
+    bool          begun = false;
     std::uint64_t quads = 0;
+    auto [au0, av0, au1, av1] = *atlas;
     auto quad = [&](int face, PartBox const& b) {
         if (!begun) {
             tess.begin(Tessellator::DebugContextCallback{}, mce::PrimitiveMode::QuadList, 0, false);
-            tess.color(1.f, 1.f, 1.f, 1.f);
             begun = true;
         }
+        tess.color(1.f, 1.f, 1.f, 1.f);
         float y = 0.2f / 16.f;
         Vec3  c[4] = {placeOnFace(face, {b.x0 / 16.f, y, b.z0 / 16.f}), placeOnFace(face, {b.x1 / 16.f, y, b.z0 / 16.f}),
                       placeOnFace(face, {b.x1 / 16.f, y, b.z1 / 16.f}), placeOnFace(face, {b.x0 / 16.f, y, b.z1 / 16.f})};
-        Vec2  t[4] = {{b.u0 / 16.f, b.v0 / 16.f}, {b.u1 / 16.f, b.v0 / 16.f}, {b.u1 / 16.f, b.v1 / 16.f}, {b.u0 / 16.f, b.v1 / 16.f}};
+        auto  at = [&](float u, float v) { return Vec2{au0 + (au1 - au0) * u / 16.f, av0 + (av1 - av0) * v / 16.f}; };
+        Vec2  t[4] = {at(b.u0, b.v0), at(b.u1, b.v0), at(b.u1, b.v1), at(b.u0, b.v1)};
         for (auto& v : c) v = Vec3{pos.x + v.x - ctx.camera.x, pos.y + v.y - ctx.camera.y, pos.z + v.z - ctx.camera.z};
         // both windings: the cutout material culls
         tess.simpleQuad(c[0], t[0], c[1], t[1], c[2], t[2], c[3], t[3]);
@@ -534,12 +566,23 @@ void drawThread(render::RenderContext& ctx, BlockPos const& pos, Block const& bl
         }
     }
     if (!begun) return;
-    if (lit) render::setupLight(ctx, Vec3{pos.x + .5f, pos.y + .5f, pos.z + .5f}, false);
-    TextureVariant variant{*tex};
-    MeshHelpers::renderMeshImmediately(ctx.screen, tess, *material, variant, OffscreenCaptureDescription{});
+    TextureVariant variant{moving->mAtlasTexture.get()};
+    if (lit) {
+        // the block's light (Java's packedLight of the block entity), as the moving block draws
+        render::setupLight(ctx, Vec3{pos.x + .5f, pos.y + .5f, pos.z + .5f}, false);
+        MeshHelpers::renderMeshImmediately(ctx.screen, tess, *material, variant, OffscreenCaptureDescription{});
+    } else {
+        // full bright: the texture as it is (white shader colour), put back afterwards
+        ShaderColor& color = ctx.screen.currentShaderColor;
+        ShaderColor  saved = color;
+        color.color        = mce::Color{1.f, 1.f, 1.f, 1.f};
+        color.dirty        = true;
+        MeshHelpers::renderMeshImmediately(ctx.screen, tess, *material, variant, OffscreenCaptureDescription{});
+        color       = saved;
+        color.dirty = true;
+    }
     if (gThreadQuads.fetch_add(quads) == 0) log().info("tgear: red thread drawn ({} quads, {})", quads, glow ? "glow" : "cutout");
 }
-
 // ---- item icons (TravellersGearItemModel) -----------------------------------------------------------------
 
 /// The modifier_directory of a gear item ("" for the belt and the gloves: no overlays).
@@ -565,8 +608,16 @@ void drawGearIcon(render::RenderContext& ctx, ItemStack const& stack, render::It
     for (auto const& m : tg::insertableModifiers(stack)) layers.push_back(base + m.substr(m.find(':') + 1));
     if (id == tg::ids::kVest && tg::hasGloves(stack)) layers.push_back(base + "gloves");
     if (layers.empty()) return;
+    // the slot's absolute position (UIControl::mCachedPosition): no translation of another control
+    auto& world = ctx.screen.camera.worldMatrixStack.get();
+    auto  ref   = world.push(false);
+    auto& m     = ref.mat->_m.get();
+    m[3][0] = m[3][1] = m[3][2] = 0.f;
     screen::Canvas canvas(*ctx.ui);
-    for (auto const& t : layers) ui::blit(canvas, t, {ctx.guiX, ctx.guiY, ctx.guiSize, ctx.guiSize}, 0, 0, 16, 16, 16, 16);
+    int            drawn = 0;
+    for (auto const& t : layers) drawn += ui::blit(canvas, t, {ctx.guiX, ctx.guiY, ctx.guiSize, ctx.guiSize}, 0, 0, 16, 16, 16, 16) ? 1 : 0;
+    static std::atomic<int> logged{0};
+    if (drawn > 0 && logged.fetch_add(1) < 3) log().info("tgear: gear icon {} drawn at ({}, {}) size {}: {} of {} layers", id, ctx.guiX, ctx.guiY, ctx.guiSize, drawn, layers.size());
 }
 
 // ---- tooltip (TravellersArmorItem#appendHoverText) ----------------------------------------------------------
@@ -611,28 +662,26 @@ void describe(ItemStack const& stack, std::vector<std::string>& lines) {
 
 // ---- item display clicks (TravellersGogglesItem#overrideStackedOnOther / overrideOtherStackedOnMe) --------
 
-/// A secondary click the goggles take: on goggles with a display holding an item for it (insert) or
-/// with an empty cursor (take the first stored item out); with goggles on the cursor, on an empty slot
-/// (take one out) or on a display item (insert it). The server does it ("tgear.display_click").
+/// The collections the server resolves (Display.cpp: the player's inventory, armour and off-hand, and
+/// the open container's own slots).
+bool handledCollection(std::string const& collection) {
+    static constexpr char const* kNames[] = {"hotbar_items", "inventory_items", "combined_hotbar_and_inventory_items", "armor_items", "offhand_items", "container_items", "shulker_box_items", "barrel_items", "hopper_items", "dispenser_items"};
+    for (auto const* n : kNames)
+        if (collection == n) return true;
+    return false;
+}
+
+/// TravellersGogglesItem#overrideStackedOnOther / overrideOtherStackedOnMe: a secondary click with
+/// goggles that carry a display (one item) on the cursor or in the slot is always the goggles' (true):
+/// insert the other stack, take the first stored item out, or nothing at all (an empty cursor on goggles
+/// with an empty display). The server does it ("tgear.display_click").
 bool onSlotClick(std::string const& collection, int index, ItemStack const& slot, ItemStack const& cursor) {
     auto isGoggles = [](ItemStack const& s) { return !items::isEmpty(s) && items::idOf(s) == tg::ids::kGoggles && tg::displayOf(s) && items::countOf(s) == 1; };
-    auto holds     = [](ItemStack const& s) {
-        auto d = tg::displayOf(s);
-        if (!d) return false;
-        for (auto const& j : d->items)
-            if (!j.is_null()) return true;
-        return false;
-    };
-    auto fits = [](ItemStack const& s) { return !items::isEmpty(s) && tg::displayTypeOf(items::idOf(s)) != core::tgear::DisplayType::None; };
-    bool take = false;
-    if (isGoggles(slot)) take = items::isEmpty(cursor) ? holds(slot) : fits(cursor);
-    else if (isGoggles(cursor)) take = items::isEmpty(slot) ? holds(cursor) : fits(slot);
-    if (!take) return false;
+    if (!handledCollection(collection) || !(isGoggles(slot) || isGoggles(cursor))) return false;
     feature::net::client::send("tgear.display_click", {{"collection", collection}, {"index", index}});
     log().info("tgear: item display click on {} {}", collection, index);
     return true;
 }
-
 class TgearClientModule {
 public:
     void load() { registerKeys(); }
@@ -645,7 +694,7 @@ public:
             if (auto* p = currentPlayer()) {
                 tickZoom(*p);
                 tickThreads(*p);
-                tickWornModels(*p); // the wearer state as molang variables (no attachable can read them yet)
+                tickStealth(*p);
             }
         });
         hud::addLayer("tgear.item_display", 100, drawHud);

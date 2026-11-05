@@ -53,8 +53,20 @@ GF_REGISTER_SELFTEST("tgear.real_arm", [](Context& ctx) {
         auto goggles = make(tg::ids::kGoggles);
         tg::addModifier(goggles, tg::ids::kItemDisplay);
         tg::addModifier(goggles, tg::ids::kRedThreadVision);
-        for (auto const* id : {"minecraft:filled_map", "minecraft:compass", "minecraft:clock", "twilightforest:moon_dial"}) {
-            auto      s = make(id);
+        // a real map: the filled map the player made (the client e2e uses an empty map first), else a
+        // plain one
+        auto&     inv0 = p.getInventory();
+        ItemStack map  = make("minecraft:filled_map");
+        for (int i = 0; i < inv0.getContainerSize(); ++i) {
+            auto const& s = inv0.getItem(i);
+            if (items::idOf(s) == "minecraft:filled_map" && tg::mapIdOf(tg::displayJsonOf(s))) {
+                map = s;
+                inv0.setItem(i, ItemStack::EMPTY_ITEM());
+                gf::log().info("tgear: storing {}'s map {}", p.getRealName(), *tg::mapIdOf(tg::displayJsonOf(s)));
+                break;
+            }
+        }
+        for (auto s : {map, make("minecraft:compass"), make("minecraft:clock"), make("twilightforest:moon_dial")}) {
             ItemStack replaced;
             if (!items::isEmpty(s)) tg::displayInsert(goggles, s, replaced);
         }

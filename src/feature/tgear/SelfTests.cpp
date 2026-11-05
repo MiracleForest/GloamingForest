@@ -3,6 +3,7 @@
 // gloves merge, the command, the per-tick modifiers, efficient eater, never-break, the belt swap, the
 // item display, the zoom channel and the red thread placement. Behaviour from TF 4.8 (see the headers of
 // the files under test).
+#include <array>
 #include <cmath>
 #include <string>
 #include <vector>
@@ -15,6 +16,8 @@
 #include "mc/entity/components_json_legacy/InsomniaComponent.h"
 #include "mc/server/SimulatedPlayer.h"
 #include "mc/world/PlayerUIContainer.h"
+#include "mc/world/inventory/network/ItemStackNetIdVariant.h"
+#include "mc/world/inventory/network/crafting/CraftHandlerGrindstone.h"
 #include "mc/world/actor/Mob.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/actor/player/Inventory.h"
@@ -335,8 +338,20 @@ GF_REGISTER_SELFTEST("tgear.perfect_dodge", [](Context& ctx) -> ll::coro::CoroTa
         ctx.require(arrow != nullptr, "an arrow is shot at the wearer");
         // the hit through the combat contract, as the arrow's impact deals it
         ctx.check(!gf::combat::hurt(p, 4.f, "minecraft:arrow", &s, arrow), "the arrow's damage is cancelled");
+        // the same projectile's explosion on that impact goes with it (TF cancels the whole impact)
+        ctx.check(!gf::combat::hurt(p, 2.f, "minecraft:explosion", &s, arrow), "the dodged impact's explosion is cancelled too");
     }
     co_await ctx.ticks(30);
+    {
+        // an explosion a projectile causes (a ghast fireball, a wither skull, a firework) is never dodged
+        auto& p      = ctx.player();
+        int   count  = tg::dodgeCount();
+        auto* rocket = gf::projectile::shoot(s, "minecraft:arrow", Vec3{0.f, 1.f, 0.f}, 0.5f, 0.f);
+        ctx.require(rocket != nullptr, "another projectile");
+        gf::combat::hurt(p, 1.f, "minecraft:explosion", &s, rocket);
+        ctx.check(tg::dodgeCount() == count, "explosion damage of a projectile is not a dodge");
+        rocket->remove();
+    }
     tg::setDodgeProbabilityForTest(std::nullopt);
     {
         auto& p = ctx.player();
@@ -633,7 +648,8 @@ GF_REGISTER_SELFTEST("tgear.arrow_magnetism", [](Context& ctx) -> ll::coro::Coro
         auto* old   = p.getLevel().fetchEntity(ActorUniqueID{oldArrow}, false);
         ctx.check(fresh == nullptr || !fresh->isAlive(), "the wearer's arrow was taken back when it hit the ground");
         ctx.check(arrows >= 1, "the arrow went to the inventory (got " + std::to_string(arrows) + ")");
-        ctx.info("the arrow stuck before the vest was worn: " + std::string(old != nullptr && old->isAlive() ? "stays" : "gone (the game's own pickup or despawn)") + std::string(old ? " (at x " + std::to_string(old->getPosition().x) + ")" : ""));
+        // the round-1 regression: arrows stuck before the vest was worn are never collected
+        ctx.check(old != nullptr && old->isAlive(), "the arrow stuck before the vest was worn stays where it is");
         if (old) old->remove();
         for (int i = 0; i < inv.getContainerSize(); ++i)
             if (items::idOf(inv.getItem(i)) == "minecraft:arrow") inv.setItem(i, ItemStack::EMPTY_ITEM());
@@ -671,4 +687,51 @@ GF_REGISTER_SELFTEST("tgear.display_click", [](Context& ctx) {
     gf::net::setTestCompanion(p, false);
     ui.setItem(0, ItemStack::EMPTY_ITEM());
     for (int i : {5, 12, 13}) inv.setItem(i, ItemStack::EMPTY_ITEM());
+});
+
+GF_REGISTER_SELFTEST("tgear.grindstone_anvil", [](Context& ctx) {
+    // removeModifiersFromTravellersGear: one piece with modifiers comes out without them
+    auto wings = make(tg::ids::kWings);
+    tg::addModifier(wings, tg::ids::kSwapHotbar);
+    tg::addModifier(wings, tg::ids::kAutoRepair);
+    std::array<ItemStack, 9> stored;
+    for (auto& s : stored) s = ItemStack::EMPTY_ITEM();
+    stored[0] = make("minecraft:stone", 5);
+    stored[4] = make("minecraft:torch", 3);
+    tg::setContainer(wings, stored);
+    auto out = tg::grindstoneResult(wings, ItemStack::EMPTY_ITEM());
+    ctx.require(out.has_value() && !items::isEmpty(*out), "a piece with modifiers gives a result");
+    ctx.check(tg::insertableModifiers(*out).empty() && !tg::hasContainer(*out), "the result has no insertable modifier and no storage");
+    ctx.check(items::idOf(*out) == tg::ids::kWings, "the result is the same piece");
+    // through the game's own grindstone result (the ext/tgear hook)
+    auto game = CraftHandlerGrindstone::getResultItem(wings, ItemStack::EMPTY_ITEM());
+    ctx.check(items::idOf(game.first) == tg::ids::kWings && tg::insertableModifiers(game.first).empty(), "the grindstone's own result is the stripped piece");
+    // refused: two pieces, or a piece without modifiers
+    auto plain = make(tg::ids::kVest);
+    ctx.check(items::isEmpty(*tg::grindstoneResult(plain, ItemStack::EMPTY_ITEM())), "a piece without modifiers is refused");
+    ctx.check(items::isEmpty(*tg::grindstoneResult(wings, plain)), "two pieces are refused");
+    ctx.check(items::isEmpty(CraftHandlerGrindstone::getResultItem(wings, plain).first), "the grindstone's own result refuses two pieces");
+    ctx.check(!tg::grindstoneResult(make("minecraft:iron_sword"), ItemStack::EMPTY_ITEM()).has_value(), "other items keep the game's result");
+    // extractItemsFromSwapHotbarModifier: the stored stacks come back on take
+    auto back = tg::grindstoneReturns(wings, ItemStack::EMPTY_ITEM());
+    ctx.check(back.size() == 2 && items::idOf(back[0]) == "minecraft:stone" && items::countOf(back[0]) == 5 && items::idOf(back[1]) == "minecraft:torch",
+              "the swap_hotbar storage is given back (" + std::to_string(back.size()) + " stacks)");
+    auto goggles = make(tg::ids::kGoggles);
+    tg::addModifier(goggles, tg::ids::kItemDisplay);
+    auto      compass = make("minecraft:compass");
+    ItemStack replaced;
+    tg::displayInsert(goggles, compass, replaced);
+    auto back2 = tg::grindstoneReturns(goggles, ItemStack::EMPTY_ITEM());
+    ctx.check(back2.size() == 1 && items::idOf(back2[0]) == "minecraft:compass", "the item display's contents are given back");
+    // cancelCombiningTravellersGear and the book rule
+    ctx.check(tg::anvilRefuses(wings, make(tg::ids::kWings), true), "two pieces are never combined on an anvil");
+    ctx.check(tg::anvilRefuses(plain, make("minecraft:enchanted_book"), false), "a survival player cannot apply a book to a piece");
+    ctx.check(!tg::anvilRefuses(plain, make("minecraft:enchanted_book"), true), "a creative player can");
+    ctx.check(!tg::anvilRefuses(plain, ItemStack::EMPTY_ITEM(), false), "renaming a piece stays allowed");
+    ctx.check(!tg::anvilRefuses(make("minecraft:iron_sword"), make("minecraft:iron_sword"), false), "other items are the game's");
+    // canFitInsideContainerItems: the belt stays out of shulker boxes and bundles
+    auto belt = make(tg::ids::kBelt);
+    tg::setContainer(belt, stored);
+    ctx.check(tg::storageRefuses(belt), "a belt with its storage cannot go into a shulker box or a bundle");
+    ctx.check(!tg::storageRefuses(wings) && !tg::storageRefuses(make("minecraft:stone")), "wings and other items can");
 });

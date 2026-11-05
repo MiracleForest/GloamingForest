@@ -150,4 +150,13 @@ std::string interpolate(std::string const& text, std::function<std::string(std::
     return out;
 }
 
+bool isProjectileImpactType(std::string const& t) {
+    static constexpr char const* kTypes[] = {"minecraft:arrow",       "minecraft:trident",       "minecraft:thrown",      "minecraft:mob_projectile",
+                                             "minecraft:fireball",    "minecraft:unattributed_fireball", "minecraft:wither_skull", "minecraft:wind_charge",
+                                             "minecraft:spit"};
+    for (auto const* k : kTypes)
+        if (t == k) return true;
+    return false;
+}
+
 } // namespace gf::core::tgear

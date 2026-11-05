@@ -16,10 +16,13 @@
 #include <memory>
 #include <optional>
 #include <random>
+#include <unordered_map>
 
 #include "mc/deps/shared_types/legacy/actor/ArmorSlot.h"
 #include "mc/network/Packet.h"
 #include "mc/world/PlayerUIContainer.h"
+#include "mc/world/containers/managers/models/ContainerManagerModel.h"
+#include "mc/world/containers/models/ContainerModel.h"
 #include "mc/world/actor/player/Inventory.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/Item.h"
@@ -140,6 +143,14 @@ Json lodestoneOf(Player& player, ItemStack const& compass) {
 
 } // namespace
 
+namespace {
+/// Per wearer: the stored map JSON and the stack built from it.
+std::unordered_map<std::int64_t, std::pair<Json, ItemStack>>& mapCache() {
+    static std::unordered_map<std::int64_t, std::pair<Json, ItemStack>> c; // server thread
+    return c;
+}
+} // namespace
+
 void tickDisplayMap(Player& player) {
     if (!isActive(player, ids::kItemDisplay)) return;
     ItemStack head = player.getArmor(SharedTypes::Legacy::ArmorSlot::Head);
@@ -158,8 +169,12 @@ void tickDisplayMap(Player& player) {
     }
     int slot = d->chosenMapSlot;
     if (slot >= 0 && slot < core::tgear::kDisplaySlots && !d->items[slot].is_null()) {
-        ItemStack map = items::fromJson(d->items[slot]);
-        auto      id  = items::idOf(map);
+        // the stored map's stack, kept between ticks while its JSON is the same (no per-tick rebuild)
+        auto& cached = mapCache()[player.getOrCreateUniqueID().rawID];
+        if (cached.first != d->items[slot]) cached = {d->items[slot], items::fromJson(d->items[slot])};
+        ItemStack& map    = cached.second;
+        auto       id     = items::idOf(map);
+        ItemStack  before = map;
         if (id == "minecraft:filled_map") {
             // GogglesItem#inventoryTick / MapHooks (UpdateMapsInGoggles): the chosen map updates as if
             // held, with the wearer as its carrier; the goggles are no complex item, so send the update
@@ -171,12 +186,13 @@ void tickDisplayMap(Player& player) {
         } else if (auto const* b = gf::item::internal::behaviourOf(id); b && b->inventoryTick) {
             // TF's own maps (magic, maze, ore: MapItem subclasses, another unit's registered items):
             // their inventory tick as the selected item, the wearer carrying it
-            ItemStack before = map;
             b->inventoryTick(map, player, -1, true);
-            if (!items::sameItemSameData(before, map)) {
-                d->items[slot] = displayJsonOf(map);
-                changed        = true;
-            }
+        }
+        // whatever the tick wrote to the stack (map data, TF's map state) is kept in the display
+        if (!items::sameItemSameData(before, map)) {
+            d->items[slot] = displayJsonOf(map);
+            cached.first   = d->items[slot];
+            changed        = true;
         }
     }
     if (changed) {
@@ -187,23 +203,32 @@ void tickDisplayMap(Player& player) {
 
 namespace {
 
-/// A slot of the player's own screens by the client's collection name (nullopt: another container).
+/// A slot by the client's collection name: the player's own inventory, armour and off-hand, or a slot
+/// of the open screen's container (a chest, barrel, shulker box, ...: the server container manager's
+/// model of that collection).
 struct SlotRef {
-    enum Kind { Inventory, Armor, Offhand } kind;
-    int index;
+    enum Kind { Inventory, Armor, Offhand, Model } kind;
+    int                             index;
+    std::shared_ptr<ContainerModel> model;
 };
-std::optional<SlotRef> slotRefOf(std::string const& collection, int index) {
+std::optional<SlotRef> slotRefOf(Player& player, std::string const& collection, int index) {
     if (collection == "hotbar_items" || collection == "inventory_items" || collection == "combined_hotbar_and_inventory_items")
-        return index >= 0 && index < 36 ? std::optional<SlotRef>(SlotRef{SlotRef::Inventory, index}) : std::nullopt;
-    if (collection == "armor_items") return index >= 0 && index < 4 ? std::optional<SlotRef>(SlotRef{SlotRef::Armor, index}) : std::nullopt;
-    if (collection == "offhand_items") return SlotRef{SlotRef::Offhand, 0};
-    return std::nullopt;
+        return index >= 0 && index < 36 ? std::optional<SlotRef>(SlotRef{SlotRef::Inventory, index, nullptr}) : std::nullopt;
+    if (collection == "armor_items") return index >= 0 && index < 4 ? std::optional<SlotRef>(SlotRef{SlotRef::Armor, index, nullptr}) : std::nullopt;
+    if (collection == "offhand_items") return SlotRef{SlotRef::Offhand, 0, nullptr};
+    auto const& manager = player.mContainerManager.get();
+    if (!manager) return std::nullopt;
+    auto const& models = manager->mContainers.get();
+    auto        it     = models.find(collection);
+    if (it == models.end() || !it->second || index < 0 || index >= it->second->getContainerSize()) return std::nullopt;
+    return SlotRef{SlotRef::Model, index, it->second};
 }
 
 ItemStack getSlot(Player& p, SlotRef const& r) {
     switch (r.kind) {
     case SlotRef::Inventory: return p.getInventory().getItem(r.index);
     case SlotRef::Armor: return p.getArmor(static_cast<SharedTypes::Legacy::ArmorSlot>(r.index));
+    case SlotRef::Model: return r.model->getItemStack(r.index);
     default: return p.getOffhandSlot();
     }
 }
@@ -212,16 +237,16 @@ void setSlot(Player& p, SlotRef const& r, ItemStack const& s) {
     switch (r.kind) {
     case SlotRef::Inventory: p.getInventory().setItem(r.index, s); break;
     case SlotRef::Armor: p.setArmor(static_cast<SharedTypes::Legacy::ArmorSlot>(r.index), s); break;
+    case SlotRef::Model: r.model->setItem(r.index, s); break;
     default: p.setOffhandSlot(s); break;
     }
 }
-
 constexpr int kCursorSlot = 0; // PlayerUIContainer: the cursor
 
 } // namespace
 
 bool displaySlotClick(Player& player, std::string const& collection, int index) {
-    auto ref = slotRefOf(collection, index);
+    auto ref = slotRefOf(player, collection, index);
     if (!ref) return false;
     auto&     ui     = player.mPlayerUIContainer.get();
     ItemStack slot   = getSlot(player, *ref);
