@@ -21,6 +21,7 @@
 #include "mc/world/actor/Actor.h"
 #include "mc/deps/ecs/gamerefs_entity/EntityContext.h"
 #include "mc/entity/components_json_legacy/NavigationComponent.h"
+#include "mc/world/level/pathfinder/Path.h"
 #include "mc/world/actor/Mob.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
