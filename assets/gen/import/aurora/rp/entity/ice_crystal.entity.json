@@ -10,7 +10,15 @@
         "default": "textures/twilightforest/entity/icecrystal"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.ice_crystal"
+        "default": "geometry.twilightforest.ice_crystal"
+      },
+      "scripts": {
+        "animate": ["base", "spikes", "bob_render"]
+      },
+      "animations": {
+        "base": "animation.twilightforest.ice_crystal.base",
+        "spikes": "animation.twilightforest.ice_crystal.spikes",
+        "bob_render": "animation.twilightforest.ice_crystal.bob"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

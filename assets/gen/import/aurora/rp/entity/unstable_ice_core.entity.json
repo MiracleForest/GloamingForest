@@ -7,12 +7,28 @@
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/misc/missing_texture"
+        "default": "textures/twilightforest/entity/iceexploder"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.unstable_ice_core"
+        "default": "geometry.twilightforest.unstable_ice_core"
       },
-      "render_controllers": ["controller.render.default"],
+      "scripts": {
+        "animate": ["base", "spikes", "bob_render", "swell"],
+        "pre_animation": [
+          "v.f = q.property('twilightforest:dying') / 60;",
+          "v.swell = 1 + math.sin(v.f * 100 * 57.29578) * v.f * 0.01;",
+          "v.f4 = math.pow(math.clamp(v.f, 0, 1), 4);",
+          "v.swell_xz = (1 + v.f4 * 0.4) * v.swell;",
+          "v.swell_y = (1 + v.f4 * 0.1) / v.swell;"
+        ]
+      },
+      "animations": {
+        "base": "animation.twilightforest.unstable_ice_core.base",
+        "spikes": "animation.twilightforest.unstable_ice_core.spikes",
+        "bob_render": "animation.twilightforest.ice_core.bob",
+        "swell": "animation.twilightforest.unstable_ice_core.swell"
+      },
+      "render_controllers": ["controller.render.twilightforest.unstable_ice_core"],
       "spawn_egg": {
         "base_color": "#9aacf5",
         "overlay_color": "#9b0fa5"

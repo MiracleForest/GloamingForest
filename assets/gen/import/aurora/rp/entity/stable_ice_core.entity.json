@@ -7,10 +7,18 @@
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/misc/missing_texture"
+        "default": "textures/twilightforest/entity/iceshooter"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.stable_ice_core"
+        "default": "geometry.twilightforest.stable_ice_core"
+      },
+      "scripts": {
+        "animate": ["base", "spikes", "bob_render"]
+      },
+      "animations": {
+        "base": "animation.twilightforest.stable_ice_core.base",
+        "spikes": "animation.twilightforest.stable_ice_core.spikes",
+        "bob_render": "animation.twilightforest.ice_core.bob"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

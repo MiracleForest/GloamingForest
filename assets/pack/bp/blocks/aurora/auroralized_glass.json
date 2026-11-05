@@ -1,0 +1,83 @@
+{
+  "format_version": "1.26.0",
+  "minecraft:block": {
+    "components": {
+      "minecraft:geometry": "minecraft:geometry.full_block",
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 1.5
+      },
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0.3
+      },
+      "minecraft:material_instances": {
+        "west": {
+          "render_method": "opaque",
+          "texture": "tf_block_auroralized_glass_ct",
+          "tint_method": "water"
+        },
+        "east": {
+          "render_method": "opaque",
+          "texture": "tf_block_auroralized_glass_ct",
+          "tint_method": "water"
+        },
+        "down": {
+          "render_method": "opaque",
+          "texture": "tf_block_auroralized_glass_ct",
+          "tint_method": "water"
+        },
+        "*": {
+          "render_method": "opaque",
+          "texture": "tf_block_auroralized_glass_ct",
+          "tint_method": "water"
+        },
+        "south": {
+          "render_method": "opaque",
+          "texture": "tf_block_auroralized_glass_ct",
+          "tint_method": "water"
+        },
+        "north": {
+          "render_method": "opaque",
+          "texture": "tf_block_auroralized_glass_ct",
+          "tint_method": "water"
+        },
+        "up": {
+          "render_method": "opaque",
+          "texture": "tf_block_auroralized_glass_ct",
+          "tint_method": "water"
+        }
+      }
+    },
+    "description": {
+      "menu_category": {
+        "category": "none"
+      },
+      "identifier": "twilightforest:auroralized_glass",
+      "states": {
+        "gloamingforest:up": [
+          false,
+          true
+        ],
+        "gloamingforest:north": [
+          false,
+          true
+        ],
+        "gloamingforest:west": [
+          false,
+          true
+        ],
+        "gloamingforest:south": [
+          false,
+          true
+        ],
+        "gloamingforest:east": [
+          false,
+          true
+        ],
+        "gloamingforest:down": [
+          false,
+          true
+        ]
+      }
+    }
+  }
+}

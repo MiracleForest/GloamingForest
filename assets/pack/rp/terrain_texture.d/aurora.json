@@ -1,0 +1,74 @@
+{
+  "tf_aurora_block_variants": {
+    "textures": [
+      {
+        "variations": [
+          {
+            "path": "textures/twilightforest/block/aurora_block_0",
+            "weight": 1
+          },
+          {
+            "path": "textures/twilightforest/block/aurora_block_1",
+            "weight": 1
+          },
+          {
+            "path": "textures/twilightforest/block/aurora_block_2",
+            "weight": 1
+          },
+          {
+            "path": "textures/twilightforest/block/aurora_block_3",
+            "weight": 1
+          },
+          {
+            "path": "textures/twilightforest/block/aurora_block_4",
+            "weight": 1
+          },
+          {
+            "path": "textures/twilightforest/block/aurora_block_5",
+            "weight": 1
+          },
+          {
+            "path": "textures/twilightforest/block/aurora_block_6",
+            "weight": 1
+          },
+          {
+            "path": "textures/twilightforest/block/aurora_block_7",
+            "weight": 1
+          },
+          {
+            "path": "textures/twilightforest/block/aurora_block_8",
+            "weight": 1
+          },
+          {
+            "path": "textures/twilightforest/block/aurora_block_9",
+            "weight": 1
+          },
+          {
+            "path": "textures/twilightforest/block/aurora_block_10",
+            "weight": 1
+          },
+          {
+            "path": "textures/twilightforest/block/aurora_block_11",
+            "weight": 1
+          },
+          {
+            "path": "textures/twilightforest/block/aurora_block_12",
+            "weight": 1
+          },
+          {
+            "path": "textures/twilightforest/block/aurora_block_13",
+            "weight": 1
+          },
+          {
+            "path": "textures/twilightforest/block/aurora_block_14",
+            "weight": 1
+          },
+          {
+            "path": "textures/twilightforest/block/aurora_block_15",
+            "weight": 1
+          }
+        ]
+      }
+    ]
+  }
+}

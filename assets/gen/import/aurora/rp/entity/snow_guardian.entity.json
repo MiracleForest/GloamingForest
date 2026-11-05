@@ -7,10 +7,23 @@
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/misc/missing_texture"
+        "default": "textures/twilightforest/entity/snowqueen"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.snow_guardian"
+        "default": "geometry.twilightforest.snow_guardian"
+      },
+      "enable_attachables": true,
+      "scripts": {
+        "pre_animation": ["v.tcos0 = (math.cos(q.modified_distance_moved * 38.17) * q.modified_move_speed) * 57.3;"],
+        "animate": ["humanoid_base_pose", "move", "bob_render"]
+      },
+      "animations": {
+        "humanoid_base_pose": "animation.humanoid.base_pose",
+        "look_at_target": "animation.humanoid.look_at_target.default",
+        "move": "animation.humanoid.move",
+        "attack": "animation.humanoid.attack.rotations",
+        "bob": "animation.humanoid.bob",
+        "bob_render": "animation.twilightforest.ice_mob.bob"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

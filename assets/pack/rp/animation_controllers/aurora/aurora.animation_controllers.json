@@ -1,0 +1,32 @@
+{
+  "format_version": "1.10.0",
+  "animation_controllers": {
+    "controller.animation.twilightforest.snow_queen.phase": {
+      "initial_state": "default",
+      "states": {
+        "default": {
+          "transitions": [
+            {
+              "beam": "q.property('twilightforest:phase') == 2"
+            }
+          ]
+        },
+        "beam": {
+          "animations": [
+            {
+              "beam_arms": "q.property('twilightforest:beam')"
+            },
+            {
+              "arms_up": "!q.property('twilightforest:beam')"
+            }
+          ],
+          "transitions": [
+            {
+              "default": "q.property('twilightforest:phase') != 2"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

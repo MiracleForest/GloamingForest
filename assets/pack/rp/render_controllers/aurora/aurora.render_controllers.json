@@ -1,0 +1,33 @@
+{
+  "format_version": "1.10.0",
+  "render_controllers": {
+    "controller.render.twilightforest.snow_queen_shields": {
+      "geometry": "Geometry.shields",
+      "materials": [
+        {
+          "*": "Material.shields"
+        }
+      ],
+      "textures": [
+        "Texture.shields"
+      ]
+    },
+    "controller.render.twilightforest.unstable_ice_core": {
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ],
+      "overlay_color": {
+        "r": 1,
+        "g": 1,
+        "b": 1,
+        "a": "q.property('twilightforest:dying') > 0 && math.mod(math.floor(q.property('twilightforest:dying') / 2), 2) == 0 ? math.clamp(q.property('twilightforest:dying') / 60 * 0.2, 0, 1) : 0"
+      }
+    }
+  }
+}

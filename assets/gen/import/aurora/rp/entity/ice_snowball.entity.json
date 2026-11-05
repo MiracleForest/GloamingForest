@@ -4,15 +4,21 @@
     "description": {
       "identifier": "twilightforest:ice_snowball",
       "materials": {
-        "default": "entity_alphatest"
+        "default": "snowball"
       },
       "textures": {
-        "default": "textures/misc/missing_texture"
+        "default": "textures/items/snowball"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.ice_snowball"
+        "default": "geometry.item_sprite"
       },
-      "render_controllers": ["controller.render.default"]
+      "render_controllers": ["controller.render.item_sprite"],
+      "animations": {
+        "flying": "animation.actor.billboard"
+      },
+      "scripts": {
+        "animate": ["flying"]
+      }
     }
   }
 }

@@ -1,0 +1,50 @@
+{
+  "entity_sounds": {
+    "entities": {
+      "twilightforest:snow_queen": {
+        "volume": 1.0,
+        "pitch": [0.8, 1.2],
+        "events": {
+          "ambient": "entity.twilightforest.snow_queen.ambient",
+          "hurt": "entity.twilightforest.snow_queen.hurt",
+          "death": "entity.twilightforest.snow_queen.death"
+        }
+      },
+      "twilightforest:snow_guardian": {
+        "volume": 1.0,
+        "pitch": [0.6, 1.0],
+        "events": {
+          "ambient": "entity.twilightforest.snow_guardian.ambient",
+          "hurt": "entity.twilightforest.snow_guardian.hurt",
+          "death": "entity.twilightforest.snow_guardian.death"
+        }
+      },
+      "twilightforest:stable_ice_core": {
+        "volume": 1.0,
+        "pitch": [0.8, 1.2],
+        "events": {
+          "ambient": "entity.twilightforest.ice.ambient",
+          "hurt": "entity.twilightforest.ice.hurt",
+          "death": "entity.twilightforest.ice.death"
+        }
+      },
+      "twilightforest:unstable_ice_core": {
+        "volume": 1.0,
+        "pitch": [0.8, 1.2],
+        "events": {
+          "ambient": "entity.twilightforest.ice.ambient",
+          "hurt": "entity.twilightforest.ice.hurt"
+        }
+      },
+      "twilightforest:ice_crystal": {
+        "volume": 1.0,
+        "pitch": [0.8, 1.2],
+        "events": {
+          "ambient": "entity.twilightforest.ice.ambient",
+          "hurt": "entity.twilightforest.ice.hurt",
+          "death": "entity.twilightforest.ice.death"
+        }
+      }
+    }
+  }
+}

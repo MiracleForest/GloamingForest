@@ -1,0 +1,58 @@
+{
+  "format_version": "1.26.50",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:aurora_block",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 10
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 30
+      },
+      "minecraft:map_color": "#a0a0ff",
+      "minecraft:geometry": "minecraft:geometry.full_block",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_aurora_block_variants",
+          "render_method": "opaque",
+          "tint_method": "water"
+        },
+        "up": {
+          "texture": "tf_aurora_block_variants",
+          "render_method": "opaque",
+          "tint_method": "water"
+        },
+        "down": {
+          "texture": "tf_aurora_block_variants",
+          "render_method": "opaque",
+          "tint_method": "water"
+        },
+        "north": {
+          "texture": "tf_aurora_block_variants",
+          "render_method": "opaque",
+          "tint_method": "water"
+        },
+        "south": {
+          "texture": "tf_aurora_block_variants",
+          "render_method": "opaque",
+          "tint_method": "water"
+        },
+        "east": {
+          "texture": "tf_aurora_block_variants",
+          "render_method": "opaque",
+          "tint_method": "water"
+        },
+        "west": {
+          "texture": "tf_aurora_block_variants",
+          "render_method": "opaque",
+          "tint_method": "water"
+        }
+      }
+    }
+  }
+}

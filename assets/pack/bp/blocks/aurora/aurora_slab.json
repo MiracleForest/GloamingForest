@@ -1,0 +1,323 @@
+{
+  "format_version": "1.26.0",
+  "minecraft:block": {
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 2
+      },
+      "minecraft:map_color": "#a0a0ff",
+      "minecraft:collision_box": {
+        "origin": [
+          -8,
+          0,
+          -8
+        ],
+        "size": [
+          16,
+          8,
+          16
+        ]
+      },
+      "minecraft:light_dampening": 0,
+      "minecraft:liquid_detection": {
+        "detection_rules": [
+          {
+            "can_contain_liquid": true,
+            "on_liquid_touches": "no_reaction",
+            "liquid_type": "water"
+          }
+        ]
+      },
+      "minecraft:material_instances": {
+        "*": {
+          "render_method": "opaque",
+          "texture": "tf_block_aurora_slab_side",
+          "tint_method": "water"
+        },
+        "bottom": {
+          "render_method": "opaque",
+          "texture": "tf_block_aurora_pillar_top",
+          "tint_method": "water"
+        },
+        "top": {
+          "render_method": "opaque",
+          "texture": "tf_block_aurora_pillar_top",
+          "tint_method": "water"
+        },
+        "side": {
+          "render_method": "opaque",
+          "texture": "tf_block_aurora_slab_side",
+          "tint_method": "water"
+        }
+      },
+      "minecraft:geometry": "geometry.tf.twilightforest.block.aurora_slab",
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 30
+      },
+      "tag:minecraft:is_pickaxe_item_destructible": {},
+      "minecraft:selection_box": {
+        "origin": [
+          -8,
+          0,
+          -8
+        ],
+        "size": [
+          16,
+          8,
+          16
+        ]
+      }
+    },
+    "description": {
+      "identifier": "twilightforest:aurora_slab",
+      "menu_category": {
+        "category": "construction"
+      },
+      "states": {
+        "twilightforest:type": [
+          "bottom",
+          "top",
+          "double"
+        ]
+      }
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('twilightforest:type') == 'bottom'",
+        "components": {
+          "minecraft:collision_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              8,
+              16
+            ]
+          },
+          "minecraft:material_instances": {
+            "*": {
+              "render_method": "opaque",
+              "texture": "tf_block_aurora_slab_side",
+              "tint_method": "water"
+            },
+            "bottom": {
+              "render_method": "opaque",
+              "texture": "tf_block_aurora_pillar_top",
+              "tint_method": "water"
+            },
+            "top": {
+              "render_method": "opaque",
+              "texture": "tf_block_aurora_pillar_top",
+              "tint_method": "water"
+            },
+            "side": {
+              "render_method": "opaque",
+              "texture": "tf_block_aurora_slab_side",
+              "tint_method": "water"
+            }
+          },
+          "minecraft:geometry": "geometry.tf.twilightforest.block.aurora_slab",
+          "minecraft:transformation": {
+            "rotation": [
+              0,
+              0,
+              0
+            ]
+          },
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              8,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:type') == 'double'",
+        "components": {
+          "minecraft:collision_box": true,
+          "minecraft:material_instances": {
+            "west": {
+              "render_method": "opaque",
+              "texture": "tf_block_aurora_slab_side",
+              "tint_method": "water"
+            },
+            "up": {
+              "render_method": "opaque",
+              "texture": "tf_block_aurora_pillar_top",
+              "tint_method": "water"
+            },
+            "north": {
+              "render_method": "opaque",
+              "texture": "tf_block_aurora_slab_side",
+              "tint_method": "water"
+            },
+            "east": {
+              "render_method": "opaque",
+              "texture": "tf_block_aurora_slab_side",
+              "tint_method": "water"
+            },
+            "down": {
+              "render_method": "opaque",
+              "texture": "tf_block_aurora_pillar_top",
+              "tint_method": "water"
+            },
+            "*": {
+              "render_method": "opaque",
+              "texture": "tf_block_aurora_slab_side",
+              "tint_method": "water"
+            },
+            "south": {
+              "render_method": "opaque",
+              "texture": "tf_block_aurora_slab_side",
+              "tint_method": "water"
+            }
+          },
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:transformation": {
+            "rotation": [
+              0,
+              0,
+              0
+            ]
+          },
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:type') == 'top'",
+        "components": {
+          "minecraft:collision_box": {
+            "origin": [
+              -8,
+              8,
+              -8
+            ],
+            "size": [
+              16,
+              8,
+              16
+            ]
+          },
+          "minecraft:material_instances": {
+            "*": {
+              "render_method": "opaque",
+              "texture": "tf_block_aurora_slab_side",
+              "tint_method": "water"
+            },
+            "bottom": {
+              "render_method": "opaque",
+              "texture": "tf_block_aurora_pillar_top",
+              "tint_method": "water"
+            },
+            "top": {
+              "render_method": "opaque",
+              "texture": "tf_block_aurora_pillar_top",
+              "tint_method": "water"
+            },
+            "side": {
+              "render_method": "opaque",
+              "texture": "tf_block_aurora_slab_side",
+              "tint_method": "water"
+            }
+          },
+          "minecraft:geometry": "geometry.tf.twilightforest.block.aurora_slab",
+          "minecraft:transformation": {
+            "rotation": [
+              180,
+              0,
+              0
+            ]
+          },
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              8,
+              -8
+            ],
+            "size": [
+              16,
+              8,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "components": {
+          "minecraft:collision_box": {
+            "size": [
+              16,
+              8,
+              16
+            ],
+            "origin": [
+              -8,
+              0,
+              -8
+            ]
+          },
+          "minecraft:selection_box": {
+            "size": [
+              16,
+              8,
+              16
+            ],
+            "origin": [
+              -8,
+              0,
+              -8
+            ]
+          }
+        },
+        "condition": "q.block_state('twilightforest:type') == 'bottom'"
+      },
+      {
+        "components": {
+          "minecraft:collision_box": {
+            "size": [
+              16,
+              8,
+              16
+            ],
+            "origin": [
+              -8,
+              8,
+              -8
+            ]
+          },
+          "minecraft:selection_box": {
+            "size": [
+              16,
+              8,
+              16
+            ],
+            "origin": [
+              -8,
+              8,
+              -8
+            ]
+          }
+        },
+        "condition": "q.block_state('twilightforest:type') == 'top'"
+      },
+      {
+        "components": {
+          "minecraft:collision_box": true,
+          "minecraft:loot": "loot_tables/aurora/aurora_slab_double.json",
+          "minecraft:selection_box": true
+        },
+        "condition": "q.block_state('twilightforest:type') == 'double'"
+      }
+    ]
+  }
+}

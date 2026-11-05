@@ -1,0 +1,1168 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.twilightforest.ice_crystal.spikes": {
+      "loop": true,
+      "bones": {
+        "spike_0": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578)) / 4 * 57.29578 + 0.0",
+            "((q.life_time * 20) / 5 + 1) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578)) / 4 * 57.29578 - 0.0"
+          ]
+        },
+        "spike_1": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578)) / 4 * 57.29578 + 22.5",
+            "((q.life_time * 20) / 5) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578)) / 4 * 57.29578 - 0.0"
+          ]
+        },
+        "spike_2": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578)) / 4 * 57.29578 + 45.0",
+            "((q.life_time * 20) / 5 - 1) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578)) / 4 * 57.29578 - 0.0"
+          ]
+        },
+        "spike_3": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578)) / 4 * 57.29578 + 67.5",
+            "((q.life_time * 20) / 5) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578)) / 4 * 57.29578 - 0.0"
+          ]
+        },
+        "spike_4": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578)) / 4 * 57.29578 + 90.0",
+            "((q.life_time * 20) / 5 + 1) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578)) / 4 * 57.29578 - 0.0"
+          ]
+        },
+        "spike_5": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578)) / 4 * 57.29578 + 112.5",
+            "((q.life_time * 20) / 5) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578)) / 4 * 57.29578 - 0.0"
+          ]
+        },
+        "spike_6": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578)) / 4 * 57.29578 + 135.0",
+            "((q.life_time * 20) / 5 - 1) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578)) / 4 * 57.29578 - 0.0"
+          ]
+        },
+        "spike_7": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578)) / 4 * 57.29578 + 157.5",
+            "((q.life_time * 20) / 5) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578)) / 4 * 57.29578 - 0.0"
+          ]
+        },
+        "spike_8": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578)) / 4 * 57.29578 + 180.0",
+            "((q.life_time * 20) / 5 + 1) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578)) / 4 * 57.29578 - 0.0"
+          ]
+        },
+        "spike_9": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578)) / 4 * 57.29578 + 202.5",
+            "((q.life_time * 20) / 5) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578)) / 4 * 57.29578 - 0.0"
+          ]
+        },
+        "spike_10": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578)) / 4 * 57.29578 + 225.0",
+            "((q.life_time * 20) / 5 - 1) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578)) / 4 * 57.29578 - 0.0"
+          ]
+        },
+        "spike_11": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578)) / 4 * 57.29578 + 247.5",
+            "((q.life_time * 20) / 5) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578)) / 4 * 57.29578 - 0.0"
+          ]
+        },
+        "spike_12": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578)) / 4 * 57.29578 + 270.0",
+            "((q.life_time * 20) / 5 + 1) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578)) / 4 * 57.29578 - 0.0"
+          ]
+        },
+        "spike_13": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578)) / 4 * 57.29578 + 292.5",
+            "((q.life_time * 20) / 5) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578)) / 4 * 57.29578 - 0.0"
+          ]
+        },
+        "spike_14": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578)) / 4 * 57.29578 + 315.0",
+            "((q.life_time * 20) / 5 - 1) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578)) / 4 * 57.29578 - 0.0"
+          ]
+        },
+        "spike_15": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578)) / 4 * 57.29578 + 337.5",
+            "((q.life_time * 20) / 5) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578)) / 4 * 57.29578 - 0.0"
+          ]
+        }
+      }
+    },
+    "animation.twilightforest.unstable_ice_core.spikes": {
+      "loop": true,
+      "bones": {
+        "spike_0": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578) / 4 + 0.0) * 57.29578 - 0.0",
+            "((q.life_time * 20) / 5 + 0.0) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578) / 4 + 0.0) * 57.29578 - 0.0"
+          ],
+          "position": [
+            "0",
+            "-1.0",
+            "0"
+          ]
+        },
+        "cube_0": {
+          "position": [
+            0,
+            "-2.0",
+            0
+          ]
+        },
+        "spike_1": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578) / 4 + 5.0) * 57.29578 - 0.0",
+            "((q.life_time * 20) / 5 + 2.5) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578) / 4 + 3.0) * 57.29578 - 0.0"
+          ],
+          "position": [
+            "math.cos(((q.life_time * 20) / 1) * 57.29578) * 3 - 0",
+            "-(5 + math.sin(((q.life_time * 20) / 1) * 57.29578) * 3 - 4)",
+            "math.sin(((q.life_time * 20) / 1) * 57.29578) * 3 - 0"
+          ]
+        },
+        "cube_1": {
+          "position": [
+            0,
+            "-(10 + math.sin(((1 + (q.life_time * 20)) / 1) * 57.29578) * 3 - 8)",
+            0
+          ]
+        },
+        "spike_2": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578) / 4 + 10.0) * 57.29578 - 0.0",
+            "((q.life_time * 20) / 5 + 5.0) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578) / 4 + 6.0) * 57.29578 - 0.0"
+          ],
+          "position": [
+            "math.cos(((q.life_time * 20) / 2) * 57.29578) * 3 - 0",
+            "-(5 + math.sin(((q.life_time * 20) / 2) * 57.29578) * 3 - 4)",
+            "math.sin(((q.life_time * 20) / 2) * 57.29578) * 3 - 0"
+          ]
+        },
+        "cube_2": {
+          "position": [
+            0,
+            "-(10 + math.sin(((2 + (q.life_time * 20)) / 2) * 57.29578) * 3 - 8)",
+            0
+          ]
+        },
+        "spike_3": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578) / 4 + 15.0) * 57.29578 - 0.0",
+            "((q.life_time * 20) / 5 + 7.5) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578) / 4 + 9.0) * 57.29578 - 0.0"
+          ],
+          "position": [
+            "math.cos(((q.life_time * 20) / 3) * 57.29578) * 3 - 0",
+            "-(5 + math.sin(((q.life_time * 20) / 3) * 57.29578) * 3 - 4)",
+            "math.sin(((q.life_time * 20) / 3) * 57.29578) * 3 - 0"
+          ]
+        },
+        "cube_3": {
+          "position": [
+            0,
+            "-(10 + math.sin(((3 + (q.life_time * 20)) / 3) * 57.29578) * 3 - 8)",
+            0
+          ]
+        },
+        "spike_4": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578) / 4 + 20.0) * 57.29578 - 0.0",
+            "((q.life_time * 20) / 5 + 10.0) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578) / 4 + 12.0) * 57.29578 - 0.0"
+          ],
+          "position": [
+            "math.cos(((q.life_time * 20) / 4) * 57.29578) * 3 - 0",
+            "-(5 + math.sin(((q.life_time * 20) / 4) * 57.29578) * 3 - 4)",
+            "math.sin(((q.life_time * 20) / 4) * 57.29578) * 3 - 0"
+          ]
+        },
+        "cube_4": {
+          "position": [
+            0,
+            "-(10 + math.sin(((4 + (q.life_time * 20)) / 4) * 57.29578) * 3 - 8)",
+            0
+          ]
+        },
+        "spike_5": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578) / 4 + 25.0) * 57.29578 - 0.0",
+            "((q.life_time * 20) / 5 + 12.5) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578) / 4 + 15.0) * 57.29578 - 0.0"
+          ],
+          "position": [
+            "math.cos(((q.life_time * 20) / 5) * 57.29578) * 3 - 0",
+            "-(5 + math.sin(((q.life_time * 20) / 5) * 57.29578) * 3 - 4)",
+            "math.sin(((q.life_time * 20) / 5) * 57.29578) * 3 - 0"
+          ]
+        },
+        "cube_5": {
+          "position": [
+            0,
+            "-(10 + math.sin(((5 + (q.life_time * 20)) / 5) * 57.29578) * 3 - 8)",
+            0
+          ]
+        },
+        "spike_6": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578) / 4 + 30.0) * 57.29578 - 0.0",
+            "((q.life_time * 20) / 5 + 15.0) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578) / 4 + 18.0) * 57.29578 - 0.0"
+          ],
+          "position": [
+            "math.cos(((q.life_time * 20) / 6) * 57.29578) * 3 - 0",
+            "-(5 + math.sin(((q.life_time * 20) / 6) * 57.29578) * 3 - 4)",
+            "math.sin(((q.life_time * 20) / 6) * 57.29578) * 3 - 0"
+          ]
+        },
+        "cube_6": {
+          "position": [
+            0,
+            "-(10 + math.sin(((6 + (q.life_time * 20)) / 6) * 57.29578) * 3 - 8)",
+            0
+          ]
+        },
+        "spike_7": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578) / 4 + 35.0) * 57.29578 - 0.0",
+            "((q.life_time * 20) / 5 + 17.5) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578) / 4 + 21.0) * 57.29578 - 0.0"
+          ],
+          "position": [
+            "math.cos(((q.life_time * 20) / 7) * 57.29578) * 3 - 0",
+            "-(5 + math.sin(((q.life_time * 20) / 7) * 57.29578) * 3 - 4)",
+            "math.sin(((q.life_time * 20) / 7) * 57.29578) * 3 - 0"
+          ]
+        },
+        "cube_7": {
+          "position": [
+            0,
+            "-(10 + math.sin(((7 + (q.life_time * 20)) / 7) * 57.29578) * 3 - 8)",
+            0
+          ]
+        },
+        "spike_8": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578) / 4 + 40.0) * 57.29578 - 0.0",
+            "((q.life_time * 20) / 5 + 20.0) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578) / 4 + 24.0) * 57.29578 - 0.0"
+          ],
+          "position": [
+            "math.cos(((q.life_time * 20) / 8) * 57.29578) * 3 - 0",
+            "-(5 + math.sin(((q.life_time * 20) / 8) * 57.29578) * 3 - 4)",
+            "math.sin(((q.life_time * 20) / 8) * 57.29578) * 3 - 0"
+          ]
+        },
+        "cube_8": {
+          "position": [
+            0,
+            "-(10 + math.sin(((8 + (q.life_time * 20)) / 8) * 57.29578) * 3 - 8)",
+            0
+          ]
+        },
+        "spike_9": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578) / 4 + 45.0) * 57.29578 - 0.0",
+            "((q.life_time * 20) / 5 + 22.5) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578) / 4 + 27.0) * 57.29578 - 0.0"
+          ],
+          "position": [
+            "math.cos(((q.life_time * 20) / 9) * 57.29578) * 3 - 0",
+            "-(5 + math.sin(((q.life_time * 20) / 9) * 57.29578) * 3 - 4)",
+            "math.sin(((q.life_time * 20) / 9) * 57.29578) * 3 - 0"
+          ]
+        },
+        "cube_9": {
+          "position": [
+            0,
+            "-(10 + math.sin(((9 + (q.life_time * 20)) / 9) * 57.29578) * 3 - 8)",
+            0
+          ]
+        },
+        "spike_10": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578) / 4 + 50.0) * 57.29578 - 0.0",
+            "((q.life_time * 20) / 5 + 25.0) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578) / 4 + 30.0) * 57.29578 - 0.0"
+          ],
+          "position": [
+            "math.cos(((q.life_time * 20) / 10) * 57.29578) * 3 - 0",
+            "-(5 + math.sin(((q.life_time * 20) / 10) * 57.29578) * 3 - 4)",
+            "math.sin(((q.life_time * 20) / 10) * 57.29578) * 3 - 0"
+          ]
+        },
+        "cube_10": {
+          "position": [
+            0,
+            "-(10 + math.sin(((10 + (q.life_time * 20)) / 10) * 57.29578) * 3 - 8)",
+            0
+          ]
+        },
+        "spike_11": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578) / 4 + 55.0) * 57.29578 - 0.0",
+            "((q.life_time * 20) / 5 + 27.5) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578) / 4 + 33.0) * 57.29578 - 0.0"
+          ],
+          "position": [
+            "math.cos(((q.life_time * 20) / 11) * 57.29578) * 3 - 0",
+            "-(5 + math.sin(((q.life_time * 20) / 11) * 57.29578) * 3 - 4)",
+            "math.sin(((q.life_time * 20) / 11) * 57.29578) * 3 - 0"
+          ]
+        },
+        "cube_11": {
+          "position": [
+            0,
+            "-(10 + math.sin(((11 + (q.life_time * 20)) / 11) * 57.29578) * 3 - 8)",
+            0
+          ]
+        },
+        "spike_12": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578) / 4 + 60.0) * 57.29578 - 0.0",
+            "((q.life_time * 20) / 5 + 30.0) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578) / 4 + 36.0) * 57.29578 - 0.0"
+          ],
+          "position": [
+            "math.cos(((q.life_time * 20) / 12) * 57.29578) * 3 - 0",
+            "-(5 + math.sin(((q.life_time * 20) / 12) * 57.29578) * 3 - 4)",
+            "math.sin(((q.life_time * 20) / 12) * 57.29578) * 3 - 0"
+          ]
+        },
+        "cube_12": {
+          "position": [
+            0,
+            "-(10 + math.sin(((12 + (q.life_time * 20)) / 12) * 57.29578) * 3 - 8)",
+            0
+          ]
+        },
+        "spike_13": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578) / 4 + 65.0) * 57.29578 - 0.0",
+            "((q.life_time * 20) / 5 + 32.5) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578) / 4 + 39.0) * 57.29578 - 0.0"
+          ],
+          "position": [
+            "math.cos(((q.life_time * 20) / 13) * 57.29578) * 3 - 0",
+            "-(5 + math.sin(((q.life_time * 20) / 13) * 57.29578) * 3 - 4)",
+            "math.sin(((q.life_time * 20) / 13) * 57.29578) * 3 - 0"
+          ]
+        },
+        "cube_13": {
+          "position": [
+            0,
+            "-(10 + math.sin(((13 + (q.life_time * 20)) / 13) * 57.29578) * 3 - 8)",
+            0
+          ]
+        },
+        "spike_14": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578) / 4 + 70.0) * 57.29578 - 0.0",
+            "((q.life_time * 20) / 5 + 35.0) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578) / 4 + 42.0) * 57.29578 - 0.0"
+          ],
+          "position": [
+            "math.cos(((q.life_time * 20) / 14) * 57.29578) * 3 - 0",
+            "-(5 + math.sin(((q.life_time * 20) / 14) * 57.29578) * 3 - 4)",
+            "math.sin(((q.life_time * 20) / 14) * 57.29578) * 3 - 0"
+          ]
+        },
+        "cube_14": {
+          "position": [
+            0,
+            "-(10 + math.sin(((14 + (q.life_time * 20)) / 14) * 57.29578) * 3 - 8)",
+            0
+          ]
+        },
+        "spike_15": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578) / 4 + 75.0) * 57.29578 - 0.0",
+            "((q.life_time * 20) / 5 + 37.5) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578) / 4 + 45.0) * 57.29578 - 0.0"
+          ],
+          "position": [
+            "math.cos(((q.life_time * 20) / 15) * 57.29578) * 3 - 0",
+            "-(5 + math.sin(((q.life_time * 20) / 15) * 57.29578) * 3 - 4)",
+            "math.sin(((q.life_time * 20) / 15) * 57.29578) * 3 - 0"
+          ]
+        },
+        "cube_15": {
+          "position": [
+            0,
+            "-(10 + math.sin(((15 + (q.life_time * 20)) / 15) * 57.29578) * 3 - 8)",
+            0
+          ]
+        }
+      }
+    },
+    "animation.twilightforest.stable_ice_core.spikes": {
+      "loop": true,
+      "bones": {
+        "spike_0": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578) / 4 + 0.0) * 57.29578 - 0.0",
+            "((q.life_time * 20) / 5 + 0.0) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578) / 4 + 0.0) * 57.29578 - 0.0"
+          ],
+          "position": [
+            "0",
+            "-1.0",
+            "0"
+          ]
+        },
+        "cube_0": {
+          "position": [
+            0,
+            "-2.0",
+            0
+          ]
+        },
+        "spike_1": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578) / 4 + 5.0) * 57.29578 - 0.0",
+            "((q.life_time * 20) / 5 + 2.5) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578) / 4 + 3.0) * 57.29578 - 0.0"
+          ],
+          "position": [
+            "math.cos(((q.life_time * 20) / 1) * 57.29578) * 3 - 0",
+            "-(5 + math.sin(((q.life_time * 20) / 1) * 57.29578) * 3 - 4)",
+            "math.sin(((q.life_time * 20) / 1) * 57.29578) * 3 - 0"
+          ]
+        },
+        "cube_1": {
+          "position": [
+            0,
+            "-(10 + math.sin(((1 + (q.life_time * 20)) / 1) * 57.29578) * 3 - 8)",
+            0
+          ]
+        },
+        "spike_2": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578) / 4 + 10.0) * 57.29578 - 0.0",
+            "((q.life_time * 20) / 5 + 5.0) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578) / 4 + 6.0) * 57.29578 - 0.0"
+          ],
+          "position": [
+            "math.cos(((q.life_time * 20) / 2) * 57.29578) * 3 - 0",
+            "-(5 + math.sin(((q.life_time * 20) / 2) * 57.29578) * 3 - 4)",
+            "math.sin(((q.life_time * 20) / 2) * 57.29578) * 3 - 0"
+          ]
+        },
+        "cube_2": {
+          "position": [
+            0,
+            "-(10 + math.sin(((2 + (q.life_time * 20)) / 2) * 57.29578) * 3 - 8)",
+            0
+          ]
+        },
+        "spike_3": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578) / 4 + 15.0) * 57.29578 - 0.0",
+            "((q.life_time * 20) / 5 + 7.5) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578) / 4 + 9.0) * 57.29578 - 0.0"
+          ],
+          "position": [
+            "math.cos(((q.life_time * 20) / 3) * 57.29578) * 3 - 0",
+            "-(5 + math.sin(((q.life_time * 20) / 3) * 57.29578) * 3 - 4)",
+            "math.sin(((q.life_time * 20) / 3) * 57.29578) * 3 - 0"
+          ]
+        },
+        "cube_3": {
+          "position": [
+            0,
+            "-(10 + math.sin(((3 + (q.life_time * 20)) / 3) * 57.29578) * 3 - 8)",
+            0
+          ]
+        },
+        "spike_4": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578) / 4 + 20.0) * 57.29578 - 0.0",
+            "((q.life_time * 20) / 5 + 10.0) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578) / 4 + 12.0) * 57.29578 - 0.0"
+          ],
+          "position": [
+            "math.cos(((q.life_time * 20) / 4) * 57.29578) * 3 - 0",
+            "-(5 + math.sin(((q.life_time * 20) / 4) * 57.29578) * 3 - 4)",
+            "math.sin(((q.life_time * 20) / 4) * 57.29578) * 3 - 0"
+          ]
+        },
+        "cube_4": {
+          "position": [
+            0,
+            "-(10 + math.sin(((4 + (q.life_time * 20)) / 4) * 57.29578) * 3 - 8)",
+            0
+          ]
+        },
+        "spike_5": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578) / 4 + 25.0) * 57.29578 - 0.0",
+            "((q.life_time * 20) / 5 + 12.5) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578) / 4 + 15.0) * 57.29578 - 0.0"
+          ],
+          "position": [
+            "math.cos(((q.life_time * 20) / 5) * 57.29578) * 3 - 0",
+            "-(5 + math.sin(((q.life_time * 20) / 5) * 57.29578) * 3 - 4)",
+            "math.sin(((q.life_time * 20) / 5) * 57.29578) * 3 - 0"
+          ]
+        },
+        "cube_5": {
+          "position": [
+            0,
+            "-(10 + math.sin(((5 + (q.life_time * 20)) / 5) * 57.29578) * 3 - 8)",
+            0
+          ]
+        },
+        "spike_6": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578) / 4 + 30.0) * 57.29578 - 0.0",
+            "((q.life_time * 20) / 5 + 15.0) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578) / 4 + 18.0) * 57.29578 - 0.0"
+          ],
+          "position": [
+            "math.cos(((q.life_time * 20) / 6) * 57.29578) * 3 - 0",
+            "-(5 + math.sin(((q.life_time * 20) / 6) * 57.29578) * 3 - 4)",
+            "math.sin(((q.life_time * 20) / 6) * 57.29578) * 3 - 0"
+          ]
+        },
+        "cube_6": {
+          "position": [
+            0,
+            "-(10 + math.sin(((6 + (q.life_time * 20)) / 6) * 57.29578) * 3 - 8)",
+            0
+          ]
+        },
+        "spike_7": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578) / 4 + 35.0) * 57.29578 - 0.0",
+            "((q.life_time * 20) / 5 + 17.5) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578) / 4 + 21.0) * 57.29578 - 0.0"
+          ],
+          "position": [
+            "math.cos(((q.life_time * 20) / 7) * 57.29578) * 3 - 0",
+            "-(5 + math.sin(((q.life_time * 20) / 7) * 57.29578) * 3 - 4)",
+            "math.sin(((q.life_time * 20) / 7) * 57.29578) * 3 - 0"
+          ]
+        },
+        "cube_7": {
+          "position": [
+            0,
+            "-(10 + math.sin(((7 + (q.life_time * 20)) / 7) * 57.29578) * 3 - 8)",
+            0
+          ]
+        },
+        "spike_8": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578) / 4 + 40.0) * 57.29578 - 0.0",
+            "((q.life_time * 20) / 5 + 20.0) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578) / 4 + 24.0) * 57.29578 - 0.0"
+          ],
+          "position": [
+            "math.cos(((q.life_time * 20) / 8) * 57.29578) * 3 - 0",
+            "-(5 + math.sin(((q.life_time * 20) / 8) * 57.29578) * 3 - 4)",
+            "math.sin(((q.life_time * 20) / 8) * 57.29578) * 3 - 0"
+          ]
+        },
+        "cube_8": {
+          "position": [
+            0,
+            "-(10 + math.sin(((8 + (q.life_time * 20)) / 8) * 57.29578) * 3 - 8)",
+            0
+          ]
+        },
+        "spike_9": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578) / 4 + 45.0) * 57.29578 - 0.0",
+            "((q.life_time * 20) / 5 + 22.5) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578) / 4 + 27.0) * 57.29578 - 0.0"
+          ],
+          "position": [
+            "math.cos(((q.life_time * 20) / 9) * 57.29578) * 3 - 0",
+            "-(5 + math.sin(((q.life_time * 20) / 9) * 57.29578) * 3 - 4)",
+            "math.sin(((q.life_time * 20) / 9) * 57.29578) * 3 - 0"
+          ]
+        },
+        "cube_9": {
+          "position": [
+            0,
+            "-(10 + math.sin(((9 + (q.life_time * 20)) / 9) * 57.29578) * 3 - 8)",
+            0
+          ]
+        },
+        "spike_10": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578) / 4 + 50.0) * 57.29578 - 0.0",
+            "((q.life_time * 20) / 5 + 25.0) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578) / 4 + 30.0) * 57.29578 - 0.0"
+          ],
+          "position": [
+            "math.cos(((q.life_time * 20) / 10) * 57.29578) * 3 - 0",
+            "-(5 + math.sin(((q.life_time * 20) / 10) * 57.29578) * 3 - 4)",
+            "math.sin(((q.life_time * 20) / 10) * 57.29578) * 3 - 0"
+          ]
+        },
+        "cube_10": {
+          "position": [
+            0,
+            "-(10 + math.sin(((10 + (q.life_time * 20)) / 10) * 57.29578) * 3 - 8)",
+            0
+          ]
+        },
+        "spike_11": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578) / 4 + 55.0) * 57.29578 - 0.0",
+            "((q.life_time * 20) / 5 + 27.5) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578) / 4 + 33.0) * 57.29578 - 0.0"
+          ],
+          "position": [
+            "math.cos(((q.life_time * 20) / 11) * 57.29578) * 3 - 0",
+            "-(5 + math.sin(((q.life_time * 20) / 11) * 57.29578) * 3 - 4)",
+            "math.sin(((q.life_time * 20) / 11) * 57.29578) * 3 - 0"
+          ]
+        },
+        "cube_11": {
+          "position": [
+            0,
+            "-(10 + math.sin(((11 + (q.life_time * 20)) / 11) * 57.29578) * 3 - 8)",
+            0
+          ]
+        },
+        "spike_12": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578) / 4 + 60.0) * 57.29578 - 0.0",
+            "((q.life_time * 20) / 5 + 30.0) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578) / 4 + 36.0) * 57.29578 - 0.0"
+          ],
+          "position": [
+            "math.cos(((q.life_time * 20) / 12) * 57.29578) * 3 - 0",
+            "-(5 + math.sin(((q.life_time * 20) / 12) * 57.29578) * 3 - 4)",
+            "math.sin(((q.life_time * 20) / 12) * 57.29578) * 3 - 0"
+          ]
+        },
+        "cube_12": {
+          "position": [
+            0,
+            "-(10 + math.sin(((12 + (q.life_time * 20)) / 12) * 57.29578) * 3 - 8)",
+            0
+          ]
+        },
+        "spike_13": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578) / 4 + 65.0) * 57.29578 - 0.0",
+            "((q.life_time * 20) / 5 + 32.5) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578) / 4 + 39.0) * 57.29578 - 0.0"
+          ],
+          "position": [
+            "math.cos(((q.life_time * 20) / 13) * 57.29578) * 3 - 0",
+            "-(5 + math.sin(((q.life_time * 20) / 13) * 57.29578) * 3 - 4)",
+            "math.sin(((q.life_time * 20) / 13) * 57.29578) * 3 - 0"
+          ]
+        },
+        "cube_13": {
+          "position": [
+            0,
+            "-(10 + math.sin(((13 + (q.life_time * 20)) / 13) * 57.29578) * 3 - 8)",
+            0
+          ]
+        },
+        "spike_14": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578) / 4 + 70.0) * 57.29578 - 0.0",
+            "((q.life_time * 20) / 5 + 35.0) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578) / 4 + 42.0) * 57.29578 - 0.0"
+          ],
+          "position": [
+            "math.cos(((q.life_time * 20) / 14) * 57.29578) * 3 - 0",
+            "-(5 + math.sin(((q.life_time * 20) / 14) * 57.29578) * 3 - 4)",
+            "math.sin(((q.life_time * 20) / 14) * 57.29578) * 3 - 0"
+          ]
+        },
+        "cube_14": {
+          "position": [
+            0,
+            "-(10 + math.sin(((14 + (q.life_time * 20)) / 14) * 57.29578) * 3 - 8)",
+            0
+          ]
+        },
+        "spike_15": {
+          "rotation": [
+            "(math.sin(((q.life_time * 20) / 5) * 57.29578) / 4 + 75.0) * 57.29578 - 0.0",
+            "((q.life_time * 20) / 5 + 37.5) * 57.29578 - 0.0",
+            "(math.cos(((q.life_time * 20) / 5) * 57.29578) / 4 + 45.0) * 57.29578 - 0.0"
+          ],
+          "position": [
+            "math.cos(((q.life_time * 20) / 15) * 57.29578) * 3 - 0",
+            "-(5 + math.sin(((q.life_time * 20) / 15) * 57.29578) * 3 - 4)",
+            "math.sin(((q.life_time * 20) / 15) * 57.29578) * 3 - 0"
+          ]
+        },
+        "cube_15": {
+          "position": [
+            0,
+            "-(10 + math.sin(((15 + (q.life_time * 20)) / 15) * 57.29578) * 3 - 8)",
+            0
+          ]
+        }
+      }
+    },
+    "animation.twilightforest.snow_queen.beam_arms": {
+      "loop": true,
+      "override_previous_animation": false,
+      "bones": {
+        "rightArm": {
+          "rotation": [
+            "(-1.5708 - (math.sin(v.attack_time * 180) * 1.2 - math.sin((1 - (1 - v.attack_time) * (1 - v.attack_time)) * 180) * 0.4) + (math.sin((q.life_time * 20) * 0.067 * 57.29578) * 0.05)) * 57.29578 - this",
+            "(-(0.1 - math.sin(v.attack_time * 180) * 0.6)) * 57.29578 - this",
+            "((math.cos((q.life_time * 20) * 0.09 * 57.29578) * 0.05 + 0.05)) * 57.29578 - this"
+          ]
+        },
+        "leftArm": {
+          "rotation": [
+            "(-1.5708 - (math.sin(v.attack_time * 180) * 1.2 - math.sin((1 - (1 - v.attack_time) * (1 - v.attack_time)) * 180) * 0.4) - (math.sin((q.life_time * 20) * 0.067 * 57.29578) * 0.05)) * 57.29578 - this",
+            "(0.1 - math.sin(v.attack_time * 180) * 0.6) * 57.29578 - this",
+            "(-(math.cos((q.life_time * 20) * 0.09 * 57.29578) * 0.05 + 0.05)) * 57.29578 - this"
+          ]
+        }
+      }
+    },
+    "animation.twilightforest.snow_queen.arms_up": {
+      "loop": true,
+      "bones": {
+        "rightArm": {
+          "rotation": [
+            180,
+            0,
+            0
+          ]
+        },
+        "leftArm": {
+          "rotation": [
+            180,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "animation.twilightforest.snow_queen.shields": {
+      "loop": true,
+      "bones": {
+        "shields": {
+          "rotation": [
+            0,
+            "-((q.life_time * 20) * 5) - q.body_y_rotation",
+            0
+          ]
+        }
+      }
+    },
+    "animation.twilightforest.ice_mob.bob": {
+      "loop": true,
+      "bones": {
+        "root": {
+          "position": [
+            0,
+            "math.sin(((q.life_time * 20) * 0.2) * 57.29578) * 0.15 * 16",
+            0
+          ]
+        }
+      }
+    },
+    "animation.twilightforest.ice_crystal.bob": {
+      "loop": true,
+      "bones": {
+        "spike_0": {
+          "position": [
+            0,
+            "math.sin(((q.life_time * 20) * 0.2) * 57.29578) * 0.15 * 16",
+            0
+          ]
+        },
+        "spike_1": {
+          "position": [
+            0,
+            "math.sin(((q.life_time * 20) * 0.2) * 57.29578) * 0.15 * 16",
+            0
+          ]
+        },
+        "spike_2": {
+          "position": [
+            0,
+            "math.sin(((q.life_time * 20) * 0.2) * 57.29578) * 0.15 * 16",
+            0
+          ]
+        },
+        "spike_3": {
+          "position": [
+            0,
+            "math.sin(((q.life_time * 20) * 0.2) * 57.29578) * 0.15 * 16",
+            0
+          ]
+        },
+        "spike_4": {
+          "position": [
+            0,
+            "math.sin(((q.life_time * 20) * 0.2) * 57.29578) * 0.15 * 16",
+            0
+          ]
+        },
+        "spike_5": {
+          "position": [
+            0,
+            "math.sin(((q.life_time * 20) * 0.2) * 57.29578) * 0.15 * 16",
+            0
+          ]
+        },
+        "spike_6": {
+          "position": [
+            0,
+            "math.sin(((q.life_time * 20) * 0.2) * 57.29578) * 0.15 * 16",
+            0
+          ]
+        },
+        "spike_7": {
+          "position": [
+            0,
+            "math.sin(((q.life_time * 20) * 0.2) * 57.29578) * 0.15 * 16",
+            0
+          ]
+        },
+        "spike_8": {
+          "position": [
+            0,
+            "math.sin(((q.life_time * 20) * 0.2) * 57.29578) * 0.15 * 16",
+            0
+          ]
+        },
+        "spike_9": {
+          "position": [
+            0,
+            "math.sin(((q.life_time * 20) * 0.2) * 57.29578) * 0.15 * 16",
+            0
+          ]
+        },
+        "spike_10": {
+          "position": [
+            0,
+            "math.sin(((q.life_time * 20) * 0.2) * 57.29578) * 0.15 * 16",
+            0
+          ]
+        },
+        "spike_11": {
+          "position": [
+            0,
+            "math.sin(((q.life_time * 20) * 0.2) * 57.29578) * 0.15 * 16",
+            0
+          ]
+        },
+        "spike_12": {
+          "position": [
+            0,
+            "math.sin(((q.life_time * 20) * 0.2) * 57.29578) * 0.15 * 16",
+            0
+          ]
+        },
+        "spike_13": {
+          "position": [
+            0,
+            "math.sin(((q.life_time * 20) * 0.2) * 57.29578) * 0.15 * 16",
+            0
+          ]
+        },
+        "spike_14": {
+          "position": [
+            0,
+            "math.sin(((q.life_time * 20) * 0.2) * 57.29578) * 0.15 * 16",
+            0
+          ]
+        },
+        "spike_15": {
+          "position": [
+            0,
+            "math.sin(((q.life_time * 20) * 0.2) * 57.29578) * 0.15 * 16",
+            0
+          ]
+        }
+      }
+    },
+    "animation.twilightforest.ice_core.bob": {
+      "loop": true,
+      "bones": {
+        "head": {
+          "position": [
+            0,
+            "math.sin(((q.life_time * 20) * 0.2) * 57.29578) * 0.15 * 16",
+            0
+          ]
+        },
+        "spike_0": {
+          "position": [
+            0,
+            "math.sin(((q.life_time * 20) * 0.2) * 57.29578) * 0.15 * 16",
+            0
+          ]
+        },
+        "spike_1": {
+          "position": [
+            0,
+            "math.sin(((q.life_time * 20) * 0.2) * 57.29578) * 0.15 * 16",
+            0
+          ]
+        },
+        "spike_2": {
+          "position": [
+            0,
+            "math.sin(((q.life_time * 20) * 0.2) * 57.29578) * 0.15 * 16",
+            0
+          ]
+        },
+        "spike_3": {
+          "position": [
+            0,
+            "math.sin(((q.life_time * 20) * 0.2) * 57.29578) * 0.15 * 16",
+            0
+          ]
+        },
+        "spike_4": {
+          "position": [
+            0,
+            "math.sin(((q.life_time * 20) * 0.2) * 57.29578) * 0.15 * 16",
+            0
+          ]
+        },
+        "spike_5": {
+          "position": [
+            0,
+            "math.sin(((q.life_time * 20) * 0.2) * 57.29578) * 0.15 * 16",
+            0
+          ]
+        },
+        "spike_6": {
+          "position": [
+            0,
+            "math.sin(((q.life_time * 20) * 0.2) * 57.29578) * 0.15 * 16",
+            0
+          ]
+        },
+        "spike_7": {
+          "position": [
+            0,
+            "math.sin(((q.life_time * 20) * 0.2) * 57.29578) * 0.15 * 16",
+            0
+          ]
+        },
+        "spike_8": {
+          "position": [
+            0,
+            "math.sin(((q.life_time * 20) * 0.2) * 57.29578) * 0.15 * 16",
+            0
+          ]
+        },
+        "spike_9": {
+          "position": [
+            0,
+            "math.sin(((q.life_time * 20) * 0.2) * 57.29578) * 0.15 * 16",
+            0
+          ]
+        },
+        "spike_10": {
+          "position": [
+            0,
+            "math.sin(((q.life_time * 20) * 0.2) * 57.29578) * 0.15 * 16",
+            0
+          ]
+        },
+        "spike_11": {
+          "position": [
+            0,
+            "math.sin(((q.life_time * 20) * 0.2) * 57.29578) * 0.15 * 16",
+            0
+          ]
+        },
+        "spike_12": {
+          "position": [
+            0,
+            "math.sin(((q.life_time * 20) * 0.2) * 57.29578) * 0.15 * 16",
+            0
+          ]
+        },
+        "spike_13": {
+          "position": [
+            0,
+            "math.sin(((q.life_time * 20) * 0.2) * 57.29578) * 0.15 * 16",
+            0
+          ]
+        },
+        "spike_14": {
+          "position": [
+            0,
+            "math.sin(((q.life_time * 20) * 0.2) * 57.29578) * 0.15 * 16",
+            0
+          ]
+        },
+        "spike_15": {
+          "position": [
+            0,
+            "math.sin(((q.life_time * 20) * 0.2) * 57.29578) * 0.15 * 16",
+            0
+          ]
+        }
+      }
+    },
+    "animation.twilightforest.unstable_ice_core.swell": {
+      "loop": true,
+      "bones": {
+        "head": {
+          "scale": [
+            "v.swell_xz",
+            "v.swell_y",
+            "v.swell_xz"
+          ]
+        },
+        "spike_0": {
+          "scale": [
+            "v.swell_xz",
+            "v.swell_y",
+            "v.swell_xz"
+          ]
+        },
+        "spike_1": {
+          "scale": [
+            "v.swell_xz",
+            "v.swell_y",
+            "v.swell_xz"
+          ]
+        },
+        "spike_2": {
+          "scale": [
+            "v.swell_xz",
+            "v.swell_y",
+            "v.swell_xz"
+          ]
+        },
+        "spike_3": {
+          "scale": [
+            "v.swell_xz",
+            "v.swell_y",
+            "v.swell_xz"
+          ]
+        },
+        "spike_4": {
+          "scale": [
+            "v.swell_xz",
+            "v.swell_y",
+            "v.swell_xz"
+          ]
+        },
+        "spike_5": {
+          "scale": [
+            "v.swell_xz",
+            "v.swell_y",
+            "v.swell_xz"
+          ]
+        },
+        "spike_6": {
+          "scale": [
+            "v.swell_xz",
+            "v.swell_y",
+            "v.swell_xz"
+          ]
+        },
+        "spike_7": {
+          "scale": [
+            "v.swell_xz",
+            "v.swell_y",
+            "v.swell_xz"
+          ]
+        },
+        "spike_8": {
+          "scale": [
+            "v.swell_xz",
+            "v.swell_y",
+            "v.swell_xz"
+          ]
+        },
+        "spike_9": {
+          "scale": [
+            "v.swell_xz",
+            "v.swell_y",
+            "v.swell_xz"
+          ]
+        },
+        "spike_10": {
+          "scale": [
+            "v.swell_xz",
+            "v.swell_y",
+            "v.swell_xz"
+          ]
+        },
+        "spike_11": {
+          "scale": [
+            "v.swell_xz",
+            "v.swell_y",
+            "v.swell_xz"
+          ]
+        },
+        "spike_12": {
+          "scale": [
+            "v.swell_xz",
+            "v.swell_y",
+            "v.swell_xz"
+          ]
+        },
+        "spike_13": {
+          "scale": [
+            "v.swell_xz",
+            "v.swell_y",
+            "v.swell_xz"
+          ]
+        },
+        "spike_14": {
+          "scale": [
+            "v.swell_xz",
+            "v.swell_y",
+            "v.swell_xz"
+          ]
+        },
+        "spike_15": {
+          "scale": [
+            "v.swell_xz",
+            "v.swell_y",
+            "v.swell_xz"
+          ]
+        }
+      }
+    }
+  }
+}
