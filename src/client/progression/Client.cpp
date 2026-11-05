@@ -162,7 +162,11 @@ namespace {
 class ProgressionClientModule {
 public:
     // input listeners are added at mod load, before the game's threads run (as the screen framework)
-    void load() { watchMouseRelease(); }
+    // and the keys, before the game builds its input handler (so the key is in the controls)
+    void load() {
+        watchMouseRelease();
+        registerAdvancementsKey();
+    }
     void install() {
         static bool registered = false;
         if (registered) return;
@@ -176,14 +180,22 @@ public:
             }
             if (auto* p = currentPlayer()) tickLockedToast(*p, biome);
         });
-        // Java's key.advancements (L)
-        keys::registerKey("progression.advancements", 'L', "key.categories.misc", [] {
-            if (net::client::connected()) net::client::send("progression.open", nlohmann::json::object());
-        });
+        registerAdvancementsKey();
         registerAdvancementScreen();
         registerToastLayer();
     }
     void uninstall() {}
+
+private:
+    /// Java's key.advancements (L); once, at load (install() on a late enable).
+    static void registerAdvancementsKey() {
+        static bool done = false;
+        if (done) return;
+        done = true;
+        keys::registerKey("progression.advancements", 'L', "key.categories.misc", [] {
+            if (net::client::connected()) net::client::send("progression.open", nlohmann::json::object());
+        });
+    }
 };
 
 } // namespace
