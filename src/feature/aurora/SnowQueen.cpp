@@ -37,6 +37,7 @@
 #include "mc/entity/components_json_legacy/ProjectileComponent.h"
 #include "mc/world/actor/ActorSwingSource.h"
 #include "mc/world/attribute/AttributeInstance.h"
+#include "mc/world/attribute/AttributeInstanceConstRef.h"
 #include "mc/world/attribute/SharedAttributes.h"
 #include "mc/world/item/HandSlot.h"
 #include "mc/world/item/enchanting/EnchantUtils.h"
