@@ -18,4 +18,10 @@ foreach ($t in 'trees.sapling_growers', 'trees.mega_2x2', 'trees.time_core_ticks
 # the features contract knows every type and placer this unit registers (no unknown-id warnings)
 $unknown = @(Get-ServerLog -Since $mark | Select-String -Pattern 'unknown (trunk placer|foliage placer|tree decorator|feature type|block state provider) twilightforest:' | ForEach-Object { $_.Line.Trim() })
 if ($unknown.Count -gt 0) { throw "unknown tree parts: $($unknown -join ' | ')" }
-Write-Step 'every trees selftest passed'
+# every tree was compared with TF 4.8 on Java block for block (the oracle's boxes are this world's):
+# 3 feature grids, 4 golden trees and 9 saplings
+$parity = @(Get-ServerLog -Since $mark | Select-String -Pattern 'JAVA PARITY (\S+): ' | ForEach-Object { $_.Line.Trim() })
+$notCompared = @($parity | Where-Object { $_ -match 'not compared' })
+if ($notCompared.Count -gt 0) { throw "Java parity not compared: $($notCompared -join ' | ')" }
+if ($parity.Count -lt 16) { throw "expected 16 Java parity comparisons, got $($parity.Count): $($parity -join ' | ')" }
+Write-Step "every trees selftest passed; $($parity.Count) Java parity comparisons ran"

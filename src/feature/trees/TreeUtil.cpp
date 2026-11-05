@@ -234,6 +234,12 @@ bool saplingSoil(Block const& block) { return kit::hasTag(block, "minecraft:dirt
 
 // ---- FeaturePlacers ---------------------------------------------------------------------------------
 
+namespace {
+/// FeatureLogic.ROOT_SHOULD_SKIP: BlockTagGenerator.ROOT_TRACE_SKIP, whose id is tree_roots_skip
+/// (logs, root, liveroot, mangrove root, time wood, #features_cannot_replace).
+constexpr char const* kRootTraceSkip = "twilightforest:tree_roots_skip";
+} // namespace
+
 void setBlock(Region& region, BlockPos const& pos, Block const& block) { region.setBlock(pos, block, 19); }
 
 void placeProvided(Region& region, Placer const& placer, bool (*predicate)(Region&, BlockPos const&), BlockPos const& pos, Json const& provider, RandomSource& random) {
@@ -384,7 +390,7 @@ void traceRoot(Region& region, RootPlacer const& placer, RandomSource& random, J
     BlockPos p;
     while (line.next(p)) {
         // end the root where it cannot be penetrated
-        if (anyBelowMatch(p, placer.penetrability - 1, [&](BlockPos const& q) { return kit::hasTag(region.getBlock(q), "twilightforest:root_trace_skip"); })) return;
+        if (anyBelowMatch(p, placer.penetrability - 1, [&](BlockPos const& q) { return kit::hasTag(region.getBlock(q), kRootTraceSkip); })) return;
         // stop where the position cannot be replaced or is detached from the ground mass
         if (!placeIfValidRootPos(region, placer, random, p, dirtRoot)) return;
     }
@@ -393,7 +399,7 @@ void traceRoot(Region& region, RootPlacer const& placer, RandomSource& random, J
 void traceExposedRoot(Region& region, RootPlacer const& placer, RandomSource& random, Json const& exposedRoot, Json const& dirtRoot, Bresenham& line) {
     BlockPos p;
     while (line.next(p)) {
-        if (kit::hasTag(region.getBlock(p), "twilightforest:root_trace_skip")) continue;
+        if (kit::hasTag(region.getBlock(p), kRootTraceSkip)) continue;
         if (hasEmptyNeighborExceptBelow(region, p)) {
             // not underground: the root must stop at what it cannot replace
             bool stop = anyBelowMatch(p, placer.penetrability - 1, [&](BlockPos const& q) {

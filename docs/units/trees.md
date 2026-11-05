@@ -18,7 +18,7 @@ Spec: [docs/spec/trees.md](../spec/trees.md). What is where:
 | Selftests, e2e | `src/feature/trees/SelfTests.cpp`, `tools/e2e/{server,client}/scenarios/trees.ps1` |
 | Pack: hardened dark leaves (foliage tint), particles | `assets/pack/bp/blocks/trees/`, `assets/pack/rp/particles/trees/` |
 | Import overrides (mangrove trunk defaults, leaf mining speeds) | `tools/import/overrides/trees.json` |
-| Core sounds | `tools/sounds/recipes/trees.json` -> `assets/gen/audio/trees/` |
+| Core sounds | F3's mapping in `assets/gen/audio/trees/rp/sounds.d/trees.json`: TF's `sounds.json` makes `block.twilightforest.core.time` an event reference to vanilla `block.comparator.click` (`sounds/random/click`) and `core.transformation` one to `block.note_block.harp` (`sounds/note/harp`); `Cores.cpp` plays them at TF's volume / pitch (0.35 / 0.5 and 0.1 / random 0..2). No synth recipe: TF ships no audio for them. |
 
 ## Magic log cores
 
@@ -60,8 +60,12 @@ clamped to TF's `defineInRange(0, 128)`; a range of 0 disables the core.
   ground: an entry of `s` seconds gives `toolSpeed / (30 s)` per tick (shears 5, hoes their tier's
   speed, others 1), so shears get `h / 3` and swords `h / 1.5`; hoes and every other item already
   match. `trees.leaf_tool_speeds` checks 16 items on the 10 leaves.
-- Hardened dark leaves: no natural spawn stands on them (an empty spawn list there through
-  `gf::spawn::onSpecialSpawn`); pick block gives dark leaves (`PickBlock` extension).
+- Spawning: no natural spawn stands on hardened dark leaves (`isValidSpawn(noSpawning)`) nor on the
+  `LeavesBlock` leaves (twilight oak, canopy, mangrove, rainbow oak, time, transformation, mining,
+  sorting: the default `isValidSpawn`, `isFaceSturdy(UP)`, fails on LeavesBlock's empty support
+  shape): an empty spawn list there through `gf::spawn::onSpecialSpawn`. Dark leaves
+  (DarkLeavesBlock, a full support shape) take the biome's list. `trees.hardened_dark_leaves`
+  checks all ten. Pick block on hardened dark leaves gives dark leaves (`PickBlock` extension).
 - Leaf runes: the client mod runs ClientLevel#animateTick's sampling itself; the server does it only
   for players without the client mod and sends each rune to that player alone (at most 16 a tick),
   and only while leaves of transformation are within the samples' reach (a block palette look over
@@ -69,8 +73,24 @@ clamped to TF's `defineInRange(0, 128)`; a range of 0 disables the core.
 
 ## Tree features
 
-`TFTreeFeature#place` runs `TreeFeature.updateLeaves` (TF passes its leaf set as the sources; the
-seven work sets iterate in Java's HashSet order, `core::trees::JavaHashSet`).
+`TFTreeFeature#place` runs `TreeFeature.updateLeaves` (TF passes its leaf set as the sources, the
+decorations and the trunk as filled, every set in the box; the seven work sets iterate in Java's
+HashSet order, `core::trees::JavaHashSet`). TF's own tree features have no decorators in TF's data,
+but `runDecorator` records what decorators place (set3) for them anyway.
+
+**Temporary data patch (for A8):** `tools/import/overrides/trees.json` appends the decorator
+`gf_trees:update_leaves` to TF's 16 `minecraft:tree` configured features, because F5's interpreter
+writes no leaf distances. Once F5 runs `TreeFeature.updateLeaves` itself, the decorator turns into a
+no-op on its own (`interpreterUpdatesLeaves`: a probe tree placed once in an in-memory world shows
+whether the interpreter wrote distances), and A8 should drop the patch. Running both would be
+harmless anyway (the walk is idempotent), only slower.
+
+Roots: `FeatureLogic.ROOT_SHOULD_SKIP` is the tag `twilightforest:tree_roots_skip` (logs, roots,
+liveroot, mangrove root, time wood, `#features_cannot_replace`). An earlier build asked for a
+non-existent `root_trace_skip`, so traced roots replaced the roots of earlier strands (root is
+worldgen-replaceable through `#moss_replaceable`): more roots under the trees (outside the
+comparison boxes) and shifted random draws for every decorator after `tree_roots` (the firefly
+canopy tree's fireflies and lanterns) and the tree of time's exposed roots overwriting its time wood.
 `StructureTemplate.updateShapeAtEdge` has no Bedrock counterpart (the game connects block shapes;
 F11 recomputes leaf distances on neighbour changes). The decorators get their position sets in
 Java's HashSet order, then sorted by y. `dark_canopy_tree` checks DarkCanopyTreeFeature's own free
@@ -124,7 +144,10 @@ everything (blocks, biomes, the stand-in) back at once.
   stays, as TF's grower leaves it without a valid start. The landmark contract has no validate-only
   step, so the sapling stays in place while `generateAt` builds the start: a failed start changes
   nothing (no block update, no F11 events); after a valid one the sapling goes unless a piece put
-  something else there (TF removes it before placing; its pieces overwrite that air).
+  something else there (TF removes it before placing; its pieces overwrite that air). When a valid
+  start leaves the sapling's cell untouched (a piece that places only into air or replaceable cells
+  would, since the sapling is still there), the grower logs a warning
+  (`the ... start did not fill the robust twilight oak sapling's cell`) before clearing it.
 - Transformation core: needs U1's enchanted forest biome.
 - F11 recomputes leaf distances when leaves are placed (Java's tree placement uses
   UPDATE_KNOWN_SHAPE, which does not); TF's distances from `updateLeaves` are therefore replaced by

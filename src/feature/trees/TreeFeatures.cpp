@@ -27,13 +27,17 @@
 #include <cmath>
 #include <atomic>
 #include <optional>
+#include <unordered_map>
 #include <unordered_set>
 #include <string>
 #include <vector>
 
 #include "mc/world/level/block/Block.h"
 
+#include "core/jrand/JRand.h"
 #include "core/jrand/JavaOrder.h"
+#include "feature/features/Features.h"
+#include "feature/worldgen/Worldgen.h"
 #include "core/trees/JavaHashSet.h"
 #include "feature/ext/worldgen/FeatureKit.h"
 #include "feature/trees/TreeUtil.h"
@@ -269,7 +273,73 @@ void knownShapeUpdateLeaves(Region& region, std::vector<BlockPos> const& logs) {
 constexpr char kKnownShapeLeaves[] = "gf_trees:legacy_update_leaves";
 
 /// TreeFeature.updateLeaves after F5's minecraft:tree (data: the import override appends it).
+/// TEMPORARY (A8): F5's interpreter should run updateLeaves itself; see interpreterUpdatesLeaves.
 constexpr char kTreeUpdateLeaves[] = "gf_trees:update_leaves";
+
+/// An empty in-memory world (air everywhere) for the interpreter probe below.
+class ProbeRegion final : public gf::worldgen::Region {
+public:
+    explicit ProbeRegion(Block const& air) : mAir(air) {}
+    int          centerChunkX() const override { return 0; }
+    int          centerChunkZ() const override { return 0; }
+    int          minY() const override { return -64; }
+    int          maxY() const override { return 320; }
+    bool         isInside(int, int) const override { return true; }
+    Block const& getBlock(BlockPos const& pos) const override {
+        auto it = mBlocks.find(key(pos));
+        return it == mBlocks.end() ? mAir : *it->second;
+    }
+    bool setBlock(BlockPos const& pos, Block const& block, int) override {
+        mBlocks[key(pos)] = &block;
+        return true;
+    }
+    int          height(gf::worldgen::Heightmap, int, int) const override { return minY(); }
+    std::string  biome(BlockPos const&) const override { return {}; }
+    std::int64_t seed() const override { return 0; }
+    int          dimension() const override { return 0; }
+
+    template <class F>
+    void forEach(F&& f) const {
+        for (auto const& [k, b] : mBlocks) f(*b);
+    }
+
+private:
+    static std::int64_t key(BlockPos const& p) { return (static_cast<std::int64_t>(p.x) & 0x3FFFFFF) << 38 | (static_cast<std::int64_t>(p.z) & 0x3FFFFFF) << 12 | (static_cast<std::int64_t>(p.y) & 0xFFF); }
+    Block const&                                      mAir;
+    std::unordered_map<std::int64_t, Block const*>    mBlocks;
+};
+
+/// Whether F5's minecraft:tree interpreter writes the leaves' distances itself (TreeFeature#place's
+/// updateLeaves): a small oak with twilight oak leaves placed once in an empty in-memory world; any
+/// leaf left with a distance 1..6 means it does, and gf_trees:update_leaves then does nothing (the
+/// data patch stays harmless until A8 drops it). Asked once per process.
+bool interpreterUpdatesLeaves() {
+    static bool const answer = [] {
+        auto const* air = game::blockWith("minecraft:air");
+        if (!air) return false;
+        Json leaves{{"type", "minecraft:simple_state_provider"},
+                    {"state", {{"Name", "twilightforest:twilight_oak_leaves"}, {"Properties", {{"distance", "7"}, {"persistent", "false"}, {"waterlogged", "false"}}}}}};
+        Json config{{"trunk_placer", {{"type", "minecraft:straight_trunk_placer"}, {"base_height", 4}, {"height_rand_a", 0}, {"height_rand_b", 0}}},
+                    {"foliage_placer", {{"type", "minecraft:blob_foliage_placer"}, {"radius", 2}, {"offset", 0}, {"height", 3}}},
+                    {"trunk_provider", {{"type", "minecraft:simple_state_provider"}, {"state", {{"Name", "minecraft:oak_log"}, {"Properties", {{"axis", "y"}}}}}}},
+                    {"foliage_provider", leaves},
+                    {"dirt_provider", {{"type", "minecraft:simple_state_provider"}, {"state", {{"Name", "minecraft:dirt"}}}}},
+                    {"minimum_size", {{"type", "minecraft:two_layers_feature_size"}, {"limit", 1}, {"lower_size", 0}, {"upper_size", 1}}},
+                    {"decorators", Json::array()},
+                    {"ignore_vines", true},
+                    {"force_dirt", false}};
+        ProbeRegion               region(*air);
+        core::jrand::LegacyRandom random(0);
+        if (!gf::features::placeJson(Json{{"type", "minecraft:tree"}, {"config", config}}, region, BlockPos{0, 0, 0}, random)) return false;
+        bool computed = false;
+        region.forEach([&](Block const& b) {
+            if (auto d = game::intState(b, "twilightforest:distance"); d && *d >= 1 && *d <= 6) computed = true;
+        });
+        if (computed) gf::log().info("trees: the minecraft:tree interpreter writes leaf distances itself; gf_trees:update_leaves does nothing");
+        return computed;
+    }();
+    return answer;
+}
 
 Json withKnownShapeLeaves(Json config) {
     if (!config.is_object()) return config;
@@ -303,6 +373,7 @@ bool tfTree(FeatureContext const& c, GenerateFn generate) {
     };
     if (!generate(g)) return false;
     if (leafSet.list.empty() && rootSet.list.empty()) return false;
+    std::vector<BlockPos> decorations; // set3, the decoration setter's
     if (g.config.decorators.is_array() && !g.config.decorators.empty()) {
         // TreeDecorator.Context(level, decorationSetter, random, set1, set2, set): TF hands the
         // leaves as "logs", the roots as "leaves" and the trunk as "roots", each a HashSet sorted
@@ -311,11 +382,14 @@ bool tfTree(FeatureContext const& c, GenerateFn generate) {
         javaOrder(tree.logs);
         javaOrder(tree.leaves);
         javaOrder(tree.roots);
-        for (auto const& d : g.config.decorators) runDecorator(tree, d);
+        for (auto const& d : g.config.decorators) runDecorator(tree, d, &decorations);
     }
-    // TreeFeature.updateLeaves(level, box, set1, set3, set): TF passes its leaves as the distance
-    // sources and the trunk (and the decorators' blocks, none in TF's data) as filled
-    updateLeaves(region, leafSet.list, trunkSet.list, rootSet.list);
+    // TreeFeature.updateLeaves(level, encapsulatingPositions(set, set1, set2, set3), set1, set3, set):
+    // TF passes its leaves as the distance sources and the decorations and the trunk as filled
+    // (TF's data gives its own tree features no decorators: set3 stays empty there)
+    std::vector<BlockPos> filled = trunkSet.list;
+    filled.insert(filled.end(), decorations.begin(), decorations.end());
+    updateLeaves(region, leafSet.list, filled, rootSet.list);
     return true;
 }
 
@@ -837,7 +911,10 @@ void registerTreeFeatures() {
     // The decorations set (filled, and part of the box) is the interpreter's own (F5's internal
     // TreeState, not in the contract): the blocks decorators place have no distance, so leaving them
     // out changes nothing inside the box of the trunk, roots and leaves the walk is held to.
-    gf::features::registerTreeDecorator(kTreeUpdateLeaves, [](gf::features::TreeContext& t, Json const&) { updateLeaves(t.region, t.logs, t.roots, {}, t.leaves); });
+    gf::features::registerTreeDecorator(kTreeUpdateLeaves, [](gf::features::TreeContext& t, Json const&) {
+        if (interpreterUpdatesLeaves()) return; // F5 does it after the decorators (A8 drops the data patch)
+        updateLeaves(t.region, t.logs, t.roots, {}, t.leaves);
+    });
 }
 
 } // namespace gf::feature::trees

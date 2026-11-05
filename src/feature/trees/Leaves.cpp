@@ -22,6 +22,7 @@
 
 #include <random>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "ll/api/service/Bedrock.h"
 
@@ -159,8 +160,14 @@ bool growHollowTree(BlockSource& region, BlockPos const& pos, std::string const&
         gf::log().info("trees: the robust twilight oak sapling at {} {} {} could not grow {}", pos.x, pos.y, pos.z, structureId);
         return false;
     }
-    if (&region.getBlock(pos) == sapling)
+    if (&region.getBlock(pos) == sapling) {
+        // no piece put a block into the sapling's cell: TF's pieces would have found air there (the
+        // grower removes the sapling first), so a piece that places only into air or replaceable
+        // cells left it out here. Reported until F6 has a validate-then-place step.
+        gf::log().warn("trees: the {} start did not fill the robust twilight oak sapling's cell {} {} {} (TF clears it before placing)", structureId, pos.x, pos.y,
+                       pos.z);
         if (auto const* air = game::blockWith("minecraft:air")) game::setBlock(region, pos, *air);
+    }
     gf::log().info("trees: the robust twilight oak sapling at {} {} {} grew {}", pos.x, pos.y, pos.z, structureId);
     return true;
 }
@@ -208,12 +215,24 @@ void installLeaves() {
     gf::families_ext::registerStructureGrower("twilightforest:hollow_tree", [](BlockSource& region, BlockPos const& pos, std::string const& id, gf::families_ext::RandomSource&) {
         return growHollowTree(region, pos, id);
     });
-    // TFBlocks.HARDENED_DARK_LEAVES isValidSpawn(noSpawning): no natural spawn stands on them (the
-    // spawners' position list is empty there)
+    // No natural spawn stands on TF's leaves (the spawners' position list is empty there; F5's
+    // spawner does not ask BlockState#isValidSpawn):
+    // - hardened dark leaves: isValidSpawn(noSpawning);
+    // - the LeavesBlock leaves: the default isValidSpawn, isFaceSturdy(UP), on LeavesBlock's empty
+    //   support shape. Dark leaves (DarkLeavesBlock: a full support shape) are not in the list.
     gf::spawn::onSpecialSpawn([](BlockSource& region, BlockPos const& pos, std::string const&) -> std::optional<std::vector<gf::spawn::SpawnEntry>> {
+        static std::unordered_set<std::string> const noSpawn = {kHardenedDarkLeaves,
+                                                                "twilightforest:twilight_oak_leaves",
+                                                                "twilightforest:canopy_leaves",
+                                                                "twilightforest:mangrove_leaves",
+                                                                "twilightforest:rainbow_oak_leaves",
+                                                                "twilightforest:time_leaves",
+                                                                kTransformationLeaves,
+                                                                "twilightforest:mining_leaves",
+                                                                "twilightforest:sorting_leaves"};
         BlockPos below{pos.x, pos.y - 1, pos.z};
         if (below.y < region.getMinHeight()) return std::nullopt;
-        if (region.getBlock(below).getTypeName() == kHardenedDarkLeaves) return std::vector<gf::spawn::SpawnEntry>{};
+        if (noSpawn.contains(region.getBlock(below).getTypeName())) return std::vector<gf::spawn::SpawnEntry>{};
         return std::nullopt;
     });
     // HardenedDarkLeavesBlock#getCloneItemStack: dark leaves

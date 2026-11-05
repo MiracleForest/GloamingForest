@@ -19,10 +19,12 @@
 #include <algorithm>
 #include <cmath>
 #include <numbers>
+#include <unordered_set>
 
 #include "mc/world/level/block/Block.h"
 
 #include "core/jrand/JavaOrder.h"
+#include "core/jrand/Mth.h"
 #include "feature/ext/worldgen/FeatureKit.h"
 #include "feature/trees/TreeUtil.h"
 #include "mod/Log.h"
@@ -49,8 +51,33 @@ T num(Json const& j, char const* key, T fallback) {
     return v.is_number() ? v.get<T>() : fallback;
 }
 
-void addOnce(std::vector<BlockPos>& list, BlockPos const& p) {
-    if (std::find(list.begin(), list.end(), p) == list.end()) list.push_back(p);
+/// A hash index next to a tree's position list (TreeFeature's sets), so adding stays O(1): rebuilt
+/// when the list is another one or something else (the features kit) appended to it.
+struct PosIndex {
+    std::vector<BlockPos> const*     list = nullptr;
+    std::unordered_set<std::int64_t> keys;
+};
+thread_local PosIndex tLogIndex, tLeafIndex;
+
+std::int64_t posKey(BlockPos const& p) { return core::mth::blockPosAsLong(p.x, p.y, p.z); }
+
+void addOnce(PosIndex& index, std::vector<BlockPos>& list, BlockPos const& p) {
+    if (index.list != &list || index.keys.size() != list.size() || (!list.empty() && !index.keys.contains(posKey(list.back())))) {
+        index.list = &list;
+        index.keys.clear();
+        for (auto const& q : list) index.keys.insert(posKey(q));
+    }
+    if (index.keys.insert(posKey(p)).second) list.push_back(p);
+}
+
+/// TFTreeFeature#place's decoration set (set3) while runDecorator runs for it.
+thread_local std::vector<BlockPos>* tDecorations = nullptr;
+
+/// TreeDecorator.Context#setBlock: the decoration setter (the features kit's, which records it for
+/// the minecraft:tree feature; TF's own tree features collect it in tDecorations).
+void decorate(TreeContext& tree, BlockPos const& pos, Block const& block) {
+    kit::setDecoration(tree, pos, block);
+    if (tDecorations) tDecorations->push_back(pos);
 }
 
 } // namespace
@@ -59,12 +86,12 @@ void addOnce(std::vector<BlockPos>& list, BlockPos const& p) {
 
 void setLog(TreeContext& tree, BlockPos const& pos, Block const& block) {
     tree.region.setBlock(pos, block, 19);
-    addOnce(tree.logs, pos);
+    addOnce(tLogIndex, tree.logs, pos);
 }
 
 void setLeaf(TreeContext& tree, BlockPos const& pos, Block const& block) {
     tree.region.setBlock(pos, block, 19);
-    addOnce(tree.leaves, pos);
+    addOnce(tLeafIndex, tree.leaves, pos);
 }
 
 namespace {
@@ -208,7 +235,7 @@ void spheroidFoliage(TreeContext& tree, FoliageAttachment const& at, int, int, J
 void corePlacer(TreeContext& tree, Json const& config) {
     if (tree.logs.empty()) return;
     BlockPos pos = above(tree.logs.front(), num(config, "core_position", 0));
-    if (auto const* b = provide(member(config, "deco_provider"), tree.random, pos)) kit::setDecoration(tree, pos, *b);
+    if (auto const* b = provide(member(config, "deco_provider"), tree.random, pos)) decorate(tree, pos, *b);
 }
 
 // ---- TrunkSideDecorator ---------------------------------------------------------------------------------
@@ -228,10 +255,13 @@ void trunkSide(TreeContext& tree, Json const& config) {
         Dir      direction = randomHorizontal(tree.random);
         BlockPos newPos    = rel(logPos, direction);
         if (!tree.region.getBlock(newPos).isAir()) continue;
-        Block const* probe = provide(deco, tree.random, newPos); // getState(..).hasProperty(FACING)
+        // Java draws the state twice in both branches: getState(..).hasProperty(FACING), then
+        // getState(..) again for the block it sets (with FACING when the first had it)
+        Block const* probe = provide(deco, tree.random, newPos);
         Block const* state = provide(deco, tree.random, newPos);
         if (!probe || !state) continue;
-        kit::setDecoration(tree, newPos, kit::withProperty(*state, "facing", dirName(direction)));
+        bool facing = &kit::withProperty(*probe, "facing", "up") != probe || &kit::withProperty(*probe, "facing", "down") != probe;
+        decorate(tree, newPos, facing ? kit::withProperty(*state, "facing", dirName(direction)) : *state);
     }
 }
 
@@ -249,7 +279,7 @@ void treeRoots(TreeContext& tree, Json const& config) {
     int         numBranches = strands + tree.random.nextInt(extra + 1);
     float       offset      = tree.random.nextFloat();
     BlockPos    startPos    = above(tree.logs.front(), yOffset);
-    RootPlacer  placer{[&tree](BlockPos const& p, Block const& b) { kit::setDecoration(tree, p, b); }, penetrate};
+    RootPlacer  placer{[&tree](BlockPos const& p, Block const& b) { decorate(tree, p, b); }, penetrate};
     for (int i = 0; i < numBranches; ++i) {
         BlockPos  dest = translate(below(startPos, i + 2), length, 0.3 * i + static_cast<double>(offset), 0.8);
         Bresenham line(below(startPos), dest);
@@ -298,11 +328,11 @@ void dangle(TreeContext& tree, Json const& config) {
             Block const* rope = weighted(member(config, "rope_provider"), tree.random, pos);
             for (int r = 1; r < cordLength; ++r) {
                 pos = below(pos);
-                if (rope && isAir(pos)) kit::setDecoration(tree, pos, *rope);
+                if (rope && isAir(pos)) decorate(tree, pos, *rope);
             }
             pos = below(pos);
             if (isAir(pos))
-                if (auto const* bag = weighted(member(config, "baggage_provider"), tree.random, pos)) kit::setDecoration(tree, pos, *bag);
+                if (auto const* bag = weighted(member(config, "baggage_provider"), tree.random, pos)) decorate(tree, pos, *bag);
         }
     }
 }
@@ -319,7 +349,12 @@ void registerTreePlacers() {
     gf::features::registerTreeDecorator("twilightforest:dangle_from_tree_decorator", dangle);
 }
 
-void runDecorator(TreeContext& tree, Json const& decorator) {
+void runDecorator(TreeContext& tree, Json const& decorator, std::vector<BlockPos>* decorations) {
+    struct Sink {
+        std::vector<BlockPos>* saved = tDecorations;
+        ~Sink() { tDecorations = saved; }
+    } sink;
+    tDecorations     = decorations;
     std::string type = decorator.value("type", std::string());
     if (type == "twilightforest:core_placer") corePlacer(tree, decorator);
     else if (type == "twilightforest:trunkside_decorator") trunkSide(tree, decorator);

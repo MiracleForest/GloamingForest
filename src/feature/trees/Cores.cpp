@@ -176,8 +176,10 @@ BlockPos randomOffset(core::jrand::RandomSource& r, BlockPos const& pos, int rx,
 /// Bedrock id: crops and stems, saplings and propagules, sugar cane, cactus, bamboo, kelp, vines
 /// (vine, cave / twisting / weeping vines), grass, mycelium, nylium, farmland, ice, frosted ice, snow,
 /// lava, cocoa, nether wart, sweet berries, chorus flowers, turtle eggs, pointed dripstone, budding
-/// amethyst, lit redstone ores, the leaves and every copper block that still oxidizes. Not: fire
-/// (scheduled ticks), big dripleaf, sculk shriekers, amethyst buds, sniffer eggs.
+/// amethyst, lit redstone ores, the leaves and every copper block that still oxidizes (with
+/// Bedrock's copper-age chests, lanterns, bars, chains, golem statues and lightning rods, which
+/// oxidize here). Not: fire (scheduled ticks), big dripleaf, sculk shriekers, amethyst buds, sniffer
+/// eggs. Bedrock has no callable random-ticking flag on BlockType (checked in the 26.51 headers).
 bool vanillaRandomTicking(std::string const& id) {
     static std::unordered_set<std::string> const ids = [] {
         std::unordered_set<std::string> s{
@@ -199,7 +201,9 @@ bool vanillaRandomTicking(std::string const& id) {
         for (char const* stage : {"", "exposed_", "weathered_"}) {
             std::string st = stage;
             for (char const* kind : {"cut_copper", "cut_copper_stairs", "cut_copper_slab", "double_cut_copper_slab", "copper_door", "copper_trapdoor",
-                                     "copper_bulb", "copper_grate", "chiseled_copper"})
+                                     "copper_bulb", "copper_grate", "chiseled_copper",
+                                     // Bedrock's copper-age blocks (not in Java 1.21.1; they oxidize by random ticks here)
+                                     "copper_chest", "copper_lantern", "copper_bars", "copper_chain", "copper_golem_statue", "lightning_rod"})
                 s.insert("minecraft:" + st + kind);
             s.insert(st.empty() ? std::string("minecraft:copper_block") : "minecraft:" + st + "copper");
         }

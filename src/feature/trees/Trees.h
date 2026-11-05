@@ -42,8 +42,9 @@ struct TreesConfig {
 /// TreeFeature's trunk / foliage setters for a tree being placed by the features contract.
 void setLog(gf::features::TreeContext& tree, BlockPos const& pos, Block const& block);
 void setLeaf(gf::features::TreeContext& tree, BlockPos const& pos, Block const& block);
-/// Runs one of TF's tree decorators on a tree (TF's own tree features).
-void runDecorator(gf::features::TreeContext& tree, nlohmann::json const& decorator);
+/// Runs one of TF's tree decorators on a tree (TF's own tree features); the positions it decorates
+/// (the decoration setter's set) are appended to `decorations` when given.
+void runDecorator(gf::features::TreeContext& tree, nlohmann::json const& decorator, std::vector<BlockPos>* decorations = nullptr);
 
 void registerTreePlacers();
 void registerTreeFeatures();

@@ -194,7 +194,7 @@ int countBlocks(BlockSource& region, BlockBox const& box, std::string_view needl
     return n;
 }
 
-bool compareWithJava(Context& ctx, std::string const& name, BlockBox const& box);
+bool compareWithJava(Context& ctx, std::string const& name, BlockBox const& box, std::vector<std::string> const& cells = {});
 
 /// Places every feature of `ids` on a 4 x 4 grid of 36-block cells in one flat area, then compares the
 /// area with the Java oracle's `name` case.
@@ -209,7 +209,7 @@ ll::coro::CoroTask<> placeAll(Context& ctx, int dx, std::string name, std::vecto
         ctx.check(ok, ids[i] + " placed");
         if (ok) ctx.info(ids[i] + " placed");
     }
-    compareWithJava(ctx, name, box);
+    compareWithJava(ctx, name, box, ids);
 }
 
 std::string tree(char const* path) { return std::string("twilightforest:tree/") + path; }
@@ -304,23 +304,51 @@ bool sameBlock(Block const& here, Block const* java) {
     return a == b;
 }
 
+/// The differences from TF 4.8 known and explained (docs/units/trees.md, "Java oracle comparison"),
+/// per feature (a placeAll cell's feature id, or the case name of a one-tree case): at most this
+/// many blocks may differ; every other feature must match block for block.
+struct Allowance {
+    char const* feature;
+    int         max;
+    char const* why;
+};
+constexpr Allowance kAllowances[] = {
+    // the oracle places in a live level, where HugeMushroomBlock#updateShape clears the faces between
+    // cap blocks of the same kind; worldgen (WorldGenRegion) keeps them, as Bedrock's features do
+    // (measured: the spheroid cap's 19 inner cap faces, the smooth cap's 8; the flat and vanilla caps
+    // have no cap block next to another of a face it shows)
+    {"twilightforest:mushroom/canopy_red_spheroid_mushroom", 19, "Java oracle artifact: HugeMushroomBlock#updateShape in a live level"},
+    {"twilightforest:mushroom/canopy_red_smooth_mushroom", 8, "Java oracle artifact: HugeMushroomBlock#updateShape in a live level"},
+};
+
 /// Compares the box of `name` with the Java oracle's (when the oracle placed it at this very box:
 /// the positions depend on the world's spawn); returns false when there is nothing to compare.
-bool compareWithJava(Context& ctx, std::string const& name, BlockBox const& box) {
+/// `cells`: the features of a placeAll grid (4 x n cells of 36 blocks), to tell the differences
+/// apart per feature; empty: the whole box is the one feature `name`.
+bool compareWithJava(Context& ctx, std::string const& name, BlockBox const& box, std::vector<std::string> const& cells) {
     auto jc = javaCase(name);
     if (!jc) {
-        ctx.info(name + ": no Java oracle case");
+        ctx.check(false, name + ": no Java oracle case (data/gf/java_goldens/trees.json)");
         return false;
     }
     if (jc->box.minX != box.minX || jc->box.minY != box.minY || jc->box.minZ != box.minZ || jc->box.maxX != box.maxX || jc->box.maxY != box.maxY || jc->box.maxZ != box.maxZ) {
-        ctx.info(name + ": the Java oracle placed it at another box (this world's spawn differs): not compared");
+        // the server e2e world's spawn fixes the boxes the oracle dumped; another world (a client
+        // run, a different spawn) has nothing to compare with. The server scenario requires every
+        // case to be compared.
+        ctx.info("JAVA PARITY " + name + ": not compared (the Java oracle placed it at another box: this world's spawn differs)");
         return false;
     }
     auto* region = ctx.region();
     if (!region) return false;
-    int                      x = box.minX, y = box.minY, z = box.minZ, mismatches = 0, nonAir = 0;
-    std::vector<std::string> first;
-    int                      kinds[3] = {0, 0, 0}, shown[3] = {0, 0, 0};
+    auto featureAt = [&](int x, int z) -> std::string {
+        if (cells.empty()) return name;
+        std::size_t i = static_cast<std::size_t>((z - box.minZ) / 36 * 4 + (x - box.minX) / 36);
+        return i < cells.size() ? cells[i] : std::string("(no feature)");
+    };
+    int                        x = box.minX, y = box.minY, z = box.minZ, mismatches = 0, nonAir = 0;
+    std::map<std::string, int> perFeature;
+    std::vector<std::string>   first;
+    std::map<std::string, int> shown;
     for (auto const& [count, index] : jc->rle) {
         for (int i = 0; i < count; ++i) {
             Block const& here = region->getBlock(BlockPos{x, y, z});
@@ -328,11 +356,11 @@ bool compareWithJava(Context& ctx, std::string const& name, BlockBox const& box)
             if (!here.isAir()) ++nonAir;
             if (!sameBlock(here, java)) {
                 ++mismatches;
-                int kind = java && java->isAir() ? 0 : here.isAir() ? 1 : 2; // only here, only in Java, both differ
-                ++kinds[kind];
-                if (shown[kind]++ < 6)
-                    first.push_back(std::to_string(x) + " " + std::to_string(y) + " " + std::to_string(z) + ": Java " + jc->paletteText[static_cast<std::size_t>(index)] + " (" +
-                                    (java ? java->getTypeName() + nlohmann::json(game::statesOf(*java)).dump() : std::string("unmapped")) + "), here " + here.getTypeName() +
+                auto feature = featureAt(x, z);
+                ++perFeature[feature];
+                if (shown[feature]++ < 20)
+                    first.push_back(feature + " at " + std::to_string(x) + " " + std::to_string(y) + " " + std::to_string(z) + ": Java " + jc->paletteText[static_cast<std::size_t>(index)] +
+                                    " (" + (java ? java->getTypeName() + nlohmann::json(game::statesOf(*java)).dump() : std::string("unmapped")) + "), here " + here.getTypeName() +
                                     nlohmann::json(game::statesOf(here)).dump());
             }
             if (++z > box.maxZ) {
@@ -344,32 +372,17 @@ bool compareWithJava(Context& ctx, std::string const& name, BlockBox const& box)
             }
         }
     }
-    for (auto const& f : first) ctx.info(name + " differs at " + f);
-    if (mismatches > 0)
-        ctx.info(name + ": " + std::to_string(kinds[0]) + " blocks only here, " + std::to_string(kinds[1]) + " only in Java, " + std::to_string(kinds[2]) + " different blocks");
-    // the differences known and explained (docs/units/trees.md, "Java oracle comparison"): a case
-    // may differ by at most this many blocks; more is a regression
-    struct Known {
-        char const* name;
-        int         max;
-        char const* why;
-    };
-    static constexpr Known kKnown[] = {
-        {"features_a", 120, "the firefly canopy tree's trunkside / dangle decorators draw differently (fireflies, a jar on a rope), F5's leave_vine "
-                            "writes vine bits 1 for Java's east, one mega oak leaf keeps distance 2 where Java keeps 7"},
-        {"features_b", 21, "the tree of time's exposed roots at its base (traceExposedRoot on the pedestal)"},
-        {"features_c", 19, "the oracle places in a live level, where HugeMushroomBlock#updateShape clears the faces between cap blocks (worldgen "
-                           "keeps them, as here)"},
-        {"sapling_time_sapling", 10, "the tree of time's exposed roots at its base (traceExposedRoot on the pedestal)"},
-    };
-    std::string text = name + " matches TF 4.8 on Java block for block (" + std::to_string(mismatches) + " of " + std::to_string(box.volume()) + " differ; " +
-                       std::to_string(nonAir) + " blocks here)";
-    for (auto const& k : kKnown)
-        if (name == k.name && mismatches > 0 && mismatches <= k.max) {
-            ctx.info("PARITY GAP (known): " + text + ": " + k.why);
-            return true;
-        }
-    ctx.check(mismatches == 0, text);
+    for (auto const& f : first) ctx.info(name + " differs: " + f);
+    ctx.info("JAVA PARITY " + name + ": " + (mismatches == 0 ? std::string("matches TF 4.8 on Java block for block") : "differs from TF 4.8 in " + std::to_string(mismatches) + " blocks") + " (" +
+             std::to_string(box.volume()) + " compared, " + std::to_string(nonAir) + " blocks here)");
+    for (auto const& [feature, n] : perFeature) {
+        Allowance const* allowed = nullptr;
+        for (auto const& a : kAllowances)
+            if (feature == a.feature) allowed = &a;
+        if (allowed && n <= allowed->max)
+            ctx.info("PARITY GAP (known): " + feature + " differs from TF 4.8 in " + std::to_string(n) + " blocks (at most " + std::to_string(allowed->max) + "): " + allowed->why);
+        else ctx.check(false, name + ": " + feature + " differs from TF 4.8 in " + std::to_string(n) + " blocks" + (allowed ? " (more than the known " + std::to_string(allowed->max) + ")" : ""));
+    }
     return true;
 }
 
@@ -431,6 +444,23 @@ struct RangeGuard {
     ~RangeGuard() { gf::config::mut<TreesConfig>() = saved; }
 };
 
+/// Puts the ground under the grass of an area back to the flat world's layers (those of the area's
+/// corner column, which no tree reaches): a sapling grown through the game's setters leaves its
+/// underground roots there, outside what flatArea restores. Roots left by an earlier tree would stop
+/// the next tree's roots (#twilightforest:tree_roots_skip) and shift its random draws.
+void resetGround(BlockSource& region, int minX, int minZ, int maxX, int maxZ, int grassY) {
+    int const                 bottom = region.getMinHeight();
+    std::vector<Block const*> column;
+    for (int y = bottom; y < grassY; ++y) column.push_back(&region.getBlock(BlockPos{minX, y, minZ}));
+    for (int x = minX; x <= maxX; ++x)
+        for (int z = minZ; z <= maxZ; ++z)
+            for (int y = bottom; y < grassY; ++y) {
+                BlockPos     p{x, y, z};
+                Block const* want = column[static_cast<std::size_t>(y - bottom)];
+                if (&region.getBlock(p) != want) game::setBlock(region, p, *want);
+            }
+}
+
 } // namespace
 
 GF_REGISTER_SELFTEST("trees.sapling_growers", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -450,6 +480,8 @@ GF_REGISTER_SELFTEST("trees.sapling_growers", [](Context& ctx) -> ll::coro::Coro
         ctx.check(grown, id + " grew its tree on bone meal (now " + ctx.blockAt(p) + ")");
         if (grown) ctx.info(id + " grew into " + ctx.blockAt(p));
     }
+    // the roots under the grass (flatArea puts back only its box)
+    if (auto* region = ctx.region()) resetGround(*region, box.minX, box.minZ, box.maxX, box.maxZ, box.minY - 1);
 });
 
 namespace {
@@ -463,7 +495,7 @@ struct SaplingGolden {
 };
 constexpr SaplingGolden kSaplingGoldens[] = {
     {"twilight_oak_sapling", "a1b2c5a299f0e75e"}, {"canopy_sapling", "d9124ba1a42db576"},         {"mangrove_sapling", "d9d95df8efd64c0b"},       {"darkwood_sapling", "8d2cb57d8fbc026a"},
-    {"time_sapling", "9bbf36011e7d5572"},         {"transformation_sapling", "90f238ac17b5fe5c"}, {"mining_sapling", "cb9cad4efe78e3c1"},         {"sorting_sapling", "761d50d030059e92"},
+    {"time_sapling", "488bf3bed2c51e32"},         {"transformation_sapling", "90f238ac17b5fe5c"}, {"mining_sapling", "cb9cad4efe78e3c1"},         {"sorting_sapling", "761d50d030059e92"},
     {"rainbow_oak_sapling", "99fd8e7c28d9425d"},
 };
 
@@ -479,6 +511,9 @@ GF_REGISTER_SELFTEST("trees.sapling_hashes", [](Context& ctx) -> ll::coro::CoroT
         co_await ctx.ensureLoaded(p);
         auto* region = ctx.region();
         ctx.require(region != nullptr, "a region");
+        // the flat world's ground under the cell (the Java oracle resets it too): no roots of an
+        // earlier tree (trees.sapling_growers grows the same saplings around the same spots)
+        resetGround(*region, cell.minX, cell.minZ, cell.maxX, cell.maxZ, box.minY - 1);
         if (id == "twilightforest:time_sapling") p = game::globalPos(ctx.dimension(), pedestal(*region, bp(p)));
         ctx.require(ctx.setBlock(p, id), id + " planted");
         ctx.info(id + " at " + std::to_string(p.x) + " " + std::to_string(p.y) + " " + std::to_string(p.z) + " (cell " + std::to_string(cell.minX) + " " +
@@ -1013,6 +1048,18 @@ GF_REGISTER_SELFTEST("trees.hardened_dark_leaves", [](Context& ctx) -> ll::coro:
     }
     auto onDirt = gf::spawn::detail::spawnListAt(*region, bp(dirt.offset(0, 1, 0)), "monster", "minecraft:forest");
     ctx.info("monster spawn entries on dirt: " + std::to_string(onDirt.size()));
+    // TF's LeavesBlock leaves keep the default isValidSpawn (isFaceSturdy(UP)) on LeavesBlock's empty
+    // support shape: nothing spawns on them either; dark leaves (DarkLeavesBlock: a full support shape)
+    // take the biome's list
+    for (char const* id : {"twilight_oak_leaves", "canopy_leaves", "mangrove_leaves", "rainbow_oak_leaves", "time_leaves", "transformation_leaves",
+                           "mining_leaves", "sorting_leaves", "dark_leaves"}) {
+        std::string full = std::string("twilightforest:") + id;
+        ctx.require(ctx.setBlock(leaves, full, {{"twilightforest:persistent", true}}), full);
+        auto list = gf::spawn::detail::spawnListAt(*region, bp(leaves.offset(0, 1, 0)), "monster", "minecraft:forest");
+        if (full == "twilightforest:dark_leaves") ctx.check(list.size() == onDirt.size(), "dark leaves take the biome's monster spawns");
+        else ctx.check(list.empty(), "no monster spawns on " + full);
+    }
+    ctx.require(ctx.setBlock(leaves, "twilightforest:hardened_dark_leaves"), "hardened dark leaves again");
     // HardenedDarkLeavesBlock#getCloneItemStack: pick block gives dark leaves
     ctx.check(gf::trees_ext::pickItem("twilightforest:hardened_dark_leaves") == "twilightforest:dark_leaves", "pick block gives dark leaves");
     auto& sp = sim(ctx);
