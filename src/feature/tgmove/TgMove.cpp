@@ -43,6 +43,8 @@
 #include "mc/entity/components/BlockMovementSlowdownImmunityComponent.h"
 #include "mc/entity/components/ItemUseSlowdownModifierComponent.h"
 #include "mc/entity/components_json_legacy/LeashableComponent.h"
+#include "mc/entity/components_json_legacy/LeashablePreset.h"
+#include "mc/entity/utilities/leashable_utility/LeashableUtility.h"
 #include "mc/world/actor/BuiltInActorComponents.h"
 #include "mc/entity/components/MaxAutoStepComponent.h"
 #include "mc/entity/components/MoveInputComponent.h"
@@ -72,6 +74,7 @@
 #include "mc/world/level/Level.h"
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/BlockDescriptor.h"
+#include "mc/world/level/block/BlockType.h"
 #include "mc/world/level/dimension/Dimension.h"
 #include "mc/deps/shared_types/v1_26_20/block/MaterialType.h"
 
@@ -104,9 +107,13 @@ constexpr unsigned kJumpBoostId    = 8;  ///< MobEffectIds::JumpBoost
 constexpr unsigned kSlowFallingId  = 27; ///< MobEffectIds::SlowFalling
 constexpr int      kEffectTicks    = 20; ///< our hidden effects last this long, refreshed at half
 constexpr double   kTrackRange     = 64; ///< companions that see a player's wings
+constexpr int      kMobScanPeriod  = 20; ///< ticks between looks for mobs that put Travellers' gear on
+constexpr float    kLeashFreeDistance = 6.0f; ///< PathfinderMob#tickLeash: no stay-close pathing within 6 blocks with the override
 constexpr char     kWings[]        = "twilightforest:travellers_wings";
 constexpr char     kStraightName[] = "twilightforest:travellers_gear.boots_straight_ahead";
-constexpr char const* kSlowdownBlocks[] = {"minecraft:web", "minecraft:sweet_berry_bush", "minecraft:powder_snow", "minecraft:honey_block", "minecraft:soul_sand"};
+// the slowdowns BlockMovementSlowdownImmunityComponent covers (EntityInsideSystemImpl: cobweb, powder
+// snow; the berry bush's stuck speed); soul sand and honey are applyUnrestrained's
+constexpr char const* kSlowdownBlocks[] = {"minecraft:web", "minecraft:sweet_berry_bush", "minecraft:powder_snow"};
 
 struct Store {
     std::unordered_map<std::int64_t, PlayerState> players; ///< players and mobs
@@ -309,6 +316,80 @@ void applyDepthStrider(Actor& a, PlayerState& st, bool on) {
     }
 }
 
+double blockFriction(Block const& block) {
+    float f = block.getBlockType().mFriction;
+    return f > 0 && f < 1.5f ? static_cast<double>(f) : tg::kUnrestrainedFriction;
+}
+
+EngineSlowdown engineSlowdown(std::string const& blockId, double vy, bool steppingCarefully) {
+    // measured (tgmove.unrestrained_blocks): Bedrock's slime and honey blocks multiply a ground
+    // step's velocity by Java's SlimeBlock#stepOn factor (0.4 + |vy| x 0.2) on top of their friction
+    // 0.8; soul sand leaves a slide alone and slows the walk (the input acceleration)
+    if (blockId == "minecraft:slime" || blockId == "minecraft:honey_block") return {tg::slimeStepFactor(vy, steppingCarefully), 1.0};
+    if (blockId == "minecraft:soul_sand") return {1.0, kSoulSandAccel};
+    return {};
+}
+
+Vec3 applyUnrestrained(Actor& a, PlayerState& st, bool on, Vec3 v, bool onGround, bool steppingCarefully, Vec2 const* move) {
+    auto&       region = a.getDimensionBlockSource();
+    Vec3        feet   = a.getFeetPos();
+    // Entity#getBlockPosBelowThatAffectsMyMovement
+    BlockPos    below{static_cast<int>(std::floor(feet.x)), static_cast<int>(std::floor(feet.y - 0.5000001)), static_cast<int>(std::floor(feet.z))};
+    Block const& block = region.getBlock(below);
+    std::string id     = game::blockId(block);
+    // the height a jump off honey lost last step was made up in it: its velocity comes off again
+    if (st.unrJumpLost != 0) {
+        v.y            = static_cast<float>(v.y - st.unrJumpLost * 0.98);
+        st.unrJumpLost = 0;
+    }
+    // resetFactorWithUnrestrained (getBlockJumpFactor): the engine's jump off honey was weaker
+    if (on && st.unrHoney && !onGround && v.y > 0 && st.unrVyPre <= 0) {
+        if (auto j = tg::unrestrainedJump(v.y, tg::jumpPower(effectAmplifier(a, kJumpBoostId)))) {
+            v.y            = static_cast<float>(j->vy);
+            st.unrJumpLost = j->lost;
+        }
+    }
+    // stopBouncing: the engine bounced a walk on slime in the last step
+    if (on && st.unrSlime && !steppingCarefully)
+        if (auto vy = tg::slimeBounceStop(st.unrVyPre, v.y)) v.y = static_cast<float>(*vy);
+    // without the input (mobs, simulated players): the input acceleration of the last ground step
+    float speed = 0.1f;
+    if (auto attr = a.getAttribute(SharedAttributes::MOVEMENT_SPEED()); attr.mPtr) speed = attr.mPtr->mCurrentValue;
+    if (!move) {
+        tg::Velocity raw{};
+        bool         have = false;
+        if (st.unrLastDrag > 0) {
+            double k = tg::groundAccelFactor(st.unrLastFriction) * st.unrLastAccelSlow;
+            if (k > 0) {
+                raw  = {(v.x / st.unrLastDrag - st.unrStepX) / k, 0, (v.z / st.unrLastDrag - st.unrStepZ) / k};
+                have = true;
+            }
+        }
+        // a push (knockback, a motion packet) looks like one step's acceleration: only what the last
+        // two steps agree on, no more than the movement speed, is the input's
+        double len = std::sqrt(raw.x * raw.x + raw.z * raw.z);
+        double dx = raw.x - st.unrAccelRaw.x, dz = raw.z - st.unrAccelRaw.z;
+        bool   steady = have && st.unrAccelRawValid && std::sqrt(dx * dx + dz * dz) <= 0.25 * len + 0.003 && len <= 1.5 * speed;
+        st.unrAccel         = steady ? raw : tg::Velocity{};
+        st.unrAccelRaw      = raw;
+        st.unrAccelRawValid = have;
+    }
+    tg::Velocity acc = move ? tg::inputAcceleration(move->x, move->y, a.getRotation().y, speed) : st.unrAccel;
+    double f    = blockFriction(block);
+    auto   slow = engineSlowdown(id, v.y, steppingCarefully);
+    auto   step = tg::unrestrainedStep({v.x, v.y, v.z}, st.unrRescale, acc, f, slow.drag, onGround, on, slow.accel);
+    st.unrRescale = step.nextRescale;
+    st.unrSlime   = on && onGround && id == "minecraft:slime";
+    st.unrHoney   = on && onGround && id == "minecraft:honey_block";
+    st.unrVyPre   = v.y;
+    Vec3 out{static_cast<float>(step.velocity.x), static_cast<float>(step.velocity.y), static_cast<float>(step.velocity.z)};
+    st.unrStepX         = out.x;
+    st.unrStepZ         = out.z;
+    st.unrLastDrag      = on && onGround ? f * 0.91 * slow.drag : 0.0;
+    st.unrLastFriction  = f;
+    st.unrLastAccelSlow = on && onGround ? slow.accel : 1.0;
+    return out;
+}
 namespace {
 
 /// Puts back everything this unit changed on `a` (the modifiers' end, forget, uninstall).
@@ -324,7 +405,7 @@ void restore(Actor& a, PlayerState& st) {
     keepEffect(a, kSlowFallingId, 0, false, st.slowFalling, nullptr);
     if (a.isPlayer()) {
         auto& p = static_cast<Player&>(a);
-        (void)applyAgileRanger(p, st.agileBase, st.agileSet); // off: the slowdown before comes back
+        (void)applyAgileRanger(p, st.agileBase, st.agileSet, true); // off: the slowdown before comes back
         st.agileBase.reset();
     }
 }
@@ -373,20 +454,35 @@ bool brokenGear(ItemStack const& stack) {
     return item->getMaxDamage() - 1 <= stack.getDamageValue();
 }
 
-bool active(Player const& player, Mod m) {
-    if (player.isSpectator()) return false;
-    if (gear::level(player, modId(m)) <= 0) return false;
-    return !brokenGear(armor(player, modSlot(m)));
+namespace {
+constexpr Mod kAllMods[] = {Mod::DoubleJump, Mod::SideStep, Mod::GradualGlide, Mod::HighJump, Mod::AgileRanger, Mod::StepUp, Mod::StraightAhead,
+                            Mod::SlimySoles, Mod::Unrestrained, Mod::WaterWalk, Mod::SwiftSwim, Mod::AquaticAgility, Mod::EfficientEater};
+} // namespace
+
+unsigned modMask(Actor const& entity) {
+    // TravellersModifier#isActive: the stack in the modifier's equipment slot group, not a spectator
+    if (entity.isPlayer() && static_cast<Player const&>(entity).isSpectator()) return 0;
+    unsigned mask = 0;
+    for (int slot = 0; slot < 4; ++slot) {
+        auto const& stack = armor(entity, slot);
+        if (game::items::isEmpty(stack) || brokenGear(stack)) continue;
+        bool any = false;
+        for (Mod m : kAllMods) any = any || modSlot(m) == slot;
+        if (!any) continue;
+        auto mods = gear::modifiers(stack);
+        if (mods.empty()) continue;
+        for (Mod m : kAllMods) {
+            if (modSlot(m) != slot) continue;
+            auto it = mods.find(modId(m));
+            if (it != mods.end() && it->second > 0) mask |= 1u << static_cast<unsigned>(m);
+        }
+    }
+    return mask;
 }
 
-bool activeOn(Actor const& entity, Mod m) {
-    if (entity.isPlayer()) return active(static_cast<Player const&>(entity), m);
-    auto const& stack = armor(entity, modSlot(m));
-    if (game::items::isEmpty(stack) || brokenGear(stack)) return false;
-    auto mods = gear::modifiers(stack);
-    auto it   = mods.find(modId(m));
-    return it != mods.end() && it->second > 0;
-}
+bool active(Player const& player, Mod m) { return has(modMask(player), m); }
+
+bool activeOn(Actor const& entity, Mod m) { return has(modMask(entity), m); }
 
 bool agileRangerItem(ItemStack const& stack) {
     auto id = game::items::idOf(stack);
@@ -397,10 +493,10 @@ bool agileRangerItem(ItemStack const& stack) {
     return legal && !tags::has(tags::Registry::Item, "twilightforest:travellers_agile_ranger_blacklisted", id);
 }
 
-bool applyAgileRanger(Player& player, std::optional<float>& base, float& set) {
+bool applyAgileRanger(Player& player, std::optional<float>& base, float& set, bool forceOff) {
     // handleAgileRanger: using a projectile weapon, not riding -> the input x5, which cancels the
     // item use slowdown (Java's 0.2) up to full speed; Bedrock applies the slowdown from this component
-    bool on = active(player, Mod::AgileRanger) && player.getItemUseDuration() > 0 && player.getVehicle() == nullptr
+    bool on = !forceOff && active(player, Mod::AgileRanger) && player.getItemUseDuration() > 0 && player.getVehicle() == nullptr
            && agileRangerItem(player.getCarriedItem());
     auto slow = player.getEntityContext().tryGetComponent<ItemUseSlowdownModifierComponent>();
     if (!slow) {
@@ -583,6 +679,41 @@ tg::Abuse handleAbuse(Player& player, bool sidestep) {
     return verdict;
 }
 
+void onDoubleJumpPacket(Player& player) {
+    auto& st = stateOf(player);
+    if (performDoubleJump(player, false)) {
+        st.pendingJumpTries = 0;
+        return;
+    }
+    // Java's move packets come before PerformDoubleJumpPacket; Bedrock's auth input of the same tick
+    // can come after it: try again once the server copy has moved
+    st.pendingJumpTries = kPacketRetryTicks;
+}
+
+void onSidestepPacket(Player& player, bool left) {
+    auto& st = stateOf(player);
+    if (tryPerformSidestep(player, left)) {
+        st.pendingSidestepTries = 0;
+        return;
+    }
+    st.pendingSidestepTries = kPacketRetryTicks;
+    st.pendingSidestepLeft  = left;
+}
+
+void processPending(Player& player) {
+    auto it = store().players.find(player.getOrCreateUniqueID().rawID);
+    if (it == store().players.end()) return;
+    auto& st = it->second;
+    if (st.pendingJumpTries > 0) {
+        if (performDoubleJump(player, false)) st.pendingJumpTries = 0;
+        else if (--st.pendingJumpTries == 0) (void)handleAbuse(player, false);
+    }
+    if (st.pendingSidestepTries > 0) {
+        if (tryPerformSidestep(player, st.pendingSidestepLeft)) st.pendingSidestepTries = 0;
+        else if (--st.pendingSidestepTries == 0) (void)handleAbuse(player, true);
+    }
+}
+
 // ---- fall damage -------------------------------------------------------------------------------
 
 bool onFall(Actor& entity, float& amount) {
@@ -610,18 +741,25 @@ bool onFall(Actor& entity, float& amount) {
 
 namespace {
 
+float exhaustionOf(Player const& p) {
+    auto ex = p.getAttribute(Player::EXHAUSTION());
+    return ex.mPtr ? ex.mPtr->mCurrentValue : 0.0f;
+}
+
 /// Efficient eater's half of a ground jump's exhaustion, once the game added it.
 void flushRefund(Player& p) {
     auto it = store().players.find(p.getOrCreateUniqueID().rawID);
     if (it == store().players.end() || it->second.pendingRefund <= 0 || gameTime() < it->second.pendingRefundAt) return;
+    float before = exhaustionOf(p);
     refundExhaustion(p, it->second.pendingRefund);
+    // the movement measure of tickPlayer does not see this refund as exhaustion the game took off
+    if (it->second.lastExhaustion >= 0) it->second.lastExhaustion -= before - exhaustionOf(p);
     it->second.pendingRefund = 0;
 }
 
 /// The slimy soles bounce of any living entity (travellersBootsSlimySolesBounce) and the landing
 /// of a forced bounce that did not hurt.
-void tickSlimy(Actor& e, PlayerState& st, bool onGround, Vec3 delta) {
-    bool slimy = activeOn(e, Mod::SlimySoles);
+void tickSlimy(Actor& e, PlayerState& st, bool onGround, Vec3 delta, bool slimy) {
     if (onGround && !st.lastOnGround && !st.landedByDamage && slimy && st.slimy.forceBounce && !e.isSneaking()) {
         tg::slimyLand(st.slimy, st.fallVy, tg::kSlimySolesCoefficient);
         sendSlimyBoost(e, st.slimy.doubleJumpBoostVelocity);
@@ -661,28 +799,35 @@ void tickWings(Actor& e, PlayerState& st, bool onGround, bool liquid, Vec3 delta
     if (tg::determineWingState(st.wings, in)) syncWings(e);
 }
 
+void setPosDelta(Actor& a, Vec3 const& v) { a.mBuiltInComponents->mStateVectorComponent->mPosDelta = v; }
+
 } // namespace
 
 void tickPlayer(Player& player) {
     if (!player.isAlive()) return;
-    auto&     st       = stateOf(player);
-    long long now      = gameTime();
-    bool      onGround = player.isOnGround();
-    bool      inWater  = player.isInWater();
-    bool      liquid   = inWater || inLava(player);
-    Vec3      delta    = player.getPosDelta();
-    Vec3      pos      = player.getFeetPos();
-    auto&     ctx      = player.getEntityContext();
+    auto&          st       = stateOf(player);
+    long long      now      = gameTime();
+    bool           onGround = player.isOnGround();
+    bool           inWater  = player.isInWater();
+    bool           liquid   = inWater || inLava(player);
+    Vec3           delta    = player.getPosDelta();
+    Vec3           pos      = player.getFeetPos();
+    auto&          ctx      = player.getEntityContext();
+    unsigned const mask     = modMask(player); // one gear lookup per slot and tick
+    bool const     companion = net::isCompanion(player);
+    // the server copy simulates what the companion's client simulates (selftests: simulated players)
+    bool const simulatesClient = companion || player.isSimulated();
+    auto       in              = ctx.tryGetComponent<MoveInputComponent>();
 
     // has_double_jump (tickMovementModifiers)
-    if (auto r = tg::refreshDoubleJump(active(player, Mod::DoubleJump), onGround, liquid, player.onClimbableBlock()); r && *r != st.hasDoubleJump) {
+    if (auto r = tg::refreshDoubleJump(has(mask, Mod::DoubleJump), onGround, liquid, player.onClimbableBlock()); r && *r != st.hasDoubleJump) {
         st.hasDoubleJump             = *r;
         st.doubleJumpValidator.count = 0;
         st.safeFall                  = false;
     }
 
     // gradual glide: off without the modifier; the fall distance a glide leaves
-    bool glideActive = active(player, Mod::GradualGlide);
+    bool glideActive = has(mask, Mod::GradualGlide);
     if (!glideActive && st.gliding) {
         st.gliding = false;
         broadcastGlide(player, false);
@@ -691,59 +836,70 @@ void tickPlayer(Player& player) {
     // simulates it from the client's input and corrects a client that falls slower than it)
     if (auto vy = tg::glide(delta.y, tg::kGradualGlideMultiplier, glideActive, st.gliding, player.isGliding())) {
         delta.y = static_cast<float>(*vy);
-        player.mBuiltInComponents->mStateVectorComponent->mPosDelta = delta;
+        setPosDelta(player, delta);
         player.setFallDistance(tg::glideFallDistance(*vy));
     }
     // the server's copy of a companion walks on water as its client does
     bool waterWalking = false;
-    if (active(player, Mod::WaterWalk) && !player.isSneaking() && net::isCompanion(player)) {
+    if (has(mask, Mod::WaterWalk) && !player.isSneaking() && companion) {
         if (auto surface = waterSurface(player, pos, delta.y)) {
             delta.y = static_cast<float>(*surface - pos.y);
-            player.mBuiltInComponents->mStateVectorComponent->mPosDelta = delta;
+            setPosDelta(player, delta);
             if (!ctx.hasComponent<OnGroundFlagComponent>()) ctx.getRegistry().emplace<OnGroundFlagComponent>(ctx.mEntity);
             waterWalking = true;
+            onGround     = true;
         }
     }
     // swift swim (water movement efficiency +1 = Depth Strider III), and ground speed on the water
-    applyDepthStrider(player, st, active(player, Mod::SwiftSwim) || waterWalking);
+    applyDepthStrider(player, st, has(mask, Mod::SwiftSwim) || waterWalking);
 
     // vanilla clients: sneak in the air = Slow Falling (the client config's default)
-    bool vanillaGlide = glideActive && !net::isCompanion(player)
-                     && tg::wantsGlide(true, player.isSneaking(), delta.y, onGround && !st.airborne) && !player.isGliding();
+    bool vanillaGlide = glideActive && !companion && tg::wantsGlide(true, player.isSneaking(), delta.y, onGround && !st.airborne) && !player.isGliding();
     bool wasSlowFalling = st.slowFalling;
     keepEffect(player, kSlowFallingId, 0, vanillaGlide, st.slowFalling, nullptr);
     if (st.slowFalling && !wasSlowFalling) log().info("tgmove: {} glides (Slow Falling)", player.getRealName());
 
     // sidestep cooldown sound (travellersWingsSidestepCooldownSound)
-    if (active(player, Mod::SideStep) && tg::sidestepReady(now, st.wings.lastSidestepTime, tg::kSidestepCooldown) && st.wings.shouldPlayCooldownSound) {
+    if (has(mask, Mod::SideStep) && tg::sidestepReady(now, st.wings.lastSidestepTime, tg::kSidestepCooldown) && st.wings.shouldPlayCooldownSound) {
         fx::soundTo(player, "item.twilightforest.travellers_gear.side_step_ready", 1.0f, voicePitch());
         st.wings.shouldPlayCooldownSound = false;
     }
 
     // high jump: Jump Boost II, hidden
-    keepEffect(player, kJumpBoostId, tg::kHighJumpAmplifier, active(player, Mod::HighJump), st.highJump, &st.savedJumpBoost);
+    keepEffect(player, kJumpBoostId, tg::kHighJumpAmplifier, has(mask, Mod::HighJump), st.highJump, &st.savedJumpBoost);
 
     // step up: +0.5 step height, off while crouching (disableHighStepWhileSneaking)
-    setStep(player, st, active(player, Mod::StepUp) && !player.isSneaking());
+    setStep(player, st, has(mask, Mod::StepUp) && !player.isSneaking());
 
-    // unrestrained: no block slowdown (cobweb, berry bush, powder snow, honey, soul sand)
-    applyImmunity(player, st, active(player, Mod::Unrestrained));
+    // unrestrained: no block slowdown (cobweb, berry bush, powder snow, honey, soul sand) ...
+    bool unrestrained = has(mask, Mod::Unrestrained);
+    applyImmunity(player, st, unrestrained);
+    // ... and friction 0.6, no slime step-on slowdown or walking bounce on the ground (the server
+    // copy of a companion as its client; a vanilla client keeps the engine's friction, which its own
+    // simulation has too)
+    if (simulatesClient && (unrestrained || st.unrRescale != 1.0)) {
+        Vec2 move{};
+        if (in) move = in->mMove;
+        // simulated players walk without an input component of their own: the estimate of mobs
+        Vec3 nv = applyUnrestrained(player, st, unrestrained, delta, onGround, player.isSneaking(), player.isSimulated() ? nullptr : &move);
+        if (nv != delta) {
+            delta = nv;
+            setPosDelta(player, delta);
+        }
+    }
 
     // agile ranger: the item use slowdown of a bow x5 (the client mod does the same on its side)
     (void)applyAgileRanger(player, st.agileBase, st.agileSet);
 
     // straight ahead: movement speed x1.4 while the forward input is held (handleStraightAhead)
-    {
-        bool forward = false;
-        if (auto in = ctx.tryGetComponent<MoveInputComponent>()) forward = in->mMove->y > 0;
-        setStraightAhead(player, active(player, Mod::StraightAhead) && forward, st.straightAhead);
-    }
+    setStraightAhead(player, has(mask, Mod::StraightAhead) && in && in->mMove->y > 0, st.straightAhead);
 
     // slimy soles: the bounce
-    tickSlimy(player, st, onGround, delta);
+    tickSlimy(player, st, onGround, delta, has(mask, Mod::SlimySoles));
 
-    // water walk splash (processWaterWalking -> waterWalkingSplashEffect)
-    if (active(player, Mod::WaterWalk) && !player.isSneaking()) {
+    // water walk splash (processWaterWalking -> waterWalkingSplashEffect): only while the server
+    // copy stands on the water
+    if (waterWalking) {
         BlockPos below{static_cast<int>(std::floor(pos.x)), static_cast<int>(std::floor(pos.y - 0.25)), static_cast<int>(std::floor(pos.z))};
         auto&    region = player.getDimensionBlockSource();
         auto     id     = game::blockIdAt(region, below);
@@ -760,7 +916,7 @@ void tickPlayer(Player& player) {
     // aquatic agility: oxygen bonus 3 (LivingEntity#decreaseAirSupply)
     if (auto br = ctx.tryGetComponent<BreathableComponent>()) {
         int air = br->mAirSupply;
-        if (active(player, Mod::AquaticAgility) && st.lastAir >= 0 && air == st.lastAir - 1) {
+        if (has(mask, Mod::AquaticAgility) && st.lastAir >= 0 && air == st.lastAir - 1) {
             int r = std::uniform_int_distribution<int>(0, tg::kOxygenBonus)(store().rng);
             if (tg::keepsAir(tg::kOxygenBonus, r)) {
                 br->mAirSupply = static_cast<short>(st.lastAir);
@@ -770,15 +926,28 @@ void tickPlayer(Player& player) {
         st.lastAir = air;
     }
 
-    // efficient eater: movement exhaustion / 2 (ReduceMovementFoodExhaustion over Player#checkMovementStatistics)
-    if (st.hasLast && active(player, Mod::EfficientEater) && !player.isSimulated()) {
-        double dx = pos.x - st.lastX, dy = pos.y - st.lastY, dz = pos.z - st.lastZ;
-        double horiz = std::sqrt(dx * dx + dz * dz);
-        float  e     = 0;
-        if (player.isSwimming() || eyesInWater(player)) e = static_cast<float>(0.01 * std::sqrt(dx * dx + dy * dy + dz * dz));
-        else if (inWater) e = static_cast<float>(0.01 * horiz); // wading: WALK_ON_WATER, horizontal
-        else if (onGround && player.isSprinting()) e = static_cast<float>(0.1 * horiz);
-        if (e < 1) refundExhaustion(player, e / 2.0f);
+    // efficient eater: movement exhaustion / 2 (ReduceMovementFoodExhaustion over Player#checkMovementStatistics):
+    // half of Java's movement exhaustion of the move, at most half of what the game added this tick
+    // (other sources keep theirs); a teleport or a push of more than a block is no movement
+    if (has(mask, Mod::EfficientEater) && !player.isSimulated()) {
+        float exh = exhaustionOf(player);
+        if (st.hasLast && st.lastExhaustion >= 0) {
+            double dx = pos.x - st.lastX, dy = pos.y - st.lastY, dz = pos.z - st.lastZ;
+            double horiz = std::sqrt(dx * dx + dz * dz);
+            float  e     = 0;
+            if (std::sqrt(dx * dx + dy * dy + dz * dz) <= 1.0) {
+                if (player.isSwimming() || eyesInWater(player)) e = static_cast<float>(0.01 * std::sqrt(dx * dx + dy * dy + dz * dz));
+                else if (inWater) e = static_cast<float>(0.01 * horiz); // wading: WALK_ON_WATER, horizontal
+                else if (onGround && player.isSprinting()) e = static_cast<float>(0.1 * horiz);
+            }
+            if (float refund = tg::efficientEaterRefund(e, exh - st.lastExhaustion); refund > 0) {
+                refundExhaustion(player, refund);
+                exh = exhaustionOf(player);
+            }
+        }
+        st.lastExhaustion = exh;
+    } else {
+        st.lastExhaustion = -1;
     }
     st.lastX = pos.x, st.lastY = pos.y, st.lastZ = pos.z, st.hasLast = true;
 
@@ -789,59 +958,94 @@ void tickPlayer(Player& player) {
 
 void tickMob(Mob& mob) {
     if (!mob.isAlive()) return;
-    auto& st       = stateOf(mob);
-    bool  onGround = mob.isOnGround();
-    Vec3  delta    = mob.getPosDelta();
+    auto&          st       = stateOf(mob);
+    bool           onGround = mob.isOnGround();
+    Vec3           delta    = mob.getPosDelta();
+    unsigned const mask     = modMask(mob);
     // travellersWingsGradualGlide: a mob glides whenever it falls (isGraduallyGliding = !(Player))
-    if (auto vy = tg::glide(delta.y, tg::kGradualGlideMultiplier, activeOn(mob, Mod::GradualGlide), true, mob.isGliding())) {
+    if (auto vy = tg::glide(delta.y, tg::kGradualGlideMultiplier, has(mask, Mod::GradualGlide), true, mob.isGliding())) {
         delta.y = static_cast<float>(*vy);
-        mob.mBuiltInComponents->mStateVectorComponent->mPosDelta = delta;
+        setPosDelta(mob, delta);
         mob.setFallDistance(tg::glideFallDistance(*vy));
     }
-    applyImmunity(mob, st, activeOn(mob, Mod::Unrestrained));
-    tickSlimy(mob, st, onGround, delta);
-    keepEffect(mob, kJumpBoostId, tg::kHighJumpAmplifier, activeOn(mob, Mod::HighJump), st.highJump, &st.savedJumpBoost);
-    setStraightAhead(mob, activeOn(mob, Mod::StraightAhead), st.straightAhead); // travellersBootsStraightAhead
+    bool unrestrained = has(mask, Mod::Unrestrained);
+    applyImmunity(mob, st, unrestrained);
+    if (unrestrained || st.unrRescale != 1.0) {
+        Vec3 nv = applyUnrestrained(mob, st, unrestrained, delta, onGround, mob.isSneaking(), nullptr);
+        if (nv != delta) {
+            delta = nv;
+            setPosDelta(mob, delta);
+        }
+    }
+    tickSlimy(mob, st, onGround, delta, has(mask, Mod::SlimySoles));
+    keepEffect(mob, kJumpBoostId, tg::kHighJumpAmplifier, has(mask, Mod::HighJump), st.highJump, &st.savedJumpBoost);
+    setStraightAhead(mob, has(mask, Mod::StraightAhead), st.straightAhead); // travellersBootsStraightAhead
     tickWings(mob, st, onGround, mob.isInWater() || inLava(mob), delta, false, false);
     st.lastOnGround = onGround;
 }
-
 namespace {
 
-/// Mobs wearing Travellers' gear (legs or feet), and the leash override marker of every mob.
+/// leashed_pathfinder_override (EntityHooks#overrideStayCloseToHolder): Java's PathfinderMob#tickLeash
+/// leaves a marked mob free within 6 blocks of the holder and pulls it beyond. Bedrock's leash pulls
+/// a mob beyond the preset's soft distance (measured by tgmove.leash: unmarked pigs 3.5 blocks away
+/// end up next to the holder): a marked mob's soft (and hard) distance becomes at least 6.
+void applyLeashOverride(Actor& a) {
+    auto leash = a.getEntityContext().tryGetComponent<LeashableComponent>();
+    if (!leash) return;
+    auto& presets = leash->mPresets.get();
+    if (presets.empty()) presets.push_back(LeashableUtility::getPreset(a, *leash, nullptr)); // the default, made the mob's own
+    for (auto& preset : presets) {
+        if (preset.mSoftDistance < kLeashFreeDistance) preset.mSoftDistance = kLeashFreeDistance;
+        if (preset.mHardDistance < preset.mSoftDistance) preset.mHardDistance = preset.mSoftDistance;
+        if (preset.mMaxDistance < preset.mHardDistance) preset.mMaxDistance = preset.mHardDistance;
+    }
+}
+
+/// A mob wears Travellers' gear where TF's mob modifiers come from (legs or feet).
+bool wearsTravellers(Actor const& a) {
+    for (int slot : {2, 3}) {
+        auto const& stack = armor(a, slot);
+        if (!game::items::isEmpty(stack) && game::items::idOf(stack).starts_with("twilightforest:travellers_")) return true;
+    }
+    return false;
+}
+
+/// Mobs wearing Travellers' gear (legs or feet), and the leash override marker of every mob. The
+/// world's mobs are looked through every kMobScanPeriod ticks; the wearers found are ticked every
+/// tick until the gear comes off or they leave.
 void tickMobs(Level& lv) {
-    auto&                            s = store();
-    std::unordered_set<std::int64_t> seen;
-    for (Actor* a : lv.getRuntimeActorList()) {
-        if (!a || a->isPlayer() || !a->hasCategory(ActorCategory::Mob) || !a->isAlive()) continue;
-        // leashed_pathfinder_override: dropped from a mob that can no longer be leashed
-        // (EntityEvents#handleLeashPathingOverrides)
-        if (a->hasTags() && a->hasTag(kLeashOverrideTag) && !a->getEntityContext().hasComponent<LeashableComponent>()) a->removeTag(kLeashOverrideTag);
-        auto id    = a->getOrCreateUniqueID().rawID;
-        bool wears = game::items::idOf(armor(*a, 2)).starts_with("twilightforest:travellers_")
-                  || game::items::idOf(armor(*a, 3)).starts_with("twilightforest:travellers_");
-        if (!wears) {
-            if (s.mobs.contains(id)) forget(*a); // the gear came off: put everything back
+    auto& s = store();
+    if (gameTime() % kMobScanPeriod == 0) {
+        for (Actor* a : lv.getRuntimeActorList()) {
+            if (!a || a->isPlayer() || !a->hasCategory(ActorCategory::Mob) || !a->isAlive()) continue;
+            // leashed_pathfinder_override: dropped from a mob that can no longer be leashed
+            // (EntityEvents#handleLeashPathingOverrides)
+            if (a->hasTags() && a->hasTag(kLeashOverrideTag)) {
+                if (!a->getEntityContext().hasComponent<LeashableComponent>()) a->removeTag(kLeashOverrideTag);
+                else applyLeashOverride(*a);
+            }
+            if (!s.mobs.contains(a->getOrCreateUniqueID().rawID) && wearsTravellers(*a)) (void)stateOf(*a);
+        }
+    }
+    std::vector<std::int64_t> ids(s.mobs.begin(), s.mobs.end());
+    for (auto id : ids) {
+        Actor* a = lv.fetchEntity(ActorUniqueID{id}, false);
+        if (!a || !a->isAlive() || a->isPlayer()) { // left the world
+            s.players.erase(id);
+            s.mobs.erase(id);
             continue;
         }
-        seen.insert(id);
+        if (!wearsTravellers(*a)) { // the gear came off: put everything back
+            forget(*a);
+            continue;
+        }
         try {
             tickMob(static_cast<Mob&>(*a));
         } catch (std::exception const& e) {
             log().error("tgmove: tick of {} failed: {}", a->getTypeName(), e.what());
         }
     }
-    // mobs that left the world
-    for (auto it = s.mobs.begin(); it != s.mobs.end();) {
-        if (seen.contains(*it)) {
-            ++it;
-            continue;
-        }
-        s.players.erase(*it);
-        it = s.mobs.erase(it);
-    }
 }
-
 } // namespace
 
 void onInputEdge(Player& player, int edgeValue) {
@@ -893,6 +1097,7 @@ public:
                 if (!p) continue;
                 try {
                     flushRefund(*p);
+                    processPending(*p);
                     tickPlayer(*p);
                 } catch (std::exception const& e) {
                     log().error("tgmove: tick of {} failed: {}", p->getRealName(), e.what());
@@ -904,13 +1109,8 @@ public:
         // a respawned player starts afresh
         mRespawn = bus.emplaceListener<ll::event::PlayerRespawnEvent>([](ll::event::PlayerRespawnEvent& ev) { forget(ev.self()); });
 
-        net::on("tgmove.double_jump", [](Player& p, Json const&) {
-            if (!performDoubleJump(p, false)) (void)handleAbuse(p, false);
-        });
-        net::on("tgmove.sidestep", [](Player& p, Json const& msg) {
-            bool left = msg.value("left", false);
-            if (!tryPerformSidestep(p, left)) (void)handleAbuse(p, true);
-        });
+        net::on("tgmove.double_jump", [](Player& p, Json const&) { onDoubleJumpPacket(p); });
+        net::on("tgmove.sidestep", [](Player& p, Json const& msg) { onSidestepPacket(p, msg.value("left", false)); });
         net::on("tgmove.gradual_glide", [](Player& p, Json const& msg) {
             auto& st   = stateOf(p);
             bool  want = msg.value("gliding", false);

@@ -123,7 +123,53 @@ struct SidestepTap {
 /// The fall distance a glide leaves: v^2 / 2 / g.
 [[nodiscard]] float glideFallDistance(double vy, double gravity = kGravity);
 /// speedUpControlledWhileSneaking: impulses / 0.2, then (Java's getInputVector) at most length 1.
-void unsneakImpulse(float& forward, float& left);
+/// Java applies the 0.3 sneak factor before TF's / 0.2. `engineScalesLater`: the engine applies
+/// its sneak factor after these impulses (the impulses are the raw input): then the result is
+/// 1 / sneakFactor of the unit input, so the engine's factor brings it back to TF's full input.
+void unsneakImpulse(float& forward, float& left, bool engineScalesLater = false, float sneakFactor = 0.3f);
+
+// ---- unrestrained (BlockHooks / EntityHooks) -------------------------------------------------------
+
+inline constexpr double kUnrestrainedFriction = 0.6;   ///< resetBlockFrictionWithUnrestrained
+inline constexpr double kSlimeBounceStop      = -0.08; ///< stopBouncing: vy > -0.08 -> max(0, vy)
+inline constexpr double kGroundAccel          = 0.21600002; ///< LivingEntity#getFrictionInfluencedSpeed
+
+/// Java's ground acceleration factor of a block with friction `f`: 0.21600002 / f^3.
+[[nodiscard]] double groundAccelFactor(double friction);
+/// Entity#moveRelative's input acceleration (x, z) before the friction factor: the input
+/// (strafe = Java's xxa, positive to the left; forward = zza) at most length 1, x `speed`, turned
+/// by `yawDeg`.
+[[nodiscard]] Velocity inputAcceleration(double strafe, double forward, double yawDeg, double speed);
+/// SlimeBlock#stepOn's horizontal factor (0.4 + |vy| x 0.2 while |vy| < 0.1 and not stepping
+/// carefully, else 1), which resetSlimeMomentumWithUnrestrained turns off.
+[[nodiscard]] double slimeStepFactor(double vy, bool steppingCarefully);
+/// One ground step of an unrestrained entity, before the engine's step. The engine multiplies the
+/// horizontal velocity of the step by `friction` x 0.91 x `engineSlowdown` (slime's step-on, a speed
+/// factor), where TF's unrestrained has 0.6 x 0.91 and no slowdown, and adds the input acceleration
+/// with `friction`'s factor, where TF has 0.6's. `stored` is the velocity the engine kept, `rescale`
+/// the factor the previous step left to restore (1 = none), `accel` the input acceleration
+/// (inputAcceleration) and `engineAccelSlowdown` the engine's factor on it (soul sand). Returns the
+/// velocity to step with (y unchanged); `nextRescale` is what the
+/// next call restores. Off the ground (or `active` false) only the previous step is restored.
+struct UnrestrainedStep {
+    Velocity velocity;
+    double   nextRescale = 1.0;
+};
+[[nodiscard]] UnrestrainedStep unrestrainedStep(Velocity stored, double rescale, Velocity accel, double friction, double engineSlowdown, bool onGround,
+                                                bool active, double engineAccelSlowdown = 1.0);
+/// The jump off a block whose jump factor the engine applies (the honey block), which
+/// resetFactorWithUnrestrained turns off: from the y velocity the engine kept after the jump step
+/// (Java: (power - g) x 0.98), the one to step with now so that the height lost in the jump step is
+/// made up (`lost`, to take off the next step's velocity again as lost x 0.98); nullopt when the
+/// engine's jump was not weaker than `power`.
+struct JumpMakeUp {
+    double vy   = 0;
+    double lost = 0;
+};
+[[nodiscard]] std::optional<JumpMakeUp> unrestrainedJump(double vyAfterJumpStep, double power, double gravity = kGravity);
+/// stopBouncing after the engine's slime landing: the y velocity TF keeps (0 instead of a bounce of
+/// a landing slower than 0.08), or nullopt when the bounce stays.
+[[nodiscard]] std::optional<double> slimeBounceStop(double vyBeforeLanding, double vyAfter);
 
 // ---- slimy soles -----------------------------------------------------------------------------
 
@@ -206,7 +252,7 @@ void startSidestep(Wings& w, bool left);
 /// TFMathUtil#interpolateToTarget.
 [[nodiscard]] double interpolateToTarget(double old, double target, double dtTicks, double tau);
 
-/// TravellersWingsAnimAttachment.
+/// TravellersWingsAnimAttachment (`phase` starts at a random value in [0, 2 pi): seedPhase).
 struct WingsAnim {
     double phase      = 0;
     double oldAge     = 0;
@@ -215,6 +261,9 @@ struct WingsAnim {
     float  yRotOldR   = 0;
     float  zRotOld    = 0;
 };
+/// TravellersWingsAnimAttachment's initial accumulatedPhase: random01 in [0, 1) -> [0, 2 pi).
+void seedPhase(WingsAnim& a, double random01);
+
 /// The wing bases' rotations (radians) and the crouch drop (model pixels) for one frame.
 struct WingPose {
     float rightX = 0, rightY = 0, rightZ = 0;
@@ -231,6 +280,15 @@ struct WingPose {
 /// The FOV factor (AbstractClientPlayer#getFieldOfViewModifier's walking part) that TF keeps
 /// unchanged by straight ahead: Java's (speed / walkSpeed + 1) / 2.
 [[nodiscard]] float speedFovFactor(double speed, double walkSpeed);
+/// PlayerHooks#straightAheadNullify / Restore: the factor that turns the FOV of `speed` (which
+/// includes straight ahead's x`multiplier`) into the FOV without it; 1 when `multiplier` is 1.
+[[nodiscard]] float straightAheadFovCompensation(double speed, double walkSpeed, double multiplier);
+
+/// Efficient eater: the exhaustion to take back this tick, half of the movement exhaustion that the
+/// game added. `expectedMovement` is Java's movement exhaustion of the move, `added` what the
+/// exhaustion value grew by this tick (all sources; a wrap past 4 adds 4 back). Never more than
+/// half of what was added.
+[[nodiscard]] float efficientEaterRefund(float expectedMovement, float added);
 
 /// The air a breath costs with an oxygen bonus (LivingEntity#decreaseAirSupply): true = keep the
 /// air (random in [0, bonus] > 0).

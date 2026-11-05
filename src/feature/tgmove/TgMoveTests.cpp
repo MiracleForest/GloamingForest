@@ -11,6 +11,9 @@
 #include "mc/deps/ecs/gamerefs_entity/EntityContext.h"
 #include "mc/deps/shared_types/legacy/actor/ArmorSlot.h"
 #include "mc/entity/components/BlockMovementSlowdownImmunityComponent.h"
+#include "mc/entity/components_json_legacy/LeashableComponent.h"
+#include "mc/entity/components_json_legacy/LeashablePreset.h"
+#include "mc/entity/utilities/leashable_utility/LeashableUtility.h"
 #include "mc/entity/components/ItemUseSlowdownModifierComponent.h"
 #include "mc/entity/components/MaxAutoStepComponent.h"
 #include "mc/entity/components/MoveInputComponent.h"
@@ -29,6 +32,8 @@
 #include "mc/world/effect/MobEffectInstance.h"
 #include "mc/world/item/Item.h"
 #include "mc/world/item/ItemStack.h"
+#include "mc/world/level/BlockPos.h"
+#include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
 
 #include "feature/combat/Combat.h"
@@ -41,6 +46,7 @@
 #include "feature/net/Net.h"
 #include "feature/tgmove/TgMove.h"
 #include "game/Items.h"
+#include "mc/server/SimulatedPlayer.h"
 #include "selftest/SelfTest.h"
 
 namespace {
@@ -170,16 +176,50 @@ GF_REGISTER_SELFTEST("tgmove.validator", [](Context& ctx) -> ll::coro::CoroTask<
     tm::forget(p);
     gf::net::setTestCompanion(p, true);
     gf::net::injectFromClient(p, "tgmove.double_jump", nlohmann::json::object());
-    ctx.check(tm::stateOf(p).doubleJumpValidator.lastCheck == p.mTickCount && tm::stateOf(p).doubleJumpValidator.count <= 1,
-              "a refused double jump packet is checked");
+    ctx.check(tm::stateOf(p).pendingJumpTries == tm::kPacketRetryTicks && tm::stateOf(p).doubleJumpValidator.count == 0,
+              "a refused double jump packet waits for the next moves before it counts");
     gf::net::injectFromClient(p, "tgmove.sidestep", {{"left", true}});
     gf::net::injectFromClient(p, "tgmove.sidestep", {{"left", true}});
-    ctx.check(tm::stateOf(p).sidestepValidator.count >= 1 || tm::stateOf(p).wings.state == tg::WingState::Sidestep, "the sidestep packet: performed or checked");
-    gf::net::setTestCompanion(p, false);
+    co_await ctx.ticks(tm::kPacketRetryTicks + 2);
+    auto& q = ctx.player();
+    ctx.check(tm::stateOf(q).pendingJumpTries == 0 && tm::stateOf(q).doubleJumpValidator.count == 1,
+              "still refused after the retries: one strike (" + std::to_string(tm::stateOf(q).doubleJumpValidator.count) + ")");
+    ctx.check(tm::stateOf(q).sidestepValidator.count >= 1 || tm::stateOf(q).wings.state == tg::WingState::Sidestep, "the sidestep packet: performed or checked");
+    gf::net::setTestCompanion(q, false);
     tm::forceValidator(std::nullopt);
-    tm::forget(p);
-    unequipAll(p);
-    co_return;
+    tm::forget(q);
+    unequipAll(q);
+});
+
+// PerformDoubleJumpPacket before the move that leaves the ground (Bedrock's auth input can come
+// after the custom packet of the same tick): the server copy is still on the ground when it
+// comes, the jump is made on the next tick and nobody gets a strike.
+GF_REGISTER_SELFTEST("tgmove.packet_before_move", [](Context& ctx) -> ll::coro::CoroTask<> {
+    co_await ctx.flatArea(1220, 8);
+    auto g = ctx.testPos(1224, 3);
+    co_await place(ctx, g);
+    auto& p = ctx.player();
+    equip(p, 2, "twilightforest:travellers_wings", {"twilightforest:double_jump"});
+    tm::forceValidator(true);
+    gf::net::setTestCompanion(p, true);
+    co_await ctx.ticks(2);
+    auto& p1 = ctx.player();
+    tm::stateOf(p1).hasDoubleJump = true;
+    gf::net::injectFromClient(p1, "tgmove.double_jump", nlohmann::json::object()); // on the ground: refused for now
+    ctx.check(tm::stateOf(p1).pendingJumpTries > 0, "the packet waits");
+    p1.teleport(at(g, 4), DimensionType(g.dim)); // the move that follows: in the air
+    tm::stateOf(p1).hasDoubleJump = true;        // has_double_jump as the client had it
+    co_await ctx.ticks(tm::kPacketRetryTicks);
+    ctx.info(std::string("on the ground: ") + (ctx.player().isOnGround() ? "yes" : "no") + ", pending " + std::to_string(tm::stateOf(ctx.player()).pendingJumpTries));
+    auto& p2 = ctx.player();
+    auto& st = tm::stateOf(p2);
+    ctx.check(!st.hasDoubleJump && st.safeFall, "the double jump was made once the server copy left the ground");
+    ctx.check(st.pendingJumpTries == 0 && st.doubleJumpValidator.count == 0, "no validator strike");
+    gf::net::setTestCompanion(p2, false);
+    tm::forceValidator(std::nullopt);
+    tm::forget(p2);
+    unequipAll(p2);
+    p2.teleport(at(g), DimensionType(g.dim));
 });
 
 GF_REGISTER_SELFTEST("tgmove.sidestep", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -307,7 +347,7 @@ GF_REGISTER_SELFTEST("tgmove.unrestrained", [](Context& ctx) -> ll::coro::CoroTa
     equip(p, 3, "twilightforest:travellers_boots", {"twilightforest:unrestrained"});
     tm::tickPlayer(p);
     auto imm = p.getEntityContext().tryGetComponent<BlockMovementSlowdownImmunityComponent>();
-    ctx.check(imm.has_value() && imm->mBlocks->size() == 5, "immune to the slowdown of cobweb, berry bush, powder snow, honey and soul sand");
+    ctx.check(imm.has_value() && imm->mBlocks->size() == 3, "immune to the slowdown of cobweb, berry bush and powder snow");
     unequipAll(p);
     tm::tickPlayer(p);
     ctx.check(!p.getEntityContext().hasComponent<BlockMovementSlowdownImmunityComponent>(), "removed with the boots");
@@ -542,7 +582,7 @@ GF_REGISTER_SELFTEST("tgmove.mobs", [](Context& ctx) -> ll::coro::CoroTask<> {
     tm::tickMob(static_cast<Mob&>(*a));
     ctx.check(std::abs(a->getPosDelta().y + 0.6f * 5 / 6) < 1e-3f, "a mob glides whenever it falls: vy " + num(a->getPosDelta().y));
     ctx.check(a->getEffect(8u) && a->getEffect(8u)->mAmplifier == tg::kHighJumpAmplifier, "a mob jumps high");
-    co_await ctx.ticks(2);
+    co_await ctx.ticks(21); // the leash marker is looked at with the mob scan (every 20 ticks)
     auto* lv  = ll::service::getLevel().as_ptr();
     auto* pig = lv->fetchEntity(pigId, false);
     auto* bat = lv->fetchEntity(batId, false);
@@ -597,6 +637,233 @@ GF_REGISTER_SELFTEST("tgmove.armor_time", [](Context& ctx) -> ll::coro::CoroTask
     p1.heal(20);
 });
 
+// Unrestrained on the ground (BlockHooks): friction 0.6 on ice, packed ice, blue ice and slime, no
+// slime step-on slowdown and no walking bounce on slime, no soul sand / honey slowdown, the honey
+// block's full jump. A push of 0.4 slides 0.4 / (1 - 0.546) = 0.88 blocks on a 0.6 block.
+GF_REGISTER_SELFTEST("tgmove.unrestrained_blocks", [](Context& ctx) -> ll::coro::CoroTask<> {
+    co_await ctx.flatArea(1270, 16);
+    auto const row = [&](int i) { return ctx.testPos(1271 + i, 2); };
+    auto       g   = row(0);
+    auto       floor = [&](std::string const& id) {
+        for (int i = 0; i < 14; ++i) {
+            auto at = row(i);
+            ctx.setBlock(gf::core::GlobalPos{at.dim, at.x, at.y - 1, at.z}, id);
+        }
+    };
+    // the slide of a 0.4 push along +x, with and without the boots
+    auto slide = [&](std::string const& block, bool boots) -> ll::coro::CoroTask<double> {
+        floor(block);
+        auto& p = ctx.player();
+        unequipAll(p);
+        if (boots) equip(p, 3, "twilightforest:travellers_boots", {"twilightforest:unrestrained"});
+        p.teleport(at(g, 0.0f), DimensionType(g.dim));
+        tm::forget(p);
+        if (boots) equip(p, 3, "twilightforest:travellers_boots", {"twilightforest:unrestrained"});
+        co_await ctx.ticks(8);
+        auto& q     = ctx.player();
+        float start = q.getFeetPos().x;
+        q.lerpMotion(Vec3{0.4f, 0, 0});
+        std::string trace;
+        for (int i = 0; i < 40; ++i) {
+            co_await ctx.ticks(1);
+            auto& r = ctx.player();
+            if (i < 8) trace += "(" + num(r.getPosDelta().x).substr(0, 6) + " " + num(r.getPosDelta().y).substr(0, 6) + " " + num(r.getFeetPos().y - g.y).substr(0, 5) + ") ";
+        }
+        auto& r = ctx.player();
+        auto const& below = r.getDimensionBlockSource().getBlock(BlockPos{g.x, g.y - 1, g.z});
+        ctx.info(block + (boots ? " with" : " without") + ": friction " + num(tm::blockFriction(below)) + ", vx vy y: " + trace);
+        co_return static_cast<double>(r.getFeetPos().x - start);
+    };
+    // walking (input forward) along +x for 30 ticks
+    auto walk = [&](std::string const& block, bool boots) -> ll::coro::CoroTask<double> {
+        floor(block);
+        auto& p = ctx.player();
+        unequipAll(p);
+        p.teleport(at(g, 0.0f), DimensionType(g.dim));
+        tm::forget(p);
+        if (boots) equip(p, 3, "twilightforest:travellers_boots", {"twilightforest:unrestrained"});
+        co_await ctx.ticks(8);
+        auto& q     = ctx.player();
+        float start = q.getFeetPos().x;
+        if (q.isSimulated()) static_cast<SimulatedPlayer&>(q).simulateWorldMove(Vec3{1, 0, 0}, 1.0f);
+        co_await ctx.ticks(20);
+        auto& r = ctx.player();
+        if (r.isSimulated()) static_cast<SimulatedPlayer&>(r).simulateStopMoving();
+        co_return static_cast<double>(r.getFeetPos().x - start) / 20.0;
+    };
+    std::vector<std::pair<std::string, double>> walks;
+    for (std::string block : {"minecraft:grass_block", "minecraft:packed_ice", "minecraft:slime", "minecraft:soul_sand", "minecraft:honey_block"}) {
+        double w0 = co_await walk(block, false);
+        double w1 = co_await walk(block, true);
+        ctx.info("walk on " + block + ": " + num(w0) + " without, " + num(w1) + " with unrestrained (blocks per tick)");
+        if (block != "minecraft:grass_block") walks.push_back({block, w1});
+    }
+    double grassWalk = co_await walk("minecraft:grass_block", true);
+    for (auto const& [block, w1] : walks) {
+        ctx.check(w1 > 0.88 * grassWalk && w1 < 1.08 * grassWalk, "unrestrained walks on " + block + " about as on grass: " + num(w1) + " (grass " + num(grassWalk) + ")");
+    }
+    double grass = co_await slide("minecraft:grass_block", false);
+    ctx.info("slide on grass " + num(grass));
+    ctx.check(grass > 0.5 && grass < 1.3, "a 0.4 push slides about 0.88 blocks on grass: " + num(grass));
+    for (std::string block : {"minecraft:ice", "minecraft:packed_ice", "minecraft:blue_ice", "minecraft:slime", "minecraft:soul_sand", "minecraft:honey_block"}) {
+        double without = co_await slide(block, false);
+        double with    = co_await slide(block, true);
+        ctx.info("slide on " + block + ": " + num(without) + " without, " + num(with) + " with unrestrained (grass " + num(grass) + ")");
+        ctx.check(std::abs(with - grass) < 0.15, "unrestrained on " + block + " slides as on grass: " + num(with) + " (grass " + num(grass) + ", without " + num(without) + ")");
+    }
+    // slime: no bounce while walking (stopBouncing), a real fall still bounces
+    {
+        floor("minecraft:slime");
+        auto& p = ctx.player();
+        unequipAll(p);
+        p.teleport(at(g, 0.0f), DimensionType(g.dim));
+        tm::forget(p);
+        equip(p, 3, "twilightforest:travellers_boots", {"twilightforest:unrestrained"});
+        co_await ctx.ticks(10);
+        float lo = 1e9f, hi = -1e9f;
+        for (int i = 0; i < 20; ++i) {
+            co_await ctx.ticks(1);
+            float y = ctx.player().getFeetPos().y;
+            lo      = std::min(lo, y);
+            hi      = std::max(hi, y);
+        }
+        ctx.check(hi - lo < 0.02f, "standing on slime with unrestrained: no bounce (" + num(hi - lo) + " blocks up and down)");
+        auto& q = ctx.player();
+        q.teleport(at(g, 4), DimensionType(g.dim));
+        co_await ctx.ticks(30);
+        float top = -1e9f;
+        for (int i = 0; i < 20; ++i) {
+            co_await ctx.ticks(1);
+            top = std::max(top, ctx.player().getFeetPos().y);
+        }
+        ctx.info("after a 4 block fall onto slime the player rose to " + num(top - static_cast<float>(g.y)) + " above the slime");
+    }
+    // honey: the full jump with unrestrained (getBlockJumpFactor 1)
+    auto jump = [&](std::string const& block, bool boots) -> ll::coro::CoroTask<double> {
+        floor(block);
+        auto& p = ctx.player();
+        unequipAll(p);
+        p.teleport(at(g, 0.0f), DimensionType(g.dim));
+        tm::forget(p);
+        if (boots) equip(p, 3, "twilightforest:travellers_boots", {"twilightforest:unrestrained"});
+        co_await ctx.ticks(10);
+        auto& q     = ctx.player();
+        float start = q.getFeetPos().y, top = start;
+        if (q.isSimulated()) static_cast<SimulatedPlayer&>(q).simulateJump();
+        for (int i = 0; i < 20; ++i) {
+            co_await ctx.ticks(1);
+            top = std::max(top, ctx.player().getFeetPos().y);
+        }
+        co_return static_cast<double>(top - start);
+    };
+    double grassJump = co_await jump("minecraft:grass_block", false);
+    double honey     = co_await jump("minecraft:honey_block", false);
+    double honeyFree = co_await jump("minecraft:honey_block", true);
+    ctx.info("jump " + num(grassJump) + " on grass, " + num(honey) + " on honey, " + num(honeyFree) + " on honey with unrestrained");
+    ctx.check(std::abs(honeyFree - grassJump) < 0.1, "unrestrained: the full jump on honey: " + num(honeyFree) + " (grass " + num(grassJump) + ", without " + num(honey) + ")");
+    unequipAll(ctx.player());
+    tm::forget(ctx.player());
+});
+
+// Agile ranger: the item use slowdown comes back when the state is dropped while the bow is still
+// drawn (forget: disconnect, respawn, tests, uninstall).
+GF_REGISTER_SELFTEST("tgmove.agile_restore", [](Context& ctx) -> ll::coro::CoroTask<> {
+    co_await ctx.flatArea(1280, 8);
+    co_await place(ctx, ctx.testPos(1284, 3));
+    auto& p = ctx.player();
+    equip(p, 2, "twilightforest:travellers_wings", {"twilightforest:agile_ranger"});
+    ctx.give("minecraft:arrow", 16);
+    if (auto bow = gf::game::items::make("minecraft:bow", 1); bow && p.isSimulated()) {
+        auto& sp = static_cast<SimulatedPlayer&>(p);
+        (void)sp.simulateSetItem(*bow, true, 0);
+        (void)sp.simulateUseItemInSlot(0);
+        if (p.getItemUseDuration() <= 0) p.startUsingItem(p.getCarriedItem(), 72000);
+    }
+    co_await ctx.ticks(3);
+    auto& q = ctx.player();
+    // a simulated player's item use keeps no slowdown component (a real player's client and server
+    // copy have it during the use): the test gives it Bedrock's 0.2 and runs the tick itself
+    if (!q.getEntityContext().hasComponent<ItemUseSlowdownModifierComponent>()) q.getEntityContext().getOrAddComponent<ItemUseSlowdownModifierComponent>().mModifier = 0.2f;
+    tm::tickPlayer(q);
+    auto slow = q.getEntityContext().tryGetComponent<ItemUseSlowdownModifierComponent>();
+    ctx.require(q.getItemUseDuration() > 0 && slow.has_value(), "drawing a bow (use duration " + std::to_string(q.getItemUseDuration()) + ")");
+    auto& st = tm::stateOf(q);
+    ctx.require(st.agileBase.has_value(), "agile ranger is on");
+    float base = *st.agileBase;
+    ctx.check(std::abs(slow->mModifier - std::min(1.0f, base * 5)) < 1e-4f, "the use slowdown x5: " + num(slow->mModifier) + " of " + num(base));
+    tm::forget(q); // still drawing
+    auto after = q.getEntityContext().tryGetComponent<ItemUseSlowdownModifierComponent>();
+    ctx.check(after.has_value() && std::abs(after->mModifier - base) < 1e-4f, "forgotten while drawing: the slowdown is back: " + num(after ? after->mModifier : -1) + " of " + num(base));
+    if (q.isSimulated()) static_cast<SimulatedPlayer&>(q).simulateStopUsingItem();
+    q.getEntityContext().removeComponent<ItemUseSlowdownModifierComponent>();
+    unequipAll(q);
+    tm::forget(q);
+});
+
+// leashed_pathfinder_override: Java's PathfinderMob#tickLeash brings a leashed mob within 6 blocks
+// to 2 blocks of its holder unless the override is set. Bedrock's leash pulls a mob beyond the
+// preset's soft distance: 3 unmarked pigs 3.5 blocks from the holder come to it, 3 marked ones
+// (soft distance 6) stay where they are.
+GF_REGISTER_SELFTEST("tgmove.leash", [](Context& ctx) -> ll::coro::CoroTask<> {
+    co_await ctx.flatArea(1286, 12);
+    auto g = ctx.testPos(1291, 2);
+    co_await place(ctx, g);
+    auto& region = ctx.player().getDimensionBlockSource();
+    std::vector<ActorUniqueID> pigs;
+    for (int i = 0; i < 6; ++i) {
+        float  dx = i < 3 ? 4.0f : -3.0f;
+        float  dz = static_cast<float>(i % 3 - 1) * 1.5f;
+        Actor* a  = gf::spawn::spawnMob(region, "minecraft:pig", Vec3{g.x + 0.5f + dx, static_cast<float>(g.y), g.z + 0.5f + dz}, gf::spawn::SpawnReason::Command);
+        if (!a) continue;
+        if (i >= 3) a->addTag(tm::kLeashOverrideTag);
+        pigs.push_back(a->getOrCreateUniqueID());
+    }
+    ctx.require(pigs.size() == 6, "6 pigs");
+    co_await ctx.ticks(21); // the mob scan sees the marker
+    auto& p = ctx.player();
+    ctx.require(p.isSimulated(), "a simulated player holds the leads");
+    auto* lv = ll::service::getLevel().as_ptr();
+    std::string presets;
+    for (auto id : pigs) {
+        auto& sp = static_cast<SimulatedPlayer&>(ctx.player());
+        if (auto lead = gf::game::items::make("minecraft:lead", 1)) (void)sp.simulateSetItem(*lead, true, 0);
+        if (auto* a = lv->fetchEntity(id, false)) {
+            (void)sp.simulateInteract(*a);
+            if (auto leash = a->getEntityContext().tryGetComponent<LeashableComponent>()) {
+                auto const& pr = LeashableUtility::getPreset(*a, *leash, &ctx.player());
+                presets += num(pr.mSoftDistance).substr(0, 4) + "/" + num(pr.mHardDistance).substr(0, 4) + "/" + num(pr.mMaxDistance).substr(0, 4) + " ";
+            }
+        }
+        co_await ctx.ticks(2);
+    }
+    ctx.info("soft distances " + presets);
+    int leashed = 0;
+    for (auto id : pigs)
+        if (auto* a = lv->fetchEntity(id, false); a && a->isLeashed()) ++leashed;
+    ctx.require(leashed == 6, "the pigs are leashed to the player (" + std::to_string(leashed) + ")");
+    co_await ctx.ticks(100);
+    auto&       holder = ctx.player();
+    int         markedFar = 0, plainFar = 0;
+    std::string dists;
+    for (std::size_t i = 0; i < pigs.size(); ++i)
+        if (auto* a = lv->fetchEntity(pigs[i], false)) {
+            float d = a->getFeetPos().distanceTo(holder.getFeetPos());
+            dists += (i >= 3 ? "marked " : "") + num(d).substr(0, 4) + " ";
+            if (d > 3.0f) ++(i >= 3 ? markedFar : plainFar);
+        }
+    ctx.info("distances to the holder after 100 ticks: " + dists);
+    // the marked pigs' leash no longer pulls within 6 blocks (Java pulls beyond 6 only); Bedrock's
+    // other approach to the holder (see docs/units/tgmove.md) is reported, not checked
+    int freed = 0;
+    for (std::size_t i = 3; i < pigs.size(); ++i)
+        if (auto* a = lv->fetchEntity(pigs[i], false))
+            if (auto leash = a->getEntityContext().tryGetComponent<LeashableComponent>())
+                if (LeashableUtility::getPreset(*a, *leash, &holder).mSoftDistance >= 6.0f) ++freed;
+    ctx.check(freed == 3, "the marked pigs' leash pulls only beyond 6 blocks (" + std::to_string(freed) + " of 3)");
+    ctx.info("marked " + std::to_string(markedFar) + " / unmarked " + std::to_string(plainFar) + " pigs stayed more than 3 blocks away");
+    for (auto id : pigs)
+        if (auto* a = lv->fetchEntity(id, false)) a->despawn();
+});
 // The client e2e scenario's helpers. They act only on real players that carry the entity tag
 // kE2eTag, which only the scenario adds (/tag @s add gf_e2e.tgmove): a selftest run on a live
 // server (`/twilightforest selftest`, the full run) changes nobody. Armour they replace goes to

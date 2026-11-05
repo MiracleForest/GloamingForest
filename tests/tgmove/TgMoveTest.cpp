@@ -292,3 +292,122 @@ TEST(TgMove, InputModifiers) {
     EXPECT_FALSE(keepsAir(kOxygenBonus, 0));
     EXPECT_TRUE(keepsAir(kOxygenBonus, 2));
 }
+
+TEST(TgMove, UnsneakImpulseEngineScalesLater) {
+    // Bedrock applies its sneak factor after the impulses: 1 / 0.3 of the unit input, so the
+    // engine's 0.3 brings it back to TF's full input
+    float f = 1.0f, l = 0.0f;
+    unsneakImpulse(f, l, true, 0.3f);
+    EXPECT_NEAR(f * 0.3f, 1.0f, 1e-6);
+    f = 0.6f, l = 0.8f; // diagonal: the length 1 kept
+    unsneakImpulse(f, l, true, 0.3f);
+    EXPECT_NEAR(std::sqrt(f * f + l * l) * 0.3f, 1.0f, 1e-5);
+}
+
+TEST(TgMove, UnrestrainedFriction) {
+    EXPECT_NEAR(groundAccelFactor(0.6), 1.0, 1e-6);   // 0.21600002 / 0.216
+    EXPECT_NEAR(groundAccelFactor(0.98), 0.2295, 1e-4); // ice
+    // the input acceleration: forward at yaw 0 faces +z, a left strafe faces +x
+    auto a = inputAcceleration(0, 1, 0, 0.1);
+    EXPECT_NEAR(a.z, 0.1, 1e-9);
+    EXPECT_NEAR(a.x, 0.0, 1e-9);
+    a = inputAcceleration(1, 0, 0, 0.1);
+    EXPECT_NEAR(a.x, 0.1, 1e-9);
+    a = inputAcceleration(1, 1, 90, 0.1); // normalized to length 1
+    EXPECT_NEAR(std::sqrt(a.x * a.x + a.z * a.z), 0.1, 1e-9);
+    EXPECT_DOUBLE_EQ(inputAcceleration(0, 0, 0, 0.1).x, 0.0);
+
+    // TF's 0.6 ground step against a simulated engine with ice friction: the engine moves by
+    // v + a(f) and keeps (v + a(f)) x f x 0.91; with unrestrainedStep in front the positions and
+    // velocities follow Java's 0.6 sequence
+    double const f = 0.98, speed = 0.1;
+    Velocity     acc = inputAcceleration(0, 1, 0, speed);
+    Velocity     tf{0, 0, 0.3}, engine{0, 0, 0.3};
+    double       rescale = 1.0, tfPos = 0, enginePos = 0;
+    for (int i = 0; i < 20; ++i) {
+        if (i == 10) acc = {}; // the key released: TF stops within a block
+        // TF
+        double move = tf.z + acc.z * groundAccelFactor(0.6);
+        tfPos += move;
+        tf.z = move * 0.6 * 0.91;
+        // the engine behind unrestrainedStep
+        auto step = unrestrainedStep(engine, rescale, acc, f, 1.0, true, true);
+        rescale   = step.nextRescale;
+        double m  = step.velocity.z + acc.z * groundAccelFactor(f);
+        enginePos += m;
+        engine.z = m * f * 0.91;
+        EXPECT_NEAR(enginePos, tfPos, 1e-9) << "tick " << i;
+        EXPECT_NEAR(engine.z * rescale, tf.z, 1e-9) << "tick " << i;
+    }
+    // off the ground: only the previous step's drag is restored
+    auto air = unrestrainedStep({0.2, 0.1, 0.2}, 0.5, {0.05, 0, 0}, f, 1.0, false, true);
+    EXPECT_NEAR(air.velocity.x, 0.1, 1e-9);
+    EXPECT_NEAR(air.velocity.y, 0.1, 1e-9);
+    EXPECT_DOUBLE_EQ(air.nextRescale, 1.0);
+    // a slowdown of the engine's own (slime's step-on) is undone with the friction
+    auto slime = unrestrainedStep({0, 0, 0}, 1.0, {}, 0.8, 0.4, true, true);
+    EXPECT_NEAR(slime.nextRescale, 0.6 / (0.8 * 0.4), 1e-9);
+    // normal blocks: nothing to do
+    auto stone = unrestrainedStep({0.1, 0, 0}, 1.0, acc, 0.6, 1.0, true, true);
+    EXPECT_DOUBLE_EQ(stone.nextRescale, 1.0);
+    EXPECT_NEAR(stone.velocity.x, 0.1, 1e-6);
+}
+
+TEST(TgMove, UnrestrainedSoulSandAndHoneyJump) {
+    // an engine that slows the input acceleration (soul sand): the extra makes it TF's full one
+    double const k = 0.5;
+    Velocity     acc{0, 0, 0.1};
+    auto         s = unrestrainedStep({}, 1.0, acc, 0.6, 1.0, true, true, k);
+    EXPECT_NEAR(s.velocity.z + acc.z * groundAccelFactor(0.6) * k, acc.z * groundAccelFactor(0.6), 1e-9);
+    // the honey block's jump (Bedrock 0.42 x 0.6): made up to 0.42
+    double vyEngine = (0.42 * 0.6 - kGravity) * 0.98;
+    auto   j        = unrestrainedJump(vyEngine, 0.42);
+    ASSERT_TRUE(j.has_value());
+    EXPECT_NEAR(j->lost, 0.42 * 0.4, 1e-9);
+    // the step moves TF's jump step plus the lost height; the velocity after it, less lost x 0.98, is TF's
+    double tfVy = (0.42 - kGravity) * 0.98;
+    EXPECT_NEAR(j->vy, tfVy + j->lost, 1e-9);
+    EXPECT_NEAR((j->vy - kGravity) * 0.98 - j->lost * 0.98, (tfVy - kGravity) * 0.98, 1e-9);
+    EXPECT_FALSE(unrestrainedJump((0.42 - kGravity) * 0.98, 0.42).has_value()); // a full jump
+}
+
+TEST(TgMove, SlimeBlockUnrestrained) {
+    EXPECT_NEAR(slimeStepFactor(0.0, false), 0.4, 1e-12);
+    EXPECT_NEAR(slimeStepFactor(0.05, false), 0.41, 1e-12);
+    EXPECT_DOUBLE_EQ(slimeStepFactor(0.0, true), 1.0);
+    EXPECT_DOUBLE_EQ(slimeStepFactor(0.2, false), 1.0);
+    // walking (-0.0784 per tick) bounces no more; a real fall still does
+    auto s = slimeBounceStop(-0.0784, 0.0784);
+    ASSERT_TRUE(s.has_value());
+    EXPECT_DOUBLE_EQ(*s, 0.0);
+    EXPECT_FALSE(slimeBounceStop(-0.5, 0.5).has_value());
+    EXPECT_FALSE(slimeBounceStop(-0.0784, 0.0).has_value());
+    EXPECT_FALSE(slimeBounceStop(-0.0784, 0.42).has_value()); // a jump off the slime stays
+}
+
+TEST(TgMove, StraightAheadFov) {
+    EXPECT_FLOAT_EQ(straightAheadFovCompensation(0.14, 0.1, 1.0), 1.0f);
+    // walking x1.4: the FOV of 0.14 back to the FOV of 0.1
+    EXPECT_NEAR(straightAheadFovCompensation(0.14, 0.1, 1.4) * speedFovFactor(0.14, 0.1), speedFovFactor(0.1, 0.1), 1e-6);
+    // sprinting (0.13) x1.4
+    EXPECT_NEAR(straightAheadFovCompensation(0.182, 0.1, 1.4) * speedFovFactor(0.182, 0.1), speedFovFactor(0.13, 0.1), 1e-6);
+}
+
+TEST(TgMove, EfficientEaterRefund) {
+    EXPECT_FLOAT_EQ(efficientEaterRefund(0.1f, 0.1f), 0.05f);
+    EXPECT_FLOAT_EQ(efficientEaterRefund(0.1f, 0.02f), 0.01f); // the game added less: half of that
+    EXPECT_FLOAT_EQ(efficientEaterRefund(0.1f, 0.5f), 0.05f);  // mining added more: only the movement
+    EXPECT_NEAR(efficientEaterRefund(0.1f, 0.1f - 4.0f), 0.05f, 1e-6); // past 4: the wrap
+    EXPECT_FLOAT_EQ(efficientEaterRefund(0.0f, 0.3f), 0.0f);
+    EXPECT_FLOAT_EQ(efficientEaterRefund(0.1f, 0.0f), 0.0f);
+}
+
+TEST(TgMove, WingsPhaseSeed) {
+    WingsAnim a;
+    seedPhase(a, 0.0);
+    EXPECT_DOUBLE_EQ(a.phase, 0.0);
+    seedPhase(a, 0.5);
+    EXPECT_NEAR(a.phase, 3.14159265358979, 1e-9);
+    seedPhase(a, 0.999);
+    EXPECT_LT(a.phase, 2 * 3.14159265358979);
+}

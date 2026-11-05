@@ -38,7 +38,9 @@
 class Actor;
 class Mob;
 class Player;
+class Block;
 class ItemStack;
+class Vec2;
 class Vec3;
 
 namespace gf::feature::tgmove {
@@ -59,6 +61,10 @@ enum class Mod { DoubleJump, SideStep, GradualGlide, HighJump, AgileRanger, Step
 [[nodiscard]] bool active(Player const& player, Mod m);
 /// The same for any living entity (mobs: the modifiers of the stack in the modifier's slot).
 [[nodiscard]] bool activeOn(Actor const& entity, Mod m);
+/// Every active modifier of `entity` at once (bit 1 << Mod), one gear lookup per armour slot: the
+/// per-tick logic reads this mask instead of asking for each modifier.
+[[nodiscard]] unsigned modMask(Actor const& entity);
+[[nodiscard]] constexpr bool has(unsigned mask, Mod m) { return (mask >> static_cast<unsigned>(m)) & 1u; }
 /// Whether `stack` is broken Travellers' gear.
 [[nodiscard]] bool brokenGear(ItemStack const& stack);
 
@@ -107,6 +113,25 @@ struct PlayerState {
     int                        lastAir   = -1;
     double                     lastX = 0, lastY = 0, lastZ = 0;
     bool                       hasLast = false;
+    float                      lastExhaustion = -1; ///< efficient eater: the exhaustion after the last tick
+    // unrestrained on the ground (BlockHooks): what the engine's last step left to put right
+    double                     unrRescale = 1.0;   ///< the friction / slowdown of the last step -> TF's 0.6
+    double                     unrVyPre   = 0;     ///< the y velocity the last step started with
+    bool                       unrSlime   = false; ///< the last step was on a slime block
+    bool                       unrHoney   = false; ///< the last step was on a honey block
+    double                     unrJumpLost = 0;    ///< the height a honey jump made up in the last step
+    double                     unrLastAccelSlow = 1.0; ///< mobs: the engine's acceleration factor of the last step
+    double                     unrStepX = 0, unrStepZ = 0; ///< mobs: the last step's velocity (acceleration estimate)
+    double                     unrLastDrag = 0;    ///< mobs: the last step's friction x 0.91 x slowdown (0: no ground step)
+    double                     unrLastFriction = 0.6;
+    core::tgmove::Velocity     unrAccel;           ///< mobs: the input acceleration estimated from the last step
+    core::tgmove::Velocity     unrAccelRaw;        ///< mobs: the last step's raw estimate
+    bool                       unrAccelRawValid = false;
+    // companion packets the server copy refused when they came: retried on the next ticks before
+    // they count as a validator strike (the packet can come before the move it follows)
+    int                        pendingJumpTries     = 0;
+    int                        pendingSidestepTries = 0;
+    bool                       pendingSidestepLeft  = false;
 };
 /// The state of `entity` (created on first use).
 [[nodiscard]] PlayerState& stateOf(Actor const& entity);
@@ -157,7 +182,37 @@ void applyDepthStrider(Actor& a, PlayerState& st, bool on);
 [[nodiscard]] bool agileRangerItem(ItemStack const& stack);
 /// Applies (or puts back) agile ranger's x5 on the item use slowdown of `player`'s simulation; the
 /// client mod and the server's copy call it alike. Returns whether it is on.
-bool applyAgileRanger(Player& player, std::optional<float>& base, float& set);
+/// `forceOff` puts the slowdown back whatever the player does (the state is dropped).
+bool applyAgileRanger(Player& player, std::optional<float>& base, float& set, bool forceOff = false);
+
+/// Unrestrained on the ground (BlockHooks#resetBlockFrictionWithUnrestrained, #resetSlimeMomentum-
+/// WithUnrestrained, #stopBouncing; EntityHooks#resetFactorWithUnrestrained): the velocity `v` the
+/// engine kept, turned into the one to step with so that the step moves and slows as on a block of
+/// friction 0.6 with no slime or block slowdown and no slime bounce of a walk. `move` is the input
+/// (MoveInputComponent: x strafe, y forward); without it (mobs) the input acceleration is estimated
+/// from the last step. Client mod and server copy alike, before the engine's step.
+[[nodiscard]] Vec3 applyUnrestrained(Actor& a, PlayerState& st, bool active, Vec3 v, bool onGround, bool steppingCarefully, Vec2 const* move);
+/// The friction the engine gives the block at `pos` (Block friction; 0.6 for most blocks).
+[[nodiscard]] double blockFriction(Block const& block);
+/// The engine's own slowdowns of a ground step on `blockId`, which unrestrained undoes (1 = none):
+/// `drag` multiplies the step's velocity (Bedrock's slime and honey blocks: Java's SlimeBlock#stepOn
+/// factor), `accel` the input acceleration (soul sand). Measured by tgmove.unrestrained_blocks.
+struct EngineSlowdown {
+    double drag  = 1.0;
+    double accel = 1.0;
+};
+[[nodiscard]] EngineSlowdown engineSlowdown(std::string const& blockId, double vy, bool steppingCarefully);
+/// Bedrock's soul sand: the walk's input acceleration x this (measured: 0.544 of the walking speed
+/// on grass; a slide on it is not slowed).
+inline constexpr double kSoulSandAccel = 0.544;
+
+/// A companion's tgmove.double_jump / tgmove.sidestep (PerformDoubleJumpPacket / PerformSidestep-
+/// Packet#handle): performed now, or retried on the next ticks, then a validator strike.
+void onDoubleJumpPacket(Player& player);
+void onSidestepPacket(Player& player, bool left);
+/// The retries of refused packets (each server tick, before tickPlayer).
+void processPending(Player& player);
+inline constexpr int kPacketRetryTicks = 3;
 
 /// The entity data key (F8's gf::entity::data) where the server keeps last_damage_armor_time (the
 /// game time armour last took damage) for U11's auto repair, which reads it by this string.

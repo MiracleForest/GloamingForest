@@ -34,6 +34,7 @@
 #include <cmath>
 #include <map>
 #include <optional>
+#include <random>
 #include <set>
 #include <string>
 
@@ -48,11 +49,13 @@
 #include "mc/util/MolangScriptArg.h"
 #include "mc/util/MolangVariableMap.h"
 #include "mc/world/actor/ActorFlags.h"
+#include "mc/world/actor/player/Ability.h"
 #include "mc/world/actor/player/AbilitiesIndex.h"
 #include "mc/world/actor/player/LayeredAbilities.h"
 #include "mc/world/attribute/AttributeInstance.h"
 #include "mc/world/attribute/AttributeInstanceConstRef.h"
 #include "mc/world/attribute/AttributeInstanceRef.h"
+#include "mc/world/attribute/AttributeModifier.h"
 #include "mc/world/attribute/SharedAttributes.h"
 #include "mc/world/effect/MobEffectInstance.h"
 #include "mc/world/item/ItemStack.h"
@@ -87,6 +90,8 @@ namespace {
 
 constexpr double kPi    = 3.14159265358979323846;
 constexpr double kToDeg = 180.0 / kPi;
+constexpr char   kStraightName[] = "twilightforest:travellers_gear.boots_straight_ahead";
+constexpr int    kStaleFrames    = 200; ///< a remote entity unseen for this many frames is dropped
 
 /// A stretch of ticks the e2e scenario measures the walking speed over.
 struct SpeedRun {
@@ -111,6 +116,9 @@ struct Local {
     bool             straightForward = false; ///< straight ahead is speeding the player up
     double           speed = 0.1;             ///< the movement speed attribute (FOV)
     bool             waterWalking = false;
+    bool             sneakScaledLater = false; ///< Bedrock applies its sneak factor after MoveInputComponent::mMove
+    bool             loggedSneakInput = false;
+    float            fovIn = 0, fovOut = 0;    ///< the last FOV factor the engine asked for and what it got
     // measurements for the e2e scenario
     std::optional<double> jumpBaseY;  ///< double jump: the y it started at
     double                jumpPeakY = 0;
@@ -126,6 +134,10 @@ struct Local {
     bool                  hasLastFeet  = false;
     bool                  lastOnGround = true;
     SpeedRun              run;
+    std::optional<Vec3>   slideStart; ///< where the forward key was let go on the ground
+    std::string           slideOn;
+    int                   slideTicks = 0;
+    float                 lastForward = 0;
     bool                  loggedStraight = false;
 };
 Local& local() {
@@ -139,6 +151,9 @@ struct Remote {
     std::map<std::int64_t, tg::Wings>     wings;
     std::map<std::int64_t, tg::WingsAnim> anim;
     std::map<std::int64_t, std::pair<int, float>> walk; ///< last tick, walkAnimation speed
+    std::map<std::int64_t, long long>             seen; ///< the frame each entity was last animated
+    long long                                     frame = 0;
+    std::mt19937                                  rng{std::random_device{}()};
     tg::WingState                         loggedState = tg::WingState::Idle;
     bool                                  loggedAny   = false;
 };
@@ -172,9 +187,12 @@ std::string speedContext(LocalPlayer& p, movement::MoveState const& s, Vec3 cons
     if (in == "minecraft:web" || game::blockIdAt(region, BlockPos{at.x, at.y + 1, at.z}) == "minecraft:web") return "cobweb";
     if (p.getItemUseDuration() > 0 && feature::tgmove::agileRangerItem(p.getCarriedItem())) return "bow";
     if (local().waterWalking) return "water_walk";
+    if (local().gliding) return "glide";
     if (s.inWater) return "water";
     auto below = blockBelow(p, feet);
     if (in == "minecraft:soul_sand" || below == "minecraft:soul_sand") return "soul_sand";
+    if (s.onGround && below == "minecraft:packed_ice") return "ice";
+    if (s.onGround && below == "minecraft:slime") return "slime";
     if (s.onGround && s.forward > 0) return "forward";
     return "";
 }
@@ -190,6 +208,8 @@ void tick(movement::MoveState& s) {
         l.player = id;
     }
     l.lastLevelTick = now;
+    unsigned const mask = feature::tgmove::modMask(*p); // one gear lookup per slot and tick
+    auto const     act  = [mask](Mod m) { return feature::tgmove::has(mask, m); };
     int  tickCount = p->mTickCount;
     auto& ctx      = p->getEntityContext();
     Vec3 feet      = p->getFeetPos();
@@ -202,7 +222,7 @@ void tick(movement::MoveState& s) {
     auto const& cfg = config::get<feature::tgmove::Config>();
 
     // ---- water walk (before anything reads the ground state) ----
-    bool waterWalk = active(*p, Mod::WaterWalk) && !s.sneakHeld;
+    bool waterWalk = act(Mod::WaterWalk) && !s.sneakHeld;
     l.waterWalking = false;
     if (waterWalk) {
         if (auto surface = feature::tgmove::waterSurface(*p, feet, s.velocity.y)) {
@@ -213,21 +233,21 @@ void tick(movement::MoveState& s) {
             if (!l.lastOnGround) log().info("tgmove: walking on water at y {:.2f}", *surface);
             // WaterSprintTransformer: an unrestrained wearer is not "in water" while standing on it,
             // so it keeps sprinting there (TF changes nothing for water it does not stand on)
-            if (active(*p, Mod::Unrestrained) && p->isSprinting()) s.sprinting = true;
+            if (act(Mod::Unrestrained) && p->isSprinting()) s.sprinting = true;
         }
     }
     // swift swim (Depth Strider III), and ground speed on the water
-    feature::tgmove::applyDepthStrider(*p, l.eng, active(*p, Mod::SwiftSwim) || l.waterWalking);
+    feature::tgmove::applyDepthStrider(*p, l.eng, act(Mod::SwiftSwim) || l.waterWalking);
 
     // ---- has_double_jump ----
-    if (auto r = tg::refreshDoubleJump(active(*p, Mod::DoubleJump), s.onGround, liquid, p->onClimbableBlock()); r) l.hasDoubleJump = *r;
+    if (auto r = tg::refreshDoubleJump(act(Mod::DoubleJump), s.onGround, liquid, p->onClimbableBlock()); r) l.hasDoubleJump = *r;
 
     // ---- double jump (handleDoubleJump) ----
     if (s.jumpEdge) {
         int  last  = l.lastJumpKeyPressTime;
         l.lastJumpKeyPressTime = tickCount;
         bool mayFly = p->getAbilities().getBool(AbilitiesIndex::MayFly);
-        if (!tg::avoidCreativeFly(mayFly, tickCount, last) && active(*p, Mod::DoubleJump)) {
+        if (!tg::avoidCreativeFly(mayFly, tickCount, last) && act(Mod::DoubleJump)) {
             tg::DoubleJumpState d;
             d.hasDoubleJump = l.hasDoubleJump;
             d.fallFlying    = s.gliding;
@@ -266,7 +286,7 @@ void tick(movement::MoveState& s) {
 
     // ---- sidestep (handleSidestep) ----
     if (auto left = tg::detectSidestep(l.tap, s.strafe, tickCount, s.onGround)) {
-        if (active(*p, Mod::SideStep) && tg::sidestepReady(now, l.lastSidestepTime, tg::kSidestepCooldown) && !s.gliding && s.onGround && !s.sneakHeld) {
+        if (act(Mod::SideStep) && tg::sidestepReady(now, l.lastSidestepTime, tg::kSidestepCooldown) && !s.gliding && s.onGround && !s.sneakHeld) {
             auto push = tg::sidestepPush(yawOf(*p), *left);
             if (!connected()) s.velocity = s.velocity + Vec3{static_cast<float>(push.x), 0.0f, static_cast<float>(push.z)}; // else the server pushes it
             l.lastSidestepTime = now;
@@ -278,7 +298,7 @@ void tick(movement::MoveState& s) {
     }
 
     // ---- gradual glide (updateGradualGlideState, travellersWingsGradualGlide) ----
-    bool glideActive = active(*p, Mod::GradualGlide);
+    bool glideActive = act(Mod::GradualGlide);
     bool sneak       = s.sneakHeld || p->isSneaking();
     if (auto in = ctx.tryGetComponent<MoveInputComponent>()) { // the raw key, also in the air
         auto held = [](MoveInputState const& st) {
@@ -309,7 +329,7 @@ void tick(movement::MoveState& s) {
     // ---- input: straight ahead, gliding sneak ----
     if (auto in = ctx.tryGetComponent<MoveInputComponent>()) {
         Vec2& move = in->mMove.get();
-        double mult = tg::straightAheadMultiplier(active(*p, Mod::StraightAhead), tg::kStraightAheadMultiplier, move.y);
+        double mult = tg::straightAheadMultiplier(act(Mod::StraightAhead), tg::kStraightAheadMultiplier, move.y);
         l.straightForward = mult != 1.0;
         float before      = move.x;
         move.x            = static_cast<float>(move.x / mult);
@@ -317,7 +337,19 @@ void tick(movement::MoveState& s) {
             l.loggedStraight = true;
             log().info("tgmove: straight ahead strafe {:.3f} -> {:.3f}", before, move.x);
         }
-        if (l.gliding && sneak) tg::unsneakImpulse(move.y, move.x);
+        if (l.gliding && sneak) {
+            // speedUpControlledWhileSneaking: Java's impulses carry the 0.3 sneak factor before TF's
+            // / 0.2; when Bedrock's input is the unscaled one (longer than 0.3 while sneaking), its
+            // factor comes later and is undone in advance
+            float len = std::sqrt(move.x * move.x + move.y * move.y);
+            if (len > 0.35f) l.sneakScaledLater = true;
+            if (!l.loggedSneakInput && len > 0.01f) {
+                l.loggedSneakInput = true;
+                log().info("tgmove: gliding with sneak, input length {:.3f} (the engine's sneak factor {})", len,
+                           l.sneakScaledLater ? "comes after the input" : "is in the input");
+            }
+            tg::unsneakImpulse(move.y, move.x, l.sneakScaledLater);
+        }
     }
     // ---- agile ranger: the bow's use slowdown x5 (the server's copy does the same) ----
     (void)feature::tgmove::applyAgileRanger(*p, l.eng.agileBase, l.eng.agileSet);
@@ -330,13 +362,18 @@ void tick(movement::MoveState& s) {
     {
         float cur = s.stepHeight;
         if (!l.stepBase || cur != l.stepSet) l.stepBase = cur;
-        bool on   = active(*p, Mod::StepUp) && !s.sneakHeld;
+        bool on   = act(Mod::StepUp) && !s.sneakHeld;
         s.stepHeight = *l.stepBase + (on ? static_cast<float>(tg::kStepUp) : 0.0f);
         l.stepSet    = s.stepHeight;
     }
 
-    // ---- unrestrained: no block slowdown ----
-    feature::tgmove::applyImmunity(*p, l.eng, active(*p, Mod::Unrestrained));
+    // ---- unrestrained: no block slowdown; friction 0.6, no slime step-on slowdown or walking bounce ----
+    feature::tgmove::applyImmunity(*p, l.eng, act(Mod::Unrestrained));
+    if (act(Mod::Unrestrained) || l.eng.unrRescale != 1.0) {
+        Vec2 move{s.strafe, s.forward};
+        if (auto in = ctx.tryGetComponent<MoveInputComponent>()) move = in->mMove;
+        s.velocity = feature::tgmove::applyUnrestrained(*p, l.eng, act(Mod::Unrestrained), s.velocity, s.onGround, sneak, &move);
+    }
 
     // ---- measurements (one line per action) ----
     if (l.jumpBaseY) {
@@ -367,8 +404,10 @@ void tick(movement::MoveState& s) {
     {
         std::string what = speedContext(*p, s, feet);
         if (what != l.run.what) {
-            if (l.run.ticks >= 10 && !l.run.what.empty())
+            if (l.run.ticks >= 10 && !l.run.what.empty()) {
                 log().info("tgmove: speed {} {:.4f} blocks per tick over {} ticks", l.run.what, l.run.distance / l.run.ticks, l.run.ticks);
+                if (l.run.what == "forward") log().info("tgmove: fov forward in {:.4f} out {:.4f}", l.fovIn, l.fovOut);
+            }
             l.run = SpeedRun{what};
         } else if (!what.empty() && l.hasLastFeet) {
             double dx = feet.x - l.lastFeet.x, dz = feet.z - l.lastFeet.z;
@@ -376,6 +415,21 @@ void tick(movement::MoveState& s) {
             l.run.distance += std::sqrt(dx * dx + dz * dz);
         }
     }
+    // the slide after the forward key is let go (unrestrained: as on any block)
+    if (l.lastForward > 0 && s.forward <= 0 && s.onGround && !l.slideStart) {
+        l.slideStart = feet;
+        l.slideOn    = blockBelow(*p, feet);
+        l.slideTicks = 0;
+    }
+    if (l.slideStart) {
+        double hs = std::sqrt(s.velocity.x * s.velocity.x + s.velocity.z * s.velocity.z);
+        if (++l.slideTicks > 100 || (l.slideTicks > 1 && hs < 0.003) || s.forward > 0) {
+            double dx = feet.x - l.slideStart->x, dz = feet.z - l.slideStart->z;
+            log().info("tgmove: slid {:.2f} blocks on {} in {} ticks", std::sqrt(dx * dx + dz * dz), l.slideOn, l.slideTicks);
+            l.slideStart.reset();
+        }
+    }
+    l.lastForward  = s.forward;
     l.lastFeet     = feet;
     l.hasLastFeet  = true;
     l.lastY        = feet.y;
@@ -415,7 +469,10 @@ void animate(Actor& a, float partialTicks) {
     }
     auto it = r.wings.find(id);
     tg::Wings const w = it != r.wings.end() ? it->second : tg::Wings{};
-    auto& anim        = r.anim[id];
+    auto [animIt, fresh] = r.anim.try_emplace(id);
+    auto& anim           = animIt->second;
+    if (fresh) tg::seedPhase(anim, std::uniform_real_distribution<double>(0.0, 1.0)(r.rng)); // accumulatedPhase: random
+    r.seen[id] = r.frame;
     double age        = a.mTickCount + partialTicks;
     if (anim.oldAge <= 0 || age < anim.oldAge || age - anim.oldAge > 40) anim.oldAge = age; // first frame / jump in time
     auto pose = tg::animateWings(anim, w, age, walk.second, a.isSneaking());
@@ -440,6 +497,8 @@ void renderWings(float partialTicks) {
     auto* me = currentPlayer();
     if (!me) return;
     auto& lv = me->getLevel();
+    auto& r  = remote();
+    ++r.frame;
     std::set<std::int64_t> done;
     lv.forEachPlayer([&](Player& q) {
         if (wearsWings(q)) {
@@ -449,9 +508,28 @@ void renderWings(float partialTicks) {
         return true;
     });
     // mobs wearing the wings (their state comes from the server too)
-    for (auto const& [id, w] : remote().wings) {
+    for (auto const& [id, w] : r.wings) {
         if (done.contains(id)) continue;
         if (auto* a = lv.fetchEntity(ActorUniqueID{id}, false); a && !a->isPlayer() && wearsWings(*a)) animate(*a, partialTicks);
+    }
+    // entities gone or out of sight for a while: their state goes (it comes back with the next packet)
+    if (r.frame % 100 == 0) {
+        std::set<std::int64_t> ids;
+        for (auto const& [id, _] : r.wings) ids.insert(id);
+        for (auto const& [id, _] : r.anim) ids.insert(id);
+        for (auto const& [id, _] : r.walk) ids.insert(id);
+        for (auto id : ids) {
+            auto it = r.seen.find(id);
+            if (it != r.seen.end() && r.frame - it->second < kStaleFrames) continue;
+            if (it == r.seen.end()) { // a state packet without a frame yet: keep it until it is that old
+                r.seen[id] = r.frame;
+                continue;
+            }
+            r.wings.erase(id);
+            r.anim.erase(id);
+            r.walk.erase(id);
+            r.seen.erase(id);
+        }
     }
 }
 
@@ -467,16 +545,33 @@ public:
         });
         // PlayerHooks#straightAheadNullify / Restore: the FOV ignores straight ahead's speed
         camera::addFovModifier([](float fov) {
-            auto& l = local();
-            if (!l.straightForward || l.speed <= 0) return fov;
+            auto& l  = local();
+            l.fovIn  = fov;
+            l.fovOut = fov;
+            auto* p  = currentPlayer();
+            if (!p) return fov;
+            // only while the synced movement speed carries straight ahead's modifier (PlayerHooks#
+            // straightAheadNullify reads the attribute's modifier), with its amount
+            auto attr = p->getAttribute(SharedAttributes::MOVEMENT_SPEED());
+            if (!attr.mPtr) return fov;
+            double mult = 1.0;
+            for (auto const& m : attr.mPtr->getModifiers())
+                if (m.mName.get() == kStraightName) mult *= 1.0 + m.mAmount;
+            if (mult == 1.0) return fov;
             double walk = 0.1;
-            float  with = tg::speedFovFactor(l.speed, walk), without = tg::speedFovFactor(l.speed / tg::kStraightAheadMultiplier, walk);
-            static bool logged = false;
-            if (!logged && with > 0) {
-                logged = true;
-                log().info("tgmove: straight ahead fov x{:.3f} (speed {:.4f})", without / with, l.speed);
+            if (auto const& ab = p->getAbilities().getAbility(AbilitiesIndex::WalkSpeed); ab.mType == Ability::Type::Float) {
+                Ability::Value const& v = ab.mValue;
+                float                 w = v.mFloatVal;
+                if (w > 0) walk = w;
             }
-            return with > 0 ? fov * without / with : fov;
+            float k  = tg::straightAheadFovCompensation(attr.mPtr->mCurrentValue, walk, mult);
+            l.fovOut = fov * k;
+            static bool logged = false;
+            if (!logged) {
+                logged = true;
+                log().info("tgmove: straight ahead fov x{:.3f} (speed {:.4f}, modifier x{:.2f}, walk speed {:.3f})", k, attr.mPtr->mCurrentValue, mult, walk);
+            }
+            return l.fovOut;
         });
         render::onWorld([](render::RenderContext&, float partialTicks) {
             try {

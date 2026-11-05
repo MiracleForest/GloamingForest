@@ -121,15 +121,76 @@ std::optional<double> glide(double vy, double multiplier, bool active, bool glid
 
 float glideFallDistance(double vy, double gravity) { return static_cast<float>(vy * vy / 2 / gravity); }
 
-void unsneakImpulse(float& forward, float& left) {
-    forward /= 0.2f;
-    left /= 0.2f;
+void unsneakImpulse(float& forward, float& left, bool engineScalesLater, float sneakFactor) {
+    if (!engineScalesLater) { // Java: the impulses already carry the 0.3
+        forward /= 0.2f;
+        left /= 0.2f;
+    }
     float len2 = forward * forward + left * left;
     if (len2 > 1.0f) {
         float len = std::sqrt(len2);
         forward /= len;
         left /= len;
     }
+    if (engineScalesLater && sneakFactor > 0) { // the engine's factor comes after: undo it in advance
+        forward /= sneakFactor;
+        left /= sneakFactor;
+    }
+}
+
+// ---- unrestrained ------------------------------------------------------------------------------
+
+double groundAccelFactor(double friction) {
+    if (friction <= 0) return 0;
+    return kGroundAccel / (friction * friction * friction);
+}
+
+Velocity inputAcceleration(double strafe, double forward, double yawDeg, double speed) {
+    double len2 = strafe * strafe + forward * forward;
+    if (len2 < 1.0e-7) return {};
+    if (len2 > 1.0) {
+        double len = std::sqrt(len2);
+        strafe /= len;
+        forward /= len;
+    }
+    strafe *= speed;
+    forward *= speed;
+    double s = std::sin(toRad(yawDeg)), c = std::cos(toRad(yawDeg));
+    return {strafe * c - forward * s, 0, forward * c + strafe * s};
+}
+
+double slimeStepFactor(double vy, bool steppingCarefully) {
+    double a = std::abs(vy);
+    return a < 0.1 && !steppingCarefully ? 0.4 + a * 0.2 : 1.0;
+}
+
+UnrestrainedStep unrestrainedStep(Velocity stored, double rescale, Velocity accel, double friction, double engineSlowdown, bool onGround, bool active,
+                                  double engineAccelSlowdown) {
+    UnrestrainedStep r;
+    r.velocity = stored;
+    // the previous step's drag: the engine's friction (and slowdown) -> TF's 0.6
+    r.velocity.x *= rescale;
+    r.velocity.z *= rescale;
+    if (!active || !onGround || friction <= 0 || engineSlowdown <= 0) return r;
+    double extra = groundAccelFactor(kUnrestrainedFriction) - groundAccelFactor(friction) * engineAccelSlowdown;
+    r.velocity.x += accel.x * extra;
+    r.velocity.z += accel.z * extra;
+    r.nextRescale = kUnrestrainedFriction / (friction * engineSlowdown);
+    if (std::abs(r.nextRescale - 1.0) < 1e-9) r.nextRescale = 1.0;
+    return r;
+}
+
+std::optional<JumpMakeUp> unrestrainedJump(double vyAfterJumpStep, double power, double gravity) {
+    double enginePower = vyAfterJumpStep / 0.98 + gravity;
+    double lost        = power - enginePower;
+    if (lost <= 0.01) return std::nullopt;
+    return JumpMakeUp{(power - gravity) * 0.98 + lost, lost};
+}
+
+std::optional<double> slimeBounceStop(double vyBeforeLanding, double vyAfter) {
+    // a bounce of the landing (at most as fast as the landing), not a jump off the slime
+    if (vyBeforeLanding > kSlimeBounceStop && vyAfter > 0 && vyAfter <= std::max(-vyBeforeLanding, 0.0) + 0.02) return std::max(0.0, vyBeforeLanding);
+    return std::nullopt;
 }
 
 // ---- slimy soles -----------------------------------------------------------------------------
@@ -257,6 +318,8 @@ double interpolateToTarget(double old, double target, double dtTicks, double tau
     return target - (target - old) * std::exp(-dtTicks / tau);
 }
 
+void seedPhase(WingsAnim& a, double random01) { a.phase = std::clamp(random01, 0.0, 1.0) * 2 * kPi; }
+
 WingPose animateWings(WingsAnim& a, Wings const& w, double ageInTicks, float walkSpeed, bool crouching) {
     double   dt = ageInTicks - a.oldAge;
     WingPose p;
@@ -310,6 +373,18 @@ double straightAheadMultiplier(bool active, double multiplier, float forwardImpu
 float speedFovFactor(double speed, double walkSpeed) {
     if (walkSpeed <= 0) return 1.0f;
     return static_cast<float>((speed / walkSpeed + 1.0) / 2.0);
+}
+
+float straightAheadFovCompensation(double speed, double walkSpeed, double multiplier) {
+    if (multiplier <= 0 || multiplier == 1.0 || speed <= 0) return 1.0f;
+    float with = speedFovFactor(speed, walkSpeed), without = speedFovFactor(speed / multiplier, walkSpeed);
+    return with > 0 ? without / with : 1.0f;
+}
+
+float efficientEaterRefund(float expectedMovement, float added) {
+    if (added < 0) added += 4.0f; // the exhaustion passed 4 and the game took 4 off (food / saturation)
+    if (expectedMovement <= 0 || added <= 0) return 0.0f;
+    return std::min(expectedMovement, added) / 2.0f;
 }
 
 bool keepsAir(int oxygenBonus, int randomInclusive) { return oxygenBonus > 0 && randomInclusive > 0; }

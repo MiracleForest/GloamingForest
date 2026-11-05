@@ -16,7 +16,12 @@
 #   agile ranger drawing a bow while walking: about full walking speed, not the bow's slowdown
 #   unrestrained soul sand and cobweb at walking speed; the honey block's jump at full height
 #   swift swim   swimming with Depth Strider III is faster than without
-#   straight ahead walking forward x1.4, the strafe impulse / 1.4, the FOV compensated
+#   straight ahead walking forward x1.4, the strafe impulse / 1.4, the FOV compensated (the FOV
+#                factor walking with straight ahead equals the one walking without it)
+#   unrestrained packed ice and slime at walking speed, the slide after letting W go on ice as short
+#                as on grass (friction 0.6, no slime step-on slowdown)
+#   glide        W held while gliding with SHIFT: TF lifts the sneak slowdown (speedUpControlled-
+#                WhileSneaking), the glide moves at air speed (about 0.2 blocks per tick), not 0.3 of it
 # remote-mod runs the same against BDS (the companion packets go over the network, the host logs
 # the double jump and the sidestep); remote-vanilla checks the fallback: SPACE in the air makes the
 # server push the double jump (SetActorMotionPacket) and the client stays connected.
@@ -58,6 +63,8 @@ Invoke-Chat '/fill 316 -60 300 321 -60 316 glass'      # its lid: the swimmer st
 Invoke-Chat '/fill 298 -61 314 308 -61 315 soul_sand'
 Invoke-Chat '/fill 298 -60 318 308 -59 319 web'
 Invoke-Chat '/setblock 300 -61 322 honey_block'
+Invoke-Chat '/fill 298 -61 308 315 -61 309 packed_ice' # unrestrained: friction 0.6 on ice
+Invoke-Chat '/fill 298 -61 311 315 -61 312 slime'      # unrestrained: no slime slowdown
 Invoke-Chat '/tag @s add gf_e2e.tgmove'
 Invoke-E2eSelfTest 'tgmove.e2e.equip'
 $results = [ordered]@{}
@@ -70,6 +77,7 @@ function Measure-Walk([string]$what, [string]$tp, [int]$ms, [switch]$Bow, [switc
     Start-Sleep -Seconds 1
     Focus-Game
     $mark = Get-LogMark
+    $script:walkMark = $mark
     if ($Bow) { [BsE2E.Native]::MouseButton(1, $false); Start-Sleep -Milliseconds 300 }
     try {
         [BsE2E.Native]::Key([uint16]$VK_W, $false)
@@ -83,6 +91,12 @@ function Measure-Walk([string]$what, [string]$tp, [int]$ms, [switch]$Bow, [switc
     }
     $line = Wait-LogLine "${client}tgmove: speed $what ([0-9.]+) blocks per tick over (\d+) ticks" 15 -Since $mark
     if ($line -notmatch "speed $what ([0-9.]+) blocks per tick over (\d+)") { throw "no $what speed in '$line'" }
+    [double]$Matches[1]
+}
+# the slide (blocks) after letting W go on $block since $mark
+function Get-Slide([string]$block, [int]$mark) {
+    $line = Wait-LogLine "${client}tgmove: slid ([0-9.]+) blocks on $block" 10 -Since $mark
+    if ($line -notmatch 'slid ([0-9.]+) blocks') { throw "no slide on $block in '$line'" }
     [double]$Matches[1]
 }
 function Measure-HoneyJump {
@@ -179,10 +193,12 @@ Hold-Key $VK_F5 60 # third person: the wings' FALL_SLOW flap
 [BsE2E.Native]::Key([uint16]$VK_SHIFT, $false)
 try {
 Wait-LogLine 'tgmove.e2e.lift: lifted 1' 20 -Since $mark | Out-Null
+[BsE2E.Native]::Key([uint16]$VK_W, $false) # forward while gliding: TF moves at air speed despite the sneak key
 Start-Sleep -Milliseconds 1500
 Save-Screenshot 'glide' | Out-Null
 $glide = Wait-LogLine "${client}tgmove: glide ended after (\d+) ticks, sink ([0-9.]+) blocks per tick" 20 -Since $mark
 } finally {
+    [BsE2E.Native]::Key([uint16]$VK_W, $true)
     [BsE2E.Native]::Key([uint16]$VK_SHIFT, $true)
     Hold-Key $VK_F5 60; Start-Sleep -Milliseconds 200; Hold-Key $VK_F5 60
 }
@@ -191,6 +207,14 @@ $ticks = [int]$Matches[1]; $sink = [double]$Matches[2]
 $results['glide sink rate'] = "$sink blocks/tick over $ticks ticks (TF terminal 0.357)"
 if ($ticks -lt 40) { Add-Failure "the glide lasted only $ticks ticks" }
 if ($sink -lt 0.25 -or $sink -gt 0.40) { Add-Failure "glide sink $sink blocks per tick, TF's terminal is 0.357" }
+$gs = Get-LeviLog | Select-Object -Skip $mark | Select-String -Pattern "${client}tgmove: speed glide ([0-9.]+) blocks per tick" | Select-Object -Last 1
+if (-not $gs -or $gs.Line -notmatch 'speed glide ([0-9.]+)') { Add-Failure 'no glide speed line' }
+else {
+    $results['glide forward with sneak'] = "$($Matches[1]) blocks/tick (TF: air speed, about 0.2; the sneak slowdown would give 0.07)"
+    if ([double]$Matches[1] -lt 0.12) { Add-Failure "gliding forward with SHIFT moves $($Matches[1]) blocks per tick: the sneak slowdown was not lifted" }
+}
+$si = Get-LeviLog | Select-Object -Skip $mark | Select-String -Pattern "${client}tgmove: gliding with sneak, input length .*" | Select-Object -Last 1
+if ($si) { $results['sneak input'] = $si.Line -replace '.*tgmove: ', '' }
 } catch { Add-Failure "glide: $_" }
 
 # ---- water walk (first person: no wings in view) ----
@@ -228,6 +252,11 @@ try {
     Invoke-Chat '/replaceitem entity @s slot.weapon.mainhand 0 bow'
     Invoke-Chat '/give @s arrow 64'
     $with.forward  = Measure-Walk 'forward' '/tp @s 302.5 -60 296.5 0 0' 1500
+    $with.grassSlide = Get-Slide 'minecraft:grass_block' $script:walkMark
+    $with.fov      = Wait-LogLine "${client}tgmove: fov forward in ([0-9.]+) out ([0-9.]+)" 10 -Since $script:walkMark
+    $with.ice      = Measure-Walk 'ice' '/tp @s 299.5 -60 308.5 270 0' 1000
+    $with.iceSlide = Get-Slide 'minecraft:packed_ice' $script:walkMark
+    $with.slime    = Measure-Walk 'slime' '/tp @s 299.5 -60 311.5 270 0' 1000
     $with.bow      = Measure-Walk 'bow' '/tp @s 304.5 -60 296.5 0 0' 1500 -Bow
     $with.soul     = Measure-Walk 'soul_sand' '/tp @s 299.5 -60 314.5 270 0' 1500
     $with.web      = Measure-Walk 'cobweb' '/tp @s 299.5 -60 318.5 270 0' 1500
@@ -235,6 +264,10 @@ try {
     $with.honey    = Measure-HoneyJump
     Invoke-E2eSelfTest 'tgmove.e2e.plain'
     $without.forward = Measure-Walk 'forward' '/tp @s 302.5 -60 296.5 0 0' 1500 -Strafe
+    $without.fov     = Wait-LogLine "${client}tgmove: fov forward in ([0-9.]+) out ([0-9.]+)" 10 -Since $script:walkMark
+    $without.ice     = Measure-Walk 'ice' '/tp @s 299.5 -60 308.5 270 0' 1000
+    $without.iceSlide = Get-Slide 'minecraft:packed_ice' $script:walkMark
+    $without.slime   = Measure-Walk 'slime' '/tp @s 299.5 -60 311.5 270 0' 1000
     $without.bow     = Measure-Walk 'bow' '/tp @s 304.5 -60 296.5 0 0' 1500 -Bow
     $without.soul    = Measure-Walk 'soul_sand' '/tp @s 299.5 -60 314.5 270 0' 1500
     $without.web     = Measure-Walk 'cobweb' '/tp @s 299.5 -60 318.5 270 0' 1500
@@ -259,6 +292,17 @@ try {
     }
     $fov = Get-LeviLog | Select-String -Pattern "${client}tgmove: straight ahead fov x([0-9.]+)" | Select-Object -Last 1
     if (-not $fov) { Add-Failure 'the FOV was not compensated for straight ahead' } else { $results['straight ahead fov'] = $fov.Line -replace '.*tgmove: ', '' }
+    # the FOV walking forward with straight ahead (compensated) is the FOV walking without it
+    if ($with.fov -match 'in ([0-9.]+) out ([0-9.]+)') { $plainFov = [double]$Matches[2] } else { $plainFov = 0 }
+    if ($without.fov -match 'in ([0-9.]+) out ([0-9.]+)') { $saRaw = [double]$Matches[1]; $saFov = [double]$Matches[2] } else { $saRaw = 0; $saFov = 0 }
+    $results['straight ahead fov factor'] = "walking $plainFov without, $saFov with straight ahead (engine $saRaw before the compensation)"
+    if ([Math]::Abs($saFov - $plainFov) -gt 0.02) { Add-Failure "straight ahead FOV $saFov, walking without it $plainFov" }
+    $results['unrestrained ice'] = "walk $($with.ice) / $($without.ice) (grass $($with.forward)), slide $($with.iceSlide) / $($without.iceSlide) (grass $($with.grassSlide))"
+    if ([Math]::Abs($with.ice - $with.forward) -gt 0.15 * $with.forward) { Add-Failure "unrestrained on packed ice walks $($with.ice), on grass $($with.forward)" }
+    if ([Math]::Abs($with.iceSlide - $with.grassSlide) -gt 0.4) { Add-Failure "unrestrained slide on packed ice $($with.iceSlide), on grass $($with.grassSlide)" }
+    if ($without.iceSlide -lt $with.iceSlide + 0.5) { Add-Failure "without unrestrained the ice slide should be longer: $($without.iceSlide) / $($with.iceSlide)" }
+    $results['unrestrained slime'] = "walk $($with.slime) with, $($without.slime) without (grass $($with.forward))"
+    if ([Math]::Abs($with.slime - $with.forward) -gt 0.15 * $with.forward) { Add-Failure "unrestrained on slime walks $($with.slime), on grass $($with.forward)" }
 } catch { Add-Failure "walks: $_" }
 
 foreach ($k in $results.Keys) { Write-Step "${k}: $($results[$k])" }
