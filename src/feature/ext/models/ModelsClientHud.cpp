@@ -55,7 +55,9 @@ GF_REGISTER_SELFTEST("models.client_hud", [](Context& ctx) -> ll::coro::CoroTask
         ctx.info("hud unknown (no client instance)");
         co_return;
     }
-    ctx.info(std::string("hud ") + ((a & kHudBit) ? "hidden" : "shown") + ", hand " + ((a & kHandBit) ? "hidden" : "shown"));
+    ctx.info(
+        std::string("hud ") + ((a & kHudBit) ? "hidden" : "shown") + ", hand " + ((a & kHandBit) ? "hidden" : "shown")
+    );
 });
 
 } // namespace

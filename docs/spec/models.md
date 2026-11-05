@@ -449,16 +449,18 @@ extracts), 45 attachables. The Curios charm of life necklace (`CuriosCompat`) is
   - server `models`: `tools/models/test.ps1`, then the selftests. BDS loads behavior packs only, so it cannot
     see resource-pack errors.
   - client `models` (BeDD, local world): the prelaunch step builds a test-only preview pack
-    (`tools/models/e2e/preview.ps1`): one actor per geometry with its TF texture and base animation, the x-sign
-    actor, armor stands (facing the camera) with every attachable on test items in every slot it is drawn in
-    (head, main hand, off hand), and two broken canary files. The game options of the run (content log file on,
-    HUD and hand shown) and putting the instance's own values back however the run ends are the harness's
-    (F0: `Reset-GameOptions`, `Enable-ContentLog`, `Restore-RunOptions`). The scenario runs the selftests, turns off command feedback, hides the HUD with F1, takes 31 screenshots of
-    four models each, shows the HUD again with F1 (`hud_back.png`, in creative mode: the hotbar), then reads the
-    client's content log (`<game data>/logs/ContentLog*.txt`): the canary geometry must be reported (the log is
-    captured), and any other error or warning fails the run (`out/models/content-log.txt`). Every F1 press is
-    checked with `models.client_hud` and repeated when the game missed it (at most 3 presses each way; then the
-    run fails). Commands naming the preview items run after each shot's function (functions are parsed before
-    data-driven items exist).
+    (`tools/models/e2e/preview.ps1`): one actor per geometry with its TF texture and base animation (trophy
+    extracts, frame `world`, are turned 180 degrees to show their faces), the x-sign actor, armor stands
+    (facing the camera) with every attachable on test items in every slot it is drawn in (head, main hand,
+    off hand), and two broken canary files. The game options of the run (content log file on, HUD and hand
+    shown) and putting the instance's own values back however the run ends are the harness's (F0:
+    `Reset-GameOptions`, `Enable-ContentLog`, `Restore-RunOptions`). The scenario runs the selftests, turns
+    off command feedback, hides the HUD with F1, takes 31 screenshots of four models each, shows the HUD
+    again with F1 (`hud_back.png`, in creative mode: the hotbar), then reads the client's content log
+    (`<game data>/logs/ContentLog*.txt`): the canary geometry must be reported (the log is captured), and
+    any other error or warning fails the run (`out/models/content-log.txt`). Every F1 press is checked with
+    `models.client_hud` and repeated until both the HUD and the hand are in the wanted state (at most 4
+    presses each way; then the run fails). Commands naming the preview items run after each shot's function
+    (functions are parsed before data-driven items exist).
   - server `models.preview`: the preview behavior pack on BDS (actors, items, functions) loads without a
     content-log error and every function and command runs.

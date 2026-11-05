@@ -31,16 +31,17 @@ function Get-GfHudState([int]$Since = -1) {
     [pscustomobject]@{ Hud = $hit.Matches[0].Groups[1].Value; Hand = $hit.Matches[0].Groups[2].Value }
 }
 
-# Presses F1 until the game's HUD is $Want ('hidden' or 'shown'), asking the game after every press:
-# a press the game missed (it arrived while a screen was closing, say) is repeated. Throws when the
-# HUD is not $Want after $Presses presses, or its state cannot be read.
-function Set-GfHud([ValidateSet('hidden', 'shown')][string]$Want, [int]$Presses = 3) {
+# Presses F1 until the game's HUD and hand are both $Want ('hidden' or 'shown'), asking the game after
+# every press: a press the game missed (it arrived while a screen was closing, say) is repeated, and so
+# is one that left the hand out of step with the HUD (F1 toggles both). Throws when they are not both
+# $Want after $Presses presses, or the state cannot be read.
+function Set-GfHud([ValidateSet('hidden', 'shown')][string]$Want, [int]$Presses = 4) {
     $state = Get-GfHudState
     for ($i = 1; -not $state -and $i -le 2; $i++) { Start-Sleep -Seconds 1; $state = Get-GfHudState }
     if (-not $state) { throw "cannot read the HUD state (no 'SELFTEST INFO models.client_hud: hud ...' line)" }
     $pressed = 0
-    while ($state.Hud -ne $Want) {
-        if ($pressed -ge $Presses) { throw "the HUD is still $($state.Hud) after $pressed F1 press(es) (wanted: $Want); the game misses F1" }
+    while ($state.Hud -ne $Want -or $state.Hand -ne $Want) {
+        if ($pressed -ge $Presses) { throw "the HUD is $($state.Hud) and the hand $($state.Hand) after $pressed F1 press(es) (wanted: both $Want)" }
         # F1 on the HUD itself, not on a screen that is still closing (the chat of the last command)
         $deadline = (Get-Date).AddSeconds(5)
         while ((Get-ClientScreen) -ne 'hud_screen' -and (Get-Date) -lt $deadline) { Start-Sleep -Milliseconds 100 }
@@ -52,7 +53,6 @@ function Set-GfHud([ValidateSet('hidden', 'shown')][string]$Want, [int]$Presses 
         if (-not $state) { throw "cannot read the HUD state after F1 press $pressed (no 'SELFTEST INFO models.client_hud: hud ...' line)" }
         Write-Step "F1 press ${pressed}: hud $($state.Hud), hand $($state.Hand)"
     }
-    if ($state.Hand -ne $Want) { Write-Step "warning: the hand is $($state.Hand) while the HUD is $Want" }
     Write-Step "HUD $Want (hand $($state.Hand)) after $pressed F1 press(es)"
 }
 
