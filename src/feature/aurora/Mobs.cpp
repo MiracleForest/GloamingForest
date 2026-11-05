@@ -340,7 +340,7 @@ void tickMining() {
         if (++m.ticks >= 10) {
             auto& player = static_cast<Player&>(*actor);
             auto& region = player.getDimensionBlockSource();
-            auto& gameMode = player.mGameMode.get();
+            auto* gameMode = player.mGameMode.get();
             if (gf::game::blockId(region.getBlock(m.pos)) == "twilightforest:aurora_block" && gameMode) {
                 auto eye = player.getEyePos();
                 double dx = m.pos.x + 0.5 - eye.x, dy = m.pos.y + 0.5 - eye.y, dz = m.pos.z + 0.5 - eye.z;
