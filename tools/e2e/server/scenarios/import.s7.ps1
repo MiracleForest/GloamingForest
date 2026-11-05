@@ -62,7 +62,7 @@ $s7ExpectedCount = ($s7Expected.Values | ForEach-Object { $_.Count } | Measure-O
 
 # The probe pack's lines: "ERR [Server] [Blocks] block_definitions | <pack> | blocks/<name>.json | <message>", where
 # the legacy parser repeats "<pack> | blocks/<name>.json | gf_s7:<name> | " before the component path.
-$s7LineRegex = '\bERR \[Server\] \[Blocks\] block_definitions \| (?<pack>[^|]*?[\\/]GloamingForest_S7_BP) \| blocks/(?<name>[A-Za-z0-9_]+)\.json \| (?<msg>.*)$'
+$s7LineRegex = '\bERR \[Server\] \[Blocks\] block_definitions \| (?<pack>[^|]*?[\\/]GloamingForest_S7_BP) \| (?<file>blocks[\\/](?<name>[A-Za-z0-9_]+)\.json) \| (?<msg>.*)$'
 $s7Matched = [System.Collections.Generic.List[string]]::new()
 $s7Unexpected = [System.Collections.Generic.List[string]]::new()
 $s7Errors = @(Get-ErrorLines)
@@ -74,7 +74,7 @@ foreach ($l in $s7Errors) {
     }
     $name = $m.Groups['name'].Value
     $msg = $m.Groups['msg'].Value.Trim()
-    $prefix = "$($m.Groups['pack'].Value) | blocks/$name.json | gf_s7:$name | "
+    $prefix = "$($m.Groups['pack'].Value) | $($m.Groups['file'].Value) | gf_s7:$name | "
     if ($msg.StartsWith($prefix, [StringComparison]::Ordinal)) { $msg = $msg.Substring($prefix.Length) }
     if ($s7Expected.ContainsKey($name) -and $s7Expected[$name].Remove($msg)) { $s7Matched.Add($l) }
     else { $s7Unexpected.Add($l) }
