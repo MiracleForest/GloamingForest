@@ -14,8 +14,8 @@
 // (twilightforest:flame_jet) ticks every popping / flaming jet from a registry of positions, the
 // smokers' TFSmokerBlockEntity (twilightforest:smoker) every smoker near a player. The registry is
 // filled when a jet starts (random tick, redstone) and by a palette scan around the players (a jet
-// still popping or flaming after a reload, smokers placed by world generation); placed jets and
-// smokers of every dimension are remembered in the world DB (gf:hydra:jets) and come back with
+// still popping or flaming after a reload, smokers placed by world generation); the jets and smokers players place (and every encased one,
+// every one outside the Twilight Forest) are remembered in the world DB (gf:hydra:jets) and come back with
 // their chunk, as Java's block entities do (watches are dropped while the chunk is unloaded). The encased blocks
 // read redstone through gf::redstone (custom blocks get no neighbour updates): F11's neighbour
 // changes plus a watch on every encased block the scan or a placement found. TF's client-side
@@ -27,6 +27,7 @@
 #include <map>
 #include <memory>
 #include <set>
+#include <string_view>
 #include <unordered_set>
 
 #include "ll/api/service/Bedrock.h"
@@ -429,7 +430,8 @@ void onLevelTick() {
         revisit();
     }
     // a placement is written at the end of its tick (not only at the next autosave): the client
-    // leaves a world without a final save of the mod's data
+    // leaves a world without a final save of the mod's data (only player placements, encased
+    // blocks and other dimensions are remembered, so this stays rare)
     saveKnown();
     for (auto it = s.jets.begin(); it != s.jets.end();) it = tickJet(it->first, it->second) ? std::next(it) : s.jets.erase(it);
     // a smoker ticks while its chunk is loaded (it is forgotten with the chunk; the scan finds it again)
@@ -499,12 +501,16 @@ void installJets() {
             });
         for (auto const* id : {kSmoker, kEncasedSmoker})
             gf::blockevents::onPlaced(id, [](BlockSource& region, BlockPos const& pos, Block const&, Actor*) { J().smokers.try_emplace(game::globalPos(region, pos)); });
-        // every jet and smoker placed, in any dimension, is remembered with the world: its "block
-        // entity" comes back with its chunk however far it is from the players (the palette scan
-        // around the players still finds the generated ones)
+        // the jets and smokers placed are remembered with the world: their "block entity" comes back
+        // with its chunk however far it is from the players. Every one outside the Twilight Forest
+        // and every encased one (never generated); in the Twilight Forest a plain jet or smoker only
+        // when a player placed it: block changes of any cause reach onPlaced, so the fire swamp's
+        // generated ones would otherwise grow the list with exploration (the palette scan around
+        // the players finds those, as before)
         for (auto const* id : {kFireJet, kEncasedJet, kSmoker, kEncasedSmoker})
-            gf::blockevents::onPlaced(id, [](BlockSource& region, BlockPos const& pos, Block const&, Actor*) {
-                remember(game::globalPos(region, pos));
+            gf::blockevents::onPlaced(id, [id](BlockSource& region, BlockPos const& pos, Block const&, Actor* placer) {
+                bool encased = std::string_view(id) == kEncasedJet || std::string_view(id) == kEncasedSmoker;
+                if (encased || placer || !gf::world::isTwilight(region.getDimension())) remember(game::globalPos(region, pos));
             });
         gf::game::db::onWorldReady([] { loadKnown(); });
         gf::game::db::onWorldSave([] { saveKnown(); });

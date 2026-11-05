@@ -331,7 +331,14 @@ GF_REGISTER_SELFTEST("hydra.part_damage", [](Context& ctx) -> ll::coro::CoroTask
         h = byId(uid);
         ctx.require(h != nullptr, "the hydra is there");
         ctx.check(h->getHealth() == hpFire, "a fire hit is refused (" + std::to_string(hpFire - h->getHealth()) + ")");
-        ctx.check(headView(*h, 0)->damageTaken == 4, "but head 0 counts it: 4 (" + std::to_string(headView(*h, 0)->damageTaken) + ")");
+        ctx.check(headView(*h, 0)->damageTaken == 4, "but head 0 counts it: 4 (" + std::to_string(headView(*h, 0)->damageTaken) + ")");        // environmental fire never reaches a part (fire-immune type): lava counts nothing
+        head0 = ge::partActor(ge::ext::parts(*fe::asMob(*h))[ch::headPartIndex(0)]);
+        ctx.require(head0 != nullptr, "head part");
+        gf::combat::hurt(*head0, 4.0F, "minecraft:lava");
+        co_await ctx.ticks(1);
+        h = byId(uid);
+        ctx.require(h != nullptr, "the hydra is there");
+        ctx.check(headView(*h, 0)->damageTaken == 4, "lava on a head counts nothing (" + std::to_string(headView(*h, 0)->damageTaken) + ")");
     }
     // the hydra itself takes nothing but /kill
     int mid = h->getHealth();

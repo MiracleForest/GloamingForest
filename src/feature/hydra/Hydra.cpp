@@ -1206,6 +1206,10 @@ bool hurt(Actor& self, float& amount, std::string const& type, Actor* attacker) 
     // the causing entity is the living one of the pair (F10 reports a child source, a projectile
     // and its shooter, with the two swapped when the victim is hit directly)
     if (attacker && direct && !fe::asMob(*attacker) && fe::asMob(*direct)) std::swap(attacker, direct);
+    // environmental fire (lava, a fire block, burning) never reaches a part in TF: the parts share
+    // the hydra's fire-immune type, so Entity#lavaHurt, BaseFireBlock#entityInside and the burning
+    // tick skip them; only an entity's fire hit (a fireball) gets to attackEntityFromPart
+    if (fireRefused && !attacker && !direct) return false;
     // the explosion of a mortar (Explosion#getIndirectSourceEntity): caused by the mortar's owner (the
     // hydra for its own mortars, the player who reflected one), the mortar is the direct entity
     if (attacker && attacker->getTypeName() == kMortar) {

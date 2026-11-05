@@ -240,9 +240,6 @@ ia::Result onAttack(ia::EntityContext const& c) {
     return ia::Result::Consume;
 }
 
-/// HydraMortar#hurt for everything but a player's melee (onAttack): any damage with a causing
-/// entity (an arrow's or a snowball's shooter, a mob's hit, an explosion's source) reflects the
-/// mortar along that entity's look; the mortar itself never takes damage.
 /// Damage type tag minecraft:is_projectile: Minecraft 1.21.1's own members (Bedrock has no data for
 /// them) plus the tag data (TF's projectiles).
 bool isProjectileDamage(std::string const& type) {
@@ -273,6 +270,9 @@ bool projectileReachesJavaBox(Actor& mortar, Actor& projectile) {
     return ch::segmentHits(box, from, to);
 }
 
+/// HydraMortar#hurt for everything but a player's melee (onAttack): any damage with a living causing
+/// entity (an arrow's or a snowball's shooter, a mob's hit, an explosion's source) reflects the
+/// mortar along that entity's look; the mortar itself never takes damage.
 gf::combat::Verdict onIncoming(gf::combat::DamageInfo& d) {
     if (d.victim.getTypeName() != kMortar) return gf::combat::Verdict::Pass;
     // the causing entity (DamageSource#getEntity) is the living one of the pair: F10 reports a
