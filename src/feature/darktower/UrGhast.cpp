@@ -264,6 +264,9 @@ void lookAtPitch(Mob& m, Actor& t, float maxStep) {
 struct UrFireball {
     std::int64_t shooter = 0;
     bool         leftOwner = false;
+    Vec3         velocity{};       ///< the last tick's motion (Bedrock moves projectiles without a pos delta)
+    Vec3         last{};
+    bool         hasLast = false;
 };
 std::unordered_map<std::int64_t, UrFireball>& fireballs() {
     static std::unordered_map<std::int64_t, UrFireball> m;
@@ -301,7 +304,7 @@ Actor* fireball(Mob& m, Vec3 const& at, Vec3 const& dir) {
     if (!fb) return nullptr;
     if (auto pc = fb->getEntityContext().tryGetComponent<ProjectileComponent>())
         pc->shoot(*fb, Vec3{float(dir.x / len), float(dir.y / len), float(dir.z / len)}, 1.0f, 0.0f, Vec3{0, 0, 0}, nullptr);
-    fireballs()[uidOf(*fb)] = UrFireball{uidOf(m), false};
+    fireballs()[uidOf(*fb)] = UrFireball{uidOf(m), false, Vec3{float(dir.x / len), float(dir.y / len), float(dir.z / len)}, at, true};
     return fb;
 }
 
@@ -327,7 +330,15 @@ void urFireballTick(Actor& fb, UrFireball& state) {
     if (!fb.isAlive()) return;
     auto&  region = fb.getDimensionBlockSource();
     Vec3   p      = fb.getFeetPos();
-    Vec3   v      = fb.getPosDelta();
+    // the motion: the engine's delta when it has one, else what the fireball moved since last tick
+    Vec3 v = fb.getPosDelta();
+    if (state.hasLast && v.x == 0.0f && v.y == 0.0f && v.z == 0.0f) {
+        Vec3 moved{p.x - state.last.x, p.y - state.last.y, p.z - state.last.z};
+        if (moved.x != 0.0f || moved.y != 0.0f || moved.z != 0.0f) state.velocity = moved;
+        v = state.velocity;
+    }
+    state.last    = p;
+    state.hasLast = true;
     auto   b      = fb.getAABB();
     float  hw     = std::max(0.5f, (b.max.x - b.min.x) * 0.5f);
     Actor* owner  = currentOwner(fb, state.shooter);
@@ -358,7 +369,10 @@ void urFireballTick(Actor& fb, UrFireball& state) {
         BlockPos bp{int(std::floor(q.x)), int(std::floor(q.y + hw)), int(std::floor(q.z))};
         bool     blockHit = !hit && blocksMotion(region, bp);
         if (!hit && !blockHit) continue;
-        if (hit) combat::hurt(*hit, 16.0f, "minecraft:fireball", owner, &fb);
+        // the fire-immune ghasts (Bedrock's minecraft:fire_immune refuses every fire cause, Java's
+        // Ghast / UrGhast let a player-reflected fireball through): the hit as a projectile
+        bool reflectedOnGhast = hit && owner && owner->isPlayer() && isTrappable(*hit);
+        if (hit) combat::hurt(*hit, 16.0f, reflectedOnGhast ? "minecraft:mob_projectile" : "minecraft:fireball", owner, &fb);
         if (fb.isAlive()) {
             region.getLevel().explode(region, nullptr, q, 1.0f, mobGriefing(), false, 3.40282347e38f, false);
             fb.remove();
@@ -976,7 +990,14 @@ void install() {
     combat::onIncoming(combat::priority::High, [](combat::DamageInfo& d) {
         auto t = typeOf(d.victim);
         if (t != id::Ghastguard && t != id::Ghastling) return combat::Verdict::Pass;
-        if (d.direct && typeOf(*d.direct) == "minecraft:fireball" && d.attacker && d.attacker->isPlayer()) d.amount = 1000.0f;
+        if (!(d.direct && typeOf(*d.direct) == "minecraft:fireball" && d.attacker && d.attacker->isPlayer())) return combat::Verdict::Pass;
+        // Bedrock's minecraft:fire_immune refuses a fire cause outright: the reflected hit goes in again
+        // as a projectile hit (Java: Ghast#isInvulnerableTo lets a reflected fireball through)
+        if (d.type == "minecraft:fireball" || d.type == "minecraft:unattributed_fireball") {
+            combat::hurt(d.victim, 1000.0f, "minecraft:mob_projectile", d.attacker, d.direct);
+            return combat::Verdict::Cancel;
+        }
+        d.amount = 1000.0f;
         return combat::Verdict::Pass;
     });
     ge::registerType(id::Ghastguard, {.onSpawn = ghastSpawn, .tick = ghastTick, .die = ghastDie});

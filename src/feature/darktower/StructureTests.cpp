@@ -141,7 +141,7 @@ void golden(Context& ctx, std::string const& name, std::string const& expected, 
 
 // Recorded from the translation (GloamingForest's own goldens: chunk (2, -3), y 8, seed 20260521).
 constexpr char kLayout[] = "TFDTBB=4 TFDTBT=4 TFDTBal=9 TFDTBea=38 TFDTBri=38 TFDTEB=2 TFDTEnt=2 TFDTMB=2 TFDTMai=3 TFDTRA=14 TFDTRC=8 TFDTRFP=5 TFDTRR=7 TFDTWin=32 1,8,-103,103,196,-1";
-constexpr char kHash[]   = "98b9c13b88acc2b0";
+constexpr char kHash[]   = "0394439afaafccd5"; // with vanilla oak / birch planter trees (inline)
 
 } // namespace
 

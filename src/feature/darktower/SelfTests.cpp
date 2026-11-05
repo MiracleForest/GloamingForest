@@ -333,6 +333,7 @@ GF_REGISTER_SELFTEST("darktower.ghast_trap_fight", [](Context& ctx) -> ll::coro:
     // inside the flat area (z 0..29): the trap tower's walls reach 5 blocks to each side
     auto trap = ctx.testPos(2615, 2).offset(0, 1, 8);
     ctx.require(ctx.setBlock(trap, id::GhastTrap), "ghast trap placed");
+    co_await ctx.ticks(2); // the block events dispatch on the next tick
     ctx.check(devices::ghastTrapIndexed(trap.dim, bp(trap)), "the ghast trap is in the POI index");
     // DarkTowerBossTrapComponent's open-topped tower: 11 wide (the trap at (5, 1, 5)), 9 high
     for (int y = 0; y < 9; ++y)
@@ -393,6 +394,7 @@ GF_REGISTER_SELFTEST("darktower.ghast_trap_fight", [](Context& ctx) -> ll::coro:
     if (auto* a = actorById(urId)) a->remove();
     removeAround(ctx, trap, id::Ghastling, 30.0f);
     ctx.require(ctx.setBlock(trap, "minecraft:air"), "trap removed");
+    co_await ctx.ticks(2);
     ctx.check(!devices::ghastTrapIndexed(trap.dim, bp(trap)), "the removed trap left the POI index");
 });
 
