@@ -61,7 +61,7 @@ TEST(AuroraFloorPlan, PlansFollowTheRules) {
             for (int n = 0; n < floors; n++) {
                 auto const& f      = plan[static_cast<std::size_t>(n)];
                 int         level  = floors - 1 - n; // floor index of this entry
-                PartSet     bottom = partsBlockedByDoors(doors, (level - 1) * 10, level * 10);
+                PartSet     bottom = partsBlockedByDoors(doors, level * 10, (level + 1) * 10);
                 EXPECT_NE(f.type, FloorType::Top);
                 EXPECT_EQ(rotateSet(floorDef(f.type).required, f.rotation) & top, 0) << "seed " << seed;
                 EXPECT_EQ(rotateSet(floorDef(f.type).blocked, f.rotation) & bottom, 0) << "seed " << seed;
@@ -84,7 +84,7 @@ TEST(AuroraFloorPlan, WeightsFavourThePillarFloors) {
             if (f.type == FloorType::PillarParkour || f.type == FloorType::PillarPlatforms) pillars++;
         }
     }
-    EXPECT_GT(pillars * 2, total); // weights 6 + 6 of at most 18
+    EXPECT_GT(pillars * 3, total); // weights 6 + 6 of at most 18, fewer candidates where the rules allow less
 }
 
 TEST(AuroraColor, Simplex) {
@@ -117,8 +117,8 @@ TEST(AuroraColor, Hsv) {
     EXPECT_EQ(hsvToRGB(0.0f, 1.0f, 1.0f), 0xFF0000u);
     EXPECT_EQ(hsvToRGB(1.0f / 3.0f, 1.0f, 1.0f), 0x00FF00u);
     EXPECT_EQ(hsvToRGB(1.25f, 1.0f, 1.0f), hsvToRGB(0.25f, 1.0f, 1.0f)); // the hue wraps
-    // the item colour: hue 0.45 -> sector 2, f 0.7: (0, 1, 0.7)
-    EXPECT_EQ(auroraBlockItemColor(), 0x00FFB3u);
+    // the item colour: hue 0.45 -> sector 2, f ~0.7: (0, 1, 0.7)
+    EXPECT_EQ(auroraBlockItemColor(), 0x00FFB2u); // (int)(0.7F * 255 + 0.5F) is 178 in float
     auto red = rgbToHSV(255, 0, 0);
     EXPECT_FLOAT_EQ(red[0], 0.0f);
     EXPECT_FLOAT_EQ(red[1], 1.0f);

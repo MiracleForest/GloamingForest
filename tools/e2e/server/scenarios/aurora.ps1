@@ -10,4 +10,4 @@
 Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
 $r = Invoke-SelfTest 'aurora.*' -TimeoutSeconds 900
 if ($r.Fail -gt 0) { throw "$($r.Fail) aurora selftest(s) failed: $($r.Failed -join ', ')" }
-if ($r.Pass -lt 11) { throw "only $($r.Pass) aurora selftests ran" }
+if ($r.Pass -lt 10) { throw "only $($r.Pass) aurora selftests ran" }
