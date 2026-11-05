@@ -307,6 +307,7 @@ public:
         // world or the first use), so the references advancements() / restrictions() hand out stay
         // valid on every thread (the client mod reads them on the client thread)
         game::db::onWorldReady([] { (void)loaded(); });
+        (void)loaded(); // BDS: the world was ready before the mod was enabled
 
         pr::events::onInventoryChanged([](Player& p) { evaluateInventory(p); });
 
