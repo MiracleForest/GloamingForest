@@ -31,20 +31,12 @@
       "minecraft:breathable": { "total_supply": 15, "suffocate_time": 0, "breathes_water": true },
       "minecraft:experience_reward": { "on_death": "217" },
       "minecraft:behavior.float": { "priority": 0 },
-      "minecraft:environment_sensor": {
-        "triggers": [
-          { "filters": { "test": "bool_property", "subject": "self", "domain": "twilightforest:clone", "value": true }, "event": "gf:as_clone" }
-        ]
+      "minecraft:ambient_sound_interval": {
+        "value": 8.0,
+        "range": 16.0,
+        "event_name": "undefined",
+        "event_names": [ { "event_name": "ambient", "condition": "!query.property('twilightforest:clone')" } ]
       }
-    },
-    "component_groups": {
-      "gf:voice": {
-        "minecraft:ambient_sound_interval": { "value": 8.0, "range": 16.0, "event_name": "ambient" }
-      }
-    },
-    "events": {
-      "minecraft:entity_spawned": { "add": { "component_groups": ["gf:voice"] } },
-      "gf:as_clone": { "remove": { "component_groups": ["gf:voice"] } }
     }
   }
 }
