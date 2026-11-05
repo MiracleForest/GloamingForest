@@ -41,7 +41,10 @@ function Set-GfHud([ValidateSet('hidden', 'shown')][string]$Want, [int]$Presses 
     if (-not $state) { throw "cannot read the HUD state (no 'SELFTEST INFO models.client_hud: hud ...' line)" }
     $pressed = 0
     while ($state.Hud -ne $Want -or $state.Hand -ne $Want) {
-        if ($pressed -ge $Presses) { throw "the HUD is $($state.Hud) and the hand $($state.Hand) after $pressed F1 press(es) (wanted: both $Want)" }
+        if ($pressed -ge $Presses) {
+            $why = if ($state.Hud -eq $Want) { 'F1 does not bring the hand in step with the HUD' } else { 'the game misses F1' }
+            throw "the HUD is $($state.Hud) and the hand $($state.Hand) after $pressed F1 press(es) (wanted: both $Want; $why)"
+        }
         # F1 on the HUD itself, not on a screen that is still closing (the chat of the last command)
         $deadline = (Get-Date).AddSeconds(5)
         while ((Get-ClientScreen) -ne 'hud_screen' -and (Get-Date) -lt $deadline) { Start-Sleep -Milliseconds 100 }

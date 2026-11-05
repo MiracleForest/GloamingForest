@@ -222,9 +222,9 @@ function Add-Shot($entries, [string]$label) {
         $x = $slots[$i]; $e = $entries[$i]
         $pos = "$x -60 0"
         $look = "$($camera.x) -59 $($camera.z)"
-        # a trophy extract (frame 'world') is the block's geometry (the wall trophy facing north): an
-        # actor facing the camera shows its back, so it looks at the camera's mirror point behind it
-        # instead (turned 180 degrees) and the shot shows the trophy's face
+        # a trophy extract (frame 'world') is the block's geometry at TrophyRenderer angle 0 (floor
+        # rotation 0 and a wall trophy facing north alike): an actor facing the camera shows its back, so
+        # it looks at the camera's mirror point behind it (turned 180 degrees) and shows the trophy's face
         if ($e.kind -eq 'actor' -and $e.frame -eq 'world') { $look = "$(2 * $x - $camera.x) -59 $(-$camera.z)" }
         if ($e.kind -eq 'actor') {
             $lines.Add("summon $($e.id) $pos facing $look minecraft:entity_spawned `"$($e.name)`"")
