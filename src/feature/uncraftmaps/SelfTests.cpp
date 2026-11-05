@@ -261,8 +261,9 @@ GF_REGISTER_SELFTEST("uncraftmaps.recraft", [](Context& ctx) {
     TestMenu m(p);
     m.input(sword);
     ctx.require(m.state.ghost != nullptr, "the sword has a recipe");
-    m.menu.set(kSlotAssembly + 1, make(ctx, "minecraft:iron_ingot"));
-    m.menu.set(kSlotAssembly + 4, make(ctx, "minecraft:iron_ingot"));
+    // the sword's pattern is one column: the diamonds at slots 0 and 3, the stick at 6
+    m.menu.set(kSlotAssembly + 0, make(ctx, "minecraft:iron_ingot"));
+    m.menu.set(kSlotAssembly + 3, make(ctx, "minecraft:iron_ingot"));
     ctx.check(items::idOf(m.state.result) == "minecraft:iron_sword", "the combined grid makes an iron sword (" + items::idOf(m.state.result) + ")");
     ctx.check(enchant::level(m.state.result, "minecraft:sharpness") == 3 && enchant::level(m.state.result, "minecraft:unbreaking") == 2, "the enchantments moved over");
     ctx.check(m.menu.recraftingCost() == 13, "the recrafting cost is 13 (" + std::to_string(m.menu.recraftingCost()) + ")");

@@ -251,7 +251,10 @@ std::vector<CraftingRecipe const*> Menu::recipesFor(ItemStack const& input) {
     auto const& c      = config();
     auto        filter = recipeFilter();
     auto        id     = items::idOf(input);
-    for (auto const* r : recipes::producing(id)) {
+    // Bedrock's tipped arrow is an arrow with a potion aux value: Java's tipped_arrow is its own
+    // item, which no crafting recipe makes (the uncrafting recipe below takes it)
+    bool tippedArrow = id == "minecraft:arrow" && input.getAuxValue() > 0;
+    for (auto const* r : tippedArrow ? std::vector<CraftingRecipe const*>{} : recipes::producing(id)) {
         if (!r || r->type == kUncraftingType) continue;
         // isRecipeSupported: shaped (any crafting recipe with enableShapelessCrafting)
         if (!(c.enableShapelessCrafting ? isCrafting(*r) : r->type == "minecraft:crafting_shaped")) continue;
