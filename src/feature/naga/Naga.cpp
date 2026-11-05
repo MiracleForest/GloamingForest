@@ -218,6 +218,21 @@ bool isLeaves(Block const& block) {
     return id.size() > 6 && id.compare(id.size() - 6, 6, "leaves") == 0;
 }
 
+/// A boolean block state ("true" / "false" in the block's serialized states; false when absent).
+bool boolState(Block const& block, std::string const& name) {
+    auto states = game::statesOf(block);
+    auto it     = states.find(name);
+    return it != states.end() && (it->second == "true" || it->second == "1");
+}
+
+/// BlockState#getDestroySpeed with Java's values where Bedrock's differ across the 50 limit of
+/// canDestroyBlock: obsidian and crying obsidian are 50 in Java (Bedrock: 35).
+float javaHardness(Block const& block) {
+    auto id = game::blockId(block);
+    if (id == "minecraft:obsidian" || id == "minecraft:crying_obsidian") return 50.0F;
+    return block.getBlockType().getDestroySpeed();
+}
+
 /// `world.getBlockEntity(pos) instanceof Container`: a TF container (gf::inventory, custom blocks
 /// keep no block entity) or a vanilla block entity whose Java counterpart implements Container
 /// (chests, furnaces, hoppers, dispensers, droppers, barrels, shulker boxes, brewing stands,
@@ -260,7 +275,7 @@ bool vanishingBlocksLocked(BlockSource& region, BlockPos const& start) {
         queue.pop_front();
         Block const& block = region.getBlock(cur);
         auto         id    = game::blockId(block);
-        if (id == "twilightforest:locked_vanishing_block" && game::intState(block, "twilightforest:locked").value_or(0) != 0) return true;
+        if (id == "twilightforest:locked_vanishing_block" && boolState(block, "twilightforest:locked")) return true;
         checked.insert({cur.x, cur.y, cur.z});
         if (kVanishingBlocks.contains(id))
             for (auto [dx, dy, dz] : {std::tuple{0, -1, 0}, std::tuple{0, 1, 0}, std::tuple{0, 0, -1}, std::tuple{0, 0, 1}, std::tuple{-1, 0, 0}, std::tuple{1, 0, 0}}) {
@@ -279,8 +294,8 @@ bool vanishingBlocksLocked(BlockSource& region, BlockPos const& start) {
 bool canEntityDestroy(BlockSource& region, BlockPos const& pos, Block const& block) {
     auto id = game::blockId(block);
     if (kRefusesEntityDestroy.contains(id)) return false;
-    if (id == "twilightforest:locked_vanishing_block" && game::intState(block, "twilightforest:locked").value_or(0) != 0) return false;
-    if (kVanishingBlocks.contains(id) && game::intState(block, "twilightforest:active").value_or(0) == 0) return !vanishingBlocksLocked(region, pos);
+    if (id == "twilightforest:locked_vanishing_block" && boolState(block, "twilightforest:locked")) return false;
+    if (kVanishingBlocks.contains(id) && !boolState(block, "twilightforest:active")) return !vanishingBlocksLocked(region, pos);
     return true;
 }
 
@@ -289,7 +304,7 @@ bool canEntityDestroy(BlockSource& region, BlockPos const& pos, Block const& blo
 bool canDestroyBlock(BlockSource& region, BlockPos const& pos) {
     Block const& block = region.getBlock(pos);
     if (block.isAir()) return false;
-    float hardness = block.getBlockType().getDestroySpeed();
+    float hardness = javaHardness(block);
     if (hardness < 0.0f || hardness >= 50.0f) return false;
     if (isContainer(region, pos)) return false;
     if (!canEntityDestroy(region, pos, block)) return false;

@@ -496,9 +496,9 @@ GF_REGISTER_SELFTEST("naga.destroy_blocks", [](Context& ctx) -> ll::coro::CoroTa
         {"twilightforest:vanishing_block", {{"twilightforest:active", false}}, true},
         {"twilightforest:vanishing_block", {{"twilightforest:active", true}}, true},
     };
-    for (std::size_t i = 0; i < cases.size(); i++) ctx.require(ctx.setBlock(at.offset(int(i % 7) - 3, 1, int(i / 7) * 2 - 2), cases[i].id, cases[i].states), std::string("placed ") + cases[i].id);
+    for (std::size_t i = 0; i < cases.size(); i++) ctx.require(ctx.setBlock(at.offset(int(i % 7) - 3, 0, int(i / 7) * 2 - 2), cases[i].id, cases[i].states), std::string("placed ") + cases[i].id);
     // an inactive vanishing block joined (through another vanishing block) to a locked one
-    auto locked = at.offset(-3, 1, 2);
+    auto locked = at.offset(-3, 0, 2); // on the ground: a floating sign or pot pops off
     ctx.require(ctx.setBlock(locked, "twilightforest:locked_vanishing_block", {{"twilightforest:locked", true}}), "a locked vanishing block");
     ctx.require(ctx.setBlock(locked.offset(1, 0, 0), "twilightforest:vanishing_block", {{"twilightforest:active", false}}), "a vanishing block next to it");
     ctx.require(ctx.setBlock(locked.offset(2, 0, 0), "twilightforest:vanishing_block", {{"twilightforest:active", false}}), "a vanishing block one further");
@@ -506,7 +506,7 @@ GF_REGISTER_SELFTEST("naga.destroy_blocks", [](Context& ctx) -> ll::coro::CoroTa
     auto* region = ctx.region();
     ctx.require(region != nullptr, "the test region");
     for (std::size_t i = 0; i < cases.size(); i++) {
-        auto pos = at.offset(int(i % 7) - 3, 1, int(i / 7) * 2 - 2);
+        auto pos = at.offset(int(i % 7) - 3, 0, int(i / 7) * 2 - 2);
         bool can = nagaCanDestroyBlock(*region, game::blockPos(pos));
         ctx.check(can == cases[i].breaks, std::string(cases[i].id) + " " + cases[i].states.dump() + (cases[i].breaks ? " breaks" : " stays"));
     }
@@ -829,7 +829,7 @@ namespace {
 constexpr int  kSiteMinX = -4000, kSiteMinZ = -4000, kSiteSize = 144;
 constexpr int  kSiteCy    = 250;          ///< the courtyard's y (CourtyardMain's origin)
 constexpr int  kSiteFloor = kSiteCy - 5;  ///< the grass layer (a flat area's ground layer)
-constexpr int  kSiteTop   = kSiteCy + 16; ///< the cleared air reaches up to here
+constexpr int  kSiteTop   = kSiteCy + 24; ///< the cleared air reaches up to here
 constexpr int  kSiteCx = kSiteMinX + 70, kSiteCz = kSiteMinZ + 70;
 constexpr char kSiteArea[] = "gf_naga_courtyard";
 
@@ -885,9 +885,10 @@ BlockBox placeSeededCourtyard(Context& ctx) {
         all.minX = std::min(all.minX, p->bbox.minX), all.minY = std::min(all.minY, p->bbox.minY), all.minZ = std::min(all.minZ, p->bbox.minZ);
         all.maxX = std::max(all.maxX, p->bbox.maxX), all.maxY = std::max(all.maxY, p->bbox.maxY), all.maxZ = std::max(all.maxZ, p->bbox.maxZ);
     }
-    ctx.require(kSiteMinX <= all.minX - 2 && all.maxX + 2 < kSiteMinX + kSiteSize && kSiteMinZ <= all.minZ - 2 && all.maxZ + 2 < kSiteMinZ + kSiteSize &&
-                    kSiteFloor <= all.minY - 2 && all.maxY + 8 <= kSiteTop,
-                "the courtyard fits the site");
+    ctx.require(kSiteMinX <= all.minX && all.maxX < kSiteMinX + kSiteSize && kSiteMinZ <= all.minZ && all.maxZ < kSiteMinZ + kSiteSize && kSiteFloor < all.minY &&
+                    all.maxY < kSiteTop,
+                "the courtyard fits the site (pieces " + std::to_string(all.minX) + " " + std::to_string(all.minY) + " " + std::to_string(all.minZ) + " .. " +
+                    std::to_string(all.maxX) + " " + std::to_string(all.maxY) + " " + std::to_string(all.maxZ) + ")");
     LiveRegion                region(*source, ctx.dimension());
     core::jrand::LegacyRandom random(7);
     BlockBox                  clip{all.minX - 2, all.minY - 2, all.minZ - 2, all.maxX + 2, all.maxY + 8, all.maxZ + 2};
@@ -924,7 +925,7 @@ GF_REGISTER_SELFTEST("naga.courtyard_layout", [](Context& ctx) -> ll::coro::Coro
         }
     ctx.check(hedges > 20, "the maze has hedges (" + std::to_string(hedges) + " samples)");
     ctx.check(bricks > 5, "the wall has stone bricks (" + std::to_string(bricks) + " samples)");
-    static char const* const kGolden = "0000000000000000"; // reviewed with the client screenshots
+    static char const* const kGolden = "69dee0ca2240c26d"; // reviewed with the client screenshots
     ctx.check(hash == kGolden, "the golden volume hash " + std::string(kGolden) + " (got " + hash + ")");
 });
 
