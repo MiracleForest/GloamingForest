@@ -289,7 +289,7 @@ bool dispenseOnHead(BlockSource& region, BlockPos const& dispenser, int facing, 
         auto one = game::items::withCount(stack, 1);
         // MobCanWearArmorEntitySelector: a Mob only when it can pick up loot (Mob#canPickUpLoot);
         // players and armour stands always
-        bool wearer = a->isPlayer() || a->getTypeName() == "minecraft:armor_stand" || *a->mCanPickupItems || a->canPickupItem(one);
+        bool wearer = a->isPlayer() || a->getTypeName() == "minecraft:armor_stand" || a->mCanPickupItems || a->canPickupItem(one);
         if (!wearer) continue;
         a->setArmor(SharedTypes::Legacy::ArmorSlot::Head, one);
         stack.remove(1);
@@ -320,7 +320,9 @@ void installTrophies() {
         for (auto const& id : {floor, wall}) {
             // AbstractTrophyBlock#useWithoutItem: any hand, the sound and the particles
             handlers().push_back(ia::onUseOn({.block = id}, [](ia::UseOnContext const& c) {
-                if (c.sneaking && !c.itemId.empty()) return ia::Result::Pass; // the item is used instead
+                // UseItemOn: a sneaking player with an item in either hand skips useWithoutItem
+                // (Player#isSecondaryUseActive && !(main empty && off-hand empty))
+                if (c.sneaking && (!c.player.getCarriedItem().isNull() || !c.player.getOffhandSlot().isNull())) return ia::Result::Pass;
                 if (!c.firstEvent) return ia::Result::Consume;
                 auto* region = game::regionOf(c.pos.dim);
                 if (!region) return ia::Result::Pass;

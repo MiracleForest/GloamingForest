@@ -11,9 +11,11 @@
 #include "feature/building/Util.h"
 
 class Actor;
+class BannerPattern;
 class Block;
 class BlockPos;
 class BlockSource;
+class ItemStack;
 
 namespace gf::feature::building {
 
@@ -75,13 +77,16 @@ struct BannerSpec {
 [[nodiscard]] std::vector<BannerSpec> const&   bannerPatterns();
 [[nodiscard]] std::optional<BannerSpec>         bannerOfPatternId(std::string_view nameId);
 [[nodiscard]] std::optional<BannerSpec>         bannerOfItem(std::string_view itemId);
-/// Appends TF's patterns that are missing to Bedrock's registry; returns how many.
+/// Appends TF's patterns that are missing to Bedrock's registry; returns how many (-1: the vanilla
+/// registry is not built yet).
 int                                             registerBannerPatterns();
 [[nodiscard]] bool                              bannerPatternsRegistered();
-[[nodiscard]] class BannerPattern const*        findBannerPattern(std::string_view nameId);
+/// Logs "building: banner pattern ids <nameID>=<id> ..." (the e2e compares server and client).
+void                                            logBannerIds();
+[[nodiscard]] BannerPattern const*        findBannerPattern(std::string_view nameId);
 /// The loom's result (LoomMenu): `banner` with one more layer {patternId, dyeColor}; nullopt for an
 /// unknown pattern, no banner or a banner with 6 layers already.
-[[nodiscard]] std::optional<class ItemStack>    loomResult(class ItemStack const& banner, std::string const& patternId, int dyeColor);
+[[nodiscard]] std::optional<ItemStack>    loomResult(ItemStack const& banner, std::string const& patternId, int dyeColor);
 void                                            installBannerHooks();
 void                                            uninstallBannerHooks();
 

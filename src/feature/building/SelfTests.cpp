@@ -2,7 +2,11 @@
 
 #include <algorithm>
 #include <cmath>
+#include <filesystem>
+#include <fstream>
 #include <map>
+
+#include <nlohmann/json.hpp>
 
 #include "ll/api/service/Bedrock.h"
 
@@ -37,6 +41,7 @@
 #include "feature/recipes/Recipes.h"
 #include "game/Blocks.h"
 #include "game/Items.h"
+#include "mod/Main.h"
 #include "selftest/SelfTest.h"
 
 namespace {
@@ -163,17 +168,41 @@ GF_REGISTER_SELFTEST("building.blocks", [](Context& ctx) {
     ctx.info("building blocks registered: " + std::to_string(std::size(ids) - missing) + " of " + std::to_string(std::size(ids)));
 });
 
-GF_REGISTER_SELFTEST("building.block_properties", [](Context& ctx) {
-    // every block of Appendix A: TF's hardness, explosion resistance, mining tool and tier
-    struct Row {
-        char const* id;
-        float       hardness, resistance;
-        char const* tool;
-        char const* tier;
-    };
-    static Row const rows[]{
+// every block of Appendix A: TF's hardness, explosion resistance, mining tools, tier and sound
+struct BlockRow {
+    char const* id;
+    float       hardness, resistance;
+    char const* tools; ///< "|"-joined mineable/* tags
+    char const* tier;
+    char const* javaSound;
+    char const* sound; ///< the Bedrock blocks.json sound F1 maps the Java SoundType to
+};
+BlockRow const kBlockRows[]{
 #include "feature/building/BlockTable.inc"
-    };
+};
+
+// every stonecutting recipe of the unit (Appendix A): input -> output x count
+struct Cut {
+    char const* input;
+    char const* output;
+    int         count;
+};
+Cut const kCuts[]{
+#include "feature/building/StonecutTable.inc"
+};
+
+/// The shipped resource pack's blocks.json (the mod's resource_packs/GloamingForest_RP).
+nlohmann::json shippedBlocksJson() {
+    auto          file = gf::Mod::getInstance().getSelf().getModDir() / "resource_packs" / "GloamingForest_RP" / "blocks.json";
+    std::ifstream in(file);
+    if (!in) return {};
+    return nlohmann::json::parse(in, nullptr, false, true);
+}
+
+GF_REGISTER_SELFTEST("building.block_properties", [](Context& ctx) {
+    auto const& rows   = kBlockRows;
+    auto const  blocks = shippedBlocksJson();
+    ctx.require(blocks.is_object(), "the resource pack's blocks.json");
     // Bedrock keeps the explosion resistance in its own units: scale by vanilla stone (Java 6.0)
     auto const* stone = gf::game::blockWith("minecraft:stone");
     ctx.require(stone != nullptr, "minecraft:stone");
@@ -201,8 +230,9 @@ GF_REGISTER_SELFTEST("building.block_properties", [](Context& ctx) {
             ctx.check(false, id + " explosion resistance " + std::to_string(r.resistance) + " (got " + std::to_string(res) + ")");
             ok = false;
         }
+        std::string tools = std::string("|") + r.tools + "|";
         for (std::string tool : {"pickaxe", "axe", "shovel", "hoe"}) {
-            bool want = tool == r.tool;
+            bool want = tools.find("|" + tool + "|") != std::string::npos;
             bool got  = type.hasTag(HashedString("minecraft:is_" + tool + "_item_destructible"));
             if (want != got) {
                 ctx.check(false, id + (want ? " is mined with the " : " is not mined with the ") + tool);
@@ -216,6 +246,13 @@ GF_REGISTER_SELFTEST("building.block_properties", [](Context& ctx) {
                 ctx.check(false, id + (want ? " needs " : " does not need ") + tier + " tier");
                 ok = false;
             }
+        }
+        // the SoundType (blocks.json "sound": Bedrock's step / break / place sounds)
+        auto it = blocks.find(id);
+        std::string got = it != blocks.end() && it->is_object() ? it->value("sound", std::string()) : std::string();
+        if (got != r.sound) {
+            ctx.check(false, id + " sounds like " + r.javaSound + " (" + r.sound + ", got \"" + got + "\")");
+            ok = false;
         }
         ok ? ++good : ++bad;
     }
@@ -507,6 +544,14 @@ GF_REGISTER_SELFTEST("building.storage_blocks", [](Context& ctx) -> ll::coro::Co
     ctx.info("on the fiery block: on ground " + std::to_string(sim(ctx).isOnGround()) + ", y " + std::to_string(sim(ctx).getPosition().y));
     float after = sim(ctx).getHealth();
     ctx.check(after < before, "the fiery block hurts the player stepping on it (" + std::to_string(before) + " -> " + std::to_string(after) + ")");
+    // off the fiery block, and out of the fire and the hurt cooldown, so the knightmetal hit below
+    // lands in full (LivingEntity#hurt inside invulnerableTime applies only the amount above lastHurt)
+    auto rest = [&]() -> ll::coro::CoroTask<> {
+        sim(ctx).teleport(Vec3{p.x + 0.5f, float(p.y), p.z + 3.5f}, sim(ctx).getDimensionId());
+        for (int i = 0; i < 300 && sim(ctx).isOnFire(); ++i) co_await ctx.ticks(1);
+        co_await ctx.ticks(25);
+    };
+    co_await rest();
     // a fire source: fire on top that goes out by itself is lit again
     {
         auto source = at(p, 6, 1, 0), flame = at(p, 6, 2, 0);
@@ -522,6 +567,7 @@ GF_REGISTER_SELFTEST("building.storage_blocks", [](Context& ctx) -> ll::coro::Co
         co_await ctx.ticks(2);
         ctx.check(ctx.blockAt(flame) == "minecraft:air", "without the fiery block it stays out");
     }
+    co_await rest();
     // knightmetal: standing in its spiky shape hurts (4 knightmetal damage)
     auto km = at(p, 0, 1, 0);
     ctx.require(ctx.setBlock(km, "twilightforest:knightmetal_block"), "a knightmetal block");
@@ -551,15 +597,7 @@ GF_REGISTER_SELFTEST("building.recipes", [](Context& ctx) {
 });
 
 GF_REGISTER_SELFTEST("building.stonecutting", [](Context& ctx) {
-    // every stonecutting recipe of the unit (Appendix A): input -> output x count
-    struct Cut {
-        char const* input;
-        char const* output;
-        int         count;
-    };
-    static Cut const cuts[]{
-#include "feature/building/StonecutTable.inc"
-    };
+    auto const& cuts = kCuts;
     auto has = [&](Cut const& c) {
         for (auto const* r : gf::recipes::producing(c.output)) {
             if (r->type.find("stonecutting") == std::string::npos && r->type.find("stonecutter") == std::string::npos) continue;

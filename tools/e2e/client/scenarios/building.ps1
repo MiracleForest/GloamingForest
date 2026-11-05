@@ -17,6 +17,20 @@ if ($script:Mode -eq 'local') {
 } else {
     Wait-LogLine '\[host\].*GloamingForest world ready' 120 | Out-Null
 }
+# TF's banner patterns in the registry (the client mod: at install, after the game's own patterns):
+# remote-mod also compares the client's ids with the BDS host's (banners carry the nameID string,
+# but the loom screen and the renderer index the registry)
+if ($script:Mode -ne 'remote-vanilla') {
+    $ids = Wait-LogLine '^(?!.*\[host\]).*building: banner pattern ids' 60
+    if ($ids -notmatch 'tf_naga=\d+') { throw "the client mod did not register TF's banner patterns: $ids" }
+    Write-Step "building: client $($ids -replace '^.*banner pattern ids', 'banner pattern ids')"
+    if ($script:Mode -eq 'remote-mod') {
+        $hostIds = Wait-LogLine '\[host\].*building: banner pattern ids' 60
+        $a = $ids -replace '^.*banner pattern ids', ''
+        $b = $hostIds -replace '^.*banner pattern ids', ''
+        if ($a -ne $b) { throw "banner pattern ids differ: client$a, host$b" }
+    }
+}
 $r = Invoke-SelfTest 'building.*' -TimeoutSeconds 300
 if ($r.Fail -gt 0) { throw "$($r.Fail) building selftest(s) failed" }
 if ($r.Pass -lt 14) { throw "expected at least 14 building selftests to pass, got $($r.Pass)" }
@@ -86,6 +100,7 @@ Start-Sleep -Seconds 1
 $mark = Get-LogMark
 Invoke-Chat '/twilightforest selftest "building.banner_loom"'
 $shown = Wait-LogLine 'building: TF banners shown at (-?\d+) (-?\d+) (-?\d+)' 120 -Since $mark
+if ($shown -notmatch 'shown at (-?\d+) (-?\d+) (-?\d+)') { throw "building.banner_loom did not put up its banners: $shown" }
 if ($shown -match 'shown at (-?\d+) (-?\d+) (-?\d+)') {
     $bx = [int]$Matches[1] + 4; $by = [int]$Matches[2] + 1; $bz = [int]$Matches[3] + 6
     Invoke-Chat '/gamemode spectator'
@@ -97,6 +112,43 @@ if ($shown -match 'shown at (-?\d+) (-?\d+) (-?\d+)') {
 $done = Wait-LogLine 'SELFTEST DONE pass=\d+ fail=\d+' 120 -Since $mark
 if ($done -notmatch 'fail=0') { throw "building.banner_loom failed: $done" }
 Invoke-Chat '/setblock 16 -61 140 grass_block'
+
+# a real loom craft with TF's naga pattern: the client's loom screen lists the pattern for the naga
+# banner pattern item, the client sends the CraftLoom request, the (integrated or BDS) server
+# validates it; building.loom_crafted then finds the banner in the player's inventory
+# (local and remote-mod: the client mod's registry; remote-vanilla: the loom screen of a client
+# without the patterns, photographed only)
+Invoke-Chat '/gamemode creative'
+Invoke-Chat '/clear @s'
+Invoke-Chat '/fill 38 -60 147 42 -57 153 air'
+Invoke-Chat '/setblock 40 -60 148 loom'
+Invoke-Chat '/give @s banner 1 15'
+Invoke-Chat '/give @s red_dye 1'
+Invoke-Chat '/give @s twilightforest:naga_banner_pattern 1'
+Invoke-Teleport '/tp @s 40.5 -60 150.5 180 35'
+Start-Sleep -Seconds 2
+Save-Screenshot 'loom-before' | Out-Null
+Focus-Game
+Press-Key '1'
+Click 0.5 0.5 -Relative -Right
+Start-Sleep -Seconds 2
+Save-Screenshot 'loom-open' | Out-Null
+Write-Step "building: loom screen $(Get-ClientScreen)"
+Close-Screen
+
+# a shield with TF's naga pattern in the off-hand, from the front (Bedrock draws shield patterns
+# from the banner textures)
+Invoke-Chat '/clear @s'
+Invoke-Chat '/setblock 17 -61 140 emerald_block'
+Invoke-Chat '/twilightforest selftest "building.shield_pattern"'
+Start-Sleep -Seconds 2
+Invoke-Teleport '/tp @s 40.5 -60 150.5 0 10'
+Invoke-Chat '/camera @s set minecraft:third_person_front'
+Start-Sleep -Seconds 3
+Save-Screenshot 'shield' | Out-Null
+Invoke-Chat '/camera @s clear'
+Invoke-Chat '/clear @s'
+Invoke-Chat '/setblock 17 -61 140 grass_block'
 
 Invoke-Chat '/clear @s'
 Invoke-Chat '/function gfbuilding/clear'

@@ -6,9 +6,15 @@
 #include "mc/deps/core/math/Vec3.h"
 #include "mc/deps/nbt/CompoundTag.h"
 #include "mc/scripting/modules/minecraft/ScriptFacing.h"
+#include "ll/api/service/Bedrock.h"
 #include "mc/server/SimulatedPlayer.h"
+#include "mc/world/Container.h"
+#include "mc/world/actor/player/Inventory.h"
+#include "mc/world/actor/player/Player.h"
+#include "mc/world/level/Level.h"
 #include "mc/server/sim/LookDuration.h"
 #include "mc/world/gamemode/GameMode.h"
+#include "mc/world/gamemode/InteractionResult.h"
 #include "mc/world/item/BannerItem.h"
 #include "mc/world/item/HandSlot.h"
 #include "mc/world/item/ItemStack.h"
@@ -129,7 +135,7 @@ GF_REGISTER_SELFTEST("building.banner_loom", [](Context& ctx) -> ll::coro::CoroT
         if (!actor) continue;
         auto const& patterns = *static_cast<BannerBlockActor*>(actor)->mPatterns;
         auto const* want     = b::findBannerPattern(s.nameId);
-        ctx.check(want && std::find(patterns.begin(), patterns.end(), *want->mID) != patterns.end(), "the placed banner shows " + s.nameId);
+        ctx.check(want && std::find(patterns.begin(), patterns.end(), want->mID) != patterns.end(), "the placed banner shows " + s.nameId);
     }
     if (show) {
         gf::log().info("building: TF banners shown at {} {} {}", p.x, p.y + 1, p.z + 2);
@@ -138,4 +144,66 @@ GF_REGISTER_SELFTEST("building.banner_loom", [](Context& ctx) -> ll::coro::CoroT
     for (auto it = placed.rbegin(); it != placed.rend(); ++it) ctx.cleanupBlock(*it);
 });
 
+// The client scenario's loom craft (tools/e2e/client/scenarios/building.ps1): the player put a white
+// banner, red dye and the naga banner pattern into a real loom, picked TF's naga pattern in the
+// loom screen and took the result, so the client's CraftLoom request went through the server's
+// validation (LoomMaterialContainerValidation, BannerPattern::matchesPatternItem, CraftHandlerLoom).
+// With the emerald marker this test requires that a (real) player now holds such a banner; without
+// it (every other run) there is nothing to check.
+constexpr int kLoomMarker[3] = {17, -61, 140};
+
+GF_REGISTER_SELFTEST("building.loom_crafted", [](Context& ctx) {
+    auto* region = ctx.region();
+    ctx.require(region != nullptr, "region");
+    if (b::idAt(*region, BlockPos{kLoomMarker[0], kLoomMarker[1], kLoomMarker[2]}) != "minecraft:emerald_block") {
+        ctx.info("no loom craft to check (no marker)");
+        return;
+    }
+    auto* level = ll::service::getLevel().as_ptr();
+    ctx.require(level != nullptr, "level");
+    int  players = 0;
+    bool found   = false;
+    level->forEachPlayer([&](Player& player) {
+        if (player.isSimulatedPlayer()) return true;
+        ++players;
+        auto const& inv = player.getInventory();
+        for (int i = 0; i < inv.getContainerSize() && !found; ++i) {
+            auto const& stack = inv.getItem(i);
+            if (stack.isNull() || gf::game::items::idOf(stack) != "minecraft:banner") continue;
+            for (auto const& [p, color] : BannerItem::getPatternAndColorPairsFromItemStack(stack))
+                if (p && *p->mNameID == "tf_naga") {
+                    found = true;
+                    gf::log().info("building: loom result in {}'s slot {}: a banner with tf_naga (colour {})", player.getRealName(), i, static_cast<int>(color));
+                }
+        }
+        return true;
+    });
+    ctx.require(players > 0, "a real player is online");
+    ctx.check(found, "the loom's result (a banner with TF's naga pattern) is in the player's inventory");
+});
+// The client scenario's shield: with the emerald marker, every real player holds a shield with TF's
+// naga pattern in the off-hand (Bedrock's shield draws banner patterns from the banner textures, so a
+// TF pattern on a shield needs no shield atlas: Java's textures/entity/shield/<boss>.png has no
+// Bedrock counterpart).
+GF_REGISTER_SELFTEST("building.shield_pattern", [](Context& ctx) {
+    auto shield = gf::game::items::make("minecraft:shield");
+    ctx.require(shield.has_value(), "a shield");
+    auto tag = CompoundTag::fromSnbt("{Base:15,Patterns:[{Color:1,Pattern:\"tf_naga\"}]}");
+    ctx.require(tag.has_value(), "the shield's pattern data");
+    shield->setUserData(std::make_unique<CompoundTag>(std::move(*tag)));
+    auto layers = BannerItem::getPatternAndColorPairsFromItemStack(*shield);
+    ctx.check(std::any_of(layers.begin(), layers.end(), [](auto const& l) { return l.first && *l.first->mNameID == "tf_naga"; }), "the shield carries TF's naga pattern");
+    auto* region = ctx.region();
+    ctx.require(region != nullptr, "region");
+    if (b::idAt(*region, BlockPos{kLoomMarker[0], kLoomMarker[1], kLoomMarker[2]}) != "minecraft:emerald_block") return;
+    auto* level = ll::service::getLevel().as_ptr();
+    ctx.require(level != nullptr, "level");
+    level->forEachPlayer([&](Player& player) {
+        if (player.isSimulatedPlayer()) return true;
+        player.setOffhandSlot(*shield);
+        player.refreshInventory();
+        gf::log().info("building: {} holds a shield with TF's naga pattern", player.getRealName());
+        return true;
+    });
+});
 } // namespace

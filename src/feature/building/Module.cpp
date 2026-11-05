@@ -13,14 +13,22 @@ namespace gf::feature::building {
 namespace {
 
 struct BuildingModule {
-    // TF's banner patterns join Bedrock's registry before the game hands out pattern pointers
-    // (spike S6: an append later is only safe with spare capacity)
+    // TF's banner patterns join Bedrock's registry after the vanilla ones, before a world exists, so
+    // both builds give them the same ids (vanilla count + 0..8). BDS: at load (the vanilla registry is
+    // built). Client: LeviLamina loads mods before the game's static initialisers, so the registry is
+    // still empty at load and the patterns join at install (game start, no world yet). Banners carry
+    // the pattern's nameID string on disk and over the network, never the index.
     void load() {
         int n = registerBannerPatterns();
-        log().info("building: {} banner patterns registered", n);
+        if (n >= 0) log().info("building: {} banner patterns registered", n);
     }
     void install() {
-        if (!bannerPatternsRegistered()) log().warn("building: banner patterns missing from the registry: {} appended now", registerBannerPatterns());
+        if (!bannerPatternsRegistered()) {
+            int n = registerBannerPatterns();
+            if (n < 0) log().error("building: the banner pattern registry is empty at install: TF patterns not registered");
+            else log().info("building: {} banner patterns registered", n);
+        }
+        logBannerIds();
         installBannerHooks();
         installTrophies();
         installNagastone();

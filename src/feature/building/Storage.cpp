@@ -35,6 +35,7 @@
 #include "feature/item/Item.h"
 #include "game/Blocks.h"
 #include "game/Items.h"
+#include "game/WorldDb.h"
 #include "mod/I18n.h"
 
 namespace gf::feature::building {
@@ -79,6 +80,11 @@ bool fieryHurts(Actor& entity) {
 void installStorage() {
     if (gInstalled) return;
     gInstalled = true;
+    // the client opens many worlds in one process: positions belong to one world
+    game::db::onWorldClosed([] {
+        burning().clear();
+        putOut().clear();
+    });
     // TFBlocks: the fiery block's item is rarity UNCOMMON (and fireResistant: its BP item's
     // minecraft:fire_resistant); the client mod colours its name
     item::ext::setRarity(kFiery, item::ext::Rarity::Uncommon);

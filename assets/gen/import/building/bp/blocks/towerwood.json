@@ -24,31 +24,38 @@
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_block_towerwood",
-          "render_method": "opaque"
+          "render_method": "opaque",
+          "tint_method": "dry_foliage"
         },
         "up": {
           "texture": "tf_block_towerwood",
-          "render_method": "opaque"
+          "render_method": "opaque",
+          "tint_method": "dry_foliage"
         },
         "down": {
           "texture": "tf_block_towerwood",
-          "render_method": "opaque"
+          "render_method": "opaque",
+          "tint_method": "dry_foliage"
         },
         "north": {
           "texture": "tf_block_towerwood",
-          "render_method": "opaque"
+          "render_method": "opaque",
+          "tint_method": "dry_foliage"
         },
         "south": {
           "texture": "tf_block_towerwood",
-          "render_method": "opaque"
+          "render_method": "opaque",
+          "tint_method": "dry_foliage"
         },
         "east": {
           "texture": "tf_block_towerwood",
-          "render_method": "opaque"
+          "render_method": "opaque",
+          "tint_method": "dry_foliage"
         },
         "west": {
           "texture": "tf_block_towerwood",
-          "render_method": "opaque"
+          "render_method": "opaque",
+          "tint_method": "dry_foliage"
         }
       }
     }

@@ -1,0 +1,261 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.building.fiery_block",
+        "texture_width": 16,
+        "texture_height": 16,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3,
+        "visible_bounds_offset": [
+          0,
+          0.75,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "root",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -7,
+                1,
+                -7
+              ],
+              "size": [
+                14,
+                14,
+                14
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    1,
+                    1
+                  ],
+                  "uv_size": [
+                    14,
+                    14
+                  ],
+                  "material_instance": "all"
+                },
+                "east": {
+                  "uv": [
+                    1,
+                    1
+                  ],
+                  "uv_size": [
+                    14,
+                    14
+                  ],
+                  "material_instance": "all"
+                },
+                "south": {
+                  "uv": [
+                    1,
+                    1
+                  ],
+                  "uv_size": [
+                    14,
+                    14
+                  ],
+                  "material_instance": "all"
+                },
+                "west": {
+                  "uv": [
+                    1,
+                    1
+                  ],
+                  "uv_size": [
+                    14,
+                    14
+                  ],
+                  "material_instance": "all"
+                },
+                "up": {
+                  "uv": [
+                    15,
+                    15
+                  ],
+                  "uv_size": [
+                    -14,
+                    -14
+                  ],
+                  "material_instance": "all"
+                },
+                "down": {
+                  "uv": [
+                    15,
+                    15
+                  ],
+                  "uv_size": [
+                    -14,
+                    -14
+                  ],
+                  "material_instance": "all"
+                }
+              }
+            },
+            {
+              "origin": [
+                -7.99,
+                0.01,
+                -7.99
+              ],
+              "size": [
+                15.98,
+                15.98,
+                0
+              ],
+              "uv": {
+                "south": {
+                  "uv": [
+                    15.99,
+                    15.99
+                  ],
+                  "uv_size": [
+                    -15.98,
+                    -15.98
+                  ],
+                  "material_instance": "over"
+                }
+              }
+            },
+            {
+              "origin": [
+                -7.99,
+                0.01,
+                7.99
+              ],
+              "size": [
+                15.98,
+                15.98,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    15.99,
+                    15.99
+                  ],
+                  "uv_size": [
+                    -15.98,
+                    -15.98
+                  ],
+                  "material_instance": "over"
+                }
+              }
+            },
+            {
+              "origin": [
+                -7.99,
+                0.01,
+                -7.99
+              ],
+              "size": [
+                0,
+                15.98,
+                15.98
+              ],
+              "uv": {
+                "east": {
+                  "uv": [
+                    15.99,
+                    15.99
+                  ],
+                  "uv_size": [
+                    -15.98,
+                    -15.98
+                  ],
+                  "material_instance": "over"
+                }
+              }
+            },
+            {
+              "origin": [
+                7.99,
+                0.01,
+                -7.99
+              ],
+              "size": [
+                0,
+                15.98,
+                15.98
+              ],
+              "uv": {
+                "west": {
+                  "uv": [
+                    15.99,
+                    15.99
+                  ],
+                  "uv_size": [
+                    -15.98,
+                    -15.98
+                  ],
+                  "material_instance": "over"
+                }
+              }
+            },
+            {
+              "origin": [
+                -7.99,
+                0.01,
+                -7.99
+              ],
+              "size": [
+                15.98,
+                0,
+                15.98
+              ],
+              "uv": {
+                "up": {
+                  "uv": [
+                    15.99,
+                    15.99
+                  ],
+                  "uv_size": [
+                    -15.98,
+                    -15.98
+                  ],
+                  "material_instance": "over"
+                }
+              }
+            },
+            {
+              "origin": [
+                -7.99,
+                15.99,
+                -7.99
+              ],
+              "size": [
+                15.98,
+                0,
+                15.98
+              ],
+              "uv": {
+                "down": {
+                  "uv": [
+                    15.99,
+                    15.99
+                  ],
+                  "uv_size": [
+                    -15.98,
+                    -15.98
+                  ],
+                  "material_instance": "over"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

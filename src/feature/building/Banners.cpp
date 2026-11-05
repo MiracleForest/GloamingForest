@@ -85,7 +85,13 @@ std::vector<BannerPattern>& registry() { return const_cast<std::vector<BannerPat
 
 int registerBannerPatterns() {
     auto& patterns = registry();
+    // the client loads mods before the game's static initialisers ran: the vanilla registry is still
+    // empty then (and is constructed over whatever was appended), so wait for install()
+    if (patterns.empty()) return -1;
     int   added    = 0;
+    // one allocation for all nine: the vector moves at most once, before the engine holds pattern
+    // pointers (both builds append before a world exists)
+    patterns.reserve(patterns.size() + bannerPatterns().size());
     short type     = kFirstPatternItemType;
     for (auto const& s : bannerPatterns()) {
         bool known = std::any_of(patterns.begin(), patterns.end(), [&](BannerPattern const& p) { return *p.mNameID == s.nameId; });
@@ -105,6 +111,15 @@ bool bannerPatternsRegistered() {
     for (auto const& s : bannerPatterns())
         if (std::none_of(patterns.begin(), patterns.end(), [&](BannerPattern const& p) { return *p.mNameID == s.nameId; })) return false;
     return true;
+}
+
+void logBannerIds() {
+    std::string line;
+    for (auto const& s : bannerPatterns()) {
+        auto const* p = findBannerPattern(s.nameId);
+        line += " " + s.nameId + "=" + (p ? std::to_string(static_cast<int>(p->mID)) : std::string("?"));
+    }
+    log().info("building: banner pattern ids (of {}){}", BannerPattern::mPatterns().size(), line);
 }
 
 BannerPattern const* findBannerPattern(std::string_view nameId) {
@@ -149,7 +164,9 @@ LL_TYPE_INSTANCE_HOOK(
     bool                          flag
 ) {
     // BannerPatternItem in LoomMenu's pattern slot: TF's pattern items too
-    if (!item.isNull() && fb::bannerOfItem(item.getTypeName())) return true;
+    // (the material container has the one pattern slot: index 0, or the screen's offset of it)
+    bool patternSlot = slot == 0 || slot == this->getContainerOffset(screenContext);
+    if (patternSlot && !item.isNull() && fb::bannerOfItem(item.getTypeName())) return true;
     return origin(screenContext, slot, item, amount, flag);
 }
 

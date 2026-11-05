@@ -9,5 +9,150 @@
     "rp/textures/twilightforest/entity/banner/alpha_yeti.png": "rp/textures/entity/banner/banner_tf_alpha_yeti.png",
     "rp/textures/twilightforest/entity/banner/snow_queen.png": "rp/textures/entity/banner/banner_tf_snow_queen.png",
     "rp/textures/twilightforest/entity/banner/quest_ram.png": "rp/textures/entity/banner/banner_tf_quest_ram.png"
+  },
+  "patch": {
+    "bp/blocks/towerwood.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/*/tint_method",
+        "value": "dry_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/up/tint_method",
+        "value": "dry_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/down/tint_method",
+        "value": "dry_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/north/tint_method",
+        "value": "dry_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/south/tint_method",
+        "value": "dry_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/east/tint_method",
+        "value": "dry_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/west/tint_method",
+        "value": "dry_foliage"
+      }
+    ],
+    "bp/blocks/cracked_towerwood.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/*/tint_method",
+        "value": "dry_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/up/tint_method",
+        "value": "dry_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/down/tint_method",
+        "value": "dry_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/north/tint_method",
+        "value": "dry_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/south/tint_method",
+        "value": "dry_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/east/tint_method",
+        "value": "dry_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/west/tint_method",
+        "value": "dry_foliage"
+      }
+    ],
+    "bp/blocks/mossy_towerwood.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/*/tint_method",
+        "value": "dry_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/up/tint_method",
+        "value": "dry_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/down/tint_method",
+        "value": "dry_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/north/tint_method",
+        "value": "dry_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/south/tint_method",
+        "value": "dry_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/east/tint_method",
+        "value": "dry_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/west/tint_method",
+        "value": "dry_foliage"
+      }
+    ],
+    "bp/blocks/fiery_block.json": [
+      {
+        "op": "replace",
+        "path": "/minecraft:block/components/minecraft:geometry",
+        "value": "geometry.twilightforest.building.fiery_block"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/all/ambient_occlusion",
+        "value": 0
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/all/face_dimming",
+        "value": false
+      },
+      {
+        "op": "replace",
+        "path": "/minecraft:block/components/minecraft:material_instances/over/render_method",
+        "value": "alpha_test_single_sided"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/over/ambient_occlusion",
+        "value": 0
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/over/face_dimming",
+        "value": false
+      }
+    ]
   }
 }
