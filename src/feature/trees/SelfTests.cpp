@@ -225,7 +225,9 @@ ll::coro::CoroTask<> golden(Context& ctx, int dx, std::string const& id, std::st
     auto     box = co_await ctx.flatArea(dx, 48, 48);
     BlockPos pos{box.minX + 24, box.minY, box.minZ + 24};
     co_await ctx.ensureLoaded(game::globalPos(ctx.dimension(), pos));
+    auto writes = leafDistanceWrites();
     ctx.require(placeSeeded(ctx, id, pos, 20240611), id + " placed");
+    ctx.info(id + ": updateLeaves wrote " + std::to_string(leafDistanceWrites() - writes) + " leaf distances");
     auto hash = ctx.snapshotVolume(box);
     ctx.info(id + " volume hash " + hash);
     if (!want.empty()) ctx.check(hash == want, id + " matches its golden hash " + want + " (got " + hash + ")");
@@ -234,7 +236,7 @@ ll::coro::CoroTask<> golden(Context& ctx, int dx, std::string const& id, std::st
 } // namespace
 
 GF_REGISTER_SELFTEST("trees.golden_canopy_tree", [](Context& ctx) -> ll::coro::CoroTask<> { co_await golden(ctx, 330, tree("canopy_tree"), "bcb7ce14451f3461"); });
-GF_REGISTER_SELFTEST("trees.golden_mega_canopy_tree", [](Context& ctx) -> ll::coro::CoroTask<> { co_await golden(ctx, 335, tree("mega_canopy_tree"), "f8ad57ebe7d2135f"); });
+GF_REGISTER_SELFTEST("trees.golden_mega_canopy_tree", [](Context& ctx) -> ll::coro::CoroTask<> { co_await golden(ctx, 335, tree("mega_canopy_tree"), "0e085f04c2c2d4de"); });
 GF_REGISTER_SELFTEST("trees.golden_darkwood_tree", [](Context& ctx) -> ll::coro::CoroTask<> { co_await golden(ctx, 340, tree("darkwood_tree"), "4b02f8878de8e514"); });
 GF_REGISTER_SELFTEST("trees.golden_mangrove_tree", [](Context& ctx) -> ll::coro::CoroTask<> { co_await golden(ctx, 345, tree("mangrove_tree"), "cf0c7c46e51a5599"); });
 
@@ -305,7 +307,7 @@ struct SaplingGolden {
 };
 constexpr SaplingGolden kSaplingGoldens[] = {
     {"twilight_oak_sapling", "c6a4d9e80098f181"}, {"canopy_sapling", "0a0cc183b669d7be"},         {"mangrove_sapling", "4b6a6ead7e3e9a70"},       {"darkwood_sapling", "41b40f3a39632b3b"},
-    {"time_sapling", "fa5ec266db0f001f"},         {"transformation_sapling", "c9279f5eb98e039c"}, {"mining_sapling", "f303bd815de99803"},         {"sorting_sapling", "1708556a4aa85b3a"},
+    {"time_sapling", "9bbf36011e7d5572"},         {"transformation_sapling", "c9279f5eb98e039c"}, {"mining_sapling", "cb9cad4efe78e3c1"},         {"sorting_sapling", "1708556a4aa85b3a"},
     {"rainbow_oak_sapling", "9614215514eda961"},
 };
 
@@ -609,6 +611,42 @@ GF_REGISTER_SELFTEST("trees.snow_under_trees", [](Context& ctx) -> ll::coro::Cor
     ctx.require(placeSeeded(ctx, "twilightforest:snow_under_trees", origin, 1), "snow_under_trees placed");
     ctx.check(ctx.blockAt(game::globalPos(ctx.dimension(), BlockPos{box.minX + 5, box.minY, box.minZ + 5})) == "minecraft:snow_layer", "snow under the leaves");
     ctx.check(ctx.blockAt(game::globalPos(ctx.dimension(), BlockPos{box.minX + 7, box.minY, box.minZ + 5})) == "minecraft:air", "no snow in the open");
+});
+
+GF_REGISTER_SELFTEST("trees.mushroom_cap_faces", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // the canopy mushrooms' caps carry the cap skin on top (Bedrock huge_mushroom_bits 1..9, 14)
+    auto     box = co_await ctx.flatArea(325, 40, 40);
+    BlockPos pos{box.minX + 20, box.minY, box.minZ + 20};
+    for (char const* id : {"twilightforest:mushroom/brown_canopy_mushroom", "twilightforest:mushroom/canopy_red_flat_mushroom"}) {
+        ctx.require(placeSeeded(ctx, id, pos, 99), std::string(id) + " placed");
+        auto*                region = ctx.region();
+        std::map<int, int>   bits;
+        int                  pores = 0, caps = 0;
+        std::string          capId;
+        for (int x = box.minX; x <= box.maxX; ++x)
+            for (int z = box.minZ; z <= box.maxZ; ++z)
+                for (int y = box.maxY; y >= box.minY; --y) {
+                    auto const& b = region->getBlock(BlockPos{x, y, z});
+                    if (b.isAir()) continue;
+                    auto const& n = b.getTypeName();
+                    if (n == "minecraft:brown_mushroom_block" || n == "minecraft:red_mushroom_block") {
+                        int v = game::intState(b, "huge_mushroom_bits").value_or(-1);
+                        ++bits[v];
+                        ++caps;
+                        capId = n;
+                        if (v == 0) ++pores;
+                    }
+                    break; // the topmost block of the column
+                }
+        std::string hist;
+        for (auto [k, v] : bits) hist += " " + std::to_string(k) + ":" + std::to_string(v);
+        ctx.info(std::string(id) + " top cap blocks (" + capId + ") huge_mushroom_bits" + hist);
+        ctx.check(caps > 0 && pores == 0, std::string(id) + ": no cap shows pores on top");
+        if (auto const* air = game::blockWith("minecraft:air"))
+            for (int x = box.minX; x <= box.maxX; ++x)
+                for (int z = box.minZ; z <= box.maxZ; ++z)
+                    for (int y = box.minY; y <= box.maxY; ++y) game::setBlock(*region, BlockPos{x, y, z}, *air);
+    }
 });
 
 GF_REGISTER_SELFTEST("trees.leaf_decay", [](Context& ctx) -> ll::coro::CoroTask<> {

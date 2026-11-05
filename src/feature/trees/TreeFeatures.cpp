@@ -25,6 +25,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <atomic>
 #include <optional>
 #include <string>
 #include <vector>
@@ -107,6 +108,24 @@ void javaOrder(std::vector<BlockPos>& v) {
     v = std::move(out);
 }
 
+std::atomic<std::uint64_t> gLeafDistanceWrites{0};
+
+/// `block` with BlockStateProperties.DISTANCE (TF leaves: twilightforest:distance) set to `distance`,
+/// its other states kept; `block` when it has no distance.
+Block const& withDistance(Block const& block, int distance) {
+    auto states = game::statesOf(block);
+    if (!states.contains("twilightforest:distance")) return block;
+    Json all = Json::object();
+    for (auto const& [k, v] : states) {
+        if (v == "true" || v == "false") all[k] = v == "true";
+        else if (!v.empty() && v.find_first_not_of("-0123456789") == std::string::npos) all[k] = std::stoi(v);
+        else all[k] = v;
+    }
+    all["twilightforest:distance"] = distance;
+    auto const* b = game::blockWithStates(block.getTypeName(), all);
+    return b ? *b : block;
+}
+
 /// LeavesBlock.getOptionalDistanceAt: 0 for #minecraft:logs, the distance of a block with one.
 std::optional<int> optionalDistanceAt(Block const& b) {
     if (kit::hasTag(b, "minecraft:logs")) return 0;
@@ -159,8 +178,11 @@ void updateLeaves(Region& region, std::vector<BlockPos> const& sources, std::vec
             if (!inside(p)) continue;
             if (k1 != 0) {
                 Block const& state = region.getBlock(p);
-                Block const& with  = kit::withProperty(state, "distance", std::to_string(k1));
-                if (&with != &state) region.setBlock(p, with, 19);
+                Block const& with  = withDistance(state, k1);
+                if (&with != &state) {
+                    region.setBlock(p, with, 19);
+                    ++gLeafDistanceWrites;
+                }
             }
             full[cell(p)] = true;
             for (Dir d : kAll) {
@@ -715,6 +737,8 @@ bool snowUnderTrees(FeatureContext const& c) {
 }
 
 } // namespace
+
+std::uint64_t leafDistanceWrites() { return gLeafDistanceWrites.load(); }
 
 void registerTreeFeatures() {
     using gf::features::registerType;

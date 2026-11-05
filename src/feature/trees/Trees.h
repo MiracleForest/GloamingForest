@@ -82,6 +82,8 @@ struct ChunkResendStats {
 [[nodiscard]] ChunkResendStats chunkResendStats();
 /// The minewood core's ore -> ground map (Bedrock ids).
 [[nodiscard]] std::map<std::string, std::string> miningCoreOres();
+/// The leaf distances TreeFeature.updateLeaves wrote so far (selftests).
+[[nodiscard]] std::uint64_t leafDistanceWrites();
 /// HollowTreeStructure#checkSaplingClearance at the robust twilight oak sapling `pos`.
 [[nodiscard]] bool hollowTreeClearance(BlockSource& region, BlockPos const& pos);
 /// The leaf runes the server sent to players without the client mod so far.
