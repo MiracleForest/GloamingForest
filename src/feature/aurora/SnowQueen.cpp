@@ -551,7 +551,7 @@ private:
         double range = 20.0, offset = 10.0;
         auto   p     = feet(m);
         Vec3   src{p.x, p.y + 0.25f, p.z};
-        Vec3   look = m.getViewVector(1.0f);
+        Vec3   look = m.getHeadLookVector(1.0f); // LivingEntity#getViewYRot: the head's yaw
         Vec3   dest{src.x + look.x * static_cast<float>(range), src.y + look.y * static_cast<float>(range), src.z + look.z * static_cast<float>(range)};
         auto   b = boxOf(m);
         AABB   search{Vec3{b.min.x + look.x * 10 - 20, b.min.y + look.y * 10 - 20, b.min.z + look.z * 10 - 20},
@@ -659,7 +659,7 @@ void queenTick(Actor& actor) {
         for (auto const& h : gf::entity::ext::parts(*self))
             if (auto* part = gf::entity::partActor(h)) gf::fx::particle(dim, "twilightforest:snow_warning", feet(*part), Vec3{}, 1, nlohmann::json{{"spread", {0.2, 0.2, 0.2}}});
     if (q.breathing) {
-        Vec3   look = self->getViewVector(1.0f);
+        Vec3   look = self->getHeadLookVector(1.0f);
         auto   p    = feet(*self);
         Vec3   at{p.x + look.x * 0.5f, p.y + 1.7f + look.y * 0.5f, p.z + look.z * 0.5f};
         for (int i = 0; i < 10; i++) {
@@ -789,6 +789,8 @@ int  queenDropsForTest(Actor& queen, int* maxDrops) {
     if (maxDrops) *maxDrops = q.maxDrops;
     return q.successfulDrops;
 }
-int queenBeamDamageForTest(Actor& queen) { return stateOf(queen).damageWhileBeaming; }
+int  queenBeamDamageForTest(Actor& queen) { return stateOf(queen).damageWhileBeaming; }
+bool queenBreathingForTest(Actor& queen) { return stateOf(queen).breathing; }
+int  pierceLevelForTest(Actor& projectile) { return pierceLevel(projectile); }
 
 } // namespace gf::feature::aurora

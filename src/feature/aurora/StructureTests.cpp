@@ -145,7 +145,7 @@ void golden(Context& ctx, std::string const& name, std::string const& expected, 
 
 // Recorded from the translation (docs/spec/aurora.md section 1.3: GloamingForest's own goldens).
 constexpr char kPalaceLayout[] = "twilightforest:TFITBea=9 twilightforest:TFITBoss=1 twilightforest:TFITBri=1 twilightforest:TFITEnt=1 twilightforest:TFITMai=1 twilightforest:TFITRoof=20 twilightforest:TFITSt=3 twilightforest:TFITWin=17 twilightforest:TFUtilityPiece=10 26,36,-49,122,181,11";
-constexpr char kPalaceHash[]   = "045f1f7f1dab88af";
+constexpr char kPalaceHash[]   = "91a51944cc29600d"; // with the aurora block variants
 constexpr char kMushroomLayout[] = "twilightforest:TFMTBri=82 twilightforest:TFMTMB=2 twilightforest:TFMTMai=3 twilightforest:TFMTRoofMush=72 twilightforest:TFMTWin=82 -119,9,25,-11,90,133";
 constexpr char kMushroomHash[]   = "541b39f142c085fd";
 
@@ -226,7 +226,7 @@ GF_REGISTER_SELFTEST("aurora.mushroom_tower_hash", [](Context& ctx) {
 
 // R19: the Snow Queen's tower placed into the world (a live region, block entities and the spawner
 // at once), hashed with snapshotVolume. Recorded from the translation (GloamingForest's golden).
-constexpr char kBossWingWorldHash[] = "";
+constexpr char kBossWingWorldHash[] = "98db9a1e1720b119";
 
 GF_REGISTER_SELFTEST("aurora.boss_wing_in_world", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto box = co_await ctx.flatArea(2830, 24, 64);

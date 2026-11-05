@@ -43,5 +43,7 @@ void              setQueenPhaseForTest(Actor& queen, int phase);
 [[nodiscard]] int queenSummonsForTest(Actor& queen);
 [[nodiscard]] int queenDropsForTest(Actor& queen, int* maxDrops);
 [[nodiscard]] int queenBeamDamageForTest(Actor& queen);
+[[nodiscard]] bool queenBreathingForTest(Actor& queen);
+[[nodiscard]] int pierceLevelForTest(Actor& projectile);
 
 } // namespace gf::feature::aurora
