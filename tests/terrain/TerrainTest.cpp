@@ -6,6 +6,7 @@
 
 #include <cmath>
 #include <cstring>
+#include <iostream>
 #include <sstream>
 
 #include "TerrainHarness.h"
@@ -89,8 +90,17 @@ TEST(TerrainGolden, DensityFinalAtPoints) {
         auto const& scale = g.at("terrain").at("scale");
         std::map<std::pair<int, int>, DensityData> at;
         for (std::size_t i = 0; i < pts.size(); ++i) at[{pts[i][0].get<int>(), pts[i][2].get<int>()}] = DensityData{depth[i].get<double>(), scale[i].get<double>()};
-        TerrainSampler sampler = [&](int x, int z) { return at.at({x, z}); };
-        for (char const* name : {"final_density", "initial_density_without_jaggedness"}) {
+        // RandomState wires the router through mapAll, which turns TF's biome-driven routers into
+        // their ChunkCached variants: one 16 x 16 cache keyed by the section-relative column, kept
+        // for every compute of the oracle's run (initial_density_without_jaggedness, then
+        // final_density), so a point reads the terrain of the first point of its slot
+        std::map<int, DensityData> slots;
+        TerrainSampler sampler = [&](int x, int z) {
+            auto [it, fresh] = slots.try_emplace((z & 15) + ((x & 15) << 4), DensityData{});
+            if (fresh) it->second = at.at({x, z});
+            return it->second;
+        };
+        for (char const* name : {"initial_density_without_jaggedness", "final_density"}) {
             std::string err;
             auto d = Density::compile(settings.at("noise_router").at(name), seed, densityResolver(), {}, &err);
             ASSERT_TRUE(d) << err;
@@ -156,6 +166,8 @@ TEST(TerrainGolden, BaseHeightsMatch) {
             if (bad < bestBad) best = variant, bestBad = bad, bestTested = tested;
         }
         ASSERT_GE(best, 0);
+        std::cout << "[ terrain  ] " << seedFile(seed) << ": biome rows transposed " << ((best & 1) != 0) << ", heights z-major " << ((best & 2) != 0) << "
+";
         bool transposed = (best & 1) != 0, zMajor = (best & 2) != 0;
         auto w          = loadWorld(seed, "twilight_noise_gen", transposed);
         auto sampler    = w->sampler();
@@ -174,6 +186,60 @@ TEST(TerrainGolden, BaseHeightsMatch) {
             }
         EXPECT_EQ(bad, 0) << seedFile(seed) << ": " << tested << " columns (variant " << best << ", sample " << bestTested << ")";
         EXPECT_GT(tested, 120 * 120);
+    }
+}
+
+
+TEST(TerrainGolden, SurfaceGridMatches) {
+    for (auto seed : seeds()) {
+        json g = golden::readJson(golden::goldenDir() / "surface" / seedFile(seed));
+        ASSERT_FALSE(g.is_discarded());
+        auto w = loadWorld(seed);
+        ASSERT_TRUE(w->gen) << w->error;
+        int x0 = g.at("x0"), z0 = g.at("z0"), step = g.at("step"), n = g.at("width");
+        auto const& pal   = g.at("palette");
+        std::string chars = g.at("paletteChars");
+        auto sampler = w->sampler();
+        auto biome   = w->blockBiome();
+        // [variant][0 = height mismatches, 1 = top mismatches]
+        int bad[2][2] = {}, checked = 0;
+        std::vector<std::string> samples[2];
+        for (int cx = x0 >> 4; cx < (x0 + n * step) >> 4; ++cx)
+            for (int cz = z0 >> 4; cz < (z0 + n * step) >> 4; ++cz) {
+                Grid grid(-32, 288);
+                w->gen->fillNoise(cx, cz, sampler, {}, grid);
+                w->gen->surface().buildSurface(cx, cz, grid, w->table, biome);
+                std::vector<std::string> chunkBiomes;
+                for (int qx = cx * 4; qx < cx * 4 + 4; ++qx)
+                    for (int qz = cz * 4; qz < cz * 4 + 4; ++qz)
+                        for (int qy = -8; qy <= 63; ++qy)
+                            if (auto b = w->noiseBiome(qx, qy, qz); b && std::find(chunkBiomes.begin(), chunkBiomes.end(), *b) == chunkBiomes.end()) chunkBiomes.push_back(*b);
+                w->blankets.apply(cx, cz, grid, w->table, chunkBiomes, biome, [](auto const&) { return false; });
+                for (int x = 0; x < 16; x += step)
+                    for (int z = 0; z < 16; z += step) {
+                        int bx = cx * 16 + x, bz = cz * 16 + z, i = (bx - x0) / step, j = (bz - z0) / step;
+                        ++checked;
+                        int         ws  = grid.worldSurfaceWg(x, z) + 1;
+                        auto        c   = grid.get(x, ws - 1, z);
+                        std::string top = c == code::DefaultBlock ? "minecraft:stone" : c == code::Water ? "minecraft:water" : (w->table.entry(c) ? w->table.entry(c)->name : "?");
+                        for (int v = 0; v < 2; ++v) {
+                            int  ei = v ? j : i, ej = v ? i : j;
+                            int  eh = g["worldSurfaceWg"][ei][ej].get<int>();
+                            char ec = g["top"][ei].get<std::string>()[static_cast<std::size_t>(ej)];
+                            std::string et = pal[chars.find(ec)].get<std::string>();
+                            if (eh != ws) ++bad[v][0];
+                            if (et != top) ++bad[v][1];
+                            if ((eh != ws || et != top) && samples[v].size() < 6)
+                                samples[v].push_back("(" + std::to_string(bx) + ", " + std::to_string(bz) + ") " + top + "@" + std::to_string(ws) + " vs " + et + "@" + std::to_string(eh));
+                        }
+                    }
+            }
+        int v = bad[0][0] + bad[0][1] <= bad[1][0] + bad[1][1] ? 0 : 1;
+        std::cout << "[ terrain  ] surface " << seedFile(seed) << ": " << checked << " cells, z-major " << v << ", height mismatches " << bad[v][0] << ", top mismatches " << bad[v][1] << "
+";
+        for (auto const& line : samples[v]) std::cout << "             " << line << "
+";
+        EXPECT_EQ(bad[v][0] + bad[v][1], 0) << seedFile(seed);
     }
 }
 
