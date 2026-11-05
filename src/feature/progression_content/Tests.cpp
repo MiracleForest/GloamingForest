@@ -16,6 +16,8 @@
 #include "ll/api/coro/CoroTask.h"
 #include "ll/api/service/Bedrock.h"
 
+#include "mc/deps/core/math/Vec3.h"
+#include "mc/world/actor/Actor.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/GameType.h"
@@ -497,14 +499,188 @@ GF_REGISTER_SELFTEST("progression.vanilla_locked_toast", [](Context& ctx) -> ll:
     gf::effects::remove(*playerById(id), "minecraft:hunger");
 });
 
-// ---- e2e demos: what the client scenario photographs (every real player) --------------------
+// The display texts with their arguments (hill1: "Defeat a %s ..." with the Redcap's name).
+GF_REGISTER_SELFTEST("progression.descriptions", [](Context& ctx) {
+    auto&    p     = ctx.player();
+    int      withArgs = 0;
+    for (auto const& a : pc::advancements()) {
+        if (!a.hasDisplay) continue;
+        if (a.description.is_object() && a.description.contains("with")) ++withArgs;
+        auto title = pc::textFor(p, a.title);
+        auto desc  = pc::textFor(p, a.description);
+        ctx.check(!title.empty() && title.find("advancement.twilightforest") == std::string::npos, a.id + "'s title is translated (" + title + ")");
+        ctx.check(desc.find("%s") == std::string::npos && desc.find("%1$s") == std::string::npos && desc.find("{}") == std::string::npos,
+                  a.id + "'s description has its arguments (" + desc + ")");
+    }
+    ctx.check(withArgs >= 20, std::to_string(withArgs) + " descriptions take arguments");
+    auto hill1 = pc::textFor(p, pc::find("twilightforest:hill1")->description);
+    ctx.check(hill1.find("Redcap") != std::string::npos, "hill1 names the Redcap: " + hill1);
+    auto merge = pc::textFor(p, pc::find("twilightforest:progress_merge")->description);
+    ctx.check(merge.find("Hydra") != std::string::npos && merge.find("Ur-Ghast") != std::string::npos && merge.find("Snow Queen") != std::string::npos,
+              "progress_merge names its three bosses: " + merge);
+});
 
-void forRealPlayers(std::function<void(Player&)> const& fn) {
+// TreeNodePosition over the whole tree (Java's server layout), sent unchanged to the screen.
+GF_REGISTER_SELFTEST("progression.tree_layout", [](Context& ctx) {
+    std::set<std::pair<float, float>> cells;
+    for (auto const& a : pc::advancements()) {
+        ctx.check(a.placed, a.id + " is laid out");
+        ctx.check(cells.insert({a.x, a.y}).second, a.id + " has a cell of its own");
+    }
+    ctx.check(pc::find("twilightforest:root")->x == 0 && pc::find("twilightforest:progression_end")->x == 7, "the root in column 0, progression_end in column 7");
+    // hill2 sits right of hill1 on its row; experiment_115's two children around it
+    auto const* h1 = pc::find("twilightforest:hill1");
+    auto const* h2 = pc::find("twilightforest:hill2");
+    ctx.check(h2->x == h1->x + 1 && h2->y == h1->y, "a single child stays on its parent's row");
+    auto const* e  = pc::find("twilightforest:experiment_115");
+    auto const* e1 = pc::find("twilightforest:experiment_115_115");
+    auto const* e2 = pc::find("twilightforest:experiment_115_self_replenishing");
+    ctx.check(e->y == (e1->y + e2->y) / 2, "a parent sits halfway between its first and last child");
+    // the screen sends the server's positions
+    auto& p = ctx.player();
+    resetProgress(p);
+    pr::trigger(p, "twilightforest:make_tf_portal");
+    auto data = pc::screenData(p);
+    int  same = 0;
+    for (auto const& n : data["nodes"]) {
+        auto const* a = pc::find(n.value("id", ""));
+        if (a && n.value("x", -1.0f) == a->x && n.value("y", -1.0f) == a->y) ++same;
+        ctx.check(!n.value("title", Json()).is_string() || !n.value("title", Json()).get<std::string>().empty(), "a node has a title component");
+    }
+    ctx.check(same == static_cast<int>(data["nodes"].size()) && same > 0, "the screen nodes keep the server's layout (" + std::to_string(same) + ")");
+    resetProgress(p);
+});
+
+// The icon's components travel as item data (experiment_115_115's "think" variant, the flask).
+GF_REGISTER_SELFTEST("progression.icon_variants", [](Context& ctx) {
+    auto check = [&](char const* adv, char const* component, Json const& want) {
+        auto const* a = pc::find(std::string("twilightforest:") + adv);
+        ctx.require(a != nullptr, std::string(adv) + " is loaded");
+        auto item = pc::iconItem(*a);
+        ctx.check(item.is_object() && item.value("id", "") == a->icon, std::string(adv) + "'s icon item is " + a->icon);
+        auto stack = gf::game::items::fromJson(item);
+        auto got   = gf::game::items::getData(stack, component);
+        ctx.check(got == want, std::string(adv) + "'s icon carries " + component + " = " + want.dump() + " (" + got.dump() + ")");
+    };
+    check("experiment_115_115", "twilightforest:e115_variant", "think");
+    check("experiment_115_self_replenishing", "twilightforest:e115_variant", "full");
+    check("full_mettle_alchemist", "twilightforest:flask_contents", Json{{"breakable", false}, {"doses", 4}, {"potion", {{"potion", "minecraft:strong_harming"}}}});
+    check("modify_travellers_gear", "twilightforest:water_walk", Json::object());
+});
+
+// chicken_jerky: a baby zombie riding a chicken, killed by a blow whose direct entity holds the
+// jerky. The vehicle is read before die() dismounts the rider; a kill whose direct entity is not
+// the player (a projectile) does not count.
+GF_REGISTER_SELFTEST("progression.chicken_jockey", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto id = ctx.player().getOrCreateUniqueID().rawID;
+    resetProgress(ctx.player());
+    auto base = ctx.testPos(1404, 3);
+    ctx.require(co_await ctx.ensureLoaded(base), "the test position is loaded");
+    auto jockey = [&](std::string const& name) -> Actor* {
+        auto* p = playerById(id);
+        if (!p) return nullptr;
+        Vec3 pos{static_cast<float>(base.x) + 0.5f, static_cast<float>(base.y) + 1.0f, static_cast<float>(base.z) + 0.5f};
+        auto& region  = p->getDimensionBlockSource();
+        auto* chicken = gf::spawn::spawnMob(region, "minecraft:chicken", pos, gf::spawn::SpawnReason::MobSummoned);
+        auto* zombie  = gf::spawn::spawnMob(region, "minecraft:zombie", pos, gf::spawn::SpawnReason::MobSummoned);
+        if (!chicken || !zombie) return nullptr;
+        zombie->setNameTag(name);
+        (void)gf::selftest::runServerCommand("event entity @e[name=" + name + "] minecraft:as_baby", base.dim);
+        zombie->startRiding(*chicken, true);
+        return zombie;
+    };
+    auto jerky = gf::game::items::make("twilightforest:chicken_jerky", 1);
+    ctx.require(jerky.has_value(), "chicken jerky exists");
+    playerById(id)->setSelectedItem(*jerky);
+    // a blow whose direct entity is another entity (a projectile's place): not the jerky's holder
+    {
+        auto* z = jockey("gf_jockey_a");
+        ctx.require(z != nullptr, "a jockey spawns");
+        co_await ctx.ticks(2);
+        z = nullptr;
+        Actor* rider = nullptr;
+        auto   level = ll::service::getLevel();
+        for (auto* a : level->getRuntimeActorList())
+            if (a && a->getNameTag() == "gf_jockey_a") rider = a;
+        ctx.require(rider && rider->isBaby() && rider->getVehicle(), "the baby zombie rides the chicken");
+        auto* vehicle = rider->getVehicle();
+        gf::combat::hurt(*rider, 1000.0f, "minecraft:arrow", playerById(id), vehicle);
+        co_await ctx.ticks(2);
+        ctx.check(!pr::has(*playerById(id), "twilightforest:chicken_jerky"), "a kill whose direct entity is not the player does not count");
+    }
+    {
+        auto* z = jockey("gf_jockey_b");
+        ctx.require(z != nullptr, "a second jockey spawns");
+        co_await ctx.ticks(2);
+        Actor* rider = nullptr;
+        for (auto* a : ll::service::getLevel()->getRuntimeActorList())
+            if (a && a->getNameTag() == "gf_jockey_b") rider = a;
+        ctx.require(rider && rider->isBaby() && rider->getVehicle(), "the second baby zombie rides its chicken");
+        gf::combat::hurt(*rider, 1000.0f, "minecraft:player_attack", playerById(id), playerById(id));
+        co_await ctx.ticks(2);
+        ctx.check(pr::has(*playerById(id), "twilightforest:chicken_jerky"), "killing the jockey's rider with jerky in hand earns chicken_jerky");
+    }
+    (void)gf::selftest::runServerCommand("kill @e[type=minecraft:chicken,x=" + std::to_string(base.x) + ",y=" + std::to_string(base.y) + ",z=" + std::to_string(base.z) + ",r=6]", base.dim);
+    (void)gf::selftest::runServerCommand("kill @e[type=minecraft:item,x=" + std::to_string(base.x) + ",y=" + std::to_string(base.y) + ",z=" + std::to_string(base.z) + ",r=8]", base.dim);
+    playerById(id)->setSelectedItem(gf::game::items::empty());
+    resetProgress(*playerById(id));
+});
+// ---- e2e demos: what the client scenario photographs -------------------------------------------
+// They act only on real players who opted in with the scoreboard tag `gf_e2e_progression` (the
+// client scenario adds it with /tag and removes it at the end), so a glob or full run on a played
+// world never touches anyone's progression. The first demo saves each opted-in player's exact
+// progress (every earned advancement and every met criterion) and demo_reset puts it back.
+
+constexpr char kDemoTag[] = "gf_e2e_progression";
+
+struct SavedProgress {
+    std::set<std::string>                           done;     ///< completed advancements
+    std::map<std::string, std::vector<std::string>> criteria; ///< met criteria of the others
+};
+std::map<std::int64_t, SavedProgress>& savedProgress() {
+    static std::map<std::int64_t, SavedProgress> s;
+    return s;
+}
+
+SavedProgress snapshotOf(Player const& p) {
+    SavedProgress s;
+    for (auto const& a : pc::advancements()) {
+        if (pr::has(p, a.id)) {
+            s.done.insert(a.id);
+            continue;
+        }
+        for (auto const& c : a.criteria)
+            if (pr::done(p, a.id, c.name)) s.criteria[a.id].push_back(c.name);
+    }
+    return s;
+}
+
+/// Saves the player's progress once per demo run.
+void saveOnce(Player& p) {
+    auto id = p.getOrCreateUniqueID().rawID;
+    if (!savedProgress().contains(id)) savedProgress()[id] = snapshotOf(p);
+}
+
+/// Puts the saved progress back (the advancements earned again show their toasts once more).
+bool restoreSaved(Player& p) {
+    auto it = savedProgress().find(p.getOrCreateUniqueID().rawID);
+    if (it == savedProgress().end()) return false;
+    resetProgress(p);
+    for (auto const& a : pc::advancements()) {
+        if (it->second.done.contains(a.id)) pr::grant(p, a.id);
+        else if (auto c = it->second.criteria.find(a.id); c != it->second.criteria.end())
+            for (auto const& name : c->second) pr::grant(p, a.id, name);
+    }
+    savedProgress().erase(it);
+    return true;
+}
+
+void forOptedIn(std::function<void(Player&)> const& fn) {
     auto level = ll::service::getLevel();
     if (!level) return;
     std::vector<std::int64_t> ids;
     level->forEachPlayer([&](Player& p) {
-        if (!p.isSimulated() && !p.isClientSide()) ids.push_back(p.getOrCreateUniqueID().rawID);
+        if (!p.isSimulated() && !p.isClientSide() && p.hasTag(kDemoTag)) ids.push_back(p.getOrCreateUniqueID().rawID);
         return true;
     });
     for (auto id : ids)
@@ -513,41 +689,42 @@ void forRealPlayers(std::function<void(Player&)> const& fn) {
 
 GF_REGISTER_SELFTEST("progression.demo_grant", [](Context& ctx) {
     int n = 0;
-    forRealPlayers([&](Player& p) {
+    forOptedIn([&](Player& p) {
+        saveOnce(p);
         resetProgress(p);
         for (char const* a : {"root", "progress_naga", "hedge", "hill1", "twilight_hunter", "progress_lich", "naga_armors"})
             pr::grant(p, std::string("twilightforest:") + a);
         ++n;
     });
-    ctx.info("granted the demo advancements to " + std::to_string(n) + " player(s)");
+    ctx.info("granted the demo advancements to " + std::to_string(n) + " opted-in player(s)");
 });
 
 GF_REGISTER_SELFTEST("progression.demo_toast", [](Context& ctx) {
     int n = 0;
-    forRealPlayers([&](Player& p) {
+    forOptedIn([&](Player& p) {
+        saveOnce(p);
         pr::revoke(p, "twilightforest:progress_labyrinth");
         pr::grant(p, "twilightforest:progress_labyrinth");
         ++n;
     });
-    ctx.info("progress_labyrinth earned by " + std::to_string(n) + " player(s)");
+    ctx.info("progress_labyrinth earned by " + std::to_string(n) + " opted-in player(s)");
 });
 
 GF_REGISTER_SELFTEST("progression.demo_screen", [](Context& ctx) {
     int n = 0;
-    forRealPlayers([&](Player& p) {
+    forOptedIn([&](Player& p) {
         if (pc::openAdvancements(p)) ++n;
     });
-    if (n == 0) ctx.info("no real player in this world: nothing opened");
+    if (n == 0) ctx.info("no opted-in player in this world: nothing opened");
 });
 
 GF_REGISTER_SELFTEST("progression.demo_reset", [](Context& ctx) {
     int n = 0;
-    forRealPlayers([&](Player& p) {
-        resetProgress(p);
+    forOptedIn([&](Player& p) {
         pc::setBiomeOverride(p, "");
-        ++n;
+        if (restoreSaved(p)) ++n;
     });
-    ctx.info("reset " + std::to_string(n) + " player(s)");
+    ctx.info("restored the progress of " + std::to_string(n) + " opted-in player(s)");
 });
 
 // A vanilla player in a locked biome (the swamp: Hunger, harmless to the picture) for 400 ticks
@@ -555,8 +732,9 @@ GF_REGISTER_SELFTEST("progression.demo_reset", [](Context& ctx) {
 // ends and the game type is put back by itself.
 GF_REGISTER_SELFTEST("progression.demo_vanilla_locked", [](Context& ctx) {
     int n = 0;
-    forRealPlayers([&](Player& p) {
+    forOptedIn([&](Player& p) {
         if (gf::net::isCompanion(p)) return;
+        saveOnce(p);
         pr::revoke(p, "twilightforest:progress_lich");
         pc::resetEnforcementCounts(p);
         auto type = p.getPlayerGameType();
@@ -564,9 +742,8 @@ GF_REGISTER_SELFTEST("progression.demo_vanilla_locked", [](Context& ctx) {
         pc::setBiomeOverride(p, "twilightforest:swamp", 400, type);
         ++n;
     });
-    ctx.info("vanilla players put into a locked biome: " + std::to_string(n));
+    ctx.info("opted-in vanilla players put into a locked biome: " + std::to_string(n));
 });
-
 #ifdef GF_CLIENT
 
 std::int64_t localCompanion() {
@@ -574,7 +751,7 @@ std::int64_t localCompanion() {
     auto         level = ll::service::getLevel();
     if (!level) return 0;
     level->forEachPlayer([&id](Player& p) {
-        if (p.isSimulated() || !gf::net::isCompanion(p)) return true;
+        if (p.isSimulated() || !gf::net::isCompanion(p) || !p.hasTag(kDemoTag)) return true;
         id = p.getOrCreateUniqueID().rawID;
         return false;
     });
@@ -587,9 +764,10 @@ namespace pcl = gf::client::progression;
 GF_REGISTER_SELFTEST("progression.client_toast", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto who = localCompanion();
     if (who == 0) {
-        ctx.info("no companion player in this world: skipped");
+        ctx.info("no opted-in companion player in this world: skipped");
         co_return;
     }
+    bool hadHedge = pr::has(*playerById(who), "twilightforest:hedge");
     pr::revoke(*playerById(who), "twilightforest:hedge");
     pr::grant(*playerById(who), "twilightforest:hedge");
     std::optional<pcl::ShownToast> shown;
@@ -603,13 +781,15 @@ GF_REGISTER_SELFTEST("progression.client_toast", [](Context& ctx) -> ll::coro::C
               "the advancement's title and icon, 5 s");
     auto style = gf::client::toast::styleOfToast(shown->title);
     ctx.check(style && style->titleColor == 0xFF55FF55u && style->bodyColor == 0xFFFFFFFFu, "task: green title, white advancement title");
+    if (!hadHedge)
+        if (auto* p = playerById(who)) pr::revoke(*p, "twilightforest:hedge");
 });
 
 // LockedBiomeToastHandler: one toast after the 60-step countdown (300 ticks) in a locked biome.
 GF_REGISTER_SELFTEST("progression.client_locked_toast", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto who = localCompanion();
     if (who == 0) {
-        ctx.info("no companion player in this world: skipped");
+        ctx.info("no opted-in companion player in this world: skipped");
         co_return;
     }
     auto  type = playerById(who)->getPlayerGameType();

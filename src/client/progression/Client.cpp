@@ -132,6 +132,8 @@ void showAdvancementToast(nlohmann::json const& msg) {
     t.spec.titleKey = "advancements.toast." + frame;
     t.spec.bodyKey  = msg.value("title", std::string{});
     t.spec.ms       = 5000;
+    // the advancement's title component (its key and arguments) in the game's language
+    if (auto c = msg.find("titleComponent"); c != msg.end() && !c->is_null()) t.body = clientText(*c);
     t.title = frame == "goal" ? ctr("advancements.toast.goal", "Goal Reached!")
             : frame == "challenge" ? ctr("advancements.toast.challenge", "Challenge Complete!")
                                    : ctr("advancements.toast.task", "Advancement Made!");
@@ -145,11 +147,14 @@ void showAdvancementToast(nlohmann::json const& msg) {
 }
 
 void registerAdvancementScreen(); // AdvancementScreen.cpp
+void watchMouseRelease();         // AdvancementScreen.cpp
 
 namespace {
 
 class ProgressionClientModule {
 public:
+    // input listeners are added at mod load, before the game's threads run (as the screen framework)
+    void load() { watchMouseRelease(); }
     void install() {
         static bool registered = false;
         if (registered) return;

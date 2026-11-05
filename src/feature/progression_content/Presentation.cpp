@@ -32,6 +32,7 @@
 #include "mc/world/level/Level.h"
 
 #include "feature/common/Screens.h"
+#include "feature/fx/Fx.h"
 #include "feature/net/Net.h"
 #include "feature/progression/Progression.h"
 #include "feature/progression_content/Config.h"
@@ -52,6 +53,7 @@ inline constexpr char kScreen[]      = "progression.advancements";
 inline constexpr char kToastChannel[] = "progression.toast";
 inline constexpr char kOpenChannel[]  = "progression.open";
 inline constexpr char kDiscordUrl[]   = "https://discord.experiment115.com/";
+inline constexpr char kChallengeSound[] = "random.levelup";
 
 namespace {
 
@@ -73,7 +75,7 @@ void announce(Player& earner, Advancement const& adv) {
     auto name = earner.getRealName();
     level->forEachPlayer([&](Player& p) {
         if (p.isClientSide()) return true;
-        auto title = trFor(p, adv.titleKey, adv.titleKey);
+        auto title = textFor(p, adv.title);
         std::string line;
         auto bracket = std::string(chatColor(adv.frame)) + "[" + title + "]§r";
         switch (adv.frame) {
@@ -89,15 +91,27 @@ void announce(Player& earner, Advancement const& adv) {
 void showToast(Player& player, Advancement const& adv) {
     if (net::isCompanion(player)) {
         net::send(player, kToastChannel,
-                  {{"advancement", adv.id}, {"frame", frameName(adv.frame)}, {"title", adv.titleKey}, {"icon", adv.icon}, {"components", adv.iconComponents}});
-        return;
+                  {{"advancement", adv.id},
+                   {"frame", frameName(adv.frame)},
+                   {"title", adv.titleKey},
+                   {"titleComponent", adv.title},
+                   {"icon", adv.icon},
+                   {"components", adv.iconComponents},
+                   {"iconItem", iconItem(adv)}});
+    } else {
+        // the game's toast (text only): AdvancementToast's title line in the frame's colour
+        // (ChatFormatting GREEN, DARK_PURPLE for challenges) over the advancement's title
+        auto packet = MinecraftPackets::createPacket(MinecraftPacketIds::ToastRequest);
+        if (!packet) return;
+        auto& pkt    = static_cast<ToastRequestPacket&>(*packet);
+        pkt.mTitle   = std::string(chatColor(adv.frame)) + toastTitle(player, adv.frame);
+        pkt.mContent = textFor(player, adv.title);
+        pkt.sendTo(player);
     }
-    auto packet = MinecraftPackets::createPacket(MinecraftPacketIds::ToastRequest);
-    if (!packet) return;
-    auto& pkt    = static_cast<ToastRequestPacket&>(*packet);
-    pkt.mTitle   = toastTitle(player, adv.frame);
-    pkt.mContent = trFor(player, adv.titleKey, adv.titleKey);
-    pkt.sendTo(player);
+    // AdvancementToast#render: a challenge plays ui.toast.challenge_complete (forUI, 1.0, 1.0) when
+    // the toast appears. Bedrock has no such sound and F3's synth only renders TF's own events, so
+    // the closest vanilla fanfare is played to the player (both clients)
+    if (adv.frame == Frame::Challenge) fx::soundTo(player, kChallengeSound, 1.0f, 1.0f);
 }
 
 void onEarned(Player& player, std::string const& id) {
@@ -132,13 +146,13 @@ void listForm(Player& player) {
     for (auto const& n : data["nodes"]) {
         auto        id    = n.value("id", std::string{});
         bool        done  = n.value("done", false);
-        auto        title = trFor(player, n.value("title", std::string{}), n.value("title", std::string{}));
+        auto        title = textFor(player, n.value("title", Json("")));
         std::string text  = done ? std::string(chatColor(n.value("frame", std::string{}) == "challenge" ? Frame::Challenge : Frame::Task)) + title
                                  : "§8" + title;
         if (!done && n.value("groups", 0) > 1) text += "§8 (" + std::to_string(n.value("met", 0)) + "/" + std::to_string(n.value("groups", 0)) + ")";
         buttons.push_back({text, "", [id](Player& p) { detailForm(p, id); }});
     }
-    auto tabTitle = trFor(player, data["tab"].value("title", std::string{}), "Twilight Forest");
+    auto tabTitle = textFor(player, data["tab"].value("title", Json("Twilight Forest")));
     ui::form(player, trFor(player, "gui.advancements", "Advancements"), tabTitle, std::move(buttons));
     log().info("progression: advancement form shown to {} ({} entries)", player.getRealName(), data["nodes"].size());
 }
@@ -147,9 +161,9 @@ void detailForm(Player& player, std::string const& id) {
     auto const* adv = find(id);
     if (!adv) return;
     auto        prog = progressOf(player, *adv);
-    std::string body = trFor(player, adv->descKey, adv->descKey) + "\n\n";
+    std::string body = textFor(player, adv->description) + "\n\n";
     body += prog.done ? toastTitle(player, adv->frame) : trFor(player, "gf.progression.progress", "Progress: {}/{}", prog.met, prog.groups);
-    ui::form(player, trFor(player, adv->titleKey, adv->titleKey), body,
+    ui::form(player, textFor(player, adv->title), body,
              {{trFor(player, "gui.back", "Back"), "", [](Player& p) { listForm(p); }}});
 }
 

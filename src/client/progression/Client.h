@@ -33,6 +33,9 @@ void setClientBiomeOverride(std::string const& biome);
 void tickLockedToast(LocalPlayer& player, std::string const& biomeOverride);
 /// Shows an advancement toast as "progression.toast" does.
 void showAdvancementToast(nlohmann::json const& msg);
+/// A text component (the advancement's title or description, with its arguments) in the game's
+/// language.
+[[nodiscard]] std::string clientText(nlohmann::json const& component);
 
 } // namespace gf::client::progression
 

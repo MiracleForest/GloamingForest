@@ -173,3 +173,16 @@ TEST(ProgressionCriteria, RecipeLayouts) {
     EXPECT_EQ(idIn(json{{"item", {{"id", "twilightforest:naga_scale"}}}}, {"item"}), "twilightforest:naga_scale");
     EXPECT_EQ(idIn(json{{"bug", "cicada"}}, {"bug"}), "minecraft:cicada");
 }
+
+TEST(ProgressionCriteria, ModifierAndStructureConditions) {
+    Env env;
+    // AddModifierTrigger: no modifier condition accepts any; a named one only itself
+    EXPECT_TRUE(matchTfTrigger("twilightforest:add_modifier", json::object(), json{{"modifier", "twilightforest:water_walk"}}, env));
+    EXPECT_TRUE(matchTfTrigger("twilightforest:add_modifier", json{{"modifier", "twilightforest:water_walk"}}, json{{"modifier", "twilightforest:water_walk"}}, env));
+    EXPECT_FALSE(matchTfTrigger("twilightforest:add_modifier", json{{"modifier", "twilightforest:water_walk"}}, json{{"modifier", "twilightforest:step_up"}}, env));
+    EXPECT_FALSE(matchTfTrigger("twilightforest:add_modifier", json{{"modifier", "twilightforest:water_walk"}}, json::object(), env));
+    // StructureClearedTrigger: the structure is required and compared
+    EXPECT_TRUE(matchTfTrigger("twilightforest:structure_cleared", json{{"structure", "twilightforest:lich_tower"}}, json{{"structure", "twilightforest:lich_tower"}}, env));
+    EXPECT_FALSE(matchTfTrigger("twilightforest:structure_cleared", json{{"structure", "twilightforest:lich_tower"}}, json{{"structure", "twilightforest:labyrinth"}}, env));
+    EXPECT_FALSE(matchTfTrigger("twilightforest:structure_cleared", json::object(), json{{"structure", "twilightforest:lich_tower"}}, env));
+}

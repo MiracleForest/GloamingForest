@@ -66,15 +66,29 @@ struct LockedToastCountdown {
     bool step(bool lockedWithIcon);
 };
 
-/// The advancement tree's layout: every node's column (depth) and row; a parent sits halfway
-/// between its first and last child, leaves take the next free row. Nodes are given in display
-/// order (children in the order they appear).
+/// The advancement tree's layout, as Minecraft 1.21.1 computes it on the server
+/// (ServerAdvancementManager#apply runs net.minecraft.advancements.TreeNodePosition over every
+/// tree whose root has a display; the positions travel to the clients in DisplayInfo's x / y):
+/// Walker's tidy-tree algorithm in Buchheim's linear form. Every node with a display gets a
+/// column `x` (its depth among displayed ancestors) and a row `y`; a node without a display is
+/// skipped and its children hang from the nearest displayed ancestor. Every displayed node is
+/// laid out, whether or not a player can see it (hidden nodes keep their rows, as in Java).
+/// Nodes come in any order; siblings keep their order of appearance (Java's order is the
+/// AdvancementNode child set's, an identity hash order that changes between runs).
 struct TreeNode {
     std::string id;
-    std::string parent; ///< "" for the root
-    float       x = 0;  ///< column (depth)
-    float       y = 0;  ///< row
+    std::string parent;          ///< "" for a root
+    bool        display = true;  ///< the advancement has a display
+    float       x       = 0;     ///< column (Java's int x)
+    float       y       = 0;     ///< row
+    bool        placed  = false; ///< a position was computed (a displayed node under a displayed root)
 };
 void layoutTree(std::vector<TreeNode>& nodes);
+
+/// A Minecraft text component as a string: a string, {"text"}, {"translate", "with",
+/// "fallback"} (each argument rendered first), lists and "extra" appended. `translate(key,
+/// fallback, args)` formats a translation (fallback: the component's "fallback", else the key).
+using TranslateFn = std::function<std::string(std::string const& key, std::string const& fallback, std::vector<std::string> const& args)>;
+[[nodiscard]] std::string renderComponent(nlohmann::json const& component, TranslateFn const& translate);
 
 } // namespace gf::core::progression

@@ -274,9 +274,21 @@ bool matchTfTrigger(std::string const& trigger, Json const& conditions, Json con
         if (auto it = data.find("item"); it != data.end() && it->is_object()) item.count = it->value("count", 1);
         return matchItem(*pred, item, env);
     }
-    // make_tf_portal, broke_glass_sword, consume_hydra_chop_on_low_hunger, add_modifier,
-    // complete_quest_ram, placed_on_trophy_pedestal, kill_all_phantoms, activate_ghast_trap,
-    // structure_cleared: only the player predicate (checked by the caller)
+    if (trigger == "twilightforest:add_modifier") {
+        // AddModifierTrigger: modifier (optional ResourceLocation) equals the added one
+        auto want = c.find("modifier");
+        if (want == c.end() || want->is_null()) return true;
+        return want->is_string() && withNamespace(want->get<std::string>()) == idIn(data, {"modifier"});
+    }
+    if (trigger == "twilightforest:structure_cleared") {
+        // StructureClearedTrigger: structure (a required ResourceKey<Structure>) equals the cleared one
+        auto want = c.find("structure");
+        if (want == c.end() || !want->is_string()) return false;
+        return withNamespace(want->get<std::string>()) == idIn(data, {"structure", "key"});
+    }
+    // make_tf_portal, broke_glass_sword, consume_hydra_chop_on_low_hunger, complete_quest_ram,
+    // placed_on_trophy_pedestal, kill_all_phantoms, activate_ghast_trap: only the player
+    // predicate (checked by the caller)
     return true;
 }
 

@@ -75,35 +75,35 @@ std::set<std::string> visibleFor(Player const& player) {
 }
 
 Json screenData(Player& player) {
-    auto const&                       all = advancements();
-    std::vector<cp::TreeNode>         layout;
-    for (auto const& a : all) layout.push_back({a.id, a.parent});
-    cp::layoutTree(layout);
-    auto visible = visibleFor(player);
-    Json nodes   = Json::array();
-    Json tab     = Json::object();
-    for (std::size_t i = 0; i < all.size(); ++i) {
-        auto const& a = all[i];
+    // the positions are the server's TreeNodePosition over the whole tree (Engine.cpp, as
+    // ServerAdvancementManager#apply): a node keeps its place whether or not its neighbours are
+    // visible, exactly as Java's tab shows a partly revealed tree
+    auto const& all     = advancements();
+    auto        visible = visibleFor(player);
+    Json        nodes   = Json::array();
+    Json        tab     = Json::object();
+    for (auto const& a : all) {
         if (a.parent.empty()) {
-            tab = {{"id", a.id}, {"title", a.titleKey}, {"icon", a.icon}, {"background", texturePath(a.background)}};
+            tab = {{"id", a.id}, {"title", a.title}, {"icon", a.icon}, {"iconItem", iconItem(a)}, {"background", texturePath(a.background)}};
         }
-        if (!visible.contains(a.id)) continue;
+        if (!visible.contains(a.id) || !a.placed) continue;
         auto prog = progressOf(player, a);
         nodes.push_back({
             {"id", a.id},
             {"parent", a.parent},
-            {"title", a.titleKey},
-            {"desc", a.descKey},
+            {"title", a.title},
+            {"desc", a.description},
             {"icon", a.icon},
+            {"iconItem", iconItem(a)},
             {"frame", frameName(a.frame)},
             {"done", prog.done},
+            {"hidden", a.hidden},
             {"met", prog.met},
             {"groups", prog.groups},
-            {"x", layout[i].x},
-            {"y", layout[i].y},
+            {"x", a.x},
+            {"y", a.y},
         });
     }
     return {{"tab", tab}, {"nodes", nodes}};
 }
-
 } // namespace gf::feature::progression_content

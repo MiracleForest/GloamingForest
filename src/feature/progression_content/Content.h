@@ -40,9 +40,12 @@ struct Advancement {
     std::string              id;      ///< "twilightforest:progress_naga"
     std::string              parent;  ///< "" for the root
     bool                     hasDisplay = false;
-    std::string              titleKey, descKey; ///< translation keys
+    std::string              titleKey, descKey; ///< the components' translation keys
+    Json                     title, description; ///< the text components (translate + with arguments)
     std::string              icon;              ///< item id
     Json                     iconComponents;    ///< the icon's components (variants)
+    float                    x = 0, y = 0;      ///< TreeNodePosition's column and row
+    bool                     placed = false;    ///< laid out (a displayed node under a displayed root)
     Frame                    frame          = Frame::Task;
     bool                     hidden         = false;
     bool                     showToast      = true;
@@ -92,6 +95,12 @@ struct Progress {
 /// that is done or has a done descendant, else the first rule found on it, its parent or its
 /// grandparent (done: shown; hidden or without display: not shown) decides; none: not shown.
 [[nodiscard]] std::set<std::string> visibleFor(Player const& player);
+
+/// An advancement text component in `player`'s language (the arguments translated too).
+[[nodiscard]] std::string textFor(Player const& player, Json const& component);
+/// The icon as item JSON (game::items::toJson): the item with its components stored as item data
+/// under the component ids (`twilightforest:e115_variant`, ...), so the icon keeps its variant.
+[[nodiscard]] Json iconItem(Advancement const& adv);
 
 /// Opens the advancement screen (native for companions, the form otherwise).
 bool openAdvancements(Player& player);

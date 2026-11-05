@@ -55,7 +55,9 @@
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/dimension/Dimension.h"
 
+#include "feature/combat/Combat.h"
 #include "feature/common/Interactions.h"
+#include "feature/death/Death.h"
 #include "feature/dimension/World.h"
 #include "feature/landmark/Landmark.h"
 #include "feature/progression/Progression.h"
@@ -65,6 +67,7 @@
 #include "game/Blocks.h"
 #include "game/Items.h"
 #include "game/WorldDb.h"
+#include "mod/I18n.h"
 #include "mod/Log.h"
 #include "mod/Main.h"
 #include "mod/Module.h"
@@ -122,8 +125,10 @@ std::optional<Advancement> parseAdvancement(std::string const& id, Json const& j
     a.parent = j.value("parent", std::string{});
     if (auto d = j.find("display"); d != j.end() && d->is_object()) {
         a.hasDisplay = true;
-        a.titleKey   = keyOf(d->value("title", Json{}));
-        a.descKey    = keyOf(d->value("description", Json{}));
+        a.title       = d->value("title", Json(""));
+        a.description = d->value("description", Json(""));
+        a.titleKey    = keyOf(a.title);
+        a.descKey     = keyOf(a.description);
         auto icon    = d->value("icon", Json::object());
         a.icon       = icon.is_object() ? icon.value("id", icon.value("item", std::string{})) : std::string{};
         a.iconComponents = icon.is_object() ? icon.value("components", Json::object()) : Json::object();
@@ -183,6 +188,17 @@ void loadLocked(Store& s) {
     }
     for (std::size_t i = 0; i < s.list.size(); ++i)
         for (std::size_t c = 0; c < s.list[i].criteria.size(); ++c) s.byTrigger[s.list[i].criteria[c].trigger].push_back({i, c});
+    // ServerAdvancementManager#apply: TreeNodePosition over every tree (children in file order)
+    {
+        std::vector<cp::TreeNode> layout;
+        for (auto const& a : s.list) layout.push_back({a.id, a.parent, a.hasDisplay});
+        cp::layoutTree(layout);
+        for (std::size_t i = 0; i < s.list.size(); ++i) {
+            s.list[i].x      = layout[i].x;
+            s.list[i].y      = layout[i].y;
+            s.list[i].placed = layout[i].placed;
+        }
+    }
     // the restrictions registry: data/<ns>/twilight/restrictions/<path>.json, keyed by biome
     for (auto const& nsDir : std::filesystem::directory_iterator(data, ec)) {
         auto root = nsDir.path() / "twilight" / "restrictions";
@@ -292,6 +308,25 @@ std::optional<BlockPos> posIn(Json const& data) {
     return std::nullopt;
 }
 
+/// What the lethal pipeline saw of a dying entity (PlayerKilledEntityTrigger's view).
+struct KillSnapshot {
+    std::shared_ptr<cp::EntityView> vehicle; ///< what the victim rode at the killing blow
+    std::optional<cp::EntityView>   direct;  ///< the direct entity when it was not the attacker
+    std::uint64_t                   tick = 0;
+};
+struct Kills {
+    std::mutex                                       mutex;
+    std::unordered_map<std::int64_t, KillSnapshot>   byVictim;
+};
+Kills& kills() {
+    static Kills k;
+    return k;
+}
+std::uint64_t currentTick() {
+    auto level = ll::service::getLevel();
+    return level ? static_cast<std::uint64_t>(level->getCurrentServerTick().tickID) : 0;
+}
+
 bool regenerating(Block const& b) {
     for (auto const& [k, v] : game::statesOf(b))
         if ((k == "regenerate" || k.ends_with(":regenerate")) && (v == "true" || v == "1")) return true;
@@ -312,22 +347,59 @@ public:
 
         pr::events::onInventoryChanged([](Player& p) { evaluateInventory(p); });
 
+        // PlayerKilledEntityTrigger reads the victim as it was when the killing blow landed (its
+        // vehicle before die() dismounts it) and the damage source's direct entity: both are
+        // captured in F10's lethal pipeline (last, so only deaths nobody prevents) and read back
+        // when F10 fires onKilled after die()
+        death::onLethal(-1000000, [](Actor& victim, combat::DamageInfo const& d) {
+            if (victim.isClientSide()) return false;
+            KillSnapshot snap;
+            if (auto* veh = victim.getVehicle()) snap.vehicle = std::make_shared<cp::EntityView>(entityView(*veh, false));
+            if (d.direct && d.direct != d.attacker) snap.direct = entityView(*d.direct, false);
+            snap.tick = currentTick();
+            auto& k   = kills();
+            std::lock_guard lock(k.mutex);
+            if (k.byVictim.size() > 256) std::erase_if(k.byVictim, [now = snap.tick](auto const& e) { return now - e.second.tick > 40; });
+            k.byVictim[victim.getOrCreateUniqueID().rawID] = std::move(snap);
+            return false;
+        });
+
         pr::events::onKilled([](Player& killer, Actor& victim, std::string const&) {
-            auto view       = entityView(victim);
-            auto killerView = entityView(killer, false);
+            std::optional<KillSnapshot> snap;
+            {
+                auto&           k = kills();
+                std::lock_guard lock(k.mutex);
+                if (auto it = k.byVictim.find(victim.getOrCreateUniqueID().rawID); it != k.byVictim.end()) {
+                    snap = std::move(it->second);
+                    k.byVictim.erase(it);
+                }
+            }
+            auto view = entityView(victim);
+            if (snap && snap->vehicle && !view.vehicle) view.vehicle = snap->vehicle; // dismounted by die()
+            // the killing blow's direct entity: the projectile when there was one, else the killer
+            // (a melee blow: Java's DamageSource#getDirectEntity is the attacking player)
+            auto direct = snap && snap->direct ? *snap->direct : entityView(killer, false);
+            if (!(snap && snap->direct)) direct.type = "minecraft:player";
             awardWhere(killer, "minecraft:player_killed_entity", [&](Advancement const&, Criterion const& c) {
                 if (auto e = c.conditions.find("entity"); e != c.conditions.end() && !cp::matchConditions(*e, cp::Context{&view}, env())) return false;
                 if (auto kb = c.conditions.find("killing_blow"); kb != c.conditions.end() && kb->is_object()) {
                     for (auto const& [key, pred] : kb->items()) {
-                        // the direct entity of a player's kill is the player (a melee blow)
-                        if ((key == "direct_entity" || key == "source_entity") && !cp::matchEntity(pred, killerView, env())) return false;
-                        if (key != "direct_entity" && key != "source_entity") return false;
+                        if (key == "direct_entity") {
+                            if (!cp::matchEntity(pred, direct, env())) return false;
+                        } else if (key == "source_entity") {
+                            auto source = entityView(killer, false);
+                            source.type = "minecraft:player";
+                            if (!cp::matchEntity(pred, source, env())) return false;
+                        } else if (key == "is_direct") {
+                            if (!pred.is_boolean() || pred.get<bool>() != !(snap && snap->direct)) return false;
+                        } else {
+                            return false; // damage type tags: not used by TF's advancements
+                        }
                     }
                 }
                 return true;
             });
         });
-
         // F10 fires minecraft:consume_item {"item": id} after Player#completeUsingItem
         pr::onTrigger("minecraft:consume_item", [](Player& p, Json const& data) {
             cp::ItemView item;
@@ -387,7 +459,35 @@ public:
             ia::priority::Highest - 1
         );
 
-        pr::onTrigger("minecraft:recipe_crafted", [](Player& p, Json const& data) {
+        // magic beans on uberous soil (MagicBeansItem#useOn, U29's item): ServerPlayerGameMode fires
+        // item_used_on_block when the use consumed the action, i.e. when the soil had air above it
+        // and a beanstalk grower took its place; watched here so beanstalk's use_beans does not
+        // depend on the item's owner firing it (a second trigger is harmless)
+        ia::onUseOn(
+            {.block = "twilightforest:uberous_soil", .item = "twilightforest:magic_beans"},
+            [](ia::UseOnContext const& c) {
+                if (!c.firstEvent) return ia::Result::Pass;
+                auto  id     = c.player.getOrCreateUniqueID();
+                auto  pos    = c.pos;
+                auto& here   = c.player.getDimensionBlockSource();
+                auto  bpNow  = game::blockPos(pos);
+                if (!here.getBlock(BlockPos{bpNow.x, bpNow.y + 1, bpNow.z}).isAir()) return ia::Result::Pass; // the beans need air above
+                ia::nextTick([id, pos] {
+                    auto  level  = ll::service::getLevel();
+                    auto* p      = level ? level->getPlayer(id) : nullptr;
+                    auto* region = game::regionOf(pos.dim);
+                    if (!p || !region) return;
+                    auto bp = game::blockPos(pos);
+                    if (game::blockId(region->getBlock(bp)) != "twilightforest:uberous_soil") return;
+                    if (game::blockId(region->getBlock(BlockPos{bp.x, bp.y + 1, bp.z})) != "twilightforest:beanstalk_grower") return;
+                    pr::trigger(*p, "minecraft:item_used_on_block", {{"pos", {pos.x, pos.y, pos.z}}, {"item", "twilightforest:magic_beans"}});
+                });
+                return ia::Result::Pass;
+            },
+            ia::priority::Highest - 1
+        );
+
+        pr::onTrigger("minecraft:recipe_crafted",[](Player& p, Json const& data) {
             auto crafted = cp::idIn(data, {"recipe_id", "recipe"});
             awardWhere(p, "minecraft:recipe_crafted", [&](Advancement const&, Criterion const& c) {
                 return cp::sameRecipe(c.conditions.value("recipe_id", std::string{}), crafted);
@@ -541,6 +641,22 @@ std::map<std::string, int> criteriaByTrigger() {
     std::map<std::string, int> out;
     for (auto const& [t, list] : s.byTrigger) out[t] = static_cast<int>(list.size());
     return out;
+}
+
+std::string textFor(Player const& player, Json const& component) {
+    auto locale = localeOf(player);
+    return cp::renderComponent(component, [&](std::string const& key, std::string const& fallback, std::vector<std::string> const& args) {
+        return core::formatMessage(translate(key, fallback, locale), args);
+    });
+}
+
+Json iconItem(Advancement const& adv) {
+    if (adv.icon.empty()) return nullptr;
+    auto stack = game::items::make(adv.icon, 1);
+    if (!stack) return Json{{"id", adv.icon}, {"count", 1}, {"aux", 0}};
+    if (adv.iconComponents.is_object())
+        for (auto const& [component, value] : adv.iconComponents.items()) game::items::setData(*stack, component, value);
+    return game::items::toJson(*stack);
 }
 
 Progress progressOf(Player const& player, Advancement const& adv) {

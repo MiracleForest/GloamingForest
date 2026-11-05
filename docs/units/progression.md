@@ -17,18 +17,37 @@ The criteria engine reads these keys (an id may be a string or an object with `i
 | `twilightforest:broke_glass_sword` | U8 | none |
 | `twilightforest:drink_from_flask` | U9 | `doses` (int), `seconds` (int, since the first dose), `potion` (id, e.g. `minecraft:strong_harming`) |
 | `twilightforest:consume_hydra_chop_on_low_hunger` | U10 | none |
-| `twilightforest:add_modifier` | U11 | none |
+| `twilightforest:add_modifier` | U11 | `modifier`: the added modifier id (compared when the criterion names one; TF's own criterion takes any) |
 | `twilightforest:uncraft_item` | U13 | `item` (or `stack`): the uncrafted item id (or `{id, count}`) |
 | `twilightforest:complete_quest_ram` | U19 | none |
 | `twilightforest:placed_on_trophy_pedestal`, `twilightforest:kill_all_phantoms` | U25 | none |
 | `twilightforest:activate_ghast_trap` | U26 | none |
-| `minecraft:item_used_on_block` | the item's owner, after a successful use-on (U29 for magic beans, U10 for redstone on experiment 115) | `pos` (`[x, y, z]` or `{x, y, z}`; the block there is read after the use), optionally `block` + `states` instead, and `item` (or `tool`, `stack`): the item used |
+| `minecraft:item_used_on_block` | U14 itself for redstone on experiment 115 and magic beans on uberous soil (it watches both uses and fires the trigger the tick after a use that took effect); the item's owner may fire it too (harmless) | `pos` (`[x, y, z]` or `{x, y, z}`; the block there is read after the use), optionally `block` + `states` instead, and `item` (or `tool`, `stack`): the item used |
 | `minecraft:recipe_crafted` | U14's extension `src/feature/ext/progression/RecipeCrafted.cpp` (crafting screen) | `recipe_id`: the BP recipe id; numbered layouts (`..._3`) count as the Java recipe |
 | `minecraft:consume_item` | F10 | `item` |
+| `twilightforest:structure_cleared` | F6 (`landmark::setConquered`) | `structure`: the landmark key, compared with the criterion's required `structure` |
 
 `minecraft:inventory_changed` (the whole inventory, armor and offhand), `minecraft:player_killed_entity`
 (the victim actor from `events::onKilled`) and the `location` / `tick` criteria (every second and
-after every grant) come from F10's events.
+after every grant) come from F10's events. For `player_killed_entity` the victim's vehicle and the
+killing blow's direct entity are captured in F10's lethal pipeline (`death::onLethal`, lowest
+priority) before `die()` dismounts the rider, and read back in `onKilled`: chicken_jerky needs the
+baby zombie's chicken and a direct entity (the player, not a projectile) holding the jerky.
+
+## Tree layout and texts
+
+The advancement positions are Minecraft's `TreeNodePosition` (Walker / Buchheim tidy tree) over
+the whole tree, as `ServerAdvancementManager#apply` computes them on the Java server and sends
+them to clients in `DisplayInfo` x / y (`core::progression::layoutTree`; gtested exactly against
+Java's own output in `tests/progression/TreeLayoutGolden.inc`, produced by
+`tests/progression/oracle/TreeNodePositionOracle.java` against the oracle's 1.21.1 server).
+Hidden nodes keep their cells, as in Java. Java keeps an advancement's children in an identity
+hash set, so its sibling order differs between runs; GloamingForest uses the file order.
+
+Titles and descriptions are text components (`translate` + `with`); the server renders them in a
+player's language for the form, chat and vanilla toasts, the client mod renders them in the game's
+language. Icons carry their components (`twilightforest:e115_variant`, `flask_contents`,
+`water_walk`) as item data under the component id.
 
 ## Item colour
 
@@ -52,3 +71,15 @@ earned (`EntityEvents#resetFlaskLogic`). The tracking is U9's: it listens to
   `progression_end` message (Bedrock chat has no links: the URL follows the blue text).
 - Locked biome toast: the client mod runs TF's static countdown; vanilla clients get the same
   countdown per player on the server and the game's toast.
+- A challenge plays Bedrock's `random.levelup` to the earner (Java's `ui.toast.challenge_complete`
+  has no Bedrock counterpart, and F3's synth renders only TF's own sound events).
+- The native tree pans by dragging with the left button and with the wheel (Shift: sideways); the
+  hover dims the tree, splits the title bar by progress, and puts the description above the node
+  near the bottom and the box to the left near the screen's right edge, as AdvancementWidget.
+
+## e2e demos
+
+`progression.demo_*` and the client toast tests act only on real players carrying the scoreboard
+tag `gf_e2e_progression` (the client scenario adds and removes it). The first demo saves the
+player's exact progress and `progression.demo_reset` restores it, so a `full` or glob run never
+changes a real player's progression.
