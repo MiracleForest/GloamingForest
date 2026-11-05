@@ -20,6 +20,7 @@
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/actor/BlockActor.h"
 #include "mc/world/level/block/actor/BlockActorType.h"
+#include "mc/world/level/block/actor/FurnaceBlockActor.h"
 #include "mc/world/level/block/actor/ItemFrameBlockActor.h"
 
 #include "feature/darktower/Util.h"
@@ -135,8 +136,8 @@ void runGenerated(BlockSource& region, BlockPos const& bp, Json const& job) {
         static_cast<ItemFrameBlockActor&>(*actor).setItem(region, ItemInstance(*stack), nullptr);
     } else if (kind == "fuel") {
         auto* actor = region.getBlockEntity(bp);
-        if (!actor || game::blockIdAt(region, bp) != "minecraft:furnace") return;
-        auto* container = actor->getContainer();
+        if (!actor || actor->getType() != BlockActorType::Furnace) return;
+        auto* container = static_cast<FurnaceBlockActor&>(*actor).getContainer();
         auto  stack     = game::items::make(job.value("item", std::string{}), job.value("count", 1));
         if (container && stack && !stack->isNull()) container->setItem(1, *stack);
     }
