@@ -6,6 +6,7 @@
 #ifdef GF_CLIENT
 
 #include <algorithm>
+#include <cmath>
 
 #include "client/Client.h"
 #include "client/atmosphere/AtmosphereClient.h"
@@ -26,6 +27,12 @@ namespace atc = gf::client::atmosphere;
 namespace ca  = gf::core::atmosphere;
 namespace at  = gf::feature::atmosphere;
 namespace sky = gf::client::sky;
+
+/// Waits until the unit's client tick counter advanced by `n` (at most 30 s of server ticks).
+ll::coro::CoroTask<> clientTicks(Context& ctx, int n) {
+    int const start = atc::state().ticks;
+    for (int i = 0; i < 600 && atc::state().ticks - start < n; ++i) co_await ctx.ticks(1);
+}
 
 GF_REGISTER_SELFTEST("atmosphere.client_provider", [](Context& ctx) {
     auto s = atc::state();
@@ -60,19 +67,26 @@ GF_REGISTER_SELFTEST("atmosphere.client_aurora", [](Context& ctx) -> ll::coro::C
         ctx.info("the local player is not in the Twilight Forest: aurora not checked");
         co_return;
     }
+    // counted in client ticks (the counter's own clock; a loaded client ticks slower than the server)
     atc::setPreview({{"biome", "twilightforest:glacier"}});
-    co_await ctx.ticks(30);
-    int half = atc::state().aurora;
-    co_await ctx.ticks(40);
+    co_await clientTicks(ctx, 2);
+    auto s0 = atc::state();
+    co_await clientTicks(ctx, 30);
+    auto s1   = atc::state();
+    int  want = std::min(ca::kAuroraMax, s0.aurora + (s1.ticks - s0.ticks));
+    ctx.check(std::abs(s1.aurora - want) <= 1, "the aurora rises by 1 a client tick (" + std::to_string(s0.aurora) + " -> " + std::to_string(s1.aurora) + " in " + std::to_string(s1.ticks - s0.ticks) + " ticks)");
+    co_await clientTicks(ctx, 70);
     int full = atc::state().aurora;
-    ctx.check(half > 10 && half < 50, "the aurora fades in over 60 ticks (" + std::to_string(half) + " after 30)");
-    ctx.check(full == ca::kAuroraMax, "the aurora is full after 70 ticks (" + std::to_string(full) + ")");
+    ctx.check(full == ca::kAuroraMax, "the aurora is full after 60 client ticks (" + std::to_string(full) + ")");
     // (an empty auroraBiomes list turning it off is core::atmosphere::tickAurora's gtest: the config
     // is read by the client and render threads, a selftest must not change it under them)
     atc::setPreview({{"biome", "twilightforest:forest"}});
-    co_await ctx.ticks(10);
-    int fading = atc::state().aurora;
-    ctx.check(fading < full && fading > 30, "outside the glacier the aurora fades out by 1 a tick (" + std::to_string(fading) + " after 10)");
+    auto f0 = atc::state();
+    co_await clientTicks(ctx, 10);
+    auto f1     = atc::state();
+    int  fading = f1.aurora;
+    int  fell   = full - fading;
+    ctx.check(fell >= std::max(1, f1.ticks - f0.ticks - 2) && fell <= f1.ticks - f0.ticks + 1, "outside the glacier the aurora fades out by 1 a client tick (" + std::to_string(fading) + " after " + std::to_string(f1.ticks - f0.ticks) + ")");
     atc::setPreview(nlohmann::json::object());
 });
 
@@ -82,19 +96,22 @@ GF_REGISTER_SELFTEST("atmosphere.client_weather", [](Context& ctx) -> ll::coro::
         co_return;
     }
     atc::setPreview({{"biome", "twilightforest:snowy_forest"}, {"locked", true}});
-    co_await ctx.ticks(3);
+    co_await clientTicks(ctx, 2);
     ctx.check(atc::state().nearLocked, "a locked biome around the player draws its weather");
     atc::setPreview({{"biome", "twilightforest:forest"}, {"locked", true}});
-    co_await ctx.ticks(3);
+    co_await clientTicks(ctx, 2);
     ctx.check(!atc::state().nearLocked, "a biome without a restriction draws none");
     atc::setPreview({{"biome", "twilightforest:forest"}, {"urGhast", true}});
-    co_await ctx.ticks(14);
+    co_await clientTicks(ctx, 12);
     float full = atc::state().urGhastRain;
-    ctx.check(full > 0.95f, "the Ur-Ghast's tantrum raises its rain by 0.1 a tick to 1 (" + std::to_string(full) + ")");
+    ctx.check(full > 0.95f, "the Ur-Ghast's tantrum raises its rain by 0.1 a client tick to 1 (" + std::to_string(full) + ")");
     atc::setPreview(nlohmann::json::object());
-    co_await ctx.ticks(10);
-    float after = atc::state().urGhastRain;
-    ctx.check(after < 0.95f && after > 0.6f, "and it falls by 0.02 a tick after (" + std::to_string(after) + ")");
+    auto r0 = atc::state();
+    co_await clientTicks(ctx, 10);
+    auto  r1    = atc::state();
+    float after = r1.urGhastRain;
+    float want  = std::max(0.0f, r0.urGhastRain - 0.02f * static_cast<float>(r1.ticks - r0.ticks));
+    ctx.check(std::abs(after - want) < 0.03f, "and it falls by 0.02 a client tick after (" + std::to_string(after) + ", " + std::to_string(r1.ticks - r0.ticks) + " ticks)");
 });
 
 GF_REGISTER_SELFTEST("atmosphere.client_config", [](Context& ctx) {

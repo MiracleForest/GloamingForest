@@ -58,6 +58,10 @@
 
 #include "mc/client/game/ClientInstance.h"
 #include "mc/client/gui/screens/ScreenContext.h"
+#include "mc/deps/core/math/Matrix.h"
+#include "mc/deps/renderer/Camera.h"
+#include "mc/deps/renderer/MatrixStack.h"
+#include "glm/gtc/matrix_transform.hpp"
 #include "mc/client/multiplayer/ClientLevel.h"
 #include "mc/client/player/LocalPlayer.h"
 #include "mc/client/renderer/game/LevelRenderer.h"
@@ -505,8 +509,8 @@ void clientTick() {
 
 // ---- aurora worker -------------------------------------------------------------------------------------------
 
-constexpr int kAuroraRings    = 160; ///< about 0.45 degrees a ring seen from the camera
-constexpr int kAuroraSegments = 320; ///< 1.1 degrees a segment
+constexpr int kAuroraRings    = 128; ///< about 0.55 degrees a ring seen from the camera
+constexpr int kAuroraSegments = 256; ///< 1.4 degrees a segment
 
 class AuroraWorker {
 public:
@@ -530,7 +534,7 @@ private:
         while (true) {
             {
                 std::unique_lock lock(mMutex);
-                mWake.wait_for(lock, std::chrono::milliseconds(80), [this] { return mStop; });
+                mWake.wait_for(lock, std::chrono::milliseconds(120), [this] { return mStop; });
                 if (mStop) return;
             }
             ca::AuroraUniforms u;
@@ -550,7 +554,7 @@ private:
             grid->mesh = ca::auroraMesh(ca::auroraHeight(u.camY), u.fogEnd, kAuroraRings, kAuroraSegments);
             int const rows = grid->mesh.rings + 1, segs = grid->mesh.segments;
             grid->vertices.resize(static_cast<std::size_t>(rows * segs));
-            // two threads: about 30 ms for the 51 k vertices (17 noise samples each)
+            // two threads: about 45 ms for the 33 k vertices (17 noise samples each)
             auto part = [&](int from, int to) {
                 for (int r = from; r < to; ++r)
                     for (int k = 0; k < segs; ++k) {
@@ -811,27 +815,43 @@ void drawAurora(render::RenderContext& ctx, float partial, bool sky) {
         logOnce("aurora_far", fmt::format("atmosphere: world pass far plane {:.0f}, aurora scaled x{:.3f}", far, k));
     }
     bool const premultiply = mode == AuroraMode::SkyStars; // the stars material ignores vertex alpha
-    int const  rings = grid->mesh.rings, segs = grid->mesh.segments;
-    auto       vtx = [&](int r, int sIdx) {
-        ColourVertex v = grid->vertices[static_cast<std::size_t>(r * segs + (sIdx % segs))];
-        v.x            = (v.x + ox) * k;
-        v.z            = (v.z + oz) * k;
-        v.y            = y * k;
-        v.a            = std::clamp(v.a * mod, 0.0f, 1.0f);
-        if (premultiply) v = ColourVertex{v.x, v.y, v.z, v.r * v.a, v.g * v.a, v.b * v.a, 1.0f};
-        return v;
+    // the quads are built again only when the mesh, the fade, the scale or the mode changes (about
+    // every 100 ms); the camera's movement since the mesh was computed is the world matrix's
+    struct Cache {
+        AuroraGrid const*         grid = nullptr;
+        int                       fade = -1, scale = -1, winding = -1, mode = -1;
+        std::vector<ColourVertex> quads;
     };
-    std::vector<ColourVertex> quads;
-    quads.reserve(static_cast<std::size_t>(rings * segs * 2));
-    for (int r = 0; r < rings; ++r)
-        for (int sIdx = 0; sIdx < segs; ++sIdx) {
-            auto a = vtx(r, sIdx), b = vtx(r, sIdx + 1), c = vtx(r + 1, sIdx + 1), d = vtx(r + 1, sIdx);
-            auto lit = [premultiply](ColourVertex const& v) { return premultiply ? (v.r + v.g + v.b) > 0.004f : v.a > 0.002f; };
-            if (!lit(a) && !lit(b) && !lit(c) && !lit(d)) continue;
-            pushQuad(quads, a, b, c, d, preview.winding);
-        }
-    drawSmoothQuads(ctx.screen, *mat, tex, quads);
-    logOnce("aurora_drawn", fmt::format("atmosphere: aurora drawn ({} quads, alpha {:.2f}, {} pass, {})", quads.size() / 4, mod, sky ? "sky" : "world", name));
+    static Cache cache[2]; // sky pass, world pass (render thread)
+    Cache&      c     = cache[sky ? 0 : 1];
+    int const   fade  = static_cast<int>(std::lround(mod * 240.0f));
+    int const   scale = static_cast<int>(std::lround(k * 4096.0f));
+    if (c.grid != grid.get() || c.fade != fade || c.scale != scale || c.winding != preview.winding || c.mode != static_cast<int>(mode)) {
+        c = Cache{grid.get(), fade, scale, preview.winding, static_cast<int>(mode), {}};
+        int const rings = grid->mesh.rings, segs = grid->mesh.segments;
+        auto      vtx   = [&](int r, int sIdx) {
+            ColourVertex v = grid->vertices[static_cast<std::size_t>(r * segs + (sIdx % segs))];
+            v.x            = v.x * k;
+            v.z            = v.z * k;
+            v.y            = y * k;
+            v.a            = std::clamp(v.a * mod, 0.0f, 1.0f);
+            if (premultiply) v = ColourVertex{v.x, v.y, v.z, v.r * v.a, v.g * v.a, v.b * v.a, 1.0f};
+            return v;
+        };
+        auto lit = [premultiply](ColourVertex const& v) { return premultiply ? (v.r + v.g + v.b) > 0.004f : v.a > 0.002f; };
+        c.quads.reserve(static_cast<std::size_t>(rings * segs * 2));
+        for (int r = 0; r < rings; ++r)
+            for (int sIdx = 0; sIdx < segs; ++sIdx) {
+                auto a = vtx(r, sIdx), b = vtx(r, sIdx + 1), cc = vtx(r + 1, sIdx + 1), d = vtx(r + 1, sIdx);
+                if (!lit(a) && !lit(b) && !lit(cc) && !lit(d)) continue;
+                pushQuad(c.quads, a, b, cc, d, preview.winding);
+            }
+    }
+    auto& world  = ctx.screen.camera.worldMatrixStack.get();
+    auto  ref    = world.push(false);
+    ref.mat->_m.get() = ref.mat->_m.get() * glm::translate(glm::mat4{1.f}, glm::vec3{ox * k, 0.0f, oz * k});
+    drawSmoothQuads(ctx.screen, *mat, tex, c.quads);
+    logOnce("aurora_drawn", fmt::format("atmosphere: aurora drawn ({} quads, alpha {:.2f}, {} pass, {})", c.quads.size() / 4, mod, sky ? "sky" : "world", name));
 }
 
 /// Publishes the aurora shader's uniforms for the worker (render thread, once per frame).
@@ -1172,7 +1192,7 @@ private:
 AtmosphereState state() {
     auto&           s = shared();
     std::lock_guard lock(s.mutex);
-    return AtmosphereState{s.inTwilight, s.aurora, s.lastAurora, s.urGhastRain, s.cameraBiome, s.nearLocked, gDimension.load(), static_cast<bool>(s.grid)};
+    return AtmosphereState{s.inTwilight, s.aurora, s.lastAurora, s.urGhastRain, s.cameraBiome, s.nearLocked, gDimension.load(), static_cast<bool>(s.grid), s.ticks};
 }
 
 void setPreview(Json const& msg) { applyPreview(msg); }

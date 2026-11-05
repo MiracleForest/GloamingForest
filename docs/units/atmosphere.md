@@ -12,6 +12,7 @@ fallback. Spec: [docs/spec/atmosphere.md](../spec/atmosphere.md).
 | `src/client/atmosphere/` | Client mod: F12 sky provider for the TF dimension (sky, stars, fog, clouds, weather), the aurora worker thread, the Ur-Ghast rain splashes and sounds, the `atmosphere.*` client selftests. |
 | `src/feature/atmosphere/` | Config section `atmosphere`, the vanilla fog fallback (PlayerFogPacket), server selftests and the `atmosphere.show_*` previews of the client scenario. |
 | `src/feature/ext/atmosphere/ClientHooks.cpp` | Contract extension (R18): HudVignetteRenderer (killVignette) and SplashTextRenderer (birthday splash) hooks. |
+| `src/feature/ext/atmosphere/SkyView.{h,cpp}` | Contract extension (R18, to fold into F12's SkyProvider): a per-dimension view override that sets the frame's cloud colour and hides the sunrise colour band (`ViewRenderObject` in `LevelRendererCamera::$render`). |
 | `assets/pack/rp/fogs/atmosphere/` | 24 resource pack fog definitions. |
 | `tools/e2e/{server,client}/scenarios/atmosphere*.ps1` | e2e scenarios (client: Classic + Vibrant Visuals in local mode, remote-mod, remote-vanilla). |
 
@@ -36,7 +37,7 @@ fallback. Spec: [docs/spec/atmosphere.md](../spec/atmosphere.md).
 
 | Key | Default | TF |
 |---|---|---|
-| `auroraBiomes` | `["twilightforest:glacier"]` | `TFClientConfig.auroraBiomes` (empty disables the aurora) |
+| `auroraBiomes` | `["twilightforest:glacier"]` | `TFClientConfig.auroraBiomes` (empty disables the aurora; ids that do not parse as resource locations, or name no biome of the world once its biomes are known, are warned about once and skipped, as `TFConfig#getValidAuroraBiomes`) |
 | `sky`, `fog`, `weather`, `aurora` | `true` | GloamingForest switches for the client mod's rendering |
 
 ## Bedrock adaptation

@@ -23,6 +23,7 @@ struct AtmosphereState {
     bool        nearLocked = false;
     int         dimension  = -1; ///< the TF dimension the provider is set for (-1: none yet)
     bool        auroraGrid = false;
+    int         ticks      = 0; ///< client ticks counted by the unit (selftests wait on these)
 };
 /// A snapshot of the client state (any thread).
 [[nodiscard]] AtmosphereState state();
