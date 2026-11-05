@@ -223,7 +223,9 @@ GF_REGISTER_SELFTEST("naga.segments", [](Context& ctx) -> ll::coro::CoroTask<> {
     ctx.require(naga != nullptr, "the Naga is still there");
     s = stateOf(*naga);
     ctx.check(activeSegments(*s) == 4, "4 active segments once the others popped (" + std::to_string(activeSegments(*s)) + ")");
-    if (auto* gone = ge::partActor(s->segments[8].part)) ctx.check(gone->getAABB().max.x - gone->getAABB().min.x < 0.05f, "a popped segment is 0 x 0");
+    // a popped segment is hidden (twilightforest:active false; Bedrock keeps a minimal hitbox for a
+    // 0 x 0 size) and takes no hits
+    ctx.check(!s->segments[8].active && s->segments[8].deathCounter == 0, "segment 8 popped and is inactive");
 });
 
 // NagaMovementPattern with a seeded random: CIRCLE -> INTIMIDATE -> CHARGE (or STUNLESS_CHARGE /
@@ -570,9 +572,12 @@ GF_REGISTER_SELFTEST("naga.courtyard_layout", [](Context& ctx) -> ll::coro::Coro
         }
     ctx.check(hedges > 20, "the maze has hedges (" + std::to_string(hedges) + " samples)");
     ctx.check(bricks > 5, "the wall has stone bricks (" + std::to_string(bricks) + " samples)");
-    static char const* const kGolden = "";
-    if (*kGolden) ctx.check(hash == kGolden, "the golden volume hash " + std::string(kGolden) + " (got " + hash + ")");
-    else ctx.info("no golden hash recorded yet");
+    static char const* const kGolden = "dfc9bf0f72de4615"; // reviewed with the client screenshots
+    // the processors' randomness is positional (StructurePlaceSettings#getRandom(pos)): the golden
+    // holds for the e2e server world's test area (box origin 118 -59 59)
+    if (hashBox.minX == 118 && hashBox.minY == -59 && hashBox.minZ == 59)
+        ctx.check(hash == kGolden, "the golden volume hash " + std::string(kGolden) + " (got " + hash + ")");
+    else ctx.info("another test area than the golden's: hash not compared");
 });
 
 } // namespace gf::feature::naga::tests
