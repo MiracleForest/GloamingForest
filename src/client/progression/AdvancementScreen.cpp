@@ -2,7 +2,8 @@
 //
 // U14, client mod: the advancement screen with TF's tab ("progression.advancements"), drawn as
 // Java's AdvancementsScreen lays it out (window 252 x 140, the tree inside at (9, 18), 234 x 113,
-// the tab above the window with the root's icon, "Advancements" at (8, 6)); the tab's background
+// the tab above the window with the root's icon, the selected tab's title at (8, 6) in 0x404040,
+// as AdvancementsScreen#renderWindow; "Advancements" without a tab); the tab's background
 // is the root's (TF's mazestone_large_brick), tiled 16 x 16 and scrolled with the tree; nodes sit
 // at (floor(x * 28), floor(y * 27)) of the server's TreeNodePosition layout, connected by Java's
 // black-outlined white lines. Hovering a node (AdvancementWidget#isMouseOver: its 27 x 27 cell, a
@@ -14,7 +15,8 @@
 // square, goals with cut corners, challenges with spikes; earned frames gold, the others grey.
 // Panning: dragging with the left button (AdvancementsScreen#mouseDragged) and the mouse wheel
 // (AdvancementsScreen#mouseScrolled, 16 pixels a notch; Shift: horizontally), clamped as
-// AdvancementTab#scroll. Everything inside the tree is clipped to it (Java's scissor).
+// AdvancementTab#scroll. Everything inside the tree is clipped to it (Java's scissor). The toasts
+// are drawn over the screen, as Java draws them over every screen.
 
 #ifdef GF_CLIENT
 
@@ -239,8 +241,8 @@ public:
         }
         // the window's inner frame and the title
         c.frame({kInX - 1, kInY - 1, kInW + 2, kInH + 2}, screen::color::kPanelDark);
-        c.text(8, 6, ctr("gui.advancements", "Advancements"), screen::color::kTextDark, screen::Align::Left, false);
-        if (!mNodes.empty()) c.text(8 + c.textWidth(ctr("gui.advancements", "Advancements")) + 6, 6, "- " + mTabTitle, screen::color::kTextDark, screen::Align::Left, false);
+        // AdvancementsScreen#renderWindow: the selected tab's title (TITLE without a tab) in 4210752
+        c.text(8, 6, mNodes.empty() || mTabTitle.empty() ? ctr("gui.advancements", "Advancements") : mTabTitle, 0xFF404040, screen::Align::Left, false);
         // AdvancementTab#drawTooltips: the tree dims while a node is hovered
         mFade = hovered ? std::min(mFade + 0.02f, 0.3f) : std::max(mFade - 0.04f, 0.0f);
         if (mFade > 0) c.fill({kInX, kInY, kInW, kInH}, static_cast<unsigned>(std::floor(mFade * 255.0f)) << 24);
@@ -250,6 +252,7 @@ public:
         mLastHover = hovered ? hovered->id : std::string{};
         // the tab's title when its tab is hovered
         if (mx >= 0 && mx < 28 && my >= -28 && my < 0) c.tooltip(mx, my, {mTabTitle});
+        drawToasts(c, true);
     }
 
 private:
@@ -520,6 +523,8 @@ bool TreeView::click(float mx, float my, screen::Button b, bool) {
 }
 
 } // namespace
+
+std::vector<std::string> splitLines(screen::Canvas& canvas, std::string const& text, float width) { return wrap(canvas, text, width); }
 
 std::string clientText(nlohmann::json const& component) {
     return core::progression::renderComponent(component, [](std::string const& key, std::string const& fallback, std::vector<std::string> const& args) {

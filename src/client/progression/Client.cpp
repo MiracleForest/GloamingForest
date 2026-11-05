@@ -13,8 +13,9 @@
 //   every world of the process) steps; when it shows, LockedBiomeToast (the restriction's icon,
 //   misc.twilightforest.biome_locked in yellow over misc.twilightforest.biome_locked_2, 10 s).
 // - The advancement toast of Java's AdvancementToast (progression.toast): "Advancement Made!" /
-//   "Goal Reached!" / "Challenge Complete!" in the frame's colour (green, purple for challenges)
-//   over the advancement's title in white, with its icon, for 5 s.
+//   "Goal Reached!" / "Challenge Complete!" in -256 (yellow), -30465 (pink) for challenges, over
+//   the advancement's title in white, with its icon (and its variant), for 5 s.
+// Both are drawn by this unit's toast component at Java's offsets (Toasts.cpp).
 // - The advancements key (L, as Java's key.advancements) asks the server for the screen.
 
 #ifdef GF_CLIENT
@@ -64,15 +65,18 @@ std::string localBiome(LocalPlayer& p) {
 }
 
 void showLockedToast(std::string const& icon) {
-    toast::ToastSpec spec;
-    spec.iconItem = icon;
-    spec.titleKey = "misc.twilightforest.biome_locked";
-    spec.bodyKey  = "misc.twilightforest.biome_locked_2";
-    spec.ms       = 10000;
-    toast::show(spec, toast::styleOf(toast::Kind::LockedBiome));
+    ToastInfo info;
+    info.what       = "locked_biome";
+    info.kind       = "locked_biome";
+    info.title      = ctr("misc.twilightforest.biome_locked", "Biome Locked!");
+    info.body       = ctr("misc.twilightforest.biome_locked_2", "Check your advancements");
+    info.icon       = icon;
+    info.titleColor = 0xFFFFFF00; // LockedBiomeToast: -256
+    info.ms         = 10000;
+    queueToast(info);
     {
         std::lock_guard lock(gMutex);
-        gLastToast = ShownToast{"locked_biome", spec.titleKey, spec.bodyKey, icon, spec.ms};
+        gLastToast = ShownToast{"locked_biome", "misc.twilightforest.biome_locked", "misc.twilightforest.biome_locked_2", icon, info.ms};
         ++gLockedToasts;
     }
     log().info("client toast: locked biome ({})", icon);
@@ -126,22 +130,26 @@ int lockedToastCount() {
 
 void showAdvancementToast(nlohmann::json const& msg) {
     auto frame = msg.value("frame", std::string{"task"});
-    // AdvancementToast: the type's toast name in its chat colour | 0xFF000000, the title white
-    toast::LiteralToastSpec t;
-    t.spec.iconItem = msg.value("icon", std::string{});
-    t.spec.titleKey = "advancements.toast." + frame;
-    t.spec.bodyKey  = msg.value("title", std::string{});
-    t.spec.ms       = 5000;
+    // AdvancementToast: the type's toast name in -256 (yellow), -30465 (pink) for challenges, the
+    // title white
+    ToastInfo info;
+    info.what  = msg.value("advancement", std::string{});
+    info.kind  = "advancement";
+    info.frame = frame;
+    info.icon  = msg.value("icon", std::string{});
+    info.ms    = 5000;
     // the advancement's title component (its key and arguments) in the game's language
-    if (auto c = msg.find("titleComponent"); c != msg.end() && !c->is_null()) t.body = clientText(*c);
-    t.title = frame == "goal" ? ctr("advancements.toast.goal", "Goal Reached!")
-            : frame == "challenge" ? ctr("advancements.toast.challenge", "Challenge Complete!")
-                                   : ctr("advancements.toast.task", "Advancement Made!");
-    toast::Style style{frame == "challenge" ? 0xFFAA00AAu : 0xFF55FF55u, 0xFFFFFFFFu};
-    toast::show(t, style);
+    auto titleKey = msg.value("title", std::string{});
+    if (auto c = msg.find("titleComponent"); c != msg.end() && !c->is_null()) info.body = clientText(*c);
+    if (info.body.empty()) info.body = ctr(titleKey, titleKey);
+    info.title = frame == "goal" ? ctr("advancements.toast.goal", "Goal Reached!")
+               : frame == "challenge" ? ctr("advancements.toast.challenge", "Challenge Complete!")
+                                      : ctr("advancements.toast.task", "Advancement Made!");
+    info.titleColor = frame == "challenge" ? 0xFFFF88FFu : 0xFFFFFF00u;
+    queueToast(info, msg.value("iconItem", nlohmann::json()));
     {
         std::lock_guard lock(gMutex);
-        gLastToast = ShownToast{msg.value("advancement", std::string{}), t.title, t.spec.bodyKey, t.spec.iconItem, t.spec.ms};
+        gLastToast = ShownToast{info.what, info.title, titleKey, info.icon, info.ms};
     }
     log().info("client toast: advancement {} ({})", msg.value("advancement", std::string{}), frame);
 }
@@ -173,6 +181,7 @@ public:
             if (net::client::connected()) net::client::send("progression.open", nlohmann::json::object());
         });
         registerAdvancementScreen();
+        registerToastLayer();
     }
     void uninstall() {}
 };

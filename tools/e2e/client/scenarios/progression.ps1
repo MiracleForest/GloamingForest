@@ -9,14 +9,22 @@
 #                            the green description with its argument ("Defeat a Redcap ...")
 #   advancement-drag.png     (client mod) the tree dragged with the left button: nodes cut at the
 #                            tree's edge (frames and icons clipped)
-#   advancement-toast.png    progress_labyrinth earned: Java's "Goal Reached!" toast with the
-#                            labyrinth miniature (client mod), the game's text toast, title green
-#                            (vanilla)
+#   advancement-toast.png    progress_labyrinth earned: Java's AdvancementToast (client mod: the
+#                            yellow "Goal Reached!" at (30, 7), the white title at (30, 18), the
+#                            labyrinth miniature at (8, 8)), the game's text toast with a yellow
+#                            title (vanilla)
+#   challenge-toast.png      experiment_115_115 earned, 1 s in: the pink "Challenge Complete!" at
+#                            (30, 11) (its title is wider than 125 pixels) with the "think"
+#                            Experiment 115 (client mod); the game's toast, title pink (vanilla).
+#                            The original challenge fanfare plays.
+#   challenge-toast-title.png  2.5 s in (client mod): the title's two lines centred in the toast,
+#                            faded in
 #   locked-biome-toast.png   TF's LockedBiomeToast after the 60-step countdown in the dark forest
 #                            (client mod: lich tower miniature, yellow "Biome Locked!", white "Check
 #                            your advancements"); on a vanilla client the server's toast after the
 #                            same countdown in the swamp (text only)
-# Compare them with TF's advancement screen (vanilla's window, TF's mazestone tab background) and
+# Compare them with TF's advancement screen (vanilla's window with the tab's title at 8,6, TF's
+# mazestone tab background), Java's AdvancementToast (icon at 8,8, text at 30,7 and 30,18) and
 # LockedBiomeToast (the advancement toast frame, icon at 6,8, text at 25,7 and 25,18).
 #
 # The demo selftests act only on players tagged gf_e2e_progression (they save the player's
@@ -102,6 +110,24 @@ try {
     }
     Start-Sleep -Milliseconds 1500
     Save-Screenshot 'advancement-toast' | Out-Null
+    Start-Sleep -Seconds 6
+
+    # a challenge with a long title and a variant icon
+    $mark = Get-LogMark
+    Invoke-Checked 'progression.demo_challenge_toast' | Out-Null
+    if (Test-ClientTrace) {
+        try { Wait-LogLine 'client toast: twilightforest:experiment_115_115 drawn in slot \d' 20 -Since $mark | Out-Null }
+        catch { $failures.Add('the client mod drew no challenge toast') }
+        try { Wait-LogLine 'client toast: challenge fanfare for twilightforest:experiment_115_115' 10 -Since $mark | Out-Null }
+        catch { $failures.Add('the challenge toast played no fanfare') }
+        Start-Sleep -Milliseconds 1000
+        Save-Screenshot 'challenge-toast' | Out-Null
+        Start-Sleep -Milliseconds 1500
+        Save-Screenshot 'challenge-toast-title' | Out-Null
+    } else {
+        Start-Sleep -Milliseconds 1500
+        Save-Screenshot 'challenge-toast' | Out-Null
+    }
     Start-Sleep -Seconds 6
 
     # the locked biome toast (the client mod's countdown is driven by client selftests, which exist

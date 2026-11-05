@@ -20,13 +20,14 @@
 // - minecraft:inventory_changed  progression::events::onInventoryChanged (the whole inventory,
 //                                armor and offhand against every item predicate)
 // - minecraft:player_killed_entity  events::onKilled (the victim, its vehicle, the structures and
-//                                dimension at its feet; the killing blow's direct entity is the
-//                                killer)
+//                                dimension at its feet; the killing blow's direct and source
+//                                entities as F10's lethal pipeline saw them)
 // - minecraft:consume_item       the trigger F10 fires after events::onConsumed ({"item": id})
 // - minecraft:location, tick     every second (events::onTick) and after every grant (the
 //                                "previous progression" criteria follow at once)
 // - minecraft:item_used_on_block / recipe_crafted and TF's 13 triggers: progression::onTrigger
-//   (payloads in docs/units/progression.md)
+//   (payloads in docs/units/progression.md); recipe_crafted counts F1's numbered Bedrock layouts
+//   of a split Java recipe (core::progression::sameRecipe against recipeIndex())
 //
 // A criterion that passes is granted with progression::grant(player, advancement, criterion);
 // F10's store completes the advancement when its requirements are met.
@@ -48,6 +49,7 @@
 #include "mc/world/actor/player/Inventory.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/ItemStack.h"
+#include "mc/world/item/crafting/Recipes.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
@@ -61,6 +63,7 @@
 #include "feature/dimension/World.h"
 #include "feature/landmark/Landmark.h"
 #include "feature/progression/Progression.h"
+#include "feature/recipes/Recipes.h"
 #include "feature/stats/Stats.h"
 #include "feature/tags/Tags.h"
 #include "feature/worldgen/Worldgen.h"
@@ -382,22 +385,29 @@ public:
             }
             auto view = entityView(victim);
             if (snap && snap->vehicle && !view.vehicle) view.vehicle = snap->vehicle; // dismounted by die()
-            // the killing blow's direct entity: the projectile when there was one, else the killer
-            // (a melee blow: Java's DamageSource#getDirectEntity is the attacking player)
-            auto direct = snap && snap->direct ? *snap->direct : entityView(killer, false);
-            if (!(snap && snap->direct)) direct.type = "minecraft:player";
+            // the killing blow (Java's DamageSource of LivingEntity#die): with a snapshot the player
+            // dealt it, its direct entity the projectile when there was one, else the killer (a
+            // melee blow: getDirectEntity is the attacking player). Without one F10 credited the
+            // player (lastHurtByPlayer) for a death by a source without entities, e.g. fire or a
+            // fall after the player's hit: Java's source then has neither a direct nor a causing
+            // entity, and isDirect() is true (null == null)
+            std::optional<cp::EntityView> direct, source;
+            if (snap) {
+                source       = entityView(killer, false);
+                source->type = "minecraft:player";
+                direct       = snap->direct ? *snap->direct : *source;
+            }
+            bool isDirect = !(snap && snap->direct);
             awardWhere(killer, "minecraft:player_killed_entity", [&](Advancement const&, Criterion const& c) {
                 if (auto e = c.conditions.find("entity"); e != c.conditions.end() && !cp::matchConditions(*e, cp::Context{&view}, env())) return false;
                 if (auto kb = c.conditions.find("killing_blow"); kb != c.conditions.end() && kb->is_object()) {
                     for (auto const& [key, pred] : kb->items()) {
                         if (key == "direct_entity") {
-                            if (!cp::matchEntity(pred, direct, env())) return false;
+                            if (!direct || !cp::matchEntity(pred, *direct, env())) return false;
                         } else if (key == "source_entity") {
-                            auto source = entityView(killer, false);
-                            source.type = "minecraft:player";
-                            if (!cp::matchEntity(pred, source, env())) return false;
+                            if (!source || !cp::matchEntity(pred, *source, env())) return false;
                         } else if (key == "is_direct") {
-                            if (!pred.is_boolean() || pred.get<bool>() != !(snap && snap->direct)) return false;
+                            if (!pred.is_boolean() || pred.get<bool>() != isDirect) return false;
                         } else {
                             return false; // damage type tags: not used by TF's advancements
                         }
@@ -496,7 +506,7 @@ public:
         pr::onTrigger("minecraft:recipe_crafted",[](Player& p, Json const& data) {
             auto crafted = cp::idIn(data, {"recipe_id", "recipe"});
             awardWhere(p, "minecraft:recipe_crafted", [&](Advancement const&, Criterion const& c) {
-                return cp::sameRecipe(c.conditions.value("recipe_id", std::string{}), crafted);
+                return cp::sameRecipe(c.conditions.value("recipe_id", std::string{}), crafted, recipeIndex());
             });
         });
 
@@ -520,6 +530,27 @@ public:
 };
 
 } // namespace
+
+cp::RecipeIndex const& recipeIndex() {
+    static cp::RecipeIndex const index{
+        // a Java data recipe (F9 indexes the game's recipes too, marked "native")
+        [](std::string const& id) {
+            auto const* r = gf::recipes::byId(id);
+            return r != nullptr && !(r->data.is_object() && r->data.value("native", false));
+        },
+        // a recipe identifier the game loaded (under any recipe tag)
+        [](std::string const& id) {
+            auto level = ll::service::getLevel();
+            if (!level) return false;
+            auto const& byTag = level->getRecipes().mRecipes.get();
+            auto        bare  = id.starts_with("minecraft:") ? id.substr(10) : id;
+            for (auto const& [tag, recipes] : byTag)
+                if (recipes.contains(id) || recipes.contains(bare)) return true;
+            return false;
+        },
+    };
+    return index;
+}
 
 char const* frameName(Frame f) { return f == Frame::Goal ? "goal" : f == Frame::Challenge ? "challenge" : "task"; }
 

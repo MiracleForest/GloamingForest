@@ -105,8 +105,16 @@ struct Context {
 /// The id a payload names under one of `keys` (a string, or an object with "id" / "name" / "item").
 [[nodiscard]] std::string idIn(Json const& data, std::initializer_list<char const*> keys);
 
-/// recipe_crafted: Bedrock splits a Java recipe of tag ingredients into numbered layouts
-/// ("twilightforest:equipment/travellers_belt_3"); they all count as the Java recipe.
-[[nodiscard]] bool sameRecipe(std::string const& javaId, std::string const& craftedId);
+/// The recipes a recipe_crafted criterion is resolved against.
+struct RecipeIndex {
+    std::function<bool(std::string const& id)> isJava;    ///< a Java data recipe (data/<ns>/recipe)
+    std::function<bool(std::string const& id)> isBedrock; ///< a recipe identifier the game loaded (BP)
+};
+/// recipe_crafted: F1 splits a Java recipe of tag ingredients into numbered Bedrock layouts
+/// <id>_0 .. <id>_<n-1> ("twilightforest:equipment/travellers_belt_3") and then writes no BP
+/// recipe <id>. A crafted id counts as the Java recipe when it is the Java id, or one of those
+/// layouts: <java id>_<digits>, the Java recipe exists and was split (no BP recipe of its own id,
+/// a layout _0), and the crafted id is no Java recipe of its own.
+[[nodiscard]] bool sameRecipe(std::string const& javaId, std::string const& craftedId, RecipeIndex const& index);
 
 } // namespace gf::core::progression

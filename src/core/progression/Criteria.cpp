@@ -292,11 +292,16 @@ bool matchTfTrigger(std::string const& trigger, Json const& conditions, Json con
     return true;
 }
 
-bool sameRecipe(std::string const& javaId, std::string const& craftedId) {
+bool sameRecipe(std::string const& javaId, std::string const& craftedId, RecipeIndex const& index) {
     auto j = withNamespace(javaId), c = withNamespace(craftedId);
+    if (j.empty() || c.empty()) return false;
     if (j == c) return true;
     if (c.size() <= j.size() + 1 || c.compare(0, j.size(), j) != 0 || c[j.size()] != '_') return false;
-    return std::all_of(c.begin() + static_cast<long>(j.size()) + 1, c.end(), [](unsigned char ch) { return std::isdigit(ch) != 0; });
+    if (!std::all_of(c.begin() + static_cast<long>(j.size()) + 1, c.end(), [](unsigned char ch) { return std::isdigit(ch) != 0; })) return false;
+    if (!index.isJava || !index.isBedrock) return false;
+    // a layout of F1's split: the Java recipe exists, has no BP recipe of its own id, its layouts
+    // start at _0, and the crafted id is not a Java recipe in its own right
+    return index.isJava(j) && !index.isBedrock(j) && index.isBedrock(j + "_0") && !index.isJava(c);
 }
 
 } // namespace gf::core::progression

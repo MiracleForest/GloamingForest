@@ -3,6 +3,8 @@
 // advancements (TeamTwilight/twilightforest @ 9e40a757, LGPL-2.1-or-later).
 #include <gtest/gtest.h>
 
+#include <set>
+
 #include "core/progression/Criteria.h"
 
 using namespace gf::core::progression;
@@ -166,10 +168,27 @@ TEST(ProgressionCriteria, TfTriggers) {
 }
 
 TEST(ProgressionCriteria, RecipeLayouts) {
-    EXPECT_TRUE(sameRecipe("twilightforest:equipment/travellers_belt", "twilightforest:equipment/travellers_belt"));
-    EXPECT_TRUE(sameRecipe("twilightforest:equipment/travellers_belt", "twilightforest:equipment/travellers_belt_3"));
-    EXPECT_FALSE(sameRecipe("twilightforest:equipment/travellers_belt", "twilightforest:equipment/travellers_belt_x"));
-    EXPECT_FALSE(sameRecipe("twilightforest:maze_map", "twilightforest:maze_map_focus"));
+    // Java recipes: the split belt, an unsplit map, and a Java recipe whose own id ends in _2
+    std::set<std::string> java{"twilightforest:equipment/travellers_belt", "twilightforest:maze_map", "twilightforest:stone_2",
+                               "twilightforest:stone", "twilightforest:thing"};
+    std::set<std::string> bp{"twilightforest:equipment/travellers_belt_0", "twilightforest:equipment/travellers_belt_3", "twilightforest:maze_map",
+                             "twilightforest:maze_map_1", "twilightforest:stone", "twilightforest:stone_2", "twilightforest:thing_0",
+                             "twilightforest:thing_1"};
+    RecipeIndex idx{[&](std::string const& id) { return java.contains(id); }, [&](std::string const& id) { return bp.contains(id); }};
+    EXPECT_TRUE(sameRecipe("twilightforest:equipment/travellers_belt", "twilightforest:equipment/travellers_belt", idx));
+    EXPECT_TRUE(sameRecipe("twilightforest:equipment/travellers_belt", "twilightforest:equipment/travellers_belt_3", idx));
+    EXPECT_TRUE(sameRecipe("twilightforest:equipment/travellers_belt", "twilightforest:equipment/travellers_belt_0", idx));
+    EXPECT_FALSE(sameRecipe("twilightforest:equipment/travellers_belt", "twilightforest:equipment/travellers_belt_x", idx));
+    EXPECT_FALSE(sameRecipe("twilightforest:maze_map", "twilightforest:maze_map_focus", idx));
+    // not split (a BP recipe of the Java id exists): an unrelated _1 recipe is not a layout
+    EXPECT_FALSE(sameRecipe("twilightforest:maze_map", "twilightforest:maze_map_1", idx));
+    // a Java recipe of its own that ends in _<digits> is not a layout of its prefix
+    EXPECT_FALSE(sameRecipe("twilightforest:stone", "twilightforest:stone_2", idx));
+    EXPECT_TRUE(sameRecipe("twilightforest:thing", "twilightforest:thing_1", idx));
+    // an unknown Java recipe has no layouts; without an index only the exact id counts
+    EXPECT_FALSE(sameRecipe("twilightforest:other", "twilightforest:other_0", idx));
+    EXPECT_FALSE(sameRecipe("twilightforest:thing", "twilightforest:thing_1", RecipeIndex{}));
+    EXPECT_TRUE(sameRecipe("twilightforest:thing", "twilightforest:thing", RecipeIndex{}));
     EXPECT_EQ(idIn(json{{"item", {{"id", "twilightforest:naga_scale"}}}}, {"item"}), "twilightforest:naga_scale");
     EXPECT_EQ(idIn(json{{"bug", "cicada"}}, {"bug"}), "minecraft:cicada");
 }

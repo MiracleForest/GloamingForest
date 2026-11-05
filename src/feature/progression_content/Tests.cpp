@@ -27,6 +27,7 @@
 #include "core/progression/Rules.h"
 #include "feature/combat/Combat.h"
 #include "feature/effects/Effects.h"
+#include "feature/entity/Entity.h"
 #include "feature/gamerules/GameRules.h"
 #include "feature/net/Net.h"
 #include "feature/progression/Progression.h"
@@ -40,6 +41,7 @@
 #include "selftest/SelfTest.h"
 
 #ifdef GF_CLIENT
+#include "client/Client.h"
 #include "client/progression/Client.h"
 #include "client/ui/Ui.h"
 #include "feature/ext/ui/Client.h"
@@ -199,11 +201,13 @@ GF_REGISTER_SELFTEST("progression.recipe_unlocks", [](Context& ctx) {
              + " BP recipes");
     ctx.check(rewards.size() >= 485, "at least TF's 485 recipe unlocks");
     std::vector<std::string> missing;
+    // a rewarded id names a Java recipe by definition (RecipeHolder ids)
+    cp::RecipeIndex layouts{[&](std::string const& id) { return data.contains(id) || rewards.contains(id); }, [&](std::string const& id) { return bp.contains(id); }};
     for (auto const& r : rewards) {
         bool ok = bp.contains(r) || data.contains(r);
         if (!ok)
             for (auto const& b : bp)
-                if (cp::sameRecipe(r, b)) {
+                if (cp::sameRecipe(r, b, layouts)) {
                     ok = true;
                     break;
                 }
@@ -275,6 +279,47 @@ GF_REGISTER_SELFTEST("progression.kill_criteria", [](Context& ctx) -> ll::coro::
     ctx.check(pr::done(*playerById(id), "twilightforest:twilight_hunter", "deer"), "killing a deer in the Twilight Forest meets twilight_hunter's deer");
     ctx.check(pr::has(*playerById(id), "twilightforest:twilight_hunter"), "one hunt earns twilight_hunter (any of its criteria)");
     resetProgress(*playerById(id));
+});
+
+// EntityEvents#resetFlaskLogic: earning an advancement with a drink_from_flask criterion resets
+// the flask dose tracking (twilightforest:flask_doses); others leave it alone.
+GF_REGISTER_SELFTEST("progression.flask_reset", [](Context& ctx) {
+    auto& p = ctx.player();
+    resetProgress(p);
+    auto& doses = gf::entity::data(p, "twilightforest:flask_doses");
+    auto  saved = doses;
+    doses       = Json{{"doses_drank", 2}, {"last_used_potion", "minecraft:strong_harming"}, {"last_game_time_started", 100}};
+    pr::grant(p, "twilightforest:hedge");
+    ctx.check(gf::entity::data(p, "twilightforest:flask_doses").value("doses_drank", -1) == 2, "an advancement without a flask criterion keeps the doses");
+    pr::grant(p, "twilightforest:full_mettle_alchemist");
+    auto const& after = gf::entity::data(p, "twilightforest:flask_doses");
+    ctx.check(after.value("doses_drank", -1) == 0 && !after.contains("last_used_potion") && after.value("last_game_time_started", 0) == 100,
+              "full_mettle_alchemist resets doses_drank and last_used_potion (resetDoses)");
+    gf::entity::data(p, "twilightforest:flask_doses") = saved;
+    resetProgress(p);
+});
+
+// The demo's restore is quiet: no toast, chat line or experience for re-granted progress.
+GF_REGISTER_SELFTEST("progression.quiet_grants", [](Context& ctx) {
+    auto& p = ctx.player();
+    resetProgress(p);
+    pr::trigger(p, "twilightforest:make_tf_portal"); // the root
+    gf::net::setTestCompanion(p, true);
+    (void)gf::net::takeTestMessages(p);
+    pc::setQuietGrants(true);
+    pr::grant(p, "twilightforest:hedge");
+    pc::setQuietGrants(false);
+    auto quiet = gf::net::takeTestMessages(p);
+    ctx.check(pr::has(p, "twilightforest:hedge"), "a quiet grant still completes the advancement");
+    ctx.check(std::none_of(quiet.begin(), quiet.end(), [](auto const& m) { return m.channel == "progression.toast"; }), "a quiet grant sends no toast");
+    resetProgress(p);
+    pr::trigger(p, "twilightforest:make_tf_portal");
+    (void)gf::net::takeTestMessages(p);
+    pr::grant(p, "twilightforest:hedge");
+    auto loud = gf::net::takeTestMessages(p);
+    ctx.check(std::any_of(loud.begin(), loud.end(), [](auto const& m) { return m.channel == "progression.toast"; }), "the same grant shows its toast otherwise");
+    gf::net::setTestCompanion(p, false);
+    resetProgress(p);
 });
 
 GF_REGISTER_SELFTEST("progression.trigger_criteria", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -667,16 +712,24 @@ void saveOnce(Player& p) {
     if (!savedProgress().contains(id)) savedProgress()[id] = snapshotOf(p);
 }
 
-/// Puts the saved progress back (the advancements earned again show their toasts once more).
+/// Puts the saved progress back quietly: the advancements earned again show no toast, chat line
+/// or message and award no experience (setQuietGrants).
 bool restoreSaved(Player& p) {
     auto it = savedProgress().find(p.getOrCreateUniqueID().rawID);
     if (it == savedProgress().end()) return false;
-    resetProgress(p);
-    for (auto const& a : pc::advancements()) {
-        if (it->second.done.contains(a.id)) pr::grant(p, a.id);
-        else if (auto c = it->second.criteria.find(a.id); c != it->second.criteria.end())
-            for (auto const& name : c->second) pr::grant(p, a.id, name);
+    pc::setQuietGrants(true);
+    try {
+        resetProgress(p);
+        for (auto const& a : pc::advancements()) {
+            if (it->second.done.contains(a.id)) pr::grant(p, a.id);
+            else if (auto c = it->second.criteria.find(a.id); c != it->second.criteria.end())
+                for (auto const& name : c->second) pr::grant(p, a.id, name);
+        }
+    } catch (...) {
+        pc::setQuietGrants(false);
+        throw;
     }
+    pc::setQuietGrants(false);
     savedProgress().erase(it);
     return true;
 }
@@ -714,6 +767,19 @@ GF_REGISTER_SELFTEST("progression.demo_toast", [](Context& ctx) {
         ++n;
     });
     ctx.info("progress_labyrinth earned by " + std::to_string(n) + " opted-in player(s)");
+});
+
+// A challenge with a title wider than 125 pixels and a variant icon: experiment_115_115 ("Eating
+// 115 Everyday, 115 Years, Forever", the "think" Experiment 115).
+GF_REGISTER_SELFTEST("progression.demo_challenge_toast", [](Context& ctx) {
+    int n = 0;
+    forOptedIn([&](Player& p) {
+        saveOnce(p);
+        pr::revoke(p, "twilightforest:experiment_115_115");
+        pr::grant(p, "twilightforest:experiment_115_115");
+        ++n;
+    });
+    ctx.info("experiment_115_115 earned by " + std::to_string(n) + " opted-in player(s)");
 });
 
 GF_REGISTER_SELFTEST("progression.demo_screen", [](Context& ctx) {
@@ -785,8 +851,17 @@ GF_REGISTER_SELFTEST("progression.client_toast", [](Context& ctx) -> ll::coro::C
     ctx.require(shown && shown->what == "twilightforest:hedge", "the client mod showed the hedge's toast");
     ctx.check(shown->body == "advancement.twilightforest.hedge" && shown->icon == "twilightforest:hedge" && shown->ms == 5000,
               "the advancement's title and icon, 5 s");
-    auto style = gf::client::toast::styleOfToast(shown->title);
-    ctx.check(style && style->titleColor == 0xFF55FF55u && style->bodyColor == 0xFFFFFFFFu, "task: green title, white advancement title");
+    auto info = pcl::toastOf("twilightforest:hedge");
+    ctx.check(info && info->kind == "advancement" && info->titleColor == 0xFFFFFF00u, "task: AdvancementToast's -256 (yellow) toast name");
+    // a challenge: -30465 (pink); the icon keeps its components
+    pcl::showAdvancementToast({{"advancement", "twilightforest:full_mettle_alchemist"},
+                               {"frame", "challenge"},
+                               {"title", "advancement.twilightforest.full_mettle_alchemist"},
+                               {"icon", "twilightforest:brittle_potion_flask"}});
+    auto challenge = pcl::toastOf("twilightforest:full_mettle_alchemist");
+    ctx.check(challenge && challenge->titleColor == 0xFFFF88FFu && challenge->title == gf::client::ctr("advancements.toast.challenge", "Challenge Complete!"),
+              "challenge: AdvancementToast's -30465 (pink) \"Challenge Complete!\"");
+    pcl::cancelToasts("twilightforest:full_mettle_alchemist");
     if (!hadHedge)
         if (auto* p = playerById(who)) pr::revoke(*p, "twilightforest:hedge");
 });

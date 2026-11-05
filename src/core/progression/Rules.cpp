@@ -15,6 +15,7 @@
 #pragma STDC FP_CONTRACT OFF
 
 #include <algorithm>
+#include <cmath>
 #include <deque>
 #include <functional>
 #include <map>
@@ -297,6 +298,28 @@ void layoutTree(std::vector<TreeNode>& nodes) {
     // ServerAdvancementManager: only trees whose root has a display are positioned
     for (auto r : roots)
         if (nodes[r].display) Walker(nodes, children).run(r);
+}
+
+// ---- the challenge fanfare (original) ------------------------------------------------------------------
+
+std::vector<FanfareNote> const& challengeFanfare() {
+    // note block notes: 6 C4, 10 E4, 13 G4, 18 C5, 22 E5 (the bass sounds two octaves lower)
+    static std::vector<FanfareNote> const notes{
+        {0, "note.bass", 6, 0.8f},     {0, "note.harp", 6, 0.9f},     {120, "note.harp", 10, 0.9f},  {240, "note.harp", 13, 0.9f},
+        {360, "note.bass", 13, 0.7f},  {360, "note.harp", 18, 1.0f},  {360, "note.bell", 18, 0.6f},  {600, "note.harp", 13, 0.8f},
+        {720, "note.harp", 18, 0.9f},  {840, "note.bass", 6, 0.9f},   {840, "note.harp", 22, 1.0f},  {840, "note.harp", 18, 0.8f},
+        {840, "note.chime", 22, 0.7f}, {840, "note.pling", 13, 0.6f}, {1200, "note.chime", 18, 0.5f},
+    };
+    return notes;
+}
+
+float notePitch(int note) { return static_cast<float>(std::pow(2.0, (static_cast<double>(std::clamp(note, 0, 24)) - 12.0) / 12.0)); }
+
+std::vector<FanfareNote> fanfareBetween(long fromMs, long toMs) {
+    std::vector<FanfareNote> out;
+    for (auto const& n : challengeFanfare())
+        if (n.ms > fromMs && n.ms <= toMs) out.push_back(n);
+    return out;
 }
 
 // ---- text components --------------------------------------------------------------------------------

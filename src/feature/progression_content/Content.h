@@ -80,6 +80,13 @@ void evaluatePlayerCriteria(Player& player);
 /// Tests the inventory_changed criteria against the player's inventory.
 void evaluateInventory(Player& player);
 
+/// The recipes recipe_crafted criteria resolve against (F9's data recipes, the game's BP recipes).
+[[nodiscard]] core::progression::RecipeIndex const& recipeIndex();
+
+/// While set, earning an advancement shows and awards nothing (no toast, chat line, experience
+/// or message): progress the e2e demo restores (Presentation.cpp).
+void setQuietGrants(bool quiet);
+
 /// Number of criteria the engine grants by trigger id (tests).
 [[nodiscard]] std::map<std::string, int> criteriaByTrigger();
 
