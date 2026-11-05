@@ -31,6 +31,13 @@
 #include "mc/entity/components_json_legacy/ProjectileComponent.h"
 #include "mc/scripting/modules/minecraft/ScriptFacing.h"
 #include "mc/world/actor/item/ItemActor.h"
+#include "mc/deps/core/math/Color.h"
+#include "mc/world/level/block/actor/BeaconBeamSection.h"
+#include "mc/world/level/block/actor/BeaconBlockActor.h"
+#include "mc/world/attribute/Attribute.h"
+#include "mc/world/attribute/AttributeInstance.h"
+#include "mc/world/attribute/AttributeInstanceConstRef.h"
+#include "mc/world/attribute/SharedAttributes.h"
 #include "mc/deps/shared_types/legacy/EquipmentSlot.h"
 
 #include "core/aurora/AuroraColor.h"
@@ -102,18 +109,40 @@ core::GlobalPos at(core::GlobalPos p, int dx, int dy, int dz) { return {p.dim, p
 GF_REGISTER_SELFTEST("aurora.mob_attributes", [](Context& ctx) -> ll::coro::CoroTask<> {
     DifficultyScope normal(Difficulty::Normal);
     auto            box  = co_await ctx.flatArea(2820, 16);
-    auto            base = core::GlobalPos{ctx.dimension(), box.minX + 4, box.minY + 1, box.minZ + 2};
-    // F13's goldens (tests/golden/mobs.json): max health
+    auto            base = core::GlobalPos{ctx.dimension(), box.minX + 2, box.minY + 1, box.minZ + 2};
+    // F13's goldens (tests/golden/mobs.json): max health, movement speed, attack damage, follow
+    // range, knockback resistance, the box (width, height) and the eye height, read from the live
+    // actors (flying speed: the queen's F8 flying speed, set from the same golden in SnowQueen.cpp)
     struct Row {
         char const* id;
         int         health;
+        float       speed, attack, follow, knockback, width, height, eye;
     };
+    auto attr = [](Mob& m, Attribute const& a) {
+        auto ref = m.getAttribute(a);
+        auto const* inst = static_cast<AttributeInstance const*>(ref.mPtr);
+        return inst ? inst->mCurrentValue : -1.0f;
+    };
+    auto near = [](float a, float b) { return std::abs(a - b) < 0.01f; };
     std::vector<std::int64_t> spawned;
     int                       i = 0;
-    for (auto r : {Row{kSnowGuardian, 10}, Row{kStableIceCore, 20}, Row{kUnstableIceCore, 20}, Row{kIceCrystal, 10}, Row{kSnowQueen, 200}}) {
-        auto* m = spawnAt(at(base, (i++) * 2, 0, 0), r.id);
+    for (auto r : {Row{kSnowGuardian, 10, 0.23f, 3.0f, 16.0f, 0.0f, 0.6f, 1.8f, 1.53f}, Row{kStableIceCore, 20, 0.23f, 3.0f, 16.0f, 0.0f, 0.8f, 1.8f, 1.35f},
+                   Row{kUnstableIceCore, 20, 0.23f, 3.0f, 16.0f, 0.0f, 0.8f, 1.8f, 1.35f}, Row{kIceCrystal, 10, 0.23f, 5.0f, 16.0f, 0.0f, 0.6f, 1.8f, 1.53f},
+                   Row{kSnowQueen, 200, 0.23f, 7.0f, 40.0f, 0.75f, 0.7f, 2.5f, 2.125f}}) {
+        auto* m = spawnAt(at(base, (i++) * 3, 0, 0), r.id);
         ctx.require(m != nullptr, std::string("spawned ") + r.id);
-        ctx.check(m->getMaxHealth() == r.health, std::string(r.id) + " max health " + std::to_string(m->getMaxHealth()));
+        std::string const id = r.id;
+        ctx.check(m->getMaxHealth() == r.health, id + " max health " + std::to_string(m->getMaxHealth()));
+        ctx.check(near(attr(*m, SharedAttributes::MOVEMENT_SPEED()), r.speed), id + " movement speed " + std::to_string(attr(*m, SharedAttributes::MOVEMENT_SPEED())));
+        ctx.check(near(attr(*m, SharedAttributes::ATTACK_DAMAGE()), r.attack), id + " attack damage " + std::to_string(attr(*m, SharedAttributes::ATTACK_DAMAGE())));
+        ctx.check(near(attr(*m, SharedAttributes::FOLLOW_RANGE()), r.follow), id + " follow range " + std::to_string(attr(*m, SharedAttributes::FOLLOW_RANGE())));
+        ctx.check(near(attr(*m, SharedAttributes::KNOCKBACK_RESISTANCE()), r.knockback),
+                  id + " knockback resistance " + std::to_string(attr(*m, SharedAttributes::KNOCKBACK_RESISTANCE())));
+        auto const& b = m->getAABB();
+        ctx.check(near(b.max.x - b.min.x, r.width) && near(b.max.y - b.min.y, r.height),
+                  id + " box " + std::to_string(b.max.x - b.min.x) + " x " + std::to_string(b.max.y - b.min.y));
+        float eye = m->getEyePos().y - m->getFeetPos().y;
+        ctx.check(std::abs(eye - r.eye) < 0.05f, id + " eye height " + std::to_string(eye) + " (Java " + std::to_string(r.eye) + ")");
         spawned.push_back(uidOf(*m));
     }
     co_await ctx.ticks(5);
@@ -140,7 +169,7 @@ GF_REGISTER_SELFTEST("aurora.ice_crystal_lifetime", [](Context& ctx) -> ll::coro
     auto*           wild     = spawnAt(at(pos, 2, 0, 0), kIceCrystal);
     ctx.require(summoned && wild, "two ice crystals");
     markSummonedCrystal(*summoned);
-    gf::entity::data(*summoned, "aurora:age") = 590;
+    setCrystalAgeForTest(*summoned, 590);
     auto s = uidOf(*summoned), w = uidOf(*wild);
     co_await ctx.ticks(20);
     ctx.check(fe::actorById(s) == nullptr || !fe::actorById(s)->isAlive(), "the summoned crystal is gone after 600 ticks");
@@ -148,6 +177,21 @@ GF_REGISTER_SELFTEST("aurora.ice_crystal_lifetime", [](Context& ctx) -> ll::coro
     if (auto* a = fe::actorById(w)) a->remove();
     discardAround(pos, 8);
 });
+
+namespace {
+/// Who progression's onKilled credits for the last unstable ice core (twilight_hunter, U14).
+std::int64_t& coreKilledBy() {
+    static std::int64_t who        = 0;
+    static bool         registered = false;
+    if (!registered) {
+        registered = true;
+        gf::progression::events::onKilled([](Player& killer, Actor& victim, std::string const&) {
+            if (victim.getTypeName() == kUnstableIceCore) who = killer.getOrCreateUniqueID().rawID;
+        });
+    }
+    return who;
+}
+} // namespace
 
 GF_REGISTER_SELFTEST("aurora.unstable_ice_core", [](Context& ctx) -> ll::coro::CoroTask<> {
     DifficultyScope normal(Difficulty::Normal);
@@ -162,8 +206,9 @@ GF_REGISTER_SELFTEST("aurora.unstable_ice_core", [](Context& ctx) -> ll::coro::C
     auto* core = spawnAt(pos, kUnstableIceCore);
     ctx.require(core != nullptr, "an unstable ice core");
     auto uid = uidOf(*core);
-    // killed on the tick it appears: its goals never move it away from the blocks
-    gf::combat::hurt(*core, 1000.0f, "minecraft:generic");
+    // killed by the player on the tick it appears: its goals never move it away from the blocks
+    coreKilledBy() = 0;
+    gf::combat::hurt(*core, 1000.0f, "minecraft:player_attack", &ctx.player(), &ctx.player());
     co_await ctx.ticks(20);
     auto* dying = fe::actorById(uid);
     ctx.check(dying && dying->isAlive(), "the core waits 60 ticks after its death");
@@ -173,6 +218,7 @@ GF_REGISTER_SELFTEST("aurora.unstable_ice_core", [](Context& ctx) -> ll::coro::C
     }
     co_await ctx.ticks(60);
     ctx.check(!fe::actorById(uid) || !fe::actorById(uid)->isAlive(), "then it explodes and is gone");
+    ctx.check(coreKilledBy() == uidOf(ctx.player()), "the delayed death is the player's kill (onKilled, twilight_hunter)");
     auto stone = game::blockIdAt(*region, game::blockPos(stonePos));
     auto ice   = game::blockIdAt(*region, game::blockPos(icePos));
     ctx.check(stone.ends_with("_terracotta"), "the stone became terracotta: " + stone);
@@ -205,26 +251,37 @@ GF_REGISTER_SELFTEST("aurora.transform_blocks", [](Context& ctx) -> ll::coro::Co
 });
 
 GF_REGISTER_SELFTEST("aurora.map_colors", [](Context& ctx) -> ll::coro::CoroTask<> {
-    // transformBlock reads MapColor#col: Bedrock's block map colours are Java's palette
+    // transformBlock reads MapColor#col: Java's colours of javaMapColor's table (grass and leaves are
+    // biome-tinted on Bedrock), Bedrock's own map colour for any other block. Bedrock's colours of
+    // the listed blocks are reported (a difference there is why the table exists)
     auto  box    = co_await ctx.flatArea(2850, 8);
     auto* region = ctx.region();
-    struct Row {
-        char const* id;
-        unsigned    java;
-    };
-    int i = 0;
-    for (auto r : {Row{"minecraft:stone", 0x707070}, Row{"minecraft:ice", 0xA0A0FF}, Row{"minecraft:dirt", 0x976D4D}, Row{"minecraft:snow", 0xFFFFFF},
-                   Row{"minecraft:packed_ice", 0xA0A0FF}}) {
-        auto p = core::GlobalPos{ctx.dimension(), box.minX + 1 + i++, box.minY + 1, box.minZ + 2};
-        ctx.require(ctx.setBlock(p, r.id), std::string("placed ") + r.id);
+    ctx.check(javaMapColor("minecraft:grass_block") == 0x7FB238u, "grass block: Java's MapColor.GRASS");
+    ctx.check(javaMapColor("minecraft:oak_leaves") == 0x007C00u && javaMapColor("minecraft:azalea_leaves_flowered") == 0x007C00u, "leaves: MapColor.PLANT");
+    ctx.check(javaMapColor("minecraft:red_terracotta") == 0x8E3C2Eu && javaMapColor("minecraft:lime_wool") == 0x7FCC19u, "terracotta and wool colours");
+    ctx.check(!javaMapColor("twilightforest:aurora_block").has_value(), "other blocks use Bedrock's map colour");
+    int i = 0, same = 0, n = 0;
+    std::string differ;
+    for (char const* id : {"minecraft:stone", "minecraft:ice", "minecraft:dirt", "minecraft:snow", "minecraft:packed_ice", "minecraft:grass_block", "minecraft:oak_leaves",
+                           "minecraft:sand", "minecraft:oak_planks", "minecraft:white_wool", "minecraft:deepslate", "minecraft:clay"}) {
+        auto p = core::GlobalPos{ctx.dimension(), box.minX + (i % 7), box.minY + 1 + i / 7, box.minZ + 2};
+        i++;
+        ctx.require(ctx.setBlock(p, id), std::string("placed ") + id);
         auto        bp = game::blockPos(p);
         auto const& b  = region->getBlock(bp);
         auto        c  = b.getBlockType().getMapColor(*region, bp, b);
         unsigned    rgb = (static_cast<unsigned>(c.r * 255.0f + 0.5f) << 16) | (static_cast<unsigned>(c.g * 255.0f + 0.5f) << 8) | static_cast<unsigned>(c.b * 255.0f + 0.5f);
-        char buf[96];
-        std::snprintf(buf, sizeof buf, "%s map colour #%06X, Java #%06X", r.id, rgb, r.java);
-        ctx.check(rgb == r.java, buf);
+        n++;
+        if (rgb == javaMapColor(id).value_or(~0u)) same++;
+        else {
+            char buf[80];
+            std::snprintf(buf, sizeof buf, "%s #%06X (Java #%06X); ", id, rgb, javaMapColor(id).value_or(0));
+            differ += buf;
+        }
+        ctx.cleanupBlock(p);
     }
+    ctx.info("Bedrock map colours equal to Java's: " + std::to_string(same) + " of " + std::to_string(n) + (differ.empty() ? std::string() : ", differing: " + differ));
+    ctx.check(same * 2 >= n, "Bedrock agrees with Java for most plain blocks");
 });
 GF_REGISTER_SELFTEST("aurora.stable_ice_core_snowballs", [](Context& ctx) -> ll::coro::CoroTask<> {
     DifficultyScope normal(Difficulty::Normal);
@@ -275,7 +332,7 @@ GF_REGISTER_SELFTEST("aurora.snow_queen_fight", [](Context& ctx) -> ll::coro::Co
         summoned = q && queenSummonsForTest(*q) < 6 && !around(pos, kIceCrystal, 30).empty();
     }
     ctx.check(summoned, "the summon phase brings ice crystals");
-    for (auto* c : around(pos, kIceCrystal, 30)) ctx.check(gf::entity::data(*c, "aurora:max_age") == 600, "a summoned crystal dies in 30 seconds");
+    for (auto* c : around(pos, kIceCrystal, 30)) ctx.check(crystalMaxAgeForTest(*c) == 600, "a summoned crystal dies in 30 seconds");
     // a hit on a shield is blocked
     auto* q = mobById(uid);
     ctx.require(q != nullptr, "the queen is still there");
@@ -415,27 +472,8 @@ GF_REGISTER_SELFTEST("aurora.snow_queen_beam", [](Context& ctx) -> ll::coro::Cor
     for (auto const& [type, amount] : dealt().hits) types += type + " ";
     ctx.info("damage the player took: " + (types.empty() ? std::string("none") : types));
     ctx.check(breathing, "she beams once in place");
-    // the ray itself: one doRayAttack along a view straight at the player
-    if (auto* q = mobById(uid)) {
-        auto pp = ctx.player().getFeetPos();
-        q->teleportTo(Vec3{pp.x - 2.0f, pp.y + 0.2f, pp.z}, false, 0, 1, false);
-    }
-    co_await ctx.ticks(1);
-    if (auto* q = mobById(uid)) {
-        auto qp = q->getFeetPos();
-        auto pp = ctx.player().getFeetPos();
-        // straight at the player, level
-        float yaw = static_cast<float>(-std::atan2(pp.x - qp.x, pp.z - qp.z) * 180.0 / 3.14159265358979);
-        q->moveTo(qp, Vec2{0.0f, yaw}); // (pitch, yaw)
-        q->setYHeadRot(yaw);
-        dealt().hits.clear();
-        ctx.player().heal(20);
-        rayAttackForTest(*q);
-        for (auto const& [type, amount] : dealt().hits)
-            if (type == "twilightforest:chilling_breath") breath++;
-        ctx.info("ray hits: " + std::to_string(dealt().hits.size()));
-    }
-    ctx.check(breath > 0, "the beam hit the player with chilling_breath");
+    // no forced aim: HoverBeamGoal's own lookAt turns her to the player and its ray hits
+    ctx.check(breath > 0, "the goal's beam hit the player with chilling_breath");
     dealt().victim = 0;
     ctx.player().setPlayerGameType(GameType::Creative);
     if (auto* q = fe::actorById(uid)) q->remove();
@@ -609,6 +647,20 @@ GF_REGISTER_SELFTEST("aurora.aurora_block_variant", [](Context& ctx) -> ll::coro
         if (want != 0) differs++;
     }
     ctx.check(differs > 0, "positions get different variants");
+    // a block set by a command (/setblock, /fill) gets its position's variant as well
+    int cmdChecked = 0, cmdOk = 0;
+    for (int i = 0; i < 6; i++) {
+        auto p = core::GlobalPos{ctx.dimension(), box.minX + 1 + i, box.minY + 3, box.minZ + 2};
+        auto r = gf::selftest::runServerCommand("setblock " + std::to_string(p.x) + " " + std::to_string(p.y) + " " + std::to_string(p.z) + " twilightforest:aurora_block",
+                                                ctx.dimension());
+        if (!r) continue;
+        cmdChecked++;
+        co_await ctx.ticks(2);
+        int got = game::intState(ctx.region()->getBlock(game::blockPos(p)), "gloamingforest:variant").value_or(-1);
+        if (got == core::aurora::calcVariant(p.x, p.y, p.z, 16)) cmdOk++;
+        ctx.cleanupBlock(p);
+    }
+    ctx.check(cmdChecked > 0 && cmdOk == cmdChecked, "/setblock aurora blocks take calcVariant: " + std::to_string(cmdOk) + " of " + std::to_string(cmdChecked));
     // a structure's plain aurora blocks get theirs
     auto* region = ctx.region();
     auto  p      = core::GlobalPos{ctx.dimension(), box.minX + 1, box.minY + 2, box.minZ + 3};
@@ -645,9 +697,7 @@ GF_REGISTER_SELFTEST("aurora.snow_guardian_gear", [](Context& ctx) -> ll::coro::
     auto head  = game::items::idOf(g->getItemSlot(Slot::Head));
     auto sword = game::items::idOf(g->getItemSlot(Slot::Mainhand));
     ctx.check(sword.ends_with("_sword") && head.ends_with("_helmet"), "gear: " + sword + ", " + head);
-    // the chestplate needs U7's wearable armour items (the engine refuses a non-wearable item in the
-    // chest slot): reported, not required
-    ctx.info("chest slot: " + (chest.empty() ? std::string("empty (U7's armour is not wearable yet)") : chest));
+    ctx.check(chest.ends_with("_chestplate"), "the chestplate is worn: " + (chest.empty() ? std::string("empty") : chest));
     gf::combat::hurt(*g, 1000.0f, "minecraft:generic");
     co_await ctx.ticks(25);
     int gear = 0;
@@ -679,4 +729,34 @@ GF_REGISTER_SELFTEST("aurora.snow_queen_spawner", [](Context& ctx) -> ll::coro::
     discardAround(spawner, 30);
 });
 
+GF_REGISTER_SELFTEST("aurora.auroralized_glass_beacon", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // AuroralizedGlassBlock#getBeaconColorMultiplier: the beam above the glass takes the aurora
+    // colour of the glass's position (the beacon's white replaced by the first colour, as Java)
+    auto box    = co_await ctx.flatArea(2890, 8, 16);
+    auto beacon = core::GlobalPos{ctx.dimension(), box.minX + 3, box.minY + 2, box.minZ + 2};
+    for (int dx = -1; dx <= 1; dx++)
+        for (int dz = -1; dz <= 1; dz++) ctx.require(ctx.setBlock(at(beacon, dx, -1, dz), "minecraft:iron_block"), "the pyramid");
+    ctx.require(ctx.setBlock(beacon, "minecraft:beacon"), "a beacon");
+    auto glass = at(beacon, 0, 2, 0);
+    ctx.require(ctx.setBlock(glass, "twilightforest:auroralized_glass"), "auroralized glass two above it");
+    std::vector<BeaconBeamSection> sections;
+    for (int i = 0; i < 12 && sections.size() < 2; i++) {
+        co_await ctx.ticks(20);
+        if (auto* be = ctx.region()->getBlockEntity(game::blockPos(beacon)))
+            if (game::blockIdAt(*ctx.region(), game::blockPos(beacon)) == "minecraft:beacon") sections = static_cast<BeaconBlockActor*>(be)->mBeamSections.get();
+    }
+    auto want = mce::Color(core::aurora::auroraBlockColor(glass.x, glass.y, glass.z));
+    std::string got;
+    for (auto const& s : sections) got += std::to_string(s.mHeight) + "x(" + std::to_string(s.mColor->r) + "," + std::to_string(s.mColor->g) + "," + std::to_string(s.mColor->b) + ") ";
+    ctx.info("beam sections: " + (got.empty() ? std::string("none") : got));
+    ctx.check(sections.size() >= 2, "the beam has a section above the glass");
+    if (sections.size() >= 2) {
+        auto const& c = sections[1].mColor.get();
+        ctx.check(std::abs(c.r - want.r) < 0.01f && std::abs(c.g - want.g) < 0.01f && std::abs(c.b - want.b) < 0.01f, "the glass colours the beam with its aurora colour");
+    }
+    for (int dx = -1; dx <= 1; dx++)
+        for (int dz = -1; dz <= 1; dz++) ctx.cleanupBlock(at(beacon, dx, -1, dz));
+    ctx.cleanupBlock(beacon);
+    ctx.cleanupBlock(glass);
+});
 } // namespace gf::feature::aurora::tests

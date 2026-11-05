@@ -144,3 +144,27 @@ TEST(AuroraColor, BlockColourHueRange) {
             EXPECT_LE(c >> 16, 8u) << x << " " << z; // hue 0.37..0.67: next to no red at full saturation
         }
 }
+
+// Exact values of TF's SimplexNoiseHelper / ColorUtil / ColorHandler (TF 4.8's Java sources compiled
+// and run on the F13 oracle's JDK 21 with stand-ins for BlockPos and Mth): pins the translation
+// beyond ranges, so a sign or permutation slip fails here.
+TEST(AuroraColor, JavaGoldens) {
+    EXPECT_FLOAT_EQ(simplex3(0.5F, 1.25F, -3.75F), -0.06123151F);
+    EXPECT_FLOAT_EQ(simplex3(12.3F, -4.5F, 7.7F), 0.44227454F);
+    EXPECT_FLOAT_EQ(simplex3(-100.1F, 64.2F, 33.3F), -0.255951F);
+    EXPECT_FLOAT_EQ(simplex3(0.1F, 0.2F, 0.3F), 0.6358906F);
+    struct Row {
+        int      x, y, z, variant;
+        unsigned color, pale;
+    };
+    for (auto r : {Row{0, 0, 0, 12, 0x00FF66, 0x73E6A1}, Row{10, 64, -20, 4, 0x00FF97, 0x73E6B7}, Row{-123, 80, 456, 14, 0x0042FF, 0x7390E6},
+                   Row{1000, 100, -1000, 11, 0x00FFC1, 0x73E6CA}, Row{7, 13, 29, 2, 0x0085FF, 0x73AFE6}, Row{-1, -1, -1, 12, 0x00FF5D, 0x73E69D}}) {
+        EXPECT_EQ(calcVariant(r.x, r.y, r.z, 16), r.variant) << r.x << " " << r.y << " " << r.z;
+        EXPECT_EQ(auroraBlockColor(r.x, r.y, r.z), r.color) << r.x << " " << r.y << " " << r.z;
+        EXPECT_EQ(auroraPaleColor(auroraBlockColor(r.x, r.y, r.z)), r.pale) << r.x << " " << r.y << " " << r.z;
+    }
+    // the items (ColorHandler#registerItemColors: no level, hue 0.45): the aurora block 00FFB2, the
+    // pillar, slab and glass its pale form 73E6C3 (terrain_texture.d/aurora.json's tint_color)
+    EXPECT_EQ(hsvToRGB(0.45F, 1.0F, 1.0F), 0x00FFB2u);
+    EXPECT_EQ(auroraPaleColor(hsvToRGB(0.45F, 1.0F, 1.0F)), 0x73E6C3u);
+}

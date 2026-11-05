@@ -15,6 +15,7 @@
 // queen starts over in SUMMON), the three hover goals, the seven ice shields (F8 parts), the ice
 // crystal minions, the ice beam and the client effects (sent through gf::fx). Her phase and beam
 // flag are entity properties, which the resource pack's animations read on every client.
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <map>
@@ -23,6 +24,7 @@
 
 #include "ll/api/service/Bedrock.h"
 
+#include "mc/deps/core/math/Vec2.h"
 #include "mc/deps/core/math/Vec3.h"
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/ActorCategory.h"
@@ -132,6 +134,37 @@ Mob* mobOf(std::int64_t uid) {
 }
 
 AABB boxOf(Actor const& a) { return a.getAABB(); }
+
+/// Mth#wrapDegrees.
+float wrapDegrees(float d) {
+    d = std::fmod(d, 360.0F);
+    if (d >= 180.0F) d -= 360.0F;
+    if (d < -180.0F) d += 360.0F;
+    return d;
+}
+
+/// Mob#rotlerp / LookControl#rotateTowards: turn a towards b by at most max degrees.
+float rotlerp(float a, float b, float max) { return a + std::clamp(wrapDegrees(b - a), -max, max); }
+
+/// The yaw and pitch from the mob's eyes to the target's eyes (Mob#lookAt, LookControl#getYRotD / getXRotD).
+std::pair<float, float> anglesTo(Mob& m, Actor& t) {
+    auto   me = m.getEyePos();
+    auto   te = t.getEyePos();
+    double dx = te.x - me.x, dy = te.y - me.y, dz = te.z - me.z;
+    float  yaw   = static_cast<float>(std::atan2(dz, dx) * 180.0 / std::numbers::pi) - 90.0F;
+    float  pitch = static_cast<float>(-(std::atan2(dy, std::sqrt(dx * dx + dz * dz)) * 180.0 / std::numbers::pi));
+    return {yaw, pitch};
+}
+
+/// Mob#lookAt(target, maxYRot, maxXRot): turns the yaw and pitch themselves (rotlerp), and the head
+/// with them (her view vector reads the head's yaw: LookControl#tick's rotateTowards on yHeadRot,
+/// which the engine's LookControl repeats towards the same target).
+void mobLookAt(Mob& m, Actor& t, float maxY, float maxX) {
+    auto [yaw, pitch] = anglesTo(m, t);
+    auto rot          = m.getRotation(); // (pitch, yaw)
+    m.setRotationWrapped(Vec2{rotlerp(rot.x, pitch, maxX), rotlerp(rot.y, yaw, maxY)});
+    m.setYHeadRot(rotlerp(m.getYHeadRot(), yaw, maxY));
+}
 
 /// SnowQueen#countMyMinions: ice crystals in the queen's 1 x 1 x 1 box inflated by 32 / 16 / 32.
 int countMyMinions(Actor& self) {
@@ -291,6 +324,76 @@ private:
     double       mSpeed;
     long long    mLastCanUseCheck = -100;
     int          mRecalc = 0, mNextAttack = 0;
+};
+
+/// Java's LookAtPlayerGoal(mob, Player.class, 8.0F) (priority 8, LOOK). As F8 goals (not the BP's
+/// look behaviours) so that the hover goals' LOOK flag keeps them off her head while she beams.
+class LookAtPlayerGoal final : public gf::entity::Goal {
+public:
+    explicit LookAtPlayerGoal(Mob& mob) : mUid(uidOf(mob)) { flags = Look; }
+    bool canUse() override {
+        auto* m = mobOf(mUid);
+        if (!m || rng().nextFloat() >= kProbability) return false;
+        Actor* look = mobs::target(*m);
+        if (!look) {
+            auto   p    = feet(*m);
+            double best = kDistance * kDistance + 1;
+            AABB   box{Vec3{p.x - kDistance, p.y - 3.0f, p.z - kDistance}, Vec3{p.x + kWidth + kDistance, p.y + kHeight + 3.0f, p.z + kWidth + kDistance}};
+            for (auto* a : fe::actorsIn(m->getDimensionBlockSource(), static_cast<int>(m->getDimensionId()), box)) {
+                if (!a->isPlayer() || !a->isAlive() || static_cast<Player*>(a)->isSpectator()) continue;
+                double d = mobs::distanceSqr(*m, *a);
+                if (d <= kDistance * kDistance && d < best) best = d, look = a;
+            }
+        }
+        if (!look) return false;
+        mLookAt = uidOf(*look);
+        return true;
+    }
+    bool canContinueToUse() override {
+        auto* m = mobOf(mUid);
+        auto* a = fe::actorById(mLookAt);
+        return m && a && a->isAlive() && mobs::distanceSqr(*m, *a) <= kDistance * kDistance && mLookTime > 0;
+    }
+    void start() override { mLookTime = 40 + rng().nextInt(40); }
+    void stop() override { mLookAt = 0; }
+    void tick() override {
+        auto* m = mobOf(mUid);
+        auto* a = fe::actorById(mLookAt);
+        if (m && a && a->isAlive()) mobs::lookAt(*m, a->getEyePos(), 10.0F, 40.0F);
+        --mLookTime;
+    }
+
+private:
+    static constexpr float kDistance = 8.0F, kProbability = 0.02F;
+    std::int64_t           mUid, mLookAt = 0;
+    int                    mLookTime = 0;
+};
+
+/// Java's RandomLookAroundGoal (priority 8, MOVE + LOOK).
+class RandomLookAroundGoal final : public gf::entity::Goal {
+public:
+    explicit RandomLookAroundGoal(Mob& mob) : mUid(uidOf(mob)) { flags = Move | Look; }
+    bool canUse() override { return rng().nextFloat() < 0.02F; }
+    bool canContinueToUse() override { return mLookTime >= 0; }
+    bool requiresUpdateEveryTick() override { return true; }
+    void start() override {
+        double d0 = 2.0 * std::numbers::pi * rng().nextDouble();
+        mRelX     = std::cos(d0);
+        mRelZ     = std::sin(d0);
+        mLookTime = 20 + rng().nextInt(20);
+    }
+    void tick() override {
+        --mLookTime;
+        if (auto* m = mobOf(mUid)) {
+            auto e = m->getEyePos();
+            mobs::lookAt(*m, Vec3{static_cast<float>(e.x + mRelX), e.y, static_cast<float>(e.z + mRelZ)}, 10.0F, 40.0F);
+        }
+    }
+
+private:
+    std::int64_t mUid;
+    double       mRelX = 0, mRelZ = 0;
+    int          mLookTime = 0;
 };
 
 // ---- hover goals ---------------------------------------------------------------------------------
@@ -545,6 +648,7 @@ public:
         if (dis > 0.5) pushTowardsSpot(*m, 0.045F);
         if (auto* t = target()) {
             float tracking = mIsInPosition ? 1.0F : 20.0F;
+            mobLookAt(*m, *t, tracking, tracking);
             mobs::lookAt(*m, *t, tracking, tracking);
         }
     }
@@ -692,6 +796,8 @@ void queenSpawn(Actor& actor) {
     gf::entity::addGoal(*self, 3, std::make_shared<HoverBeamGoal>(*self, 80, 100));
     gf::entity::addGoal(*self, 5, gf::entity::goals::goHome(*self, 1.25));
     gf::entity::addGoal(*self, 6, std::make_shared<MeleeAttackGoal>(*self, 1.0));
+    gf::entity::addGoal(*self, 8, std::make_shared<LookAtPlayerGoal>(*self));
+    gf::entity::addGoal(*self, 8, std::make_shared<RandomLookAroundGoal>(*self));
     ensureShields(*self);
 }
 
@@ -750,17 +856,31 @@ void installSnowQueen() {
         // the direct entity, type minecraft:thrown) the piercing arrow at the shield
         Actor* projectile = d.direct && pierceLevel(*d.direct) > 0 ? d.direct : nullptr;
         if (!projectile && (d.type == "minecraft:thrown" || d.type == "minecraft:arrow" || d.type == "minecraft:projectile")) {
+            // the arrow that made this hit: of every arrow near the shield (piercing or not), the one
+            // whose flight this tick (its motion back and forth from where it is) crosses the shield's
+            // box first; a plain arrow there means a plain hit (blocked as TF), even with a piercing
+            // one nearby
             AABB   b = d.victim.getAABB();
-            AABB   near{Vec3{b.min.x - 1.5f, b.min.y - 1.5f, b.min.z - 1.5f}, Vec3{b.max.x + 1.5f, b.max.y + 1.5f, b.max.z + 1.5f}};
-            double best = 1e9;
+            AABB   near{Vec3{b.min.x - 3.0f, b.min.y - 3.0f, b.min.z - 3.0f}, Vec3{b.max.x + 3.0f, b.max.y + 3.0f, b.max.z + 3.0f}};
+            AABB   hitBox{Vec3{b.min.x - 0.3f, b.min.y - 0.3f, b.min.z - 0.3f}, Vec3{b.max.x + 0.3f, b.max.y + 0.3f, b.max.z + 0.3f}};
+            double best    = 1e9;
+            Actor* hitting = nullptr;
             for (auto* e : fe::actorsIn(d.victim.getDimensionBlockSource(), static_cast<int>(d.victim.getDimensionId()), near)) {
-                if (!e || !e->isAlive() || pierceLevel(*e) <= 0) continue;
-                double dist = mobs::distanceSqr(d.victim, *e);
+                if (!e || !e->isAlive() || !e->getEntityContext().tryGetComponent<ProjectileComponent>()) continue;
+                if (d.attacker && e->getOwner() && e->getOwner() != d.attacker) continue; // another shooter's arrow
+                auto p = feet(*e);
+                auto v = gf::projectile::ext::isProjectile(*e) ? gf::projectile::ext::velocity(*e) : e->getPosDelta();
+                Vec3 from{p.x - v.x, p.y - v.y, p.z - v.z}, to{p.x + v.x, p.y + v.y, p.z + v.z};
+                double dist;
+                if (hitBox.contains(p)) dist = 0.0;
+                else if (auto hit = clip(hitBox, from, to)) dist = std::sqrt((hit->x - p.x) * (hit->x - p.x) + (hit->y - p.y) * (hit->y - p.y) + (hit->z - p.z) * (hit->z - p.z));
+                else continue;
                 if (dist < best) {
-                    best       = dist;
-                    projectile = e;
+                    best    = dist;
+                    hitting = e;
                 }
             }
+            if (hitting && pierceLevel(*hitting) > 0) projectile = hitting;
         }
         if (!projectile) return gf::combat::Verdict::Pass;
         auto arrow = projectile->getOrCreateUniqueID().rawID;

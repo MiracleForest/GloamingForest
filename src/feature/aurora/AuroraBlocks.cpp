@@ -2,6 +2,7 @@
 // Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
 //   src/main/java/twilightforest/block/AuroraBrickBlock.java (getDestroyProgress)
 //   src/main/java/twilightforest/client/model/block/variant/NoiseVaryingModel.java (the variant choice)
+//   src/main/java/twilightforest/block/AuroralizedGlassBlock.java (getBeaconColorMultiplier)
 // Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -15,6 +16,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <map>
 
 #include "ll/api/service/Bedrock.h"
@@ -29,8 +31,10 @@
 
 #include "core/aurora/AuroraColor.h"
 #include "feature/common/Interactions.h"
+#include "feature/ext/aurora/BeaconColor.h"
 #include "feature/ext/aurora/W0Internals.h"
 #include "feature/families/BlockEvents.h"
+#include "feature/net/Net.h"
 #include "feature/progression/Progression.h"
 #include "game/Blocks.h"
 #include "game/WorldDb.h"
@@ -82,6 +86,30 @@ std::map<std::int64_t, Mining>& mining() {
     return m;
 }
 
+/// Whether the player's view ray (6 blocks from the eyes) passes through the block at `pos`: the
+/// evidence of continued mining when the server sees no destroy progress of its own.
+bool looksAt(Player const& player, BlockPos const& pos) {
+    auto   eye   = player.getEyePos();
+    auto   rot   = player.getRotation(); // (pitch, yaw)
+    double pitch = rot.x * 3.14159265358979 / 180.0, yaw = -rot.y * 3.14159265358979 / 180.0;
+    double d[3]  = {std::sin(yaw) * std::cos(pitch) * 6.0, -std::sin(pitch) * 6.0, std::cos(yaw) * std::cos(pitch) * 6.0};
+    double f[3]  = {eye.x, eye.y, eye.z};
+    double lo[3] = {static_cast<double>(pos.x), static_cast<double>(pos.y), static_cast<double>(pos.z)};
+    double tmin = 0.0, tmax = 1.0;
+    for (int i = 0; i < 3; i++) {
+        if (std::abs(d[i]) < 1e-9) {
+            if (f[i] < lo[i] || f[i] > lo[i] + 1.0) return false;
+            continue;
+        }
+        double t1 = (lo[i] - f[i]) / d[i], t2 = (lo[i] + 1.0 - f[i]) / d[i];
+        if (t1 > t2) std::swap(t1, t2);
+        tmin = std::max(tmin, t1);
+        tmax = std::min(tmax, t2);
+        if (tmin > tmax) return false;
+    }
+    return true;
+}
+
 void tickMining() {
     for (auto it = mining().begin(); it != mining().end();) {
         auto* actor = fe::actorById(it->first);
@@ -112,6 +140,16 @@ void tickMining() {
             it = mining().erase(it);
             continue;
         }
+        if (!m.progressed) {
+            // no destroy progress on the server (client-authoritative breaking): a companion's client
+            // applies the 0.1 a tick itself (client/aurora) and breaks the block on its own; a vanilla
+            // client's mining counts only while the player keeps looking at the block
+            if (!gf::net::isCompanion(player) && !looksAt(player, m.pos)) {
+                gf::log().info("aurora: aurora block mining stopped after {} ticks", m.ticks);
+                it = mining().erase(it);
+                continue;
+            }
+        }
         // 0.1 per tick: the block breaks on the tenth tick of mining
         ++m.ticks;
         if (m.progressed) {
@@ -123,6 +161,12 @@ void tickMining() {
                 ++it;
                 continue;
             }
+        }
+        if (m.ticks >= 10 && !m.progressed && gf::net::isCompanion(player)) {
+            // the companion's client breaks it itself (its own progress reaches 1 on this tick)
+            if (m.ticks > 14) it = mining().erase(it);
+            else ++it;
+            continue;
         }
         if (m.ticks >= 10) {
             auto& region = player.getDimensionBlockSource();
@@ -184,6 +228,9 @@ void installAuroraBlocks() {
         return gf::interactions::Result::Pass;
     });
     fe::onLevelTick(tickMining);
+    // AuroralizedGlassBlock#getBeaconColorMultiplier: the aurora colour of its position
+    gf::feature::ext::aurora::beacon::registerColorMultiplier("twilightforest:auroralized_glass",
+                                                             [](BlockPos const& p) { return core::aurora::auroraBlockColor(p.x, p.y, p.z); });
     gf::game::db::onWorldClosed([] { mining().clear(); });
 }
 

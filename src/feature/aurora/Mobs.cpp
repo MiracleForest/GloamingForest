@@ -23,6 +23,9 @@
 #include <bitset>
 #include <cmath>
 #include <map>
+#include <optional>
+#include <string>
+#include <unordered_map>
 #include <set>
 #include <random>
 
@@ -40,6 +43,7 @@
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/item/enchanting/Enchant.h"
 #include "mc/world/item/enchanting/EnchantUtils.h"
+#include "mc/deps/shared_types/legacy/actor/ArmorSlot.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/storage/GameRules.h"
@@ -157,7 +161,7 @@ float specialMultiplier(Actor&) {
     bool  hard = diff == SharedTypes::Legacy::Difficulty::Hard;
     // DifficultyInstance#calculateDifficulty(difficulty, dayTime, inhabitedTime = 0, moonBrightness)
     float f  = 0.75F;
-    float f1 = std::clamp((static_cast<float>(level->getCurrentTick().tickID) + -72000.0F) / 1440000.0F, 0.0F, 1.0F) * 0.25F; // the game time
+    float f1 = std::clamp((static_cast<float>(level->getTime()) + -72000.0F) / 1440000.0F, 0.0F, 1.0F) * 0.25F; // the day time (level.getDayTime())
     f += f1;
     float f2      = 0.0F;
     // DimensionType.MOON_BRIGHTNESS_PER_PHASE[moonPhase(dayTime)]
@@ -204,7 +208,11 @@ void equipSnowGuardian(Actor& self) {
     static char const* chests[]  = {"twilightforest:ironwood_chestplate", "twilightforest:steeleaf_chestplate", "twilightforest:knightmetal_chestplate", "twilightforest:arctic_chestplate"};
     static char const* helmets[] = {"twilightforest:ironwood_helmet", "twilightforest:steeleaf_helmet", "twilightforest:knightmetal_helmet", "twilightforest:arctic_helmet"};
     if (auto s = gf::game::items::make(swords[type], 1, 0)) mob->setItemSlot(Slot::Mainhand, *s);
-    if (auto s = gf::game::items::make(chests[type], 1, 0)) mob->setItemSlot(Slot::Torso, *s);
+    if (auto s = gf::game::items::make(chests[type], 1, 0)) {
+        // the engine's setItemSlot refuses an item without minecraft:wearable in the chest slot (the
+        // TF chestplates' wearable component is U7's): the armour container takes it directly
+        if (!mob->setItemSlot(Slot::Torso, *s) || gf::game::items::isEmpty(mob->getItemSlot(Slot::Torso))) mob->setArmor(SharedTypes::Legacy::ArmorSlot::Torso, *s);
+    }
     if (auto s = gf::game::items::make(helmets[type], 1, 0)) mob->setItemSlot(Slot::Head, *s);
     enchantSpawnedEquipment(*mob, specialMultiplier(self));
     syncEquipment(*mob);
@@ -351,6 +359,55 @@ char const* closestDye(unsigned blockColor) {
     return best;
 }
 
+} // namespace
+
+/// Java's MapColor#col of vanilla blocks (net.minecraft.world.level.block.Blocks' mapColor), for the
+/// blocks transformBlocks meets most: the terrain, the biome-tinted grass and leaves (fixed colours
+/// in Java, biome colours on Bedrock), wood, wool, concrete and terracotta.
+std::optional<unsigned> javaMapColor(std::string const& id) {
+    static std::unordered_map<std::string, unsigned> const table = [] {
+        std::unordered_map<std::string, unsigned> m{
+            {"minecraft:grass_block", 0x7FB238}, {"minecraft:dirt", 0x976D4D},         {"minecraft:coarse_dirt", 0x976D4D}, {"minecraft:rooted_dirt", 0x976D4D},
+            {"minecraft:podzol", 0x815631},      {"minecraft:mycelium", 0x7F3FB2},     {"minecraft:farmland", 0x976D4D},    {"minecraft:dirt_path", 0x976D4D},
+            {"minecraft:stone", 0x707070},       {"minecraft:cobblestone", 0x707070},  {"minecraft:stone_bricks", 0x707070}, {"minecraft:mossy_cobblestone", 0x707070},
+            {"minecraft:andesite", 0x707070},    {"minecraft:granite", 0x976D4D},      {"minecraft:diorite", 0xFFFCF5},     {"minecraft:gravel", 0x707070},
+            {"minecraft:deepslate", 0x646464},   {"minecraft:cobbled_deepslate", 0x646464}, {"minecraft:tuff", 0x575C5C},  {"minecraft:calcite", 0xD1B1A1},
+            {"minecraft:sand", 0xF7E9A3},        {"minecraft:sandstone", 0xF7E9A3},    {"minecraft:red_sand", 0xD87F33},    {"minecraft:clay", 0xA4A8B8},
+            {"minecraft:snow", 0xFFFFFF},        {"minecraft:snow_layer", 0xFFFFFF},   {"minecraft:powder_snow", 0xFFFFFF}, {"minecraft:ice", 0xA0A0FF},
+            {"minecraft:packed_ice", 0xA0A0FF},  {"minecraft:blue_ice", 0xA0A0FF},     {"minecraft:moss_block", 0x667F33},  {"minecraft:glass", 0x000000},
+            {"minecraft:netherrack", 0x700200},  {"minecraft:obsidian", 0x191919},     {"minecraft:quartz_block", 0xFFFCF5}, {"minecraft:terracotta", 0xD87F33},
+            {"minecraft:gold_block", 0xFAEE4D},  {"minecraft:diamond_block", 0x5CDBD5}, {"minecraft:lapis_block", 0x4A80FF}, {"minecraft:emerald_block", 0x00D93A},
+            {"minecraft:iron_block", 0xA7A7A7},  {"minecraft:bookshelf", 0x8F7748},    {"minecraft:pumpkin", 0xD87F33},     {"minecraft:melon_block", 0x7FCC19},
+            {"minecraft:hay_block", 0xE5E533},   {"minecraft:oak_planks", 0x8F7748},   {"minecraft:spruce_planks", 0x815631}, {"minecraft:birch_planks", 0xF7E9A3},
+            {"minecraft:jungle_planks", 0x976D4D}, {"minecraft:acacia_planks", 0xD87F33}, {"minecraft:dark_oak_planks", 0x664C33}, {"minecraft:mangrove_planks", 0x993333},
+            {"minecraft:cherry_planks", 0xD1B1A1}, {"minecraft:bamboo_planks", 0xE5E533}, {"minecraft:crimson_planks", 0x943F61}, {"minecraft:warped_planks", 0x3A8E8C},
+            {"minecraft:cherry_leaves", 0xF27FA5},
+        };
+        // the leaves: MapColor.PLANT
+        for (char const* leaves : {"oak", "spruce", "birch", "jungle", "acacia", "dark_oak", "mangrove", "azalea", "azalea_leaves_flowered"})
+            m[std::string(leaves).starts_with("azalea_") ? std::string("minecraft:") + leaves : std::string("minecraft:") + leaves + "_leaves"] = 0x007C00;
+        // wool and concrete: DyeColor#getMapColor; terracotta: MapColor.TERRACOTTA_*
+        struct DyeRow {
+            char const* name;
+            unsigned    map, terracotta;
+        };
+        for (auto d : {DyeRow{"white", 0xFFFFFF, 0xD1B1A1}, DyeRow{"orange", 0xD87F33, 0x9F5224}, DyeRow{"magenta", 0xB24CD8, 0x95576C}, DyeRow{"light_blue", 0x6699D8, 0x706C8A},
+                       DyeRow{"yellow", 0xE5E533, 0xBA8524}, DyeRow{"lime", 0x7FCC19, 0x677535}, DyeRow{"pink", 0xF27FA5, 0xA04D4E}, DyeRow{"gray", 0x4C4C4C, 0x392923},
+                       DyeRow{"light_gray", 0x999999, 0x876B62}, DyeRow{"cyan", 0x4C7F99, 0x575C5C}, DyeRow{"purple", 0x7F3FB2, 0x7A4958}, DyeRow{"blue", 0x334CB2, 0x4C3E5C},
+                       DyeRow{"brown", 0x664C33, 0x4C3223}, DyeRow{"green", 0x667F33, 0x4C522A}, DyeRow{"red", 0x993333, 0x8E3C2E}, DyeRow{"black", 0x191919, 0x251610}}) {
+            m[std::string("minecraft:") + d.name + "_wool"]       = d.map;
+            m[std::string("minecraft:") + d.name + "_concrete"]   = d.map;
+            m[std::string("minecraft:") + d.name + "_terracotta"] = d.terracotta;
+        }
+        return m;
+    }();
+    auto it = table.find(id);
+    if (it == table.end()) return std::nullopt;
+    return it->second;
+}
+
+namespace {
+
 /// UnstableIceCore#isBlockNormalBounds: Block.isShapeFullBlock(state.getShape(level, pos)), the outline.
 bool isBlockNormalBounds(BlockSource& region, BlockPos const& pos, Block const& state) {
     AABB        buffer{};
@@ -365,12 +422,15 @@ void transformBlock(BlockSource& region, BlockPos const& pos) {
     auto const& type = state.getBlockType();
     // getExplosionResistance() < 8 and breakable (destroy speed >= 0)
     if (type.getExplosionResistance() >= 8.0f * 5.0f || type.getDestroySpeed() < 0.0f) return; // Bedrock keeps Java resistance x 5
-    // MapColor#col: Bedrock's block map colours are Java's MapColor palette for vanilla blocks
-    // (aurora.map_colors checks stone, ice, dirt, grass and snow against Java's values)
-    auto     c     = type.getMapColor(region, pos, state);
-    unsigned color = (static_cast<unsigned>(c.r * 255.0f + 0.5f) << 16) | (static_cast<unsigned>(c.g * 255.0f + 0.5f) << 8) |
-                     static_cast<unsigned>(c.b * 255.0f + 0.5f);
-    auto id    = gf::game::blockId(state);
+    // MapColor#col: Java's colour for the vanilla blocks of javaMapColor's table (Bedrock tints grass
+    // and leaves by biome), else Bedrock's own map colour (Java's palette for most vanilla blocks)
+    auto     id    = gf::game::blockId(state);
+    unsigned color = 0;
+    if (auto java = javaMapColor(id)) color = *java;
+    else {
+        auto c = type.getMapColor(region, pos, state);
+        color  = (static_cast<unsigned>(c.r * 255.0f + 0.5f) << 16) | (static_cast<unsigned>(c.g * 255.0f + 0.5f) << 8) | static_cast<unsigned>(c.b * 255.0f + 0.5f);
+    }
     bool solid = state._isSolid();
     // shouldTransformGlass: a full-cube shape and (not solid, leaves, ice or the aurora block)
     bool glassLike = isBlockNormalBounds(region, pos, state) &&
@@ -423,8 +483,27 @@ void unstableCoreTick(Actor& self) {
         if (level) level->explode(self.getDimensionBlockSource(), &self, feet(self), 1.0f, false, grief, 8.0f * 5.0f, false);
         if (grief) transformBlocks(self);
         gf::entity::data(self, "aurora:explode") = true;
-        self.kill();
+        // the death was already the killer's (TF's tickDeath only delays the removal): finish it with
+        // the lethal hit's type and entities, so the kill credit, looting and XP stay theirs
+        auto const& lethal   = gf::entity::data(self, "aurora:lethal");
+        std::string type     = lethal.is_object() ? lethal.value("type", std::string("minecraft:generic")) : std::string("minecraft:generic");
+        Actor*      attacker = lethal.is_object() ? fe::actorById(lethal.value("attacker", std::int64_t{0})) : nullptr;
+        Actor*      direct   = lethal.is_object() ? fe::actorById(lethal.value("direct", std::int64_t{0})) : nullptr;
+        if (direct && !direct->isAlive()) direct = attacker;
+        float health = static_cast<float>(std::max(self.getHealth(), 1));
+        if (!gf::combat::hurt(self, health + 1000.0f, type, attacker, direct) && self.isAlive()) {
+            if (!gf::combat::hurt(self, health + 1000.0f, "minecraft:generic", attacker, attacker) && self.isAlive()) self.kill();
+        }
     }
+}
+
+/// IceCrystal's crystalAge / maxCrystalAge (fields, not saved).
+struct CrystalAge {
+    int age = 0, max = 0;
+};
+std::map<std::int64_t, CrystalAge>& crystalAges() {
+    static std::map<std::int64_t, CrystalAge> m;
+    return m;
 }
 
 std::set<std::int64_t>& goalsAdded() {
@@ -445,12 +524,13 @@ void installMobs() {
             baseIceMobTick(self, type);
             if (type == kUnstableIceCore) unstableCoreTick(self);
             if (type == kIceCrystal) {
-                // IceCrystal#aiStep: a summoned crystal lasts 600 ticks, then vanishes (no loot)
-                auto& age = gf::entity::data(self, "aurora:age");
-                auto& max = gf::entity::data(self, "aurora:max_age");
-                int   a   = age.is_number_integer() ? age.get<int>() + 1 : 1;
-                age       = a;
-                if (max.is_number_integer() && max.get<int>() > 0 && a >= max.get<int>()) fe::removeLater(self.getOrCreateUniqueID().rawID);
+                // IceCrystal#aiStep: a summoned crystal lasts 600 ticks, then vanishes (no loot); the
+                // age fields are not saved (a reloaded crystal stays), so they live in this process only
+                auto it = crystalAges().find(self.getOrCreateUniqueID().rawID);
+                if (it != crystalAges().end() && it->second.max > 0 && ++it->second.age >= it->second.max) {
+                    fe::removeLater(it->first);
+                    crystalAges().erase(it);
+                }
             }
         };
         if (type == kSnowGuardian) {
@@ -470,9 +550,14 @@ void installMobs() {
             };
         }
         if (type == kStableIceCore) b.die = [](Actor& self, std::string const&, Actor*) { goalsAdded().erase(self.getOrCreateUniqueID().rawID); };
+        if (type == kIceCrystal) {
+            // a crystal read back from the world is a new Java entity: maxCrystalAge 0, it stays
+            b.load = [](Actor& self, nlohmann::json const&) { crystalAges().erase(self.getOrCreateUniqueID().rawID); };
+            b.die  = [](Actor& self, std::string const&, Actor*) { crystalAges().erase(self.getOrCreateUniqueID().rawID); };
+        }
         if (type == kUnstableIceCore) b.hurt = [](Actor& self, float&, std::string const&, Actor*) {
-            // the body is invulnerable while it waits for the explosion
-            return !gf::entity::data(self, "aurora:dying").is_number_integer();
+            // the body is invulnerable while it waits for the explosion (then its final hit passes)
+            return !gf::entity::data(self, "aurora:dying").is_number_integer() || gf::entity::data(self, "aurora:explode").is_boolean();
         };
         gf::entity::registerType(id, b);
         // RegistrationEvents: ON_GROUND, MOTION_BLOCKING_NO_LEAVES, Monster::checkMonsterSpawnRules
@@ -482,15 +567,24 @@ void installMobs() {
     gf::loot::onEntityDrops([](Actor& dead, std::vector<ItemStack>& drops, gf::loot::LootContext const& ctx) {
         if (dead.getTypeName() == kSnowGuardian) dropSnowGuardianGear(dead, drops, ctx);
     });
-    gf::game::db::onWorldClosed([] { goalsAdded().clear(); });
+    gf::game::db::onWorldClosed([] {
+        goalsAdded().clear();
+        crystalAges().clear();
+    });
 
     // UnstableIceCore#tickDeath: the corpse stays 60 ticks, then explodes
-    gf::death::onLethal(0, [](Actor& victim, gf::combat::DamageInfo const&) {
+    gf::death::onLethal(0, [](Actor& victim, gf::combat::DamageInfo const& info) {
         if (victim.getTypeName() != kUnstableIceCore) return false;
         if (gf::entity::data(victim, "aurora:explode").is_boolean()) return false; // the explosion's own kill: die now
         auto& d = gf::entity::data(victim, "aurora:dying");
         if (d.is_number_integer()) return true;
         d = 0;
+        // the lethal hit, to finish the death with it 60 ticks later (kill credit, looting, XP)
+        gf::entity::data(victim, "aurora:lethal") = nlohmann::json{{"type", info.type},
+                                                                   {"attacker", info.attacker ? info.attacker->getOrCreateUniqueID().rawID : std::int64_t{0}},
+                                                                   {"direct", info.direct ? info.direct->getOrCreateUniqueID().rawID : std::int64_t{0}}};
+        // LivingEntity#hurt plays the death sound at the lethal hit (the RP gives the core no engine
+        // death sound, so the final removal is silent)
         gf::fx::sound(victim.getDimension(), "entity.twilightforest.ice.death", feet(victim));
         if (auto* mob = fe::asMob(victim)) {
             mobs::stopNavigation(*mob);
@@ -520,6 +614,13 @@ void installMobs() {
 }
 
 
-void markSummonedCrystal(Actor& crystal) { gf::entity::data(crystal, "aurora:max_age") = 600; }
+void markSummonedCrystal(Actor& crystal) { crystalAges()[crystal.getOrCreateUniqueID().rawID].max = 600; }
+
+void setCrystalAgeForTest(Actor& crystal, int age) { crystalAges()[crystal.getOrCreateUniqueID().rawID].age = age; }
+
+int crystalMaxAgeForTest(Actor& crystal) {
+    auto it = crystalAges().find(crystal.getOrCreateUniqueID().rawID);
+    return it == crystalAges().end() ? 0 : it->second.max;
+}
 
 } // namespace gf::feature::aurora

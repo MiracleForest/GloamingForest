@@ -57,7 +57,7 @@
     "textures": [
       {
         "path": "textures/twilightforest/block/aurora_pillar",
-        "tint_color": "#72e5c2"
+        "tint_color": "#73e6c3"
       }
     ]
   },
@@ -65,7 +65,7 @@
     "textures": [
       {
         "path": "textures/twilightforest/block/aurora_pillar_top",
-        "tint_color": "#72e5c2"
+        "tint_color": "#73e6c3"
       }
     ]
   },
@@ -73,7 +73,7 @@
     "textures": [
       {
         "path": "textures/twilightforest/block/aurora_slab_side",
-        "tint_color": "#72e5c2"
+        "tint_color": "#73e6c3"
       }
     ]
   },
@@ -81,7 +81,7 @@
     "textures": [
       {
         "path": "textures/twilightforest/block/auroralized_glass",
-        "tint_color": "#72e5c2"
+        "tint_color": "#73e6c3"
       }
     ]
   }

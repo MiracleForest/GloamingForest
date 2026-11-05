@@ -205,7 +205,9 @@ void IceTowerWing::postProcess(Region& region, RandomSource& rand, BlockBox cons
 
     makeFloorsForTower(region, decoRNG, sbb);
     makeOpenings(region, sbb);
-    applyAuroraVariants(region, bbox, sbb);
+    // the variant depends on the position only (NoiseVaryingModel): the base's columns below the
+    // wing (fillColumnDown, down to the ground) get theirs too
+    applyAuroraVariants(region, hasBase ? BlockBox{bbox.minX, region.minY(), bbox.minZ, bbox.maxX, bbox.maxY, bbox.maxZ} : bbox, sbb);
 }
 
 void IceTowerWing::makeFloorsForTower(Region& region, RandomSource& decoRNG, BlockBox const& sbb) {

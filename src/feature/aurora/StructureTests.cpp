@@ -200,6 +200,23 @@ GF_REGISTER_SELFTEST("aurora.palace_hash", [](Context& ctx) {
     ctx.check(mem.count("twilightforest:aurora_pillar") > 50, "aurora pillars");
     ctx.check(mem.count("minecraft:packed_ice") > 100, "the boss tower's packed ice floors and stairs");
     ctx.check(mem.count("minecraft:birch_planks") > 100, "birch plank floors");
+    // the bases under the wings (fillColumnDown to the ground) vary by position as the walls above
+    int baseBlocks = 0, baseVariants = 0;
+    for (auto const& p : pieces) {
+        if (p->typeId != "twilightforest:TFITWin" && p->typeId != "twilightforest:TFITMai" && p->typeId != "twilightforest:TFITEnt") continue;
+        auto const& wing = static_cast<IceTowerWing const&>(*p);
+        if (!wing.hasBase) continue;
+        for (int x = wing.bbox.minX; x <= wing.bbox.maxX; x++)
+            for (int z = wing.bbox.minZ; z <= wing.bbox.maxZ; z++)
+                for (int y = 0; y < wing.bbox.minY; y++) {
+                    auto const& b = mem.getBlock(BlockPos{x, y, z});
+                    if (game::blockId(b) != "twilightforest:aurora_block") continue;
+                    baseBlocks++;
+                    if (game::intState(b, "gloamingforest:variant").value_or(0) != 0) baseVariants++;
+                }
+    }
+    ctx.check(baseBlocks > 100 && baseVariants > baseBlocks / 4,
+              "the wings' bases get the aurora block variants: " + std::to_string(baseVariants) + " of " + std::to_string(baseBlocks));
     golden(ctx, "palace_hash", kPalaceHash, mem.hash());
 });
 

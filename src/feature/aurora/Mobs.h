@@ -3,6 +3,7 @@
 
 // U28's mobs: shared helpers of Mobs.cpp (the ice mobs) and SnowQueen.cpp.
 
+#include <optional>
 #include <string>
 
 #include "core/jrand/JRand.h"
@@ -32,8 +33,14 @@ inline constexpr char kIceCrystal[]      = "twilightforest:ice_crystal";
 [[nodiscard]] bool mobGriefing();
 /// UnstableIceCore#transformBlocks around `at` (range 4 + (r - r) x 2): stained glass / terracotta.
 void transformBlocksAt(BlockSource& region, BlockPos const& at);
+/// Java's MapColor#col of a vanilla block id (transformBlocks' table), nullopt when not listed.
+[[nodiscard]] std::optional<unsigned> javaMapColor(std::string const& id);
 /// IceCrystal#setToDieIn30Seconds.
 void markSummonedCrystal(Actor& crystal);
+/// Test hook: the crystal's age (ticks lived since it was summoned).
+void setCrystalAgeForTest(Actor& crystal, int age);
+/// Test hook: the crystal's maxCrystalAge (0: not summoned, it stays).
+int crystalMaxAgeForTest(Actor& crystal);
 
 void installMobs();
 void installSnowQueen();

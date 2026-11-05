@@ -4,6 +4,7 @@
 #                   on vanilla clients), its bridge and the Snow Queen's tower
 #   palace-wing-floor, palace-boss-room   inside a wing (floor decorators, chests) and the queen's room
 #   blocks          aurora block (TF's animated variants), pillar, slab and auroralized glass
+#   beacon-beam     a beacon's beam through auroralized glass (the glass's aurora colour)
 #   block-items     the four block items (TF's item colours)
 #   snow-queen, snow-guardian, ice-cores, ice-crystal   the mobs (the queen with her ice shields)
 #   mushroom-tower  the mushroom tower
@@ -66,6 +67,14 @@ Invoke-Chat "/setblock $($bx + 3) $($by + 1) $($bz - 1) twilightforest:aurora_sl
 Invoke-Chat "/setblock $($bx + 5) $($by + 1) $($bz - 1) twilightforest:auroralized_glass"
 Start-Sleep -Seconds 2
 Save-Screenshot 'blocks' | Out-Null
+# a beacon under auroralized glass: the beam takes the glass's aurora colour (getBeaconColorMultiplier)
+$cx = $bx + 14
+Invoke-Chat "/fill $($cx - 1) $($by) $($bz + 4) $($cx + 1) $($by) $($bz + 6) iron_block"
+Invoke-Chat "/setblock $cx $($by + 1) $($bz + 5) beacon"
+Invoke-Chat "/setblock $cx $($by + 3) $($bz + 5) twilightforest:auroralized_glass"
+Invoke-Teleport "/tp @s $($cx + 8) $($by + 6) $($bz + 5) facing $cx $($by + 8) $($bz + 5)"
+Start-Sleep -Seconds 6
+Save-Screenshot 'beacon-beam' | Out-Null
 # the block items in the hotbar (ColorHandler's item colours: hue 0.45, the pale colour)
 Invoke-Chat '/clear @s'
 foreach ($i in 'aurora_block', 'aurora_pillar', 'aurora_slab', 'auroralized_glass') { Invoke-Chat "/give @s twilightforest:$i" }
