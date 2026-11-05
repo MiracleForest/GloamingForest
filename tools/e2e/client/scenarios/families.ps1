@@ -541,11 +541,12 @@ if ($script:Mode -ne 'remote-vanilla') {
 # place sound once): the game plays the sound type's place_in_water (tools/families defines it as
 # the type's place event), on this client too (its own prediction); checked at the end through the
 # content log, which must not say "No sound found ... 'place_in_water'" (nor the same for the chest
-# events of the chest opened above). The water sits in the ground, so nothing stands between the
-# player and the dirt below it, whose top is clicked through the water.
+# events of the chest opened above). The water sits in the ground (y - 1) and the player stands on the
+# grass just south of it looking down steeply (69 degrees: the ray passes the grass top at y inside the
+# water's column), so the dirt below the water is clicked through it and the slab goes into the water.
 $px = 230
 Invoke-Build "setblock $px $($y - 1) $z water"
-Invoke-Teleport "/tp @s $($px + 0.5) $y $($z + 2.5) 180 52.6"
+Invoke-Teleport "/tp @s $($px + 0.5) $y $($z + 1.5) 180 69"
 Start-Sleep -Seconds 3
 Invoke-Build "replaceitem entity @a slot.weapon.mainhand 0 twilightforest:twilight_oak_slab 4"
 Start-Sleep -Seconds 2
