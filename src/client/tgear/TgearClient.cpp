@@ -71,6 +71,7 @@
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/block/BlockRenderLayer.h"
 #include "mc/world/level/BlockSource.h"
+#include "mc/world/level/block/BrightnessPair.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/actor/BlockActorRendererId.h"
@@ -530,6 +531,12 @@ void drawThread(render::RenderContext& ctx, BlockPos const& pos, Block const& bl
     bool          begun = false;
     std::uint64_t quads = 0;
     auto [au0, av0, au1, av1] = *atlas;
+    // Java's packedLight: the block's own light, or full bright (15728880) for the glow
+    Vec2 lightUv{1.f, 1.f};
+    if (!glow) {
+        auto light = region.getBrightnessPair(pos);
+        lightUv    = Vec2{static_cast<float>(static_cast<unsigned char>(light.block->mValue)) / 15.f, static_cast<float>(static_cast<unsigned char>(light.sky->mValue)) / 15.f};
+    }
     auto quad = [&](int face, PartBox const& b) {
         if (!begun) {
             tess.begin(Tessellator::DebugContextCallback{}, mce::PrimitiveMode::QuadList, 0, false);
@@ -542,9 +549,17 @@ void drawThread(render::RenderContext& ctx, BlockPos const& pos, Block const& bl
         auto  at = [&](float u, float v) { return Vec2{au0 + (au1 - au0) * u / 16.f, av0 + (av1 - av0) * v / 16.f}; };
         Vec2  t[4] = {at(b.u0, b.v0), at(b.u1, b.v0), at(b.u1, b.v1), at(b.u0, b.v1)};
         for (auto& v : c) v = Vec3{pos.x + v.x - ctx.camera.x, pos.y + v.y - ctx.camera.y, pos.z + v.z - ctx.camera.z};
-        // both windings: the cutout material culls
-        tess.simpleQuad(c[0], t[0], c[1], t[1], c[2], t[2], c[3], t[3]);
-        tess.simpleQuad(c[3], t[3], c[2], t[2], c[1], t[1], c[0], t[0]);
+        // every vertex carries its colour, its atlas UV and the lightmap UV (UV1: block / sky light; the
+        // block materials sample the lightmap with it, a vertex without one reads the darkest texel:
+        // round 2 / 3 drew the connections black); both windings, the cutout material culls
+        auto vertex = [&](int i) {
+            tess.color(1.f, 1.f, 1.f, 1.f);
+            tess.mNextUV[0] = std::optional<glm::vec2>(glm::vec2{t[i].x, t[i].y});
+            tess.tex2(lightUv);
+            tess.vertex(c[i].x, c[i].y, c[i].z);
+        };
+        for (int i : {0, 1, 2, 3}) vertex(i);
+        for (int i : {3, 2, 1, 0}) vertex(i);
         ++quads;
     };
     for (int f = 0; f < 6; ++f) {
