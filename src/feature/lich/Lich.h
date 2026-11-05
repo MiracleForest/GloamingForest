@@ -96,6 +96,9 @@ Mob* spawnMinion(Mob& lich, Vec3 const& pos, Actor* target);
 
 // ---- death tome --------------------------------------------------------------------------------
 
+/// Where a lectern tome rests: on the lectern's top (Bedrock pushes a mob out of the lectern's
+/// collision, which Java's tome stands in; the client pose sits that much lower).
+inline constexpr float kLecternTop = 0.9F;
 [[nodiscard]] bool tomeOnLectern(Actor const& tome);
 /// DeathTome#setOnLectern. With `seat` (the lectern's position) the tome is moved onto that lectern
 /// and checks it from then on (Bedrock's collision may push it out of the lectern's block).

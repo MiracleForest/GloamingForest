@@ -329,9 +329,9 @@ GF_REGISTER_SELFTEST("lich.projectile_hits", [](Context& ctx) -> ll::coro::CoroT
     ctx.require(player && bolt, "the bolt waits in front of the player");
     player->simulateLookAt(*bolt, sim::LookDuration::Instant);
     player->simulateAttack(bolt);
-    co_await ctx.ticks(1);
+    // the attack runs at once: the bolt is re-shot now (a tick later it may already have hit)
     bolt = actorById(boltId);
-    ctx.require(bolt != nullptr, "the bolt is still flying");
+    ctx.require(bolt != nullptr, "the bolt is still there after the hit");
     auto   v     = gf::projectile::ext::velocity(*bolt);
     double speed = std::sqrt(double(v.x) * v.x + double(v.y) * v.y + double(v.z) * v.z);
     ctx.check(speed > 1.2 && speed < 1.6, "the attacked bolt flies off at about 1.5 (" + std::to_string(speed) + ")");
@@ -389,7 +389,7 @@ GF_REGISTER_SELFTEST("lich.death_tome_lectern", [](Context& ctx) -> ll::coro::Co
             ctx.fail("the tome rests on its lectern for 2 s without a player (" + why + ")");
         }
         auto f = tome->getFeetPos();
-        if (std::abs(f.x - (seat.x + 0.5f)) > 0.1f || std::abs(f.z - (seat.z + 0.5f)) > 0.1f || std::abs(f.y - float(seat.y)) > 0.1f)
+        if (std::abs(f.x - (seat.x + 0.5f)) > 0.1f || std::abs(f.z - (seat.z + 0.5f)) > 0.1f || std::abs(f.y - (float(seat.y) + kLecternTop)) > 0.1f)
             ctx.fail("the tome stays in its lectern (at " + std::to_string(f.x) + " " + std::to_string(f.y) + " " + std::to_string(f.z) + ")");
     }
     auto& sim = ctx.spawnPlayer("lich_tome");
@@ -515,8 +515,11 @@ GF_REGISTER_SELFTEST("lich.spawner_range", [](Context& ctx) -> ll::coro::CoroTas
 // placed into a flat test area. The goldens hold while U22's room templates are absent (the
 // placeholder rooms); with U22 present the hashes are logged for U22 / A8 to commit.
 constexpr std::int64_t  kGoldenSeed   = 21;
-constexpr std::uint64_t kGoldenLayout = 0;  // U22 absent
-constexpr char const*   kGoldenVolume = ""; // U22 absent
+constexpr std::uint64_t kGoldenLayout = 9018693297151821187ull; // U22 absent
+// the placed layout depends on where it stands (its chunk seeds the layout): the golden holds for
+// the test area of the e2e worlds (seed 20260521, the BDS spawn); elsewhere it is logged only
+constexpr char const* kGoldenVolume   = ""; // U22 absent
+constexpr int         kGoldenVolumeAt[2] = {0, 0};
 
 std::uint64_t layoutHash(std::vector<tower::PieceBox> const& pieces, BlockPos const& origin, std::map<std::string, int>& counts) {
     std::uint64_t hash = 1469598103934665603ull;
@@ -577,8 +580,10 @@ GF_REGISTER_SELFTEST("lich.tower_layout", [](Context& ctx) -> ll::coro::CoroTask
                         clip, kGoldenSeed);
     tower::forgetTestPieces();
     auto volume = ctx.snapshotVolume(clip);
-    ctx.info("lich tower: volume hash " + volume + " of " + std::to_string(placed.size()) + " pieces" + (u22 ? " (U22 rooms present)" : " (placeholder rooms)"));
-    if (!u22 && std::string(kGoldenVolume).size() > 0) ctx.check(volume == kGoldenVolume, "the placed tower matches the golden volume (" + volume + ")");
+    ctx.info("lich tower: volume hash " + volume + " of " + std::to_string(placed.size()) + " pieces at " + std::to_string(at.x) + " " + std::to_string(at.z)
+             + (u22 ? " (U22 rooms present)" : " (placeholder rooms)"));
+    bool goldenSpot = at.x == kGoldenVolumeAt[0] && at.z == kGoldenVolumeAt[1];
+    if (!u22 && goldenSpot && std::string(kGoldenVolume).size() > 0) ctx.check(volume == kGoldenVolume, "the placed tower matches the golden volume (" + volume + ")");
     removeAround(ctx, core::GlobalPos{ctx.dimension(), at.x, at.y, at.z}, "minecraft:painting", 90.0f);
 });
 
@@ -597,19 +602,34 @@ GF_REGISTER_SELFTEST("lich.yard_spawns", [](Context& ctx) -> ll::coro::CoroTask<
             for (auto const& e : *l) ids.push_back(e.value("type", std::string()));
         return ids;
     };
+    // a spot of the yard that no tower piece covers (the highest index wins where they overlap)
+    auto covered = [&](int x, int y, int z) {
+        for (auto const& q : pieces)
+            if (q.type != "twilightforest:TFLTPath" && q.type != "twilightforest:TFLTGrave" && q.type != "twilightforest:TFLTLight" && q.box.minX <= x && x <= q.box.maxX
+                && q.box.minY <= y && y <= q.box.maxY && q.box.minZ <= z && z <= q.box.maxZ)
+                return true;
+        return false;
+    };
     bool path = false, interior = false;
     for (auto const& p : pieces) {
-        if (p.type == "twilightforest:TFLTPath" && !path) {
-            auto ids = listAt(p.box);
-            path     = std::find(ids.begin(), ids.end(), "twilightforest:rising_zombie") != ids.end();
-            ctx.check(path, "a rising zombie can spawn on the yard (" + std::to_string(ids.size()) + " entries)");
-        } else if (p.type == "twilightforest:TFLTCTBase" && !interior) {
+        if (p.type != "twilightforest:TFLTPath" || path) continue;
+        for (int x = p.box.minX; x <= p.box.maxX && !path; x += 3)
+            for (int z = p.box.minZ; z <= p.box.maxZ && !path; z += 3) {
+                int y = p.box.minY + 1;
+                if (covered(x, y, z)) continue;
+                auto l = gf::landmark::ext::potentialSpawns(center.dim, "monster", x, y, z);
+                if (l)
+                    for (auto const& e : *l) path |= e.value("type", std::string()) == "twilightforest:rising_zombie";
+            }
+    }
+    ctx.check(path, "a rising zombie can spawn on the yard");
+    for (auto const& p : pieces) {
+        if (p.type == "twilightforest:TFLTCTBase" && !interior) {
             auto ids = listAt(p.box);
             interior = std::find(ids.begin(), ids.end(), "twilightforest:death_tome") != ids.end();
             ctx.check(interior, "the tower base spawns the interior list (death tomes)");
         }
     }
-    ctx.check(path, "the yard paths are there");
     co_return;
 });
 

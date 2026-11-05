@@ -303,7 +303,7 @@ void tomeAiStep(Actor& a) {
         if (seat && isLecternAt(region, *seat)) {
             auto at = *seat;
             // it rests there, still (Java: the tome only turns to the lectern's facing)
-            Vec3 rest{at.x + 0.5f, float(at.y), at.z + 0.5f};
+            Vec3 rest{at.x + 0.5f, float(at.y) + kLecternTop, at.z + 0.5f};
             setMotion(a, Vec3{0.0f, 0.0f, 0.0f});
             if (distSqr(m->getFeetPos(), rest) > 0.0025) teleportTo(a, rest);
             // face the lectern's FACING (Bedrock: direction 0 south .. 3 east -> yaw)
@@ -539,7 +539,7 @@ void setTomeOnLectern(Actor& tome, bool on, BlockPos const* seat) {
     if (!on) ge::data(tome, "lectern_pos") = nullptr;
     else if (seat) {
         ge::data(tome, "lectern_pos") = Json::array({seat->x, seat->y, seat->z});
-        teleportTo(tome, Vec3{seat->x + 0.5f, float(seat->y), seat->z + 0.5f});
+        teleportTo(tome, Vec3{seat->x + 0.5f, float(seat->y) + kLecternTop, seat->z + 0.5f});
         setMotion(tome, Vec3{0.0f, 0.0f, 0.0f});
     }
     lecterns()[uidOf(tome)]      = on;
@@ -570,7 +570,7 @@ Mob* spawnLecternTome(BlockSource& region, BlockPos const& pos) {
     if (!isLecternAt(region, pos)) return nullptr;
     // facing the lectern (HorizontalDirectionalBlock.FACING#toYRot; Bedrock's direction 0 south .. 3 east)
     int  dir  = game::intState(region.getBlock(pos), "direction").value_or(0);
-    Mob* tome = spawnMob(region, kTome, Vec3{pos.x + 0.5f, float(pos.y), pos.z + 0.5f}, static_cast<float>(dir) * 90.0F);
+    Mob* tome = spawnMob(region, kTome, Vec3{pos.x + 0.5f, float(pos.y) + kLecternTop, pos.z + 0.5f}, static_cast<float>(dir) * 90.0F);
     if (!tome) return nullptr;
     setTomeOnLectern(*tome, true, &pos);
     return tome;
