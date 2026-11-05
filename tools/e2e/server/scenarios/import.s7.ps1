@@ -59,6 +59,8 @@ foreach ($p in $s7Probes) {
     $s7Expected[$name] = [System.Collections.Generic.List[string]]::new([string[]]@($table[$p.form]))
 }
 $s7ExpectedCount = ($s7Expected.Values | ForEach-Object { $_.Count } | Measure-Object -Sum).Sum
+# the probes the game refuses: those with expected messages (taken before the matching below consumes them)
+$s7Refused = @($s7Expected.Keys | Where-Object { $s7Expected[$_].Count -gt 0 } | Sort-Object)
 
 # The probe pack's lines: "ERR [Server] [Blocks] block_definitions | <pack> | blocks/<name>.json | <message>", where
 # the legacy parser repeats "<pack> | blocks/<name>.json | gf_s7:<name> | " before the component path.
@@ -80,12 +82,8 @@ foreach ($l in $s7Errors) {
     else { $s7Unexpected.Add($l) }
 }
 $s7Missing = @(foreach ($k in ($s7Expected.Keys | Sort-Object)) { foreach ($msg in $s7Expected[$k]) { "blocks/$k.json | $msg" } })
-$s7Refused = @($s7Probes | Where-Object {
-        $t = if (Test-S7ModernFormat $_.format) { $s7Modern } else { $s7Legacy }
-        @($t[$_.form]).Count -gt 0
-    })
 
-Write-Step "S7 evidence: $($s7Matched.Count) of $s7ExpectedCount expected content errors from the probe pack ($($s7Refused.Count) of $($s7Probes.Count) probes refused: $(@($s7Refused | ForEach-Object { $_.id.Substring(6) }) -join ', '))"
+Write-Step "S7 evidence: $($s7Matched.Count) of $s7ExpectedCount expected content errors from the probe pack ($($s7Refused.Count) of $($s7Probes.Count) probes refused: $($s7Refused -join ', '))"
 $s7Matched | ForEach-Object { Write-Step "  expected: $_" }
 $others = @($s7Errors | Where-Object { $_ -notmatch 'GloamingForest_S7_BP' })
 Write-Step "S7: $($s7Unexpected.Count) unexpected probe pack error(s), $($s7Missing.Count) expected error(s) missing, $($others.Count) error(s) outside the probe pack"
