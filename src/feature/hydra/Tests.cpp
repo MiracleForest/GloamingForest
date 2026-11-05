@@ -58,7 +58,7 @@ using Difficulty = SharedTypes::Legacy::Difficulty;
 namespace {
 
 /// The golden volume hash of the hydra lair piece in its test volume (reviewed once with screenshots).
-constexpr char kLairGolden[] = "c4c1c824f4fa0068";
+constexpr char kLairGolden[] = "b69df127eecbe821";
 
 struct DifficultyScope {
     Difficulty previous = Difficulty::Normal;
@@ -173,6 +173,15 @@ GF_REGISTER_SELFTEST("hydra.lair_golden", [](Context& ctx) -> ll::coro::CoroTask
         for (int z = box.minZ; z <= box.maxZ; ++z)
             if (game::blockIdAt(*region, BlockPos{x, box.minY, z}) == "minecraft:stone") ++stone;
     ctx.check(stone > 1000, "the dome turned the dirt to stone (" + std::to_string(stone) + " columns)");
+    // the ore stalactites (iron, coal, copper, glowstone, gold, redstone) hang inside the volume
+    int ores = 0;
+    for (int x = box.minX; x <= box.maxX; ++x)
+        for (int z = box.minZ; z <= box.maxZ; ++z)
+            for (int y = cy + 1; y <= box.maxY; ++y) {
+                auto id = game::blockIdAt(*region, BlockPos{x, y, z});
+                if (id.ends_with("_ore") || id == "minecraft:glowstone") ++ores;
+            }
+    ctx.check(ores > 50, "ore stalactites hang in the lair (" + std::to_string(ores) + " blocks)");
     auto hash = ctx.snapshotVolume(box);
     ctx.info("lair volume hash " + hash);
     ctx.check(hash == kLairGolden, "golden volume hash " + std::string(kLairGolden) + " (got " + hash + ")");
