@@ -616,9 +616,11 @@ GF_REGISTER_SELFTEST("tgear.arrow_magnetism", [](Context& ctx) -> ll::coro::Coro
         for (int i = 0; i < 9; ++i) p.getInventory().setItem(i, ItemStack::EMPTY_ITEM());
         p.teleportTo(Vec3{at.x + 1.5f, static_cast<float>(at.y + 1), at.z + 2.5f}, true, 0, 0, false);
         // an arrow shot before the vest is worn, landing a few blocks away (out of pickup reach)
-        auto* a = gf::projectile::shoot(p, "minecraft:arrow", Vec3{1.f, -0.2f, 0.f}, 1.5f, 0.f);
+        auto* a = gf::projectile::shoot(p, "minecraft:arrow", Vec3{0.2f, -1.f, 0.f}, 1.f, 0.f);
         ctx.require(a != nullptr, "an old arrow");
         oldArrow = a->getOrCreateUniqueID().rawID;
+        // away at once (the game's own pickup of a stuck arrow reaches about a block)
+        p.teleportTo(Vec3{at.x + 14.5f, static_cast<float>(at.y + 1), at.z + 2.5f}, true, 0, 0, false);
     }
     co_await ctx.ticks(30);
     std::int64_t newArrow = 0;

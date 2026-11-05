@@ -23,6 +23,7 @@
 #include "mc/world/PlayerUIContainer.h"
 #include "mc/world/containers/managers/models/ContainerManagerModel.h"
 #include "mc/world/containers/models/ContainerModel.h"
+#include "mc/world/Container.h"
 #include "mc/world/actor/player/Inventory.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/Item.h"
@@ -146,8 +147,9 @@ Json lodestoneOf(Player& player, ItemStack const& compass) {
 namespace {
 /// Per wearer: the stored map JSON and the stack built from it.
 std::unordered_map<std::int64_t, std::pair<Json, ItemStack>>& mapCache() {
-    static std::unordered_map<std::int64_t, std::pair<Json, ItemStack>> c; // server thread
-    return c;
+    // server thread; kept for the process (never destroyed at exit, after the item registry)
+    static auto* c = new std::unordered_map<std::int64_t, std::pair<Json, ItemStack>>();
+    return *c;
 }
 } // namespace
 
@@ -174,7 +176,6 @@ void tickDisplayMap(Player& player) {
         if (cached.first != d->items[slot]) cached = {d->items[slot], items::fromJson(d->items[slot])};
         ItemStack& map    = cached.second;
         auto       id     = items::idOf(map);
-        ItemStack  before = map;
         if (id == "minecraft:filled_map") {
             // GogglesItem#inventoryTick / MapHooks (UpdateMapsInGoggles): the chosen map updates as if
             // held, with the wearer as its carrier; the goggles are no complex item, so send the update
@@ -188,11 +189,16 @@ void tickDisplayMap(Player& player) {
             // their inventory tick as the selected item, the wearer carrying it
             b->inventoryTick(map, player, -1, true);
         }
-        // whatever the tick wrote to the stack (map data, TF's map state) is kept in the display
-        if (!items::sameItemSameData(before, map)) {
-            d->items[slot] = displayJsonOf(map);
-            cached.first   = d->items[slot];
-            changed        = true;
+        // whatever the tick wrote to the stack (map data, TF's map state) is kept in the display: TF's
+        // maps at once, a vanilla map's own data at most once a second (the cached stack keeps it between)
+        bool vanilla = id == "minecraft:filled_map";
+        if (!vanilla || player.getLevel().getCurrentTick().tickID % 20 == 0) {
+            auto j = displayJsonOf(map);
+            if (j != d->items[slot]) {
+                d->items[slot] = j;
+                cached.first   = j;
+                changed        = true;
+            }
         }
     }
     if (changed) {
@@ -237,7 +243,11 @@ void setSlot(Player& p, SlotRef const& r, ItemStack const& s) {
     switch (r.kind) {
     case SlotRef::Inventory: p.getInventory().setItem(r.index, s); break;
     case SlotRef::Armor: p.setArmor(static_cast<SharedTypes::Legacy::ArmorSlot>(r.index), s); break;
-    case SlotRef::Model: r.model->setItem(r.index, s); break;
+    case SlotRef::Model:
+        // the container itself (its change listeners sync the viewers and the item stack net ids)
+        if (auto* ct = r.model->_getContainer()) ct->setItem(r.index + r.model->_getContainerOffset(), s);
+        else r.model->setItem(r.index, s);
+        break;
     default: p.setOffhandSlot(s); break;
     }
 }

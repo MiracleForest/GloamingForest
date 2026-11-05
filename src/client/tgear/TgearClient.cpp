@@ -317,9 +317,9 @@ void drawWidgets(screen::Canvas& canvas);
 
 /// ItemDisplayOverlay at (screenOffsetX, screenOffsetY) in GUI pixels, whatever the HUD drew before it:
 /// the HUD layers run after the whole hud_screen, and a control drawn last (the chat panel with its
-/// lines) can leave its translation on the UI's world matrix and its clipping rectangle (round 2: the
+/// lines) can leave its translation on the UI's world matrix (round 2: the
 /// overlay drew over the chat at about (30, 132) GUI pixels). The overlay draws with the UI's own
-/// world matrix without a translation and the full clipping rectangle, and its text is flushed inside them.
+/// world matrix without a translation, and its text is flushed inside it.
 void drawHud(screen::Canvas& canvas, float) {
     if (hud::guiHidden()) return;
     auto&          ui    = canvas.context();
@@ -331,13 +331,10 @@ void drawHud(screen::Canvas& canvas, float) {
     if ((m[3][0] != 0.f || m[3][1] != 0.f) && !logged.exchange(true))
         log().info("tgear: the HUD's world matrix was offset by ({}, {}) when the item display drew", m[3][0], m[3][1]);
     m[3][0] = m[3][1] = m[3][2] = 0.f; // no translation left over from another control
-    ui.saveCurrentClippingRectangle();
-    ui.setFullClippingRectangle();
     {
         screen::Canvas own(ui); // flushes its text here, inside that matrix
         drawWidgets(own);
     }
-    ui.restoreSavedClippingRectangle();
 }
 
 void drawWidgets(screen::Canvas& canvas) {
@@ -665,7 +662,7 @@ void describe(ItemStack const& stack, std::vector<std::string>& lines) {
 /// The collections the server resolves (Display.cpp: the player's inventory, armour and off-hand, and
 /// the open container's own slots).
 bool handledCollection(std::string const& collection) {
-    static constexpr char const* kNames[] = {"hotbar_items", "inventory_items", "combined_hotbar_and_inventory_items", "armor_items", "offhand_items", "container_items", "shulker_box_items", "barrel_items", "hopper_items", "dispenser_items"};
+    static constexpr char const* kNames[] = {"hotbar_items", "inventory_items", "combined_hotbar_and_inventory_items", "armor_items", "offhand_items", "container_items"};
     for (auto const* n : kNames)
         if (collection == n) return true;
     return false;

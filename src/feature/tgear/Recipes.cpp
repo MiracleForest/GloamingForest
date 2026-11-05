@@ -227,8 +227,9 @@ void fireCraftedTriggers(Player& player) {
     }
     visit(player.getOffhandSlot(), [&](ItemStack const& c) { player.setOffhandSlot(c); });
     auto& ui = player.mPlayerUIContainer.get();
-    visit(ui.getItem(0), [&](ItemStack const& c) { ui.setItem(0, c); }); // PlayerUISlot::CursorSelected
-    if (changed) player.sendInventory(false);
+    bool cursor = false;
+    visit(ui.getItem(0), [&](ItemStack const& c) { ui.setItem(0, c); cursor = true; }); // PlayerUISlot::CursorSelected
+    if (changed) player.sendInventory(cursor); // the UI container too when the cursor changed
 }
 
 } // namespace gf::feature::tgear

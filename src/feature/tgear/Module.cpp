@@ -825,7 +825,7 @@ void setZoom(Player& player, bool zoom, float fov) {
     {
         std::lock_guard lock(state().mutex);
         auto&           cur = state().zoom[uidOf(player)];
-        if (cur == zoom && !zoom) return;
+        if (cur == zoom) return; // a repeated state changes nothing
         cur = zoom;
     }
     applyZoom(player, zoom, fov);
@@ -1008,6 +1008,16 @@ bool deniesPhantomAt(int dim, Vec3 const& pos) {
         }
         return true;
     });
+    // no insomniac player near: any insomniac player of the dimension may own it, else the nearest player
+    if (owners.empty())
+        level->forEachPlayer([&](Player& p) {
+            if (p.isClientSide() || static_cast<int>(p.getDimensionId()) != dim) return true;
+            if (auto ins = p.getEntityContext().tryGetComponent<InsomniaComponent>()) {
+                int since = ins->mTimeSinceRest, until = ins->mTicksUntilInsomnia;
+                if (until > 0 && since >= until) owners.push_back(&p);
+            }
+            return true;
+        });
     if (owners.empty() && nearest) owners.push_back(nearest);
     if (owners.empty()) return false;
     return std::all_of(owners.begin(), owners.end(), [](Player* p) { return isActive(*p, ids::kAllNight); });
