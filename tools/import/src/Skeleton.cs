@@ -510,8 +510,14 @@ namespace GfImport
                     uv = VanillaParticleUv(texs.Select(t => t.Contains(":") ? t.Substring(t.IndexOf(':') + 1) : t).ToList());
                     if (uv == null)
                     {
-                        // no Bedrock cell (e.g. Java's separate glint sprite): no visual until F12's native particle
-                        Warn("particle " + full + ": vanilla sprite " + (texs.FirstOrDefault() ?? "?") + " has no cell in Bedrock's particle atlas: emits nothing");
+                        // no Bedrock cell: no visual until F12's native particle. A reviewed sprite (NoBedrockSprite,
+                        // docs/spec/import.md "Particles without a Bedrock sprite") is a logged deviation; any other a warning
+                        string sprite = texs.FirstOrDefault() ?? "?";
+                        string why;
+                        if (texs.Count == 1 && NoBedrockSprite.TryGetValue(sprite, out why))
+                            Log.Add("particle " + full + ": vanilla sprite " + sprite + " has no Bedrock counterpart (" + why + "): its skeleton effect emits nothing (documented deviation, docs/spec/import.md)");
+                        else
+                            Warn("particle " + full + ": vanilla sprite " + sprite + " has no cell in Bedrock's particle atlas: emits nothing");
                         visible = false;
                         uv = J.Obj().Set("texture_width", 128).Set("texture_height", 128).Set("uv", J.Arr(new[] { J.Num(0), J.Num(0) })).Set("uv_size", J.Arr(new[] { J.Num(8), J.Num(8) }));
                     }
@@ -536,6 +542,14 @@ namespace GfImport
                 Fragment("particles", owner, "data/gf/particles/" + NameOf(owner) + ".json", full, J.Obj().Set("textures", J.Strs(frames)));
             }
         }
+
+        /// <summary>Java vanilla particle sprites reviewed to have no Bedrock counterpart (docs/spec/import.md, Particles
+        /// without a Bedrock sprite), with the reason. The import cannot ship them: they are Mojang's textures, not TF's
+        /// CC BY-NC-SA assets.</summary>
+        static readonly Dictionary<string, string> NoBedrockSprite = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            { "minecraft:glint", "Java's textures/particle/glint.png has no cell in textures/particle/particles and no texture of its own in any Bedrock 1.26.51 vanilla resource pack" },
+        };
 
         /// <summary>The atlas cell (u, v) of a Java vanilla particle sprite in Bedrock's legacy particle atlas
         /// (textures/particle/particles.png: Java's pre-1.14 particles.png layout, 16 x 16 cells of 8 x 8), or null.</summary>
