@@ -5465,7 +5465,6 @@ path	assets/lang/*/weapons.json	U8	manual
 path	assets/lang/*/woodwork.json	U4	manual
 path	assets/lang/*/worldgen.json	F5	manual
 path	assets/LICENSE	F0	manual
-path	assets/pack/{bp,rp}/**/{combat,fx}/**	F10	manual
 path	assets/pack/{bp,rp}/**/{entity,boss}/**	F8	manual
 path	assets/pack/{bp,rp}/**/armory/**	U7	manual
 path	assets/pack/{bp,rp}/**/artifacts/**	U9	manual
@@ -5474,6 +5473,7 @@ path	assets/pack/{bp,rp}/**/aurora/**	U28	manual
 path	assets/pack/{bp,rp}/**/biomes/**	U1	manual
 path	assets/pack/{bp,rp}/**/building/**	U5	manual
 path	assets/pack/{bp,rp}/**/caves/**	U27	manual
+path	assets/pack/{bp,rp}/**/combat/**	F10	manual
 path	assets/pack/{bp,rp}/**/darktower/**	U26	manual
 path	assets/pack/{bp,rp}/**/dimension/**	F4	manual
 path	assets/pack/{bp,rp}/**/fauna/**	U16	manual
@@ -5501,6 +5501,7 @@ path	assets/pack/{bp,rp}/**/uncraftmaps/**	U13	manual
 path	assets/pack/{bp,rp}/**/weapons/**	U8	manual
 path	assets/pack/{bp,rp}/**/woodwork/**	U4	manual
 path	assets/pack/{bp,rp}/manifest.json	F0	manual
+path	assets/pack/rp/particles/fx/**	F10	manual
 path	assets/pack/rp/texts.d/*/armory.lang	U7	manual
 path	assets/pack/rp/texts.d/*/artifacts.lang	U9	manual
 path	assets/pack/rp/texts.d/*/atmosphere.lang	U15	manual

@@ -1087,15 +1087,14 @@ end
 -- docs/spec/owners.tsv gives the path to `owner` (the rule tools/ci/ownership.ps1 applies). It proves
 -- a granted directory is neither dropped by the assembly (fragment directories, "*.d", are merged,
 -- never copied) nor unowned, before the unit's first file lands there. Returns the probe count.
-local function probe_pack_paths(projectdir, cfg, owners)
-    local probes = cfg.checks.packPathProbes or {}
-    if #probes == 0 then return 0 end
-    local scratch = os.tmpfile() .. ".packprobe"
-    os.tryrm(scratch)
+local function probe_each(projectdir, cfg, owners, probes, scratch)
     for i, probe in ipairs(probes) do
         local pack
         for _, p in ipairs(cfg.packs) do
-            if not p.test and probe.file:sub(1, #p.manual + 1) == p.manual .. "/" then pack = p end
+            if not p.test and probe.file:sub(1, #p.manual + 1) == p.manual .. "/" then
+                pack = p
+                break
+            end
         end
         if not pack then
             fail("packPathProbes: %s is not under the manual directory of a shipped pack", probe.file)
@@ -1123,7 +1122,18 @@ local function probe_pack_paths(projectdir, cfg, owners)
             end
         end
     end
+end
+
+local function probe_pack_paths(projectdir, cfg, owners)
+    local probes = cfg.checks.packPathProbes or {}
+    if #probes == 0 then return 0 end
+    local scratch = os.tmpfile() .. ".packprobe"
     os.tryrm(scratch)
+    -- the scratch project goes even when a probe raises (build_pack reads JSON with load_json)
+    try {
+        function () probe_each(projectdir, cfg, owners, probes, scratch) end,
+        finally { function () os.tryrm(scratch) end }
+    }
     return #probes
 end
 

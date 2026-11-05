@@ -58,6 +58,8 @@
       { "file": "assets/pack/rp/particles/fx/gf_pack_probe.json", "out": "particles/fx/gf_pack_probe.json", "owner": "F10",
         "comment": "F10's own particle effects (fx contract): assets/pack/rp/particles/fx/<name>.json -> particles/fx/<name>.json" },
       { "file": "assets/pack/rp/particles/combat/gf_pack_probe.json", "out": "particles/combat/gf_pack_probe.json", "owner": "F10" },
+      { "file": "assets/pack/rp/textures/ui/fx/gf_pack_probe.png", "out": "textures/ui/fx/gf_pack_probe.png", "owner": "F12",
+        "comment": "F10's fx grant is particles/fx only: an fx folder elsewhere stays with the enclosing unit folder" },
       { "file": "assets/pack/rp/particles/landmark/gf_pack_probe.json", "out": "particles/landmark/gf_pack_probe.json", "owner": "F6" },
       { "file": "assets/pack/bp/entities/entity/gf_pack_probe.json", "out": "entities/entity/gf_pack_probe.json", "owner": "F8" },
       { "file": "assets/pack/rp/textures/blocks/lich/gf_pack_probe.png", "out": "textures/blocks/lich/gf_pack_probe.png", "owner": "U21" }
