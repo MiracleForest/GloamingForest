@@ -21,7 +21,7 @@
       "render_controllers": [
         "controller.render.armor",
         {
-          "controller.render.twilightforest.tgear_belt": "(c.owning_entity->v.tgear_belt ?? 0) > 0"
+          "controller.render.twilightforest.tgear_belt": "c.owning_entity->v.tgear_belt > 0"
         }
       ]
     }

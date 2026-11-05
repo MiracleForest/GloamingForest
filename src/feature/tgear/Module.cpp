@@ -98,7 +98,8 @@ struct State {
     std::unordered_map<std::int64_t, int>                  standFlags;      ///< wearer uid -> flags we added (1 snow, 2 freeze)
     struct Arrow {
         std::int64_t firstTick = 0;
-        bool         flying    = false; ///< seen in flight while tracked
+        Vec3         last{};
+        bool         flying = false; ///< seen moving while tracked
     };
     std::unordered_map<std::int64_t, Arrow>  arrows;  ///< arrows of wearers, by unique id
     std::map<std::string, bool>              vision;  ///< player uuid -> red thread vision (default on)
@@ -315,8 +316,7 @@ bool isArrowType(std::string const& type) { return type == "minecraft:arrow" || 
 /// tridents) of a wearer that hits a block before it is 200 ticks old is discarded; a player owner gets
 /// the pickup item when the pickup is ALLOWED (survival), and CREATIVE_ONLY arrows are discarded for a
 /// creative owner. Bedrock gives units no impact event: an arrow of a wearer is tracked from the tick it
-/// is first seen flying, and the tick its ProjectileComponent reports it in the ground (or it stops
-/// moving) is its impact. Arrows already stuck when they are first seen (shot before, loaded from a
+/// is first seen moving, and the tick it stops moving is its impact. Arrows already stuck when they are first seen (shot before, loaded from a
 /// chunk) never count.
 void magnetize(Level& level, std::vector<Actor*> const& arrows, std::unordered_set<std::int64_t> const& wearers, std::int64_t now) {
     auto&                                   s = state();
@@ -325,11 +325,8 @@ void magnetize(Level& level, std::vector<Actor*> const& arrows, std::unordered_s
     for (auto* a : arrows) {
         auto ownerId = a->getOwnerId().rawID;
         if (!wearers.contains(ownerId)) continue;
-        auto  id  = uidOf(*a);
-        auto  pc  = a->getEntityContext().tryGetComponent<ProjectileComponent>();
-        auto  v   = a->getPosDelta();
-        bool  moving = std::abs(v.x) + std::abs(v.y) + std::abs(v.z) > 1e-3f;
-        bool  inGround = pc ? (pc->mOnGroundTime > 0 || (!moving && pc->mFlightTime > 0)) : !moving;
+        auto         id  = uidOf(*a);
+        auto const&  pos = a->getPosition();
         State::Arrow rec;
         bool         known = false;
         {
@@ -339,13 +336,21 @@ void magnetize(Level& level, std::vector<Actor*> const& arrows, std::unordered_s
                 known = true;
             }
         }
-        if (!known) rec.firstTick = now;
-        if (!inGround && moving) {
+        if (!known) {
+            // first sighting: whether it flies shows next tick
+            rec.firstTick = now;
+            rec.last      = pos;
+            next[id]      = rec;
+            continue;
+        }
+        bool moved = std::abs(pos.x - rec.last.x) + std::abs(pos.y - rec.last.y) + std::abs(pos.z - rec.last.z) > 1e-3f;
+        rec.last   = pos;
+        if (moved) {
             rec.flying = true;
             next[id]   = rec;
             continue;
         }
-        // in the ground now: an impact only when it was seen flying before (projectile.tickCount < 200)
+        // stopped: an impact only when it was seen flying (projectile.tickCount < 200)
         if (rec.flying && now - rec.firstTick < 200) hits.push_back(a);
         rec.flying = false;
         next[id]   = rec;
@@ -476,11 +481,16 @@ bool bypassesArmor(std::string const& type) {
 /// flies on through the wearer (Bedrock: the damage is cancelled and, a tick later, the projectile gets
 /// back the motion it hit with, one step further along, so it passes the wearer or hits it again).
 combat::Verdict onIncoming(combat::DamageInfo& d) {
-    if (d.direct && d.direct != &d.victim && d.direct->getEntityContext().tryGetComponent<ProjectileComponent>()) {
-        if (rollPerfectDodge(d.victim, d.direct)) {
-            auto  id  = d.direct->getOrCreateUniqueID();
-            Vec3  v   = d.direct->getPosDelta();
-            Vec3  at  = d.direct->getPosition();
+    // the projectile of the hit (combat's direct entity; a child-actor source may name it as the
+    // attacker instead)
+    Actor* projectile = nullptr;
+    for (Actor* a : {d.direct, d.attacker})
+        if (!projectile && a && a != &d.victim && a->getEntityContext().tryGetComponent<ProjectileComponent>()) projectile = a;
+    if (projectile) {
+        if (rollPerfectDodge(d.victim, projectile)) {
+            auto  id  = projectile->getOrCreateUniqueID();
+            Vec3  v   = projectile->getPosDelta();
+            Vec3  at  = projectile->getPosition();
             ia::nextTick([id, v, at] {
                 auto level = ll::service::getLevel();
                 if (!level) return;

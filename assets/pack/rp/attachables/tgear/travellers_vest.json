@@ -22,7 +22,7 @@
       "render_controllers": [
         "controller.render.armor",
         {
-          "controller.render.twilightforest.tgear_gloves": "(c.owning_entity->v.tgear_gloves ?? 0) > 0 && (!c.is_first_person || (c.owning_entity->v.tgear_glove_overlay ?? 0) > 0)"
+          "controller.render.twilightforest.tgear_gloves": "c.owning_entity->v.tgear_gloves > 0 && (!c.is_first_person || c.owning_entity->v.tgear_glove_overlay > 0)"
         }
       ]
     }

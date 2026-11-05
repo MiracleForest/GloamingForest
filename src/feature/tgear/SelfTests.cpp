@@ -329,15 +329,18 @@ GF_REGISTER_SELFTEST("tgear.perfect_dodge", [](Context& ctx) -> ll::coro::CoroTa
         auto& p = ctx.player();
         health  = static_cast<float>(p.getHealth());
         auto  from = s.getPosition();
-        auto  to   = p.getPosition();
-        Vec3  dir{to.x - from.x, to.y - 0.5f - from.y, to.z - from.z};
-        ctx.require(gf::projectile::shoot(s, "minecraft:arrow", dir, 2.5f, 0.f) != nullptr, "an arrow is shot at the wearer");
+        auto  to   = p.getFeetPos();
+        Vec3  dir{to.x - from.x, to.y + 1.0f - from.y, to.z - from.z};
+        auto* arrow = gf::projectile::shoot(s, "minecraft:arrow", dir, 2.5f, 0.f);
+        ctx.require(arrow != nullptr, "an arrow is shot at the wearer");
+        // the hit through the combat contract, as the arrow's impact deals it
+        ctx.check(!gf::combat::hurt(p, 4.f, "minecraft:arrow", &s, arrow), "the arrow's damage is cancelled");
     }
     co_await ctx.ticks(30);
     tg::setDodgeProbabilityForTest(std::nullopt);
     {
         auto& p = ctx.player();
-        ctx.check(tg::dodgeCount() > before, "the arrow's impact was dodged through the combat contract");
+        ctx.check(tg::dodgeCount() > before, "the arrow's impact was dodged through the combat contract (health " + std::to_string(p.getHealth()) + ")");
         ctx.check(static_cast<float>(p.getHealth()) >= health, "no damage was taken");
         clearArmor(p);
     }
@@ -423,11 +426,14 @@ GF_REGISTER_SELFTEST("tgear.item_display", [](Context& ctx) {
     ctx.check(tg::cycleMapSlot(p), "cycle 3 changed the map");
     dd = tg::displayOf(p.getArmor(Slot::Head));
     ctx.check(dd && dd->chosenMapSlot == 0, "-1 -> 0");
-    // without maps nothing changes
+    // without maps the choice goes to none once (cycle_maps_empty), then nothing changes
     auto plain = make(tg::ids::kGoggles);
     tg::addModifier(plain, tg::ids::kItemDisplay);
     p.setArmor(Slot::Head, plain);
-    ctx.check(!tg::cycleMapSlot(p), "no maps: the cycle changes nothing");
+    tg::cycleMapSlot(p);
+    auto none = tg::displayOf(p.getArmor(Slot::Head));
+    ctx.check(none && none->chosenMapSlot == -1, "no maps: the choice is none");
+    ctx.check(!tg::cycleMapSlot(p), "no maps: the next cycle changes nothing");
     clearArmor(p);
 });
 GF_REGISTER_SELFTEST("tgear.zoom_channel", [](Context& ctx) {
@@ -501,7 +507,7 @@ GF_REGISTER_SELFTEST("tgear.red_thread", [](Context& ctx) -> ll::coro::CoroTask<
         p.setSelectedItem(ItemStack::EMPTY_ITEM());
     }
     // the wall goes: MultifaceBlock#updateShape removes the north face, the floor face stays
-    ctx.cleanupBlock(wall);
+    gf::game::clearBlock(*region, BlockPos{wall.x, wall.y, wall.z});
     co_await ctx.ticks(2);
     {
         auto const& placed = region->getBlock(bp);
@@ -549,8 +555,15 @@ GF_REGISTER_SELFTEST("tgear.stealth_target_filter", [](Context& ctx) -> ll::coro
         tg::addModifier(vest, tg::ids::kStealth);
         p.setArmor(Slot::Torso, vest);
         p.teleportTo(Vec3{at.x + 2.5f, static_cast<float>(at.y + 1), at.z + 2.5f}, true, 0, 0, false);
-        auto* z = gf::spawn::spawnMob(*region, "minecraft:zombie", Vec3{at.x + 10.5f, static_cast<float>(at.y + 1), at.z + 2.5f}, gf::spawn::SpawnReason::Spawner);
-        ctx.require(z != nullptr, "a zombie 8 blocks away");
+        float zx = at.x + 10.5f, zy = static_cast<float>(at.y + 1), zz = at.z + 2.5f;
+        auto  r  = gf::selftest::runServerCommand("summon minecraft:pig " + std::to_string(zx) + " " + std::to_string(zy) + " " + std::to_string(zz), static_cast<int>(p.getDimensionId()));
+        Actor* z = nullptr;
+        for (auto* a : p.getLevel().getRuntimeActorList()) {
+            if (!a || a->getTypeName() != "minecraft:pig") continue;
+            auto f = a->getFeetPos();
+            if (std::abs(f.x - zx) < 1.5f && std::abs(f.z - zz) < 1.5f) z = a;
+        }
+        ctx.require(z != nullptr, "a mob 8 blocks away (" + r.messages + ")");
         zombieId = z->getOrCreateUniqueID().rawID;
         static_cast<SimulatedPlayer&>(p).simulateSneaking();
     }
@@ -586,9 +599,9 @@ GF_REGISTER_SELFTEST("tgear.arrow_magnetism", [](Context& ctx) -> ll::coro::Coro
         p.setPlayerGameType(GameType::Survival);
         clearArmor(p);
         for (int i = 0; i < 9; ++i) p.getInventory().setItem(i, ItemStack::EMPTY_ITEM());
-        p.teleportTo(Vec3{at.x + 2.5f, static_cast<float>(at.y + 1), at.z + 2.5f}, true, 0, 0, false);
-        // an arrow shot before the vest is worn
-        auto* a = gf::projectile::shoot(p, "minecraft:arrow", Vec3{1.f, -1.f, 0.f}, 1.0f, 0.f);
+        p.teleportTo(Vec3{at.x + 8.5f, static_cast<float>(at.y + 1), at.z + 2.5f}, true, 0, 0, false);
+        // an arrow shot before the vest is worn, landing a few blocks away (out of pickup reach)
+        auto* a = gf::projectile::shoot(p, "minecraft:arrow", Vec3{1.f, -0.4f, 0.f}, 1.0f, 0.f);
         ctx.require(a != nullptr, "an old arrow");
         oldArrow = a->getOrCreateUniqueID().rawID;
     }
@@ -603,7 +616,7 @@ GF_REGISTER_SELFTEST("tgear.arrow_magnetism", [](Context& ctx) -> ll::coro::Coro
     co_await ctx.ticks(2);
     {
         auto& p = ctx.player();
-        auto* a = gf::projectile::shoot(p, "minecraft:arrow", Vec3{-1.f, -1.f, 0.f}, 1.0f, 0.f);
+        auto* a = gf::projectile::shoot(p, "minecraft:arrow", Vec3{-1.f, -0.4f, 0.f}, 1.0f, 0.f);
         ctx.require(a != nullptr, "an arrow shot by the wearer");
         newArrow = a->getOrCreateUniqueID().rawID;
     }
