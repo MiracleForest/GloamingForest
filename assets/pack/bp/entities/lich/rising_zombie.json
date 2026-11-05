@@ -1,0 +1,29 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "twilightforest:rising_zombie",
+      "is_spawnable": false,
+      "is_summonable": true,
+      "is_experimental": false,
+      "properties": {
+        "twilightforest:rising_ticks": { "type": "int", "range": [0, 130], "default": 0, "client_sync": true }
+      }
+    },
+    "components": {
+      "minecraft:type_family": { "family": ["twilightforest", "rising_zombie", "zombie", "undead", "monster", "mob"] },
+      "minecraft:collision_box": { "width": 0.6, "height": 1.95 },
+      "minecraft:health": { "value": 20, "max": 20 },
+      "minecraft:attack": { "damage": 3 },
+      "minecraft:movement": { "value": 0.0 },
+      "minecraft:follow_range": { "value": 35, "max": 35 },
+      "minecraft:physics": { "has_gravity": true },
+      "minecraft:pushable": { "is_pushable": false, "is_pushable_by_piston": false },
+      "minecraft:knockback_resistance": { "value": 1.0 },
+      "minecraft:nameable": {},
+      "minecraft:breathable": { "total_supply": 15, "suffocate_time": 0, "breathes_solids": true, "breathes_water": true },
+      "minecraft:damage_sensor": { "triggers": [ { "cause": "suffocation", "deals_damage": "no" } ] },
+      "minecraft:experience_reward": { "on_death": "query.last_hit_by_player ? 5 : 0" }
+    }
+  }
+}

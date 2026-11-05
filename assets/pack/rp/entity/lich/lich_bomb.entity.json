@@ -1,0 +1,24 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:lich_bomb",
+      "materials": { "default": "snowball" },
+      "textures": { "default": "textures/items/magma_cream" },
+      "geometry": { "default": "geometry.item_sprite" },
+      "render_controllers": ["controller.render.item_sprite"],
+      "animations": { "flying": "animation.actor.billboard" },
+      "scripts": {
+        "pre_animation": [
+          "variable.f = (math.sin(query.life_time * 20 * 57.2958) + 1) * 0.5;",
+          "variable.f1 = 1 + math.sin(variable.f * 100 * 57.2958) * variable.f * 0.01;",
+          "variable.g = math.pow(math.clamp(variable.f, 0, 1), 4);"
+        ],
+        "scaleX": "(1 + variable.g * 0.4) * variable.f1",
+        "scaleY": "(1 + variable.g * 0.1) / variable.f1",
+        "scaleZ": "(1 + variable.g * 0.4) * variable.f1",
+        "animate": ["flying"]
+      }
+    }
+  }
+}

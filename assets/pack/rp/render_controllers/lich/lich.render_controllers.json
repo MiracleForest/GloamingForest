@@ -1,0 +1,44 @@
+{
+  "format_version": "1.10.0",
+  "render_controllers": {
+    "controller.render.twilightforest.lich": {
+      "geometry": "Geometry.default",
+      "materials": [{ "*": "Material.default" }],
+      "textures": ["Texture.default"],
+      "part_visibility": [
+        { "*": "variable.death_time <= 115" },
+        { "hat": true }
+      ]
+    },
+    "controller.render.twilightforest.lich_clone": {
+      "geometry": "Geometry.default",
+      "materials": [{ "*": "Material.clone" }],
+      "textures": ["Texture.clone"],
+      "part_visibility": [
+        { "*": true },
+        { "cloak": false },
+        { "collar": false }
+      ]
+    },
+    "controller.render.twilightforest.lich_clone_eyes": {
+      "geometry": "Geometry.default",
+      "materials": [{ "*": "Material.eyes" }],
+      "textures": ["Texture.eyes"],
+      "ignore_lighting": true,
+      "part_visibility": [
+        { "*": true },
+        { "cloak": false },
+        { "collar": false }
+      ]
+    },
+    "controller.render.twilightforest.death_tome": {
+      "geometry": "Geometry.default",
+      "materials": [{ "*": "Material.default" }],
+      "textures": ["Texture.default"],
+      "part_visibility": [
+        { "*": true },
+        { "loose_page_*": "!query.property('twilightforest:on_lectern')" }
+      ]
+    }
+  }
+}
