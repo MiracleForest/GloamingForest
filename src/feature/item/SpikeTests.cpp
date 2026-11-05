@@ -195,13 +195,14 @@ std::set<std::string>& appendedProbes() {
 /// material: §2, the fixture item as their item) while players are in the world, and `kTrimMaterial`
 /// too when the run did not register it at load (no prelaunch flag: the BDS host of the client's
 /// remote modes); `add` false takes out what it appended. Every real player gets the new
-/// TrimDataPacket.
+/// TrimDataPacket, with the materials only: a client adds the packet's patterns to the ones it has
+/// (TrimPatternRegistry::initializeFromTrimPatterns) and logs "Overwriting pattern template" for each
+/// one it already took from the join's packet, and the patterns did not change.
 bool setTrimProbe(bool add) {
     auto level = ll::service::getLevel();
     if (!level) return false;
     auto materials = level->getTrimMaterialRegistry().lock();
-    auto patterns  = level->getTrimPatternRegistry().lock();
-    if (!materials || !patterns) return false;
+    if (!materials) return false;
     // TrimMaterial has no exported assignment: the list is rebuilt by copy construction and swapped
     auto& list = materials->mTrimMaterials.get();
     auto& mine = appendedProbes();
@@ -236,7 +237,6 @@ bool setTrimProbe(bool add) {
         if (!packet) return true;
         auto&                     trim = static_cast<TrimDataPacket&>(*packet);
         std::vector<TrimMaterial> copy(list.begin(), list.end());
-        trim.mTrimPatterns = patterns->getAllEntries();
         trim.mTrimMaterials.get().swap(copy);
         trim.sendTo(p);
         return true;

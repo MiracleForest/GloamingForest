@@ -20,6 +20,9 @@
 #    check gives the player its levels back). A vanilla client offers no result there (its own
 #    preview): it then holds the book and uses the anvil, closes the anvil screen its client opens,
 #    gets the anvil form and takes the sword.
+# 4. Local mode: Save & Quit and back into the world in the same game session, then the trim probe
+#    and the carriers again (out/item/reload-*.png): the material registered at load is in the new
+#    level's registry, and no TrimDataPacket logs "Overwriting pattern template".
 # Local mode also runs every item selftest in the integrated server; remote modes run them on the
 # BDS host and check that a vanilla client stays connected with the carriers in its inventory.
 $script:IsLocal = $script:Mode -eq 'local'
@@ -29,7 +32,7 @@ if ($script:IsLocal) {
     if (-not (Get-LeviLog | Select-String -Pattern 'item: S6 trim probe registered at load' -Quiet)) { throw 'the S6 trim probe was not registered at load (prelaunch flag)' }
     $r = Invoke-SelfTest 'item.*'
     if ($r.Fail -gt 0) { throw "$($r.Fail) item selftest(s) failed in the local world: $($r.Failed -join ', ')" }
-    if ($r.Pass -lt 43) { throw "expected at least 43 item selftests, got $($r.Pass)" }
+    if ($r.Pass -lt 55) { throw "expected at least 55 item selftests, got $($r.Pass)" }
 } else {
     Wait-LogLine '\[host\].*GloamingForest world ready' 120 | Out-Null
 }
@@ -214,4 +217,49 @@ Invoke-Chat '/setblock ~3 ~ ~ air'
 if (-not $script:IsLocal) {
     $r = Invoke-SelfTest 'item.tags_fixture'
     if ($r.Fail -gt 0) { throw 'the host stopped answering after the carriers' }
+}
+
+# ---- 4. a world reload in the same game session (local) ---------------------------------------------
+# The level's trim registries are made again for the new world: the material registered at load must
+# be in the new level's registry, and the TrimDataPackets of the join and of the probe must not log
+# "Overwriting pattern template" (the run's content-log check covers the whole session).
+if ($script:IsLocal) {
+    Focus-Game
+    try { Invoke-BeDDAction pause | Out-Null } catch { Press-Key ESC }
+    Start-Sleep -Seconds 2
+    Save-Screenshot 'reload-pause-menu' | Out-Null
+    # Save & Quit: the fourth button of the pause menu's left column (375 x 480 px of 1280 x 720)
+    # one click: the game saves and goes to the worlds list (a second click there would open a
+    # world's Edit screen)
+    Move-Mouse 0.293 0.667 -Relative
+    Start-Sleep -Milliseconds 300
+    Click 0.293 0.667 -Relative
+    Start-Sleep -Seconds 15
+    Save-Screenshot 'reload-worlds-list' | Out-Null
+    # back in through the first world thumbnail (GF-Test was played last), as Enter-TestWorld does
+    $mark = Get-LogMark
+    Focus-Game
+    Click 0.173 0.43 -Relative
+    Wait-LogLine 'Player Spawned' 90 -Since $mark | Out-Null
+    Wait-LogLine "world: level '$($script:WorldName)' opened" 30 -Since $mark | Out-Null
+    Wait-LogLine 'GloamingForest world ready' 60 -Since $mark | Out-Null
+    Write-Step "back in $($script:WorldName) after Save & Quit"
+    Start-Sleep -Seconds 3
+    Wait-HudReady
+    $r = Invoke-SelfTest 'item.spike_trim_materials'
+    if ($r.Fail -gt 0) { throw 'item.spike_trim_materials failed after the world reload' }
+    $mark = Get-LogMark
+    $r = Invoke-SelfTest 'item.spike_client'
+    if ($r.Fail -gt 0) { throw 'item.spike_client failed after the world reload' }
+    Wait-LogLine 'S6 carriers given to' 30 -Since $mark | Out-Null
+    Start-Sleep -Seconds 5
+    Press-Key '7'
+    Start-Sleep -Milliseconds 700
+    Save-Screenshot 'reload-slot7-trim-emerald' | Out-Null
+    Press-Key '6'
+    Start-Sleep -Milliseconds 700
+    Save-Screenshot 'reload-slot6-trim-at-load' | Out-Null
+    Press-Key '1'
+    $r = Invoke-SelfTest 'item.spike_client_clear'
+    if ($r.Fail -gt 0) { throw 'item.spike_client_clear failed after the world reload' }
 }
