@@ -23,5 +23,8 @@ if ($unknown.Count -gt 0) { throw "unknown tree parts: $($unknown -join ' | ')" 
 $parity = @(Get-ServerLog -Since $mark | Select-String -Pattern 'JAVA PARITY (\S+): ' | ForEach-Object { $_.Line.Trim() })
 $notCompared = @($parity | Where-Object { $_ -match 'not compared' })
 if ($notCompared.Count -gt 0) { throw "Java parity not compared: $($notCompared -join ' | ')" }
-if ($parity.Count -lt 16) { throw "expected 16 Java parity comparisons, got $($parity.Count): $($parity -join ' | ')" }
+$cases = @('features_a', 'features_b', 'features_c', 'golden_canopy_tree', 'golden_mega_canopy_tree', 'golden_darkwood_tree', 'golden_mangrove_tree') +
+    @('twilight_oak', 'canopy', 'mangrove', 'darkwood', 'time', 'transformation', 'mining', 'sorting', 'rainbow_oak' | ForEach-Object { "sapling_$($_)_sapling" })
+$missing = @($cases | Where-Object { $c = $_; -not ($parity | Where-Object { $_ -match "JAVA PARITY $([regex]::Escape($c)): " }) })
+if ($missing.Count -gt 0) { throw "Java parity comparisons missing: $($missing -join ', ')" }
 Write-Step "every trees selftest passed; $($parity.Count) Java parity comparisons ran"

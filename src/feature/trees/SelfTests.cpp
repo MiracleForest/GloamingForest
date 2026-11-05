@@ -452,6 +452,13 @@ void resetGround(BlockSource& region, int minX, int minZ, int maxX, int maxZ, in
     int const                 bottom = region.getMinHeight();
     std::vector<Block const*> column;
     for (int y = bottom; y < grassY; ++y) column.push_back(&region.getBlock(BlockPos{minX, y, minZ}));
+    // the four corners agree on an untouched flat world; otherwise a corner was changed: leave it
+    for (auto [cx, cz] : {std::pair{maxX, minZ}, std::pair{minX, maxZ}, std::pair{maxX, maxZ}})
+        for (int y = bottom; y < grassY; ++y)
+            if (&region.getBlock(BlockPos{cx, y, cz}) != column[static_cast<std::size_t>(y - bottom)]) {
+                gf::log().warn("trees: the ground's corner columns differ at {} {}: not reset", cx, cz);
+                return;
+            }
     for (int x = minX; x <= maxX; ++x)
         for (int z = minZ; z <= maxZ; ++z)
             for (int y = bottom; y < grassY; ++y) {

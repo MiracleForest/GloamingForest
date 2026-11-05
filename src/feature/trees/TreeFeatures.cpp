@@ -36,6 +36,7 @@
 
 #include "core/jrand/JRand.h"
 #include "core/jrand/JavaOrder.h"
+#include "core/jrand/Mth.h"
 #include "feature/features/Features.h"
 #include "feature/worldgen/Worldgen.h"
 #include "core/trees/JavaHashSet.h"
@@ -304,7 +305,7 @@ public:
     }
 
 private:
-    static std::int64_t key(BlockPos const& p) { return (static_cast<std::int64_t>(p.x) & 0x3FFFFFF) << 38 | (static_cast<std::int64_t>(p.z) & 0x3FFFFFF) << 12 | (static_cast<std::int64_t>(p.y) & 0xFFF); }
+    static std::int64_t key(BlockPos const& p) { return core::mth::blockPosAsLong(p.x, p.y, p.z); }
     Block const&                                      mAir;
     std::unordered_map<std::int64_t, Block const*>    mBlocks;
 };

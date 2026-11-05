@@ -91,7 +91,7 @@ non-existent `root_trace_skip`, so traced roots replaced the roots of earlier st
 worldgen-replaceable through `#moss_replaceable`): more roots under the trees (outside the
 comparison boxes) and shifted random draws for every decorator after `tree_roots` (the firefly
 canopy tree's fireflies and lanterns) and the tree of time's exposed roots overwriting its time wood.
-`StructureTemplate.updateShapeAtEdge` has no Bedrock counterpart (the game connects block shapes;
+Not ported: `StructureTemplate.updateShapeAtEdge` has no Bedrock counterpart (the game connects block shapes;
 F11 recomputes leaf distances on neighbour changes). The decorators get their position sets in
 Java's HashSet order, then sorted by y. `dark_canopy_tree` checks DarkCanopyTreeFeature's own free
 height (logs are not free) before the tree interpreter, which replays the two trunk height draws.
@@ -111,18 +111,27 @@ server e2e world's). The dump comes from a `trees` kind of the F13 oracle dumper
 flat area as `flatArea` does, places the configured feature with `LegacyRandomSource(seed)` or plants
 the sapling and calls `SaplingBlock#advanceTree` twice with one, and dumps the box.
 
-What it showed and what was fixed: F5's `minecraft:tree` writes no leaf distances (Java's
-`TreeFeature.updateLeaves`): TF's vanilla-type trees now run it through `gf_trees:update_leaves`, a
-decorator `tools/import/overrides/trees.json` appends to their configured features; the dark canopy and
-snow trees run their own older copy. Every golden tree, mega canopy tree and sapling (the tree of time
-aside) then matches block for block; the golden hashes are those runs'. Known differences (at most this
-many blocks, `PARITY GAP (known)` in the log, more fails):
-- `features_a` (120; 105 or 106 measured): the firefly canopy tree's trunkside / dangle decorators draw differently (some
-  fireflies, a jar on a rope); F5's `leave_vine` writes vine bits 1 where Java's vine faces east (8);
-  one mega oak leaf keeps distance 2 where Java keeps 7.
-- `features_b` (21) and `sapling_time_sapling` (10): the tree of time's exposed roots at its base.
-- `features_c` (19): the oracle places in a live level, where `HugeMushroomBlock#updateShape` clears
-  the faces between cap blocks; worldgen keeps them, as Bedrock does.
+What it showed and what was fixed:
+- F5's `minecraft:tree` writes no leaf distances (Java's `TreeFeature.updateLeaves`): TF's
+  vanilla-type trees run it through `gf_trees:update_leaves` (the temporary data patch above); the
+  dark canopy and snow trees run their own older copy.
+- Root tracing asked for a tag that does not exist (`root_trace_skip` instead of TF's
+  `tree_roots_skip`): fixed, which brought the firefly canopy tree (its fireflies, jars and ropes
+  after `tree_roots`) and the tree of time's base to Java's blocks.
+- `trees.sapling_growers` grows the same saplings around the same spots through the game's setters,
+  whose underground roots flatArea does not put back; `trees.sapling_hashes` resets the ground under
+  each cell to the flat world's layers first, as the oracle does (an earlier root would stop the
+  next tree's roots and shift its draws).
+
+Every tree feature, golden tree and sapling now matches TF 4.8 block for block; the golden hashes are
+those runs'. The comparison counts differences per feature (a placeAll cell or the case) and allows
+differences only where they are explained (`kAllowances`, logged as `PARITY GAP (known)`, more
+fails), all of them Java oracle artifacts: the oracle places in a live level, where
+`HugeMushroomBlock#updateShape` clears the faces between cap blocks of the same kind, and worldgen
+(WorldGenRegion) keeps them as Bedrock's features do: `canopy_red_spheroid_mushroom` (19 blocks)
+and `canopy_red_smooth_mushroom` (8). The server scenario requires all 16 comparisons to run (each
+logs `JAVA PARITY <case>: ...`); a world whose spawn differs from the oracle's logs `not compared`
+and fails the scenario.
 
 ## Client e2e probes
 
@@ -160,5 +169,5 @@ everything (blocks, biomes, the stand-in) back at once.
   tinted materials) can draw ColorHandler's colours; Bedrock's tint methods are all biome colours, and
   a pre-tinted texture would be multiplied again by that tint. The fix belongs to F11 / F12 (see the
   PR's routing notes).
-- F5's natural spawner does not check `BlockState#isValidSpawn`; hardened dark leaves use the
-  special spawn list instead (a landmark's own list registered before it wins there).
+- F5's natural spawner does not check `BlockState#isValidSpawn`; TF's leaves (hardened dark leaves
+  and the eight LeavesBlock leaves) use the special spawn list instead (a landmark's own list registered before it wins there).
