@@ -59,6 +59,24 @@ inline constexpr int kFoliageForestMap   = 0x59AE30;
 /// FoliageColorHandler#get(o, biome, x, z): `base` is the biome's foliage colour. nullopt: no handler.
 [[nodiscard]] std::optional<int> foliage(std::string_view biomeId, int base, double x, double z);
 
+/// The grass / foliage colour of a TF biome without a modifier (Biome#getGrassColor /
+/// getFoliageColor): TF's JSON grass_color / foliage_color (fire swamp, snowy forest), else the
+/// vanilla colour map at the biome's climate (GrassColor.get / FoliageColor.get(temperature,
+/// downfall); the values are Bedrock's colour maps, which differ from Java's by at most one step in
+/// one channel). nullopt: not a TF biome, or a biome whose modifier gives every colour.
+[[nodiscard]] std::optional<int> staticGrass(std::string_view biomeId);
+[[nodiscard]] std::optional<int> staticFoliage(std::string_view biomeId);
+/// TF's grass / foliage colour of `biomeId` at block column (x, z) before the blend: the modifier's
+/// (or the foliage handler's) colour where the biome has one, else the static colour. nullopt: not a
+/// TF biome.
+[[nodiscard]] std::optional<int> grassAt(std::string_view biomeId, double x, double z);
+[[nodiscard]] std::optional<int> foliageAt(std::string_view biomeId, double x, double z);
+/// BiomeSpecialEffects#waterColor / #waterFogColor of a TF biome (nullopt: not a TF biome).
+[[nodiscard]] std::optional<int> water(std::string_view biomeId);
+[[nodiscard]] std::optional<int> waterFog(std::string_view biomeId);
+/// Whether `biomeId` is in TF's has_closer_water_fog tag (Java's water fog ends at 85% there).
+[[nodiscard]] bool closerWaterFog(std::string_view biomeId);
+
 /// ClientLevel#calculateBlockTint: the average over the (2r+1)^2 columns around (x, z) of
 /// `colorAt(dx, dz)` (r = biomeBlendRadius, Java's default 2), channel by channel, truncating.
 [[nodiscard]] int blend(int x, int z, int radius, std::function<int(int x, int z)> const& colorAt);

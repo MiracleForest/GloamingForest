@@ -21,10 +21,17 @@
 // player spawns only when that player is the nearest Twilight Forest player to it: every point
 // then gets the particles of one player's animateTick (the nearest one's), which is what each of
 // them sees in Java up to the shape of the falloff between two players.
+//
+// The mood sound (TF's AmbientMoodSettings.LEGACY_CAVE_SETTINGS in every biome: ambient.cave,
+// tick delay 6000, search extent 8, offset 2.0) is played by the server per player as
+// BiomeAmbientSoundsHandler#tick does on Java's client (core/biomes/Mood): Bedrock's client biome
+// mood has none of these settings, so the client biome files carry no mood.
 
 #include <array>
+#include <cmath>
 #include <random>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "ll/api/event/EventBus.h"
@@ -32,6 +39,10 @@
 #include "ll/api/service/Bedrock.h"
 
 #include "mc/deps/core/math/Vec3.h"
+#include "mc/network/MinecraftPacketIds.h"
+#include "mc/network/MinecraftPackets.h"
+#include "mc/network/packet/PlaySoundPacket.h"
+#include "mc/platform/UUID.h"
 #include "mc/world/phys/AABB.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/level/BlockPos.h"
@@ -42,15 +53,20 @@
 #include "mc/world/level/block/BlockType.h"
 #include "mc/world/level/dimension/Dimension.h"
 
+#include "core/biomes/Colors.h"
+#include "core/biomes/Mood.h"
 #include "feature/biomes/Biomes.h"
 #include "feature/dimension/World.h"
 #include "feature/fx/Fx.h"
 #include "game/Blocks.h"
+#include "mod/Log.h"
 #include "mod/Module.h"
 
 namespace gf::feature::biomes {
 
 namespace {
+
+namespace mood = core::biomes::mood;
 
 struct AmbientParticle {
     char const* biome;
@@ -118,10 +134,50 @@ private:
         if (!region) return;
         mPlayers.clear();
         level->forEachPlayer([&](Player& player) {
-            if (player.getDimensionId() == *twilight) mPlayers.push_back(game::blockPosOf(player.getFeetPos()));
+            if (player.getDimensionId() != *twilight) return true;
+            mPlayers.push_back(game::blockPosOf(player.getFeetPos()));
+            moodTick(*region, player);
             return true;
         });
         for (std::size_t i = 0; i < mPlayers.size(); ++i) animateTick(*region, i);
+    }
+
+    /// BiomeAmbientSoundsHandler#tick's mood part for `player` (TF's mood settings in every TF
+    /// biome). Bedrock's own mood timing does not apply: the client biome files have no mood.
+    void moodTick(BlockSource& region, Player& player) {
+        if (player.isSimulatedPlayer()) return;
+        Vec3 const feet = player.getFeetPos();
+        // Entity#getEyeY: the player's eye height (1.62 standing, 1.27 crouching)
+        double const eyeY = feet.y + (player.isSneaking() ? 1.27 : 1.62);
+        if (!core::biomes::colors::water(biomeIdOf(region.getBiome(game::blockPosOf(feet)))).has_value()) return; // a TF biome
+        auto const&                        s = mood::kTwilight;
+        std::uniform_int_distribution<int> axis(0, s.blockSearch * 2);
+        // Java draws x, y, z in that order
+        int      dx = axis(mRandom) - s.blockSearch, dy = axis(mRandom) - s.blockSearch, dz = axis(mRandom) - s.blockSearch;
+        BlockPos pos{static_cast<int>(std::floor(feet.x + dx)), static_cast<int>(std::floor(eyeY + dy)), static_cast<int>(std::floor(feet.z + dz))};
+        int      sky = 0, block = 0;
+        if (pos.y >= region.getMaxHeight()) sky = 15;
+        else if (pos.y >= region.getMinHeight()) {
+            if (!region.hasChunksAt(pos, 0, false)) return;
+            auto light = region.getBrightnessPair(pos);
+            sky        = light.sky->mValue;
+            block      = light.block->mValue;
+        }
+        float& moodiness = mMoodiness[player.getUuid().asString()];
+        if (!mood::step(moodiness, sky, block, s)) return;
+        auto at  = mood::soundPosition(mood::Vec{feet.x, eyeY, feet.z}, pos.x, pos.y, pos.z, s);
+        auto pkt = MinecraftPackets::createPacket(MinecraftPacketIds::PlaySound);
+        if (!pkt) return;
+        auto& sound   = static_cast<PlaySoundPacket&>(*pkt);
+        sound.mName   = "ambient.cave";
+        sound.mPos    = BlockPos{static_cast<int>(std::floor(at.x * 8)), static_cast<int>(std::floor(at.y * 8)), static_cast<int>(std::floor(at.z * 8))};
+        sound.mVolume = mood::kVolume;
+        sound.mPitch  = mood::kPitch;
+        sound.sendTo(player);
+        if (!mMoodLogged) {
+            mMoodLogged = true;
+            gf::log().info("biomes: mood sound ambient.cave played to {} at {:.1f} {:.1f} {:.1f}", player.getRealName(), at.x, at.y, at.z);
+        }
     }
 
     /// Whether player `self` is the nearest of mPlayers to `pos` (ties: the first).
@@ -161,8 +217,10 @@ private:
         }
     }
 
-    std::vector<BlockPos>  mPlayers; ///< feet blocks of the Twilight Forest's players, this tick
-    ll::event::ListenerPtr mTick;
+    std::vector<BlockPos>                  mPlayers; ///< feet blocks of the Twilight Forest's players, this tick
+    std::unordered_map<std::string, float> mMoodiness; ///< BiomeAmbientSoundsHandler#moodiness per player (UUID)
+    bool                                   mMoodLogged = false;
+    ll::event::ListenerPtr                 mTick;
     std::mt19937           mRandom{std::random_device{}()};
 };
 

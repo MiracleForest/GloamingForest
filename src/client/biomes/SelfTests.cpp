@@ -3,7 +3,9 @@
 //   biomes.grass_tint  (client mod only, spec section 10) TF's position-dependent grass and foliage
 //                      colours of the spooky forest, dark forest centre and enchanted forest, as the
 //                      tints compute them from a world's stored biomes and from F12's registry;
-//                      the vanilla tint hook (feature/ext/biomes/VanillaTint.cpp) drew them.
+//                      the forest's colour-map colours, the snowy forest's white leaves (without
+//                      Bedrock's seasons map), TF's water colours through the game's lookup; the
+//                      vanilla tint hook (feature/ext/biomes/VanillaTint.cpp) drew them.
 
 #ifdef GF_CLIENT
 
@@ -13,6 +15,11 @@
 
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
+#include "mc/world/level/biome/Biome.h"
+#include "mc/world/level/biome/biome_color_sampling/BiomeColorSampling.h"
+#include "mc/world/level/block/Block.h"
+#include "mc/world/level/block/BlockRenderLayer.h"
+#include "mc/world/level/block/BlockType.h"
 
 #include "client/biomes/Tints.h"
 #include "core/biomes/Colors.h"
@@ -20,6 +27,7 @@
 #include "feature/ext/biomes/Biomes.h"
 #include "feature/ext/ui/Client.h"
 #include "feature/worldgen/Worldgen.h"
+#include "game/Blocks.h"
 #include "selftest/SelfTest.h"
 
 namespace gf::client::biomes {
@@ -111,24 +119,48 @@ GF_REGISTER_SELFTEST("biomes.grass_tint", [](Context& ctx) -> ll::coro::CoroTask
     // TF's known values: the dark forest centre's leaves are always #E94E14 (BiomeColorAlgorithms:
     // (noise + 1) / 2 is never below -0.1), the spooky forest's grass is a blend of TF's red and green
     ctx.check(colors::darkForestCenterFoliage(123.0, -456.0) == 0xE94E14, "the dark forest centre's foliage is #E94E14");
-    // a biome without a position-dependent colour keeps the game's colour
-    if (auto at = inside("twilightforest:forest")) {
-        core::GlobalPos gp{ctx.dimension(), at->x, at->y, at->z};
+    // a biome without a modifier: its own colour-map colour in every column (not the game's colour)
+    std::optional<BlockPos> forestAt = inside("twilightforest:forest");
+    if (forestAt) {
+        core::GlobalPos gp{ctx.dimension(), forestAt->x, forestAt->y, forestAt->z};
         if (co_await ctx.ensureLoaded(gp)) {
-            unsigned g = grassAt(ctx.region(), *at, plain);
-            ctx.check(g == 0x79C05A, std::format("the forest keeps the game's grass colour (#{:06X})", g));
+            unsigned g = grassAt(ctx.region(), *forestAt, plain), f = foliageAt(ctx.region(), *forestAt, plain);
+            ctx.check(g == 0x8DB870, std::format("the forest's grass is its colour-map colour #8DB870 (#{:06X})", g));
+            ctx.check(f == 0x71A74D, std::format("the forest's foliage is its colour-map colour #71A74D (#{:06X})", f));
         }
     }
-    // the snowy forest: TF's flat white grass; its leaves keep the game's colour (in a cold biome the
-    // game's leaf "colour" addresses its seasons map, see Tints.cpp)
+    // the snowy forest: TF's white grass and leaves; the leaves are drawn without Bedrock's seasons
+    // map (as in the forest), so the white tint is a colour there
     if (auto at = inside("twilightforest:snowy_forest")) {
         core::GlobalPos gp{ctx.dimension(), at->x, at->y, at->z};
         if (co_await ctx.ensureLoaded(gp)) {
-            unsigned f = foliageAt(ctx.region(), *at, plain), g = grassAt(ctx.region(), *at, plain);
+            auto*    region = ctx.region();
+            unsigned f = foliageAt(region, *at, plain), g = grassAt(region, *at, plain);
             ctx.check(g == 0xFFFFFF, std::format("the snowy forest's grass is TF's white (#{:06X})", g));
-            ctx.check(f == 0x59AE30, std::format("the snowy forest's leaves keep the game's colour (#{:06X})", f));
+            ctx.check(f == 0xFFFFFF, std::format("the snowy forest's leaves are TF's white (#{:06X})", f));
+            Block const* leaves = game::blockWith("minecraft:oak_leaves");
+            ctx.require(leaves != nullptr, "oak leaves");
+            ctx.check(!leaves->getBlockType().isSeasonTinted(*leaves, *region, *at), "oak leaves in the snowy forest are not season tinted");
+            if (forestAt) {
+                auto snowy  = static_cast<int>(leaves->getBlockType().getRenderLayer(*leaves, *region, *at));
+                auto forest = static_cast<int>(leaves->getBlockType().getRenderLayer(*leaves, *region, *forestAt));
+                ctx.check(snowy == forest, std::format("oak leaves draw in the forest's render layer in the snowy forest ({} / {})", snowy, forest));
+            }
         }
     }
+    // TF's water colours (BiomeSpecialEffects#waterColor) through the game's water colour lookup
+    for (char const* biome : {"twilightforest:fire_swamp", "twilightforest:swamp", "twilightforest:spooky_forest", "twilightforest:dense_forest", "twilightforest:forest"}) {
+        auto at = inside(biome);
+        if (!at) continue;
+        core::GlobalPos gp{ctx.dimension(), at->x, at->y, at->z};
+        if (!co_await ctx.ensureLoaded(gp)) continue;
+        Biome const& b    = ctx.region()->getBiome(*at);
+        unsigned     got  = static_cast<unsigned>(BiomeColorSampling::getWaterColor(b, *at)) & 0xFFFFFF;
+        unsigned     want = static_cast<unsigned>(*colors::water(biome));
+        ctx.check(got == want, std::format("{} water #{:06X} (TF #{:06X})", biome, got, want));
+        ctx.info(std::format("{}: the server biome's map water colour #{:08X}", biome, static_cast<unsigned>(static_cast<int>(b.mMapWaterColor))));
+    }
+    ctx.check(gf::biomes::ext::waterColoursApplied() > 0, "the water colour hook answered TF's water colours");
     // the client draws the world: the vanilla tint hook applied the registry to vanilla blocks
     ctx.check(gf::biomes::ext::vanillaTintsApplied() > 0, "the vanilla tint hook applied TF's tints to vanilla grass and leaves");
 });

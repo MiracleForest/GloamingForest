@@ -115,9 +115,6 @@ public:
     [[nodiscard]] TerrainColumn const* terrainColumn(std::string const& keyBiome) const;
     /// BiomeDensitySource#sampleTerrain(blockX, blockZ, ctx) (the columns' values are constants).
     [[nodiscard]] DensityData sampleTerrain(int blockX, int blockZ) const;
-    /// BiomeSource#possibleBiomes(): the columns sorted by id (ResourceLocation order: path, then
-    /// namespace), each column's layers in ascending elevation, duplicates dropped.
-    [[nodiscard]] std::vector<std::string> possibleBiomes() const;
     /// Every column (sorted by key).
     [[nodiscard]] std::vector<TerrainColumn> const& columns() const { return mColumns; }
 

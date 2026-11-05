@@ -8,7 +8,8 @@
 //   biomes.streams             streams divide differing biomes, never next to the excluded ones
 //   biomes.vertical_layers     underground below the columns (highlands: highlands_underground)
 //   biomes.tags                TF's biome tags (17 valid_* + in_twilight_forest)
-//   biomes.engine_biomes       the 22 behavior pack biomes are registered with the game
+//   biomes.engine_biomes       the 22 behavior pack biomes are registered with the game, with TF's
+//                              water colours
 //   biomes.spawn_tables        BiomeHelper's tables equal TF's biome JSON (spawners, costs, probability)
 //   biomes.spawn_costs         the spawn costs leave a type out where its charge exceeds its budget
 //   biomes.generated           a freshly generated Twilight Forest chunk stores the source's biomes
@@ -31,6 +32,7 @@
 #include "mc/world/level/biome/registry/BiomeRegistry.h"
 
 #include "core/biomes/BiomeLayers.h"
+#include "core/biomes/Colors.h"
 #include "feature/biomes/Biomes.h"
 #include "feature/ext/biomes/Biomes.h"
 #include "feature/tags/Tags.h"
@@ -287,6 +289,18 @@ GF_REGISTER_SELFTEST("biomes.engine_biomes", [](Context& ctx) {
         }
     }
     ctx.check(missing == 0, std::format("{} of 22 biomes registered", 22 - missing));
+    // TF's water colours on the server's biomes (the biome definitions sent to clients carry them)
+    int wrong = 0;
+    for (auto const& id : biomeIds()) {
+        auto const* b = reg.lookupByName(id);
+        if (!b) continue;
+        unsigned got  = static_cast<unsigned>(static_cast<int>(b->mMapWaterColor)) & 0xFFFFFF;
+        unsigned want = static_cast<unsigned>(*core::biomes::colors::water(id));
+        if (got != want && ++wrong <= 3) ctx.check(false, std::format("{} water #{:06X} (TF #{:06X})", id, got, want));
+    }
+    ctx.check(wrong == 0, "TF's water colours are set on the 22 biomes");
+    if (auto const* swamp = reg.lookupByName("minecraft:swampland"))
+        ctx.info(std::format("vanilla swampland map water colour #{:08X}", static_cast<unsigned>(static_cast<int>(swamp->mMapWaterColor))));
 });
 
 GF_REGISTER_SELFTEST("biomes.spawn_tables", [](Context& ctx) {

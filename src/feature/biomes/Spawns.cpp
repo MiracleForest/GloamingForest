@@ -174,7 +174,7 @@ BiomeSpawns spawnsOf(std::string const& id) {
 
 void registerSpawns() {
     for (auto const& id : biomeIds()) spawn::setBiomeSpawns(id, spawnsOf(id).table);
-    registerSpawnCosts();
+    // the spawn costs register on the next server tick (BiomesModule), after every unit's install
 }
 
 } // namespace gf::feature::biomes

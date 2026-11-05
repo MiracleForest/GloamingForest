@@ -3,6 +3,7 @@
 #include <gtest/gtest.h>
 
 #include <cmath>
+#include <string>
 
 #include "core/biomes/Colors.h"
 #include "core/landmark/Landmark.h"
@@ -95,4 +96,52 @@ TEST(BiomeColors, DarkForestCenterStaticColoursAreTheCommonOnes) {
     }
     RecordProperty("dark_forest_center_grass_554114_permille", common * 1000 / n);
     EXPECT_GT(common * 2, n) << common << " of " << n;
+}
+
+TEST(BiomeColors, EveryTfBiomeHasAColourAtEveryColumn) {
+    // Java's blend reads each column's own biome colour: every TF biome answers (a modifier or its
+    // static colour); a vanilla biome does not
+    char const* ids[] = {"clearing", "dark_forest", "dark_forest_center", "dense_forest", "dense_mushroom_forest", "enchanted_forest",
+                         "final_plateau", "fire_swamp", "firefly_forest", "forest", "glacier", "highlands", "highlands_underground",
+                         "lake", "mushroom_forest", "oak_savannah", "snowy_forest", "spooky_forest", "stream", "swamp", "thornlands",
+                         "underground"};
+    for (char const* id : ids) {
+        std::string full = std::string("twilightforest:") + id;
+        EXPECT_TRUE(c::grassAt(full, 100, -200).has_value()) << full;
+        EXPECT_TRUE(c::foliageAt(full, 100, -200).has_value()) << full;
+        EXPECT_TRUE(c::water(full).has_value()) << full;
+        EXPECT_TRUE(c::waterFog(full).has_value()) << full;
+        // a biome with a modifier has no static colour (the modifier gives every colour)
+        EXPECT_EQ(c::staticGrass(full).has_value(), !c::hasModifier(full)) << full;
+    }
+    EXPECT_FALSE(c::grassAt("minecraft:plains", 0, 0).has_value());
+    EXPECT_FALSE(c::water("minecraft:plains").has_value());
+}
+
+TEST(BiomeColors, StaticColoursAreTfJsonOrTheColourMap) {
+    // TF's JSON colours
+    EXPECT_EQ(c::grassAt("twilightforest:snowy_forest", 0, 0), 0xFFFFFF);
+    EXPECT_EQ(c::foliageAt("twilightforest:snowy_forest", 0, 0), 0xFFFFFF);
+    EXPECT_EQ(c::grassAt("twilightforest:fire_swamp", 0, 0), 0x572E23);
+    EXPECT_EQ(c::foliageAt("twilightforest:fire_swamp", 0, 0), 0x64260F);
+    // the colour map at (0.7, 0.8) is Java's forest colour within one step (#79C05A / #59AE30)
+    EXPECT_EQ(c::staticFoliage("twilightforest:dense_forest"), c::kFoliageForestMap);
+    EXPECT_EQ(*c::staticGrass("twilightforest:dense_forest") & 0xFF00FF, c::kGrassForestMap & 0xFF00FF);
+    // modifiers win: the swamp's flat colours, the enchanted forest's bands on its JSON 0x00FFFF
+    EXPECT_EQ(c::grassAt("twilightforest:swamp", 5, 5), 0x5C694E);
+    EXPECT_EQ(c::foliageAt("twilightforest:dark_forest", 5, 5), 0x3B5E3F);
+    auto center = gf::core::landmark::nearestCenter(0, 0);
+    EXPECT_EQ(c::grassAt("twilightforest:enchanted_forest", center.x + 8, center.z), 0x00FF7F);
+}
+
+TEST(BiomeColors, WaterColoursAreTfJson) {
+    EXPECT_EQ(c::water("twilightforest:fire_swamp"), 0x6C2C2C);
+    EXPECT_EQ(c::water("twilightforest:swamp"), 0x95B55F);
+    EXPECT_EQ(c::water("twilightforest:spooky_forest"), 0xBC8857);
+    EXPECT_EQ(c::water("twilightforest:dense_forest"), 0x005522);
+    EXPECT_EQ(c::water("twilightforest:forest"), 0x3F76E4);
+    EXPECT_EQ(c::waterFog("twilightforest:forest"), 0x050533);
+    EXPECT_EQ(c::waterFog("twilightforest:dense_forest"), 0x005522);
+    EXPECT_TRUE(c::closerWaterFog("twilightforest:swamp"));
+    EXPECT_FALSE(c::closerWaterFog("twilightforest:dense_forest"));
 }

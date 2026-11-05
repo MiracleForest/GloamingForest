@@ -14,26 +14,34 @@
 // list of every pack position (getRandomSpawnMobAt for the pack's first position, canSpawnMobAt's
 // "the entry is still in the list here" for every member). In a biome with costs this answers the
 // biome's list without the types whose charge would exceed their energy budget at the position, so
-// a member is refused exactly where Java's canSpawn refuses it. The potential is rebuilt once per
-// tick from the mobs of the dimension (SpawnState: every non-persistent mob whose type has a cost in
-// the biome at its block adds that charge at its block), as NaturalSpawner#createState does.
-// Deviations (F5 has no hook for them): the mobs spawned during a tick add their charge from the
-// next tick on (Java: SpawnState#afterSpawn at once), and when the type over budget is the one a
-// pack would have picked at its first position another type of the list is picked instead (Java
-// picks it and then refuses every member).
+// a member is refused exactly where Java's canSpawn refuses it. The potential is built from the
+// mobs near the dimension's players (SpawnState: every non-persistent mob whose type has a cost in
+// the biome at its block adds that charge at its block), as NaturalSpawner#createState does, and
+// rebuilt as soon as the level's entity count changes, so a mob the spawner just added counts for
+// the next member at once (SpawnState#afterSpawn).
+// The handler registers on the first server tick, after every unit's install: F5 takes the first
+// answer, so a structure's own spawn list (another unit's special spawn) is used as it is.
+// Deviation (F5 asks the same question to pick a pack's type and to check each member): when the
+// type over budget is the one a pack would have picked at its first position, another type of the
+// list is picked instead (Java picks it and then refuses every member).
 
 #include <memory>
 #include <mutex>
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "ll/api/service/Bedrock.h"
 
+#include "mc/deps/core/math/Vec3.h"
 #include "mc/deps/ecs/gamerefs_entity/EntityContext.h"
+#include "mc/deps/ecs/gamerefs_entity/GameRefsEntity.h"
 #include "mc/entity/components/PersistentComponent.h"
 #include "mc/world/actor/Actor.h"
+#include "mc/world/actor/player/Player.h"
+#include "mc/world/phys/AABB.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
@@ -83,32 +91,61 @@ Cost const* costOf(std::string const& biome, std::string const& entity) {
     return e == b->second.end() ? nullptr : &e->second;
 }
 
+/// Whether `entity` has a spawn cost in any biome (the others never add to a potential).
+bool anyCost(std::string const& entity) {
+    static auto const types = [] {
+        std::unordered_set<std::string> t;
+        for (auto const& [biome, byType] : costs())
+            for (auto const& [type, cost] : byType) t.insert(type);
+        return t;
+    }();
+    return types.contains(entity);
+}
+
 /// Mob#isPersistenceRequired / requiresCustomPersistence on Bedrock (as F5's spawner counts mobs).
 bool persistent(Actor& a) { return a.getEntityContext().hasComponent<PersistentComponent>() || !a.getNameTag().empty(); }
 
 struct Potential {
-    std::uint64_t                    tick  = ~std::uint64_t(0);
-    std::uint64_t                    world = ~std::uint64_t(0);
-    int                              dim   = -1;
+    std::uint64_t                     tick     = ~std::uint64_t(0);
+    std::uint64_t                     world    = ~std::uint64_t(0);
+    std::size_t                       entities = ~std::size_t(0);
+    int                               dim      = -1;
     core::biomes::PotentialCalculator calc;
 };
 
-/// The spawn potential of dimension `dim` this tick (NaturalSpawner#createState).
-core::biomes::PotentialCalculator const& potentialOf(int dim) {
+/// The spawn potential of `region`'s dimension now (NaturalSpawner#createState, kept up to date as
+/// SpawnState#afterSpawn does): every non-persistent mob near a player of the dimension (F5's
+/// spawner counts the mobs of the same boxes) whose type has a cost in the biome at its block adds
+/// its charge there. Rebuilt when the tick changes and whenever the level's entity count changed
+/// since (a mob the spawner added a moment ago counts at once).
+core::biomes::PotentialCalculator const& potentialOf(BlockSource& region) {
     static Potential p;
-    auto             level = ll::service::getLevel();
-    std::uint64_t    tick  = level ? static_cast<std::uint64_t>(level->getCurrentTick().tickID) : 0;
-    std::uint64_t    world = worldGeneration();
-    if (p.tick == tick && p.dim == dim && p.world == world) return p.calc;
-    p.tick  = tick;
-    p.dim   = dim;
-    p.world = world;
+    auto             level    = ll::service::getLevel();
+    int              dim      = static_cast<int>(region.getDimensionId());
+    std::uint64_t    tick     = level ? static_cast<std::uint64_t>(level->getCurrentTick().tickID) : 0;
+    std::uint64_t    world    = worldGeneration();
+    std::size_t      entities = level ? level->getEntities().size() : 0;
+    if (p.tick == tick && p.dim == dim && p.world == world && p.entities == entities) return p.calc;
+    p.tick     = tick;
+    p.dim      = dim;
+    p.world    = world;
+    p.entities = entities;
     p.calc.clear();
     if (!level) return p.calc;
-    for (Actor* a : level->getRuntimeActorList()) {
-        if (!a || static_cast<int>(a->getDimensionId()) != dim || a->isPlayer() || persistent(*a)) continue;
-        BlockPos at = game::blockPosOf(a->getFeetPos());
-        if (auto const* c = costOf(worldgen::biomeAt(at), a->getTypeName())) p.calc.addCharge(at.x, at.y, at.z, c->charge);
+    std::vector<Vec3> players;
+    level->forEachPlayer([&](Player& player) {
+        if (static_cast<int>(player.getDimensionId()) == dim) players.push_back(player.getFeetPos());
+        return true;
+    });
+    std::unordered_set<Actor const*> seen; // a mob near several players counts once
+    for (auto const& at : players) {
+        AABB box{Vec3{at.x - 160, static_cast<float>(region.getMinHeight()), at.z - 160}, Vec3{at.x + 160, static_cast<float>(region.getMaxHeight()), at.z + 160}};
+        for (Actor* a : region.fetchEntities(static_cast<Actor const*>(nullptr), box, false, false)) {
+            if (!a || a->isPlayer() || !seen.insert(a).second || persistent(*a)) continue;
+            if (!anyCost(a->getTypeName())) continue;
+            BlockPos pos = game::blockPosOf(a->getFeetPos());
+            if (auto const* c = costOf(worldgen::biomeAt(pos), a->getTypeName())) p.calc.addCharge(pos.x, pos.y, pos.z, c->charge);
+        }
     }
     return p.calc;
 }
@@ -143,7 +180,7 @@ void registerSpawnCosts() {
         for (auto const& e : it->second) anyCost = anyCost || b->second.contains(e.entityId);
         if (!anyCost) return std::nullopt;
         // nothing over budget: pass (the spawner keeps the list it has; later special spawns are asked)
-        auto out = costFiltered(biome, category, potentialOf(static_cast<int>(region.getDimensionId())), pos);
+        auto out = costFiltered(biome, category, potentialOf(region), pos);
         if (out.size() == it->second.size()) return std::nullopt;
         return out;
     });

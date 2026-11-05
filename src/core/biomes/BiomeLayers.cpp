@@ -641,15 +641,4 @@ DensityData BiomeProvider::sampleTerrain(int blockX, int blockZ) const {
     return DensityData{totalDepth / totalContribution, totalScale / totalScaleContribution};
 }
 
-std::vector<std::string> BiomeProvider::possibleBiomes() const {
-    std::vector<std::string> out;
-    std::set<std::string>    seen;
-    for (auto const& col : mColumns) {
-        for (auto const& [elevation, biome] : col.layers) {
-            if (seen.insert(biome).second) out.push_back(biome);
-        }
-    }
-    return out;
-}
-
 } // namespace gf::core::biomes

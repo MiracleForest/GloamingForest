@@ -9,9 +9,9 @@ Spec: [docs/spec/biomes.md](../spec/biomes.md). What is where:
 | Installation into F5 (biome source, main biome, possible biomes), config `biomes` | `src/feature/biomes/Module.cpp` |
 | Spawn tables (BiomeHelper) | `src/feature/biomes/Spawns.cpp` |
 | Spawn costs (MobSpawnCost, NaturalSpawner's spawn potential) | `src/core/biomes/SpawnCost.{h,cpp}`, `tests/biomes/SpawnCostTest.cpp`, `src/feature/biomes/SpawnCosts.cpp` |
-| Ambient particles (server stand-in for ClientLevel#animateTick) | `src/feature/biomes/Ambient.cpp` |
+| Ambient particles (server stand-in for ClientLevel#animateTick), mood sound | `src/feature/biomes/Ambient.cpp`, `src/core/biomes/Mood.{h,cpp}`, `tests/biomes/MoodTest.cpp` |
 | Client tints on vanilla grass / foliage blocks | `src/client/biomes/Tints.{h,cpp}`, `src/client/biomes/SelfTests.cpp` (`biomes.grass_tint`) |
-| Vanilla tint hook (F12's tint registry applied to vanilla blocks) | `src/feature/ext/biomes/VanillaTint.cpp` |
+| Client colour hooks (grass / foliage policies, leaves without seasons, water colour) | `src/feature/ext/biomes/VanillaTint.cpp` |
 | Extension for other units (terrain blend, key biome, client colours) | `src/feature/ext/biomes/Biomes.h`, `src/feature/biomes/Ext.cpp` |
 | Behavior pack biomes (climate, map tints) | `assets/pack/bp/biomes/biomes/*.biome.json` |
 | Client biomes (sky, grass, foliage, water, fog ids) and fogs | `assets/pack/rp/biomes/biomes/*.client_biome.json`, `assets/pack/rp/fogs/biomes/*_fog.json` |
@@ -38,11 +38,14 @@ manual layer:
   `minecraft:foliage_appearance` (TF's colours; the swamp's and dark forest's are already the
   modifiers' results), `minecraft:water_appearance` with TF's water colour in every biome (Java's
   default `#3F76E4` where TF sets none: Bedrock's own default is `#44AFF5`), a fog
-  (`gloamingforest:<biome>_fog`) in every biome with TF's water fog (`#050533` by default) and TF's
-  air fog where it is not TF's usual `#C0FFD8` (the sky and air fog of the dimension are U15's),
-  and `minecraft:ambient_sounds`: TF's mood sound (`ambient.cave`; Bedrock's mood has no tick
-  delay / search extent / offset fields, its own timing applies) and the underwater loop and
-  additions (chance 0.01) vanilla Bedrock biomes carry.
+  (`gloamingforest:<biome>_fog`) in every biome with TF's water fog (`#050533` by default; it ends
+  at 96 blocks, 81.6 in TF's `has_closer_water_fog` biomes: Java's
+  `96 * max(0.25, waterVision)` once the eyes have adapted, without Java's 5-30 s ramp from 24
+  blocks) and TF's air fog where it is not TF's usual `#C0FFD8` (the sky and air fog of the
+  dimension are U15's), and `minecraft:ambient_sounds`: the underwater loop and additions (chance
+  0.01) vanilla Bedrock biomes carry. No mood: the server plays TF's (see Ambient).
+- The server's biome registry gets TF's water colours (`Biome::mMapWaterColor`, which the biome
+  definitions sent to clients carry) at install and at every world load.
 - The enchanted forest's static grass and foliage are `#00FF80`, the middle of TF's bands
   (`0x00FFxx`): vanilla clients cannot draw the bands; the client mod does.
 - The dark forest centre's static colours are what TF draws most: foliage `#E94E14` (TF's
@@ -59,28 +62,64 @@ change their colours by position. The client mod registers tints for vanilla gra
 blocks with F12's registry (`tint::registerBlock`); F12's hook only reaches blocks of the client
 block pipeline, so `src/feature/ext/biomes/VanillaTint.cpp` hooks the game's grass and foliage
 tessellation policies (`BiomeColorSampling::GrassTessellationPolicy` /
-`FoliageTessellationPolicy::get`) and applies the registry there. The tint reads the biome of every
-column of the blend (`tintBlendRadius`, default 2 = 5x5) from the tessellated block source (the
-client's synced chunks, so remote worlds need no seed): TF's colour where TF's biome has one
-(position-dependent, modifier or flat: the fire swamp, the snowy forest's grass), the game's colour
-elsewhere, averaged as Java does. In a cold biome (the snowy forest) Bedrock's leaf tint is not a
-colour but the coordinates of its seasons map (`textures/environment/seasons`, green leaves with
-snow; a white tint drew the map's red corner in the e2e screenshots), so oak-kin leaves stay
-green there instead of TF's white, on every client (a Bedrock limit). TF blocks tinted by the biome colour belong to
-their owners; they can call `gf::biomes::ext::grassColor / foliageColor`.
+`FoliageTessellationPolicy::get`) and applies the registry there; every other block the game draws
+with the biome grass or (default) foliage colour in a TF biome gets TF's colour too (Java's
+`BiomeColors.getAverage*Color`: TF's twilight oak / dark / giant / fallen leaves and the fiddlehead,
+and the probe block F12's resolver asks for the biome colour F11's canopy and mangrove leaves start
+from). The tint reads the biome of every column of the blend (`tintBlendRadius`, default 2 = 5x5)
+from the tessellated block source (the client's synced chunks, so remote worlds need no seed) and
+averages each column's own TF colour as Java does: the modifier or foliage handler, else TF's
+JSON colour (fire swamp, snowy forest), else the colour map at the biome's climate
+(`core/biomes/Colors.cpp`: Bedrock's colour maps, within one step of Java's in one channel). Outside
+TF's biomes the game's colour stays after one biome lookup per block. Caches keyed by block or
+biome addresses are checked against the object's name / serialization hash on every use, so a
+remote join that reuses addresses never draws a stale biome.
+
+Leaves: in a cold biome Bedrock draws leaves through its seasons map (the tint is a place in that
+map, not a colour; a white tint drew the map's red corner). Java has no seasons:
+`LeavesBlock::isSeasonTinted` is false in TF's biomes with the mod, so the snowy forest's leaves
+are TF's white `#FFFFFF` and the glacier's its colour-map colour. Vanilla clients keep Bedrock's
+seasons look there (they cannot be told otherwise: the foliage colour is the only data and it is
+read as a map place).
+
+Water: `BiomeColorSampling::getWaterColor` answers TF's water colour (`water_color` of TF's biome
+JSON) for TF's biomes with the mod; vanilla clients get it from the client biome files and the
+server's biome definitions.
 
 ## Spawn costs
 
 `SpawnCosts.cpp` applies BiomeHelper's spawn costs to F5's natural spawner through
 `spawn::onSpecialSpawn`: in a biome with costs the list asked for a position leaves out the types
 whose charge times the spawn potential there exceeds their energy budget, which is where Java's
-SpawnState#canSpawn refuses a pack member. The potential is rebuilt each tick from the
-dimension's non-persistent mobs. Two deviations remain (F5 has no hook for them): a mob spawned
-during a tick adds its charge from the next tick, and when the pack's first position refuses the
-type Java would have picked, another type of the list is picked instead.
+SpawnState#canSpawn refuses a pack member. The potential is built from the non-persistent mobs
+near the dimension's players (the boxes F5's spawner counts) and rebuilt whenever the level's
+entity count changed, so a mob spawned a moment ago counts for the next member (SpawnState#afterSpawn).
+The handler registers on the first server tick, after every other unit's: F5 takes the first answer,
+so another unit's structure list is used as it is (Java would also apply the biome's costs to it).
+One deviation remains: F5 asks the same question to pick a pack's type and to check each member, so
+when the pack's first position refuses the type Java would have picked, another type of the list is
+picked instead (Java picks it and refuses every member). Fixing it needs F5 to separate the two
+questions or carry the costs in `spawn::Table`.
+
+Vanilla entries of TF's tables (chicken, wolf, enderman, zombie, skeleton, spider, creeper, slime,
+witch, bat) are refused by F5's `spawn::spawnMob` (`Spawner::spawnMob(..., natural = true, ...)`,
+`src/feature/spawn/Spawn.cpp:394-395`): Bedrock then applies the mobs' own spawn rules, whose biome
+filters need vanilla biome tags. U1 does not give TF's biomes those tags (the same tags would let
+Bedrock's own spawn rules place vanilla mobs there, which TF does not) and cannot hook `Spawner::spawnMob` (rule R8).
+F5's fix: pass `natural = false` for natural and chunk-generation spawns, whose Java rules F5 has
+already checked.
 
 ## Ambient particles
 
 The server stands in for ClientLevel#animateTick per player; a sample only spawns when its player
 is the nearest Twilight Forest player to it, so players close together do not see their densities
 added. A sample is skipped when its block's collision is the full unit cube.
+
+## Mood sound
+
+TF's mood (`ambient.cave`, tick delay 6000, search extent 8, offset 2.0 in every biome) is played
+by the server per player in a TF biome as BiomeAmbientSoundsHandler does (`core/biomes/Mood`,
+gtested): one random block within 8 of the eyes per tick, darkness adds `(1 - blockLight) / 6000`,
+sky light takes `sky / 15 * 0.001`; at 1 the sound plays to that player only (PlaySoundPacket,
+volume 0.5) from that block's direction, 2 blocks beyond it. The client biome files carry no mood,
+so Bedrock's own timing does not add to it.

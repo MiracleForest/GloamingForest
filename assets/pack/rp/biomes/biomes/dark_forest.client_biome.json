@@ -21,7 +21,6 @@
         "color": "#3B5E3F"
       },
       "minecraft:ambient_sounds": {
-        "mood": "ambient.cave",
         "underwater_loop": "ambient.underwater.loop",
         "underwater_addition": {
           "asset": "ambient.underwater.additions",

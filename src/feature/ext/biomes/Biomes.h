@@ -44,9 +44,11 @@ struct DensityData {
 
 namespace gf::biomes::ext {
 
-/// TF's grass colour at `pos` (0xRRGGBB): the game's colour (`game.grass()`) unless the position
-/// lies in one of TF's position-dependent biomes (spooky forest, dark forest centre, enchanted
-/// forest), whose colours are computed as Java does and blended over the configured radius.
+/// TF's grass colour at `pos` (0xRRGGBB): Java's blend over the configured radius of each column's
+/// TF biome colour (modifiers, position-dependent colours, JSON colours, colour map); the game's
+/// colour (`game.grass()`) outside TF's biomes. Blocks the game draws with the biome grass / foliage
+/// colour get these colours without calling this (feature/ext/biomes/VanillaTint.cpp); a tint of
+/// one's own that starts from the biome colour (as TF's canopy leaves do) can call it.
 [[nodiscard]] unsigned grassColor(BlockPos const& pos, gf::client::tint::GameColors const& game);
 /// TF's foliage colour at `pos` (FoliageColorHandler over the game's foliage colour).
 [[nodiscard]] unsigned foliageColor(BlockPos const& pos, gf::client::tint::GameColors const& game);
@@ -59,6 +61,10 @@ namespace gf::biomes::ext {
 [[nodiscard]] BlockSource* tintRegion();
 /// How many vanilla block tints the hook applied so far (selftests, e2e).
 [[nodiscard]] std::uint64_t vanillaTintsApplied();
+/// How many water colours of TF's biomes the water colour hook answered so far.
+[[nodiscard]] std::uint64_t waterColoursApplied();
+/// How many times leaves in TF's biomes were drawn without Bedrock's seasons map so far.
+[[nodiscard]] std::uint64_t seasonsOffApplied();
 
 } // namespace gf::biomes::ext
 

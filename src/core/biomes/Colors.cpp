@@ -114,6 +114,99 @@ std::optional<int> foliage(std::string_view id, int base, double x, double z) {
     return std::nullopt;
 }
 
+namespace {
+
+struct StaticColours {
+    std::string_view id;
+    int              grass, foliage;
+};
+
+// TF's biome JSON (src/generated/resources/data/twilightforest/worldgen/biome/*.json): the explicit
+// colours of the fire swamp and the snowy forest; the others the colour map at (temperature,
+// downfall) as GrassColor.get / FoliageColor.get read it (Java float climate widened to double).
+// The biomes with a modifier (enchanted forest, dark forest centre, spooky forest, swamp, dark
+// forest) are not here: their modifier gives every colour.
+constexpr StaticColours kStatic[] = {
+    {"twilightforest:clearing", 0x92BC58, 0x77AB2F},              // 0.8, 0.4
+    {"twilightforest:dense_forest", 0x79BF5A, 0x59AE30},          // 0.7, 0.8
+    {"twilightforest:dense_mushroom_forest", 0x61C64B, 0x3BB61E}, // 0.8, 1.0
+    {"twilightforest:final_plateau", 0xA6BB4D, 0x91A922},         // 1.0, 0.2
+    {"twilightforest:fire_swamp", 0x572E23, 0x64260F},            // JSON
+    {"twilightforest:firefly_forest", 0x7CBB6C, 0x5BAB46},        // 0.5, 1.0
+    {"twilightforest:forest", 0x8DB870, 0x71A74D},                // 0.5, 0.5
+    {"twilightforest:glacier", 0x84B491, 0x66A275},               // 0.08, 0.1
+    {"twilightforest:highlands", 0x88B777, 0x6AA755},             // 0.4, 0.7
+    {"twilightforest:highlands_underground", 0x96B47F, 0x7BA35F}, // 0.35, 0.0
+    {"twilightforest:lake", 0x70C05B, 0x4CB031},                  // 0.66, 1.0
+    {"twilightforest:mushroom_forest", 0x71C34F, 0x4EB224},       // 0.8, 0.8
+    {"twilightforest:oak_savannah", 0xB8B55B, 0xA6A432},          // 0.9, 0.0
+    {"twilightforest:snowy_forest", 0xFFFFFF, 0xFFFFFF},          // JSON
+    {"twilightforest:stream", 0x9BB574, 0x83A352},                // 0.5, 0.1
+    {"twilightforest:thornlands", 0x8FB582, 0x74A362},            // 0.3, 0.2
+    {"twilightforest:underground", 0xABB568, 0x97A342},           // 0.7, 0.0
+};
+
+StaticColours const* staticOf(std::string_view id) {
+    for (auto const& s : kStatic)
+        if (s.id == id) return &s;
+    return nullptr;
+}
+
+/// TF's JSON grass colour before the modifier (BiomeMaker): the enchanted forest's 0x00FFFF.
+constexpr int kEnchantedJson = 0x00FFFF;
+
+struct WaterColours {
+    std::string_view id;
+    int              water, fog;
+};
+// TF's biome JSON effects.water_color / water_fog_color where they are not 0x3F76E4 / 0x050533
+constexpr WaterColours kWater[] = {
+    {"twilightforest:dense_forest", 0x005522, 0x005522},
+    {"twilightforest:fire_swamp", 0x6C2C2C, 0x6C2C2C},
+    {"twilightforest:spooky_forest", 0xBC8857, 0xBC8857},
+    {"twilightforest:swamp", 0x95B55F, 0x95B55F},
+};
+
+bool isTf(std::string_view id) { return staticOf(id) != nullptr || hasModifier(id); }
+
+} // namespace
+
+std::optional<int> staticGrass(std::string_view id) {
+    auto const* s = staticOf(id);
+    return s ? std::optional<int>(s->grass) : std::nullopt;
+}
+
+std::optional<int> staticFoliage(std::string_view id) {
+    auto const* s = staticOf(id);
+    return s ? std::optional<int>(s->foliage) : std::nullopt;
+}
+
+std::optional<int> grassAt(std::string_view id, double x, double z) {
+    if (auto v = grass(id, kEnchantedJson, x, z)) return v;
+    return staticGrass(id);
+}
+
+std::optional<int> foliageAt(std::string_view id, double x, double z) {
+    if (auto v = foliage(id, kEnchantedJson, x, z)) return v;
+    return staticFoliage(id);
+}
+
+std::optional<int> water(std::string_view id) {
+    if (!isTf(id)) return std::nullopt;
+    for (auto const& w : kWater)
+        if (w.id == id) return w.water;
+    return 0x3F76E4;
+}
+
+std::optional<int> waterFog(std::string_view id) {
+    if (!isTf(id)) return std::nullopt;
+    for (auto const& w : kWater)
+        if (w.id == id) return w.fog;
+    return 0x050533;
+}
+
+bool closerWaterFog(std::string_view id) { return id == kSpooky || id == kSwamp || id == "twilightforest:fire_swamp"; }
+
 int blend(int x, int z, int radius, std::function<int(int, int)> const& colorAt) {
     if (radius <= 0) return colorAt(x, z);
     int n = (radius * 2 + 1) * (radius * 2 + 1);

@@ -21,8 +21,16 @@
 #include <fstream>
 #include <mutex>
 
+#include "ll/api/service/Bedrock.h"
+
+#include "mc/world/level/Level.h"
+#include "mc/world/level/biome/Biome.h"
+#include "mc/world/level/biome/registry/BiomeRegistry.h"
+
 #include "core/biomes/BiomeLayers.h"
+#include "core/biomes/Colors.h"
 #include "feature/biomes/Biomes.h"
+#include "feature/common/Interactions.h"
 #include "feature/ext/worldgen/Generation.h"
 #include "feature/worldgen/Worldgen.h"
 #include "game/WorldDb.h"
@@ -127,6 +135,23 @@ std::atomic<std::uint64_t>& generation() {
 
 } // namespace
 
+static int applyWaterColours() {
+    auto level = ll::service::getLevel();
+    if (!level) return 0;
+    auto& registry = level->getBiomeRegistry();
+    int   n        = 0;
+    for (auto const& id : biomeIds()) {
+        auto* biome = registry.lookupByName(id);
+        auto  water = core::biomes::colors::water(id);
+        if (!biome || !water) continue;
+        auto old              = static_cast<unsigned>(static_cast<int>(biome->mMapWaterColor));
+        unsigned alpha        = old & 0xFF000000u ? old & 0xFF000000u : 0xFF000000u;
+        biome->mMapWaterColor = static_cast<int>(alpha | static_cast<unsigned>(*water));
+        ++n;
+    }
+    return n;
+}
+
 std::shared_ptr<SourceData const> sourceData() {
     // a failed load is retried on the next call (the client loads many worlds in one process: one
     // early failure must not disable the biomes of every later world); the error is logged per try
@@ -185,6 +210,11 @@ struct BiomesModule {
         mInstalled = true;
         retrySourceData();
         tryInstall();
+        // BDS: the world is open when the mod is enabled (onWorldReady fires for later worlds only)
+        if (ll::service::getLevel()) setWaterColours();
+        // the spawn costs answer F5's special spawn question after every other unit's handler
+        // (F5 takes the first answer: a structure's own list must not be replaced by the biome's)
+        interactions::nextTick([] { registerSpawnCosts(); });
         // a world loaded later retries a failed load (the client loads many worlds in one process)
         static bool hooked = false;
         if (!hooked) {
@@ -192,6 +222,7 @@ struct BiomesModule {
             game::db::onWorldClosed([] { gWorldGeneration.fetch_add(1, std::memory_order_acq_rel); });
             game::db::onWorldReady([this] {
                 gWorldGeneration.fetch_add(1, std::memory_order_acq_rel);
+                if (mInstalled) setWaterColours();
                 if (!mInstalled || mSourceInstalled) return;
                 retrySourceData();
                 tryInstall();
@@ -207,6 +238,11 @@ struct BiomesModule {
     }
 
 private:
+    static void setWaterColours() {
+        int n = applyWaterColours();
+        gf::log().info("biomes: TF's water colours set on {} biomes", n);
+    }
+
     void tryInstall() {
         auto data = sourceData();
         if (!data || mSourceInstalled) return;

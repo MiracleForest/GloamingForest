@@ -6,9 +6,12 @@
 #ifdef GF_CLIENT
 
 #include <span>
+#include <string>
+#include <string_view>
 
 #include "feature/ext/ui/Client.h"
 
+class Biome;
 class BlockPos;
 class BlockSource;
 
@@ -22,6 +25,13 @@ namespace gf::client::biomes {
 /// The vanilla blocks the tints are registered for.
 [[nodiscard]] std::span<char const* const> grassBlocks();
 [[nodiscard]] std::span<char const* const> foliageBlocks();
+
+/// The namespaced id of a biome ("minecraft:plains", "twilightforest:swamp"), cached per biome object
+/// on this thread. An entry is checked against the biome's name hash on every use, so a biome of
+/// another world (a remote join reuses the address) is looked up again.
+[[nodiscard]] std::string const& biomeIdOf(Biome const& biome);
+/// Whether `biomeId` is one of TF's 22 biomes.
+[[nodiscard]] bool isTfBiome(std::string_view biomeId);
 
 } // namespace gf::client::biomes
 
