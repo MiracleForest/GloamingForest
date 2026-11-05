@@ -276,9 +276,8 @@ void applyImmunity(Actor& a, PlayerState& st, bool want) {
         if (auto imm = ctx.tryGetComponent<BlockMovementSlowdownImmunityComponent>()) {
             auto& v = imm->mBlocks.get();
             for (char const* b : kSlowdownBlocks) { // one of each of ours
-                HashedString h(b);
                 for (auto it = v.rbegin(); it != v.rend(); ++it)
-                    if (*it == h) {
+                    if (it->getFullName() == b) {
                         v.erase(std::next(it).base());
                         break;
                     }

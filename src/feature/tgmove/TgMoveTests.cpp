@@ -462,7 +462,7 @@ GF_REGISTER_SELFTEST("tgmove.restore", [](Context& ctx) -> ll::coro::CoroTask<> 
     unequipAll(p);
     tm::tickPlayer(p);
     auto after = ectx.tryGetComponent<BlockMovementSlowdownImmunityComponent>();
-    ctx.check(after.has_value() && after->mBlocks->size() == 1 && after->mBlocks->front() == HashedString("minecraft:mud"), "only the other entry is left");
+    ctx.check(after.has_value() && after->mBlocks->size() == 1 && after->mBlocks->front().getFullName() == "minecraft:mud", "only the other entry is left");
     if (after) ectx.removeComponent<BlockMovementSlowdownImmunityComponent>();
     ctx.check(std::abs(step() - base) < 1e-4f, "the step height is back");
     tm::forget(p);
