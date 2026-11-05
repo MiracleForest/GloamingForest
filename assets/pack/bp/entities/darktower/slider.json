@@ -1,0 +1,25 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "twilightforest:slider",
+      "is_spawnable": false,
+      "is_summonable": true,
+      "is_experimental": false,
+      "properties": {
+        "twilightforest:axis": { "type": "int", "range": [0, 2], "default": 0, "client_sync": true }
+      }
+    },
+    "components": {
+      "minecraft:type_family": { "family": ["twilightforest", "slider", "inanimate"] },
+      "minecraft:collision_box": { "width": 0.98, "height": 0.98 },
+      "minecraft:health": { "value": 1, "max": 1 },
+      "minecraft:damage_sensor": { "triggers": [{ "cause": "all", "deals_damage": "no" }] },
+      "minecraft:physics": { "has_gravity": false, "has_collision": false },
+      "minecraft:pushable": { "is_pushable": false, "is_pushable_by_piston": false },
+      "minecraft:fire_immune": true,
+      "minecraft:knockback_resistance": { "value": 1.0 },
+      "minecraft:conditional_bandwidth_optimization": {}
+    }
+  }
+}

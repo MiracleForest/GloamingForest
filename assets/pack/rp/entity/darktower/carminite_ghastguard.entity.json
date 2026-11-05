@@ -1,0 +1,37 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:carminite_ghastguard",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/towerghast",
+        "openeyes": "textures/twilightforest/entity/towerghast_openeyes",
+        "fire": "textures/twilightforest/entity/towerghast_fire"
+      },
+      "geometry": {
+        "default": "geometry.twilightforest.carminite_ghastguard"
+      },
+      "render_controllers": [
+        "controller.render.twilightforest.carminite_ghast"
+      ],
+      "animations": {
+        "setup": "animation.twilightforest.carminite_ghast.setup"
+      },
+      "scripts": {
+        "animate": [
+          "setup"
+        ],
+        "scalex": "((8.0 + 1.0 / (1.0 / (math.pow(math.max(q.property('twilightforest:attack_timer') / 20.0, 0.0), 5) * 2.0 + 1.0))) / 2.0)",
+        "scaley": "((8.0 + (1.0 / (math.pow(math.max(q.property('twilightforest:attack_timer') / 20.0, 0.0), 5) * 2.0 + 1.0))) / 2.0)",
+        "scalez": "((8.0 + 1.0 / (1.0 / (math.pow(math.max(q.property('twilightforest:attack_timer') / 20.0, 0.0), 5) * 2.0 + 1.0))) / 2.0)"
+      },
+      "spawn_egg": {
+        "base_color": "#bcbcbc",
+        "overlay_color": "#b77878"
+      }
+    }
+  }
+}

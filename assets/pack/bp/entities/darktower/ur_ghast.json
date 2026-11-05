@@ -1,0 +1,43 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "twilightforest:ur_ghast",
+      "is_spawnable": true,
+      "is_summonable": true,
+      "is_experimental": false,
+      "properties": {
+        "twilightforest:tantrum": { "type": "bool", "default": false, "client_sync": true },
+        "twilightforest:charging": { "type": "bool", "default": false, "client_sync": true },
+        "twilightforest:attack_status": { "type": "int", "range": [0, 2], "default": 0, "client_sync": true },
+        "twilightforest:attack_timer": { "type": "int", "range": [-40, 20], "default": 0, "client_sync": true },
+        "twilightforest:death_time": { "type": "int", "range": [0, 90], "default": 0, "client_sync": true }
+      }
+    },
+    "components": {
+      "minecraft:type_family": { "family": ["twilightforest", "ur_ghast", "monster", "mob"] },
+      "minecraft:collision_box": { "width": 14, "height": 18 },
+      "minecraft:health": { "value": 250, "max": 250 },
+      "minecraft:attack": { "damage": 0 },
+      "minecraft:follow_range": { "value": 128, "max": 128 },
+      "minecraft:knockback_resistance": { "value": 1.0 },
+      "minecraft:movement": { "value": 0.7 },
+      "minecraft:flying_speed": { "value": 0.02 },
+      "minecraft:can_fly": {},
+      "minecraft:physics": { "has_gravity": false, "has_collision": false },
+      "minecraft:pushable": { "is_pushable": false, "is_pushable_by_piston": false },
+      "minecraft:fire_immune": true,
+      "minecraft:breathable": { "total_supply": 15, "suffocate_time": 0, "breathes_water": true },
+      "minecraft:damage_sensor": {
+        "triggers": [
+          { "cause": "fall", "deals_damage": "no" },
+          { "cause": "suffocation", "deals_damage": "no" }
+        ]
+      },
+      "minecraft:experience_reward": { "on_death": "317" },
+      "minecraft:persistent": {},
+      "minecraft:nameable": {},
+      "minecraft:conditional_bandwidth_optimization": {}
+    }
+  }
+}

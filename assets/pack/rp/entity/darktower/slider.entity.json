@@ -1,0 +1,28 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:slider",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/block/slider_v"
+      },
+      "geometry": {
+        "default": "geometry.twilightforest.darktower.slide_block"
+      },
+      "render_controllers": [
+        "controller.render.default"
+      ],
+      "animations": {
+        "spin": "animation.twilightforest.slider.spin"
+      },
+      "scripts": {
+        "animate": [
+          "spin"
+        ]
+      }
+    }
+  }
+}

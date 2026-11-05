@@ -1,0 +1,32 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:towerwood_borer",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/towertermite"
+      },
+      "geometry": {
+        "default": "geometry.silverfish"
+      },
+      "render_controllers": [
+        "controller.render.default"
+      ],
+      "animations": {
+        "move": "animation.silverfish.move"
+      },
+      "scripts": {
+        "animate": [
+          "move"
+        ]
+      },
+      "spawn_egg": {
+        "base_color": "#5d2b21",
+        "overlay_color": "#aca03a"
+      }
+    }
+  }
+}
