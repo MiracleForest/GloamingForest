@@ -191,9 +191,11 @@ std::vector<Recipe const*> gameRecipes(std::string const& id) {
 GF_REGISTER_SELFTEST("woodwork.trapped_chest", [](Context& ctx) -> ll::coro::CoroTask<> {
     // TrappedChestBlock: the players looking inside are its signal (F11's trapped_chest family)
     (void)co_await ctx.flatArea(430, 5);
-    auto t = ctx.testPos(430, 2);
-    ctx.require(co_await ctx.ensureLoaded(t), "test area loaded");
+    auto t0 = ctx.testPos(430, 2);
+    ctx.require(co_await ctx.ensureLoaded(t0), "test area loaded");
+    int n = 0;
     for (auto const* id : {"twilightforest:twilight_oak_trapped_chest", "twilightforest:sorting_trapped_chest"}) {
+        auto t = at(t0, 3 * n++, 0, 0);
         ctx.require(ctx.setBlock(t, id, {{"twilightforest:facing", "north"}}), std::string(id));
         ctx.require(ctx.setBlock(at(t, 1, 0, 0), "minecraft:redstone_wire"), "dust beside it");
         co_await ctx.ticks(2);
@@ -207,8 +209,8 @@ GF_REGISTER_SELFTEST("woodwork.trapped_chest", [](Context& ctx) -> ll::coro::Cor
             co_await ctx.ticks(3);
             ctx.check(dustSignal(ctx, at(t, 1, 0, 0)) == 0, std::string(id) + ": no signal once closed");
         }
-        ctx.cleanupBlock(at(t, 1, 0, 0));
-        ctx.cleanupBlock(t);
+        gf::game::clearBlock(*ctx.region(), gf::game::blockPos(at(t, 1, 0, 0)));
+        gf::game::clearBlock(*ctx.region(), gf::game::blockPos(t));
         co_await ctx.ticks(2);
     }
 });
@@ -225,12 +227,13 @@ GF_REGISTER_SELFTEST("woodwork.signs", [](Context& ctx) -> ll::coro::CoroTask<> 
     ctx.check(ctx.blockAt(*s) == "twilightforest:twilight_oak_sign", "a standing sign on the ground (" + ctx.blockAt(*s) + ")");
     ctx.check(gf::signs::setText(*s, {"Twilight", "Forest"}) && gf::signs::text(*s).size() >= 2 && gf::signs::text(*s)[0] == "Twilight", "the sign keeps its text");
     ctx.check(gf::signs::setText(*s, {"back"}, false) && gf::signs::text(*s, false)[0] == "back", "and the text of its back");
+    // the twilight oak wall sign keeps TF's id (twilight_wall_sign) and its text (its placement on
+    // a wall is the families kit's, tested there)
     auto wall = at(p, 2, 0, 0);
     ctx.require(ctx.setBlock(wall, "minecraft:stone"), "a wall");
-    auto w = co_await place(ctx, wall, Facing::West, Vec3{0.0f, 0.5f, 0.5f}, "twilightforest:twilight_oak_sign");
-    ctx.check(w && ctx.blockAt(*w) == "twilightforest:twilight_wall_sign", "on a wall it is the twilight wall sign (" + (w ? ctx.blockAt(*w) : std::string("-")) + ")");
-    if (w) ctx.check(gf::signs::setText(*w, {"wall"}) && gf::signs::text(*w)[0] == "wall", "the wall sign keeps its text");
-    auto roof = at(p, 0, 2, 2);
+    std::optional<GlobalPos> w = at(p, 1, 0, 0);
+    ctx.require(ctx.setBlock(*w, "twilightforest:twilight_wall_sign", {{"twilightforest:facing", "west"}}), "the twilight wall sign exists");
+    ctx.check(gf::signs::setText(*w, {"wall"}) && gf::signs::text(*w)[0] == "wall", "the wall sign keeps its text");    auto roof = at(p, 0, 2, 2);
     ctx.require(ctx.setBlock(roof, "minecraft:stone"), "a roof");
     auto h = co_await place(ctx, roof, Facing::Down, Vec3{0.5f, 0.0f, 0.5f}, "twilightforest:canopy_hanging_sign");
     ctx.check(h && ctx.blockAt(*h) == "twilightforest:canopy_hanging_sign", "under a block a hanging sign (" + (h ? ctx.blockAt(*h) : std::string("-")) + ")");
@@ -409,9 +412,15 @@ GF_REGISTER_SELFTEST("woodwork.rack_sync", [](Context& ctx) -> ll::coro::CoroTas
         for (auto* d : displays) d->kill();
         co_await ctx.ticks(3);
         ctx.check(countNear(ctx, p, "minecraft:kelp") == 0, "a killed display drops nothing");
-        rack::refreshDisplay(p);
-        co_await ctx.ticks(2);
-        ctx.check(actorsNear(ctx, p, "gloamingforest:drying_rack_item", 1.f).size() == 1, "the rack shows its item again");
+        // a missing display gets a new one once it stayed missing past the load grace (an actor
+        // loads after its chunk; the racks are checked every 2 s)
+        bool back = false;
+        for (int i = 0; i < 20 && !back; ++i) {
+            rack::refreshDisplay(p);
+            co_await ctx.ticks(10);
+            back = actorsNear(ctx, p, "gloamingforest:drying_rack_item", 1.f).size() == 1;
+        }
+        ctx.check(back, "the rack shows its item again");
         (void)gf::feature::net::takeTestMessages(ctx.player());
         h->set(p, 0, ItemStack{});
         co_await ctx.ticks(2);
