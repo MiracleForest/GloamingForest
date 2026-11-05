@@ -18,9 +18,10 @@
 // (BannerPattern(name, nameID, itemFunctor, patternItemType, ignoreAux)). A banner stores the
 // pattern's nameID (kPatternIds); the renderer draws textures/entity/banner/banner_<name> (TF's
 // textures/entity/banner/<boss>.png, renamed by tools/import/overrides/building.json). The engine
-// knows pattern items only as the BannerPatternItem class: two hooks let TF's data-driven items in,
-// BannerPattern::matchesPatternItem (the pattern whose item is in the slot) and the loom's pattern
-// slot validation (LoomMaterialContainerValidation::isItemAllowedInSlot).
+// knows pattern items only as the BannerPatternItem class: the contract extension
+// feature/ext/building/PatternItems.h (two engine hooks, for A8 to fold into W0) lets TF's
+// data-driven items in: BannerPattern::matchesPatternItem (the pattern whose item is in the slot)
+// and the loom's pattern slot validation (LoomMaterialContainerValidation::isItemAllowedInSlot).
 // Vanilla clients (no client mod on a BDS) do not know the nine ids: Bedrock clients keep a banner
 // with an unknown pattern and draw it as a plain field (spike S6), with an untranslated line.
 
@@ -28,13 +29,11 @@
 
 #include <algorithm>
 
-#include "ll/api/memory/Hook.h"
-
-#include "mc/world/inventory/simulation/validation/LoomMaterialContainerValidation.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/item/ItemStackBase.h"
 #include "mc/world/level/block/actor/BannerPattern.h"
 
+#include "feature/ext/building/PatternItems.h"
 #include "game/Items.h"
 #include "mod/Log.h"
 
@@ -136,58 +135,14 @@ BannerPattern const* findBannerPattern(std::string_view nameId) {
 
 } // namespace gf::feature::building
 
-namespace {
-
-namespace fb = gf::feature::building;
-
-/// The TF pattern a TF pattern item unlocks (the item's tag #twilightforest:pattern_item/<boss>).
-bool tfMatch(BannerPattern const& pattern, ItemStackBase const& item, bool& isTf) {
-    auto spec = fb::bannerOfPatternId(*pattern.mNameID);
-    isTf      = spec.has_value();
-    if (!spec || item.isNull()) return false;
-    return item.getTypeName() == std::string(fb::kNs) + spec->boss + "_banner_pattern";
-}
-
-LL_TYPE_INSTANCE_HOOK(BannerMatchHook, ll::memory::HookPriority::Normal, BannerPattern, &BannerPattern::matchesPatternItem, bool, ItemStackBase const& item) {
-    bool isTf  = false;
-    bool match = tfMatch(*this, item, isTf);
-    if (isTf) return match;
-    // a vanilla pattern never takes a TF item
-    if (!item.isNull() && fb::bannerOfItem(item.getTypeName())) return false;
-    return origin(item);
-}
-
-LL_TYPE_INSTANCE_HOOK(
-    LoomPatternSlotHook,
-    ll::memory::HookPriority::Normal,
-    LoomMaterialContainerValidation,
-    &LoomMaterialContainerValidation::$isItemAllowedInSlot,
-    bool,
-    ContainerScreenContext const& screenContext,
-    int const                     slot,
-    ItemStackBase const&          item,
-    int const                     amount,
-    bool                          flag
-) {
-    // BannerPatternItem in LoomMenu's pattern slot: TF's pattern items too
-    // (the material container has the one pattern slot: index 0, or the screen's offset of it)
-    bool patternSlot = slot == 0 || slot == this->getContainerOffset(screenContext);
-    if (patternSlot && !item.isNull() && fb::bannerOfItem(item.getTypeName())) return true;
-    return origin(screenContext, slot, item, amount, flag);
-}
-
-} // namespace
-
 namespace gf::feature::building {
 
 void installBannerHooks() {
-    BannerMatchHook::hook();
-    LoomPatternSlotHook::hook();
+    // each pattern item is the only member of #twilightforest:pattern_item/<boss>
+    for (auto const& s : bannerPatterns()) ::gf::building::ext::registerPatternItem(s.nameId, std::string(kNs) + s.boss + "_banner_pattern");
+    ::gf::building::ext::installPatternItems();
 }
 
-void uninstallBannerHooks() {
-    BannerMatchHook::unhook();
-    LoomPatternSlotHook::unhook();
-}
+void uninstallBannerHooks() { ::gf::building::ext::uninstallPatternItems(); }
 
 } // namespace gf::feature::building

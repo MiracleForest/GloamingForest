@@ -10,6 +10,7 @@
 #   z 80  the nine boss spawners; z 83 the five miniature structures (facing south)
 #   z 100 nagastone (an L, a head, pillars, etched, spiral, twisted pillar), rope, iron ladders
 #   z 120 castle bricks, rune bricks, mazestone, underbrick, towerwood, deadrock, storage blocks
+#   z 124 (x 36..41) encased and bold castle brick stairs, mossy and cracked nagastone stairs
 
 function Get-BuildingShowcase {
     $ns = 'twilightforest'
@@ -71,6 +72,11 @@ function Get-BuildingShowcase {
     for ($i = 0; $i -lt $row.Count; $i++) {
         for ($y = 0; $y -lt 3; $y++) { $lines.Add("setblock $(20 + $i) $(-60 + $y) 120 ${ns}:$($row[$i][$y])") }
     }
+    # z 124: the stairs the rows above leave out
+    $lines.Add("setblock 36 -60 124 ${ns}:encased_castle_brick_stairs")
+    $lines.Add("setblock 37 -60 124 ${ns}:bold_castle_brick_stairs")
+    $stairs = 'mossy_nagastone_stairs_left', 'mossy_nagastone_stairs_right', 'cracked_nagastone_stairs_left', 'cracked_nagastone_stairs_right'
+    for ($i = 0; $i -lt 4; $i++) { $lines.Add("setblock $(38 + $i) -60 124 ${ns}:$($stairs[$i]) [`"${ns}:facing`"=`"north`"]") }
     $lines.Add('say building showcase built')
     $lines
 }

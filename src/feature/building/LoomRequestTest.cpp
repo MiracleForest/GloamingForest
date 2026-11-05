@@ -25,6 +25,8 @@
 #include "mc/network/packet/ItemStackRequestPacket.h"
 #include "mc/network/packet/item_stack_request_packet_data/RequestData.h"
 #include "mc/scripting/modules/minecraft/ScriptFacing.h"
+#include "mc/legacy/ActorUniqueID.h"
+#include "mc/server/ServerPlayer.h"
 #include "mc/server/SimulatedPlayer.h"
 #include "mc/server/sim/LookDuration.h"
 #include "mc/world/PlayerUIContainer.h"
@@ -163,8 +165,51 @@ void clearLoom(Player& player) {
         player.setPlayerUIItem(s, ItemStack::EMPTY_ITEM(), false);
 }
 
+SharedTypes::Legacy::ContainerType screenOf(Player& player) {
+    auto* base = player.mItemStackNetManager.get();
+    return base ? base->getScreenContext().mScreenContainerType : SharedTypes::Legacy::ContainerType::None;
+}
+
+/// One request: the banner and the dye from hotbar slots 0 and 1 into the loom's input and dye
+/// slots (and, when `withPattern`, TF's pattern item from slot 2 into the pattern slot).
+std::string placeIntoLoom(Player& player, int requestId, bool withPattern) {
+    auto& inv = player.getInventory();
+    int   ids[3]{};
+    for (int i = 0; i < 3; ++i) {
+        auto& item = const_cast<ItemStack&>(inv.getItem(i));
+        if (item.isNull()) continue;
+        if (netIdOf(item) == 0) item.serverInitNetId();
+        ids[i] = netIdOf(item);
+    }
+    RequestWriter w;
+    w.uvarint(1);
+    w.request(requestId, withPattern ? 3 : 2, [&](RequestWriter& r) {
+        r.place(1, ContainerEnumName::HotbarContainer, 0, ids[0], ContainerEnumName::LoomInputContainer, static_cast<int>(PlayerUISlot::LoomInput), 0);
+        r.place(1, ContainerEnumName::HotbarContainer, 1, ids[1], ContainerEnumName::LoomDyeContainer, static_cast<int>(PlayerUISlot::LoomDye), 0);
+        if (withPattern)
+            r.place(1, ContainerEnumName::HotbarContainer, 2, ids[2], ContainerEnumName::LoomMaterialContainer, static_cast<int>(PlayerUISlot::LoomMaterial), 0);
+    });
+    return sendRequest(player, w.mBytes, 1, "");
+}
+
+/// One request exactly as a client's loom craft: CraftLoom <pattern>, the banner and the dye
+/// consumed, the created result taken to the cursor. Only the pattern id differs between crafts.
+std::string craftInLoom(Player& player, int requestId, std::string const& pattern) {
+    int in = netIdOf(uiItem(player, PlayerUISlot::LoomInput)), dy = netIdOf(uiItem(player, PlayerUISlot::LoomDye));
+    RequestWriter w;
+    w.uvarint(1);
+    w.request(requestId, 4, [&](RequestWriter& r) {
+        r.craftLoom(pattern);
+        r.consume(1, ContainerEnumName::LoomInputContainer, static_cast<int>(PlayerUISlot::LoomInput), in);
+        r.consume(1, ContainerEnumName::LoomDyeContainer, static_cast<int>(PlayerUISlot::LoomDye), dy);
+        r.take(1, ContainerEnumName::CreatedOutputContainer, static_cast<int>(PlayerUISlot::CreatedItemOutput), requestId, ContainerEnumName::CursorContainer, 0, 0);
+    });
+    return sendRequest(player, w.mBytes, 1, pattern);
+}
+
 GF_REGISTER_SELFTEST("building.loom_request", [](Context& ctx) -> ll::coro::CoroTask<> {
-    auto p = ctx.testPos(575, 1);
+    using CT = SharedTypes::Legacy::ContainerType;
+    auto p   = ctx.testPos(575, 1);
     ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
     auto loomPos = p;
     loomPos.y += 1;
@@ -177,7 +222,11 @@ GF_REGISTER_SELFTEST("building.loom_request", [](Context& ctx) -> ll::coro::Coro
         clearLoom(sp);
     }
     co_await ctx.ticks(2);
-    // a use of the loom with an empty hand opens its screen (the server's loom container screen)
+    // Open the loom screen as the server does for a player's use of the block: a use through
+    // GameMode first (LoomBlock::use). A simulated player has no client that acknowledges the
+    // screen, so when the use does not set it the test asks the server to open the loom's unmanaged
+    // container (what LoomBlock::use does for a real player), and last pushes the screen context the
+    // server keeps for an open loom (ItemStackNetManagerServer::onContainerScreenOpen).
     {
         auto& sp = static_cast<SimulatedPlayer&>(ctx.player());
         sp.simulateLookAt(lp, sim::LookDuration::Instant);
@@ -187,11 +236,29 @@ GF_REGISTER_SELFTEST("building.loom_request", [](Context& ctx) -> ll::coro::Coro
         sp.mGameMode->useItemOn(hand, lp, static_cast<uchar>(Facing::South), Vec3{lp.x + 0.5f, lp.y + 0.5f, lp.z + 1.0f}, HandSlot::Mainhand, nullptr, true);
     }
     co_await ctx.ticks(2);
-    auto& sp0  = static_cast<SimulatedPlayer&>(ctx.player());
-    auto* base = sp0.mItemStackNetManager.get();
-    ctx.require(base && base->isEnabled(), "the simulated player handles item stack requests");
-    auto screen = base->getScreenContext().mScreenContainerType;
-    ctx.require(screen == SharedTypes::Legacy::ContainerType::Loom, "the loom screen is open (container type " + std::to_string(static_cast<int>(screen)) + ")");
+    std::string opened = "a use of the loom block";
+    if (screenOf(ctx.player()) != CT::Loom) {
+        auto& sp = static_cast<ServerPlayer&>(ctx.player());
+        sp.openUnmanagedContainer(CT::Loom, std::variant<BlockPos, ActorUniqueID>{lp});
+        opened = "the server's open of the loom's unmanaged container";
+        co_await ctx.ticks(1);
+    }
+    if (screenOf(ctx.player()) != CT::Loom) {
+        auto&                  sp = ctx.player();
+        ContainerScreenContext screen;
+        screen.mPlayer              = &sp;
+        screen.mScreenContainerType = CT::Loom;
+        screen.mOwner               = std::variant<std::monostate, ActorUniqueID, BlockPos>{lp};
+        if (auto* base = sp.mItemStackNetManager.get()) base->onContainerScreenOpen(screen);
+        opened = "the loom screen context the server keeps for an open loom";
+    }
+    {
+        auto* base = ctx.player().mItemStackNetManager.get();
+        ctx.require(base && base->isEnabled(), "the simulated player handles item stack requests");
+        auto screen = screenOf(ctx.player());
+        ctx.require(screen == CT::Loom, "the loom screen is open (container type " + std::to_string(static_cast<int>(screen)) + ")");
+        ctx.info("loom screen opened by " + opened);
+    }
 
     // the client's first request: the banner, the dye and TF's pattern item from the hotbar into the
     // loom's input, dye and pattern slots
@@ -199,80 +266,37 @@ GF_REGISTER_SELFTEST("building.loom_request", [](Context& ctx) -> ll::coro::Coro
     auto dye     = gf::game::items::make("minecraft:red_dye", 1);
     auto pattern = gf::game::items::make("twilightforest:naga_banner_pattern", 1);
     ctx.require(banner && dye && pattern, "a white banner, red dye and the naga banner pattern");
-    int ids[3]{};
     {
-        auto& sp  = static_cast<SimulatedPlayer&>(ctx.player());
+        auto& sp  = ctx.player();
         auto& inv = sp.getInventory();
         inv.setItem(0, *banner);
         inv.setItem(1, *dye);
         inv.setItem(2, *pattern);
-        for (int i = 0; i < 3; ++i) {
-            auto& item = const_cast<ItemStack&>(inv.getItem(i));
-            if (netIdOf(item) == 0) item.serverInitNetId();
-            ids[i] = netIdOf(item);
-        }
-        RequestWriter w;
-        w.uvarint(1);
-        w.request(-101, 3, [&](RequestWriter& r) {
-            r.place(1, ContainerEnumName::HotbarContainer, 0, ids[0], ContainerEnumName::LoomInputContainer, static_cast<int>(PlayerUISlot::LoomInput), 0);
-            r.place(1, ContainerEnumName::HotbarContainer, 1, ids[1], ContainerEnumName::LoomDyeContainer, static_cast<int>(PlayerUISlot::LoomDye), 0);
-            r.place(1, ContainerEnumName::HotbarContainer, 2, ids[2], ContainerEnumName::LoomMaterialContainer, static_cast<int>(PlayerUISlot::LoomMaterial), 0);
-        });
-        auto err = sendRequest(sp, w.mBytes, 1, "");
+        auto err = placeIntoLoom(sp, -101, true);
         ctx.require(err.empty(), "the loom request (place): " + err);
     }
     co_await ctx.ticks(2);
     {
-        auto& sp = static_cast<SimulatedPlayer&>(ctx.player());
+        auto& sp = ctx.player();
         ctx.check(gf::game::items::idOf(uiItem(sp, PlayerUISlot::LoomInput)) == "minecraft:banner", "the banner is in the loom (" + gf::game::items::idOf(uiItem(sp, PlayerUISlot::LoomInput)) + ")");
         ctx.check(gf::game::items::idOf(uiItem(sp, PlayerUISlot::LoomDye)) == "minecraft:red_dye", "the dye is in the loom");
         ctx.require(gf::game::items::idOf(uiItem(sp, PlayerUISlot::LoomMaterial)) == "twilightforest:naga_banner_pattern",
                     "the server let TF's pattern item into the loom's pattern slot (" + gf::game::items::idOf(uiItem(sp, PlayerUISlot::LoomMaterial)) + ")");
     }
 
-    // a pattern the item does not unlock: refused, nothing is consumed
-    {
-        auto& sp = static_cast<SimulatedPlayer&>(ctx.player());
-        int   in = netIdOf(uiItem(sp, PlayerUISlot::LoomInput)), dy = netIdOf(uiItem(sp, PlayerUISlot::LoomDye));
-        RequestWriter w;
-        w.uvarint(1);
-        w.request(-103, 4, [&](RequestWriter& r) {
-            r.craftLoom("tf_lich");
-            r.consume(1, ContainerEnumName::LoomInputContainer, static_cast<int>(PlayerUISlot::LoomInput), in);
-            r.consume(1, ContainerEnumName::LoomDyeContainer, static_cast<int>(PlayerUISlot::LoomDye), dy);
-            r.take(1, ContainerEnumName::CreatedOutputContainer, static_cast<int>(PlayerUISlot::CreatedItemOutput), -103, ContainerEnumName::CursorContainer, 0, 0);
-        });
-        auto err = sendRequest(sp, w.mBytes, 1, "tf_lich");
-        ctx.require(err.empty(), "the loom request (tf_lich): " + err);
-    }
-    co_await ctx.ticks(2);
-    {
-        auto& sp = static_cast<SimulatedPlayer&>(ctx.player());
-        ctx.check(!hasPattern(uiItem(sp, PlayerUISlot::CursorSelected), "tf_lich"), "the naga pattern item does not make a lich banner");
-        ctx.check(gf::game::items::idOf(uiItem(sp, PlayerUISlot::LoomInput)) == "minecraft:banner", "the refused craft kept the banner in the loom");
-    }
-
     // the craft: CraftLoom tf_naga, the banner and the dye consumed, the result to the cursor
     {
-        auto& sp = static_cast<SimulatedPlayer&>(ctx.player());
-        int   in = netIdOf(uiItem(sp, PlayerUISlot::LoomInput)), dy = netIdOf(uiItem(sp, PlayerUISlot::LoomDye));
-        RequestWriter w;
-        w.uvarint(1);
-        w.request(-105, 4, [&](RequestWriter& r) {
-            r.craftLoom("tf_naga");
-            r.consume(1, ContainerEnumName::LoomInputContainer, static_cast<int>(PlayerUISlot::LoomInput), in);
-            r.consume(1, ContainerEnumName::LoomDyeContainer, static_cast<int>(PlayerUISlot::LoomDye), dy);
-            r.take(1, ContainerEnumName::CreatedOutputContainer, static_cast<int>(PlayerUISlot::CreatedItemOutput), -105, ContainerEnumName::CursorContainer, 0, 0);
-        });
-        auto err = sendRequest(sp, w.mBytes, 1, "tf_naga");
+        auto err = craftInLoom(ctx.player(), -103, "tf_naga");
         ctx.require(err.empty(), "the loom request (tf_naga): " + err);
     }
     co_await ctx.ticks(2);
+    bool nagaCrafted = false;
     {
-        auto& sp     = static_cast<SimulatedPlayer&>(ctx.player());
+        auto&       sp     = ctx.player();
         auto const& cursor = uiItem(sp, PlayerUISlot::CursorSelected);
-        ctx.check(hasPattern(cursor, "tf_naga"), "the server's loom made a banner with TF's naga pattern (" + gf::game::items::idOf(cursor) + ")");
-        if (hasPattern(cursor, "tf_naga")) {
+        nagaCrafted        = hasPattern(cursor, "tf_naga");
+        ctx.check(nagaCrafted, "the server's loom made a banner with TF's naga pattern (" + gf::game::items::idOf(cursor) + ")");
+        if (nagaCrafted) {
             for (auto const& [pp, color] : BannerItem::getPatternAndColorPairsFromItemStack(cursor))
                 if (pp && *pp->mNameID == "tf_naga") ctx.check(static_cast<int>(color) == 1, "in the dye's colour, red (" + std::to_string(static_cast<int>(color)) + ")");
             gf::log().info("building: the server's loom crafted a banner with tf_naga for a client request");
@@ -280,9 +304,39 @@ GF_REGISTER_SELFTEST("building.loom_request", [](Context& ctx) -> ll::coro::Coro
         ctx.check(uiItem(sp, PlayerUISlot::LoomInput).isNull(), "the banner was used up");
         ctx.check(uiItem(sp, PlayerUISlot::LoomDye).isNull(), "the dye was used up");
         ctx.check(gf::game::items::idOf(uiItem(sp, PlayerUISlot::LoomMaterial)) == "twilightforest:naga_banner_pattern", "the pattern item stays in the loom (LoomMenu keeps it)");
+        sp.setPlayerUIItem(PlayerUISlot::CursorSelected, ItemStack::EMPTY_ITEM(), false);
+    }
+
+    // The same request with only the pattern id swapped to tf_lich: the naga pattern item does not
+    // unlock it (Java's LoomMenu offers only the patterns of #pattern_item/<boss>), so the server
+    // refuses it and consumes nothing. The naga craft above proves the request itself is valid.
+    if (nagaCrafted) {
+        {
+            auto& sp  = ctx.player();
+            auto& inv = sp.getInventory();
+            inv.setItem(0, *banner);
+            inv.setItem(1, *dye);
+            auto err = placeIntoLoom(sp, -105, false);
+            ctx.require(err.empty(), "the loom request (second place): " + err);
+        }
+        co_await ctx.ticks(2);
+        ctx.require(gf::game::items::idOf(uiItem(ctx.player(), PlayerUISlot::LoomInput)) == "minecraft:banner", "a second banner is in the loom");
+        {
+            auto err = craftInLoom(ctx.player(), -107, "tf_lich");
+            ctx.require(err.empty(), "the loom request (tf_lich): " + err);
+        }
+        co_await ctx.ticks(2);
+        auto& sp = ctx.player();
+        ctx.check(!hasPattern(uiItem(sp, PlayerUISlot::CursorSelected), "tf_lich"), "the naga pattern item does not make a lich banner");
+        ctx.check(gf::game::items::idOf(uiItem(sp, PlayerUISlot::LoomInput)) == "minecraft:banner", "the refused craft kept the banner in the loom");
+        ctx.check(gf::game::items::idOf(uiItem(sp, PlayerUISlot::LoomDye)) == "minecraft:red_dye", "the refused craft kept the dye in the loom");
+    }
+    {
+        auto& sp = static_cast<ServerPlayer&>(ctx.player());
         clearLoom(sp);
         sp.getInventory().removeAllItems();
         sp.doDeleteContainerManager(false);
+        if (auto* base = sp.mItemStackNetManager.get()) base->onContainerScreenClose();
     }
     ctx.cleanupBlock(loomPos);
     ctx.cleanupBlock(p);

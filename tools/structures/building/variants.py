@@ -246,6 +246,11 @@ def outputs():
         doc = gen_block(block)
         comps = doc["minecraft:block"]["components"]
         mats = comps["minecraft:material_instances"]
+        if block in TINTED:
+            # ColorHandler's towerwood colour on placed blocks (the only place it is set: the
+            # generated block has no tint)
+            for inst in list(mats):
+                mats[inst] = dict(mats[inst], tint_method="dry_foliage")
         insts = CARMINITE if block == "carminite_block" else {f: (f, None) for f in FACE_ORDER}
         for inst, (face, tex_override) in insts.items():
             entries = []

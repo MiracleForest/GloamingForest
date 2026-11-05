@@ -11,11 +11,16 @@
 // sturdy centre face; never below); one tick after a placement or a neighbour change the
 // unsupported strands go, one rope dropped per strand (the block breaks when none is left). A rope
 // item used on a rope extends it (RopeItem#updatePlacementContext / #getForward): up to
-// EXTEND_RANGE horizontal blocks, any length downwards.
+// EXTEND_RANGE horizontal blocks, any length downwards. The horizontal strands are a tightrope: solid
+// only for an entity above them that is not descending (a sneaking player drops through); the
+// rope climbs as scaffolding (a sneaking player slides down, Storage.cpp's block properties).
 
 #include "feature/building/Building.h"
 
 #include <algorithm>
+#include <array>
+#include <optional>
+#include <vector>
 #include <set>
 
 #include "mc/network/packet/TextPacket.h"
@@ -28,6 +33,7 @@
 #include "mc/world/level/dimension/Dimension.h"
 
 #include "feature/common/Interactions.h"
+#include "feature/ext/building/Collision.h"
 #include "feature/families/BlockEvents.h"
 #include "feature/fx/Fx.h"
 #include "feature/tags/Tags.h"
@@ -265,7 +271,24 @@ void placeRope(ia::PlaceContext const& c) {
 
 } // namespace
 
+std::vector<std::array<float, 6>> ropeCollision(Block const& rope, BlockPos const& pos, bool hasEntity, float entityBottom, bool descending) {
+    // X_SHAPE box(0, 6.5, 6.5, 16, 9.5, 9.5), Z_SHAPE box(6.5, 6.5, 0, 9.5, 9.5, 16): only for an
+    // entity above the strand (EntityCollisionContext#isAbove: bottom > y + 9.5/16 - 1e-5) that is
+    // not descending (a sneaking player); an empty context (no entity) collides with nothing
+    std::vector<std::array<float, 6>> out;
+    if (!hasEntity || descending) return out;
+    if (!(entityBottom > pos.y + 9.5f / 16.f - 1.0e-5f)) return out;
+    if (ropeHasAxis(rope, 0)) out.push_back({0.f, 6.5f, 6.5f, 16.f, 9.5f, 9.5f});
+    if (ropeHasAxis(rope, 2)) out.push_back({6.5f, 6.5f, 0.f, 9.5f, 9.5f, 16.f});
+    return out;
+}
+
 void installRope() {
+    // RopeBlock#getCollisionShape: the tightrope (contract extension, feature/ext/building/Collision.h)
+    ::gf::building::ext::registerCollision(kRope, [](Block const& b, BlockPos const& pos, std::optional<::gf::building::ext::CollisionEntity> e, std::vector<::gf::building::ext::Box>& out) {
+        auto boxes = ropeCollision(b, pos, e.has_value(), e ? e->bottom : 0.f, e && e->descending);
+        out.insert(out.end(), boxes.begin(), boxes.end());
+    });
     handlers().push_back(ia::onUseOn({.block = kRope, .item = kRope}, extendRope, ia::priority::High));
     handlers().push_back(ia::onPlace({.block = kRope}, placeRope));
     blockevents::onPlaced(kRope, [](BlockSource& region, BlockPos const& pos, Block const&, Actor*) { scheduleTick(region, pos); });

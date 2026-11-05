@@ -17,7 +17,7 @@
 #   assets/pack/rp/models/blocks/building/<boss>[_wall]_trophy.geo.json
 #   assets/pack/bp/blocks/building/<boss>[_wall]_trophy.json
 #   assets/pack/bp/items/building/<boss>_trophy.json
-#   assets/pack/rp/attachables/building/<boss>_trophy.json
+#   (the held and worn trophies are F2's attachables, assets/gen/geo/building/rp/attachables)
 #   assets/pack/rp/terrain_texture.d/building.json (with variants.py's entries), assets/pack/rp/item_texture.d/building.json
 #
 # TrophyBlock's ROTATION_16 is a 22.5 degree step: Bedrock turns a block in quarter turns only, so the
@@ -43,7 +43,6 @@ OUT_BLOCKS = os.path.join(ROOT, "assets", "pack", "bp", "blocks", "building")
 OUT_ITEMS = os.path.join(ROOT, "assets", "pack", "bp", "items", "building")
 OUT_TERRAIN = os.path.join(ROOT, "assets", "pack", "rp", "terrain_texture.d", "building.json")
 OUT_ITEM_TEX = os.path.join(ROOT, "assets", "pack", "rp", "item_texture.d", "building.json")
-OUT_ATTACH = os.path.join(ROOT, "assets", "pack", "rp", "attachables", "building")
 
 NS = "twilightforest:"
 # BossVariant: trophy type (the GUI backdrop, item/<model>) per boss
@@ -356,17 +355,6 @@ def item(boss):
     }
 
 
-def attachable(boss):
-    # F2's attachable (held: TrophyRenderer through ISTER; worn: the head), plus
-    # ClientGameEvents#unrenderHeadWithTrophies: a worn trophy hides the wearer's hat layer (the
-    # parent's helmet layer, as vanilla helmets do)
-    with open(os.path.join(GEO, "rp", "attachables", boss + "_trophy.json"), encoding="utf-8") as f:
-        doc = json.load(f)
-    desc = doc["minecraft:attachable"]["description"]
-    desc["scripts"] = {"parent_setup": "c.item_slot == 'head' ? { variable.helmet_layer_visible = 0.0; };"}
-    return doc
-
-
 def dump(doc):
     return json.dumps(doc, indent=2) + "\n"
 
@@ -389,7 +377,6 @@ def outputs():
             for path, _ in textures_of(base).values():
                 terrain[tex_key(path)] = {"textures": path}
         files[os.path.join(OUT_ITEMS, boss + "_trophy.json")] = dump(item(boss))
-        files[os.path.join(OUT_ATTACH, boss + "_trophy.json")] = dump(attachable(boss))
     # the castle rune bricks' rune layer (ColorHandler: a constant colour per block), tinted in the
     # atlas (blocks.py writes the blocks); the blockstate's eight equally weighted models
     # castle_rune_brick_0..7 (castleblock_magic_0..7, one picked per position) are the atlas entry's

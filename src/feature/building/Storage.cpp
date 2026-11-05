@@ -11,6 +11,9 @@
 // - Knightmetal block: an entity inside its spiky shape (box 1..15) takes 4 knightmetal damage.
 // - Fiery block: stepping on it hurts 1 fiery damage, unless the entity is fire immune or a living
 //   entity wearing fiery boots.
+// - Block properties the game's own systems read: the fiery block keeps fire on top burning
+//   (InfiniBurn), mobs path around the knightmetal block (CausesDamage), the rope climbs like
+//   scaffolding (Scaffolding).
 // - Arctic fur block: a fall onto it causes a tenth of the fall damage (fallOn: causeFallDamage with
 //   multiplier 0.1); shears mine it at 0.2 progress a tick (the BP's item-specific speed).
 // - Tooltips of the knightmetal and arctic fur blocks.
@@ -18,7 +21,6 @@
 #include "feature/building/Building.h"
 
 #include <cmath>
-#include <set>
 
 #include "mc/deps/shared_types/legacy/actor/ArmorSlot.h"
 #include "mc/world/actor/Actor.h"
@@ -26,10 +28,12 @@
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
+#include "mc/deps/core/string/HashedString.h"
 #include "mc/world/level/block/Block.h"
+#include "mc/world/level/block/BlockProperty.h"
+#include "mc/world/level/block/BlockType.h"
 
 #include "feature/combat/Combat.h"
-#include "feature/common/Interactions.h"
 #include "feature/ext/item/Item.h"
 #include "feature/families/BlockEvents.h"
 #include "feature/item/Item.h"
@@ -37,6 +41,7 @@
 #include "game/Items.h"
 #include "game/WorldDb.h"
 #include "mod/I18n.h"
+#include "mod/Log.h"
 
 namespace gf::feature::building {
 
@@ -47,12 +52,6 @@ constexpr char const* kFiery       = "twilightforest:fiery_block";
 constexpr char const* kArcticFur   = "twilightforest:arctic_fur_block";
 
 bool gInstalled = false;
-
-/// Fire a player put out this tick (not lit again).
-std::set<core::GlobalPos>& putOut() {
-    static std::set<core::GlobalPos> s;
-    return s;
-}
 
 std::string gray(std::string text) { return std::string("\xC2\xA7") + "7" + text; }
 
@@ -73,11 +72,35 @@ bool fieryHurts(Actor& entity) {
     return game::items::idOf(entity.getArmor(SharedTypes::Legacy::ArmorSlot::Feet)) != "twilightforest:fiery_boots";
 }
 
+void applyBlockProperties() {
+    auto add = [](char const* id, BlockProperty p) {
+        auto type = BlockType::tryGetFromRegistry(HashedString(id));
+        if (!type) return false;
+        auto& t       = const_cast<BlockType&>(*type);
+        t.mProperties = static_cast<BlockProperty>(static_cast<std::uint64_t>(t.mProperties) | static_cast<std::uint64_t>(p));
+        return true;
+    };
+    // FieryBlock#isFireSource(UP): fire on top never burns out (FireBlock#tick skips the age and
+    // rain checks). Bedrock's fire asks the block below for BlockProperty::InfiniBurn (netherrack,
+    // magma), so the fiery block's type carries it: the game's own fire tick keeps that fire, and
+    // any other way of putting it out (a hit, water, a potion, a command) still works.
+    bool fiery = add(kFiery, BlockProperty::InfiniBurn);
+    // KnightmetalBlock#getBlockPathType: DAMAGE_OTHER (mobs path around it). Bedrock's navigation
+    // avoids the block types with BlockProperty::CausesDamage (magma, cactus, sweet berry bush).
+    bool knightmetal = add(kKnightmetal, BlockProperty::CausesDamage);
+    // RopeBlock#isScaffolding: climbing it, a sneaking player still slides down (Java's
+    // LivingEntity#handleOnClimbable holds a sneaking player only on non-scaffolding climbables);
+    // Bedrock's climb movement does the same for BlockProperty::Scaffolding types. The rope is
+    // already climbable (F11's climbable family).
+    bool rope = add("twilightforest:rope", BlockProperty::Scaffolding);
+    log().info("building: block properties (fiery infiniburn {}, knightmetal causes damage {}, rope scaffolding {})", fiery, knightmetal, rope);
+}
+
 void installStorage() {
     if (gInstalled) return;
     gInstalled = true;
-    // the client opens many worlds in one process: positions belong to one world
-    game::db::onWorldClosed([] { putOut().clear(); });
+    game::db::onWorldReady([] { applyBlockProperties(); });
+    if (game::db::available()) applyBlockProperties();
     // TFBlocks: the fiery block's item is rarity UNCOMMON (and fireResistant: its BP item's
     // minecraft:fire_resistant); the client mod colours its name
     item::ext::setRarity(kFiery, item::ext::Rarity::Uncommon);
@@ -88,36 +111,6 @@ void installStorage() {
     blockevents::onSteppedOn(kFiery, [](BlockSource&, BlockPos const&, Actor& entity) {
         if (fieryHurts(entity)) combat::hurt(entity, kFieryDamage, "twilightforest:fiery");
     });
-    // FieryBlock#isFireSource (Direction.UP): fire on top burns forever, FireBlock#tick never puts it
-    // out (age, rain). Bedrock's fire knows only its own infiniburn blocks: any fire above a fiery
-    // block that goes out on its own (whoever lit it: a player, a structure, before a reload) is
-    // lit again the next tick; a player putting it out (a hit on the fire or on the face under it)
-    // is not undone.
-    blockevents::onRemoved("minecraft:fire", [](BlockSource& region, BlockPos const& pos, Block const&) {
-        auto gp = game::globalPos(region, pos);
-        if (putOut().erase(gp)) return;
-        if (idAt(region, BlockPos{pos.x, pos.y - 1, pos.z}) != kFiery || idAt(region, pos) != "minecraft:air") return;
-        interactions::nextTick([gp] {
-            auto* r = game::regionOf(gp.dim);
-            if (!r) return;
-            BlockPos at{gp.x, gp.y, gp.z};
-            if (idAt(*r, at) != "minecraft:air" || idAt(*r, BlockPos{gp.x, gp.y - 1, gp.z}) != kFiery) return;
-            setBlock(*r, at, "minecraft:fire");
-        });
-    });
-    for (char const* target : {"minecraft:fire", kFiery}) {
-        interactions::onStartDestroy({.block = target}, [](interactions::DestroyContext const& c) {
-            auto p = c.pos;
-            if (c.blockId == kFiery) {
-                if (c.face != Up) return interactions::Result::Pass;
-                p.y += 1;
-            }
-            putOut().insert(p);
-            // kept two ticks: the fire's removal reaches onRemoved through the families' deferred queue
-            interactions::nextTick([p] { interactions::nextTick([p] { putOut().erase(p); }); });
-            return interactions::Result::Pass;
-        });
-    }
     combat::onIncoming(combat::priority::Normal, [](combat::DamageInfo& d) {
         if (d.type != "minecraft:fall") return combat::Verdict::Pass;
         auto& region = d.victim.getDimensionBlockSource();

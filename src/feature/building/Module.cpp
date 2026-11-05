@@ -2,6 +2,8 @@
 
 #include "feature/building/Building.h"
 
+#include "feature/ext/building/Collision.h"
+#include "game/WorldDb.h"
 #include "mod/Config.h"
 #include "mod/Log.h"
 #include "mod/Module.h"
@@ -34,6 +36,15 @@ struct BuildingModule {
         installNagastone();
         installRope();
         installStorage();
+        // the rope's entity-dependent collision (contract extension, feature/ext/building/Collision.h);
+        // the client builds its block registry per world
+        static bool registered = false;
+        if (!registered) {
+            registered = true;
+            game::db::onWorldReady([] { ::gf::building::ext::refreshCollisionTypes(); });
+        }
+        ::gf::building::ext::refreshCollisionTypes();
+        ::gf::building::ext::installCollision();
         log().info("building: installed");
     }
     void uninstall() {
@@ -41,6 +52,7 @@ struct BuildingModule {
         uninstallTrophies();
         uninstallNagastone();
         uninstallRope();
+        ::gf::building::ext::uninstallCollision();
     }
 };
 

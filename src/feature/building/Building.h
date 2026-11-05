@@ -3,6 +3,7 @@
 // U5 (building): the unit's internal declarations (not a contract; other units reach the unit's
 // blocks by string id only, rule R2).
 
+#include <array>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -65,6 +66,9 @@ inline constexpr int kRopeExtendRange = 7; ///< RopeItem.EXTEND_RANGE
 [[nodiscard]] bool ropeCanSurvive(BlockSource& region, BlockPos const& pos, Block const& rope);
 /// RopeBlock#tick: drops the unsupported strands; returns the number of ropes dropped.
 int  ropeTick(BlockSource& region, BlockPos const& pos);
+/// RopeBlock#getCollisionShape for an entity (`hasEntity` false: an empty context): the horizontal
+/// strands' boxes in pixels, only for an entity above them that is not descending.
+[[nodiscard]] std::vector<std::array<float, 6>> ropeCollision(Block const& rope, BlockPos const& pos, bool hasEntity, float entityBottom, bool descending);
 void installRope();
 void uninstallRope();
 
@@ -96,6 +100,7 @@ inline constexpr float kFieryDamage             = 1.0f; ///< FieryBlock#stepOn
 inline constexpr float kArcticFurFallMultiplier = 0.1f; ///< ArcticFurBlock#fallOn
 [[nodiscard]] float arcticFurFallDamage(float amount);
 [[nodiscard]] bool  fieryHurts(Actor& entity);
+/// The block type properties of the fiery block (InfiniBurn), knightmetal block (CausesDamage) and\n/// rope (Scaffolding); applied when a world is ready.\nvoid applyBlockProperties();
 void installStorage();
 
 } // namespace gf::feature::building

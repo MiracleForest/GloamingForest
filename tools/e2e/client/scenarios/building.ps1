@@ -7,7 +7,9 @@
 #   out/building/spawners.png        the nine boss spawners and the five miniature structures
 #   out/building/nagastone.png       nagastone, pillars, etched, stairs, spiral, twisted pillar, rope, iron ladders
 #   out/building/blocks.png          castle, rune, maze, under, tower, dead rock and storage blocks
+#   out/building/stairs.png          encased / bold castle brick stairs, mossy / cracked nagastone stairs
 #   out/building/hotbar.png          the nine trophy items in the hotbar
+#   out/building/patterns-hotbar.png the nine banner pattern items in the hotbar
 #   out/building/held-first-person.png, held-third-person.png, worn.png   a trophy held and worn
 #   out/building/banners.png         TF's nine banner patterns on standing banners
 # The remote-vanilla client draws the same blocks from the host's resource packs (no client mod).
@@ -56,7 +58,8 @@ $shots = @(
     @{ name = 'rotations'; tp = '/tp @s 27.5 -56 64 180 40' },
     @{ name = 'spawners'; tp = '/tp @s 28 -57 89 180 22' },
     @{ name = 'nagastone'; tp = '/tp @s 30 -57 108 180 18' },
-    @{ name = 'blocks'; tp = '/tp @s 27 -58 128 180 12' }
+    @{ name = 'blocks'; tp = '/tp @s 27 -58 128 180 12' },
+    @{ name = 'stairs'; tp = '/tp @s 38.5 -58.5 127 180 25' }
 )
 foreach ($s in $shots) {
     Invoke-Teleport $s.tp
@@ -74,6 +77,13 @@ foreach ($b in 'naga', 'lich', 'hydra', 'ur_ghast', 'knight_phantom', 'snow_quee
 Invoke-Teleport '/tp @s 28 -58 25 180 25'
 Start-Sleep -Seconds 2
 Save-Screenshot 'hotbar' | Out-Null
+# the nine banner pattern items
+Invoke-Chat '/clear @s'
+foreach ($b in 'naga', 'lich', 'hydra', 'ur_ghast', 'knight_phantom', 'snow_queen', 'minoshroom', 'alpha_yeti', 'quest_ram') {
+    Invoke-Chat "/give @s twilightforest:${b}_banner_pattern"
+}
+Start-Sleep -Seconds 2
+Save-Screenshot 'patterns-hotbar' | Out-Null
 
 # a trophy held (first person, then third person from the front) and worn on the head
 Invoke-Chat '/clear @s'

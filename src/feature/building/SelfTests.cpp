@@ -28,6 +28,7 @@
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/block/Block.h"
+#include "mc/world/level/block/BlockProperty.h"
 #include "mc/world/level/block/BlockType.h"
 #include "mc/world/level/block/DispenserBlock.h"
 #include "mc/world/level/block/actor/BlockActor.h"
@@ -552,24 +553,37 @@ GF_REGISTER_SELFTEST("building.storage_blocks", [](Context& ctx) -> ll::coro::Co
         co_await ctx.ticks(25);
     };
     co_await rest();
-    // a fire source: fire on top that goes out by itself is lit again
+    // a fire source (FieryBlock#isFireSource): fire on top never burns out, the game's own fire tick
+    // keeps it; the same old fire on stone next to it goes out (FireBlock#tick: no valid fire
+    // location and age > 3)
     {
         auto source = at(p, 6, 1, 0), flame = at(p, 6, 2, 0);
-        ctx.require(ctx.setBlock(source, "twilightforest:fiery_block"), "a second fiery block");
-        ctx.require(ctx.setBlock(flame, "minecraft:fire"), "fire on it");
-        co_await ctx.ticks(2);
-        ctx.setBlock(flame, "minecraft:air"); // as FireBlock#tick removes it
-        co_await ctx.ticks(3);
-        ctx.check(ctx.blockAt(flame) == "minecraft:fire", "fire on a fiery block burns forever (" + ctx.blockAt(flame) + ")");
-        // fire the module never saw being lit (a structure's, one from before a reload) too
+        auto stone = at(p, 8, 1, 0), control = at(p, 8, 2, 0);
+        ctx.require(ctx.setBlock(source, "twilightforest:fiery_block") && ctx.setBlock(stone, "minecraft:stone"), "a second fiery block and a stone");
+        ctx.require(ctx.setBlock(flame, "minecraft:fire", {{"age", 15}}) && ctx.setBlock(control, "minecraft:fire", {{"age", 15}}), "old fire on both");
+        int waited = 0;
+        for (; waited < 400 && ctx.blockAt(control) == "minecraft:fire"; waited += 5) co_await ctx.ticks(5);
+        co_await ctx.ticks(60); // two more fire ticks at least
+        ctx.check(ctx.blockAt(control) != "minecraft:fire", "old fire on stone burns out (after " + std::to_string(waited) + " ticks)");
+        ctx.check(ctx.blockAt(flame) == "minecraft:fire", "the same fire on a fiery block burns on (" + ctx.blockAt(flame) + ")");
+        // putting it out (water, a potion, a hit, a command) is not undone
         ctx.setBlock(flame, "minecraft:air");
-        co_await ctx.ticks(3);
-        ctx.check(ctx.blockAt(flame) == "minecraft:fire", "relit fire goes on burning (" + ctx.blockAt(flame) + ")");
+        co_await ctx.ticks(5);
+        ctx.check(ctx.blockAt(flame) == "minecraft:air", "fire put out on a fiery block stays out");
         ctx.setBlock(source, "minecraft:air");
-        co_await ctx.ticks(1);
-        ctx.setBlock(flame, "minecraft:air");
-        co_await ctx.ticks(2);
-        ctx.check(ctx.blockAt(flame) == "minecraft:air", "without the fiery block it stays out");
+        ctx.setBlock(control, "minecraft:air");
+        ctx.setBlock(stone, "minecraft:air");
+    }
+    // KnightmetalBlock#getBlockPathType DAMAGE_OTHER and RopeBlock#isScaffolding as the game's block
+    // properties (navigation avoids CausesDamage; climbing reads Scaffolding)
+    {
+        auto has = [](char const* id, BlockProperty prop) {
+            auto const* b = gf::game::blockWith(id);
+            return b && (static_cast<std::uint64_t>(b->getBlockType().mProperties) & static_cast<std::uint64_t>(prop)) != 0;
+        };
+        ctx.check(has("twilightforest:fiery_block", BlockProperty::InfiniBurn), "the fiery block is an infinite fire source");
+        ctx.check(has("twilightforest:knightmetal_block", BlockProperty::CausesDamage), "mobs path around the knightmetal block (CausesDamage)");
+        ctx.check(has("twilightforest:rope", BlockProperty::Scaffolding) && has("twilightforest:rope", BlockProperty::Climbable), "the rope climbs as scaffolding");
     }
     co_await rest();
     // knightmetal: standing in its spiky shape hurts (4 knightmetal damage)
