@@ -19,6 +19,8 @@
 #include <functional>
 #include <string>
 
+#include "nlohmann/json.hpp"
+
 #include "core/GlobalPos.h"
 
 class Block;
@@ -45,6 +47,16 @@ void onDeviceTick(std::string const& blockId, BlockFn fn);
 void onForget(std::string const& blockId, std::function<void(GlobalPos const&)> fn);
 /// Whether a position is tracked (selftests).
 [[nodiscard]] bool tracked(GlobalPos const& pos);
+
+/// Work the dark tower's generation leaves for its chunk (thread safe; worldgen threads): run on the
+/// server thread once the chunk of `pos` is loaded, persisted until then (gf:darktower:generated).
+/// Jobs: {"k": "track"} starts ticking the device generated there (the antibuilder, builder,
+/// reactor and ghast trap block entities / POI of Java's chunk); {"k": "frame", "item"} puts the
+/// item into the item frame block there (Java's ItemFrame entity); {"k": "fuel", "item", "count"}
+/// fills a furnace's fuel slot (makeFurnacePillar's charcoal).
+void queueGenerated(int dim, BlockPos const& pos, nlohmann::json job);
+/// The jobs still waiting (selftests).
+[[nodiscard]] std::size_t pendingGenerated();
 
 /// Installs the runtime (the module's install / uninstall).
 void install();

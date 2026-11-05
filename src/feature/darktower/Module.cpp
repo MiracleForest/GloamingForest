@@ -24,7 +24,7 @@ public:
             slider::install();
             ghasts::install();
             mobs::install();
-            structure::install();
+            landmarkgen::install();
         }
     }
     void uninstall() { runtime::uninstall(); }

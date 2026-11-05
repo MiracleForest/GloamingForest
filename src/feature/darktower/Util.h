@@ -87,6 +87,9 @@ void breakEffect(BlockSource& region, BlockPos const& pos, Block const& block);
 [[nodiscard]] bool loaded(BlockSource& region, BlockPos const& pos, int radius = 0);
 /// Java's hasNeighborSignal.
 [[nodiscard]] bool powered(BlockSource& region, BlockPos const& pos);
+/// The mobGriefing / doTileDrops game rules (true without a level).
+[[nodiscard]] bool mobGriefing();
+[[nodiscard]] bool doTileDrops();
 [[nodiscard]] BlockPos offset(BlockPos const& p, core::darktower::Facing f);
 [[nodiscard]] Vec3     center(BlockPos const& p);
 

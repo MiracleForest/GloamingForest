@@ -5,40 +5,77 @@
       "identifier": "twilightforest:carminite_ghastling",
       "is_spawnable": true,
       "is_summonable": true,
-      "is_experimental": false
+      "is_experimental": false,
+      "properties": {
+        "twilightforest:attack_timer": {
+          "type": "int",
+          "range": [
+            -40,
+            20
+          ],
+          "default": 0,
+          "client_sync": true
+        },
+        "twilightforest:charging": {
+          "type": "bool",
+          "default": false,
+          "client_sync": true
+        }
+      }
     },
     "components": {
-      "minecraft:type_family": { "family": ["twilightforest", "carminite_ghastling", "ghast", "monster", "mob"] },
-      "minecraft:collision_box": { "width": 1.1, "height": 1.5 },
-      "minecraft:health": { "value": 10, "max": 10 },
-      "minecraft:follow_range": { "value": 16, "max": 16 },
-      "minecraft:movement": { "value": 0.03 },
-      "minecraft:navigation.float": { "can_path_over_water": true },
-      "minecraft:can_fly": {},
-      "minecraft:physics": { "has_gravity": false },
-      "minecraft:pushable": { "is_pushable": true, "is_pushable_by_piston": true },
-      "minecraft:fire_immune": true,
-      "minecraft:breathable": { "total_supply": 15, "suffocate_time": 0, "breathes_water": true },
-      "minecraft:damage_sensor": { "triggers": [{ "cause": "fall", "deals_damage": "no" }] },
-      "minecraft:experience_reward": { "on_death": "query.last_hit_by_player ? 5 : 0" },
-      "minecraft:nameable": {},
-      "minecraft:despawn": { "despawn_from_distance": {} },
-      "minecraft:shooter": { "def": "minecraft:fireball" },
-      "minecraft:behavior.float_wander": { "priority": 5, "must_reach": true, "xz_dist": 4, "y_dist": 4 },
-      "minecraft:behavior.ranged_attack": {
-        "priority": 7,
-        "attack_radius": 64,
-        "charge_shoot_trigger": 2,
-        "charge_charged_trigger": 1
-      },
-      "minecraft:behavior.nearest_attackable_target": {
-        "priority": 1,
-        "must_see": true,
-        "reselect_targets": true,
-        "scan_interval": 10,
-        "entity_types": [
-          { "filters": { "test": "is_family", "subject": "other", "value": "player" }, "max_dist": 16 }
+      "minecraft:type_family": {
+        "family": [
+          "twilightforest",
+          "carminite_ghastling",
+          "ghast",
+          "monster",
+          "mob"
         ]
+      },
+      "minecraft:collision_box": {
+        "width": 1.1,
+        "height": 1.5
+      },
+      "minecraft:health": {
+        "value": 10,
+        "max": 10
+      },
+      "minecraft:follow_range": {
+        "value": 16,
+        "max": 16
+      },
+      "minecraft:movement": {
+        "value": 0.7
+      },
+      "minecraft:can_fly": {},
+      "minecraft:physics": {
+        "has_gravity": false
+      },
+      "minecraft:pushable": {
+        "is_pushable": true,
+        "is_pushable_by_piston": true
+      },
+      "minecraft:fire_immune": true,
+      "minecraft:breathable": {
+        "total_supply": 15,
+        "suffocate_time": 0,
+        "breathes_water": true
+      },
+      "minecraft:damage_sensor": {
+        "triggers": [
+          {
+            "cause": "fall",
+            "deals_damage": "no"
+          }
+        ]
+      },
+      "minecraft:experience_reward": {
+        "on_death": "query.last_hit_by_player ? 5 : 0"
+      },
+      "minecraft:nameable": {},
+      "minecraft:despawn": {
+        "despawn_from_distance": {}
       },
       "minecraft:conditional_bandwidth_optimization": {}
     }

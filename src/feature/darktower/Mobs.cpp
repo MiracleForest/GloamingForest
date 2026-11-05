@@ -38,14 +38,6 @@ namespace ge = gf::entity;
 
 namespace {
 
-bool mobGriefing() {
-    auto* l = level();
-    if (!l) return true;
-    GameRuleId griefing;
-    griefing.mValue = static_cast<int>(GameRules::GameRulesIndex::MobGriefing);
-    return l->getGameRules().getBool(griefing, true);
-}
-
 // ---- carminite golem ---------------------------------------------------------------------------
 
 std::unordered_map<std::int64_t, int>& golemTimers() {

@@ -24,6 +24,8 @@
 #include "mc/world/level/Level.h"
 #include "mc/world/level/Spawner.h"
 #include "mc/world/level/Tick.h"
+#include "mc/world/level/storage/GameRuleId.h"
+#include "mc/world/level/storage/GameRules.h"
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/BlockChangeContext.h"
 #include "mc/world/level/block/BlockType.h"
@@ -120,6 +122,19 @@ bool unbreakable(Block const& block) { return block.getBlockType().getDestroySpe
 bool loaded(BlockSource& region, BlockPos const& pos, int radius) { return region.hasChunksAt(pos, radius, false); }
 
 bool powered(BlockSource& region, BlockPos const& pos) { return redstone::powered(region, pos); }
+
+namespace {
+bool gameRule(GameRules::GameRulesIndex index) {
+    auto* l = level();
+    if (!l) return true;
+    GameRuleId rule;
+    rule.mValue = static_cast<int>(index);
+    return l->getGameRules().getBool(rule, true);
+}
+} // namespace
+
+bool mobGriefing() { return gameRule(GameRules::GameRulesIndex::MobGriefing); }
+bool doTileDrops() { return gameRule(GameRules::GameRulesIndex::DoTileDrops); }
 
 BlockPos offset(BlockPos const& p, dt::Facing f) {
     auto o = dt::offsetOf(f);

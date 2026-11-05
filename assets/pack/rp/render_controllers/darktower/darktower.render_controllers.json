@@ -55,7 +55,7 @@
         }
       ],
       "textures": [
-        "Array.skins[q.is_charged ? 2 : (q.has_target ? 1 : 0)]"
+        "Array.skins[q.property('twilightforest:charging') ? 2 : (q.has_target ? 1 : 0)]"
       ]
     }
   }
