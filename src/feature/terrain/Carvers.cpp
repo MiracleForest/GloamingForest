@@ -24,6 +24,7 @@
 #include "core/jrand/Mth.h"
 #include "core/landmark/Landmark.h"
 #include "core/noise/Noise.h"
+#include "feature/ext/terrain/Pipeline.h"
 #include "feature/ext/worldgen/Carving.h"
 #include "feature/ext/worldgen/FeatureKit.h"
 #include "feature/terrain/Terrain.h"
@@ -64,9 +65,8 @@ std::uint16_t flagsOf(State const& s, Block const& b) {
     if (kit::isAir(b)) f |= kAir;
     // BlockState#getFluidState: water and lava (still and flowing), and the blocks whose fluid state
     // is always water (bubble columns and the underwater plants Java builds waterlogged). A
-    // waterlogged block keeps its water in Bedrock's liquid layer, which F5's worldgen::Chunk does not
-    // expose; at the carver step TF's chunk holds only noise, surface rule and blanket blocks, none of
-    // them waterloggable, so Java's getFluidState and this test agree there
+    // waterlogged block keeps its water in Bedrock's liquid layer: Carver::flags adds that layer's
+    // fluid (ext::liquidLayerBlock) for the game's chunks
     if (kit::isWater(b) || id == "minecraft:bubble_column" || id == "minecraft:kelp" || id == "minecraft:kelp_plant" || id == "minecraft:seagrass" ||
         id == "minecraft:tall_seagrass")
         f |= kWater | kFluid;
@@ -116,7 +116,7 @@ struct Carver {
     int                          minY, maxY;      ///< the chunk's build range
     int                          genMinY, genDepth; ///< WorldGenerationContext
     Block const*                 caveAir;
-
+    bool                         liquidLayer; ///< a game chunk: waterlogged blocks hold their water in Bedrock's liquid layer
 
     Block const& get(int x, int y, int z) const {
         int lx = x - chunk.chunkX() * 16, lz = z - chunk.chunkZ() * 16;
@@ -127,8 +127,18 @@ struct Carver {
         int lx = x - chunk.chunkX() * 16, lz = z - chunk.chunkZ() * 16;
         if (y < minY || y >= maxY || lx < 0 || lz < 0 || lx > 15 || lz > 15) return;
         chunk.setBlock(lx, y, lz, b);
+        // Java's setBlockState replaces the whole state, the fluid of a waterlogged one included
+        if (liquidLayer) gf::terrain::ext::clearLiquidLayer(chunk, lx, y, lz, *s.block(code::Air));
     }
-    std::uint16_t flags(int x, int y, int z) const { return flagsOf(s, get(x, y, z)); }
+    std::uint16_t flags(int x, int y, int z) const {
+        std::uint16_t f = flagsOf(s, get(x, y, z));
+        if (liquidLayer && !(f & kFluid)) {
+            // a waterlogged block: BlockState#getFluidState is its water
+            int lx = x - chunk.chunkX() * 16, lz = z - chunk.chunkZ() * 16;
+            if (auto const* l = gf::terrain::ext::liquidLayerBlock(chunk, lx, y, lz)) f |= flagsOf(s, *l) & (kWater | kFluid);
+        }
+        return f;
+    }
 
     bool canReplaceBlock(std::uint16_t f) const { return !(f & kIce) && !(f & kWater) && (f & kReplace); }
     bool insideChunk(int x, int z) const {
@@ -376,7 +386,8 @@ void carveWith(State const& st, bool highlands, worldgen::Chunk& chunk, worldgen
     if (!highlands && !(random.nextFloat() <= probability)) return;
     auto start = std::chrono::steady_clock::now();
     auto shape = s->gen->shape();
-    Carver c{highlands, *s, chunk, *ctx, {}, cfg, chunk.minY(), chunk.maxY(), std::max(chunk.minY(), shape.minY), std::min(chunk.maxY() - chunk.minY(), shape.height), s->caveAir};
+    Carver c{highlands, *s, chunk, *ctx, {}, cfg, chunk.minY(), chunk.maxY(), std::max(chunk.minY(), shape.minY), std::min(chunk.maxY() - chunk.minY(), shape.height), s->caveAir,
+             gf::terrain::ext::hasLiquidLayer(chunk)};
     c.carve(random);
     addChunkMs(std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count());
 }

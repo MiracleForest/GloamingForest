@@ -3,6 +3,8 @@
 // memory (MemWorld below), so they do not depend on the e2e world's biomes; terrain.golden_* run the
 // generator on the F13 goldens' biomes and compare with their heights / surface (fingerprint below).
 #include <algorithm>
+#include <array>
+#include <optional>
 #include <chrono>
 #include <map>
 #include <memory>
@@ -742,21 +744,38 @@ Player* taggedPlayer(char const* tag) {
     return found;
 }
 
-/// Where terrain.live_view took the tagged player from.
-struct LiveView {
-    bool active = false;
-    int  dim    = 0;
-    Vec3 back{};
-};
-LiveView& liveView() {
-    static LiveView v;
-    return v;
+/// Where terrain.live_view took the tagged player from: kept in the world's DB, so it never sends
+/// the player of another world (the client loads several in one process) anywhere.
+constexpr char kLiveViewKey[] = "gf:terrain:liveview";
+
+/// The landscapes the client e2e looks at, in order (TF 4.8's Twilight Forest biomes with a terrain
+/// or a blanket of their own first).
+constexpr std::array<char const*, 9> kLiveBiomes{"twilightforest:dark_forest", "twilightforest:highlands",       "twilightforest:glacier",
+                                                 "twilightforest:snowy_forest", "twilightforest:enchanted_forest", "twilightforest:swamp",
+                                                 "twilightforest:fire_swamp",   "twilightforest:thornlands",       "twilightforest:forest"};
+
+/// A spot well inside `biome` (its main biome on a 48-block square around it), searched on a
+/// 32-block grid around (x0, z0).
+std::optional<std::pair<int, int>> findBiome(std::string const& biome, int x0, int z0, int radius) {
+    for (int r = 0; r <= radius; r += 32)
+        for (int dx = -r; dx <= r; dx += 32)
+            for (int dz = -r; dz <= r; dz += 32) {
+                if (std::max(std::abs(dx), std::abs(dz)) != r) continue;
+                int x = x0 + dx, z = z0 + dz;
+                if (worldgen::mainBiomeAt(x, z) != biome) continue;
+                bool inside = true;
+                for (int k = 0; k < 4 && inside; ++k)
+                    inside = worldgen::mainBiomeAt(x + ((k & 1) ? 24 : -24), z + ((k & 2) ? 24 : -24)) == biome;
+                if (inside) return std::pair{x, z};
+            }
+    return std::nullopt;
 }
 
-// The client e2e's look at real Twilight Forest terrain: sends the player tagged gf_terrain_live to
-// chunks no one generated before, above the terrain height the generator gives there (the biomes
-// are U1's biome source, the forest's column until it registers). terrain.live_view_restore brings
-// the player back.
+// The client e2e's look at real Twilight Forest terrain: finds, around chunks no one generated
+// before, a spot in each landscape of kLiveBiomes the biome source (U1) gives (without one: the
+// forest column everywhere, one spot), logs each one ("terrain live view target ...") and sends the
+// player tagged gf_terrain_live high above the first; the scenario flies to the others.
+// terrain.live_view_restore brings the player back.
 GF_REGISTER_SELFTEST("terrain.live_view", [](Context& ctx) {
     auto twilight = gf::world::twilight();
     if (!twilight) {
@@ -768,36 +787,52 @@ GF_REGISTER_SELFTEST("terrain.live_view", [](Context& ctx) {
         ctx.info("no player tagged gf_terrain_live");
         return;
     }
-    auto& v = liveView();
-    if (!v.active) {
-        v.back   = shown->getFeetPos();
-        v.dim    = static_cast<int>(shown->getDimensionId());
-        v.active = true;
+    if (!game::db::get(kLiveViewKey)) {
+        auto back = shown->getFeetPos();
+        game::db::put(kLiveViewKey, Json{{"dim", static_cast<int>(shown->getDimensionId())}, {"x", back.x}, {"y", back.y}, {"z", back.z}});
     }
     auto stamp = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    int  x     = 60000 + static_cast<int>(stamp % 20000) * 64 + 8;
-    int  z     = 60000 + 8;
+    int  x0    = 60000 + static_cast<int>(stamp % 400) * 4096 + 8;
+    int  z0    = 60000 + 8;
     int  dim   = static_cast<int>(*twilight);
-    auto h     = gf::landmark::ext::firstOccupiedHeight(dim, x, z, worldgen::Heightmap::WorldSurfaceWg);
-    int  y     = (h ? *h : 32) + 24;
-    ctx.check(gf::world::teleport(*shown, *twilight, Vec3{static_cast<float>(x) + 0.5F, static_cast<float>(y), static_cast<float>(z) + 0.5F}, 0.0F),
+    struct Target {
+        std::string biome;
+        int         x, z, h;
+    };
+    std::vector<Target> targets;
+    for (char const* b : kLiveBiomes)
+        if (auto at = findBiome(b, x0, z0, 1536)) {
+            auto h = gf::landmark::ext::firstOccupiedHeight(dim, at->first, at->second, worldgen::Heightmap::WorldSurfaceWg);
+            targets.push_back({b, at->first, at->second, h ? *h : 32});
+        }
+    if (targets.empty()) {
+        // no biome source: every column is the forest's (main biome '')
+        auto h = gf::landmark::ext::firstOccupiedHeight(dim, x0, z0, worldgen::Heightmap::WorldSurfaceWg);
+        targets.push_back({worldgen::mainBiomeAt(x0, z0), x0, z0, h ? *h : 32});
+    }
+    for (auto const& t : targets) {
+        gf::log().info("terrain live view target {} at {} {} {} (terrain height {})", t.biome.empty() ? std::string("none") : t.biome, t.x, t.h + 40, t.z, t.h);
+    }
+    ctx.info(std::to_string(targets.size()) + " landscape(s) found around " + std::to_string(x0) + ", " + std::to_string(z0));
+    auto const& first = targets.front();
+    ctx.check(gf::world::teleport(*shown, *twilight, Vec3{static_cast<float>(first.x) + 0.5F, static_cast<float>(first.h + 40), static_cast<float>(first.z) + 0.5F}, 0.0F),
               "the player is sent into new Twilight Forest chunks");
-    gf::log().info("terrain live view at {} {} {} (terrain height {}, biome {})", x, y, z, h ? *h : -999, worldgen::mainBiomeAt(x, z));
+    gf::log().info("terrain live view at {} {} {} (terrain height {}, biome {})", first.x, first.h + 40, first.z, first.h, first.biome);
 });
 
 GF_REGISTER_SELFTEST("terrain.live_view_restore", [](Context& ctx) {
-    auto& v = liveView();
-    if (!v.active) {
+    auto v = game::db::get(kLiveViewKey);
+    if (!v || !v->is_object()) {
         ctx.info("nothing to restore");
         return;
     }
-    v.active = false;
+    game::db::erase(kLiveViewKey);
     if (Player* shown = taggedPlayer("gf_terrain_live")) {
         shown->removeTag("gf_terrain_live");
-        (void)gf::world::teleport(*shown, DimensionType(v.dim), v.back, 0.0F);
+        Vec3 back{v->value("x", 0.0F), v->value("y", 64.0F), v->value("z", 0.0F)};
+        (void)gf::world::teleport(*shown, DimensionType(v->value("dim", 0)), back, 0.0F);
     }
     gf::log().info("terrain live view: the player is back");
 });
-
 } // namespace
 } // namespace gf::feature::terrain

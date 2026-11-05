@@ -80,13 +80,19 @@ TEST(TerrainDensityTypes, TerrainColumnPicksNearestLayer) {
 
 // ---- density goldens ------------------------------------------------------------------------------------
 
-TEST(TerrainGolden, DensityFinalAtPoints) {
+/// The Skylight goldens: F13's oracle and dumper run on a world whose Twilight Forest uses
+/// skylight_noise_gen (tests/terrain/oracle/skylight.ps1).
+fs::path skylightGoldenDir() { return repo() / "tests/terrain/golden/skylight"; }
+
+/// initial_density_without_jaggedness and final_density of `settingsName` against the density
+/// goldens in `dir` (the router's values at the oracle's points, bit for bit).
+void checkDensityGolden(std::string const& settingsName, fs::path const& dir) {
     ASSERT_FALSE(golden::goldenDir().empty());
-    json settings = golden::readJson(imported("terrain") / "worldgen/noise_settings/twilight_noise_gen.json");
+    json settings = golden::readJson(imported("terrain") / "worldgen/noise_settings" / (settingsName + ".json"));
     ASSERT_FALSE(settings.is_discarded());
     int files = 0;
     for (auto seed : seeds()) {
-        json g = golden::readJson(golden::goldenDir() / "density" / seedFile(seed));
+        json g = golden::readJson(dir / "density" / seedFile(seed));
         ASSERT_FALSE(g.is_discarded()) << seedFile(seed);
         ++files;
         auto const& pts   = g.at("points");
@@ -124,6 +130,9 @@ TEST(TerrainGolden, DensityFinalAtPoints) {
     EXPECT_EQ(files, 3);
 }
 
+TEST(TerrainGolden, DensityFinalAtPoints) { checkDensityGolden("twilight_noise_gen", golden::goldenDir()); }
+TEST(TerrainSkylight, DensityFinalAtPointsMatchesOracle) { checkDensityGolden("skylight_noise_gen", skylightGoldenDir()); }
+
 /// The F13 heights grid ([i][j] or [j][i]) at column (x0 + i * step, z0 + j * step).
 int gridAt(json const& rows, int i, int j, bool zMajor) { return zMajor ? rows[static_cast<std::size_t>(j)][static_cast<std::size_t>(i)].get<int>() : rows[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)].get<int>(); }
 
@@ -147,16 +156,18 @@ TEST(TerrainGolden, SampleTerrainMatchesDensityGoldenWhereGridCovers) {
     }
 }
 
-TEST(TerrainGolden, BaseHeightsMatch) {
+/// NoiseBasedChunkGenerator#getBaseHeight (WORLD_SURFACE_WG and OCEAN_FLOOR_WG) of `settingsName`
+/// against the heights goldens in `dir`, over the columns the biomes golden covers.
+void checkHeightsGolden(std::string const& settingsName, fs::path const& dir) {
     for (auto seed : seeds()) {
-        json g = golden::readJson(golden::goldenDir() / "heights" / seedFile(seed));
+        json g = golden::readJson(dir / "heights" / seedFile(seed));
         ASSERT_FALSE(g.is_discarded());
         int x0 = g.at("x0"), z0 = g.at("z0"), step = g.at("step"), width = g.at("width"), height = g.at("height");
         // orientation of the biome rows and of the height arrays: the one that matches
         int best = -1, bestBad = 1 << 30, bestTested = 0;
         for (int variant = 0; variant < 4; ++variant) {
             bool transposed = (variant & 1) != 0, zMajor = (variant & 2) != 0;
-            auto w          = loadWorld(seed, "twilight_noise_gen", transposed);
+            auto w          = loadWorld(seed, settingsName, transposed);
             ASSERT_TRUE(w->gen) << w->error;
             auto sampler = w->sampler();
             int  bad = 0, tested = 0;
@@ -172,7 +183,7 @@ TEST(TerrainGolden, BaseHeightsMatch) {
         ASSERT_GE(best, 0);
         std::cout << "[ terrain  ] " << seedFile(seed) << ": biome rows transposed " << ((best & 1) != 0) << ", heights z-major " << ((best & 2) != 0) << "\n";
         bool transposed = (best & 1) != 0, zMajor = (best & 2) != 0;
-        auto w          = loadWorld(seed, "twilight_noise_gen", transposed);
+        auto w          = loadWorld(seed, settingsName, transposed);
         auto sampler    = w->sampler();
         int  bad = 0, tested = 0;
         for (int i = 0; i < width; ++i)
@@ -191,6 +202,9 @@ TEST(TerrainGolden, BaseHeightsMatch) {
         EXPECT_GT(tested, 120 * 120);
     }
 }
+
+TEST(TerrainGolden, BaseHeightsMatch) { checkHeightsGolden("twilight_noise_gen", golden::goldenDir()); }
+TEST(TerrainSkylight, BaseHeightsMatchOracle) { checkHeightsGolden("skylight_noise_gen", skylightGoldenDir()); }
 
 
 constexpr int kLandmarkRadius = 48;

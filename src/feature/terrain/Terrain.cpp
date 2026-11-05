@@ -30,10 +30,12 @@
 #include <deque>
 #include <filesystem>
 #include <fstream>
+#include <list>
 #include <mutex>
 #include <sstream>
 #include <thread>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/block/Block.h"
@@ -45,6 +47,7 @@
 #include "feature/dimension/World.h"
 #include "feature/ext/landmark/LandmarkExt.h"
 #include "feature/ext/terrain/PieceBeard.h"
+#include "feature/ext/terrain/Pipeline.h"
 #include "feature/ext/worldgen/FeatureKit.h"
 #include "feature/ext/worldgen/Generation.h"
 #include "feature/features/Features.h"
@@ -67,6 +70,9 @@ namespace kit = gf::features::kit;
 namespace {
 
 constexpr char kSkylightKey[] = "gf:terrain:skylight";
+/// Set once the Twilight Forest of the world generated chunks with this unit's providers.
+constexpr char kGeneratedKeyPrefix[] = "gf:terrain:generated:";
+constexpr char kBlanketId[]   = "twilightforest:chunk_blanketing";
 
 Json readJson(fs::path const& p) {
     std::ifstream in(p, std::ios::binary);
@@ -415,9 +421,42 @@ int twilightDim() {
 
 namespace {
 
+/// The rigids of the starts recently generated near, least recently used evicted first (a start
+/// stays while chunks near it generate, however many other starts come and go).
 struct BeardCache {
-    std::mutex                                                              mutex;
-    std::unordered_map<std::string, std::shared_ptr<std::vector<PieceRigid> const>> starts;
+    static constexpr std::size_t kCapacity = 1024;
+    using Rigids                           = std::shared_ptr<std::vector<PieceRigid> const>;
+    struct Entry {
+        Rigids                           rigids;
+        std::list<std::string>::iterator use;
+    };
+    std::mutex                             mutex;
+    std::list<std::string>                 uses; ///< most recent first
+    std::unordered_map<std::string, Entry> starts;
+
+    Rigids find(std::string const& key) {
+        auto it = starts.find(key);
+        if (it == starts.end()) return nullptr;
+        uses.splice(uses.begin(), uses, it->second.use);
+        return it->second.rigids;
+    }
+    void put(std::string const& key, Rigids rigids) {
+        if (auto it = starts.find(key); it != starts.end()) {
+            it->second.rigids = std::move(rigids);
+            uses.splice(uses.begin(), uses, it->second.use);
+            return;
+        }
+        uses.push_front(key);
+        starts.emplace(key, Entry{std::move(rigids), uses.begin()});
+        while (starts.size() > kCapacity) {
+            starts.erase(uses.back());
+            uses.pop_back();
+        }
+    }
+    void clear() {
+        starts.clear();
+        uses.clear();
+    }
 };
 BeardCache& beardCache() {
     static BeardCache c;
@@ -473,14 +512,13 @@ std::vector<beard::Rigid> beardRigids(int dim, int chunkX, int chunkZ) {
         {
             auto&           c = beardCache();
             std::lock_guard lock(c.mutex);
-            if (auto it = c.starts.find(key); it != c.starts.end()) rigids = it->second;
+            rigids = c.find(key);
         }
         if (!rigids) {
             rigids = std::make_shared<std::vector<PieceRigid> const>(rigidsOfPieces(landmark::ext::startPieces(st), adaptation));
             auto&           c = beardCache();
             std::lock_guard lock(c.mutex);
-            if (c.starts.size() > 1024) c.starts.clear();
-            c.starts[key] = rigids;
+            c.put(key, rigids);
         }
         for (auto const& pr : *rigids)
             if (beard::isCloseToChunk(pr.pieceBox, chunkX, chunkZ, 12)) out.push_back(pr.rigid);
@@ -491,7 +529,7 @@ std::vector<beard::Rigid> beardRigids(int dim, int chunkX, int chunkZ) {
 void clearBeardCache() {
     auto&           c = beardCache();
     std::lock_guard lock(c.mutex);
-    c.starts.clear();
+    c.clear();
 }
 
 // ---- the grids the stages hand on ---------------------------------------------------------------------------
@@ -523,6 +561,20 @@ std::uint16_t classOf(std::uint16_t c, State const& s) {
     return b ? classify(s, *b) : code::Air;
 }
 
+/// Whether anything else can write the chunk between the provider that hands a grid on (stage 0:
+/// the terrain provider, 1: the surface provider) and the one that takes it (the surface provider,
+/// the chunk_blanketing blanket): F5's Stage::Noise steps run between the first two, its
+/// Stage::Surface steps and the blankets whose id sorts before ours between the last two.
+bool foreignWritersBetween(int stage) {
+    if (stage == 0) return !gf::terrain::ext::stageStepIds(worldgen::Stage::Noise).empty();
+    if (!gf::terrain::ext::stageStepIds(worldgen::Stage::Surface).empty()) return true;
+    for (auto const& id : gf::terrain::ext::blanketIds()) {
+        if (id == kBlanketId) break;
+        return true;
+    }
+    return false;
+}
+
 } // namespace
 
 bool takeHandedGrid(State const& s, worldgen::Chunk& chunk, int stage, Grid& out) {
@@ -531,9 +583,14 @@ bool takeHandedGrid(State const& s, worldgen::Chunk& chunk, int stage, Grid& out
     tHanded.stage = -1;
     Grid& g       = *tHanded.grid;
     if (g.minY != out.minY || g.height != out.height) return false;
-    // a cheap check that no step in between (F5's Noise / Surface stage steps of other units)
-    // changed the chunk where the next stage looks: the top block of every column and the air
-    // above it hold what the grid says
+    // another unit's step may have changed any block of the chunk (a pit, a lake, an underground
+    // placement): then the next stage reads the chunk itself
+    if (foreignWritersBetween(stage)) {
+        tHanded.grid.reset();
+        return false;
+    }
+    // and a cheap check that the chunk still is what the grid says where the next stage looks
+    // first (the top block of every column and the air above it)
     for (int z = 0; z < 16; ++z)
         for (int x = 0; x < 16; ++x) {
             int top = g.worldSurfaceWg(x, z);
@@ -694,8 +751,9 @@ void registerDensityTypes() {
 // ---- landmark heights ----------------------------------------------------------------------------------
 
 std::optional<int> heightProvider(int dimension, int x, int z, worldgen::Heightmap type) {
+    // TF's heights only for the Twilight Forest (no dimension registered: no Twilight Forest)
     int tf = twilightDim();
-    if (tf >= 0 && dimension != tf) return std::nullopt;
+    if (tf < 0 || dimension != tf) return std::nullopt;
     auto s = state();
     if (!s) return std::nullopt;
     // OCEAN_FLOOR(_WG): blocks motion; WORLD_SURFACE(_WG) and MOTION_BLOCKING(_NO_LEAVES) also
@@ -720,10 +778,31 @@ bool biomeInSet(Json const& set, std::string const& biome) {
     return test(set);
 }
 
+/// ChunkBlanketingModifier.CODEC: integrity (floatRange 0..1) and heightmap (Heightmap.Types) are
+/// required fields, biome_lock optional. Data Java's codec rejects places nothing here (one warning
+/// per placed feature, rule R17).
+bool blanketingConfigValid(features::PlacementContext const& ctx) {
+    static constexpr std::string_view kHeightmaps[] = {"WORLD_SURFACE_WG", "WORLD_SURFACE", "OCEAN_FLOOR_WG", "OCEAN_FLOOR", "MOTION_BLOCKING", "MOTION_BLOCKING_NO_LEAVES"};
+    auto const& c       = ctx.config;
+    char const* problem = nullptr;
+    if (!c.contains("integrity") || !c["integrity"].is_number()) problem = "no integrity";
+    else if (double i = c["integrity"].get<double>(); !(i >= 0.0 && i <= 1.0)) problem = "integrity outside 0..1";
+    else if (!c.contains("heightmap") || !c["heightmap"].is_string()) problem = "no heightmap";
+    else if (std::find(std::begin(kHeightmaps), std::end(kHeightmaps), c["heightmap"].get<std::string>()) == std::end(kHeightmaps)) problem = "unknown heightmap";
+    if (!problem) return true;
+    static std::mutex                      m;
+    static std::unordered_set<std::string> warned;
+    std::lock_guard                        lock(m);
+    if (warned.insert(ctx.placedFeatureId).second)
+        gf::log().warn("terrain: {} has an invalid twilightforest:chunk_blanketing modifier ({}): it places nothing", ctx.placedFeatureId.empty() ? std::string("a placed feature") : ctx.placedFeatureId, problem);
+    return false;
+}
+
 std::vector<BlockPos> chunkBlanketing(features::PlacementContext const& ctx, BlockPos const& pos) {
     std::vector<BlockPos> out;
-    float                 integrity = ctx.config.value("integrity", 1.0F);
-    auto                  heightmap = kit::heightmapOf(ctx.config.value("heightmap", std::string("WORLD_SURFACE_WG")));
+    if (!blanketingConfigValid(ctx)) return out;
+    float                 integrity = ctx.config["integrity"].get<float>();
+    auto                  heightmap = kit::heightmapOf(ctx.config["heightmap"].get<std::string>());
     bool                  locked    = ctx.config.contains("biome_lock");
     int                   ox = (pos.x >> 4) << 4, oz = (pos.z >> 4) << 4;
     for (int zIn = 0; zIn < 16; ++zIn)
@@ -735,40 +814,57 @@ std::vector<BlockPos> chunkBlanketing(features::PlacementContext const& ctx, Blo
         }
     return out;
 }
-
 // ---- world lifecycle ------------------------------------------------------------------------------------
 
-/// Whether the Twilight Forest of the loaded world already has generated chunks: F6 stores the
-/// structure starts of every chunk area the dimension generates (gf:landmark:start:<dim>:...; with
-/// TF's landmark grid every generated area holds some), so a world without them never generated
-/// the dimension.
-bool twilightGenerated() {
-    int dim = twilightDim();
-    if (dim < 0) return false;
-    bool any = false;
-    game::db::forEachKey("gf:landmark:start:" + std::to_string(dim) + ":", [&](std::string_view) { any = true; });
-    return any;
+/// This session generated Twilight Forest chunks of the world with the terrain providers (set on a
+/// generation thread, written to the world DB on the server thread).
+std::atomic<bool>& generatedThisWorld() {
+    static std::atomic<bool> v{false};
+    return v;
+}
+std::atomic<bool>& generatedMarkerWritten() {
+    static std::atomic<bool> v{false};
+    return v;
 }
 
+std::string generatedKey(int dim) { return kGeneratedKeyPrefix + std::to_string(dim); }
+
+/// Whether the loaded world's Twilight Forest already has chunks this unit generated (the marker
+/// gf:terrain:generated:<dim>, written once the first of them generates).
+bool twilightGenerated() {
+    int dim = twilightDim();
+    return dim >= 0 && game::db::get(generatedKey(dim)).has_value();
+}
+
+void writeGeneratedMarker() {
+    int dim = twilightDim();
+    if (dim < 0 || !generatedThisWorld() || generatedMarkerWritten()) return;
+    if (!game::db::available()) return;
+    game::db::put(generatedKey(dim), true);
+    generatedMarkerWritten() = true;
+}
 void onWorldReady() {
     noteLifecycleThread();
     // TF's preset is chosen when the world is created (the dimension's chunk generator) and kept
-    // with it: a stored choice wins; a new world takes the config's (or the one chunks already
-    // generated with); a world whose Twilight Forest was generated before U2 kept a preset stays
-    // twilight_noise_gen
-    bool sky        = false;
+    // with it: a stored choice wins; a world whose Twilight Forest already holds chunks generated
+    // without a kept preset stays twilight_noise_gen; a new world takes the one chunks already
+    // generated with this session (before the world was ready), else the config's
+    bool sky         = false;
     int  provisional = provisionalFlag().load();
+    auto name        = [](bool s) { return s ? "skylight" : "twilight"; };
     if (auto v = game::db::get(kSkylightKey); v && v->is_boolean()) {
         sky = v->get<bool>();
         if (provisional >= 0 && (provisional == 1) != sky)
-            gf::log().warn("terrain: chunks generated before the world was ready used {} but the world is {}", provisional == 1 ? "skylight" : "twilight",
-                           sky ? "skylight" : "twilight");
+            gf::log().warn("terrain: chunks generated before the world was ready used {} but the world is {}", name(provisional == 1), name(sky));
     } else {
         bool configured = config::get<TerrainConfig>().skylight;
-        if (provisional >= 0) sky = provisional == 1;
-        else if (twilightGenerated()) {
+        if (twilightGenerated()) {
             sky = false;
             if (configured) gf::log().warn("terrain: this world's Twilight Forest was generated before a preset was kept: it stays twilight (config skylight ignored)");
+            if (provisional == 1) gf::log().warn("terrain: chunks generated before the world was ready used skylight, but the world stays twilight");
+        } else if (provisional >= 0) {
+            sky = provisional == 1;
+            if (sky != configured) gf::log().warn("terrain: chunks generated before the world was ready used {}: the new world keeps it (config {})", name(sky), name(configured));
         } else sky = configured;
         game::db::put(kSkylightKey, sky);
     }
@@ -777,9 +873,10 @@ void onWorldReady() {
         skylightFlag() = sky ? 1 : 0;
     }
     flagKnown().notify_all();
+    generatedMarkerWritten() = twilightGenerated();
+    writeGeneratedMarker();
     gf::log().info("terrain: world preset {}", sky ? "skylight" : "twilight");
 }
-
 struct TerrainModule {
     void install() {
         noteLifecycleThread();
@@ -787,7 +884,7 @@ struct TerrainModule {
         registerDensityTypes();
         worldgen::setTerrain(terrainProvider);
         worldgen::setSurface(surfaceProvider);
-        worldgen::registerBlanket("twilightforest:chunk_blanketing", blanketProvider);
+        worldgen::registerBlanket(kBlanketId, blanketProvider);
         worldgen::registerCarver("twilightforest:tf_caves", [](worldgen::Chunk& c, worldgen::Region& r, core::jrand::RandomSource& rnd) {
             carve(false, c, r, rnd);
         });
@@ -795,17 +892,22 @@ struct TerrainModule {
             carve(true, c, r, rnd);
         });
         // the chunk's total (noise .. carvers) once its Carvers stage ends
-        worldgen::addStage(worldgen::Stage::Carvers, "terrain.timing", 1000000, [](worldgen::Chunk&, worldgen::Region&) {
+        worldgen::addStage(worldgen::Stage::Carvers, "terrain.timing", 1000000, [](worldgen::Chunk&, worldgen::Region& region) {
             recordChunkMs(tChunkMs);
             tChunkMs = 0;
+            // a chunk of the world's Twilight Forest (in-memory runs have no dimension)
+            if (int dim = twilightDim(); dim >= 0 && region.dimension() == dim) generatedThisWorld() = true;
         });
         features::registerPlacement("twilightforest:chunk_blanketing", chunkBlanketing);
         landmark::ext::setHeightProvider(heightProvider);
         game::db::onWorldReady(onWorldReady);
         if (game::db::available()) onWorldReady(); // BDS: the world was ready before the mods were enabled
+        game::db::onWorldSave(writeGeneratedMarker);
         game::db::onWorldClosed([] {
             skylightFlag()    = -1;
             provisionalFlag() = -1;
+            generatedThisWorld()     = false;
+            generatedMarkerWritten() = false;
             clearBeardCache();
             std::lock_guard lock(stateMutex());
             cachedState().reset();

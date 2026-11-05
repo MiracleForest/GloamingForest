@@ -8,7 +8,7 @@
 # 2. terrain.live_view sends the player into Twilight Forest chunks the game generates there and
 #    then (F5's pipeline with the terrain, surface, blanket and carver providers, F6's starts); the
 #    biomes are U1's biome source (the forest column until U1 registers one).
-# Screenshots: out/terrain/{start,highlands,dark_forest,glacier,twilight_live,twilight_live_down}.png
+# Screenshots: out/terrain/{start,highlands,dark_forest,glacier}.png and twilight_live_<landscape>[_down].png
 # The unit has no vanilla fallback of its own (terrain is server-side blocks): run -Mode local.
 Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
 Save-Screenshot 'start' | Out-Null
@@ -32,23 +32,37 @@ $d = [regex]::Match($done, 'pass=(\d+) fail=(\d+)')
 if ([int]$d.Groups[2].Value -gt 0 -or [int]$d.Groups[1].Value -lt 1) { throw "terrain.showcase failed: $done" }
 Write-Step 'terrain.showcase passed'
 
-# real Twilight Forest chunks
+# real Twilight Forest chunks: terrain.live_view finds a spot in each landscape the biome source
+# gives (U1; without it, the forest column everywhere: one spot) and the player looks at each one
+# from 40 blocks above the terrain, pitched down 35 degrees
 Invoke-Chat '/tag @s add gf_terrain_live'
 Start-Sleep -Milliseconds 800
 $liveMark = Get-LogMark
 $v = Invoke-SelfTest 'terrain.live_view'
 if ($v.Fail -gt 0) { throw 'terrain.live_view failed' }
-$live = Get-LeviLog -Since $liveMark | Select-String -Pattern 'terrain live view at (-?\d+) (-?\d+) (-?\d+) \(terrain height (-?\d+), biome (\S*)\)' | Select-Object -Last 1
+$liveLog = @(Get-LeviLog -Since $liveMark)
+$live = $liveLog | Select-String -Pattern 'terrain live view at (-?\d+) (-?\d+) (-?\d+) \(terrain height (-?\d+), biome (\S*)\)' | Select-Object -Last 1
 if (-not $live) { throw 'terrain.live_view did not send the player into the Twilight Forest' }
-$lx = [int]$live.Matches[0].Groups[1].Value; $ly = [int]$live.Matches[0].Groups[2].Value; $lz = [int]$live.Matches[0].Groups[3].Value
-Write-Step "live Twilight Forest terrain at $lx $ly $lz (terrain height $($live.Matches[0].Groups[4].Value), main biome '$($live.Matches[0].Groups[5].Value)')"
+$targets = @($liveLog | Select-String -Pattern 'terrain live view target (\S+) at (-?\d+) (-?\d+) (-?\d+) \(terrain height (-?\d+)\)')
+if (-not $targets.Count) { throw 'terrain.live_view logged no target' }
+Write-Step "live Twilight Forest landscapes: $(($targets | ForEach-Object { $_.Matches[0].Groups[1].Value }) -join ', ')"
 Start-Sleep -Seconds 15
-Invoke-Teleport "/tp @s $lx $ly $lz 0 25"
-Start-Sleep -Seconds 5
-Save-Screenshot 'twilight_live' | Out-Null
-Invoke-Teleport "/tp @s $lx $ly $lz 0 70"
-Start-Sleep -Seconds 3
-Save-Screenshot 'twilight_live_down' | Out-Null
+$first = $true
+foreach ($tg in $targets) {
+    $g = $tg.Matches[0].Groups
+    $biome = $g[1].Value; $lx = [int]$g[2].Value; $ly = [int]$g[3].Value; $lz = [int]$g[4].Value
+    $short = if ($biome -eq 'none') { 'forest_column' } else { ($biome -split ':')[-1] }
+    Write-Step "$biome at $lx $ly $lz (terrain height $($g[5].Value))"
+    Invoke-Teleport "/tp @s $lx $ly $lz 0 35"
+    Start-Sleep -Seconds $(if ($first) { 6 } else { 14 })
+    Save-Screenshot "twilight_live_$short" | Out-Null
+    if ($first) {
+        Invoke-Teleport "/tp @s $lx $ly $lz 0 80"
+        Start-Sleep -Seconds 3
+        Save-Screenshot "twilight_live_${short}_down" | Out-Null
+        $first = $false
+    }
+}
 $back = Invoke-SelfTest 'terrain.live_view_restore'
 if ($back.Fail -gt 0) { throw 'terrain.live_view_restore failed' }
 Start-Sleep -Seconds 5
