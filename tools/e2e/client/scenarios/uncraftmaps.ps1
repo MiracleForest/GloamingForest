@@ -103,22 +103,13 @@ Invoke-Build "clear $who"
 foreach ($i in 'magic_map', 'maze_map', 'ore_map', 'magic_map_focus', 'maze_map_focus') { Invoke-Build "give $who twilightforest:$i" }
 Start-Sleep -Seconds 1
 Save-Screenshot 'uncraftmaps-6-items' | Out-Null
+# a magic map in hand (uncraftmaps.fixture_map: the test world's Twilight Forest has no ground), held
+# for a while so the holder's area is painted, then looked at
 $mark = Get-LogMark
-if ($script:Mode -eq 'local') { Invoke-Chat '/twilightforest tp' } else { Send-HostConsole "execute as @a at @s run twilightforest tp" }
-Start-Sleep -Seconds 2
-# the test world's Twilight Forest has no ground here: a platform high up, before the fall reaches the void
-Invoke-Teleport "/tp $who 40.5 100 72.5"
-if ($script:Mode -eq 'local') { Invoke-Chat '/fill 38 98 70 43 98 75 stone' } else { Send-HostConsole 'execute as @a at @s run fill 38 98 70 43 98 75 stone' }
-Invoke-Teleport "/tp $who 40.5 99 72.5 0 30"
-Start-Sleep -Seconds 4
-Invoke-Build "replaceitem entity $who slot.hotbar 0 twilightforest:magic_map"
-Press-Key '1'
-# look up into the air and use the empty map (EmptyMagicMapItem#use)
-Invoke-Teleport "/tp $who ~ ~ ~ 0 -45"
-Start-Sleep -Seconds 1
-Click 0.5 0.5 -Relative -Right
+$r = Invoke-SelfTest 'uncraftmaps.fixture_map'
+if ($r.Fail -gt 0) { throw 'uncraftmaps.fixture_map failed' }
 Wait-LogLine 'uncraftmaps: magic map -?\d+ for' 30 -Since $mark | Out-Null
 Start-Sleep -Seconds 6
 Invoke-Teleport "/tp $who ~ ~ ~ 0 60"
-Start-Sleep -Seconds 2
+Start-Sleep -Seconds 3
 Save-Screenshot 'uncraftmaps-5-magic-map' | Out-Null

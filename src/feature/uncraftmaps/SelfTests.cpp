@@ -532,4 +532,23 @@ GF_REGISTER_SELFTEST("uncraftmaps.commands", [](Context& ctx) -> ll::coro::CoroT
 #endif
 });
 
+// The client scenario's map: a magic map in the hand of every real player (the test world's
+// Twilight Forest has no ground to stand on; the map is painted from the Twilight Forest's biome
+// source wherever it is held). Real players only: nothing happens on a server without one.
+GF_REGISTER_SELFTEST("uncraftmaps.fixture_map", [](Context& ctx) {
+    auto level = ll::service::getLevel();
+    ctx.require(level != nullptr, "a level");
+    int given = 0;
+    level->forEachPlayer([&](Player& p) {
+        if (p.isSimulated()) return true;
+        auto map = setupMagicMap(p);
+        if (mapKindOf(map) != MapKind::Magic) return true;
+        p.getInventory().setItem(p.getSelectedItemSlot(), map);
+        p.sendInventory(false);
+        ++given;
+        return true;
+    });
+    ctx.info("magic map given to " + std::to_string(given) + " real player(s)");
+});
+
 } // namespace gf::feature::uncraftmaps
