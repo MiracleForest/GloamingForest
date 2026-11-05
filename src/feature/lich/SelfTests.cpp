@@ -589,6 +589,15 @@ GF_REGISTER_SELFTEST("lich.tower_layout", [](Context& ctx) -> ll::coro::CoroTask
     tower::placeForTest([source](BlockPos const& c) -> std::unique_ptr<gf::worldgen::Region> { return std::make_unique<gf::structure::BlockSourceRegion>(*source, c); },
                         clip, kGoldenSeed);
     tower::forgetTestPieces();
+    // the yard's dirt and its first path turn the grass of the ground layer
+    int turned = 0;
+    for (int x = clip.minX; x <= clip.maxX; ++x)
+        for (int z = clip.minZ; z <= clip.maxZ; ++z) {
+            auto id = game::blockIdAt(*source, BlockPos{x, clip.minY, z});
+            turned += id == "minecraft:coarse_dirt" || id == "minecraft:dirt_with_roots" || id == "minecraft:grass_path" || id == "minecraft:dirt_path" || id == "minecraft:dirt";
+        }
+    ctx.info("lich tower: " + std::to_string(turned) + " ground blocks turned to dirt or path by the yard");
+    ctx.check(turned > 0, "the yard turns the ground to dirt and path");
     auto volume = ctx.snapshotVolume(clip);
     ctx.info("lich tower: volume hash " + volume + " of " + std::to_string(placed.size()) + " pieces at " + std::to_string(at.x) + " " + std::to_string(at.z)
              + (u22 ? " (U22 rooms present)" : " (placeholder rooms)"));
