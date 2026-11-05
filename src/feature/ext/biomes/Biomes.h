@@ -23,6 +23,7 @@
 #include <string>
 
 class BlockPos;
+class BlockSource;
 
 namespace gf::biomes::ext {
 
@@ -49,6 +50,15 @@ namespace gf::biomes::ext {
 [[nodiscard]] unsigned grassColor(BlockPos const& pos, gf::client::tint::GameColors const& game);
 /// TF's foliage colour at `pos` (FoliageColorHandler over the game's foliage colour).
 [[nodiscard]] unsigned foliageColor(BlockPos const& pos, gf::client::tint::GameColors const& game);
+
+/// Vanilla tints (VanillaTint.cpp, an extension of client.render): F12's tint registry applied to
+/// vanilla blocks the legacy tessellator draws with the biome grass or foliage colour (grass,
+/// plants, oak-kin leaves, vines), which F12's PositionDependentTintResolver hook never sees.
+/// The block source being tessellated while a tint function runs from that hook on this thread
+/// (nullptr elsewhere, e.g. for blocks of F12's own path): read the biome at a position from it.
+[[nodiscard]] BlockSource* tintRegion();
+/// How many vanilla block tints the hook applied so far (selftests, e2e).
+[[nodiscard]] std::uint64_t vanillaTintsApplied();
 
 } // namespace gf::biomes::ext
 

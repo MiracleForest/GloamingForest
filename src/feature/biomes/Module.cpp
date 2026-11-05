@@ -25,6 +25,7 @@
 #include "feature/biomes/Biomes.h"
 #include "feature/ext/worldgen/Generation.h"
 #include "feature/worldgen/Worldgen.h"
+#include "game/WorldDb.h"
 #include "mod/Config.h"
 #include "mod/Log.h"
 #include "mod/Main.h"
@@ -109,6 +110,9 @@ std::shared_ptr<SourceData const> loadSourceData() {
     return data;
 }
 
+std::shared_ptr<SourceData const> gSourceData;   ///< guarded by dataMutex()
+bool                              gSourceFailed = false;
+
 std::atomic<std::shared_ptr<BiomeProvider const>>& current() {
     static std::atomic<std::shared_ptr<BiomeProvider const>> p;
     return p;
@@ -122,14 +126,20 @@ std::atomic<std::uint64_t>& generation() {
 } // namespace
 
 std::shared_ptr<SourceData const> sourceData() {
-    static std::shared_ptr<SourceData const> data;
-    static bool                              loaded = false;
-    std::lock_guard                          lock(dataMutex());
-    if (!loaded) {
-        data   = loadSourceData();
-        loaded = true;
+    // a failed load is retried on the next call (the client loads many worlds in one process: one
+    // early failure must not disable the biomes of every later world); the error is logged per try
+    // (generation workers ask per quart: a failure is not retried before the next world)
+    std::lock_guard lock(dataMutex());
+    if (!gSourceData && !gSourceFailed) {
+        gSourceData   = loadSourceData();
+        gSourceFailed = gSourceData == nullptr;
     }
-    return data;
+    return gSourceData;
+}
+
+void retrySourceData() {
+    std::lock_guard lock(dataMutex());
+    gSourceFailed = false;
 }
 
 std::shared_ptr<BiomeProvider const> providerFor(std::int64_t seed) {
@@ -165,10 +175,35 @@ std::shared_ptr<BiomeProvider const> provider() {
 
 struct BiomesModule {
     void install() {
+        mInstalled = true;
+        retrySourceData();
+        tryInstall();
+        // a world loaded later retries a failed load (the client loads many worlds in one process)
+        static bool hooked = false;
+        if (!hooked) {
+            hooked = true;
+            game::db::onWorldReady([this] {
+                if (!mInstalled || mSourceInstalled) return;
+                retrySourceData();
+                tryInstall();
+            });
+        }
+    }
+    void uninstall() {
+        mInstalled = mSourceInstalled = false;
+        worldgen::setBiomeSource({});
+        worldgen::setMainBiomeSource({});
+        current().store(nullptr);
+        generation().fetch_add(1, std::memory_order_acq_rel);
+    }
+
+private:
+    void tryInstall() {
         auto data = sourceData();
-        if (!data) return;
-        // FeatureSorter's order: BiomeSource#possibleBiomes (seed independent)
-        worldgen::ext::setPossibleBiomes(BiomeProvider(data->grid, data->stacks, 0).possibleBiomes());
+        if (!data || mSourceInstalled) return;
+        mSourceInstalled = true;
+        // FeatureSorter's order: BiomeSource#possibleBiomes (seed independent, from the grid alone)
+        worldgen::ext::setPossibleBiomes(core::biomes::possibleBiomesOf(data->grid));
         worldgen::setBiomeSource([](int qx, int qy, int qz) -> std::string {
             auto p = provider();
             return p ? p->noiseBiome(qx, qy, qz) : std::string{};
@@ -181,12 +216,9 @@ struct BiomesModule {
         registerSpawns();
         gf::log().info("biomes: Twilight Forest biome source installed ({} layer stacks, {} biomes)", data->stacks.entries.size(), biomeIds().size());
     }
-    void uninstall() {
-        worldgen::setBiomeSource({});
-        worldgen::setMainBiomeSource({});
-        current().store(nullptr);
-        generation().fetch_add(1, std::memory_order_acq_rel);
-    }
+
+    bool mInstalled       = false;
+    bool mSourceInstalled = false;
 };
 
 } // namespace gf::feature::biomes

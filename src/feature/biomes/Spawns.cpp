@@ -174,6 +174,7 @@ BiomeSpawns spawnsOf(std::string const& id) {
 
 void registerSpawns() {
     for (auto const& id : biomeIds()) spawn::setBiomeSpawns(id, spawnsOf(id).table);
+    registerSpawnCosts();
 }
 
 } // namespace gf::feature::biomes

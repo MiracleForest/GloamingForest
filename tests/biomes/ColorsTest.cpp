@@ -80,3 +80,19 @@ TEST(BiomeColors, BlendAveragesChannels) {
     EXPECT_EQ(v, (255 * 15 / 25) << 16);
     EXPECT_EQ(c::blend(5, 5, 0, [](int x, int z) { return x + z; }), 10);
 }
+
+TEST(BiomeColors, DarkForestCenterStaticColoursAreTheCommonOnes) {
+    // The client biome file's static colours of the dark forest centre (what vanilla clients draw):
+    // the foliage TF always draws, and the grass of darkForestCenterGrass' more common branch
+    // (temperature noise >= -0.2: #554114) over a large sample.
+    int common = 0, n = 0;
+    for (int z = -20000; z < 20000; z += 97) {
+        for (int x = -20000; x < 20000; x += 89) {
+            common += c::darkForestCenterGrass(x, z) == 0x554114;
+            ++n;
+            EXPECT_EQ(c::darkForestCenterFoliage(x, z), 0xE94E14);
+        }
+    }
+    RecordProperty("dark_forest_center_grass_554114_permille", common * 1000 / n);
+    EXPECT_GT(common * 2, n) << common << " of " << n;
+}

@@ -174,6 +174,15 @@ TEST(Biomes, PossibleBiomesInJavaOrder) {
     EXPECT_EQ(b[1], "twilightforest:clearing");
     EXPECT_EQ(b[2], "twilightforest:dark_forest");
     EXPECT_NE(std::find(b.begin(), b.end(), "twilightforest:highlands_underground"), b.end());
+    // the same list from the grid alone (no layer stack built)
+    EXPECT_EQ(gf::core::biomes::possibleBiomesOf(grid()), b);
+    auto cols = gf::core::biomes::terrainColumnsOf(grid());
+    ASSERT_EQ(cols.size(), p.columns().size());
+    for (std::size_t i = 0; i < cols.size(); ++i) {
+        EXPECT_EQ(cols[i].key, p.columns()[i].key);
+        EXPECT_EQ(cols[i].layers, p.columns()[i].layers);
+        EXPECT_EQ(cols[i].depth, p.columns()[i].depth);
+    }
 }
 
 TEST(Biomes, KeyBiomeQuadrantsAndCompanions) {

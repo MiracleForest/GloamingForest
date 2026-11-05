@@ -541,8 +541,8 @@ bool resourceLocationLess(std::string const& a, std::string const& b) {
     return na < nb;
 }
 
-BiomeProvider::BiomeProvider(Json const& terrainData, LayerStackRegistry const& stacks, std::int64_t seed) : mSeed(seed) {
-    mStack = buildLayer(terrainData.at("biome_layer_config"), stacks, mNames, seed);
+std::vector<TerrainColumn> terrainColumnsOf(Json const& terrainData) {
+    std::vector<TerrainColumn> columns;
     for (auto const& c : terrainData.at("biome_landscape")) {
         TerrainColumn col;
         col.key    = normalize(c.at("key_biome").get<std::string>());
@@ -551,9 +551,26 @@ BiomeProvider::BiomeProvider(Json const& terrainData, LayerStackRegistry const& 
         col.weight = constantOf(c, "weight");
         for (auto const& [k, v] : c.at("biome_layers").items()) col.layers.emplace_back(std::stod(k), normalize(v.get<std::string>()));
         std::sort(col.layers.begin(), col.layers.end(), [](auto const& a, auto const& b) { return a.first < b.first; });
-        mColumns.push_back(std::move(col));
+        columns.push_back(std::move(col));
     }
-    std::stable_sort(mColumns.begin(), mColumns.end(), [](auto const& a, auto const& b) { return resourceLocationLess(a.key, b.key); });
+    std::stable_sort(columns.begin(), columns.end(), [](auto const& a, auto const& b) { return resourceLocationLess(a.key, b.key); });
+    return columns;
+}
+
+std::vector<std::string> possibleBiomesOf(Json const& terrainData) {
+    std::vector<std::string> out;
+    std::set<std::string>    seen;
+    for (auto const& col : terrainColumnsOf(terrainData)) {
+        for (auto const& [elevation, biome] : col.layers) {
+            if (seen.insert(biome).second) out.push_back(biome);
+        }
+    }
+    return out;
+}
+
+BiomeProvider::BiomeProvider(Json const& terrainData, LayerStackRegistry const& stacks, std::int64_t seed) : mSeed(seed) {
+    mStack   = buildLayer(terrainData.at("biome_layer_config"), stacks, mNames, seed);
+    mColumns = terrainColumnsOf(terrainData);
     for (auto const& col : mColumns) mColumnByName[col.key] = &col;
     mColumnOfKey.assign(mNames.size(), nullptr);
     for (std::size_t i = 0; i < mNames.size(); ++i) {

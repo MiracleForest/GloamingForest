@@ -1,5 +1,5 @@
 {
-  "format_version": "1.21.70",
+  "format_version": "1.21.120",
   "minecraft:client_biome": {
     "description": {
       "identifier": "twilightforest:swamp"
@@ -19,6 +19,14 @@
       },
       "minecraft:foliage_appearance": {
         "color": "#496137"
+      },
+      "minecraft:ambient_sounds": {
+        "mood": "ambient.cave",
+        "underwater_loop": "ambient.underwater.loop",
+        "underwater_addition": {
+          "asset": "ambient.underwater.additions",
+          "chance": 0.01
+        }
       }
     }
   }

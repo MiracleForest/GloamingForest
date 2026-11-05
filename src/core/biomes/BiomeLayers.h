@@ -130,6 +130,12 @@ private:
     std::map<std::string, TerrainColumn const*>     mColumnByName;
 };
 
+/// The terrain grid's columns (`terrainData`: a biome_terrain_data entry), sorted by key as
+/// BiomeProvider keeps them; no layer is built.
+[[nodiscard]] std::vector<TerrainColumn> terrainColumnsOf(Json const& terrainData);
+/// BiomeProvider#possibleBiomes of `terrainData` without building the layer stack (seed independent).
+[[nodiscard]] std::vector<std::string> possibleBiomesOf(Json const& terrainData);
+
 /// ResourceLocation#compareTo of two ids ("ns:path"): path first, then namespace.
 [[nodiscard]] bool resourceLocationLess(std::string const& a, std::string const& b);
 

@@ -6,7 +6,8 @@
 # water colours; the sky and fog around it) and photographed.
 # - local / remote-mod (the client mod): TF's position-dependent colours (spooky forest, dark forest
 #   centre, enchanted forest bands) are drawn by the mod (src/client/biomes/Tints.cpp logs the first
-#   use per biome); the other colours come from the client biome files.
+#   use per biome, applied to vanilla blocks by feature/ext/biomes/VanillaTint.cpp's hook); the
+#   other colours come from the client biome files. biomes.grass_tint runs in local mode.
 # - remote-vanilla: the client biome files reach the client with the host's resource packs; the
 #   static colours only.
 # The ground tint of the spooky forest (orange-red #C45123 family) must be redder than the forest's.
@@ -76,17 +77,16 @@ if ($script:Mode -ne 'remote-vanilla') {
     # the client mod drew TF's position-dependent colours
     $log = Get-LeviLog
     if (-not ($log | Select-String -Pattern 'biomes: TF biome colours on \d+ grass and \d+ foliage blocks' -Quiet)) { throw 'the client mod did not register its biome tints' }
-    if ($log | Select-String -Pattern 'biomes: game (grass|foliage) colour' -Quiet) {
-        # F12's tint hook reached the vanilla blocks: TF's position-dependent colours must be drawn
-        foreach ($b in 'spooky_forest', 'dark_forest_center', 'enchanted_forest') {
-            if ($places.Contains($b) -and -not ($log | Select-String -Pattern "biomes: client draws TF's grass colours of twilightforest:$b" -Quiet)) {
-                throw "the client mod did not draw TF's grass colours in twilightforest:$b"
-            }
+    # the vanilla grass / foliage tints go through U1's hook on the game's tessellation policies
+    # (feature/ext/biomes/VanillaTint.cpp; F12's resolver hook never sees vanilla blocks)
+    if (-not ($log | Select-String -Pattern 'biomes: vanilla tint hooks installed \(grass ok, foliage ok\)' -Quiet)) { throw 'the vanilla tint hooks were not installed' }
+    $applied = $log | Select-String -Pattern 'biomes: vanilla tint hook applied the tint of .*' | Select-Object -First 1
+    if (-not $applied) { throw 'the vanilla tint hook never applied a tint (vanilla grass and leaves drew without TF colours)' }
+    Write-Step "hook: $($applied.Matches[0].Value)"
+    foreach ($b in 'spooky_forest', 'dark_forest_center', 'enchanted_forest') {
+        if ($places.Contains($b) -and -not ($log | Select-String -Pattern "biomes: client draws TF's grass colours of twilightforest:$b" -Quiet)) {
+            throw "the client mod did not draw TF's grass colours in twilightforest:$b"
         }
-    } else {
-        # Known W0 gap (reported to the coordinator): F12's tint hook (PositionDependentTintResolver)
-        # is never asked for vanilla grass / leaves, so only the client biome files' static colours show.
-        Write-Step 'NOTE: the client tints were never asked for vanilla blocks (F12 tint hook gap): static biome colours only'
     }
 }
 Invoke-Chat '/gamemode creative'

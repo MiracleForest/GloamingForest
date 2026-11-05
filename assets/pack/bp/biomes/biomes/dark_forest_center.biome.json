@@ -14,10 +14,10 @@
         ]
       },
       "minecraft:map_tints": {
-        "foliage": "#F9821E",
+        "foliage": "#E94E14",
         "grass": {
           "type": "tint",
-          "tint": "#667540"
+          "tint": "#554114"
         }
       }
     }

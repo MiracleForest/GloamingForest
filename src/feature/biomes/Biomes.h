@@ -14,7 +14,10 @@
 #include <vector>
 
 #include "core/biomes/BiomeLayers.h"
+#include "core/biomes/SpawnCost.h"
 #include "feature/spawn/Spawn.h"
+
+class BlockPos;
 
 namespace gf::feature::biomes {
 
@@ -41,6 +44,8 @@ struct SourceData {
     core::biomes::Json               grid;
 };
 [[nodiscard]] std::shared_ptr<SourceData const> sourceData();
+/// Lets the next sourceData() call retry a failed load (install, each world load).
+void retrySourceData();
 
 /// The biome provider for `seed` (cached for the last seed asked; thread-safe). nullptr without data.
 [[nodiscard]] std::shared_ptr<core::biomes::BiomeProvider const> providerFor(std::int64_t seed);
@@ -55,10 +60,16 @@ struct SpawnCost {
 };
 struct BiomeSpawns {
     spawn::Table           table;
-    std::vector<SpawnCost> costs; ///< MobSpawnSettings#mobSpawnCost (not used by F5's spawner yet)
+    std::vector<SpawnCost> costs; ///< MobSpawnSettings#mobSpawnCost (applied by SpawnCosts.cpp)
 };
 [[nodiscard]] BiomeSpawns spawnsOf(std::string const& biomeId);
-/// Registers every biome's table (install).
+/// Registers every biome's table and the spawn costs (install).
 void registerSpawns();
+/// Applies the biomes' spawn costs to the natural spawner (spawn::onSpecialSpawn; once).
+void registerSpawnCosts();
+/// The natural spawn list of `category` in `biome` at `pos` under the spawn potential `potential`:
+/// the types whose spawn cost exceeds their energy budget there left out (SpawnState#canSpawn).
+[[nodiscard]] std::vector<spawn::SpawnEntry>
+costFiltered(std::string const& biome, std::string const& category, core::biomes::PotentialCalculator const& potential, BlockPos const& pos);
 
 } // namespace gf::feature::biomes
