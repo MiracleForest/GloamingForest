@@ -37,8 +37,15 @@
 #include "mc/world/level/block/Block.h"
 #include "mc/world/phys/AABB.h"
 
+#include "mc/world/level/block/actor/BlockActor.h"
+#include "mc/world/level/block/actor/BlockActorType.h"
+#include "mc/world/level/block/actor/LecternBlockActor.h"
+
 #include "feature/combat/Combat.h"
+#include "feature/common/Interactions.h"
 #include "feature/entity/Entity.h"
+#include "feature/fx/Fx.h"
+#include "game/Items.h"
 #include "feature/ext/entity/EntityExt.h"
 #include "feature/lich/Common.h"
 #include "feature/lich/Lich.h"
@@ -50,6 +57,7 @@
 namespace gf::feature::lich {
 
 namespace ge = gf::entity;
+namespace ia = gf::feature::common::interactions;
 
 namespace {
 
@@ -87,12 +95,104 @@ void findNewMaster(Mob& minion) {
     }
 }
 
+/// Zombie#tick's under-water conversion (a LichMinion is a Zombie): 600 ticks with the eyes in
+/// water start it, 300 more turn the minion into a drowned (Zombie#doUnderWaterConversion).
+void minionWaterConversion(Mob& m) {
+    auto& d          = ge::data(m, "lich:water");
+    int   inWater    = d.is_object() ? d.value("in", 0) : 0;
+    int   conversion = d.is_object() ? d.value("conversion", -1) : -1;
+    if (conversion >= 0) {
+        if (--conversion < 0) {
+            float hp  = health(m);
+            float yaw = m.getRotation().y;
+            Mob*  drowned = spawnMob(m.getDimensionBlockSource(), "minecraft:drowned", m.getFeetPos(), yaw);
+            if (drowned) {
+                setHealthTo(*drowned, hp);
+                if (!m.getNameTag().empty()) {
+                    drowned->setNameTag(m.getNameTag());
+                    drowned->setPersistent();
+                }
+            }
+            playSound(m, "mob.zombie.converted_to_drowned", 1.0F, 1.0F); // levelEvent 1040
+            masters().erase(uidOf(m));
+            discardLater(m);
+            log().info("lich: a lich minion became a drowned");
+            return;
+        }
+    } else {
+        Vec3  eye   = eyeOf(m);
+        auto  block = game::blockIdAt(m.getDimensionBlockSource(), game::blockPosOf(eye));
+        bool  eyeInWater = block == "minecraft:water" || block == "minecraft:flowing_water";
+        if (eyeInWater) {
+            if (++inWater >= 600) conversion = 300; // startUnderWaterConversion(300)
+        } else inWater = -1;
+    }
+    d = Json{{"in", inWater}, {"conversion", conversion}};
+}
+
 void minionAiStep(Actor& a) {
     auto* m = asMob(a);
     if (!m || !m->isAlive()) return;
     if (!minionMaster(*m)) findNewMaster(*m);
     Mob* master = minionMaster(*m);
-    if (!master || !master->isAlive()) m->kill();
+    if (!master || !master->isAlive()) {
+        m->kill();
+        return;
+    }
+    minionWaterConversion(*m);
+}
+
+/// Zombie#handleAttributes: the reinforcement chance a zombie spawns with (nextDouble() * 0.1;
+/// a leader, 5 % x the special multiplier, adds 0.5..0.75). Bedrock has no attribute for it: the
+/// minion's data keeps it.
+double reinforcementChance(Mob& m) {
+    auto& d = ge::data(m, "lich:reinforcements");
+    if (d.is_number()) return d.get<double>();
+    auto&  r      = randomOf(m);
+    double chance = r.nextDouble() * 0.1F;
+    auto   level  = ll::service::getLevel();
+    float  special = level && level->getDifficulty() == SharedTypes::Legacy::Difficulty::Hard ? 0.5F : 0.0F; // DifficultyInstance#getSpecialMultiplier
+    if (r.nextFloat() < special * 0.05F) chance += r.nextDouble() * 0.25 + 0.5;
+    d = chance;
+    return chance;
+}
+
+/// Zombie#hurt's reinforcements on Hard: up to 50 tries for a spot 7..40 blocks away on each axis,
+/// dark enough and clear, with no player within 7; the new minion takes the target, and both
+/// zombies lose 0.05 of their chance.
+void callReinforcements(Mob& m, Actor* attacker) {
+    auto level = ll::service::getLevel();
+    if (!level || level->getDifficulty() != SharedTypes::Legacy::Difficulty::Hard) return;
+    Actor* target = targetOf(m);
+    if (!target && attacker && (attacker->isPlayer() || attacker->hasCategory(ActorCategory::Mob))) target = attacker;
+    if (!target) return;
+    auto& r = randomOf(m);
+    if (r.nextFloat() >= reinforcementChance(m)) return;
+    auto& region = m.getDimensionBlockSource();
+    auto  p      = m.getFeetPos();
+    int   x = int(std::floor(p.x)), y = int(std::floor(p.y)), z = int(std::floor(p.z));
+    auto  nextInt = [&](int lo, int hi) { return lo + r.nextInt(hi - lo + 1); };
+    for (int l = 0; l < 50; ++l) {
+        int i1 = x + nextInt(7, 40) * nextInt(-1, 1);
+        int j1 = y + nextInt(7, 40) * nextInt(-1, 1);
+        int k1 = z + nextInt(7, 40) * nextInt(-1, 1);
+        BlockPos pos{i1, j1, k1};
+        if (!region.hasChunksAt(pos, 1, false)) continue;
+        // SpawnPlacements ON_GROUND + Monster#checkMonsterSpawnRules (no light check without a
+        // brightness query here: the block below must be solid, the column clear and dry)
+        Block const& below = region.getBlock(BlockPos{i1, j1 - 1, k1});
+        if (below.isAir() || game::blockId(below).find("water") != std::string::npos || game::blockId(below).find("lava") != std::string::npos) continue;
+        if (!region.getBlock(pos).isAir() || !region.getBlock(BlockPos{i1, j1 + 1, k1}).isAir()) continue;
+        Vec3 at{i1 + 0.0f, float(j1), k1 + 0.0f};
+        if (!playersNear(dimOf(m), at, 7.0).empty()) continue;
+        Mob* reinforcement = spawnMob(region, kMinion, at, 0.0f);
+        if (!reinforcement) continue;
+        setTarget(*reinforcement, target);
+        ge::data(m, "lich:reinforcements")              = reinforcementChance(m) - 0.05;
+        ge::data(*reinforcement, "lich:reinforcements") = reinforcementChance(*reinforcement) - 0.05;
+        log().info("lich: a lich minion called a reinforcement");
+        break;
+    }
 }
 
 void minionRemoved(Actor& a, std::string const&, Actor*) { masters().erase(uidOf(a)); }
@@ -176,24 +276,36 @@ void tomeOnSpawn(Actor& a) {
     ge::addGoal(*m, 4, std::make_shared<RangedAttackGoal>(*m));
 }
 
+/// The lectern a tome was put on (DeathTome#blockPosition when it was set on it).
+std::optional<BlockPos> lecternSeat(Actor& tome) {
+    auto const& seat = ge::data(tome, "lectern_pos");
+    if (seat.is_array() && seat.size() == 3) return BlockPos{seat[0].get<int>(), seat[1].get<int>(), seat[2].get<int>()};
+    return std::nullopt;
+}
+
 void tomeAiStep(Actor& a) {
     auto* m = asMob(a);
     if (!m || !m->isAlive()) return;
     if (tomeOnLectern(a)) {
         auto& region = m->getDimensionBlockSource();
-        auto  at     = game::blockPosOf(m->getFeetPos());
-        // the tome stands in the lectern's block, or on its top (0.875 high) when the engine lifted it;
-        // the lectern it was put on is remembered (the engine's collision may push the tome aside)
-        auto& seat = ge::data(a, "lectern_pos");
-        if (seat.is_array() && seat.size() == 3) at = BlockPos{seat[0].get<int>(), seat[1].get<int>(), seat[2].get<int>()};
-        else if (!isLecternAt(region, at)) at.y -= 1;
-        if (isLecternAt(region, at)) {
-            if (!seat.is_array()) seat = Json::array({at.x, at.y, at.z});
+        // DeathTome#aiStep looks at the block the tome stands in. A tome is put on a lectern with
+        // its seat (the lectern's position); Bedrock's collision may move it out of the lectern's
+        // block, so the seat, not the current position, is the block to check. A tome set on a
+        // lectern without a seat (an older save) takes the lectern it stands in, or the one the
+        // engine lifted it onto.
+        auto seat = lecternSeat(a);
+        if (!seat) {
+            auto at = game::blockPosOf(m->getFeetPos());
+            if (isLecternAt(region, at)) seat = at;
+            else if (isLecternAt(region, BlockPos{at.x, at.y - 1, at.z})) seat = BlockPos{at.x, at.y - 1, at.z};
+            if (seat) ge::data(a, "lectern_pos") = Json::array({seat->x, seat->y, seat->z});
+        }
+        if (seat && isLecternAt(region, *seat)) {
+            auto at = *seat;
             // it rests there, still (Java: the tome only turns to the lectern's facing)
             Vec3 rest{at.x + 0.5f, float(at.y), at.z + 0.5f};
             setMotion(a, Vec3{0.0f, 0.0f, 0.0f});
-            if (distSqr(m->getFeetPos(), rest) > 0.04) teleportTo(a, rest);
-            ge::data(a, "lectern_missed") = 0;
+            if (distSqr(m->getFeetPos(), rest) > 0.0025) teleportTo(a, rest);
             // face the lectern's FACING (Bedrock: direction 0 south .. 3 east -> yaw)
             int   dir = game::intState(region.getBlock(at), "direction").value_or(0);
             float yaw = static_cast<float>(dir) * 90.0F;
@@ -211,13 +323,8 @@ void tomeAiStep(Actor& a) {
             }
             return;
         }
-        // a tome placed on a lectern this tick may still see the spawner's adjusted position: the
-        // lectern counts as gone once the tome has missed it for 5 ticks in a row
-        auto& missed = ge::data(a, "lectern_missed");
-        int   n      = missed.is_number_integer() ? missed.get<int>() + 1 : 1;
-        missed       = n;
-        if (n < 5) return;
-        log().info("lich: a death tome is off its lectern ({} below it)", game::blockIdAt(region, at));
+        // the lectern is gone (broken, replaced): the tome wakes up
+        log().info("lich: a death tome is off its lectern ({} at its seat)", seat ? game::blockIdAt(region, *seat) : std::string("no lectern"));
         setTomeOnLectern(a, false);
     }
     auto v = m->getPosDelta();
@@ -338,7 +445,13 @@ void risingAiStep(Actor& a) {
         Mob*  zombie = spawnMob(region, "minecraft:zombie", z->getFeetPos(), yaw);
         if (zombie) {
             setHealthTo(*zombie, hp);
-            zombie->setPersistent();
+            // Mob#convertTo keeps the custom name and the persistence the source required (Bedrock
+            // has no query for it: a named rising zombie, a name tag making a mob persistent, or one
+            // the unit marked persistent)
+            auto const& name = z->getNameTag();
+            auto const& keep = ge::data(a, "lich:persistent");
+            if (!name.empty()) zombie->setNameTag(name);
+            if (!name.empty() || (keep.is_boolean() && keep.get<bool>())) zombie->setPersistent();
         }
         rising().erase(uidOf(a));
         discardLater(a);
@@ -350,16 +463,30 @@ void risingAiStep(Actor& a) {
 
 // ---- the shared operations ------------------------------------------------------------------------------
 
+// The per-actor fields live in the actor's saved document (gf::entity::data), so they survive a
+// chunk unload and a restart; the maps are a cache rebuilt from it.
+
 Mob* minionMaster(Actor const& minion) {
-    auto it = masters().find(uidOf(minion));
-    if (it == masters().end()) return nullptr;
+    auto uid = uidOf(minion);
+    auto it  = masters().find(uid);
+    if (it == masters().end()) {
+        auto const& saved = ge::data(const_cast<Actor&>(minion), "lich:master");
+        if (!saved.is_number_integer()) return nullptr;
+        it = masters().emplace(uid, saved.get<std::int64_t>()).first;
+    }
     auto* m = mobById(it->second);
     return m && isLich(*m) ? m : nullptr;
 }
 
 void setMinionMaster(Actor const& minion, Mob* master) {
-    if (master) masters()[uidOf(minion)] = uidOf(*master);
-    else masters().erase(uidOf(minion));
+    auto& saved = ge::data(const_cast<Actor&>(minion), "lich:master");
+    if (master) {
+        masters()[uidOf(minion)] = uidOf(*master);
+        saved                    = uidOf(*master);
+    } else {
+        masters().erase(uidOf(minion));
+        saved = nullptr;
+    }
 }
 
 Mob* spawnMinion(Mob& lich, Vec3 const& pos, Actor* target) {
@@ -398,20 +525,37 @@ void pruneMobs() {
 }
 
 bool tomeOnLectern(Actor const& tome) {
-    auto it = lecterns().find(uidOf(tome));
-    return it != lecterns().end() && it->second;
+    auto uid = uidOf(tome);
+    auto it  = lecterns().find(uid);
+    if (it == lecterns().end()) {
+        if (!isType(tome, kTome)) return false;
+        auto const& saved = ge::data(const_cast<Actor&>(tome), "on_lectern");
+        it                = lecterns().emplace(uid, saved.is_boolean() && saved.get<bool>()).first;
+    }
+    return it->second;
 }
 
-void setTomeOnLectern(Actor& tome, bool on) {
+void setTomeOnLectern(Actor& tome, bool on, BlockPos const* seat) {
     if (!on) ge::data(tome, "lectern_pos") = nullptr;
-    lecterns()[uidOf(tome)]     = on;
+    else if (seat) {
+        ge::data(tome, "lectern_pos") = Json::array({seat->x, seat->y, seat->z});
+        teleportTo(tome, Vec3{seat->x + 0.5f, float(seat->y), seat->z + 0.5f});
+        setMotion(tome, Vec3{0.0f, 0.0f, 0.0f});
+    }
+    lecterns()[uidOf(tome)]      = on;
     ge::data(tome, "on_lectern") = on;
-    ge::setProperty(tome, "gf:on_lectern", on);
+    ge::setProperty(tome, "gf:on_lectern", on); // the BP's gf:lectern group keeps it persistent (isPersistenceRequired)
 }
 
 int risingTicks(Actor const& zombie) {
-    auto it = rising().find(uidOf(zombie));
-    return it != rising().end() ? it->second : 0;
+    auto uid = uidOf(zombie);
+    auto it  = rising().find(uid);
+    if (it == rising().end()) {
+        if (!isType(zombie, kRising)) return 0;
+        auto const& saved = ge::data(const_cast<Actor&>(zombie), "rising_ticks");
+        it                = rising().emplace(uid, saved.is_number_integer() ? saved.get<int>() : 0).first;
+    }
+    return it->second;
 }
 
 void setRisingTicks(Actor& zombie, int ticks) {
@@ -422,7 +566,43 @@ void setRisingTicks(Actor& zombie, int ticks) {
     if (old != ticks || ticks == 0) applyRisingSize(zombie, ticks);
 }
 
+Mob* spawnLecternTome(BlockSource& region, BlockPos const& pos) {
+    if (!isLecternAt(region, pos)) return nullptr;
+    // facing the lectern (HorizontalDirectionalBlock.FACING#toYRot; Bedrock's direction 0 south .. 3 east)
+    int  dir  = game::intState(region.getBlock(pos), "direction").value_or(0);
+    Mob* tome = spawnMob(region, kTome, Vec3{pos.x + 0.5f, float(pos.y), pos.z + 0.5f}, static_cast<float>(dir) * 90.0F);
+    if (!tome) return nullptr;
+    setTomeOnLectern(*tome, true, &pos);
+    return tome;
+}
+
 void registerMobs() {
+    // MiscEvents#addTomesToLecterns: a Death Tome spawn egg used on a lectern without a book puts a
+    // tome mimic on it
+    ia::onUseOn({.block = "minecraft:lectern", .item = "twilightforest:death_tome_spawn_egg"}, [](ia::UseOnContext const& c) {
+        auto& region = c.player.getDimensionBlockSource();
+        BlockPos pos{c.pos.x, c.pos.y, c.pos.z};
+        auto*    actor = region.getBlockEntity(pos);
+        if (actor && actor->getType() == BlockActorType::Lectern && !static_cast<LecternBlockActor*>(actor)->mBook->isNull()) return ia::Result::Pass;
+        if (!c.firstEvent) return ia::Result::Consume;
+        if (auto* dim = &c.player.getDimension()) gf::fx::sound(*dim, "item.book.put", Vec3{pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f}, 1.0F, 1.0F);
+        bool  creative = c.player.isCreative();
+        auto  uid      = uidOf(c.player);
+        ia::nextTick([pos, dim = c.pos.dim, uid, creative] {
+            auto* player = static_cast<Player*>(actorById(uid));
+            if (!player || dimOf(*player) != dim) return;
+            auto& r = player->getDimensionBlockSource();
+            if (!spawnLecternTome(r, pos)) return;
+            log().info("lich: a death tome was put on a lectern");
+            if (creative) return;
+            auto& held = const_cast<ItemStack&>(player->getSelectedItem());
+            if (game::items::idOf(held) == "twilightforest:death_tome_spawn_egg") {
+                held.remove(1);
+                player->sendInventory(false);
+            }
+        });
+        return ia::Result::Consume;
+    });
     ge::registerType(kMinion, {.aiStep = minionAiStep, .die = minionRemoved});
     ge::registerType(kTome, {.onSpawn = tomeOnSpawn, .aiStep = tomeAiStep, .save = tomeSave, .load = tomeLoad});
     ge::registerType(kRising, {.onSpawn = risingOnSpawn, .aiStep = risingAiStep});
@@ -435,18 +615,29 @@ void registerMobs() {
         if (isType(d.victim, kTome) && d.type == "minecraft:in_wall" && tomeOnLectern(d.victim)) return gf::combat::Verdict::Cancel;
         // RisingZombie#isInvulnerableTo: only in_wall
         if (isType(d.victim, kRising) && d.type == "minecraft:in_wall") return gf::combat::Verdict::Cancel;
+        // the Zombie's natural armor 2 (tests/golden/mobs.json; Bedrock mobs have no armor
+        // attribute): CombatRules#getDamageAfterAbsorb with toughness 0
+        if ((isType(d.victim, kMinion) || isType(d.victim, kRising)) && d.amount > 0 && !damageTypeIn("minecraft:bypasses_armor", d.type)) {
+            constexpr float kArmor = 2.0F;
+            float           f      = std::clamp(kArmor - d.amount / 2.0F, kArmor * 0.2F, 20.0F);
+            d.amount *= 1.0F - f / 25.0F;
+        }
         return gf::combat::Verdict::Pass;
     });
     gf::combat::onDealt(gf::combat::priority::Normal, [](gf::combat::DamageInfo const& d) {
         if (isType(d.victim, kTome)) {
             if (auto* m = asMob(d.victim); m && isServerActor(*m)) tomeDealt(*m, d);
-        } else if (isType(d.victim, kMinion) && d.attacker && isLich(*d.attacker)) {
-            // LichMinion#hurt by its Lich: back to the previous target, sped up and stronger
+        } else if (isType(d.victim, kMinion)) {
             auto* m = asMob(d.victim);
-            if (!m) return;
-            if (Actor* prev = targetOf(*m)) setLastHurtBy(*m, prev);
-            addEffect(*m, 1, 200, 2); // MOVEMENT_SPEED III
-            addEffect(*m, 5, 200, 1); // DAMAGE_BOOST II
+            if (!m || !isServerActor(*m)) return;
+            if (d.attacker && isLich(*d.attacker)) {
+                // LichMinion#hurt by its Lich: back to the previous target, sped up and stronger
+                if (Actor* prev = targetOf(*m)) setLastHurtBy(*m, prev);
+                addEffect(*m, 1, 200, 2); // MOVEMENT_SPEED III
+                addEffect(*m, 5, 200, 1); // DAMAGE_BOOST II
+            }
+            // Zombie#hurt (super.hurt of LichMinion#hurt): reinforcements on Hard
+            if (m->isAlive()) callReinforcements(*m, d.attacker);
         }
     });
 }

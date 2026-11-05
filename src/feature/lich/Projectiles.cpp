@@ -171,7 +171,7 @@ void pruneProjectiles() {
     std::erase_if(owners(), [](auto const& kv) { return actorById(kv.first) == nullptr; });
 }
 
-void reflectBolt(Actor& bolt, Actor& by) {
+void reflectBolt(Actor& bolt, Actor& by, Actor* direct) {
     // shoot(look, 1.5, 0.1): normalized look plus a tiny triangle spread
     Vec3   look = viewVector(by);
     auto&  r    = randomOf(bolt);
@@ -181,7 +181,8 @@ void reflectBolt(Actor& bolt, Actor& by) {
     Vec3   v{float((look.x / len + r.triangle(0.0, spread)) * 1.5), float((look.y / len + r.triangle(0.0, spread)) * 1.5),
            float((look.z / len + r.triangle(0.0, spread)) * 1.5)};
     pe::setVelocity(bolt, v);
-    if (isLiving(by)) setProjectileOwner(bolt, &by);
+    // the direct entity becomes the owner when it is a living one (a player's melee hit)
+    if (direct && isLiving(*direct)) setProjectileOwner(bolt, direct);
     log().info("lich: bolt reflected by {}", by.getTypeName());
 }
 
@@ -229,20 +230,38 @@ void registerProjectiles() {
         },
         .tick = tomeBoltTick,
     });
-    // LichBolt#hurt / LichBomb#hurt: a hit by an entity reflects the bolt, explodes the bomb
+    // LichBolt#hurt / LichBomb#hurt: a hit by an entity reflects the bolt, explodes the bomb. A
+    // player's melee hit comes through the attack interaction (the BP's custom_hit_test makes them
+    // pickable); any other damage with an entity source (an arrow, a mob's projectile, a thorns
+    // hit) through the damage pipeline below.
     ia::onAttack({.block = kLichBolt}, [](ia::EntityContext const& c) {
-        reflectBolt(c.entity, c.player);
+        reflectBolt(c.entity, c.player, &c.player);
         return ia::Result::Consume;
     });
     ia::onAttack({.block = kLichBomb}, [](ia::EntityContext const& c) {
         explodeBomb(c.entity);
         return ia::Result::Consume;
     });
+    gf::combat::onIncoming(gf::combat::priority::Highest, [](gf::combat::DamageInfo& d) {
+        bool bolt = isType(d.victim, kLichBolt), bomb = isType(d.victim, kLichBomb);
+        if (!bolt && !bomb) return gf::combat::Verdict::Pass;
+        // the bomb's own explosion and the bolts' and bombs' blasts leave them be (ignoreExplosion)
+        Actor* blast = d.direct && isType(*d.direct, kLichBomb) ? d.direct : d.attacker && isType(*d.attacker, kLichBomb) ? d.attacker : nullptr;
+        if (blast) return gf::combat::Verdict::Cancel;
+        if (bomb && d.direct && d.direct != &d.victim) explodeBomb(d.victim);                   // source.getDirectEntity() != null
+        else if (bolt && d.attacker && d.attacker != &d.victim) reflectBolt(d.victim, *d.attacker, d.direct); // source.getEntity() != null
+        return gf::combat::Verdict::Cancel; // a projectile has no health
+    });
+    // EntityEvents#lichBombsDontBlowUpItems: a lich bomb's explosion leaves item entities alone
+    gf::combat::onIncoming(gf::combat::priority::Highest, [](gf::combat::DamageInfo& d) {
+        if (d.victim.getTypeName() != "minecraft:item") return gf::combat::Verdict::Pass;
+        bool fromBomb = (d.direct && isType(*d.direct, kLichBomb)) || (d.attacker && isType(*d.attacker, kLichBomb));
+        return fromBomb ? gf::combat::Verdict::Cancel : gf::combat::Verdict::Pass;
+    });
     // the bomb's explosion is TFDamageTypes.LICH_BOMB, attributed to the bomb's owner
     gf::combat::onIncoming(gf::combat::priority::Highest, [](gf::combat::DamageInfo& d) {
         Actor* bomb = d.direct && isType(*d.direct, kLichBomb) ? d.direct : d.attacker && isType(*d.attacker, kLichBomb) ? d.attacker : nullptr;
         if (!bomb) return gf::combat::Verdict::Pass;
-        if (isType(d.victim, kLichBomb) || isType(d.victim, kLichBolt)) return gf::combat::Verdict::Cancel; // ignoreExplosion
         d.type     = "twilightforest:lich_bomb";
         d.direct   = bomb;
         d.attacker = projectileOwner(*bomb);

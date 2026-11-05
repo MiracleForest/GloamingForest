@@ -12,6 +12,7 @@
 
 class Actor;
 class BlockPos;
+class BlockSource;
 class Mob;
 
 namespace gf::feature::lich {
@@ -96,7 +97,12 @@ Mob* spawnMinion(Mob& lich, Vec3 const& pos, Actor* target);
 // ---- death tome --------------------------------------------------------------------------------
 
 [[nodiscard]] bool tomeOnLectern(Actor const& tome);
-void               setTomeOnLectern(Actor& tome, bool on);
+/// DeathTome#setOnLectern. With `seat` (the lectern's position) the tome is moved onto that lectern
+/// and checks it from then on (Bedrock's collision may push it out of the lectern's block).
+void setTomeOnLectern(Actor& tome, bool on, BlockPos const* seat = nullptr);
+/// MiscEvents#addTomesToLecterns / LichTowerWingRoom#putTrappableLectern: a Death Tome mimic on the
+/// lectern at `pos` (persistent, facing the lectern). nullptr when it could not spawn.
+Mob* spawnLecternTome(BlockSource& region, BlockPos const& pos);
 
 // ---- rising zombie -----------------------------------------------------------------------------
 
@@ -108,8 +114,9 @@ void              setRisingTicks(Actor& zombie, int ticks);
 /// The owner of a lich bolt / bomb / tome bolt (the reflected owner first, then the shooter).
 [[nodiscard]] Actor* projectileOwner(Actor const& projectile);
 void                 setProjectileOwner(Actor const& projectile, Actor* owner);
-/// LichBolt#hurt by an entity: re-shot along `by`'s look at 1.5 (inaccuracy 0.1), owner = direct.
-void reflectBolt(Actor& bolt, Actor& by);
+/// LichBolt#hurt by an entity: re-shot along `by`'s look (the source's entity) at 1.5 (inaccuracy
+/// 0.1); the direct entity becomes the owner when it is a living one.
+void reflectBolt(Actor& bolt, Actor& by, Actor* direct);
 /// LichBomb#hurt / #explode.
 void explodeBomb(Actor& bomb);
 

@@ -1,0 +1,26 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "twilightforest:lich_tower/grave",
+  "size": [3, 3, 5],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"minecraft:dirt"},
+    {"Name":"minecraft:coarse_dirt"},
+    {"Name":"minecraft:mossy_cobblestone"},
+    {"Name":"minecraft:stone_bricks"},
+    {"Name":"minecraft:stone_brick_slab","Properties":{"type":"bottom"}},
+    {"Name":"minecraft:mossy_stone_brick_wall"},
+    {"Name":"minecraft:chest","Properties":{"facing":"north"}}
+  ],
+  "blocks": [
+    [1, 7], [7, 1], [1, 7], [2, 3], [3, 1], [2, 1], [3, 2], [2, 1], [3, 2], [2, 1], [3, 1], [4, 3], [0, 4], [5, 1], [0, 2], [5, 1],
+    [0, 2], [5, 1], [0, 1], [5, 1], [6, 1], [5, 1]
+  ],
+  "markers": [
+    {"pos":[1,0,2],"marker":"loot","data":{"table":"twilightforest:chests/tower_grave_lower"}}
+  ],
+  "jigsaw": [
+    {"pos":[1,1,0],"front":"north","top":"up","pool":"minecraft:empty","name":"gf:lich_tower/grave","target":""}
+  ]
+}

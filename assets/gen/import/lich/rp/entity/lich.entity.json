@@ -20,16 +20,20 @@
         "scale": "1.125",
         "pre_animation": [
           "variable.death_time = query.property('twilightforest:death_time');",
+          "variable.dying = variable.death_time > 0;",
+          "variable.phase = query.property('twilightforest:phase');",
+          "variable.has_item = query.is_item_equipped(0);",
           "variable.limb = query.modified_move_speed * 0.75;"
         ],
-        "animate": ["base_pose", "look_at_target", "legs", "base", "death"]
+        "animate": ["base_pose", "look_at_target", "legs", "arms", "death", "shake"]
       },
       "animations": {
         "base_pose": "animation.humanoid.base_pose",
         "look_at_target": "animation.humanoid.look_at_target.default",
         "legs": "animation.twilightforest.lich.legs",
-        "base": "animation.twilightforest.lich.base",
-        "death": "animation.twilightforest.lich.death"
+        "arms": "animation.twilightforest.lich.arms",
+        "death": "animation.twilightforest.lich.death",
+        "shake": "animation.twilightforest.lich.shake"
       },
       "render_controllers": [
         {

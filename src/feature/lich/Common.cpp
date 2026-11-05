@@ -323,16 +323,20 @@ std::optional<Vec3> randomTeleportSpot(BlockSource& region, Vec3 const& at, floa
     // LivingEntity#randomTeleport(x, y, z, false): down to the first motion-blocking block below
     BlockPos p{int(std::floor(at.x)), int(std::floor(at.y)), int(std::floor(at.z))};
     if (!region.hasChunksAt(p, 1, false)) return std::nullopt;
-    bool found = false;
+    bool   found = false;
+    double y     = at.y; // Java's d3: the y keeps its fraction, one block lower per step down
     while (!found && p.y > region.getMinHeight()) {
         BlockPos below{p.x, p.y - 1, p.z};
         Block const& b = region.getBlock(below);
         AABB         c = b.getBlockType().getCollisionShape(b, region, below, nullptr);
         if (!b.isAir() && c.max.y > c.min.y) found = true; // BlockState#blocksMotion
-        else p.y--;
+        else {
+            p.y--;
+            y -= 1.0;
+        }
     }
     if (!found) return std::nullopt;
-    Vec3  spot{at.x, float(p.y), at.z};
+    Vec3  spot{at.x, float(y), at.z};
     float hw = width / 2.0f;
     AABB  box{Vec3{spot.x - hw, spot.y, spot.z - hw}, Vec3{spot.x + hw, spot.y + height, spot.z + hw}};
     std::vector<AABB> shapes;

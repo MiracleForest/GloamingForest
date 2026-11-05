@@ -17,9 +17,12 @@
 
 #include "feature/boss/Boss.h"
 #include "feature/lich/Common.h"
+#include "feature/lich/Edits.h"
 #include "feature/lich/Lich.h"
+#include "feature/lich/Pending.h"
 #include "feature/lich/Tower.h"
 #include "feature/loot/Loot.h"
+#include "game/WorldDb.h"
 #include "mod/Log.h"
 #include "mod/Module.h"
 
@@ -37,6 +40,9 @@ public:
             registerMobs();
             registerProjectiles();
             tower::registerTower();
+            edits::registerEdits();
+            game::db::onWorldReady([] { pending::load(); });
+            game::db::onWorldSave([] { pending::save(); });
             // IsMinionCondition(inverse): THIS_ENTITY is a Carminite Ghastling whose isMinion() == !inverse
             gf::loot::registerCondition("twilightforest:is_minion", [](gf::loot::LootContext const& ctx, Json const& config, gf::loot::RandomSource&) {
                 bool inverse = config.is_object() && config.value("inverse", false);

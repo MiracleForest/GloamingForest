@@ -12,7 +12,6 @@
     [0, 2], [1, 2], [0, 2], [1, 2], [0, 2], [1, 2], [0, 2], [1, 2], [0, 2], [1, 2], [0, 24], [2, 1], [0, 45]
   ],
   "jigsaw": [
-    {"pos":[0,0,1],"front":"west","top":"up","pool":"minecraft:empty","name":"gf:mob_bridge","target":""},
-    {"pos":[9,0,1],"front":"east","top":"down","pool":"minecraft:empty","name":"gf:mob_bridge","target":""}
+    {"pos":[5,0,1],"front":"up","top":"east","pool":"minecraft:empty","name":"gf:mob_bridge","target":""}
   ]
 }

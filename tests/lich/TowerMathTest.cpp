@@ -1,5 +1,6 @@
 // GloamingForest - U21 (lich): gtests of src/core/lich/TowerMath.
 
+#include <algorithm>
 #include <cmath>
 
 #include <gtest/gtest.h>
@@ -83,3 +84,25 @@ TEST(LichTowerMath, SegmentPlan) {
     EXPECT_TRUE(plan[11].gallery);
     EXPECT_FALSE(plan[10].gallery);
 }
+
+#include "core/lich/Simplex.h"
+
+// org.joml.SimplexNoise#noise(x, y, z) as LichYardBox uses it: bounded, deterministic, continuous
+// and not flat.
+TEST(LichSimplex, BoundedContinuousAndVaried) {
+    float lo = 1.0F, hi = -1.0F;
+    for (int i = 0; i < 2000; ++i) {
+        float x = float(i % 37) * 0.35F - 3.0F, y = float(i % 11) * 0.7F + 1024.0F, z = float(i / 37) * 0.29F - 7.0F;
+        float v = simplex3(x, y, z);
+        EXPECT_LE(std::abs(v), 1.05F);
+        EXPECT_EQ(v, simplex3(x, y, z));
+        EXPECT_LT(std::abs(simplex3(x + 1e-3F, y, z) - v), 0.05F);
+        lo = std::min(lo, v);
+        hi = std::max(hi, v);
+    }
+    EXPECT_LT(lo, -0.3F);
+    EXPECT_GT(hi, 0.3F);
+}
+
+// At the origin the first corner's offset is zero and the other three lie beyond the 0.6 radius.
+TEST(LichSimplex, ZeroAtTheOrigin) { EXPECT_EQ(simplex3(0.0F, 0.0F, 0.0F), 0.0F); }

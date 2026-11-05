@@ -44,6 +44,8 @@
 #include "feature/entity/Entity.h"
 #include "feature/ext/entity/EntityExt.h"
 #include "feature/lich/Common.h"
+#include "feature/lich/Edits.h"
+#include "feature/lich/Pending.h"
 #include "feature/projectile/Projectile.h"
 #include "game/Blocks.h"
 #include "mod/Log.h"
@@ -612,6 +614,29 @@ void onSpawn(Actor& a) {
     syncProperties(*m, *s);
 }
 
+/// Lich#deflection for projectiles whose hit the unit does not run itself: U9's wand bolt (a member
+/// of #twilightforest:lich_deflects_phase_2 like the lich bolt and bomb, whose own hits call
+/// deflect). Java deflects in Projectile#hitTargetOrDeflectSelf before the hit; here a wand bolt
+/// whose path of the next two ticks crosses the Lich's box is deflected now, before its hit.
+void deflectIncoming(Mob& m) {
+    auto  p   = m.getFeetPos();
+    AABB  box{Vec3{p.x - 6.0f, p.y - 6.0f, p.z - 6.0f}, Vec3{p.x + 6.0f, p.y + 8.0f, p.z + 6.0f}};
+    auto  aabb = m.getAABB();
+    for (auto* a : actorsIn(m.getDimensionBlockSource(), dimOf(m), box)) {
+        if (!a || !isType(*a, kWandBolt) || !a->isAlive()) continue;
+        auto pos = a->getPosition();
+        auto v   = gf::projectile::ext::velocity(*a);
+        bool hits = false;
+        for (int i = 1; i <= 16 && !hits; ++i) {
+            float k = static_cast<float>(i) / 8.0F; // two ticks ahead
+            Vec3  q{pos.x + v.x * k, pos.y + v.y * k, pos.z + v.z * k};
+            hits = q.x >= aabb.min.x - 0.3f && q.x <= aabb.max.x + 0.3f && q.y >= aabb.min.y - 0.3f && q.y <= aabb.max.y + 0.3f && q.z >= aabb.min.z - 0.3f
+                && q.z <= aabb.max.z + 0.3f;
+        }
+        if (hits && deflect(m, *a, projectileOwner(*a))) log().info("lich: deflected {}", a->getTypeName());
+    }
+}
+
 /// Lich#customServerAiStep.
 void serverStep(Actor& a) {
     auto* m = self(a);
@@ -637,6 +662,7 @@ void serverStep(Actor& a) {
     }
     s->previousPhase = phase;
     syncProperties(*m, *s);
+    if (phase > 1) deflectIncoming(*m);
 }
 
 /// Lich#aiStep.
@@ -889,7 +915,14 @@ Json statesJson(Block const& block) {
 
 LichState* lichState(Actor const& actor) {
     if (!isType(actor, kLich)) return nullptr;
-    return &states()[uidOf(actor)];
+    auto [it, created] = states().try_emplace(uidOf(actor));
+    if (created) {
+        // the map is a cache: a Lich whose record was dropped (unloaded, pruned) gets its saved
+        // fields back from its document (Behaviour::save's last write)
+        auto const& saved = ge::data(const_cast<Actor&>(actor), "entity:save");
+        if (saved.is_object() && !saved.empty()) load(const_cast<Actor&>(actor), saved);
+    }
+    return &it->second;
 }
 
 bool isLich(Actor const& actor) { return isType(actor, kLich); }
@@ -1207,7 +1240,21 @@ bool deflect(Mob& lich, Actor& projectile, Actor* owner) {
 }
 
 void levelTick() {
-    static int sweep = 0;
+    static int sweep = 0, queued = 0, leashes = 0;
+    if (++queued >= 20) {
+        queued = 0;
+        pending::tick();
+    }
+    if (++leashes >= 100) {
+        leashes = 0;
+        if (auto level = ll::service::getLevel())
+            level->forEachPlayer(std::function<bool(Player&)>([](Player& p) {
+                auto f = p.getFeetPos();
+                edits::tickTethers(p.getDimensionBlockSource(), dimOf(p), AABB{Vec3{f.x - 48.0f, f.y - 24.0f, f.z - 48.0f}, Vec3{f.x + 48.0f, f.y + 24.0f, f.z + 48.0f}});
+                return true;
+            }));
+    }
+    edits::tickLeashes();
     if (++sweep >= 200) {
         sweep = 0;
         pruneRandoms();
@@ -1251,7 +1298,7 @@ void registerLich() {
         .shouldSpawnLoot     = [](Mob& m) { return !isShadowClone(m) && gameRuleDoMobLoot(); },
         .shouldCreateSpawner = [](Mob& m) { return !isShadowClone(m); },
         .tickDeath           = [](Mob& m, int t) { tickDeath(m, t); },
-        .deathAnimationFinished = [](Mob& m, int t) { return isShadowClone(m) ? t >= 20 : t >= kDeathDuration; },
+        .deathAnimationFinished = [](Mob&, int t) { return t >= kDeathDuration; }, // Lich#isDeathAnimationFinished, clones too
         .deathContainer =
             [](Mob& m, gf::core::jrand::RandomSource&) {
                 return randomOf(m).nextBoolean() ? std::string("twilightforest:canopy_chest") : std::string("twilightforest:twilight_oak_chest");

@@ -15,16 +15,31 @@
       "scripts": {
         "animate": [
           {
-            "base": "!query.property('gf:on_lectern')"
+            "base": "!variable.on_lectern"
           },
           {
-            "lectern": "query.property('gf:on_lectern')"
-          }
+            "lectern": "variable.on_lectern"
+          },
+          "flip"
+        ],
+        "pre_animation": [
+          "variable.on_lectern = query.property('gf:on_lectern');",
+          "variable.dt = math.min(query.delta_time * 20, 4);",
+          "variable.flip_t = variable.flip_t ?? 0; variable.flip = variable.flip ?? 0; variable.flip_a = variable.flip_a ?? 0;",
+          "variable.turn = math.random_integer(0, 3) - math.random_integer(0, 3); variable.turn = variable.turn == 0 ? (math.random(0, 1) < 0.5 ? 1 : -1) : variable.turn;",
+          "variable.flip_t = math.random(0, 1) < variable.dt / (variable.on_lectern ? 120 : 30) ? variable.flip_t + variable.turn : variable.flip_t;",
+          "variable.flip_f = math.clamp((variable.flip_t - variable.flip) * 0.4, -0.2, 0.2);",
+          "variable.flip_a = variable.flip_a + (variable.flip_f - variable.flip_a) * math.min(0.9 * variable.dt, 1);",
+          "variable.flip = variable.flip + variable.flip_a * variable.dt;",
+          "variable.flip_right = math.clamp((variable.flip + 0.25 - math.floor(variable.flip + 0.25)) * 1.6 - 0.3, 0, 1);",
+          "variable.flip_left = math.clamp((variable.flip + 0.75 - math.floor(variable.flip + 0.75)) * 1.6 - 0.3, 0, 1);",
+          "variable.open_angle = variable.on_lectern ? 1.5 : (math.sin(query.life_time * 20 * 0.4 * 57.2958) * 0.3 + 1.25) * 0.9;"
         ]
       },
       "animations": {
         "base": "animation.twilightforest.death_tome.base",
-        "lectern": "animation.twilightforest.death_tome.lectern"
+        "lectern": "animation.twilightforest.death_tome.lectern",
+        "flip": "animation.twilightforest.death_tome.flip"
       },
       "render_controllers": ["controller.render.twilightforest.death_tome"],
       "spawn_egg": {

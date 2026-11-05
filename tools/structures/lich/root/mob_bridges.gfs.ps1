@@ -1,6 +1,7 @@
 # U21 (lich): the spawner bridges that cross the central tower's shaft (original designs, rule R19).
-# Each runs along +x from a junction facing west at (0, 0, 1) (top up); the far end carries the same
-# junction facing east with its top down, for the upside-down placement LichTowerSegment rolls.
+# Each runs along +x across the shaft. The junction is a vertical one in the middle of the deck
+# (front up, top east) that meets the slice's mob bridge jigsaw above it (front down); TF's
+# LichTowerSegment keeps or spins that jigsaw's top by 180, which turns the bridge end for end.
 . (Join-Path $PSScriptRoot '../LichLib.ps1')
 $NS = 'twilightforest:lich_tower/'
 $L  = 10
@@ -8,8 +9,7 @@ $L  = 10
 function New-LichMobBridge([string]$id, [scriptblock]$shape) {
     $t = New-Gft -Id "$NS$id" -Size $L, 3, 3 -Out "lich/root/$id"
     & $shape $t
-    Add-GftJigsaw $t 0 0 1 -Front west -Top up -Name 'gf:mob_bridge'
-    Add-GftJigsaw $t ($L - 1) 0 1 -Front east -Top down -Name 'gf:mob_bridge'
+    Add-GftJigsaw $t 5 0 1 -Front up -Top east -Name 'gf:mob_bridge'
     Save-Gft $t
 }
 

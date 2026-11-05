@@ -100,7 +100,7 @@ foreach ($j in @(@(12, 1, 6, 'east'), @(0, 1, 6, 'west'), @(6, 1, 0, 'north'), @
     Add-GftJigsaw $t $j[0] $j[1] $j[2] -Front $j[3] -Name 'gf:lich_tower/bridge_out' -Target 'gf:lich_tower/bridge'
 }
 foreach ($w in @(@(3, 3, 0), @(9, 3, 12), @(0, 3, 9), @(12, 3, 3))) { Set-GftBlock $t $w[0] $w[1] $w[2] 'minecraft:iron_bars' }
-Add-GftJigsaw $t 1 3 6 -Front east -Name 'gf:mob_bridge_wall' -Target 'gf:mob_bridge'
+Add-GftJigsaw $t 6 4 6 -Front down -Top east -Name 'gf:mob_bridge_center' -Target 'gf:mob_bridge'
 Add-GftJigsaw $t $C 0 $C -Front down -Top north -Name 'gf:lich_tower/tower_below'
 Add-GftJigsaw $t $C ($H - 1) $C -Front up -Top north -Name 'gf:lich_tower/tower_above' -Target 'gf:lich_tower/tower_below'
 Add-GftDataMarker $t 6 3 2 'south:2:2'

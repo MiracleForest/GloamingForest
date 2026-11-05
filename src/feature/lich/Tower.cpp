@@ -34,6 +34,8 @@
 #include <algorithm>
 #include <cctype>
 #include <cmath>
+#include <functional>
+#include <limits>
 #include <map>
 #include <memory>
 #include <optional>
@@ -44,14 +46,18 @@
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/block/Block.h"
 
+#include "core/lich/Simplex.h"
 #include "core/lich/TowerMath.h"
 #include "feature/ext/landmark/LandmarkExt.h"
 #include "feature/ext/structure/Paintings.h"
 #include "feature/ext/structure/Placement.h"
 #include "feature/ext/structure/Processors.h"
 #include "feature/ext/structure/TemplateDefinitions.h"
+#include "feature/features/Features.h"
 #include "feature/landmark/Landmark.h"
 #include "feature/lich/Common.h"
+#include "feature/lich/Lich.h"
+#include "feature/lich/Pending.h"
 #include "feature/structure/Structure.h"
 #include "feature/structure/bases/Component.h"
 #include "feature/structure/bases/TemplatePieces.h"
@@ -312,6 +318,106 @@ void removeIfBanister(Region& region, BlockPos const& pos, BlockBox const& chunk
     if (auto const* air = game::blockWith("minecraft:air")) region.setBlock(pos, *air, 2);
 }
 
+// ---- label parsing (LichTowerWingRoom / LichTowerFoyer data markers) ------------------------------------
+
+/// Java's String#split(regex) for one literal character: trailing empty strings are dropped.
+std::vector<std::string> javaSplit(std::string const& s, char sep) {
+    std::vector<std::string> out;
+    std::size_t              start = 0;
+    for (;;) {
+        auto at = s.find(sep, start);
+        out.push_back(s.substr(start, at == std::string::npos ? std::string::npos : at - start));
+        if (at == std::string::npos) break;
+        start = at + 1;
+    }
+    if (out.size() > 1)
+        while (!out.empty() && out.back().empty()) out.pop_back();
+    return out;
+}
+
+/// StringUtils.isNumeric: non-empty, digits only.
+bool isNumeric(std::string const& s) { return !s.empty() && std::all_of(s.begin(), s.end(), [](unsigned char c) { return std::isdigit(c) != 0; }); }
+
+/// ResourceLocation.bySeparator(label, sep): "twilightforest.chests.x" -> "twilightforest:chests/x"
+/// (the first separator splits the namespace, the others become '/'); no separator: minecraft:.
+std::string bySeparator(std::string const& label, char sep) {
+    auto at = label.find(sep);
+    if (at == std::string::npos) return "minecraft:" + label;
+    std::string path = label.substr(at + 1);
+    std::replace(path.begin(), path.end(), sep, '/');
+    return label.substr(0, at) + ":" + path;
+}
+
+int quarterTurns(Rotation r) {
+    switch (r) {
+    case Rotation::None: return 0;
+    case Rotation::Clockwise90: return 1;
+    case Rotation::Clockwise180: return 2;
+    case Rotation::Counterclockwise90: return 3;
+    }
+    return 0;
+}
+Rotation fromQuarterTurns(int q) {
+    static Rotation const k[] = {Rotation::None, Rotation::Clockwise90, Rotation::Clockwise180, Rotation::Counterclockwise90};
+    return k[((q % 4) + 4) % 4];
+}
+/// Rotation#getRotated.
+Rotation compose(Rotation a, Rotation b) { return fromQuarterTurns(quarterTurns(a) + quarterTurns(b)); }
+int      horizontalIndex(Orientation o) { return o == Orientation::South ? 0 : o == Orientation::West ? 1 : o == Orientation::North ? 2 : 3; }
+/// RotationUtil.getRelativeRotation(from, to): the rotation that turns `from` into `to`.
+Rotation relativeRotation(Orientation from, Orientation to) { return fromQuarterTurns(horizontalIndex(to) - horizontalIndex(from)); }
+/// DirectionUtil.fromStringOrElse(name, fallback) for the horizontal names.
+Orientation directionOr(std::string const& name, Orientation fallback) {
+    if (name == "north") return Orientation::North;
+    if (name == "south") return Orientation::South;
+    if (name == "west") return Orientation::West;
+    if (name == "east") return Orientation::East;
+    return fallback;
+}
+char const* orientationName(Orientation o) {
+    switch (o) {
+    case Orientation::North: return "north";
+    case Orientation::South: return "south";
+    case Orientation::West: return "west";
+    case Orientation::East: return "east";
+    }
+    return "north";
+}
+
+/// LichTowerWingRoom#pickRandomMob: one of the label's comma list, else defaultRandomMob.
+std::string pickRandomMob(RandomSource& random, std::vector<std::string> const& params) {
+    if (params.size() >= 2) {
+        auto monsters = javaSplit(params[1], ',');
+        if (!monsters.empty()) {
+            auto const& label = monsters[random.nextInt(static_cast<int>(monsters.size()))];
+            if (label == "hedge_spider") return "twilightforest:hedge_spider";
+            if (label == "swarm_spider") return "twilightforest:swarm_spider";
+            // EntityType.byString(label).orElse(ZOMBIE): a well-formed id, else a zombie
+            std::string id = label.find(':') == std::string::npos ? "minecraft:" + label : label;
+            bool ok = !label.empty() && std::all_of(label.begin(), label.end(), [](unsigned char c) { return std::islower(c) || std::isdigit(c) || c == '_' || c == ':' || c == '.' || c == '/'; });
+            return ok ? id : "minecraft:zombie";
+        }
+    }
+    switch (random.nextInt(10)) { // defaultRandomMob
+    case 7:
+    case 8:
+    case 9: return "minecraft:skeleton";
+    case 6: return "minecraft:spider";
+    case 5: return "minecraft:cave_spider";
+    case 4: return "twilightforest:hedge_spider";
+    case 3: return "twilightforest:swarm_spider";
+    default: return "minecraft:zombie";
+    }
+}
+
+/// A chest-like container with a facing and a loot table: the block now, the loot table once the
+/// chunk is loaded (gf::loot::placeContainer, Pending.h).
+void placeContainer(Region& region, BlockPos const& pos, std::string const& id, Orientation facing, std::string const& table, std::int64_t seed) {
+    static int const kFacing[] = {2, 5, 3, 4}; // FacingID of North, East, South, West
+    gf::feature::lich::pending::add(region.dimension(), pos, "container",
+                                    Json{{"block", id}, {"facing", kFacing[static_cast<int>(facing)]}, {"table", table}, {"seed", seed}});
+}
+
 // ---- the piece base ----------------------------------------------------------------------------------
 
 class LichPiece : public JigsawPiece, public sb::SortablePiece {
@@ -376,11 +482,14 @@ public:
 
 protected:
     void handleDataMarker(std::string const& label, BlockPos const& pos, Region& region, RandomSource& random, BlockBox const& chunk, Rotation) override {
-        auto at       = label.find('@');
-        auto name     = label.substr(0, at);
-        if (!putChest || name != (chestSide ? "chest_a" : "chest_b")) return;
-        // the chest faces the marker's direction (default south: CLOCKWISE_180 of north)
-        placeChest(region, chunk, random, pos.x, pos.y, pos.z, "minecraft:chest", "twilightforest:chests/tower_room");
+        auto split = javaSplit(label, '@');
+        if (split.empty()) return;
+        Rotation dataRotation = split.size() == 1 ? Rotation::Clockwise180 : relativeRotation(Orientation::North, directionOr(split[1], Orientation::South));
+        // the chest generates at one of the two markers only
+        if (!putChest || split[0] != (chestSide ? "chest_a" : "chest_b") || !chunk.contains(pos.x, pos.y, pos.z)) return;
+        Orientation facing = rotate(Orientation::North, compose(placeSettings.rotation, dataRotation));
+        placeBlock(region, "minecraft:chest", Json{{"facing", orientationName(facing)}}, pos.x, pos.y, pos.z, chunk);
+        placeContainer(region, pos, "minecraft:chest", facing, "twilightforest:chests/tower_room", random.nextLong());
         placeBlock(region, "twilightforest:canopy_planks", Json::object(), pos.x, pos.y - 1, pos.z, chunk);
     }
 
@@ -471,12 +580,18 @@ public:
 protected:
     void handleDataMarker(std::string const& label, BlockPos const& pos, Region& region, RandomSource& random, BlockBox const& chunk, Rotation) override {
         placeBlock(region, "minecraft:air", Json::object(), pos.x, pos.y, pos.z, chunk);
-        if (label == "sapling" || label == "tree") {
-            // TFStructureHelper#randomPlant (the tree features are F5 / U3 features: a plant here)
-            static char const* const kPlants[] = {"minecraft:oak_sapling", "minecraft:spruce_sapling", "minecraft:birch_sapling", "minecraft:jungle_sapling",
-                                                  "minecraft:acacia_sapling", "minecraft:dark_oak_sapling", "minecraft:brown_mushroom", "minecraft:red_mushroom",
-                                                  "minecraft:dead_bush"};
-            placeBlock(region, kPlants[random.nextInt(9)], Json::object(), pos.x, pos.y, pos.z, chunk);
+        // TFStructureHelper#randomPlant: a potted oak / spruce / birch / jungle sapling, red or brown mushroom
+        static char const* const kPlants[] = {"minecraft:potted_oak_sapling",    "minecraft:potted_spruce_sapling", "minecraft:potted_birch_sapling",
+                                              "minecraft:potted_jungle_sapling", "minecraft:potted_red_mushroom",   "minecraft:potted_brown_mushroom"};
+        if (label == "sapling") {
+            placeBlock(region, kPlants[random.nextInt(6)], Json::object(), pos.x, pos.y, pos.z, chunk);
+        } else if (label == "tree") {
+            // TFStructureHelper#randomTree(nextInt(4)): oak, spruce, birch or a jungle tree without
+            // vines; a plant when the tree does not fit
+            static char const* const kTrees[] = {"minecraft:oak", "minecraft:spruce", "minecraft:birch", "minecraft:jungle_tree_no_vine"};
+            char const*              tree     = kTrees[random.nextInt(4)];
+            if (!chunk.contains(pos.x, pos.y, pos.z) || !gf::features::place(tree, region, pos, random))
+                placeBlock(region, kPlants[random.nextInt(6)], Json::object(), pos.x, pos.y, pos.z, chunk);
         }
     }
 };
@@ -484,6 +599,9 @@ protected:
 class TowerBase final : public LichPiece {
 public:
     explicit TowerBase(JigsawPlaceContext const& ctx) : LichPiece(kBase, 1, gid("tower_base"), ctx) {
+        // LichTowerUtil.addDefaultProcessors(placeSettings.addProcessor(TrimProcessor.INSTANCE)):
+        // the trim processor runs first
+        placeSettings.processors.insert(placeSettings.processors.begin(), trimProcessor());
         bbox = adjusted(bbox, 0, 0, 0, 0, 30, 0);
         casketWingIndex = firstMatchIndex([](JigsawRecord const& r) { return r.target == kJunctionBridge; });
         terrain         = TerrainAdjustment::BeardBox;
@@ -499,7 +617,13 @@ public:
     void load(Json const& d) override {
         JigsawPiece::load(d);
         casketWingIndex = d.value("CasketWingIdx", -1);
+        placeSettings.processors.clear();
+        placeSettings.processors.push_back(trimProcessor());
+        addDefaultProcessors(placeSettings.processors);
     }
+    /// LichTowerBase.TrimProcessor: a polished andesite stair of the base does not replace the
+    /// stone bricks a wing's trim put there.
+    static std::string trimProcessor() { return json({{"processor_type", "gf:lich_tower_trim"}}); }
     void process(JigsawPiece& parent, PieceList& pieces, RandomSource& random, JigsawRecord const& c, int index) override;
 
 protected:
@@ -945,20 +1069,30 @@ private:
         int dx = pos.x - bbox.minX, dz = pos.z - bbox.minZ;
         return dx >= 0 && dx < static_cast<int>(ceiling.size()) && ceiling[dx] == dz;
     }
+    /// LichTowerWingRoom#parseRange: "n" or "a-b" (StringUtils.isNumeric parts), else lo..hi.
     static int parseRange(std::string const& s, RandomSource& random, int lo, int hi) {
-        if (s.empty()) return random.nextIntBetweenInclusive(lo, hi);
-        auto dash = s.find('-');
-        try {
-            if (dash == std::string::npos) return std::stoi(s);
-            return random.nextIntBetweenInclusive(std::stoi(s.substr(0, dash)), std::stoi(s.substr(dash + 1)));
-        } catch (...) {
-            return random.nextIntBetweenInclusive(lo, hi);
+        auto parts = javaSplit(s, '-');
+        if (parts.size() == 1 && isNumeric(parts[0])) return std::stoi(parts[0]);
+        if (parts.size() == 2 && isNumeric(parts[0]) && isNumeric(parts[1])) return random.nextIntBetweenInclusive(std::stoi(parts[0]), std::stoi(parts[1]));
+        return random.nextIntBetweenInclusive(lo, hi);
+    }
+    /// LichTowerWingRoom#getHeadRotation: "n" or "a+b" (a..a+b, mod 16), else 0..15.
+    static int headRotation(std::string const& s, RandomSource& random) {
+        auto parts = javaSplit(s, '+');
+        if (parts.size() == 1 && isNumeric(parts[0])) return std::stoi(parts[0]);
+        if (parts.size() == 2 && isNumeric(parts[0]) && isNumeric(parts[1])) {
+            int src = std::stoi(parts[0]), extra = std::stoi(parts[1]);
+            return ((random.nextIntBetweenInclusive(src, src + extra) % 16) + 16) % 16;
         }
+        return random.nextIntBetweenInclusive(0, 15);
     }
+    /// putCandles: min(4, the label's range or 1..3) lit candles (none at 0).
     void putCandles(Region& region, BlockBox const& chunk, RandomSource& random, std::vector<std::string> const& params, BlockPos const& pos, std::string const& id) {
-        int count = params.size() >= 2 ? std::clamp(parseRange(params[1], random, 1, 3), 1, 4) : random.nextIntBetweenInclusive(1, 3);
-        placeBlock(region, id, Json{{"lit", true}, {"candles", count}}, pos.x, pos.y, pos.z, chunk);
+        int amount = std::min(4, params.size() == 2 ? parseRange(params[1], random, 1, 3) : random.nextIntBetweenInclusive(1, 3));
+        if (amount <= 0) return;
+        placeBlock(region, id, Json{{"lit", true}, {"candles", amount}}, pos.x, pos.y, pos.z, chunk);
     }
+    void handleDataParams(BlockPos const& pos, Region& region, RandomSource& random, BlockBox const& chunk, std::vector<std::string> const& params, Rotation dataRotation);
 
     int                roomSize       = 0;
     bool               generateGround = false;
@@ -969,47 +1103,50 @@ private:
 };
 
 void WingRoom::handleDataMarker(std::string const& label, BlockPos const& pos0, Region& region, RandomSource& random, BlockBox const& chunk, Rotation) {
-    BlockPos pos     = pos0;
-    auto     gt      = label.find('>');
-    std::string variety = gt == std::string::npos ? label : label.substr(gt + 1);
-    if (gt != std::string::npos) {
-        std::string mod = label.substr(0, gt);
+    BlockPos pos      = pos0;
+    auto     modified = javaSplit(label, '>');
+    std::string variety = modified.size() == 2 ? modified[1] : label;
+    if (modified.size() == 2) {
+        auto const& mod = modified[0];
         bool        rope = mod.rfind("rope", 0) == 0, chain = mod.rfind("chain", 0) == 0;
         if (rope || chain) {
+            // danglingBlock: the rope / chain hangs only from the ceiling cell this room allows
+            auto chance = javaSplit(mod.substr(rope ? 4 : 5), '%');
             if (!canHang(pos)) return;
-            std::string params = mod.substr(rope ? 4 : 5);
-            auto        pct    = params.rfind('%');
-            int         len    = parseRange(pct == std::string::npos ? std::string() : params.substr(pct + 1), random, 1, 2);
-            for (int i = 0; i < len; ++i) placeBlock(region, rope ? "twilightforest:rope" : "minecraft:chain", Json::object(), pos.x, pos.y - i, pos.z, chunk);
-            pos.y -= len;
+            int len = parseRange(chance.empty() ? std::string() : chance.back(), random, 1, 2);
+            if (len > 0) {
+                for (int i = 0; i < len; ++i) placeBlock(region, rope ? "twilightforest:rope" : "minecraft:chain", Json::object(), pos.x, pos.y - i, pos.z, chunk);
+                pos.y -= len;
+            }
         } else if (mod == "pedestal") {
             placeBlock(region, "twilightforest:twisted_stone_pillar", Json::object(), pos.x, pos.y, pos.z, chunk);
             pos.y += 1;
         } else if (mod == "below") {
-            pos.y -= 1;
+            pos.y -= 1; // the 9x9 winding_ways room
         }
     }
-    auto at = variety.find('@');
-    std::string body = variety.substr(0, at);
-    std::vector<std::string> options;
-    for (std::size_t s = 0;;) {
-        auto bar = body.find('|', s);
-        options.push_back(body.substr(s, bar == std::string::npos ? std::string::npos : bar - s));
-        if (bar == std::string::npos) break;
-        s = bar + 1;
-    }
-    std::string chosen = options[random.nextInt(static_cast<int>(options.size()))];
-    std::vector<std::string> params;
-    for (std::size_t s = 0;;) {
-        auto colon = chosen.find(':', s);
-        params.push_back(chosen.substr(s, colon == std::string::npos ? std::string::npos : colon - s));
-        if (colon == std::string::npos) break;
-        s = colon + 1;
-    }
+    auto direction = javaSplit(variety, '@');
+    if (direction.empty()) return;
+    Rotation dataRotation = direction.size() == 1 ? Rotation::Clockwise180 : relativeRotation(Orientation::North, directionOr(direction[1], Orientation::South));
+    auto permutations = javaSplit(direction[0], '|');
+    if (permutations.empty()) return;
+    std::string const& chosen = permutations[random.nextInt(static_cast<int>(permutations.size()))];
+    auto               params = javaSplit(chosen, ':');
     if (params.empty()) return;
-    placeBlock(region, "minecraft:air", Json::object(), pos.x, pos.y, pos.z, chunk);
-    auto const& k = params[0];
-    auto put      = [&](char const* id, Json const& states = Json::object()) { placeBlock(region, id, states, pos.x, pos.y, pos.z, chunk); };
+    placeBlock(region, "minecraft:air", Json::object(), pos.x, pos.y, pos.z, chunk); // removeBlock: the data marker's block entity
+    handleDataParams(pos, region, random, chunk, params, dataRotation);
+}
+
+void WingRoom::handleDataParams(BlockPos const& pos, Region& region, RandomSource& random, BlockBox const& chunk, std::vector<std::string> const& params, Rotation dataRotation) {
+    if (!chunk.contains(pos.x, pos.y, pos.z)) return;
+    auto const& k     = params[0];
+    int         dim   = region.dimension();
+    Rotation    state = compose(placeSettings.rotation, dataRotation); // placeSettings.getRotation().getRotated(dataRotation)
+    auto put = [&](std::string const& id, Json const& states = Json::object()) { placeBlock(region, id, states, pos.x, pos.y, pos.z, chunk); };
+    auto facing = [&](Rotation r) { return dirName(rotate(Orientation::North, r)); };
+    // the heads turn with placeSettings.getRotation().getRotated(dataRotation.getRotated(CLOCKWISE_180))
+    Rotation headTurn = compose(placeSettings.rotation, compose(dataRotation, Rotation::Clockwise180));
+    auto     turnHead = [&](int rotation16) { return (rotation16 + 4 * quarterTurns(headTurn)) % 16; };
     if (k == "air" || k == "empty") return;
     if (k == "bookshelf") return put("minecraft:bookshelf");
     if (k == "canopy_shelf" || k == "canopy_bookshelf") return put("twilightforest:canopy_bookshelf");
@@ -1018,77 +1155,164 @@ void WingRoom::handleDataMarker(std::string const& label, BlockPos const& pos0, 
     if (k == "water") return put("minecraft:water");
     if (k == "firefly_jar") return put("twilightforest:firefly_jar");
     if (k == "terrorcotta_arcs") return put("twilightforest:terrorcotta_arcs");
-    if (k == "mason_jar") return put("twilightforest:mason_jar");
+    if (k == "mason_jar") {
+        // putMasonJar: the jar's loot table (or the item the label names), its item turned with the piece
+        put("twilightforest:mason_jar");
+        if (params.size() >= 2) {
+            static std::map<std::string, std::string> const kTables{{"jar", "twilightforest:chests/tower_jars"},
+                                                                    {"room", "twilightforest:chests/tower_room"},
+                                                                    {"library", "twilightforest:chests/tower_library"},
+                                                                    {"potion", "twilightforest:chests/tower_potion"},
+                                                                    {"enchanting", "twilightforest:chests/tower_enchanting"}};
+            // a known table fills the jar; any other label is a table id, or the item when no such
+            // table fills it (fillFromLootTable fails)
+            auto it   = kTables.find(params[1]);
+            Json data = it != kTables.end() ? Json{{"table", it->second}} : Json{{"table", bySeparator(params[1], '.')}, {"item", bySeparator(params[1], '.')}};
+            data["seed"] = random.nextLong();
+            data["item_rotation"] = quarterTurns(placeSettings.rotation) * 4 + (params.size() == 3 ? headRotation(params[2], random) : 0);
+            gf::feature::lich::pending::add(dim, pos, "jar", data);
+        }
+        if (game::blockId(region.getBlock(up(pos))) == "twilightforest:canopy_bookshelf")
+            placeBlock(region, "twilightforest:canopy_slab", Json{{"type", "top"}}, pos.x, pos.y + 1, pos.z, chunk);
+        return;
+    }
     if (k == "canopy_slab") return put("twilightforest:canopy_slab");
     if (k == "canopy_stairs") return put("twilightforest:canopy_stairs");
-    if (k == "creeper_head" || k == "skeleton_skull" || k == "wither_skull" || k == "zombie_head") {
-        static std::map<std::string, char const*> const heads{{"creeper_head", "minecraft:creeper_head"}, {"skeleton_skull", "minecraft:skeleton_skull"},
-                                                              {"wither_skull", "minecraft:wither_skeleton_skull"}, {"zombie_head", "minecraft:zombie_head"}};
-        return put(heads.at(k), Json{{"rotation", params.size() >= 2 ? parseRange(params[1], random, 0, 15) & 15 : random.nextInt(16)}});
+    static std::map<std::string, char const*> const kHeads{{"creeper_head", "minecraft:creeper_head"},
+                                                           {"skeleton_skull", "minecraft:skeleton_skull"},
+                                                           {"wither_skull", "minecraft:wither_skeleton_skull"},
+                                                           {"zombie_head", "minecraft:zombie_head"}};
+    if (auto h = kHeads.find(k); h != kHeads.end()) {
+        int rotation = params.size() >= 2 ? headRotation(params[1], random) : random.nextIntBetweenInclusive(0, 15);
+        return put(h->second, Json{{"rotation", turnHead(rotation)}});
     }
-    if (k == "creeper_candle" || k == "skeleton_candle" || k == "wither_candle" || k == "zombie_candle") {
-        std::string id = k == "wither_candle" ? "twilightforest:wither_skele_skull_candle" : "twilightforest:" + k.substr(0, k.find('_')) + "_skull_candle";
-        int         count = params.size() >= 2 ? std::clamp(parseRange(params[1], random, 1, 3), 1, 4) : random.nextIntBetweenInclusive(1, 3);
-        return put(id.c_str(), Json{{"lighting", "normal"}, {"candles", count}});
-    }
-    if (k == "spawner") {
-        static char const* const kMobs[] = {"minecraft:spider", "minecraft:cave_spider", "twilightforest:hedge_spider", "twilightforest:swarm_spider"};
-        std::string mob;
-        if (params.size() >= 2 && !params[1].empty()) {
-            auto list = params[1];
-            auto first = list.substr(0, list.find(','));
-            mob       = first.find(':') == std::string::npos ? (first == "hedge_spider" || first == "swarm_spider" ? "twilightforest:" + first : "minecraft:" + first) : first;
-        } else {
-            int r = random.nextInt(10);
-            mob   = r < 4 ? kMobs[r] : r < 7 ? "minecraft:skeleton" : "minecraft:zombie";
+    static std::map<std::string, char const*> const kCandleHeads{{"creeper_candle", "twilightforest:creeper_skull_candle"},
+                                                                 {"skeleton_candle", "twilightforest:skeleton_skull_candle"},
+                                                                 {"wither_candle", "twilightforest:wither_skele_skull_candle"},
+                                                                 {"zombie_candle", "twilightforest:zombie_skull_candle"}};
+    auto putHeadCandles = [&](BlockPos const& at, char const* id) {
+        int amount = std::min(4, params.size() >= 2 ? parseRange(params[1], random, 1, 3) : random.nextIntBetweenInclusive(1, 3));
+        if (amount <= 0) return;
+        int rotation = params.size() >= 3 ? headRotation(params[2], random) : random.nextIntBetweenInclusive(0, 15);
+        placeBlock(region, id, Json{{"lighting", "normal"}, {"candles", amount}, {"rotation", turnHead(rotation)}}, at.x, at.y, at.z, chunk);
+    };
+    if (auto h = kCandleHeads.find(k); h != kCandleHeads.end()) return putHeadCandles(pos, h->second);
+    if (k == "spawner" || k == "sinister_spawner") {
+        // configureBaseSpawner: one mob (the label's list or the default roll) with the custom spawn
+        // rules block light 0..7 / sky light 0..15; the spawn range from the third parameter
+        std::string mob = pickRandomMob(random, params);
+        int         range = 0;
+        if (k == "spawner" && params.size() == 3 && isNumeric(params[2])) range = std::clamp(std::stoi(params[2]), 1, 16);
+        if (k == "sinister_spawner" && params.size() >= 3 && isNumeric(params[2])) range = std::clamp(std::stoi(params[2]), 1, 16);
+        gs::TemplateSettings s;
+        s.processors.push_back(sx::compileSpawnerProcessor(range, 0.0F, {{mob, 1}}));
+        s.clip = chunk;
+        s.seed = random.nextLong();
+        bool placed = gs::templates::place(gid(k == "spawner" ? "stamp/spawner" : "stamp/sinister_spawner"), region, pos, s);
+        if (!placed) placeSpawner(region, chunk, pos.x, pos.y, pos.z, mob);
+        if (k == "sinister_spawner") {
+            // putSinisterSpawner: the ominous flame, the ominous spawner drops, the entity scan range
+            Json data{{"entity", mob}};
+            if (range > 0) data["range"] = range;
+            if (params.size() >= 4 && isNumeric(params[3])) data["scan"] = std::clamp(std::stoi(params[3]), 1, 32);
+            gf::feature::lich::pending::add(dim, pos, "sinister", data);
         }
-        placeSpawner(region, chunk, pos.x, pos.y, pos.z, mob);
         return;
     }
-    if (k == "sinister_spawner") return put("twilightforest:sinister_spawner");
-    if (k == "brewing_stand") return put("minecraft:brewing_stand");
-    if (k == "lectern" || k == "empty_lectern" || k == "candled_lectern") {
-        put("minecraft:lectern");
-        if (k == "candled_lectern") {
-            if (random.nextInt(4) != 0) placeBlock(region, "minecraft:candle", Json{{"lit", true}, {"candles", random.nextIntBetweenInclusive(1, 3)}}, pos.x, pos.y + 1, pos.z, chunk);
-            else placeBlock(region, "twilightforest:skeleton_skull_candle", Json{{"lighting", "normal"}, {"candles", random.nextIntBetweenInclusive(1, 3)}}, pos.x, pos.y + 1, pos.z, chunk);
-        }
-        // "lectern": TF puts a writable book on half of them and a Death Tome mimic on the other
-        // half; the book (lectern block entity) and the mimic (an entity spawned at generation) are
-        // not placed yet (docs/units/lich.md, "Not implemented")
-        if (k == "lectern") (void)random.nextBoolean();
+    if (k == "brewing_stand") {
+        // putBrewingStand: three bottles of one potion, blaze powder and fuel
+        put("minecraft:brewing_stand", Json{{"has_bottle_0", true}, {"has_bottle_1", true}, {"has_bottle_2", true}});
+        bool splash = random.nextInt(4) == 0;
+        int  roll   = random.nextInt(7);
+        int  aux    = roll == 6 ? 22 : (roll == 4 || roll == 5) ? 28 : (roll >= 1 && roll <= 3) ? 21 : 0; // strong healing / regeneration / healing / water
+        int  blaze  = random.nextIntBetweenInclusive(1, 5);
+        int  fuel   = random.nextIntBetweenInclusive(10, 20);
+        gf::feature::lich::pending::add(dim, pos, "brewing_stand", Json{{"splash", splash}, {"aux", aux}, {"blaze", blaze}, {"fuel", fuel}});
         return;
     }
-    if (k == "chiseled_canopy_shelf") return put("twilightforest:chiseled_canopy_bookshelf");
-    if (k == "chest" || k == "trapped_chest") {
-        std::string table = "twilightforest:chests/tower_room";
-        if (params.size() >= 2) {
-            static std::map<std::string, std::string> const kTables{{"room", "twilightforest:chests/tower_room"}, {"library", "twilightforest:chests/tower_library"},
-                                                                    {"potion", "twilightforest:chests/tower_potion"}, {"enchanting", "twilightforest:chests/tower_enchanting"},
-                                                                    {"jar", "twilightforest:chests/tower_jars"}};
-            if (auto it = kTables.find(params[1]); it != kTables.end()) table = it->second;
-            else {
-                table = params[1];
-                std::replace(table.begin(), table.end(), '.', '/');
-                if (table.find(':') == std::string::npos && params.size() >= 3) table = params[1] + ":" + params[2];
+    if (k == "lectern") {
+        // putTrappableLectern: half of them hold a writable book, the other half a Death Tome mimic
+        bool mimic = random.nextBoolean();
+        put("minecraft:lectern", Json{{"facing", facing(state)}, {"has_book", !mimic}});
+        gf::feature::lich::pending::add(dim, pos, "lectern", Json{{"mimic", mimic}});
+        return;
+    }
+    if (k == "chiseled_canopy_shelf") {
+        // putTrappableBookshelf: a twelfth are Death Tome spawners; two thirds of the slots hold a book
+        bool hostile = random.nextInt(12) == 0;
+        Json states{{"facing", facing(state)}, {"spawner", hostile}};
+        std::vector<int> filled;
+        for (int i = 0; i < 6; ++i)
+            if (random.nextInt(3) != 0) {
+                filled.push_back(i);
+                states["slot_" + std::to_string(i) + "_occupied"] = true;
             }
+        put("twilightforest:chiseled_canopy_bookshelf", states);
+        Json slots = Json::array();
+        for (int i : filled) {
+            // spawner shelves never hold enchanted books; otherwise 1 in 16 is enchanted at 1..40
+            int enchant = hostile || random.nextInt(16) != 0 ? 0 : random.nextIntBetweenInclusive(1, 40);
+            slots.push_back(Json{{"slot", i}, {"enchant", enchant}});
         }
-        placeChest(region, chunk, random, pos.x, pos.y, pos.z, k == "chest" ? "minecraft:chest" : "minecraft:trapped_chest", table);
+        gf::feature::lich::pending::add(dim, pos, "shelf", Json{{"slots", slots}, {"hostile", hostile}});
+        return;
+    }
+    if (k == "chest" || k == "trapped_chest") {
+        // putChest: the chest turned with the piece and the marker, its loot table, a top slab above it
+        std::string table;
+        if (params.size() == 2) {
+            static std::map<std::string, std::string> const kTables{{"room", "twilightforest:chests/tower_room"},
+                                                                    {"library", "twilightforest:chests/tower_library"},
+                                                                    {"potion", "twilightforest:chests/tower_potion"},
+                                                                    {"enchanting", "twilightforest:chests/tower_enchanting"}};
+            auto it = kTables.find(params[1]);
+            table   = it != kTables.end() ? it->second : bySeparator(params[1], '.');
+        }
+        std::string id = k == "chest" ? "minecraft:chest" : "minecraft:trapped_chest";
+        put(id, Json{{"facing", facing(state)}});
+        if (!table.empty()) placeContainer(region, pos, id, rotate(Orientation::North, state), table, random.nextLong());
+        if (game::blockId(region.getBlock(up(pos))) == "twilightforest:canopy_bookshelf")
+            placeBlock(region, "twilightforest:canopy_slab", Json{{"type", "top"}}, pos.x, pos.y + 1, pos.z, chunk);
         return;
     }
     if (k == "candle" || k == "candles") return putCandles(region, chunk, random, params, pos, "minecraft:candle");
-    if (k.size() > 7 && k.substr(k.size() - 7) == "_candle") return putCandles(region, chunk, random, params, pos, "minecraft:" + k);
+    static char const* const kColors[] = {"white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray", "light_gray", "cyan", "purple", "blue", "brown", "green", "red", "black"};
+    for (auto const* c : kColors)
+        if (k == std::string(c) + "_candle") return putCandles(region, chunk, random, params, pos, "minecraft:" + k);
     if (k == "water_cauldron") {
-        int level = params.size() >= 2 ? std::clamp(parseRange(params[1], random, 1, 3), 0, 3) : random.nextIntBetweenInclusive(1, 3);
-        if (level == 0) return put("minecraft:cauldron");
-        return put("minecraft:water_cauldron", Json{{"level", level}});
+        int amount = std::min(3, params.size() == 2 ? parseRange(params[1], random, 1, 3) : random.nextIntBetweenInclusive(1, 3));
+        if (amount <= 0) return put("minecraft:cauldron");
+        return put("minecraft:water_cauldron", Json{{"level", amount}});
     }
-    if (k == "zombie_trap" || k == "wrought_iron_post") return put("twilightforest:wrought_iron_fence");
-    // any other label: the block with that id ("." or ":" as the separator)
-    std::string id = params.size() >= 2 && k.find('.') == std::string::npos ? k + ":" + params[1] : k;
-    std::replace(id.begin(), id.end(), '.', ':');
-    if (id.find(':') == std::string::npos) id = "minecraft:" + id;
-    if (game::blockWith(id)) put(id.c_str());
+    if (k == "zombie_trap") {
+        // putZombieTrap: a capped (or post) iron fence with a zombie leashed to it on a random side
+        // that stays inside the chunk
+        bool open = region.getBlock(up(pos)).isAir();
+        put("twilightforest:wrought_iron_fence", Json{{"post", open ? "capped" : "post"}});
+        std::vector<Orientation> dirs{Orientation::North, Orientation::East, Orientation::South, Orientation::West};
+        // Direction.Plane.HORIZONTAL.shuffledCopy(random): Util.shuffle over [NORTH, EAST, SOUTH, WEST]
+        for (int i = static_cast<int>(dirs.size()); i > 1; --i) std::swap(dirs[i - 1], dirs[random.nextInt(i)]);
+        int xIn = ((pos.x % 16) + 16) % 16, zIn = ((pos.z % 16) + 16) % 16;
+        std::erase_if(dirs, [&](Orientation d) {
+            return (xIn == 0 && d == Orientation::West) || (zIn == 0 && d == Orientation::North) || (xIn == 15 && d == Orientation::East) || (zIn == 15 && d == Orientation::South);
+        });
+        if (dirs.empty()) return;
+        Orientation d  = dirs[random.nextInt(static_cast<int>(dirs.size()))];
+        BlockPos    at = relative(pos, d);
+        gf::feature::lich::pending::add(dim, pos, "leashed_zombie", Json{{"post", {pos.x, pos.y, pos.z}}, {"at", {at.x + 0.5, at.y - 1, at.z + 0.5}}});
+        return;
+    }
+    if (k == "wrought_iron_post") return put("twilightforest:wrought_iron_fence", Json{{"post", "post"}});
+    if (k == "empty_lectern") return put("minecraft:lectern", Json{{"facing", facing(state)}});
+    if (k == "candled_lectern") {
+        if (random.nextInt(4) != 0) putCandles(region, chunk, random, params, up(pos), "minecraft:candle");
+        else putHeadCandles(up(pos), "twilightforest:skeleton_skull_candle");
+        return put("minecraft:lectern", Json{{"facing", facing(state)}});
+    }
+    // any other label: the block with that id ("." or ":" as the separator), turned like a block
+    std::string id = k.find('.') != std::string::npos ? bySeparator(k, '.') : (k.find(':') == std::string::npos ? "minecraft:" + k : k);
+    if (game::blockWith(id)) put(id);
+    else log().warn("lich: variation label {} names no block ({})", k, templateName);
 }
 
 void WingBridge::tryRoomAndBridge(JigsawPiece& parent, PieceList& pieces, RandomSource& random, JigsawRecord const& c, bool fromCentral, int roomMax, bool ground, int depth,
@@ -1204,9 +1428,21 @@ public:
 protected:
     void handleDataMarker(std::string const& label, BlockPos const& pos, Region& region, RandomSource& random, BlockBox const& chunk, Rotation) override {
         placeBlock(region, "minecraft:air", Json::object(), pos.x, pos.y, pos.z, chunk);
-        // the gallery's magic painting is U22's entity (twilightforest:magic_painting, the variant named
-        // after the gallery); it is not spawned yet (docs/units/lich.md, "Not implemented")
-        if (label == "painting") return;
+        if (label == "painting") {
+            // the gallery's magic painting (U22's twilightforest:magic_painting) facing the piece's
+            // rotation of south, its variant named after the gallery; spawned once the chunk is loaded
+            static std::map<std::string, std::string> const kVariants{
+                {"twilightforest:lich_tower/gallery/castaway_paradise", "twilightforest:castaway_paradise"},
+                {"twilightforest:lich_tower/gallery/darkness", "twilightforest:darkness"},
+                {"twilightforest:lich_tower/gallery/lucid_lands", "twilightforest:lucid_lands"},
+                {"twilightforest:lich_tower/gallery/music_in_the_mire", "twilightforest:music_in_the_mire"},
+                {"twilightforest:lich_tower/gallery/the_hostile_paradise", "twilightforest:the_hostile_paradise"}};
+            auto it = kVariants.find(templateName);
+            if (it == kVariants.end() || !chunk.contains(pos.x, pos.y, pos.z)) return;
+            gf::feature::lich::pending::add(region.dimension(), pos, "magic_painting",
+                                            Json{{"variant", it->second}, {"direction", orientationName(rotate(Orientation::South, placeSettings.rotation))}});
+            return;
+        }
         sx::placePainting(label, pos, region, random, chunk, placeSettings.rotation, 2, 1, "twilightforest:tower_paintings");
     }
 };
@@ -1283,11 +1519,10 @@ void Segment::process(JigsawPiece&, PieceList& pieces, RandomSource& random, Jig
             WingBridge::tryRoomAndBridge(*this, pieces, random, c, true, 4, false, genDepth + 1, std::nullopt);
         }
     } else if (c.target == "gf:mob_bridge" && putMobBridge) {
-        // FrontAndTop.fromFrontAndTop(front, top.getOpposite()) of a horizontal jigsaw (top UP -> DOWN)
-        // names no FrontAndTop value: the roll is kept for the random sequence, the placement uses
-        // the jigsaw as it is
+        // either keep the jigsaw's rotation or spin it 180 (FrontAndTop.fromFrontAndTop(front,
+        // top.getOpposite()); the slice's mob bridge jigsaw is a vertical one, so its top turns)
         JigsawRecord forPlacement = c;
-        (void)random.nextBoolean();
+        if (!random.nextBoolean()) forPlacement.top = opposite(c.top);
         auto id = randomTemplate(random, tid("mob_bridge"));
         auto pc = pick(templatePos(), forPlacement, id, "gf:mob_bridge", random);
         if (!pc) return;
@@ -1298,16 +1533,610 @@ void Segment::process(JigsawPiece&, PieceList& pieces, RandomSource& random, Jig
     }
 }
 
+// ---- the yard (LichYardBox, LichPerimeterFence, LichYardGrave, LichYardLights) --------------------------
+
+constexpr char const* kYardPath   = "twilightforest:TFLTPath";
+constexpr char const* kYardFence  = "twilightforest:TFLTFence";
+constexpr char const* kYardGrave  = "twilightforest:TFLTGrave";
+constexpr char const* kYardLights = "twilightforest:TFLTLight";
+
+/// Java's Direction for the yard pieces: the four horizontals and UP (LichYardBox's "no axis").
+struct YardDir {
+    bool        up = true;
+    Orientation h  = Orientation::North;
+    /// Direction#ordinal (DOWN 0, UP 1, NORTH 2, SOUTH 3, WEST 4, EAST 5).
+    [[nodiscard]] int ordinal() const {
+        if (up) return 1;
+        switch (h) {
+        case Orientation::North: return 2;
+        case Orientation::South: return 3;
+        case Orientation::West: return 4;
+        case Orientation::East: return 5;
+        }
+        return 1;
+    }
+    static YardDir fromOrdinal(int o) {
+        switch (o) {
+        case 2: return {false, Orientation::North};
+        case 3: return {false, Orientation::South};
+        case 4: return {false, Orientation::West};
+        case 5: return {false, Orientation::East};
+        default: return {true, Orientation::North};
+        }
+    }
+    /// The axis: 0 x, 1 y, 2 z.
+    [[nodiscard]] int axis() const { return up ? 1 : (h == Orientation::East || h == Orientation::West) ? 0 : 2; }
+};
+
+BlockBox inflated(BlockBox const& b, int n) { return BlockBox{b.minX - n, b.minY - n, b.minZ - n, b.maxX + n, b.maxY + n, b.maxZ + n}; }
+BlockBox inflated(BlockBox const& b, int x, int y, int z) { return BlockBox{b.minX - x, b.minY - y, b.minZ - z, b.maxX + x, b.maxY + y, b.maxZ + z}; }
+BlockBox withY(BlockBox const& b, int minY, int maxY) { return BlockBox{b.minX, minY, b.minZ, b.maxX, maxY, b.maxZ}; }
+/// BoundingBoxUtils.wrappedCoordinates(padding, a, b).
+BlockBox wrapped(int padding, BlockPos const& a, BlockPos const& b) {
+    return BlockBox{std::min(a.x, b.x) - padding, std::min(a.y, b.y) - padding, std::min(a.z, b.z) - padding,
+                    std::max(a.x, b.x) + padding, std::max(a.y, b.y) + padding, std::max(a.z, b.z) + padding};
+}
+/// BoundingBoxUtils.safeRetract(box, direction, length) for a horizontal direction or UP.
+BlockBox safeRetract(BlockBox const& b, YardDir d, int length) {
+    int axis = d.axis();
+    if (span(b, axis) <= length) return b;
+    if (d.up) return adjusted(b, 0, 0, 0, 0, -length, 0);
+    switch (d.h) {
+    case Orientation::West: return adjusted(b, length, 0, 0, 0, 0, 0);
+    case Orientation::East: return adjusted(b, 0, 0, 0, -length, 0, 0);
+    case Orientation::North: return adjusted(b, 0, 0, length, 0, 0, 0);
+    case Orientation::South: return adjusted(b, 0, 0, 0, 0, 0, -length);
+    }
+    return b;
+}
+/// BoundingBoxUtils.getIntersectionOfSBBs (nullopt when they do not meet).
+std::optional<BlockBox> intersection(BlockBox const& a, BlockBox const& b) {
+    if (a.maxX < b.minX || a.minX > b.maxX || a.maxY < b.minY || a.minY > b.maxY || a.maxZ < b.minZ || a.minZ > b.maxZ) return std::nullopt;
+    return BlockBox{std::max(a.minX, b.minX), std::max(a.minY, b.minY), std::max(a.minZ, b.minZ), std::min(a.maxX, b.maxX), std::min(a.maxY, b.maxY), std::min(a.maxZ, b.maxZ)};
+}
+/// BoundingBox#getCenter.
+BlockPos center(BlockBox const& b) { return BlockPos{b.minX + (b.maxX - b.minX + 1) / 2, b.minY + (b.maxY - b.minY + 1) / 2, b.minZ + (b.maxZ - b.minZ + 1) / 2}; }
+/// BoundingBoxUtils.bottomCenterOf.
+BlockPos bottomCenter(BlockBox const& b) { return BlockPos{b.minX + (b.maxX - b.minX + 1) / 2, b.minY, b.minZ + (b.maxZ - b.minZ + 1) / 2}; }
+/// Mth.lerp(delta, a, b) (float).
+float lerpF(float delta, float a, float b) { return a + delta * (b - a); }
+int   clampI(int v, int lo, int hi) { return std::min(std::max(v, lo), hi); }
+int   signI(int v) { return v > 0 ? 1 : v < 0 ? -1 : 0; }
+
+/// The first of `ids` the block registry knows (Bedrock renamed a few of them).
+Block const* firstBlock(std::initializer_list<char const*> ids) {
+    for (auto const* id : ids)
+        if (auto const* b = game::blockWith(id)) return b;
+    return nullptr;
+}
+
+bool isDirt(std::string const& id) {
+    static std::set<std::string> const kDirt{"minecraft:dirt",      "minecraft:grass_block",    "minecraft:podzol", "minecraft:coarse_dirt",
+                                             "minecraft:mycelium",  "minecraft:dirt_with_roots", "minecraft:moss_block", "minecraft:mud",
+                                             "minecraft:muddy_mangrove_roots", "minecraft:grass"};
+    return kDirt.contains(id) || gf::tags::has(gf::tags::Registry::Block, "minecraft:dirt", id);
+}
+
+/// LichYardBox: the dirt of the yard (doDirtMotley) and its paths; a path along an axis places
+/// its spruce fence and gets the graves along it.
+class YardBox final : public gs::Piece, public sb::SortablePiece {
+public:
+    YardBox(BlockBox const& box, float feather, YardDir dir, bool dirt, float scale, float offset)
+    : gs::Piece(kYardPath), feather(feather), dir(dir), dirt(dirt), scale(scale), offset(offset) {
+        bbox = box;
+    }
+    [[nodiscard]] int  getSortKey() const override { return dirt ? std::numeric_limits<int>::min() : std::numeric_limits<int>::min() + 255; }
+    [[nodiscard]] bool terrainAdjusted() const { return dirt; } ///< BEARD_BOX for the dirt, NONE for the paths
+    [[nodiscard]] Json save() const override {
+        auto j          = gs::Piece::save();
+        j["feather"]    = feather;
+        j["direction"]  = dir.ordinal();
+        j["dirt_mix"]   = dirt;
+        j["dirt_scale"] = scale;
+        j["offset"]     = offset;
+        return j;
+    }
+    void load(Json const& d) override {
+        gs::Piece::load(d);
+        feather = d.value("feather", 0.0F);
+        dir     = YardDir::fromOrdinal(d.value("direction", 1));
+        dirt    = d.value("dirt_mix", false);
+        scale   = d.value("dirt_scale", 0.0F);
+        offset  = d.value("offset", 0.0F);
+    }
+
+    void postProcess(Region& region, RandomSource& random, BlockBox const& chunk, BlockPos const&) override {
+        auto inter = intersection(bbox, chunk);
+        if (!inter || scale == 0.0F) return;
+        // the fence only along a path (not the dirt); the box minus the 4 blocks at its start
+        BlockBox fenceBounds = generateFence() ? safeRetract(bbox, YardDir{dir.up, opposite(dir.h)}, 4) : bbox;
+        for (int z = inter->minZ; z <= inter->maxZ; ++z)
+            for (int x = inter->minX; x <= inter->maxX; ++x) processPos(region, random, x, z, fenceBounds, chunk);
+    }
+
+    /// LichYardBox#addDecoration: five tries for a grave beside a path (none for the dirt or the
+    /// first path).
+    void addDecoration(JigsawPiece& parent, PieceList& pieces, RandomSource& random);
+
+private:
+    [[nodiscard]] bool generateFence() const { return !dirt; }
+
+    Block const* pickDirt(int x, int y, int z, RandomSource& random) const {
+        float s     = scale * 2.5F;
+        float randF = random.nextFloat();
+        float noise = randF < 0.25F ? randF * 4.0F : core::lich::simplex3(float(x) * s, float(y) * s + 1024.0F, float(z) * s) * 0.5F + 0.5F;
+        if (noise > 0.6F) return firstBlock({"minecraft:coarse_dirt"});
+        if (noise > 0.4F) return firstBlock({"minecraft:dirt"});
+        return firstBlock({"minecraft:dirt_with_roots", "minecraft:rooted_dirt"}); // rooted dirt
+    }
+
+    void processPos(Region& region, RandomSource& random, int x, int z, BlockBox const& fenceBounds, BlockBox const& chunk) {
+        int      y = region.height(gf::worldgen::Heightmap::MotionBlockingNoLeaves, x, z) - 1;
+        BlockPos at{x, y, z};
+        if (!isDirt(game::blockId(region.getBlock(at)))) return;
+        int   xBorder = std::min(x - bbox.minX, bbox.maxX - x);
+        int   zBorder = std::min(z - bbox.minZ, bbox.maxZ - z);
+        float border  = static_cast<float>(std::min(xBorder, zBorder)) + offset;
+        float level   = border > feather ? 1.0F : std::clamp(border / feather, 0.0F, 1.0F);
+        float noise   = core::lich::simplex3(float(x) * scale, float(y) * scale, float(z) * scale) * 0.5F - 0.5F;
+        if (noise + level < 0.0F) {
+            if (generateFence() && fenceBounds.minX <= x && x <= fenceBounds.maxX && fenceBounds.minZ <= z && z <= fenceBounds.maxZ) {
+                float fenceNoise = core::lich::simplex3(float(x) * 0.15F, float(y) * 0.15F - 1024.0F, float(z) * 0.15F) * 0.5F;
+                if (std::abs(fenceNoise) > 0.15F) {
+                    int  rounded = core::lich::javaRound(fenceNoise + 0.5F);
+                    bool edge    = dir.axis() == 2 ? (x == bbox.minX + rounded || x == bbox.maxX - rounded) : (z == bbox.minZ + rounded || z == bbox.maxZ - rounded);
+                    if (edge)
+                        if (auto const* fence = game::blockWith("minecraft:spruce_fence")) region.setBlock(up(at), *fence, 3); // the shape follows its neighbours
+                }
+            }
+            return;
+        }
+        Block const* state = dirt ? pickDirt(x, y, z, random) : firstBlock({"minecraft:grass_path", "minecraft:dirt_path"});
+        auto const*  air   = game::blockWith("minecraft:air");
+        if (state) region.setBlock(at, *state, 3);
+        // the plants on it go (a dead bush on 1.25 % of the dirt)
+        if (dirt && random.nextFloat() < 0.0125F) {
+            if (auto const* bush = firstBlock({"minecraft:deadbush", "minecraft:dead_bush"})) region.setBlock(up(at), *bush, 3);
+        } else if (air) region.setBlock(up(at), *air, 3);
+        if (air) region.setBlock(up(at, 2), *air, 3);
+        (void)chunk;
+    }
+
+    float   feather = 0.0F;
+    YardDir dir;
+    bool    dirt   = false;
+    float   scale  = 0.0F;
+    float   offset = 0.0F;
+};
+
+/// LichYardLights: candles on iron posts along the first path.
+class YardLights final : public gs::Piece {
+public:
+    YardLights(BlockBox const& box, int axis) : gs::Piece(kYardLights), axis(axis) { bbox = box; }
+    [[nodiscard]] Json save() const override {
+        auto j  = gs::Piece::save();
+        j["axis"] = axis;
+        return j;
+    }
+    void load(Json const& d) override {
+        gs::Piece::load(d);
+        axis = d.value("axis", 1);
+    }
+    void postProcess(Region& region, RandomSource& random, BlockBox const& chunk, BlockPos const&) override {
+        auto inter = intersection(bbox, inflated(chunk, -1));
+        if (!inter) return;
+        auto isAir = [&](BlockPos const& p) { return game::blockId(region.getBlock(p)) == "minecraft:air"; }; // not cave air
+        for (int z = inter->minZ; z <= inter->maxZ; ++z)
+            for (int x = inter->minX; x <= inter->maxX; ++x) {
+                int      y = region.height(gf::worldgen::Heightmap::WorldSurfaceWg, x, z);
+                BlockPos at{x, y, z};
+                if (!isAir(at) || random.nextFloat() > 0.125F) continue;
+                if (!isAir(BlockPos{x, y, z - 1}) || !isAir(BlockPos{x, y, z + 1}) || !isAir(BlockPos{x + 1, y, z}) || !isAir(BlockPos{x - 1, y, z})) continue;
+                bool nearEdge = axis == 2 ? std::min(x - bbox.minX, bbox.maxX - x) < 3 : std::min(z - bbox.minZ, bbox.maxZ - z) < 3;
+                if (!nearEdge) continue;
+                if (auto const* post = game::blockWith("twilightforest:wrought_iron_fence")) region.setBlock(at, *post, 3);
+                if (auto const* candle = game::blockWithStates("minecraft:candle", Json{{"lit", true}})) region.setBlock(up(at), *candle, 3);
+            }
+    }
+
+private:
+    int axis = 1; ///< Direction.Axis ordinal (x 0, y 1, z 2)
+};
+
+/// The jigsaw pieces of the yard keep only the jigsaw replacement and the structure block ignore.
+void yardProcessors(std::vector<std::string>& p) {
+    p.clear();
+    p.push_back("minecraft:jigsaw_replacement");
+    p.push_back(json({{"processor_type", "minecraft:block_ignore"}, {"blocks", Json::array({Json{{"Name", "minecraft:structure_block"}}})}}));
+}
+
+/// StructureTemplate.calculateRelativePosition(settings, pos): the template position turned by the
+/// placement (no mirror: the lich tower never mirrors).
+BlockPos turned(BlockPos const& p, Rotation r, BlockPos const& pivot) {
+    int i = p.x, k = p.z, l = pivot.x, m = pivot.z;
+    switch (r) {
+    case Rotation::Counterclockwise90: return BlockPos{l - m + k, p.y, l + m - i};
+    case Rotation::Clockwise90: return BlockPos{l + m - k, p.y, m - l + i};
+    case Rotation::Clockwise180: return BlockPos{l + l - i, p.y, m + m - k};
+    default: return p;
+    }
+}
+
+/// LichYardGrave: a grave beside a path, with dirt filled under it down to the ground.
+class YardGrave final : public LichPiece {
+public:
+    YardGrave(JigsawPlaceContext const& ctx, std::string const& id) : LichPiece(kYardGrave, 0, id, ctx) {
+        yardProcessors(placeSettings.processors);
+        terrain     = TerrainAdjustment::BeardBox;
+        groundDelta = 1;
+    }
+    void load(Json const& d) override {
+        JigsawPiece::load(d);
+        yardProcessors(placeSettings.processors);
+    }
+    void postProcess(Region& region, RandomSource& random, BlockBox const& chunk, BlockPos const& pivot) override {
+        // the box shrunk by one and pushed one block toward the path (safeRetract(front, -1))
+        BlockBox fill  = inflated(bbox, -1);
+        auto     front = getSourceJigsaw().front;
+        switch (front) {
+        case Orientation::West: fill.minX -= 1; break;
+        case Orientation::East: fill.maxX += 1; break;
+        case Orientation::North: fill.minZ -= 1; break;
+        case Orientation::South: fill.maxZ += 1; break;
+        }
+        if (auto applicable = intersection(fill, chunk)) {
+            int yUnder = applicable->minY - 1;
+            if (auto const* dirtBlock = game::blockWith("minecraft:dirt"))
+                for (int x = applicable->minX; x <= applicable->maxX; ++x)
+                    for (int z = applicable->minZ; z <= applicable->maxZ; ++z) {
+                        int bottom = region.height(gf::worldgen::Heightmap::OceanFloorWg, x, z);
+                        for (int y = yUnder; y >= bottom; --y) region.setBlock(BlockPos{x, y, z}, *dirtBlock, 3);
+                    }
+        }
+        JigsawPiece::postProcess(region, random, chunk, pivot);
+    }
+};
+
+/// LichPerimeterFence: the iron fence around the yard, from the far end of the path to the two
+/// grounded wing trims beside the tower.
+class PerimeterFence final : public LichPiece {
+public:
+    PerimeterFence(JigsawPlaceContext const& ctx, std::string const& id, RandomSource& random) : LichPiece(kYardFence, 0, id, ctx) {
+        yardProcessors(placeSettings.processors);
+        terrain     = TerrainAdjustment::BeardBox;
+        groundDelta = 2;
+        // a quarter of the fences get a zombie leashed to one of their iron posts
+        if (random.nextFloat() > 0.25F) return;
+        auto posts = postBlocks();
+        if (posts.empty()) return;
+        for (int i = static_cast<int>(posts.size()); i > 1; --i) std::swap(posts[i - 1], posts[random.nextInt(i)]); // Util.shuffle
+        leashPos = add(templatePos(), turned(posts.front(), placeSettings.rotation, placeSettings.pivot));
+    }
+    [[nodiscard]] int spawnLabel() const override { return kDenySpawns; }
+    [[nodiscard]] int getSortKey() const override { return bbox.maxY; } // higher fences later, so lower slabs do not replace full blocks
+    [[nodiscard]] Json save() const override {
+        auto j = JigsawPiece::save();
+        if (leashPos) j["leash_pos"] = Json::array({leashPos->x, leashPos->y, leashPos->z});
+        return j;
+    }
+    void load(Json const& d) override {
+        JigsawPiece::load(d);
+        yardProcessors(placeSettings.processors);
+        leashPos.reset();
+        if (auto it = d.find("leash_pos"); it != d.end() && it->is_array() && it->size() == 3) leashPos = BlockPos{(*it)[0].get<int>(), (*it)[1].get<int>(), (*it)[2].get<int>()};
+    }
+
+    [[nodiscard]] std::vector<JigsawRecord> leftJunctions() const { return matchSpareJigsaws([](JigsawRecord const& r) { return r.name == "gf:lich_tower/fence_edge_left"; }); }
+    [[nodiscard]] std::vector<JigsawRecord> rightJunctions() const { return matchSpareJigsaws([](JigsawRecord const& r) { return r.name == "gf:lich_tower/fence_edge_right"; }); }
+    [[nodiscard]] std::vector<BlockPos> fencePostPositions() const {
+        std::vector<BlockPos> out;
+        for (auto const& r : leftJunctions()) out.push_back(add(templatePos(), r.pos));
+        for (auto const& r : rightJunctions()) out.push_back(add(templatePos(), r.pos));
+        return out;
+    }
+
+    void postProcess(Region& region, RandomSource& random, BlockBox const& chunk, BlockPos const& pivot) override {
+        JigsawPiece::postProcess(region, random, chunk, pivot);
+        generateBoundZombie(region, chunk);
+        generateEscapeLadder(region, chunk);
+    }
+
+private:
+    /// The template's iron fence blocks in the POST state (template positions).
+    [[nodiscard]] std::vector<BlockPos> postBlocks() const {
+        std::vector<BlockPos> out;
+        auto const*           t = gs::templates::get(templateName);
+        if (!t) return out;
+        auto const& palette = t->data.value("palette", Json::array());
+        std::vector<bool> isPost;
+        for (auto const& e : palette)
+            isPost.push_back(e.value("Name", std::string()) == "twilightforest:wrought_iron_fence" && e.value("Properties", Json::object()).value("post", std::string()) == "post");
+        int x = 0, y = 0, z = 0, sx = t->sizeX, sz = t->sizeZ;
+        for (auto const& run : t->data.value("blocks", Json::array())) {
+            int idx = run[0].get<int>(), n = run[1].get<int>();
+            for (int i = 0; i < n; ++i) {
+                if (idx >= 0 && idx < static_cast<int>(isPost.size()) && isPost[idx]) out.push_back(BlockPos{x, y, z});
+                if (++x == sx) {
+                    x = 0;
+                    if (++z == sz) {
+                        z = 0;
+                        ++y;
+                    }
+                }
+            }
+        }
+        return out;
+    }
+    void generateBoundZombie(Region& region, BlockBox const& chunk) {
+        if (!leashPos || !chunk.contains(leashPos->x, leashPos->y, leashPos->z)) return;
+        Orientation facing = getSourceJigsaw().top;
+        BlockPos    at     = relative(*leashPos, facing);
+        if (!chunk.contains(at.x, at.y, at.z)) return;
+        gf::feature::lich::pending::add(region.dimension(), *leashPos, "leashed_zombie",
+                                        Json{{"post", {leashPos->x, leashPos->y, leashPos->z}}, {"at", {at.x + 0.5, at.y - 1, at.z + 0.5}}});
+    }
+    void generateEscapeLadder(Region& region, BlockBox const& chunk) {
+        auto const& src = getSourceJigsaw();
+        if (spareJigsaws.size() != 1 || !src.frontVertical) return;
+        Orientation ladderDir = opposite(src.top);
+        BlockPos    column    = relative(getSourcePosition(), ladderDir);
+        if (!chunk.contains(column.x, column.y, column.z)) return;
+        for (int dy = 1; dy <= 4; ++dy) placeBlock(region, "minecraft:ladder", Json{{"facing", orientationName(ladderDir)}}, column.x, column.y + dy, column.z, chunk);
+    }
+
+    std::optional<BlockPos> leashPos;
+};
+
+/// LichPerimeterFence#nextFence: the next fence of a side, its post shared with `parent`'s first
+/// junction, turned by `rotation`, homing onto the trim's height within 20 blocks of it.
+PerimeterFence* nextFence(PerimeterFence& parent, PieceList& pieces, RandomSource& random, std::vector<JigsawRecord> const& junctions, Rotation rotation,
+                          std::string const& templateId, BlockBox const& destination) {
+    if (junctions.empty()) return nullptr;
+    JigsawRecord const& junction = junctions.front();
+    // FrontAndTop.fromFrontAndTop(front.getOpposite(), rotation.rotate(top))
+    JigsawRecord connect = junction;
+    if (junction.frontVertical) connect.frontUp = !junction.frontUp;
+    else connect.front = opposite(junction.front);
+    connect.top       = rotate(junction.top, rotation);
+    BlockPos post     = add(parent.templatePos(), junction.pos);
+    int      xC       = clampI(post.x, destination.minX, destination.maxX);
+    int      zC       = clampI(post.z, destination.minZ, destination.maxZ);
+    int      hDist    = std::abs(xC - post.x) + std::abs(zC - post.z); // horizontalManhattanDistance
+    int      dY       = 0;
+    if (hDist <= 20) dY = clampI(parent.templatePos().y - 1, destination.minY + 2, destination.maxY - 2) - 1 - parent.templatePos().y;
+    BlockPos parentPos = up(parent.templatePos(), signI(dY) - 1);
+    auto     pc        = JigsawPlaceContext::pickPlaceableJunction(parentPos, junction.pos, connect, templateId, junction.target, random);
+    if (!pc) return nullptr;
+    auto  fence = std::make_unique<PerimeterFence>(*pc, templateId, random);
+    auto* raw   = fence.get();
+    pieces.push_back(std::move(fence));
+    grow(*raw, parent, pieces, random);
+    return raw;
+}
+
+using JunctionGetter = std::vector<JigsawRecord> (PerimeterFence::*)() const;
+
+/// LichPerimeterFence#generateUntilNearDest.
+PerimeterFence* generateUntilNearDest(PieceList& pieces, RandomSource& random, BlockBox const& destBox, int turnAtIndex, PerimeterFence* fence, Rotation turn,
+                                      JunctionGetter getter, std::string const& templateId) {
+    int  infolded = 0, counterRotated = 0;
+    bool foldNext = false;
+    int  foldAt   = random.nextInt(turnAtIndex - 1);
+    for (int idx = 0; idx < 16; ++idx) {
+        bool makeTurn = idx == turnAtIndex;
+        bool march    = idx > turnAtIndex;
+        if (!fence) break;
+        auto junctions = (fence->*getter)();
+        if (junctions.empty()) break;
+        if (march) {
+            // the spare post lines up with the trim: approach it with a right-angle turn
+            auto const& first  = junctions.front();
+            BlockPos    check  = add(fence->templatePos(), first.pos);
+            BlockPos    dest{clampI(check.x, destBox.minX, destBox.maxX), clampI(check.y, destBox.minY, destBox.maxY), clampI(check.z, destBox.minZ, destBox.maxZ)};
+            auto        target = step(rotate(first.top, turn));
+            if ((dest.x - check.x) * target.x + (dest.z - check.z) * target.z == 0) break;
+        } else if (idx == foldAt) {
+            infolded       = random.nextIntBetweenInclusive(1, idx + 1);
+            counterRotated = turnAtIndex - infolded;
+            turnAtIndex += infolded;
+            foldNext = true;
+        }
+        if (infolded > 0) {
+            Rotation nextTurn = foldNext ? turn : Rotation::None;
+            foldNext          = false;
+            fence             = nextFence(*fence, pieces, random, junctions, nextTurn, templateId, destBox);
+            if (--infolded == 0) foldNext = true;
+        } else if (counterRotated > 0) {
+            Rotation nextTurn = foldNext ? compose(Rotation::Clockwise180, turn) : (makeTurn ? turn : Rotation::None);
+            foldNext          = false;
+            fence             = nextFence(*fence, pieces, random, junctions, nextTurn, templateId, destBox);
+            --counterRotated;
+        } else {
+            fence = nextFence(*fence, pieces, random, junctions, makeTurn ? turn : Rotation::None, templateId, destBox);
+        }
+    }
+    return fence;
+}
+
+/// LichPerimeterFence#generateSidedPerimeter.
+void generateSidedPerimeter(PerimeterFence& front, PieceList& pieces, RandomSource& random, std::string const& fullFenceId, BlockBox const& destination, JunctionGetter getter,
+                            Rotation rotation) {
+    PerimeterFence* fence = nextFence(front, pieces, random, (front.*getter)(), Rotation::None, fullFenceId, destination);
+    if (!fence) return;
+    fence = generateUntilNearDest(pieces, random, destination, 4, fence, rotation, getter, fullFenceId);
+    if (!fence) return; // (Java would fail on the null fence here)
+    auto junctions = (fence->*getter)();
+    if (junctions.empty()) return;
+    BlockPos post = add(fence->templatePos(), junctions.front().pos);
+    BlockPos clamped{clampI(post.x, destination.minX, destination.maxX), clampI(post.y, destination.minY, destination.maxY), clampI(post.z, destination.minZ, destination.maxZ)};
+    int      greatest = std::max({std::abs(clamped.x - post.x), std::abs(clamped.y - post.y), std::abs(clamped.z - post.z)});
+    // fences of up to 7 blocks until the trim is within 2
+    for (int distance = std::min(greatest + 1, 32); distance > 2;) {
+        int stepSize = std::min(distance, 7);
+        distance -= stepSize;
+        fence = nextFence(*fence, pieces, random, (fence->*getter)(), rotation, gid(("outer_fence_" + std::to_string(stepSize)).c_str()), destination);
+        if (!fence) return;
+        rotation = Rotation::None;
+    }
+}
+
+/// LichPerimeterFence#getClosestTrimOnGround: the grounded wing trim nearest `pos`.
+std::optional<BlockBox> closestTrimOnGround(PieceList const& pieces, BlockPos const& pos) {
+    std::optional<BlockBox> best;
+    float                   minDist = std::numeric_limits<float>::max();
+    for (auto const& p : pieces) {
+        auto const* beard = dynamic_cast<WingBeard const*>(p.get());
+        if (!beard || !beard->isTrim()) continue;
+        BlockPos bc = bottomCenter(p->bbox);
+        int      dx = pos.x - bc.x, dz = pos.z - bc.z;
+        float    d  = std::sqrt(static_cast<float>(dx * dx + dz * dz));
+        if (d < minDist) {
+            minDist = d;
+            best    = p->bbox;
+        }
+    }
+    return best;
+}
+
+/// LichPerimeterFence#generateFence.
+void generateFence(JigsawPiece& vestibule, PieceList& pieces, RandomSource& random, Orientation direction, BlockPos const& fenceCenter) {
+    std::string full = gid("outer_fence_7");
+    // startPerimeterFence: an outer_fence_7 whose source sits two blocks under the fence centre
+    JigsawRecord oriented = verticalRecord(JigsawRecord{}, true, direction);
+    auto         pc       = JigsawPlaceContext::pickPlaceableJunction(BlockPos{fenceCenter.x, fenceCenter.y - 2, fenceCenter.z}, BlockPos{0, 0, 0}, oriented, full,
+                                                                     "gf:lich_tower/fence_source", random);
+    if (!pc) return;
+    auto  starter = std::make_unique<PerimeterFence>(*pc, full, random);
+    auto* front   = starter.get();
+    pieces.push_back(std::move(starter));
+    grow(*front, vestibule, pieces, random);
+    // the two sides run to the grounded wing trims beside the tower base
+    TowerBase const* base = nullptr;
+    for (auto const& p : pieces)
+        if (auto* b = dynamic_cast<TowerBase const*>(p.get())) {
+            base = b;
+            break;
+        }
+    if (!base) return;
+    BlockPos    baseBottom = bottomCenter(base->bbox);
+    Orientation baseFront  = base->getSourceJigsaw().front;
+    auto        leftDest   = closestTrimOnGround(pieces, relative(baseBottom, clockwise(baseFront), 64));
+    auto        rightDest  = closestTrimOnGround(pieces, relative(baseBottom, counterClockwise(baseFront), 64));
+    if (!leftDest || !rightDest) return;
+    generateSidedPerimeter(*front, pieces, random, full, inflated(*leftDest, -1), &PerimeterFence::leftJunctions, Rotation::Clockwise90);
+    generateSidedPerimeter(*front, pieces, random, full, inflated(*rightDest, -1), &PerimeterFence::rightJunctions, Rotation::Counterclockwise90);
+}
+
+void YardBox::addDecoration(JigsawPiece& parent, PieceList& pieces, RandomSource& random) {
+    int axis = dir.axis();
+    if (axis == 1 || scale != 0.0F) return;
+    int baseY = bbox.minY;
+    for (int i = 0; i < 5; ++i) {
+        // Direction.fromAxisAndDirection(axis, nextBoolean() ? NEGATIVE : POSITIVE).getClockWise()
+        bool        negative = random.nextBoolean();
+        Orientation along    = axis == 0 ? (negative ? Orientation::West : Orientation::East) : (negative ? Orientation::North : Orientation::South);
+        Orientation side     = clockwise(along);
+        float       delta    = lerpF(random.nextFloat(), 0.05F, 0.95F);
+        BlockPos    c        = center(bbox);
+        BlockPos    onPath   = axis == 0 ? BlockPos{sx::lerpDiscrete(delta, bbox.minX, bbox.maxX), c.y, c.z} : BlockPos{c.x, c.y, sx::lerpDiscrete(delta, bbox.minZ, bbox.maxZ)};
+        BlockPos    at       = relative(onPath, side, random.nextIntBetweenInclusive(2, 4));
+        JigsawRecord oriented;
+        oriented.front = side;
+        oriented.top   = Orientation::North;
+        auto graveId   = randomTemplate(random, tid("grave"));
+        if (!graveId) continue;
+        auto pc = JigsawPlaceContext::pickPlaceableJunction(BlockPos{at.x, baseY - 1, at.z}, BlockPos{0, 0, 0}, oriented, *graveId, "gf:lich_tower/grave", random);
+        if (!pc) continue;
+        auto grave = std::make_unique<YardGrave>(*pc, *graveId);
+        if (collides(pieces, grave->bbox)) continue;
+        auto* raw = grave.get();
+        pieces.push_back(std::move(grave));
+        grow(*raw, parent, pieces, random);
+    }
+}
+
+/// LichYardBox#putSidePath.
+YardBox* putSidePath(PieceList& pieces, BlockPos const& nearVestibule, Orientation dirFromVestibule, Orientation side, BlockPos const& pathEnd, int spread) {
+    BlockPos fromVestibule = relative(nearVestibule, side, 24);
+    BlockBox box           = withY(wrapped(1, pathEnd, relative(fromVestibule, opposite(dirFromVestibule), spread)), nearVestibule.y, nearVestibule.y + 10);
+    auto     path          = std::make_unique<YardBox>(box, -1.0F, YardDir{false, dirFromVestibule}, false, 0.0F, 0.0F);
+    auto*    raw           = path.get();
+    pieces.push_back(std::move(path));
+    return raw;
+}
+
+/// LichYardBox#generateYard: the path from the vestibule, the cross path, the two side paths, the
+/// lights along the first path and the graves beside the paths.
+void generateYard(Foyer& foyer, PieceList& pieces, BlockPos const& nearVestibule, BlockPos const& nearFence, RandomSource& random, Orientation dirFromVestibule) {
+    int                   ySurface = foyer.bbox.minY + foyer.getGroundLevelDelta();
+    std::vector<YardBox*> paths;
+    int                   axis     = (dirFromVestibule == Orientation::East || dirFromVestibule == Orientation::West) ? 0 : 2;
+    BlockBox              firstBox = withY(inflated(wrapped(3, nearVestibule, nearFence), 1), ySurface, ySurface + 10);
+    auto                  first    = std::make_unique<YardBox>(firstBox, 2.5F, YardDir{false, dirFromVestibule}, false, 0.35F, -1.0F);
+    paths.push_back(first.get());
+    pieces.push_back(std::move(first));
+    // the cross path, somewhere along the first
+    float    delta     = lerpF(random.nextFloat(), 0.2F, 0.8F);
+    BlockPos randomPos{sx::lerpDiscrete(delta, nearVestibule.x, nearFence.x), sx::lerpDiscrete(delta, nearVestibule.y, nearFence.y), sx::lerpDiscrete(delta, nearVestibule.z, nearFence.z)};
+    constexpr int crossSpan = 24;
+    BlockPos pathLeft  = relative(randomPos, clockwise(dirFromVestibule), crossSpan);
+    BlockPos pathRight = relative(randomPos, counterClockwise(dirFromVestibule), crossSpan);
+    BlockBox crossBox  = withY(wrapped(1, pathLeft, pathRight), ySurface, ySurface + 10);
+    auto     cross     = std::make_unique<YardBox>(crossBox, -1.0F, YardDir{false, clockwise(dirFromVestibule)}, false, 0.0F, 0.0F);
+    paths.push_back(cross.get());
+    pieces.push_back(std::move(cross));
+    BlockPos vestibuleGround{nearVestibule.x, ySurface, nearVestibule.z};
+    paths.push_back(putSidePath(pieces, vestibuleGround, dirFromVestibule, clockwise(dirFromVestibule), pathLeft, crossSpan));
+    paths.push_back(putSidePath(pieces, vestibuleGround, dirFromVestibule, counterClockwise(dirFromVestibule), pathRight, crossSpan));
+    // the lights first, then the graves (they check for overlap with the paths)
+    BlockBox lightBox = inflated(firstBox, axis == 2 ? 3 : 0, 0, axis == 0 ? 3 : 0);
+    pieces.push_back(std::make_unique<YardLights>(lightBox, axis));
+    for (auto* path : paths) path->addDecoration(foyer, pieces, random);
+}
+
+/// LichYardBox#beginYard.
+void beginYard(Foyer& foyer, PieceList& pieces, RandomSource& random) {
+    int  ySurface = foyer.bbox.minY + foyer.getGroundLevelDelta();
+    auto paths    = foyer.matchSpareJigsaws([](JigsawRecord const& r) { return r.target == "gf:lich_tower/path"; });
+    if (paths.empty()) return;
+    JigsawRecord const& path       = paths.front();
+    int                 pathLength = 24 + random.nextInt(8); // nextInt(24, 32)
+    Orientation         direction  = rotate(Orientation::South, foyer.settings().rotation);
+    BlockPos            generate   = add(foyer.templatePos(), path.pos);
+    BlockPos            fenceCenter = relative(generate, direction, pathLength);
+    generateFence(foyer, pieces, random, direction, BlockPos{fenceCenter.x, ySurface, fenceCenter.z});
+    BlockPos nearVestibule = up(relative(generate, direction, 1), 4);
+    BlockPos nearFence     = up(relative(fenceCenter, opposite(direction), 6), -4);
+    generateYard(foyer, pieces, nearVestibule, nearFence, random, direction);
+    // the whole yard: the foyer's centre 10 up and bottom 10 down and every fence post
+    std::vector<BlockPos> spots{up(center(foyer.bbox), 10), up(bottomCenter(foyer.bbox), -10)};
+    for (auto const& p : pieces)
+        if (auto* f = dynamic_cast<PerimeterFence*>(p.get()))
+            for (auto const& post : f->fencePostPositions()) spots.push_back(post);
+    BlockBox full{spots[0].x, spots[0].y, spots[0].z, spots[0].x, spots[0].y, spots[0].z};
+    for (auto const& s : spots) {
+        full.minX = std::min(full.minX, s.x), full.minY = std::min(full.minY, s.y), full.minZ = std::min(full.minZ, s.z);
+        full.maxX = std::max(full.maxX, s.x), full.maxY = std::max(full.maxY, s.y), full.maxZ = std::max(full.maxZ, s.z);
+    }
+    Orientation back    = opposite(foyer.getSourceJigsaw().top);
+    BlockBox    yardBox = safeRetract(withY(inflated(full, 3), ySurface, ySurface + 10), YardDir{false, back}, 5);
+    auto        dirt    = std::make_unique<YardBox>(yardBox, 8.0F, YardDir{true, Orientation::North}, true, 0.1F, 0.0F);
+    auto*       raw     = dirt.get();
+    pieces.push_back(std::move(dirt));
+    raw->addDecoration(foyer, pieces, random);
+}
+
 // ---- start ---------------------------------------------------------------------------------------------
 
 /// LichTowerStructure#getFirstPiece + #generateFromStartingPiece.
-bool layout(gf::landmark::LayoutContext& ctx) {
-    auto& start     = ctx.start;
-    auto  ctxRandom = gf::landmark::ext::contextRandom(start);
-    int   dim       = start.dimension;
-    sx::GenerationContext gctx{ctxRandom.get(), gf::worldgen::seed(), [dim](gf::worldgen::Heightmap type, int x, int z) {
-                                   return gf::landmark::ext::firstOccupiedHeight(dim, x, z, type).value_or(0);
-                               }};
+/// The pieces of the last layoutForTest (placeForTest places them).
+PieceList& testPieces() {
+    static PieceList p;
+    return p;
+}
+
+bool layoutWith(gf::landmark::LayoutContext& ctx, RandomSource& contextRandom, sx::GenerationContext const& gctx) {
+    auto&         start  = ctx.start;
     RandomSource& random = ctx.random;
     // direction = Rotation.getRandom(random).rotate(SOUTH); 24 blocks that way
     static Rotation const kRotations[] = {Rotation::None, Rotation::Clockwise90, Rotation::Clockwise180, Rotation::Counterclockwise90};
@@ -1326,6 +2155,8 @@ bool layout(gf::landmark::LayoutContext& ctx) {
     pieces.push_back(std::move(foyer));
     gContext = &gctx;
     sx::addJigsaws(*raw, *raw, pieces, gctx);
+    // LichTowerStructure#generateFromStartingPiece: the yard once the tower stands
+    beginYard(*raw, pieces, contextRandom);
     gContext = nullptr;
     // spawn labels and the terraformer's trim boxes for the start
     Json spawns = Json::array(), trims = Json::array();
@@ -1336,6 +2167,10 @@ bool layout(gf::landmark::LayoutContext& ctx) {
             int label = l->spawnLabel();
             if (label != -1) spawns.push_back({b.minX, b.minY, b.minZ, b.maxX, b.maxY, b.maxZ, label});
             if (dynamic_cast<Foyer*>(l) || l->isTrim()) trims.push_back({b.minX, b.minY, b.minZ, b.maxX, b.maxY, b.maxZ});
+        } else if (auto* yard = dynamic_cast<YardBox*>(p.get())) {
+            spawns.push_back({b.minX, b.minY, b.minZ, b.maxX, b.maxY, b.maxZ, kYardSpawns});
+            // a yard box that adjusts the terrain (the dirt) counts 5 blocks lower
+            if (yard->terrainAdjusted()) trims.push_back({b.minX, b.minY - 5, b.minZ, b.maxX, b.maxY - 5, b.maxZ});
         }
     }
     start.data["lich_spawns"] = spawns;
@@ -1343,6 +2178,15 @@ bool layout(gf::landmark::LayoutContext& ctx) {
     start.data["lich_ybase"]  = yBase;
     for (auto& p : pieces) ctx.pieces.push_back(std::move(p));
     return true;
+}
+
+bool layout(gf::landmark::LayoutContext& ctx) {
+    auto ctxRandom = gf::landmark::ext::contextRandom(ctx.start);
+    int  dim       = ctx.start.dimension;
+    sx::GenerationContext gctx{ctxRandom.get(), gf::worldgen::seed(), [dim](gf::worldgen::Heightmap type, int x, int z) {
+                                   return gf::landmark::ext::firstOccupiedHeight(dim, x, z, type).value_or(0);
+                               }};
+    return layoutWith(ctx, *ctxRandom, gctx);
 }
 
 /// EntityEvents#getSpawnListIndexAt over the pieces' labels (Deny: none).
@@ -1354,8 +2198,9 @@ int spawnIndex(gf::landmark::Start const& start, BlockPos const& pos) {
         if (!e.is_array() || e.size() != 7) continue;
         if (pos.x < e[0] || pos.y < e[1] || pos.z < e[2] || pos.x > e[3] || pos.y > e[4] || pos.z > e[5]) continue;
         int label = e[6].get<int>();
-        if (label == kDenySpawns) return -1;
-        best = std::max(best, label);
+        // SpawnIndexProvider.Deny answers -1 to the highest-index-wins rule: an overlapping labelled
+        // piece (the boss boundary segment) still gives its list
+        best = std::max(best, label == kDenySpawns ? -1 : label);
     }
     return best;
 }
@@ -1375,8 +2220,52 @@ double terraform(gf::landmark::Start const& start, int x, int y, int z) {
 
 } // namespace
 
+std::vector<PieceBox> layoutForTest(BlockPos const& origin, std::int64_t seed) {
+    gf::landmark::Start start;
+    start.key    = kTowerKey;
+    start.center = core::GlobalPos{0, origin.x, origin.y, origin.z};
+    gf::core::jrand::LegacyRandom startRandom(seed);
+    gf::core::jrand::WorldgenRandom contextRandom(std::make_unique<gf::core::jrand::LegacyRandom>(0));
+    contextRandom.setLargeFeatureSeed(seed, origin.x >> 4, origin.z >> 4);
+    // flat terrain at the origin's height (the first occupied block one below it)
+    int y = origin.y - 1;
+    sx::GenerationContext gctx{&contextRandom, seed, [y](gf::worldgen::Heightmap, int, int) { return y; }};
+    gf::landmark::LayoutContext ctx{start, startRandom, {}};
+    std::vector<PieceBox> out;
+    if (!layoutWith(ctx, contextRandom, gctx)) return out;
+    for (auto const& p : ctx.pieces) out.push_back(PieceBox{p->typeId, p->bbox, p.get()});
+    testPieces() = std::move(ctx.pieces);
+    return out;
+}
+
+void placeForTest(std::function<std::unique_ptr<Region>(BlockPos const&)> const& regionAt, BlockBox const& clip, std::int64_t seed) {
+    pending::Suppress quiet;
+    gf::core::jrand::LegacyRandom random(seed);
+    for (auto& p : testPieces()) {
+        // one call per chunk column the piece meets, each clipped to `clip` (Java's postProcess per chunk)
+        for (int cx = (std::max(p->bbox.minX, clip.minX)) >> 4; cx <= (std::min(p->bbox.maxX, clip.maxX)) >> 4; ++cx)
+            for (int cz = (std::max(p->bbox.minZ, clip.minZ)) >> 4; cz <= (std::min(p->bbox.maxZ, clip.maxZ)) >> 4; ++cz) {
+                BlockBox chunk{std::max(cx << 4, clip.minX), clip.minY, std::max(cz << 4, clip.minZ), std::min((cx << 4) + 15, clip.maxX), clip.maxY,
+                               std::min((cz << 4) + 15, clip.maxZ)};
+                if (chunk.minX > chunk.maxX || chunk.minZ > chunk.maxZ) continue;
+                random.setSeed(seed + cx * 341873128712LL + cz * 132897987541LL);
+                auto region = regionAt(BlockPos{(cx << 4) + 8, chunk.minY, (cz << 4) + 8});
+                if (region) p->postProcess(*region, random, chunk, BlockPos{chunk.minX, chunk.minY, chunk.minZ});
+            }
+    }
+}
+
+void forgetTestPieces() { testPieces().clear(); }
+
 void registerTower() {
     gf::landmark::registerGenerator(kTowerKey, {.layout = layout, .terraform = terraform, .spawnIndex = spawnIndex});
+    // LichTowerBase.TrimProcessor: keeps what is in #minecraft:stone_bricks under the base's stairs
+    gs::registerProcessor("gf:lich_tower_trim", [](Region& region, gs::BlockInfo const&, gs::BlockInfo const& placed, gs::TemplateSettings const&, Json const&) -> std::optional<gs::BlockInfo> {
+        static std::set<std::string> const kStoneBricks{"minecraft:stone_bricks", "minecraft:mossy_stone_bricks", "minecraft:cracked_stone_bricks", "minecraft:chiseled_stone_bricks"};
+        if (placed.block && game::blockId(*placed.block) == "minecraft:polished_andesite_stairs" && kStoneBricks.contains(game::blockId(region.getBlock(placed.pos))))
+            return std::nullopt;
+        return placed;
+    });
     // piece factories (saved starts): the constructors' own arguments come back from load()
     gs::registerPieceType(kFoyer, [](Json const& s) -> std::unique_ptr<gs::Piece> {
         auto p = std::make_unique<Foyer>(JigsawPlaceContext{}, false, false);
@@ -1441,6 +2330,27 @@ void registerTower() {
     });
     gs::registerPieceType(kRoomDecor, [](Json const& s) -> std::unique_ptr<gs::Piece> {
         auto p = std::make_unique<RoomDecor>(0, s.value("Template", std::string()), JigsawPlaceContext{});
+        p->load(s);
+        return p;
+    });
+    gs::registerPieceType(kYardPath, [](Json const& s) -> std::unique_ptr<gs::Piece> {
+        auto p = std::make_unique<YardBox>(BlockBox{}, 0.0F, YardDir{}, false, 0.0F, 0.0F);
+        p->load(s);
+        return p;
+    });
+    gs::registerPieceType(kYardLights, [](Json const& s) -> std::unique_ptr<gs::Piece> {
+        auto p = std::make_unique<YardLights>(BlockBox{}, 1);
+        p->load(s);
+        return p;
+    });
+    gs::registerPieceType(kYardGrave, [](Json const& s) -> std::unique_ptr<gs::Piece> {
+        auto p = std::make_unique<YardGrave>(JigsawPlaceContext{}, s.value("Template", std::string()));
+        p->load(s);
+        return p;
+    });
+    gs::registerPieceType(kYardFence, [](Json const& s) -> std::unique_ptr<gs::Piece> {
+        gf::core::jrand::LegacyRandom unused(0);
+        auto p = std::make_unique<PerimeterFence>(JigsawPlaceContext{}, s.value("Template", std::string()), unused);
         p->load(s);
         return p;
     });

@@ -1,0 +1,13 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "gf:lich_tower/stamp/spawner",
+  "size": [1, 1, 1],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"minecraft:spawner"}
+  ],
+  "blocks": [
+    [1, 1]
+  ]
+}

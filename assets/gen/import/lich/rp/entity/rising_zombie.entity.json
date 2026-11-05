@@ -28,7 +28,7 @@
         "base": "animation.twilightforest.rising_zombie.base",
         "rise": "animation.twilightforest.rising_zombie.rise"
       },
-      "render_controllers": ["controller.render.default"]
+      "render_controllers": ["controller.render.twilightforest.rising_zombie"]
     }
   }
 }

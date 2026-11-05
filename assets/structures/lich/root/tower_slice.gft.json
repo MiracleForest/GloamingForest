@@ -38,7 +38,7 @@
     {"pos":[0,1,6],"front":"west","top":"up","pool":"minecraft:empty","name":"gf:lich_tower/bridge_out","target":"gf:lich_tower/bridge"},
     {"pos":[6,1,0],"front":"north","top":"up","pool":"minecraft:empty","name":"gf:lich_tower/bridge_out","target":"gf:lich_tower/bridge"},
     {"pos":[6,1,12],"front":"south","top":"up","pool":"minecraft:empty","name":"gf:lich_tower/bridge_out","target":"gf:lich_tower/bridge"},
-    {"pos":[1,3,6],"front":"east","top":"up","pool":"minecraft:empty","name":"gf:mob_bridge_wall","target":"gf:mob_bridge"},
+    {"pos":[6,4,6],"front":"down","top":"east","pool":"minecraft:empty","name":"gf:mob_bridge_center","target":"gf:mob_bridge"},
     {"pos":[6,0,6],"front":"down","top":"north","pool":"minecraft:empty","name":"gf:lich_tower/tower_below","target":""},
     {"pos":[6,5,6],"front":"up","top":"north","pool":"minecraft:empty","name":"gf:lich_tower/tower_above","target":"gf:lich_tower/tower_below"}
   ]
