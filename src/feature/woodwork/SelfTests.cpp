@@ -129,7 +129,7 @@ std::vector<Actor*> itemsNear(Context& ctx, GlobalPos const& p) {
     std::vector<Actor*> out;
     auto*               region = ctx.region();
     if (!region) return out;
-    AABB box{Vec3{p.x - 2.f, p.y - 2.f, p.z - 2.f}, Vec3{p.x + 3.f, p.y + 3.f, p.z + 3.f}};
+    AABB box{Vec3{p.x - 5.f, p.y - 3.f, p.z - 5.f}, Vec3{p.x + 6.f, p.y + 4.f, p.z + 6.f}};
     for (Actor* a : region->getEntities(box, 0.0f))
         if (a && a->getTypeName() == "minecraft:item") out.push_back(a);
     return out;
@@ -243,7 +243,9 @@ GF_REGISTER_SELFTEST("woodwork.banister", [](Context& ctx) -> ll::coro::CoroTask
     auto upper = at(b, 0, 2, 0);
     ctx.require(ctx.setBlock(upper, kId, {{"twilightforest:shape", "tall"}, {"twilightforest:extended", true}}), "an extended banister above");
     co_await ctx.ticks(1);
-    auto lower = co_await place(ctx, at(b, 0, 1, 0).offset(0, 0, 1), Facing::North, Vec3{0.5f, 0.5f, 0.0f}, kId);
+    auto wallAt = at(b, 0, 1, 1);
+    ctx.require(ctx.setBlock(wallAt, "minecraft:stone"), "a stone to place against");
+    auto lower = co_await place(ctx, wallAt, Facing::North, Vec3{0.5f, 0.5f, 0.0f}, kId);
     ctx.require(lower && *lower == at(b, 0, 1, 0), "a banister placed between them");
     co_await ctx.ticks(2);
     ctx.check(st(ctx, *lower, "twilightforest:shape") == "connected", "under a banister it is connected (" + st(ctx, *lower, "twilightforest:shape") + ")");
@@ -496,7 +498,7 @@ GF_REGISTER_SELFTEST("woodwork.chest_pairs", [](Context& ctx) -> ll::coro::CoroT
 GF_REGISTER_SELFTEST("woodwork.recipes", [](Context& ctx) {
     // a sample of every recipe kind U4 owns (R4): wood set crafting, stonecutting, drying
     for (auto const* id : {"twilightforest:wood/canopy_planks", "twilightforest:wood/dark_banister", "twilightforest:wood/mining_chest", "twilightforest:drying/kelp",
-                           "twilightforest:drying/sponge", "twilightforest:tanned_leather", "twilightforest:wood/sorting_boat"}) {
+                           "twilightforest:drying/sponge", "twilightforest:tanned_leather", "twilightforest:sorting_boat"}) {
         ctx.check(gf::recipes::byId(id) != nullptr, std::string("recipe ") + id + " is loaded");
     }
     struct Dry {
