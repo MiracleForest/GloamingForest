@@ -324,6 +324,22 @@ std::string lockedEnforcement(std::string const& biome, Preview const& preview) 
     return it == enforcements().end() ? std::string{} : it->second;
 }
 
+/// The white texture the aurora, the world-pass stars and the void plate are drawn with, read from
+/// the mod's own pack folder on the disk: on a remote server the game's pack stack may not resolve
+/// "textures/atmosphere/white" (the remote-mod e2e drew the missing texture: magenta x the vertex
+/// colours, a blue aurora), the file is always there.
+mce::TexturePtr const* whiteTexture() {
+    static std::string const path = [] {
+        std::error_code ec;
+        try {
+            auto f = Mod::getInstance().getSelf().getModDir() / "resource_packs" / "GloamingForest_RP" / "textures" / "atmosphere" / "white.png";
+            if (std::filesystem::exists(f, ec)) return f.string();
+        } catch (...) {}
+        return std::string("textures/atmosphere/white");
+    }();
+    return texture(path);
+}
+
 bool inTwilight(LocalPlayer const& p) { return gDimension.load() >= 0 && static_cast<int>(p.getDimensionId()) == gDimension.load(); }
 
 BlockPos blockPosOf(Vec3 const& pos) { return {static_cast<int>(std::floor(pos.x)), static_cast<int>(std::floor(pos.y)), static_cast<int>(std::floor(pos.z))}; }
@@ -796,7 +812,7 @@ void drawAurora(render::RenderContext& ctx, float partial, bool sky) {
     case AuroraMode::WorldBlend:
     default:
         mat  = particleBlendMaterial();
-        tex  = texture("textures/atmosphere/white");
+        tex  = whiteTexture();
         name = "particles blend";
         if (!tex) return;
         break;
@@ -904,14 +920,14 @@ void drawWorldSky(render::RenderContext& ctx, bool stars, bool voidPlate, StarsM
     if (stars) {
         if (mode == StarsMode::WorldStars) {
             if (auto const* mat = starsMaterial()) drawColouredQuads(ctx.screen, *mat, scaled(starVertices(), r / 100.0f));
-        } else if (auto const* mat = particleBlendMaterial(); mat && texture("textures/atmosphere/white")) {
-            drawSmoothQuads(ctx.screen, *mat, texture("textures/atmosphere/white"), scaled(starVertices(), r / 100.0f));
+        } else if (auto const* mat = particleBlendMaterial(); mat && whiteTexture()) {
+            drawSmoothQuads(ctx.screen, *mat, whiteTexture(), scaled(starVertices(), r / 100.0f));
         }
         logOnce("stars_world", fmt::format("atmosphere: TF stars drawn in the world pass (radius {:.0f})", r));
     }
     if (voidPlate)
-        if (auto const* mat = particleBlendMaterial(); mat && texture("textures/atmosphere/white")) {
-            drawSmoothQuads(ctx.screen, *mat, texture("textures/atmosphere/white"), scaled(voidPlateVertices(), r / 512.0f));
+        if (auto const* mat = particleBlendMaterial(); mat && whiteTexture()) {
+            drawSmoothQuads(ctx.screen, *mat, whiteTexture(), scaled(voidPlateVertices(), r / 512.0f));
             logOnce("void_plate_world", "atmosphere: void plate drawn in the world pass");
         }
 }
