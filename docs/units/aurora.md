@@ -110,9 +110,9 @@ Spec: [docs/spec/aurora.md](../spec/aurora.md). Code: `src/feature/aurora/` (ser
   `pre_effect_script` variables for her look (body yaw, pitch towards her target: getLookAngle) and each
   shield's angle (60 i + tick x 5 from the synced shield anchor); the server sends no particle packets for them.
   The melting particles are still sent through F10's fx (one burst per event).
-- Eye height: Bedrock has no eye-height component; the engine puts a mob's eyes at 0.9 x its collision height
-  (1.62 for the 1.8-high mobs, 2.25 for the queen), where Java has 1.53 (snow guardian, ice crystal), 1.35
-  (ice cores) and 2.125 (queen). `aurora.mob_attributes` reports both (the offsets component holds no eye
-  offset the engine reads for mobs). The other golden attributes (health, speeds, attack, follow range,
-  knockback resistance, box, XP only for a player kill) are gtested against `tests/golden/mobs.json`
+- Eye height: Bedrock has no eye-height component and puts a mob's eyes at 0.9 x its collision height (1.62,
+  2.25); `getEyePos` reads the offsets component's eye offset, which `applyJavaEyeHeight` sets every tick to
+  Java's 1.53 (snow guardian, ice crystal), 1.35 (ice cores) and 2.125 (queen); `aurora.mob_attributes` checks
+  the live eye heights. The other golden attributes (health, speeds, attack, follow range, knockback
+  resistance, box, XP only for a player kill) are gtested against `tests/golden/mobs.json`
   (`AuroraMobs.MatchJavaGoldens`).
