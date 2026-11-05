@@ -24,11 +24,12 @@ Wait-LogLine 'families: installed' 60 | Out-Null
 $mark = Get-LogMark
 $r = Invoke-SelfTest 'families.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) families selftest(s) failed" }
-if ($r.Pass -lt 37) { throw "expected at least 37 families selftests to pass, got $($r.Pass)" }
-foreach ($t in 'families.chest_hoppers', 'families.chest_hoppers_more', 'families.chest_hoppers_screen', 'families.chest_migrate_lazy', 'families.chest_migrate_click', 'families.chest_migrate_click_double', 'families.chest_hopper_half_without_actor', 'families.chest_migrate_removed', 'families.chest_screen_context', 'families.chest_crafter', 'families.sign_facing_vanilla', 'families.chest_persist_a_write', 'families.chest_persist_b_read', 'families.chest_sounds', 'families.chest_sounds_double', 'families.sound_events') {
+if ($r.Pass -lt 38) { throw "expected at least 38 families selftests to pass, got $($r.Pass)" }
+foreach ($t in 'families.chest_hoppers', 'families.chest_hoppers_more', 'families.chest_hoppers_screen', 'families.chest_migrate_lazy', 'families.chest_migrate_click', 'families.chest_migrate_click_double', 'families.chest_hopper_half_without_actor', 'families.chest_migrate_removed', 'families.chest_screen_context', 'families.chest_crafter', 'families.sign_facing_vanilla', 'families.chest_persist_a_write', 'families.chest_persist_b_read', 'families.chest_sounds', 'families.chest_sounds_double', 'families.sound_events', 'families.place_in_water_sound') {
     if (-not (Get-ServerLog -Since $mark | Select-String -Pattern "SELFTEST PASS $([regex]::Escape($t))$" -Quiet)) { throw "$t did not pass" }
 }
 if (Get-ServerLog -Since $mark | Select-String -Pattern 'no TF chests in this build' -Quiet) { throw "TF's chests are not in this build" }
+if (Get-ServerLog -Since $mark | Select-String -Pattern 'no TF waterloggable slabs or stairs in this build' -Quiet) { throw "TF's waterloggable slabs and stairs are not in this build" }
 if (Get-ServerLog -Since $mark | Select-String -Pattern 'fixture families missing|no gf_test packs' -Quiet) { throw 'the fixture families were not generated (tools/families)' }
 if (-not (Get-ServerLog -Since $mark | Select-String -Pattern 'families fixtures present: \d+ \(0 missing\)' -Quiet)) { throw 'not every fixture family is registered in the game' }
 

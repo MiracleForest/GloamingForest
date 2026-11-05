@@ -1,4 +1,5 @@
-// Block families (F11): selftests of the chests' open and close sounds (testPos dx 6140..6144).
+// Block families (F11): selftests of the family blocks' sounds (testPos dx 6140..6144): the chests'
+// open and close sounds and the place sound of a waterloggable block placed into water.
 //
 // Java: ChestBlockEntity's ContainerOpenersCounter plays SoundEvents.CHEST_OPEN when the first
 // player opens a chest (onOpen) and CHEST_CLOSE when the last one closes it (onClose), through
@@ -13,16 +14,23 @@
 // volume, pitch and timing, and that the game adds no sound event of its own for the chest (the
 // client's "No sound found for block type 'wood' and event type 'chest.open'" comes from vanilla
 // chests: block_sounds "wood" has no chest events, so the game falls back to its own definition).
+// Each send of a packet is one record with whether it reached the test player (its network
+// identifier and sub-client), so "one sound" counts the sounds the player is sent, also when the
+// game reuses a freed packet's memory for the next one.
 //
 // Rule R8: no contract records the sounds players are sent with their name, position, volume and
 // pitch (gf::fx only counts its packets, FxInternal.h counters(); the selftest framework records
-// boss bar packets only), and the game's own LevelSoundEvent packets are not fx's. So these tests
-// hook the packet sender themselves, TEST-ONLY: SoundCapture installs the hooks when the first
-// capture starts and removes them when the last one ends, so no game event is hooked outside a
-// running families sound test (LeviLamina chains them with the other hooks of these functions).
+// boss bar packets only, src/selftest/SelfTest.h is F0's and frozen), and the game's own
+// LevelSoundEvent packets are not fx's. So these tests hook the packet sender themselves,
+// TEST-ONLY: SoundCapture installs the hooks when the first capture starts and removes them when
+// the last one ends, so no game event is hooked outside a running families sound test (LeviLamina
+// chains them with the other hooks of these functions). A generic packet capture in the selftest
+// framework (which hooks the same functions for captureBossEvent) would replace them.
 
 #include <algorithm>
 #include <atomic>
+#include <cstdint>
+#include <functional>
 #include <cmath>
 #include <filesystem>
 #include <fstream>
@@ -42,7 +50,10 @@
 #include "mc/network/LoopbackPacketSender.h"
 #include "mc/network/MinecraftPacketIds.h"
 #include "mc/network/NetworkIdentifierWithSubId.h"
+#include "mc/network/NetworkIdentifier.h"
 #include "mc/network/Packet.h"
+#include "mc/common/SubClientId.h"
+#include "mc/entity/components/UserEntityIdentifierComponent.h"
 #include "mc/network/packet/LevelSoundEventPacket.h"
 #include "mc/network/packet/PlaySoundPacket.h"
 #include "mc/server/SimulatedPlayer.h"
@@ -56,11 +67,13 @@
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
+#include "mc/world/level/block/Block.h"
 
 #include "feature/families/Families.h"
 #include "feature/inventory/InventoryInternal.h"
 #include "feature/net/Net.h"
 #include "game/Blocks.h"
+#include "game/Items.h"
 #include "mod/Main.h"
 #include "selftest/SelfTest.h"
 
@@ -73,18 +86,31 @@ namespace fam = gf::feature::families;
 
 // ---- the sounds the players are sent ---------------------------------------------------------------
 
-/// One sound packet a player was sent while a capture was alive.
+/// Who one send of a packet reached: the receiver the capture watches (its network identifier and
+/// sub-client), checked when the packet is sent.
+struct Receiver {
+    std::uint64_t netHash = 0;
+    SubClientId   sub     = SubClientId::PrimaryClient;
+    bool          set     = false;
+    [[nodiscard]] bool is(NetworkIdentifier const& id, SubClientId s) const { return set && s == sub && id.getHash() == netHash; }
+};
+
+/// One send of a sound packet while a capture was alive (one record per call of the packet sender:
+/// a packet sent to three players separately is three records, a broadcast is one).
 struct HeardSound {
-    std::string name;   ///< PlaySoundPacket: the sound name; LevelSoundEventPacket: "event:<id>"
-    Vec3        pos;    ///< where it plays
-    float       volume = 0;
-    float       pitch  = 0;
-    void const* packet = nullptr; ///< the packet (one packet goes to every player in range)
+    std::string   name;   ///< PlaySoundPacket: the sound name; LevelSoundEventPacket: "event:<id>"
+    Vec3          pos;    ///< where it plays
+    float         volume = 0;
+    float         pitch  = 0;
+    std::uint64_t seq    = 0;     ///< the send's number (sends are numbered in order)
+    bool          toWatched = false; ///< the send reached the watched receiver (the test player)
 };
 
 struct SoundLog {
     std::mutex              mutex;
     std::vector<HeardSound> heard;
+    std::uint64_t           seq = 0;
+    Receiver                watched;
     std::atomic<int>        captures{0};
 };
 SoundLog& soundLog() {
@@ -92,11 +118,13 @@ SoundLog& soundLog() {
     return l;
 }
 
-void inspect(Packet const& packet) {
+/// Records one send of `packet` when it is a sound; `reaches` tells whether the send reaches the
+/// watched receiver.
+template <class Reaches>
+void inspect(Packet const& packet, Reaches&& reaches) {
     auto& log = soundLog();
     if (log.captures.load() == 0) return;
     HeardSound h;
-    h.packet = &packet;
     switch (packet.getId()) {
     case MinecraftPacketIds::PlaySound: {
         auto const& p   = static_cast<PlaySoundPacket const&>(packet);
@@ -120,6 +148,8 @@ void inspect(Packet const& packet) {
         return;
     }
     std::lock_guard lock(log.mutex);
+    h.toWatched = reaches(log.watched);
+    h.seq       = ++log.seq;
     log.heard.push_back(std::move(h));
 }
 
@@ -134,7 +164,7 @@ LL_TYPE_INSTANCE_HOOK(
     UserEntityIdentifierComponent const* user,
     Packet const&                        packet
 ) {
-    inspect(packet);
+    inspect(packet, [user](Receiver const& w) { return user && w.is(user->mNetworkId.get(), user->mClientSubId); });
     origin(user, packet);
 }
 
@@ -149,7 +179,7 @@ LL_TYPE_INSTANCE_HOOK(
     Packet const&            packet,
     SubClientId              sub
 ) {
-    inspect(packet);
+    inspect(packet, [&id, sub](Receiver const& w) { return w.is(id, sub); });
     origin(id, packet, sub);
 }
 
@@ -162,7 +192,9 @@ LL_TYPE_INSTANCE_HOOK(
     std::vector<NetworkIdentifierWithSubId> const& ids,
     Packet const&                                  packet
 ) {
-    inspect(packet);
+    inspect(packet, [&ids](Receiver const& w) {
+        return std::any_of(ids.begin(), ids.end(), [&w](NetworkIdentifierWithSubId const& r) { return w.is(r.id, r.subClientId); });
+    });
     origin(ids, packet);
 }
 
@@ -174,21 +206,51 @@ LL_TYPE_INSTANCE_HOOK(
     void,
     Packet const& packet
 ) {
-    inspect(packet);
+    inspect(packet, [](Receiver const& w) { return w.set; });
     origin(packet);
+}
+
+// the broadcast to every client but one (the game's sounds a player makes itself: the others hear them)
+LL_TYPE_INSTANCE_HOOK(
+    FamiliesSoundBroadcastExceptHook,
+    ll::memory::HookPriority::Normal,
+    LoopbackPacketSender,
+    static_cast<void (LoopbackPacketSender::*)(NetworkIdentifier const&, SubClientId, Packet const&)>(&LoopbackPacketSender::$sendBroadcast),
+    void,
+    NetworkIdentifier const& exceptId,
+    SubClientId              exceptSub,
+    Packet const&            packet
+) {
+    inspect(packet, [&exceptId, exceptSub](Receiver const& w) { return w.set && !w.is(exceptId, exceptSub); });
+    origin(exceptId, exceptSub, packet);
 }
 
 namespace {
 
-/// Records the sound packets sent to players while it lives (the hooks are installed only then).
+/// Records the sound packets sent while it lives (the hooks are installed only then), each send
+/// once, with whether it reached the watched player.
 class SoundCapture {
 public:
-    SoundCapture() {
+    /// Watches `player`: the sends that reach it are told apart from the others (`toPlayer`).
+    explicit SoundCapture(Player& player) {
+        {
+            std::lock_guard lock(soundLog().mutex);
+            soundLog().watched = Receiver{player.getNetworkIdentifier().getHash(), player.getClientSubId(), true};
+        }
+        // the receivers are told apart by network identifier and sub-client: no other player of
+        // the level may share the watched one's, or its sends would count twice
+        auto const& w = soundLog().watched;
+        auto const  me = player.getOrCreateUniqueID();
+        player.getLevel().forEachPlayer(std::function<bool(Player&)>([&](Player& p) {
+            if (p.getOrCreateUniqueID().rawID != me.rawID && w.is(p.getNetworkIdentifier(), p.getClientSubId())) ++mSharing;
+            return true;
+        }));
         if (soundLog().captures.fetch_add(1) == 0) {
             FamiliesSoundToUserHook::hook();
             FamiliesSoundToNetIdHook::hook();
             FamiliesSoundToClientsHook::hook();
             FamiliesSoundBroadcastHook::hook();
+            FamiliesSoundBroadcastExceptHook::hook();
         }
         clear();
     }
@@ -198,25 +260,43 @@ public:
             FamiliesSoundToNetIdHook::unhook();
             FamiliesSoundToClientsHook::unhook();
             FamiliesSoundBroadcastHook::unhook();
+            FamiliesSoundBroadcastExceptHook::unhook();
+            std::lock_guard lock(soundLog().mutex);
+            soundLog().watched = Receiver{};
         }
     }
     SoundCapture(SoundCapture const&)            = delete;
     SoundCapture& operator=(SoundCapture const&) = delete;
 
+    /// The number of other players whose receiver equals the watched player's (0: its sends are
+    /// counted exactly).
+    [[nodiscard]] int sharing() const { return mSharing; }
+
     void clear() {
         std::lock_guard lock(soundLog().mutex);
         soundLog().heard.clear();
     }
-    /// The distinct packets heard within `range` blocks of `centre` (a packet sent to several
-    /// players counts once).
-    [[nodiscard]] std::vector<HeardSound> near(Vec3 const& centre, float range) const {
-        std::lock_guard          lock(soundLog().mutex);
-        std::vector<HeardSound>  out;
-        std::set<void const*>    seen;
+    /// The sends that reached the watched player within `range` blocks of `centre`, in order (one
+    /// per sound the player hears: a sound played twice is two, also when the game reused the
+    /// packet's memory).
+    [[nodiscard]] std::vector<HeardSound> toPlayer(Vec3 const& centre, float range) const {
+        return select(centre, range, [](HeardSound const& h) { return h.toWatched; });
+    }
+    /// Every send within `range` blocks of `centre`, whoever it reached (a broadcast is one send).
+    [[nodiscard]] std::vector<HeardSound> sent(Vec3 const& centre, float range) const {
+        return select(centre, range, [](HeardSound const&) { return true; });
+    }
+
+private:
+    int mSharing = 0;
+
+    template <class Pred>
+    [[nodiscard]] std::vector<HeardSound> select(Vec3 const& centre, float range, Pred&& pred) const {
+        std::lock_guard         lock(soundLog().mutex);
+        std::vector<HeardSound> out;
         for (auto const& h : soundLog().heard) {
             float dx = h.pos.x - centre.x, dy = h.pos.y - centre.y, dz = h.pos.z - centre.z;
-            if (dx * dx + dy * dy + dz * dz > range * range || !seen.insert(h.packet).second) continue;
-            out.push_back(h);
+            if (dx * dx + dy * dy + dz * dz <= range * range && pred(h)) out.push_back(h);
         }
         return out;
     }
@@ -320,7 +400,8 @@ GF_REGISTER_SELFTEST("families.chest_sounds", [](Context& ctx) -> ll::coro::Coro
     p.x += 2;
     ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
     Vec3 const   centre{p.x + .5f, p.y + .5f, p.z + .5f};
-    SoundCapture capture;
+    SoundCapture capture(ctx.player());
+    ctx.require(capture.sharing() == 0, "the test player is the only receiver of its network identifier and sub-client (" + std::to_string(capture.sharing()) + " other)");
     Companion    companion(ctx);
     for (auto const& id : ids) {
         ctx.require(ctx.setBlock(p, id, {{kFacing, "south"}}), id + " placed");
@@ -332,20 +413,24 @@ GF_REGISTER_SELFTEST("families.chest_sounds", [](Context& ctx) -> ll::coro::Coro
         co_await clickChest(ctx, p);
         // Java: the menu opens and ContainerOpenersCounter#incrementOpeners plays the sound while the
         // server handles the click
-        bool inClickTick = !named(capture.near(centre, 2.f), kOpenName).empty();
+        bool inClickTick = !named(capture.toPlayer(centre, 2.f), kOpenName).empty();
         co_await ctx.ticks(1);
-        auto opened = capture.near(centre, 2.f);
+        auto opened = capture.toPlayer(centre, 2.f);
         ctx.check(inv::viewerCount(p) == 1, id + ": the click opened it (" + std::to_string(inv::viewerCount(p)) + " opener)");
         auto open = named(opened, kOpenName);
         ctx.check(open.size() == 1 && javaValues(open[0], centre), id + ": one random.chestopen at its centre, volume 0.5, pitch 0.9..1.0 (heard: " + describe(opened) + ")");
         ctx.check(inClickTick, id + ": the open sound plays in the click's tick");
-        ctx.check(named(opened, kOpenEvent).empty() && named(opened, kCloseEvent).empty(), id + ": no chest sound event of the game's own");
+        // (whoever a send reached: a broadcast past the clicking player counts too)
+        auto anyOpen = capture.sent(centre, 2.f);
+        ctx.check(named(anyOpen, kOpenEvent).empty() && named(anyOpen, kCloseEvent).empty(), id + ": no chest sound event of the game's own (sent: " + describe(anyOpen) + ")");
         capture.clear();
         closeScreen(ctx);
-        auto closed = capture.near(centre, 2.f); // (ContainerOpenersCounter#decrementOpeners: at once)
+        auto closed = capture.toPlayer(centre, 2.f); // (ContainerOpenersCounter#decrementOpeners: at once)
         auto close  = named(closed, kCloseName);
         ctx.check(close.size() == 1 && javaValues(close[0], centre), id + ": one random.chestclosed as the last opener leaves, same values (heard: " + describe(closed) + ")");
-        ctx.check(named(closed, kOpenEvent).empty() && named(closed, kCloseEvent).empty(), id + ": no chest sound event of the game's own on close");
+        co_await ctx.ticks(1);
+        auto anyClose = capture.sent(centre, 2.f);
+        ctx.check(named(anyClose, kOpenEvent).empty() && named(anyClose, kCloseEvent).empty(), id + ": no chest sound event of the game's own on close (sent: " + describe(anyClose) + ")");
         co_await ctx.ticks(12); // the lid closes
         ctx.setBlock(p, "minecraft:air");
         co_await ctx.ticks(1);
@@ -435,12 +520,13 @@ GF_REGISTER_SELFTEST("families.chest_sounds_double", [](Context& ctx) -> ll::cor
     co_await ctx.ticks(2);
     ctx.require(fam::chestPartner(*ctx.region(), gf::game::blockPos(l)).has_value(), "the halves pair");
     Vec3 const   between{l.x + 1.f, l.y + .5f, l.z + .5f};
-    SoundCapture capture;
+    SoundCapture capture(ctx.player());
+    ctx.require(capture.sharing() == 0, "the test player is the only receiver of its network identifier and sub-client (" + std::to_string(capture.sharing()) + " other)");
     Companion    companion(ctx);
     for (auto const& half : {l, r}) {
         capture.clear();
         co_await clickChest(ctx, half);
-        auto heard = capture.near(between, 3.f);
+        auto heard = capture.toPlayer(between, 3.f);
         co_await ctx.ticks(1);
         auto open = named(heard, kOpenName);
         ctx.check(inv::viewerCount(l) == 1 && inv::viewerCount(r) == 1, "a click on the " + std::string(half.x == l.x ? "left" : "right") + " half opens both");
@@ -448,11 +534,87 @@ GF_REGISTER_SELFTEST("families.chest_sounds_double", [](Context& ctx) -> ll::cor
                   "one random.chestopen between the halves, volume 0.5, pitch 0.9..1.0 (clicked the " + std::string(half.x == l.x ? "left" : "right") + " half; heard: " + describe(heard) + ")");
         capture.clear();
         closeScreen(ctx);
-        auto after  = capture.near(between, 3.f);
+        auto after  = capture.toPlayer(between, 3.f);
         auto closed = named(after, kCloseName);
         ctx.check(closed.size() == 1 && javaValues(closed[0], between), "one random.chestclosed between the halves (heard: " + describe(after) + ")");
         co_await ctx.ticks(12);
     }
     for (auto const& q : {l, r}) ctx.setBlock(q, "minecraft:air");
+    (void)box;
+});
+
+GF_REGISTER_SELFTEST("families.place_in_water_sound", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // Java: BlockItem#place plays the block's SoundType#getPlaceSound once at the block, also when a
+    // SimpleWaterloggedBlock takes the water it is placed into. Bedrock plays the place sound of a
+    // block placed into water as LevelSoundEvent PlaceInWater (the type's place_in_water, which
+    // tools/families defines as its place event): a player placing a TF waterloggable slab or stairs
+    // into a water source makes exactly one place sound (PlaceInWater, Place or ItemUseOn), not two
+    constexpr char const* kCandidates[] = {"twilightforest:twilight_oak_slab", "twilightforest:castle_brick_stairs"};
+    std::vector<std::string> ids;
+    for (auto const* id : kCandidates) {
+        auto const* e = fam::entryOf(id);
+        if (gf::game::blockWith(id) && e) {
+            ctx.check(e->has(fam::Waterloggable), std::string(id) + " is a waterloggable family block");
+            ids.emplace_back(id);
+        }
+    }
+    if (ids.empty()) {
+        ctx.info("no TF waterloggable slabs or stairs in this build: skipped");
+        co_return;
+    }
+    auto box = co_await ctx.flatArea(6143, 5);
+    auto p   = ctx.testPos(6143, 2);
+    ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
+    auto& region = *ctx.region();
+    auto  wet    = [&region](GlobalPos const& q) {
+        auto const& extra = region.getExtraBlock(gf::game::blockPos(q)).getTypeName();
+        return extra == "minecraft:water" || extra == "minecraft:flowing_water";
+    };
+    // a second player in hearing range: the game sends the placing player's own sounds to the others
+    auto& listener   = ctx.spawnPlayer("gf_families_listener");
+    listener.teleport(Vec3{p.x + 3.5f, static_cast<float>(p.y), p.z - 1.5f}, listener.getDimensionId()); // (removed with the test)
+    auto const uid = ctx.player().getOrCreateUniqueID().rawID;
+    SoundCapture capture(ctx.player());
+    auto placeSound = [](HeardSound const& h) {
+        using E = SharedTypes::Legacy::LevelSoundEvent;
+        for (auto e : {E::Place, E::PlaceInWater, E::ItemUseOn})
+            if (h.name == "event:" + std::to_string(static_cast<int>(e))) return true;
+        return false;
+    };
+    for (std::size_t i = 0; i < ids.size(); ++i) {
+        auto const& id = ids[i];
+        auto        w  = p;
+        w.x += static_cast<int>(i) * 4 + 1;
+        // a basin of stone around a water source, on the area's ground
+        for (auto [dx, dz] : {std::pair{1, 0}, std::pair{-1, 0}, std::pair{0, 1}, std::pair{0, -1}}) {
+            auto q = w;
+            q.x += dx;
+            q.z += dz;
+            ctx.require(ctx.setBlock(q, "minecraft:stone"), "the basin");
+        }
+        ctx.require(ctx.setBlock(w, "minecraft:water"), "water in the basin");
+        auto below = w;
+        below.y -= 1;
+        if (auto* sp = simPlayer(ctx, uid)) {
+            sp->teleport(Vec3{w.x + .5f, static_cast<float>(w.y), w.z + 2.5f}, sp->getDimensionId());
+            sp->simulateLookAt(gf::game::blockPos(below), sim::LookDuration::Instant);
+            if (auto item = gf::game::items::make(id, 16)) sp->simulateSetItem(*item, true, 0);
+        }
+        co_await ctx.ticks(8); // the look applies on the player's next tick; Bedrock drops a use-on right after another
+        Vec3 const centre{w.x + .5f, w.y + .5f, w.z + .5f};
+        capture.clear();
+        if (auto* sp = simPlayer(ctx, uid)) {
+            auto  b    = gf::game::blockPos(below);
+            auto& held = const_cast<ItemStack&>(sp->getSelectedItem());
+            sp->mGameMode->useItemOn(held, b, 1, Vec3{b.x + .5f, b.y + 1.f, b.z + .5f}, HandSlot::Mainhand, nullptr, true);
+        }
+        co_await ctx.ticks(3);
+        ctx.check(ctx.blockAt(w) == id && wet(w), id + " placed into the water keeps it (" + ctx.blockAt(w) + ")");
+        auto sent  = capture.sent(centre, 2.f);
+        auto place = sent;
+        std::erase_if(place, [&](HeardSound const& h) { return !placeSound(h); });
+        ctx.check(place.size() == 1, id + ": one place sound for the block placed into water (sent: " + describe(sent) + ")");
+        ctx.setBlock(w, "minecraft:air");
+    }
     (void)box;
 });

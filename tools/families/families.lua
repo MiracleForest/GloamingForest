@@ -1878,6 +1878,26 @@ local function manual_ids(dirs)
     return out
 end
 
+-- Block sound types the hand-made resource pack layer sets (`<dir>/blocks.d/*.json`, the manual
+-- layer of the blocks.json merge): id -> {sound, file}. The manual layer wins per id, so the kit
+-- never replaces one of these.
+local function manual_block_sounds(dirs)
+    local out = {}
+    for _, dir in ipairs(dirs) do
+        if os.isdir(path.join(dir, "blocks.d")) then
+            for _, f in ipairs(os.files(path.join(dir, "blocks.d", "*.json"))) do
+                local doc = try_json(f)
+                if type(doc) == "table" then
+                    for id, b in pairs(doc) do
+                        if type(b) == "table" and type(b.sound) == "string" then out[id] = {sound = b.sound, file = f} end
+                    end
+                end
+            end
+        end
+    end
+    return out
+end
+
 local function merge_json_file(file, fn)
     local doc = os.isfile(file) and try_json(file) or nil
     doc = fn(doc)
@@ -2017,7 +2037,6 @@ local function entity_textures(g, rpdir, ctx)
     return t
 end
 
--- Generates the family blocks of `entries` into one BP / RP pair. Returns {blocks, skipped, files}.
 -- ---- block sound events the families need ----------------------------------------------------------
 --
 -- The game picks a block's sounds by its sound type (RP blocks.json "sound") in sounds.json
@@ -2142,6 +2161,7 @@ local function add_family_sound_events(rpdir, result, by_id, errors)
     end)
 end
 
+-- Generates the family blocks of `entries` into one BP / RP pair. Returns {blocks, skipped, files}.
 local function generate_set(entries, bpdir, rpdir, opts, errors)
     local by_id, order = group(entries, errors)
     local existing = bp_blocks(bpdir)
@@ -2255,12 +2275,22 @@ local function generate_set(entries, bpdir, rpdir, opts, errors)
     -- An id that has one keeps it: TF's sound types (the jars' twilightforest.jar, TFSoundTypes) are
     -- F1's import, its rp/blocks.d and rp/sounds.json.d fragments (block_sounds and the step, fall,
     -- jump and land interactive_sounds), except where the family's Java class sets the sound type
-    -- itself (FORCED_SOUND: the hanging signs), which replaces the one their properties give
+    -- itself (FORCED_SOUND: the hanging signs), which replaces the one their properties give (the
+    -- import's). A sound the hand-made RP layer sets (opts.manual_sounds) always stays: the manual
+    -- layer wins per id; a forced sound it differs from is reported in result.notes
+    local manual_sounds = opts.manual_sounds or {}
+    result.notes = {}
     if not table.empty(result.sounds) then
         merge_json_file(path.join(rpdir, "blocks.json"), function (doc)
             doc = doc or {format_version = "1.21.40"}
-            for id, sound in pairs(result.sounds) do
-                if doc[id] == nil then doc[id] = {sound = sound}
+            for _, id in ipairs(sorted_keys(result.sounds)) do
+                local sound = result.sounds[id]
+                local by_hand = manual_sounds[id]
+                if by_hand then
+                    if result.forced_sounds[id] and by_hand.sound ~= sound then
+                        table.insert(result.notes, string.format("families: %s keeps the sound '%s' of %s (the manual layer), not the family's '%s'", id, by_hand.sound, by_hand.file, sound))
+                    end
+                elseif doc[id] == nil then doc[id] = {sound = sound}
                 elseif type(doc[id]) == "table" and (doc[id].sound == nil or result.forced_sounds[id]) then doc[id].sound = sound end
             end
             return doc
@@ -2469,13 +2499,15 @@ local function mark(bpdir, count)
 end
 
 -- opts: {manual_dirs = {...}} (default: assets/pack/bp and assets/test/bp of `projectdir`),
--- no_fixtures.
+-- {manual_rp_dirs = {...}} (default: assets/pack/rp and assets/test/rp), no_fixtures.
 -- Returns {blocks, skipped, fixtures, files = {...}, waterloggable = {id -> file}, permutations,
 -- already (both sets were generated before: nothing done), errors = {...}}.
 function generate(projectdir, outdir, opts)
     opts = opts or {}
     local errors = {}
     local manual = manual_ids(opts.manual_dirs or {path.join(projectdir, "assets", "pack", "bp"), path.join(projectdir, "assets", "test", "bp")})
+    -- the hand-made RP layer's block sounds (assets/pack/rp, assets/test/rp: blocks.d fragments)
+    local manual_sounds = manual_block_sounds(opts.manual_rp_dirs or {path.join(projectdir, "assets", "pack", "rp"), path.join(projectdir, "assets", "test", "rp")})
     -- waterloggable: id -> generated file (every waterloggable modifier, by family or params.traits)
     local summary = {blocks = 0, skipped = 0, fixtures = 0, files = {}, waterloggable = {}, chests = {}, chest_tags = {}, permutations = 0, errors = errors}
     local sets, done = 0, 0
@@ -2489,7 +2521,8 @@ function generate(projectdir, outdir, opts)
         if marked(bp) then
             done = done + 1
         else
-            local r = generate_set(entries, bp, rp, {manual = manual, strict_textures = true}, errors)
+            local r = generate_set(entries, bp, rp, {manual = manual, manual_sounds = manual_sounds, strict_textures = true}, errors)
+            for _, n in ipairs(r.notes or {}) do print("warning: " .. n) end
             summary.blocks, summary.skipped = r.blocks, r.skipped
             for _, f in ipairs(r.files) do table.insert(summary.files, f) end
             for id, f in pairs(r.waterloggable) do summary.waterloggable[id] = f end
@@ -2509,7 +2542,8 @@ function generate(projectdir, outdir, opts)
         if #fx.entries > 0 and marked(tbp) then
             done = done + 1
         elseif #fx.entries > 0 then
-            local r = generate_set(fx.entries, tbp, trp, {manual = manual, textures = fx.textures}, errors)
+            local r = generate_set(fx.entries, tbp, trp, {manual = manual, manual_sounds = manual_sounds, textures = fx.textures}, errors)
+            for _, n in ipairs(r.notes or {}) do print("warning: " .. n) end
             summary.fixtures = r.blocks
             for _, f in ipairs(r.files) do table.insert(summary.files, f) end
             for id, f in pairs(r.waterloggable) do summary.waterloggable[id] = f end
