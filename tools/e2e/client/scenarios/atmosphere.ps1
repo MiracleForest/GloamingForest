@@ -136,12 +136,12 @@ if ($vanilla) {
     $clear = Save-Screenshot 'vanilla-clear'
     $mark = Get-LogMark
     Invoke-AtmosphereTest 'atmosphere.show_vanilla_spooky' | Out-Null
-    Wait-LogLine "$hostRx`atmosphere: fog twilightforest:spooky_forest sent to" 30 -Since $mark | Out-Null
+    Wait-LogLine "${hostRx}atmosphere: fog twilightforest:spooky_forest sent to" 30 -Since $mark | Out-Null
     Start-Sleep -Seconds 4
     $spooky = Save-Screenshot 'vanilla-spooky'
     $mark = Get-LogMark
     Invoke-AtmosphereTest 'atmosphere.show_vanilla_glacier' | Out-Null
-    Wait-LogLine "$hostRx`atmosphere: fog twilightforest:glacier sent to" 30 -Since $mark | Out-Null
+    Wait-LogLine "${hostRx}atmosphere: fog twilightforest:glacier sent to" 30 -Since $mark | Out-Null
     Start-Sleep -Seconds 4
     Save-Screenshot 'vanilla-glacier' | Out-Null
     Invoke-AtmosphereTest 'atmosphere.show_vanilla_clear' | Out-Null
