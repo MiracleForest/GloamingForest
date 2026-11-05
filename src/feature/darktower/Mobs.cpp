@@ -13,11 +13,14 @@
 
 #include "feature/darktower/Mobs.h"
 
+#include <algorithm>
 #include <cmath>
 #include <unordered_map>
 
 #include "mc/deps/core/math/Vec3.h"
 #include "mc/world/actor/Actor.h"
+#include "mc/deps/ecs/gamerefs_entity/EntityContext.h"
+#include "mc/entity/components_json_legacy/NavigationComponent.h"
 #include "mc/world/actor/Mob.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
@@ -30,7 +33,9 @@
 #include "feature/combat/Combat.h"
 #include "feature/darktower/Util.h"
 #include "feature/entity/Entity.h"
+#include "feature/tags/Tags.h"
 #include "game/Blocks.h"
+#include "game/WorldDb.h"
 
 namespace gf::feature::darktower::mobs {
 
@@ -99,6 +104,8 @@ void summonTick(Actor& self, Borer& b) {
 /// TowerwoodBorer.HideInTowerwoodGoal (silverfish merge copy).
 void hideTick(Mob& self) {
     if (actorById(self.mTargetId->rawID)) return;
+    // Silverfish.SilverfishMergeWithStoneGoal#canUse: getNavigation().isDone() (no path in progress)
+    if (auto nav = self.getEntityContext().tryGetComponent<NavigationComponent>(); nav && nav->mPath->get() != nullptr) return;
     if (!mobGriefing()) return;
     auto& r = random();
     if (r.nextInt(10) != 0) return; // reducedTickDelay(10)
@@ -148,6 +155,18 @@ void install() {
         }
     });
     ge::registerType(id::Broodling, {});
+    combat::onIncoming(combat::priority::Normal, [](combat::DamageInfo& d) {
+        // SwarmSpider#doHurtTarget: only one melee attack in four lands
+        if (d.attacker && d.direct == d.attacker && typeOf(*d.attacker) == id::Broodling && random().nextInt(4) != 0) return combat::Verdict::Cancel;
+        // CarminiteGolem: Attributes.ARMOR 2 (CombatRules#getDamageAfterAbsorb, no toughness)
+        if (typeOf(d.victim) == id::Golem && !tags::has(tags::Registry::DamageType, "minecraft:bypasses_armor", d.type)) {
+            float armor = 2.0f;
+            float f1    = std::clamp(armor - d.amount / 2.0f, armor * 0.2f, 20.0f);
+            d.amount *= 1.0f - f1 / 25.0f;
+        }
+        return combat::Verdict::Pass;
+    });
+    game::db::onWorldClosed([] { golemTimers().clear(); });
 }
 
 } // namespace gf::feature::darktower::mobs
