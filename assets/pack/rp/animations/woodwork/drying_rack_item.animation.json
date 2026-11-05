@@ -6,9 +6,9 @@
       "bones": {
         "rightItem": {
           "rotation": [
-            "v.t = q.property('gloamingforest:pose'); return (v.t == 1 || v.t == 4) ? 90 : ((v.t == 2 || v.t == 6) ? -90 : 0);",
-            "return q.property('gloamingforest:pose') >= 4 ? 90 : 0;",
-            "v.t = q.property('gloamingforest:pose'); return (v.t == 3 || v.t == 5) ? 90 : (v.t == 7 ? -90 : 0);"
+            "v.t = q.property('gloamingforest:pose'); return v.t == 0 ? -90 : (v.t == 1 ? -60 : (v.t == 2 ? -45 : (v.t == 3 ? -30 : (v.t == 4 ? 0 : (v.t == 5 ? 30 : (v.t == 6 ? 45 : 60))))));",
+            90,
+            0
           ],
           "scale": 1.6
         }

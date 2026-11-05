@@ -5,14 +5,14 @@
       "arrays": {
         "textures": {
           "Array.woods": [
-            "Texture.twilight_oak",
-            "Texture.canopy",
-            "Texture.mangrove",
-            "Texture.dark",
-            "Texture.time",
-            "Texture.transformation",
-            "Texture.mining",
-            "Texture.sorting"
+            "Texture.tf_twilight_oak",
+            "Texture.tf_canopy",
+            "Texture.tf_mangrove",
+            "Texture.tf_dark",
+            "Texture.tf_time",
+            "Texture.tf_transformation",
+            "Texture.tf_mining",
+            "Texture.tf_sorting"
           ]
         }
       },
@@ -30,14 +30,14 @@
       "arrays": {
         "textures": {
           "Array.woods": [
-            "Texture.twilight_oak",
-            "Texture.canopy",
-            "Texture.mangrove",
-            "Texture.dark",
-            "Texture.time",
-            "Texture.transformation",
-            "Texture.mining",
-            "Texture.sorting"
+            "Texture.tf_twilight_oak",
+            "Texture.tf_canopy",
+            "Texture.tf_mangrove",
+            "Texture.tf_dark",
+            "Texture.tf_time",
+            "Texture.tf_transformation",
+            "Texture.tf_mining",
+            "Texture.tf_sorting"
           ]
         }
       },

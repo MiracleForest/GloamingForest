@@ -36,7 +36,10 @@
 #include "mc/world/level/block/BlockType.h"
 #include "mc/world/phys/AABB.h"
 
+#include "feature/common/BlockData.h"
 #include "feature/common/Interactions.h"
+#include "feature/entity/Entity.h"
+#include "mc/legacy/ActorUniqueID.h"
 #include "feature/inventory/Inventory.h"
 #include "feature/recipes/Recipes.h"
 #include "feature/tags/Tags.h"
@@ -654,6 +657,36 @@ GF_REGISTER_SELFTEST("woodwork.showcase", [](Context& ctx) -> ll::coro::CoroTask
     auto r0 = rack::at(at(p, 0, 1, 0));
     ctx.check(r0 && r0->drying, "the kelp is drying");
     gf::log().info("woodwork: showcase racks at {} {} {}", p.x, p.y + 1, p.z);
+});
+
+GF_REGISTER_SELFTEST("woodwork.pose_probe", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // the display entity's poses side by side (client scenario woodwork.display): sticks on racks
+    // facing south (dz 2, poses 0..4) and north (dz 4, poses 5..7) around a wall at dz 3
+    auto p = ctx.testPos(495, 2);
+    ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
+    auto* region = ctx.region();
+    auto const* south = gf::game::blockWithStates("twilightforest:oak_drying_rack", {{"twilightforest:facing", "south"}});
+    auto const* north = gf::game::blockWithStates("twilightforest:oak_drying_rack", {{"twilightforest:facing", "north"}});
+    auto const* wall  = gf::game::blockWith("minecraft:stone");
+    ctx.require(region && south && north && wall, "blocks");
+    std::vector<std::pair<GlobalPos, int>> racks;
+    for (int i = 0; i < 5; ++i) racks.push_back({at(p, i, 1, 0), i});
+    for (int i = 0; i < 3; ++i) racks.push_back({at(p, i, 1, 2), 5 + i});
+    for (auto const& [r, pose] : racks) {
+        gf::game::setBlock(*region, gf::game::blockPos(at(p, r.x - p.x, 1, 1)), *wall);
+        gf::game::setBlock(*region, gf::game::blockPos(r), r.z == p.z ? *south : *north);
+        if (auto h = gf::inventory::find(*region, gf::game::blockPos(r)); h && h->set) h->set(r, 0, *gf::game::items::make("minecraft:stick"));
+    }
+    co_await ctx.ticks(3);
+    auto level = ll::service::getLevel();
+    for (auto const& [r, pose] : racks) {
+        auto const* id = gf::blockdata::get(*region, gf::game::blockPos(r), "drying_rack_display");
+        if (!id || !id->is_number_integer()) continue;
+        ActorUniqueID uid;
+        uid.rawID = id->get<std::int64_t>();
+        if (auto* a = level->fetchEntity(uid, false)) gf::entity::setProperty(*a, "gloamingforest:pose", pose);
+    }
+    gf::log().info("woodwork: pose probe at {} {} {}", p.x, p.y + 1, p.z);
 });
 
 // ---- a rack across a restart (the server scenario runs a, restarts, runs b) ------------------------------

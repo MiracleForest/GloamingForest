@@ -7,14 +7,24 @@
         "default": "entity"
       },
       "textures": {
-        "twilight_oak": "textures/twilightforest/entity/chest_boat/twilight_oak",
-        "canopy": "textures/twilightforest/entity/chest_boat/canopy",
-        "mangrove": "textures/twilightforest/entity/chest_boat/mangrove",
-        "dark": "textures/twilightforest/entity/chest_boat/dark",
-        "time": "textures/twilightforest/entity/chest_boat/time",
-        "transformation": "textures/twilightforest/entity/chest_boat/transformation",
-        "mining": "textures/twilightforest/entity/chest_boat/mining",
-        "sorting": "textures/twilightforest/entity/chest_boat/sorting"
+        "tf_twilight_oak": "textures/twilightforest/entity/chest_boat/twilight_oak",
+        "tf_canopy": "textures/twilightforest/entity/chest_boat/canopy",
+        "tf_mangrove": "textures/twilightforest/entity/chest_boat/mangrove",
+        "tf_dark": "textures/twilightforest/entity/chest_boat/dark",
+        "tf_time": "textures/twilightforest/entity/chest_boat/time",
+        "tf_transformation": "textures/twilightforest/entity/chest_boat/transformation",
+        "tf_mining": "textures/twilightforest/entity/chest_boat/mining",
+        "tf_sorting": "textures/twilightforest/entity/chest_boat/sorting",
+        "oak": "textures/twilightforest/entity/chest_boat/twilight_oak",
+        "default": "textures/twilightforest/entity/chest_boat/twilight_oak",
+        "spruce": "textures/twilightforest/entity/chest_boat/canopy",
+        "birch": "textures/twilightforest/entity/chest_boat/mangrove",
+        "jungle": "textures/twilightforest/entity/chest_boat/dark",
+        "acacia": "textures/twilightforest/entity/chest_boat/time",
+        "darkoak": "textures/twilightforest/entity/chest_boat/transformation",
+        "dark_oak": "textures/twilightforest/entity/chest_boat/transformation",
+        "mangrove": "textures/twilightforest/entity/chest_boat/mining",
+        "cherry": "textures/twilightforest/entity/chest_boat/sorting"
       },
       "geometry": {
         "default": "geometry.twilightforest.chest_boat"
