@@ -57,6 +57,7 @@ TEST(Atmosphere, VanillaFogPlanes) {
     EXPECT_EQ(vanillaFog(false, 32, false), (FogPlanes{28, 32}));       // clamp 4
     EXPECT_EQ(vanillaFog(false, 1024, false), (FogPlanes{960, 1024}));  // clamp 64
     EXPECT_EQ(vanillaFog(false, 256, true), (FogPlanes{12.8f, 96}));    // near fog: min(256, 192) / 2
+    EXPECT_EQ(vanillaFog(true, 256, true), (FogPlanes{0, 256}));        // the sky fog ignores the near fog
 }
 
 TEST(Atmosphere, FogHandlerSmoothing) {
@@ -86,7 +87,7 @@ TEST(Atmosphere, FogHandlerSmoothing) {
     // sky fog: spooky near 0, far halved
     EXPECT_FALSE(s.sky(vanillaFog(true, 256, true), true, true));
     EXPECT_FLOAT_EQ(s.skyPlanes().start, 0.0f);
-    EXPECT_FLOAT_EQ(s.skyPlanes().end, 48.0f);
+    EXPECT_FLOAT_EQ(s.skyPlanes().end, 128.0f);
     s.reset();
     EXPECT_FALSE(s.skyLoaded());
     EXPECT_FALSE(s.terrainLoaded());

@@ -87,7 +87,7 @@ struct FogPlanes {
 };
 /// Vanilla FogRenderer#setupFog for FogType.NONE: the sky fog (start 0, end = render distance), or
 /// the terrain fog (start = distance - clamp(distance / 10, 4, 64), end = distance); near fog
-/// (`foggy`): start = distance * 0.05, end = min(distance, 192) * 0.5 (both modes).
+/// (`foggy`, terrain only: FOG_SKY is checked first): start = distance * 0.05, end = min(distance, 192) * 0.5.
 [[nodiscard]] FogPlanes vanillaFog(bool sky, float renderDistance, bool foggy);
 
 /// FogHandler: the spooky forest halves the far plane (sky near 0, terrain near = far * 0.75) and

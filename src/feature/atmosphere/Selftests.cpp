@@ -86,7 +86,7 @@ GF_REGISTER_SELFTEST("atmosphere.fog_packet", [](Context& ctx) -> ll::coro::Coro
     ctx.check(at::sentFogStack(p) == expect, "dark forest fog at y " + std::to_string(static_cast<int>(y)) + ": " + expect.front());
     ctx.check(at::updateFog(p, "minecraft:plains"), "a biome without TF fog clears the stack");
     ctx.check(at::sentFogStack(p) && at::sentFogStack(p)->empty(), "the cleared stack is empty");
-    ctx.check(at::fogPacketsSent() - before == 3, "three PlayerFogPackets went out");
+    ctx.check(at::fogPacketsSent() - before >= 3, "the PlayerFogPackets went out (other players may get theirs meanwhile)");
     at::forgetFog(p);
 });
 

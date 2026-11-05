@@ -64,13 +64,8 @@ GF_REGISTER_SELFTEST("atmosphere.client_aurora", [](Context& ctx) -> ll::coro::C
     int full = atc::state().aurora;
     ctx.check(half > 10 && half < 50, "the aurora fades in over 60 ticks (" + std::to_string(half) + " after 30)");
     ctx.check(full == ca::kAuroraMax, "the aurora is full after 70 ticks (" + std::to_string(full) + ")");
-    // an empty auroraBiomes list disables it (TFClientConfig)
-    auto& cfg  = gf::config::mut<at::AtmosphereConfig>();
-    auto  keep = cfg.auroraBiomes;
-    cfg.auroraBiomes.clear();
-    co_await ctx.ticks(2);
-    ctx.check(atc::state().aurora == 0, "an empty biome list turns the aurora off");
-    cfg.auroraBiomes = keep;
+    // (an empty auroraBiomes list turning it off is core::atmosphere::tickAurora's gtest: the config
+    // is read by the client and render threads, a selftest must not change it under them)
     atc::setPreview({{"biome", "twilightforest:forest"}});
     co_await ctx.ticks(10);
     ctx.check(atc::state().aurora == 0, "outside the glacier the aurora stays off");

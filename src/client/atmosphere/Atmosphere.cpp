@@ -368,6 +368,7 @@ void clientTick() {
 
 class AuroraWorker {
 public:
+    ~AuroraWorker() { stop(); } // never destroy a joinable thread (std::terminate at exit)
     void start() {
         if (mThread.joinable()) return;
         mStop   = false;
@@ -494,6 +495,7 @@ float renderDistanceBlocks() {
     auto* lr = levelRenderer();
     if (!lr || !lr->mLevelRendererPlayer.get()) return 192.0f;
     float rd = lr->mLevelRendererPlayer.get()->mRenderDistance;
+    logOnce("render_distance", fmt::format("atmosphere: level renderer render distance {:.1f}", rd));
     if (rd <= 0) return 192.0f;
     return rd < 64.0f ? rd * 16.0f : rd; // chunks or blocks
 }
@@ -721,7 +723,16 @@ bool weatherFrame(render::RenderContext& ctx, float partial) {
                 auto const& enf = enforcement[static_cast<std::size_t>((gz + r) * (2 * r + 1) + gx + r)];
                 if (enf.empty()) continue;
                 ca::ColumnInput in{.x = x, .z = z, .minY = span->first, .maxY = span->second, .ticks = ticks, .partialTicks = partial, .camX = camX, .camY = camY, .camZ = camZ, .range = range};
-                if (auto col = ca::lockedColumn(in, enf)) add(*col);
+                if (auto col = ca::lockedColumn(in, enf)) {
+                    if (!col->fullBright) { // big rain: the world's light at its own column, y 0 (LevelRenderer#getLightColor)
+                        auto&    region = p->getDimensionBlockSource();
+                        BlockPos at{x, 0, z};
+                        float    br = region.hasChunksAt(at, 0, false) ? std::clamp(region.getBrightness(at), 0.05f, 1.0f) : 1.0f;
+                        col->color  = {col->color.r * br, col->color.g * br, col->color.b * br};
+                        col->fullBright = true; // lit already
+                    }
+                    add(*col);
+                }
             }
     }
     // renderLockedStructure: sparkles inside the protected parts of the boxes near the camera
@@ -739,17 +750,10 @@ bool weatherFrame(render::RenderContext& ctx, float partial) {
         }
     }
     if (batches.empty()) return false;
-    // big rain takes the world's light (LevelRenderer#getLightColor at the column, y 0)
-    float brightness = 1.0f;
-    {
-        auto& region = p->getDimensionBlockSource();
-        BlockPos at{px, 0, pz};
-        if (region.hasChunksAt(at, 0, false)) brightness = std::clamp(region.getBrightness(at), 0.05f, 1.0f);
-    }
     for (auto const& [effect, cols] : batches) {
         auto const* tex = texture(ca::textureOf(effect));
         if (!tex) continue;
-        drawColumns(ctx.screen, *mat, *tex, cols, brightness);
+        drawColumns(ctx.screen, *mat, *tex, cols, 1.0f);
         logOnce(std::string("weather:") + ca::nameOf(effect), fmt::format("atmosphere: {} weather drawn ({} columns)", ca::nameOf(effect), cols.size()));
     }
     return false; // TF renders the normal weather anyway

@@ -111,8 +111,8 @@ std::string birthdaySplash(int year) {
 // ---- fog ------------------------------------------------------------------------------------------------
 
 FogPlanes vanillaFog(bool sky, float renderDistance, bool foggy) {
+    if (sky) return {0.0f, renderDistance}; // FOG_SKY comes before the near fog
     if (foggy) return {renderDistance * 0.05f, std::min(renderDistance, 192.0f) * 0.5f};
-    if (sky) return {0.0f, renderDistance};
     float f = std::clamp(renderDistance / 10.0f, 4.0f, 64.0f);
     return {renderDistance - f, renderDistance};
 }
