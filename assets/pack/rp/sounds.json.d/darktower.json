@@ -88,14 +88,5 @@
         }
       }
     }
-  },
-  "individual_event_sounds": {
-    "events": {
-      "entity.twilightforest.tear.break": {
-        "sound": "entity.twilightforest.tear.break",
-        "volume": 0.5,
-        "pitch": 1.65
-      }
-    }
   }
 }

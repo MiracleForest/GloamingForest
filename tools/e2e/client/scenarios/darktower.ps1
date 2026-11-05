@@ -48,9 +48,9 @@ if ($script:Mode -eq 'local') {
         Invoke-Chat '/fill 596 -60 600 612 -50 612 air'
         Invoke-Chat '/fill 596 -61 600 612 -61 612 minecraft:smooth_stone'
         $x = 600
-        foreach ($b in $g) { Invoke-Chat "/setblock $x -59 606 $b"; $x += 2 }
+        foreach ($b in $g) { Invoke-Chat "/setblock $x -60 606 $b"; $x += 2 }
         # stand 5 blocks south of the row (the camera looks north, yaw 180), a little above it
-        Invoke-Teleport '/tp @s 603.5 -58 611.5 180 18'
+        Invoke-Teleport '/tp @s 603.5 -60 610.5 180 12'
         Start-Sleep -Seconds 3
         Save-Screenshot "blocks_$n" | Out-Null
         $n++
@@ -69,30 +69,28 @@ if ($script:Mode -eq 'local') {
     Invoke-Chat '/clear @s'
 
     # ---- each mob alone, close to the camera (creative: nothing targets the player) ----
-    $mobs = @(
-        @('carminite_golem', 4, -59), @('carminite_broodling', 3, -59), @('towerwood_borer', 2, -59),
-        @('carminite_ghastling', 3, -58), @('carminite_ghastguard', 9, -58)
-    )
-    Invoke-Chat '/fill 590 -60 630 640 -30 680 air'
-    Invoke-Chat '/fill 590 -61 630 640 -61 680 minecraft:smooth_stone'
+    # summoned relative to the player standing still on the ground, looking south (yaw 0)
+    $mobs = @(@('carminite_golem', '~ ~ ~4'), @('carminite_broodling', '~ ~ ~3'), @('towerwood_borer', '~ ~ ~2'),
+        @('carminite_ghastling', '~ ~1 ~4'), @('carminite_ghastguard', '~ ~1 ~9'))
+    Invoke-Teleport '/tp @s 610 -60 640 0 8'
+    Start-Sleep -Seconds 2
     foreach ($m in $mobs) {
-        $dist = $m[1]
-        Invoke-Chat "/summon twilightforest:$($m[0]) 610 $($m[2]) $(640 + $dist)"
-        Invoke-Teleport "/tp @s 610 -59 640 0 10"
-        Start-Sleep -Seconds 2
+        Invoke-Teleport '/tp @s 610 -60 640 0 8'
+        Invoke-Chat "/summon twilightforest:$($m[0]) $($m[1])"
+        Start-Sleep -Milliseconds 1200
         Save-Screenshot "mob_$($m[0])" | Out-Null
         Invoke-Chat "/kill @e[type=twilightforest:$($m[0])]"
     }
 
     # ---- the Ur-Ghast idle, then charging at a survival player (eyes open, fire texture) ----
-    Invoke-Chat '/summon twilightforest:ur_ghast 610 -52 668'
-    Invoke-Teleport '/tp @s 610 -55 640 0 -8'
-    Start-Sleep -Seconds 3
+    Invoke-Teleport '/tp @s 610 -60 640 0 -12'
+    Invoke-Chat '/summon twilightforest:ur_ghast ~ ~4 ~24'
+    Start-Sleep -Milliseconds 1500
     Save-Screenshot 'mob_ur_ghast' | Out-Null
     Invoke-Chat '/effect @s resistance 120 255 true'
     Invoke-Chat '/effect @s fire_resistance 120 1 true'
     Invoke-Chat '/gamemode survival'
-    Start-Sleep -Seconds 3
+    Start-Sleep -Seconds 2
     Save-Screenshot 'urghast_attack' | Out-Null
     Invoke-Chat '/gamemode creative'
     Invoke-Chat '/kill @e[type=twilightforest:ur_ghast]'
@@ -103,7 +101,7 @@ if ($script:Mode -eq 'local') {
     Start-Sleep -Seconds 4
     Invoke-Chat '/tf place twilightforest:dark_tower 800 -60 800'
     Start-Sleep -Seconds 12
-    Invoke-Teleport '/tp @s 755 -20 755 -45 20'
+    Invoke-Teleport '/tp @s 730 -60 730 -45 -18'
     Start-Sleep -Seconds 6
     Save-Screenshot 'tower_outside' | Out-Null
     Invoke-Teleport '/tp @s 818 -58 818 135 10'
