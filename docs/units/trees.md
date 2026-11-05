@@ -91,6 +91,19 @@ server e2e world's). The dump comes from a `trees` kind of the F13 oracle dumper
 flat area as `flatArea` does, places the configured feature with `LegacyRandomSource(seed)` or plants
 the sapling and calls `SaplingBlock#advanceTree` twice with one, and dumps the box.
 
+What it showed and what was fixed: F5's `minecraft:tree` writes no leaf distances (Java's
+`TreeFeature.updateLeaves`): TF's vanilla-type trees now run it through `gf_trees:update_leaves`, a
+decorator `tools/import/overrides/trees.json` appends to their configured features; the dark canopy and
+snow trees run their own older copy. Every golden tree, mega canopy tree and sapling (the tree of time
+aside) then matches block for block; the golden hashes are those runs'. Known differences (at most this
+many blocks, `PARITY GAP (known)` in the log, more fails):
+- `features_a` (106): the firefly canopy tree's trunkside / dangle decorators draw differently (some
+  fireflies, a jar on a rope); F5's `leave_vine` writes vine bits 1 where Java's vine faces east (8);
+  one mega oak leaf keeps distance 2 where Java keeps 7.
+- `features_b` (21) and `sapling_time_sapling` (10): the tree of time's exposed roots at its base.
+- `features_c` (19): the oracle places in a live level, where `HugeMushroomBlock#updateShape` clears
+  the faces between cap blocks; worldgen keeps them, as Bedrock does.
+
 ## Client e2e probes
 
 `trees.showcase` (client builds) builds every tree and block for the screenshots, plus the game's own
@@ -100,7 +113,7 @@ transformation (range 4, the stand-in biome `minecraft:mesa` without U1) every 1
 minute: the sorting and transformation particles in flight, and the chunk resend reaching the real
 client (`chunk resent to 1 players`, the brown mesa cell on screen). `trees.vanilla_probe` (both
 builds: the remote modes run it on the host) stands 250 blocks east and 64 north of the unit's row and
-puts itself back after 2400 ticks (loading its area again through F4's `loadArea` if needed), so a
+puts itself back after 2400 ticks (blocks in unloaded chunks are tried again every 600 ticks), so a
 `full` run or a glob with only the probe leaves nothing behind; `trees.zz_showcase_restore` puts
 everything (blocks, biomes, the stand-in) back at once.
 

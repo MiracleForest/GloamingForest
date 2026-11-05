@@ -863,6 +863,8 @@ bool hasTransformationTarget(BlockSource& region) {
     return has;
 }
 
+int resendChunkToViewers(BlockSource& region, ChunkPos const& chunk) { return resendChunk(region, chunk); }
+
 ChunkResendStats chunkResendStats() { return state().resends; }
 
 std::map<std::string, std::string> miningCoreOres() { return treeOres(); }

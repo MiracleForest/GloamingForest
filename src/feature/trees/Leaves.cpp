@@ -71,6 +71,7 @@ std::uint64_t gVanillaRunes = 0;
 struct NearLeaves {
     std::int64_t next = 0;
     bool         has  = false;
+    int          dim = -1, cx = 0, cy = 0, cz = 0; ///< where the last look was (a move to another section looks again)
 };
 constexpr std::int64_t                       kNearRefresh = 20;
 std::int64_t                                 gTick        = 0;
@@ -187,10 +188,13 @@ void tickLeaves() {
     for (auto* p : players) {
         // the sampling runs only while leaves of transformation are within its reach (a palette
         // look over the sub-chunks the samples can hit, refreshed every kNearRefresh ticks)
-        auto& near = gNear[p->getOrCreateUniqueID().rawID];
-        if (gTick >= near.next) {
-            near.has  = leavesNear(p->getDimensionBlockSource(), game::blockPosOf(p->getPosition()));
+        auto&    near = gNear[p->getOrCreateUniqueID().rawID];
+        BlockPos at   = game::blockPosOf(p->getPosition());
+        int      dim  = static_cast<int>(p->getDimensionId());
+        if (gTick >= near.next || dim != near.dim || (at.x >> 4) != near.cx || (at.y >> 4) != near.cy || (at.z >> 4) != near.cz) {
+            near.has  = leavesNear(p->getDimensionBlockSource(), at);
             near.next = gTick + kNearRefresh;
+            near.dim = dim, near.cx = at.x >> 4, near.cy = at.y >> 4, near.cz = at.z >> 4;
         }
         if (near.has) displayTicks(*p);
     }

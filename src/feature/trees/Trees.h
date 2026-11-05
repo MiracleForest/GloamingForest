@@ -23,6 +23,7 @@ class Biome;
 class Block;
 class BlockPos;
 class BlockSource;
+class ChunkPos;
 class Player;
 
 namespace gf::feature::trees {
@@ -88,6 +89,12 @@ struct ChunkResendStats {
 [[nodiscard]] bool hollowTreeClearance(BlockSource& region, BlockPos const& pos);
 /// The leaf runes the server sent to players without the client mod so far.
 [[nodiscard]] std::uint64_t vanillaLeafRunesSent();
+/// `block` with its twilightforest:distance set to `distance` (its other states kept); `block` when it
+/// has no distance.
+[[nodiscard]] Block const& leafWithDistance(Block const& block, int distance);
+/// Sends chunk `chunk` again to every player whose view holds it (the transformation core's biome
+/// resend); returns how many got it.
+int resendChunkToViewers(BlockSource& region, ChunkPos const& chunk);
 /// "minecraft:plains" / "twilightforest:enchanted_forest" of a biome.
 [[nodiscard]] std::string biomeName(Biome const& biome);
 

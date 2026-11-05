@@ -70,7 +70,8 @@ if ($script:Mode -eq 'local') {
     $qx = [int]$q.Matches[0].Groups[1].Value; $qy = [int]$q.Matches[0].Groups[2].Value; $qz = [int]$q.Matches[0].Groups[3].Value
     Invoke-Teleport "/tp @s $($qx + 0.5) $($qy + 5) $($qz + 9) 180 30"
     Wait-LogLine 'trees: the transformation core at .* \(chunk resent to [1-9]\d* players\)' 60 | Out-Null
-    Start-Sleep -Milliseconds 400
+    # the chunks around the probe load and render after the teleport; the cores run every 10 / 20 ticks
+    Start-Sleep -Seconds 4
     Save-Screenshot 'particles-1' | Out-Null
     Start-Sleep -Milliseconds 300
     Save-Screenshot 'particles-2' | Out-Null

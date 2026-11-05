@@ -36,7 +36,6 @@
 #include "core/jrand/JavaOrder.h"
 #include "core/trees/JavaHashSet.h"
 #include "feature/ext/worldgen/FeatureKit.h"
-#include "feature/features/Internal.h"
 #include "feature/trees/TreeUtil.h"
 #include "game/Blocks.h"
 #include "mod/Log.h"
@@ -818,6 +817,8 @@ bool snowUnderTrees(FeatureContext const& c) {
 
 std::uint64_t leafDistanceWrites() { return gLeafDistanceWrites.load(); }
 
+Block const& leafWithDistance(Block const& block, int distance) { return withDistance(block, distance); }
+
 void registerTreeFeatures() {
     using gf::features::registerType;
     registerType("twilightforest:mega_oak", [](FeatureContext const& c) { return tfTree(c, megaOak); });
@@ -833,12 +834,10 @@ void registerTreeFeatures() {
     // TreeFeature#place's own updateLeaves (1.21.1: the trunk is the source, the decorations and roots
     // are filled, the box holds every set), which F5's minecraft:tree interpreter does not run: TF's
     // vanilla-type trees (tools/import/overrides/trees.json appends it as their last decorator)
-    gf::features::registerTreeDecorator(kTreeUpdateLeaves, [](gf::features::TreeContext& t, Json const&) {
-        auto& state = static_cast<gf::features::detail::TreeState&>(t); // the interpreter's own context
-        std::vector<BlockPos> filled = state.decorations;
-        filled.insert(filled.end(), t.roots.begin(), t.roots.end());
-        updateLeaves(t.region, t.logs, filled, {}, t.leaves);
-    });
+    // The decorations set (filled, and part of the box) is the interpreter's own (F5's internal
+    // TreeState, not in the contract): the blocks decorators place have no distance, so leaving them
+    // out changes nothing inside the box of the trunk, roots and leaves the walk is held to.
+    gf::features::registerTreeDecorator(kTreeUpdateLeaves, [](gf::features::TreeContext& t, Json const&) { updateLeaves(t.region, t.logs, t.roots, {}, t.leaves); });
 }
 
 } // namespace gf::feature::trees
