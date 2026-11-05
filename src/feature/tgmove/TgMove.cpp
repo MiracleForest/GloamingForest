@@ -410,7 +410,7 @@ void tickPlayer(Player& player) {
     if (glideActive && st.gliding && delta.y < 0 && !player.isGliding()) player.setFallDistance(tg::glideFallDistance(delta.y));
     // vanilla clients: sneak in the air = Slow Falling (the client config's default)
     bool vanillaGlide = glideActive && !net::isCompanion(player)
-                     && tg::wantsGlide(true, player.isSneaking(), delta.y, onGround) && !player.isGliding();
+                     && tg::wantsGlide(true, player.isSneaking(), delta.y, onGround && !st.airborne) && !player.isGliding();
     bool wasSlowFalling = st.slowFalling;
     keepEffect(player, kSlowFallingId, 0, vanillaGlide, st.slowFalling);
     if (st.slowFalling && !wasSlowFalling) log().info("tgmove: {} glides (Slow Falling)", player.getRealName());

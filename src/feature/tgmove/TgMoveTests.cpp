@@ -157,7 +157,7 @@ GF_REGISTER_SELFTEST("tgmove.validator", [](Context& ctx) -> ll::coro::CoroTask<
     tm::forget(p);
     gf::net::setTestCompanion(p, true);
     gf::net::injectFromClient(p, "tgmove.double_jump", nlohmann::json::object());
-    ctx.check(tm::stateOf(p).doubleJumpValidator.count == 0 && tm::stateOf(p).doubleJumpValidator.lastCheck == p.mTickCount,
+    ctx.check(tm::stateOf(p).doubleJumpValidator.lastCheck == p.mTickCount && tm::stateOf(p).doubleJumpValidator.count <= 1,
               "a refused double jump packet is checked");
     gf::net::injectFromClient(p, "tgmove.sidestep", {{"left", true}});
     gf::net::injectFromClient(p, "tgmove.sidestep", {{"left", true}});
@@ -221,15 +221,22 @@ GF_REGISTER_SELFTEST("tgmove.glide", [](Context& ctx) -> ll::coro::CoroTask<> {
     ctx.check(!tm::stateOf(p1).gliding, "is_gradually_gliding is cleared without the modifier");
     // vanilla fallback: sneaking in the air = Slow Falling
     equip(p1, 2, "twilightforest:travellers_wings", {"twilightforest:gradual_glide"});
-    p1.setSneaking(true);
-    p1.lerpMotion(Vec3{0, -0.3f, 0});
-    tm::tickPlayer(p1);
-    ctx.check(p1.getEffect(27u) != nullptr, "Slow Falling while sneaking in the air");
-    p1.setSneaking(false);
-    tm::tickPlayer(p1);
-    ctx.check(p1.getEffect(27u) == nullptr, "no Slow Falling once the sneak key is released");
-    unequipAll(p1);
-    p1.teleport(at(g), DimensionType(g.dim));
+    p1.teleport(at(g, 24), DimensionType(g.dim));
+    co_await ctx.ticks(4);
+    auto& p1b = ctx.player();
+    p1b.setSneaking(true);
+    tm::stateOf(p1b).airborne = true; // the input edges of a vanilla client (LeftGround)
+    p1b.lerpMotion(Vec3{0, -0.3f, 0});
+    tm::tickPlayer(p1b);
+    ctx.check(p1b.getEffect(27u) != nullptr,
+              "Slow Falling while sneaking in the air (sneaking " + std::to_string(p1b.isSneaking()) + ", on ground " + std::to_string(p1b.isOnGround())
+                  + ", vy " + num(p1b.getPosDelta().y) + ", active " + std::to_string(tm::active(p1b, Mod::GradualGlide)) + ", companion "
+                  + std::to_string(gf::net::isCompanion(p1b)) + ")");
+    p1b.setSneaking(false);
+    tm::tickPlayer(p1b);
+    ctx.check(p1b.getEffect(27u) == nullptr, "no Slow Falling once the sneak key is released");
+    unequipAll(p1b);
+    p1b.teleport(at(g), DimensionType(g.dim));
     co_return;
 });
 

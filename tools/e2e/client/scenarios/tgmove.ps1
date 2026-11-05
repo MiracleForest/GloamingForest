@@ -38,6 +38,8 @@ Invoke-Chat '/twilightforest selftest "tgmove.e2e.equip"'
 $done = Wait-LogLine 'SELFTEST DONE pass=(\d+) fail=(\d+)' 60 -Since $mark
 if ($done -notmatch 'pass=1 fail=0') { throw "tgmove.e2e.equip: $done" }
 $results = [ordered]@{}
+$script:failures = @()
+function Add-Failure([string]$m) { $script:failures += $m; Write-Step "FAIL: $m" }
 
 # ---- double jump ----
 Invoke-Teleport '/tp @s 300.5 -60 302.5 0 0'
@@ -70,7 +72,7 @@ $peak = Wait-LogLine "${client}tgmove: double jump peak ([0-9.]+) blocks" 20 -Si
 if ($peak -notmatch 'peak ([0-9.]+) blocks') { throw "no double jump peak in '$peak'" }
 $h = [double]$Matches[1]
 $results['double jump height'] = "$h blocks (TF about 2.5)"
-if ($h -lt 2.0 -or $h -gt 3.0) { throw "double jump peak $h blocks, TF's is about 2.5 (0.62 with Jump Boost II)" }
+if ($h -lt 2.0 -or $h -gt 3.0) { Add-Failure "double jump peak $h blocks, TF's is about 2.5 (0.62 with Jump Boost II)" }
 if ($remote) { Wait-LogLine '\[host\].*tgmove: .* double jumped \(vy' 20 -Since $mark | Out-Null }
 
 # ---- sidestep (A twice within 4 ticks) ----
@@ -82,12 +84,12 @@ Hold-Key $VK_A 70
 Start-Sleep -Milliseconds 60
 Hold-Key $VK_A 70
 $side = Wait-LogLine "${client}tgmove: sidestep (left|right)" 10 -Since $mark
-if ($side -notmatch 'sidestep left') { throw "A A should sidestep left: '$side'" }
+if ($side -notmatch 'sidestep left') { Add-Failure "A A should sidestep left: '$side'" }
 $moved = Wait-LogLine "${client}tgmove: sidestep moved ([0-9.]+) blocks" 10 -Since $mark
 if ($moved -notmatch 'moved ([0-9.]+) blocks') { throw "no sidestep distance in '$moved'" }
 $d = [double]$Matches[1]
 $results['sidestep distance'] = "$d blocks (TF 1.6 / 0.454 = 3.5)"
-if ($d -lt 2.5 -or $d -gt 6.0) { throw "sidestep moved $d blocks, TF's push 1.6 gives about 3.5" }
+if ($d -lt 2.5 -or $d -gt 6.0) { Add-Failure "sidestep moved $d blocks, TF's push 1.6 gives about 3.5" }
 Save-Screenshot 'sidestep' | Out-Null
 if ($remote) { Wait-LogLine '\[host\].*tgmove: .* sidestepped left' 20 -Since $mark | Out-Null }
 
@@ -104,8 +106,8 @@ $glide = Wait-LogLine "${client}tgmove: glide ended after (\d+) ticks, sink ([0-
 if ($glide -notmatch 'after (\d+) ticks, sink ([0-9.]+)') { throw "no glide line in '$glide'" }
 $ticks = [int]$Matches[1]; $sink = [double]$Matches[2]
 $results['glide sink rate'] = "$sink blocks/tick over $ticks ticks (TF terminal 0.357)"
-if ($ticks -lt 40) { throw "the glide lasted only $ticks ticks" }
-if ($sink -lt 0.25 -or $sink -gt 0.40) { throw "glide sink $sink blocks per tick, TF's terminal is 0.357" }
+if ($ticks -lt 40) { Add-Failure "the glide lasted only $ticks ticks" }
+if ($sink -lt 0.25 -or $sink -gt 0.40) { Add-Failure "glide sink $sink blocks per tick, TF's terminal is 0.357" }
 
 # ---- water walk ----
 Invoke-Teleport '/tp @s 312.5 -59 301.5 0 0'
@@ -114,7 +116,7 @@ $ww = Wait-LogLine "${client}tgmove: walking on water at y (-?[0-9.]+)" 10 -Sinc
 if ($ww -notmatch 'at y (-?[0-9.]+)') { throw "no water walk line in '$ww'" }
 $y = [double]$Matches[1]
 $results['water walk'] = "stands at y $y (TF: source y -61 + 0.5 = -60.5)"
-if ([Math]::Abs($y - (-60.5)) -gt 0.01) { throw "water walk surface $y, expected -60.5" }
+if ([Math]::Abs($y - (-60.5)) -gt 0.01) { Add-Failure "water walk surface $y, expected -60.5" }
 Focus-Game
 Hold-Key $VK_W 1200
 Start-Sleep -Milliseconds 300
@@ -132,3 +134,4 @@ $results['step up'] = "$($Matches[1]) blocks (TF step height 0.6 + 0.5)"
 Save-Screenshot 'step-up' | Out-Null
 
 foreach ($k in $results.Keys) { Write-Step "${k}: $($results[$k])" }
+if ($script:failures.Count -gt 0) { throw ($script:failures -join '; ') }
