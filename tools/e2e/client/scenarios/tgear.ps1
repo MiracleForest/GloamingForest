@@ -66,7 +66,7 @@ Invoke-Chat '/setblock 43 -59 46 twilightforest:red_thread ["twilightforest:sout
 Invoke-Chat '/setblock 41 -60 42 twilightforest:red_thread ["twilightforest:down"=true]'
 Invoke-Chat '/setblock 42 -60 42 twilightforest:red_thread ["twilightforest:down"=true]'
 Invoke-Teleport '/tp @s 41.5 -60 39.5 0 25'
-Invoke-Chat '/item replace entity @s slot.weapon.mainhand 0 twilightforest:red_thread 32'
+Invoke-Chat '/replaceitem entity @s slot.weapon.mainhand 0 twilightforest:red_thread 32'
 Start-Sleep -Seconds 2
 Save-Screenshot 'red-thread' | Out-Null
 
