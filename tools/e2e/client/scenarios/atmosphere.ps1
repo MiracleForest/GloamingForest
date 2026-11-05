@@ -55,18 +55,58 @@ function Get-AtmosphereColour([string]$path) {
 }
 function Get-ColourDistance($a, $b) { [Math]::Round([Math]::Sqrt(($a[0] - $b[0]) * ($a[0] - $b[0]) + ($a[1] - $b[1]) * ($a[1] - $b[1]) + ($a[2] - $b[2]) * ($a[2] - $b[2])), 1) }
 
-# The measurable parts of a view (the signature): share of aurora-coloured pixels (green-cyan to
-# blue, brighter than the night sky), bright isolated star pixels, pink cloud pixels.
-function Get-AtmosphereSignature([string]$path) {
-    $p = Get-AtmospherePixels $path
-    $aurora = 0; $stars = 0; $pink = 0
-    foreach ($c in $p) {
-        $r = $c[0]; $g = $c[1]; $b = $c[2]
-        if ($g -gt $r + 40 -and $g -gt 70) { $aurora++ }
-        if ($r -gt 170 -and $g -gt 170 -and $b -gt 170) { $stars++ }
-        if ($r -gt $b + 12 -and $r -gt $g + 12 -and $r -gt 70) { $pink++ }
+# The measurable parts of a view (the signature), every pixel of the middle (C#: a PowerShell loop
+# is too slow): share of aurora-coloured pixels (green clearly above red), stars (bright pixels
+# brighter than every pixel 3 away: small isolated points), pink cloud pixels.
+if (-not ('GfAtmosphere.Signature' -as [type])) {
+    Add-Type -TypeDefinition @'
+using System;
+namespace GfAtmosphere {
+public static class Signature {
+    public static double[] Analyze(int[] px, int w, int h) {
+        {
+            int x0 = (int)(w * 0.42), x1 = (int)(w * 0.92), y0 = (int)(h * 0.1), y1 = (int)(h * 0.75);
+            long n = 0, aurora = 0, pink = 0, stars = 0;
+            Func<int, int> lum = c => ((c >> 16) & 255) + ((c >> 8) & 255) + (c & 255);
+            for (int y = y0; y < y1; y++) for (int x = x0; x < x1; x++) {
+                int c = px[y * w + x]; int r = (c >> 16) & 255, g = (c >> 8) & 255, b = c & 255;
+                n++;
+                if (g > r + 40 && g > 70) aurora++;
+                if (r > b + 12 && r > g + 12 && r > 70) pink++;
+                int l = r + g + b;
+                if (l > 420) {
+                    bool peak = true;
+                    for (int dy = -1; dy <= 1 && peak; dy++) for (int dx = -1; dx <= 1; dx++) {
+                        if (dx == 0 && dy == 0) continue;
+                        int q = lum(px[(y + dy) * w + x + dx]);
+                        if (q > l || (q == l && (dy < 0 || (dy == 0 && dx < 0)))) { peak = false; break; }
+                    }
+                    if (peak && lum(px[(y - 3) * w + x]) < l - 120 && lum(px[(y + 3) * w + x]) < l - 120 && lum(px[y * w + x - 3]) < l - 120 && lum(px[y * w + x + 3]) < l - 120) stars++;
+                }
+            }
+            return new double[] { (double)aurora / n, stars, (double)pink / n };
+        }
     }
-    [pscustomobject]@{ Aurora = [Math]::Round($aurora / $p.Count, 4); Stars = $stars; Pink = [Math]::Round($pink / $p.Count, 4); Count = $p.Count }
+}
+}
+'@
+}
+# Every pixel of a screenshot as 0xAARRGGBB.
+function Get-AtmosphereBits([string]$path) {
+    $bmp = [System.Drawing.Bitmap]::FromFile($path)
+    try {
+        $rect = [System.Drawing.Rectangle]::new(0, 0, $bmp.Width, $bmp.Height)
+        $data = $bmp.LockBits($rect, [System.Drawing.Imaging.ImageLockMode]::ReadOnly, [System.Drawing.Imaging.PixelFormat]::Format32bppArgb)
+        $px = [int[]]::new($bmp.Width * $bmp.Height)
+        [System.Runtime.InteropServices.Marshal]::Copy($data.Scan0, $px, 0, $px.Length)
+        $bmp.UnlockBits($data)
+        return @{ Px = $px; W = $bmp.Width; H = $bmp.Height }
+    } finally { $bmp.Dispose() }
+}
+function Get-AtmosphereSignature([string]$path) {
+    $bits = Get-AtmosphereBits $path
+    $a = [GfAtmosphere.Signature]::Analyze($bits.Px, $bits.W, $bits.H)
+    [pscustomobject]@{ Aurora = [Math]::Round($a[0], 4); Stars = [int]$a[1]; Pink = [Math]::Round($a[2], 4) }
 }
 # Share of pixels that differ by more than 40 between two shots of the same view.
 function Get-ChangedShare([string]$a, [string]$b) {
@@ -80,7 +120,11 @@ function Get-ChangedShare([string]$a, [string]$b) {
 }
 function Test-AtmosphereSignature([string]$what, [double]$value, [double]$min, [double]$max) {
     Write-Step "signature $what = $value (reviewed range $min..$max)"
-    if ($value -lt $min -or $value -gt $max) { throw "$what is $value, outside the reviewed range $min..$max" }
+    if ($value -lt $min -or $value -gt $max) {
+        # a calibration run records every view (the ranges are reviewed from its shots)
+        if ($calibrate) { Write-Step "CALIBRATION MISMATCH: $what is $value, outside $min..$max"; return }
+        throw "$what is $value, outside the reviewed range $min..$max"
+    }
 }
 
 function Invoke-AtmosphereTest([string]$name) {
@@ -145,7 +189,7 @@ function Invoke-AtmosphereViews([string]$mode) {
     Write-Step "$mode sky noon vs midnight: colour distance $d"
     if ($d -gt 25) { throw "the Twilight Forest sky changed with the time of day ($d)" }
     $sig = Get-AtmosphereSignature $noon
-    Test-AtmosphereSignature "$mode stars in the zenith view" $sig.Stars 8 2000
+    Test-AtmosphereSignature "$mode stars in the zenith view" $sig.Stars 30 1500
     Set-View 90 -15
     $horizon = Save-Screenshot "$mode-sky-horizon"
     $sig = Get-AtmosphereSignature $horizon
