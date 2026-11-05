@@ -84,7 +84,7 @@ TEST(AuroraFloorPlan, WeightsFavourThePillarFloors) {
             if (f.type == FloorType::PillarParkour || f.type == FloorType::PillarPlatforms) pillars++;
         }
     }
-    EXPECT_GT(pillars * 3, total); // weights 6 + 6 of at most 18, fewer candidates where the rules allow less
+    EXPECT_GT(pillars * 5, total); // weight 6 each; the top floor blocks MID and PILLARS, which both need free
 }
 
 TEST(AuroraColor, Simplex) {
