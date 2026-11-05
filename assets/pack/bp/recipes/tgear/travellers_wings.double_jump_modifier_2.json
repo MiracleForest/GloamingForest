@@ -1,0 +1,39 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:add_modifier_to_travellers_gear/travellers_wings/double_jump_modifier_2"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      " L ",
+      "SWS",
+      "P P"
+    ],
+    "key": {
+      "L": {
+        "item": "minecraft:potion",
+        "data": 11
+      },
+      "P": {
+        "item": "minecraft:piston"
+      },
+      "S": {
+        "item": "minecraft:string"
+      },
+      "W": {
+        "item": "twilightforest:travellers_wings"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:travellers_wings"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:travellers_wings"
+    }
+  }
+}

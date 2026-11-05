@@ -1,0 +1,35 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:add_modifier_to_travellers_gear/travellers_vest/haste_modifier"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      "RRR",
+      "RVR",
+      "OOO"
+    ],
+    "key": {
+      "O": {
+        "item": "minecraft:obsidian"
+      },
+      "R": {
+        "item": "minecraft:redstone_block"
+      },
+      "V": {
+        "item": "twilightforest:travellers_vest"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:travellers_vest"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:travellers_vest"
+    }
+  }
+}

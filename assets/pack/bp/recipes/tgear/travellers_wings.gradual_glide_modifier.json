@@ -1,0 +1,38 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:add_modifier_to_travellers_gear/travellers_wings/gradual_glide_modifier"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      "FCF",
+      "FWF",
+      "FEF"
+    ],
+    "key": {
+      "C": {
+        "item": "minecraft:web"
+      },
+      "E": {
+        "item": "twilightforest:borer_essence"
+      },
+      "F": {
+        "item": "minecraft:feather"
+      },
+      "W": {
+        "item": "twilightforest:travellers_wings"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:travellers_wings"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:travellers_wings"
+    }
+  }
+}

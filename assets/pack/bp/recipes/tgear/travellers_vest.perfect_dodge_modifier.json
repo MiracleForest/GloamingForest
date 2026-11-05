@@ -1,0 +1,38 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:add_modifier_to_travellers_gear/travellers_vest/perfect_dodge_modifier"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      " E ",
+      "PVP",
+      " S "
+    ],
+    "key": {
+      "E": {
+        "item": "minecraft:ender_eye"
+      },
+      "P": {
+        "item": "minecraft:ender_pearl"
+      },
+      "S": {
+        "item": "minecraft:sugar"
+      },
+      "V": {
+        "item": "twilightforest:travellers_vest"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:travellers_vest"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:travellers_vest"
+    }
+  }
+}

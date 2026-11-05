@@ -1,0 +1,35 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:add_modifier_to_travellers_gear/travellers_wings/auto_repair_modifier"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      " E ",
+      "MTM",
+      " E "
+    ],
+    "key": {
+      "E": {
+        "item": "minecraft:experience_bottle"
+      },
+      "M": {
+        "item": "twilightforest:moss_patch"
+      },
+      "T": {
+        "item": "twilightforest:travellers_wings"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:travellers_wings"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:travellers_wings"
+    }
+  }
+}

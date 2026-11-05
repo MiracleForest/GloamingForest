@@ -1,0 +1,27 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "twilightforest:add_modifier_to_travellers_gear/travellers_wings/swap_hotbar_modifier"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "ingredients": [
+      {
+        "item": "twilightforest:travellers_wings"
+      },
+      {
+        "item": "twilightforest:travellers_belt"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "twilightforest:travellers_wings"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:travellers_wings"
+    }
+  }
+}

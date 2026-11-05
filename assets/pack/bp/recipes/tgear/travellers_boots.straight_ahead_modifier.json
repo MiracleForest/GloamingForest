@@ -1,0 +1,38 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:add_modifier_to_travellers_gear/travellers_boots/straight_ahead_modifier"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      "MPM",
+      "HBH"
+    ],
+    "key": {
+      "B": {
+        "item": "twilightforest:travellers_boots"
+      },
+      "H": {
+        "item": "minecraft:rabbit_hide"
+      },
+      "M": {
+        "item": "twilightforest:raw_meef"
+      },
+      "P": {
+        "item": "minecraft:potion",
+        "data": 14
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:travellers_boots"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:travellers_boots"
+    }
+  }
+}

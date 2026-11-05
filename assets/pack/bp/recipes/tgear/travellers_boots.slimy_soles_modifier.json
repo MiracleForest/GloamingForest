@@ -1,0 +1,34 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:add_modifier_to_travellers_gear/travellers_boots/slimy_soles_modifier"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      "WBW",
+      "S S"
+    ],
+    "key": {
+      "B": {
+        "item": "twilightforest:travellers_boots"
+      },
+      "S": {
+        "item": "minecraft:slime"
+      },
+      "W": {
+        "item": "minecraft:string"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:travellers_boots"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:travellers_boots"
+    }
+  }
+}

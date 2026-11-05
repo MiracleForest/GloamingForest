@@ -1,0 +1,37 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "twilightforest:add_modifier_to_travellers_gear/travellers_vest/stealth_modifier_1"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "ingredients": [
+      {
+        "item": "minecraft:potion",
+        "data": 8
+      },
+      {
+        "item": "minecraft:ender_eye"
+      },
+      {
+        "item": "minecraft:spider_eye"
+      },
+      {
+        "item": "minecraft:golden_carrot"
+      },
+      {
+        "item": "twilightforest:travellers_vest"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "twilightforest:travellers_vest"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:travellers_vest"
+    }
+  }
+}
