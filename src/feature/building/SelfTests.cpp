@@ -9,6 +9,7 @@
 #include "mc/deps/shared_types/legacy/actor/ArmorSlot.h"
 #include "mc/scripting/modules/minecraft/ScriptFacing.h"
 #include "mc/server/SimulatedPlayer.h"
+#include "mc/world/Container.h"
 #include "mc/server/sim/LookDuration.h"
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/item/ItemActor.h"
@@ -445,7 +446,6 @@ GF_REGISTER_SELFTEST("building.storage_blocks", [](Context& ctx) -> ll::coro::Co
     co_await ctx.ticks(10);
     float after = sim(ctx).getHealth();
     ctx.check(after <= before - 4.0f + 0.01f, "knightmetal hurts the player standing on it (" + std::to_string(before) + " -> " + std::to_string(after) + ")");
-    sim(ctx).setHealth(sim(ctx).getMaxHealth());
     // fiery block: stepping on it hurts, fiery boots protect
     auto fb = at(p, 3, 1, 0);
     ctx.require(ctx.setBlock(fb, "twilightforest:fiery_block"), "a fiery block");
@@ -461,7 +461,6 @@ GF_REGISTER_SELFTEST("building.storage_blocks", [](Context& ctx) -> ll::coro::Co
         ctx.check(!fieryHurts(sim(ctx)), "fiery boots protect");
         sim(ctx).setArmor(SharedTypes::Legacy::ArmorSlot::Feet, ItemStack::EMPTY_ITEM());
     }
-    sim(ctx).setHealth(sim(ctx).getMaxHealth());
     sim(ctx).teleport(Vec3{p.x + 0.5f, float(p.y), p.z + 3.5f}, sim(ctx).getDimensionId());
 });
 
