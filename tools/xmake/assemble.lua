@@ -281,12 +281,12 @@ local function is_fragment_path(r)
     return false
 end
 
--- The BP identifier of a block / item / entity JSON (nil for other files).
+-- The identifier of a block / item / entity / client entity / attachable / particle effect JSON (nil for other files).
 local function bp_identifier(file)
     if not file:match("%.json$") then return nil end
     local doc = try_json(file)
     if type(doc) ~= "table" then return nil end
-    for _, key in ipairs({"minecraft:block", "minecraft:item", "minecraft:entity", "minecraft:client_entity", "minecraft:attachable"}) do
+    for _, key in ipairs({"minecraft:block", "minecraft:item", "minecraft:entity", "minecraft:client_entity", "minecraft:attachable", "particle_effect"}) do
         local def = doc[key]
         local id = def and def.description and def.description.identifier
         if type(id) == "string" then return key .. "|" .. id end
@@ -583,7 +583,26 @@ local function check_blocks(bpdirs, cfg)
     return total
 end
 
--- owners.tsv: {kinds = {kind -> {id -> owner}}, paths = {{pats, owner, glob, score}}}
+-- the last path component of a glob (no braces) without wildcards ("assets/pack/rp/**/combat/**" ->
+-- "combat"), nil when it has none
+local function last_literal_component(glob)
+    local lit
+    for _, c in ipairs(glob:split("/", {plain = true})) do
+        if c ~= "" and not c:find("[%*%?]") then lit = c end
+    end
+    return lit
+end
+
+-- 1-based index of the last component of comps equal to lit (0 when lit is nil or absent)
+local function component_depth(comps, lit)
+    if not lit then return 0 end
+    for i = #comps, 1, -1 do
+        if comps[i] == lit then return i end
+    end
+    return 0
+end
+
+-- owners.tsv: {kinds = {kind -> {id -> owner}}, paths = {{pats, owner, glob, score, lit}}}
 local function load_owners(projectdir, cfg)
     local file = path.join(projectdir, cfg.checks.owners)
     local owners = {kinds = {}, paths = {}}
@@ -600,7 +619,8 @@ local function load_owners(projectdir, cfg)
                 -- an exact path beats every glob
                 for _, alt in ipairs(expand_braces(id)) do
                     local score = glob_score(alt) + (alt:find("[%*%?]") and 0 or 1000)
-                    table.insert(owners.paths, {pats = compile_glob(alt), owner = owner, glob = id, score = score})
+                    table.insert(owners.paths, {pats = compile_glob(alt), owner = owner, glob = id, score = score,
+                        lit = last_literal_component(alt)})
                 end
             elseif kind and kind ~= "kind" then
                 owners.kinds[kind] = owners.kinds[kind] or {}
@@ -611,13 +631,21 @@ local function load_owners(projectdir, cfg)
     return owners
 end
 
+-- The most specific path rule wins (most literal characters). Rules tied in specificity are ranked
+-- by where their last literal component sits in the path, deepest first: a unit folder nested in
+-- another unit's folder (assets/pack/rp/textures/biomes/combat/x.png) belongs to the inner one.
+-- Rules still tied with different owners are ambiguous. tools/ci/ownership.ps1 (Get-PathOwner)
+-- applies the same rule.
 local function owner_of(owners, relpath)
-    local best, bestscore, tie = nil, -1, nil
+    local best, bestkey, tie = nil, nil, nil
+    local comps
     for _, p in ipairs(owners.paths) do
         if glob_match(p.pats, relpath) then
-            if p.score > bestscore then
-                best, bestscore, tie = p, p.score, nil
-            elseif p.score == bestscore and p.owner ~= best.owner then
+            comps = comps or relpath:split("/", {plain = true})
+            local depth = component_depth(comps, p.lit)
+            if not best or p.score > bestkey[1] or (p.score == bestkey[1] and depth > bestkey[2]) then
+                best, bestkey, tie = p, {p.score, depth}, nil
+            elseif p.score == bestkey[1] and depth == bestkey[2] and p.owner ~= best.owner then
                 tie = p
             end
         end
@@ -1083,22 +1111,35 @@ end
 
 -- The pack paths units are granted (checks.packPathProbes of merges.json): each probe writes a
 -- file at `file` (a manual-layer path, assets/pack/<root>/...) into a scratch project, builds that
--- pack with build_pack and fails unless the file arrives at `out` in the pack (same bytes) and
--- docs/spec/owners.tsv gives the path to `owner` (the rule tools/ci/ownership.ps1 applies). It proves
+-- pack with build_pack and fails unless the file arrives at the same path below the pack's manual
+-- directory (`out`, derived from `file`; an `out` given in the entry must equal it) with the same
+-- bytes and docs/spec/owners.tsv gives the path to `owner` (owner_of; tools/ci/ownership.ps1
+-- -PackProbes holds its own resolver to the same expectations). It proves
 -- a granted directory is neither dropped by the assembly (fragment directories, "*.d", are merged,
 -- never copied) nor unowned, before the unit's first file lands there. Returns the probe count.
 local function probe_each(projectdir, cfg, owners, probes, scratch)
     for i, probe in ipairs(probes) do
         local pack
-        for _, p in ipairs(cfg.packs) do
-            if not p.test and probe.file:sub(1, #p.manual + 1) == p.manual .. "/" then
-                pack = p
-                break
+        if type(probe) ~= "table" or type(probe.file) ~= "string" or type(probe.owner) ~= "string"
+            or (probe.out ~= nil and type(probe.out) ~= "string") then
+            fail("packPathProbes: entry %d needs a string file and owner (and out, when given)", i)
+        else
+            for _, p in ipairs(cfg.packs) do
+                if not p.test and probe.file:sub(1, #p.manual + 1) == p.manual .. "/" then
+                    pack = p
+                    break
+                end
+            end
+            if not pack then
+                fail("packPathProbes: %s is not under the manual directory of a shipped pack", probe.file)
             end
         end
-        if not pack then
-            fail("packPathProbes: %s is not under the manual directory of a shipped pack", probe.file)
-        else
+        local out = pack and probe.file:sub(#pack.manual + 2)
+        if pack and probe.out and probe.out ~= out then
+            fail("packPathProbes: %s has out %s, but it lands at %s", probe.file, probe.out, out)
+            pack = nil
+        end
+        if pack then
             local proj = path.join(scratch, tostring(i))
             local manifest = path.join(projectdir, pack.manual, "manifest.json")
             os.mkdir(path.join(proj, pack.manual))
@@ -1109,11 +1150,11 @@ local function probe_each(projectdir, cfg, owners, probes, scratch)
             -- test = true: no licence files (they are copied from the real project, not the scratch one)
             local scratch_pack = {name = pack.name, dir = pack.dir, root = pack.root, manual = pack.manual, test = true}
             local dst = build_pack(proj, cfg, scratch_pack, path.join(proj, "out"), {0, 0, 0}, false)
-            local got = path.join(dst, probe.out)
+            local got = path.join(dst, out)
             if not os.isfile(got) then
-                fail("packPathProbes: %s did not reach %s/%s in the assembled pack", probe.file, pack.name, probe.out)
+                fail("packPathProbes: %s did not reach %s/%s in the assembled pack", probe.file, pack.name, out)
             elseif io.readfile(got) ~= text then
-                fail("packPathProbes: %s reached %s/%s with other content", probe.file, pack.name, probe.out)
+                fail("packPathProbes: %s reached %s/%s with other content", probe.file, pack.name, out)
             end
             local owner, why = owner_of(owners, probe.file)
             if owner ~= probe.owner then
@@ -1129,9 +1170,11 @@ local function probe_pack_paths(projectdir, cfg, owners)
     if #probes == 0 then return 0 end
     local scratch = os.tmpfile() .. ".packprobe"
     os.tryrm(scratch)
-    -- the scratch project goes even when a probe raises (build_pack reads JSON with load_json)
+    -- a raise inside a probe fails the check (the sandbox's try swallows it without a catch), and the
+    -- scratch project goes either way
     try {
         function () probe_each(projectdir, cfg, owners, probes, scratch) end,
+        catch { function (e) fail("packPathProbes: a probe raised: %s", tostring(e)) end },
         finally { function () os.tryrm(scratch) end }
     }
     return #probes

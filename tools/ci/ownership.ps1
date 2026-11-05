@@ -6,7 +6,9 @@
   Compares the working tree (committed, staged, modified and untracked files) with the merge base
   of HEAD and -Base and resolves the owner
   of every changed path with the `path` rows of docs/spec/owners.tsv: the most specific glob wins
-  (most literal characters); two different owners at the same specificity are an error.
+  (most literal characters); at the same specificity the rule whose last literal component lies
+  deepest in the path wins (a unit folder nested in another unit's folder belongs to the inner
+  one); two different owners still tied are an error.
 
   A path is allowed for unit <u> when
     - its owner is <u>, or
@@ -21,29 +23,36 @@
   usually behind origin/main, and a stale base lists other units' merged changes as violations
   (fetch first: git fetch origin). A -Base that does not exist is tried as origin/<Base>.
 
+  -PackProbes checks instead that every probe of checks.packPathProbes (tools/xmake/merges.json)
+  resolves here to its expected owner, the same expectation assemble.lua holds its own owner_of to
+  (tools/assemble.ps1 -Check runs it).
+
   Exit code 0 = the change is owned, 1 = violations (listed).
 
 .EXAMPLE
   pwsh tools/ci/ownership.ps1 -Unit f0                       # against origin/main (main without a remote)
   pwsh tools/ci/ownership.ps1 -Unit biomes -Base origin/main
+  pwsh tools/ci/ownership.ps1 -PackProbes
 #>
 param(
-    [Parameter(Mandatory)][string]$Unit,
+    [string]$Unit,
     [string]$Base,
-    [string]$Owners
+    [string]$Owners,
+    [switch]$PackProbes
 )
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path "$PSScriptRoot/../..").Path
 if (-not $Owners) { $Owners = Join-Path $root 'docs/spec/owners.tsv' }
 $rules = Get-Content (Join-Path $root 'tools/spec/owners.rules.json') -Raw | ConvertFrom-Json -AsHashtable
 
+if (-not $Unit -and -not $PackProbes) { Write-Host '[ownership] usage: ownership.ps1 -Unit <u> [-Base <ref>] | -PackProbes' -ForegroundColor Red; exit 1 }
 # unit id from an id or a name
 $unitId = $null
 foreach ($k in $rules.units.Keys) {
     if ($k -ieq $Unit -or $rules.units[$k].name -ieq $Unit) { $unitId = $k; break }
 }
-if (-not $unitId) { Write-Host "[ownership] unknown unit '$Unit'" -ForegroundColor Red; exit 1 }
-$unitName = $rules.units[$unitId].name
+if (-not $unitId -and -not $PackProbes) { Write-Host "[ownership] unknown unit '$Unit'" -ForegroundColor Red; exit 1 }
+$unitName = if ($unitId) { $rules.units[$unitId].name } else { $null }
 
 function Get-GlobRegexes([string]$glob) {
     # brace alternatives and "**/" (zero or more directories) as in tools/xmake/assemble.lua
@@ -89,23 +98,59 @@ foreach ($line in Get-Content $Owners) {
         # one rule per brace alternative, so a rule's specificity is that of the alternative matching
         foreach ($alt in Expand-Braces $c[1]) {
             $score = ($alt -replace '[\*\?]', '').Length + $(if ($alt -notmatch '[\*\?]') { 1000 } else { 0 })
-            $pathRules.Add([pscustomobject]@{ glob = $c[1]; owner = $c[2]; mode = $(if ($c.Count -gt 3) { $c[3] } else { 'manual' }); re = Get-GlobRegexes $alt; score = $score })
+            # the last component without wildcards ranks rules tied in specificity (Get-PathOwner)
+            $lit = @($alt -split '/' | Where-Object { $_ -and $_ -notmatch '[\*\?]' }) | Select-Object -Last 1
+            $pathRules.Add([pscustomobject]@{ glob = $c[1]; owner = $c[2]; mode = $(if ($c.Count -gt 3) { $c[3] } else { 'manual' }); re = Get-GlobRegexes $alt; score = $score; lit = $lit })
         }
         # the tool unit of a generated layer: the owner of "assets/gen/<layer>/**"
         if ($c[1] -match '^assets/gen/([^/{}*?]+)/\*\*$') { $genTools[$Matches[1]] = $c[2] }
     } elseif ($c[0] -eq 'stub') { $stubs[$c[1]] = $c[2] }
 }
 
+# The most specific rule wins (most literal characters); rules tied in specificity are ranked by where
+# their last literal component sits in the path, deepest first (a unit folder nested in another unit's
+# folder belongs to the inner one); rules still tied with different owners are ambiguous. Same rule as
+# owner_of in tools/xmake/assemble.lua.
+function Get-ComponentDepth([string[]]$comps, [string]$lit) {
+    if (-not $lit) { return 0 }
+    for ($i = $comps.Count - 1; $i -ge 0; $i--) { if ($comps[$i] -ceq $lit) { return $i + 1 } }
+    return 0
+}
+
 function Get-PathOwner([string]$path) {
-    $best = $null; $tie = $null
+    $best = $null; $bestDepth = 0; $tie = $null
+    $comps = @($path -split '/' | Where-Object { $_ })
     foreach ($r in $pathRules) {
         if (-not $r.re.IsMatch($path)) { continue }
-        if (-not $best -or $r.score -gt $best.score) { $best = $r; $tie = $null }
-        elseif ($r.score -eq $best.score -and $r.owner -ne $best.owner) { $tie = $r }
+        $depth = Get-ComponentDepth $comps $r.lit
+        if (-not $best -or $r.score -gt $best.score -or ($r.score -eq $best.score -and $depth -gt $bestDepth)) { $best = $r; $bestDepth = $depth; $tie = $null }
+        elseif ($r.score -eq $best.score -and $depth -eq $bestDepth -and $r.owner -ne $best.owner) { $tie = $r }
     }
     if ($tie) { return @{ owner = $null; why = "ambiguous: $($best.glob) ($($best.owner)) vs $($tie.glob) ($($tie.owner))" } }
     if (-not $best) { return @{ owner = $null; why = 'no owner in docs/spec/owners.tsv' } }
     return @{ owner = $best.owner; why = $best.glob; mode = $best.mode }
+}
+
+# -PackProbes: the probes of checks.packPathProbes (tools/xmake/merges.json) must resolve here to the
+# owner assemble.lua's owner_of gives them, so both implementations of the rule agree
+if ($PackProbes) {
+    $merges = Get-Content (Join-Path $root 'tools/xmake/merges.json') -Raw | ConvertFrom-Json -AsHashtable
+    $probes = @($merges.checks.packPathProbes)
+    $bad = 0
+    foreach ($p in $probes) {
+        $o = Get-PathOwner $p.file
+        if ($o.owner -ne $p.owner) {
+            $who = if ($o.owner) { "$($o.owner) ($($o.why))" } else { $o.why }
+            Write-Host "[ownership] probe $($p.file): owned by $who, expected $($p.owner)" -ForegroundColor Red
+            $bad++
+        }
+    }
+    if ($bad -or -not $probes.Count) {
+        if (-not $probes.Count) { Write-Host '[ownership] no checks.packPathProbes in tools/xmake/merges.json' -ForegroundColor Red }
+        exit 1
+    }
+    Write-Host "[ownership] OK: $($probes.Count) pack path probe(s) resolve to their expected owners" -ForegroundColor Green
+    exit 0
 }
 
 # changed files since the merge base; the default base is origin/main (the local main of a worktree

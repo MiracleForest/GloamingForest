@@ -132,10 +132,17 @@ Plain (non-fragment) pack files live in a per-unit folder below their Bedrock pa
 tie with F12's `ui` in specificity) for its own particle effects (the `fx` contract: Java's portal colour and coloured
 `DustParticleOptions` motion, which no vanilla Bedrock effect reproduces): `assets/pack/rp/particles/fx/<name>.json`
 -> `particles/fx/<name>.json`. Folders ending in `.d` are fragment directories: they are merged by a
-`tools/xmake/merges.json` entry and never copied, so a `.d` folder without a merge entry ships nothing. The assemble
-check `checks.packPathProbes` (merges.json) builds a probe file in each granted folder (F10's `particles/fx` and
-`particles/combat`, and one folder of F6, F8 and a W1 unit) into a scratch pack and fails unless it reaches the pack
-and `owners.tsv` gives it to that unit.
+`tools/xmake/merges.json` entry and never copied, so a `.d` folder without a merge entry ships nothing. A unit
+folder nested in another unit's folder belongs to the inner (deepest) one: the per-unit rules tie in specificity
+when the names have the same length (`biomes`, `combat`), and the tie goes to the rule whose last literal component
+lies deepest in the path (`assets/pack/rp/textures/biomes/combat/x.png` is F10's); rules still tied with different
+owners fail as ambiguous. A particle effect's `particle_effect.description.identifier`, like a block's, item's or
+entity's identifier, may appear once per layer; a manual file with a generated file's identifier replaces it. The
+assemble check `checks.packPathProbes` (merges.json) builds a probe file in each granted folder (F10's
+`particles/fx` and `particles/combat`, one folder of F6, F8 and a W1 unit, and two nested unit folders) into a
+scratch pack and fails unless it reaches the same path below the pack (`assets/pack/<bp|rp>/<p>` -> `<p>`) and
+`owners.tsv` gives it to that unit; `tools/assemble.ps1 -Check` also runs `tools/ci/ownership.ps1 -PackProbes`, which
+holds the CI ownership gate to the same expectations.
 
 ### Subcommands (R14)
 
