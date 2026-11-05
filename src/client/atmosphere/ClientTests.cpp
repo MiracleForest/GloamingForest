@@ -68,7 +68,8 @@ GF_REGISTER_SELFTEST("atmosphere.client_aurora", [](Context& ctx) -> ll::coro::C
     // is read by the client and render threads, a selftest must not change it under them)
     atc::setPreview({{"biome", "twilightforest:forest"}});
     co_await ctx.ticks(10);
-    ctx.check(atc::state().aurora == 0, "outside the glacier the aurora stays off");
+    int fading = atc::state().aurora;
+    ctx.check(fading < full && fading > 30, "outside the glacier the aurora fades out by 1 a tick (" + std::to_string(fading) + " after 10)");
     atc::setPreview(nlohmann::json::object());
 });
 
