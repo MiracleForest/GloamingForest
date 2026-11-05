@@ -34,7 +34,7 @@
         "bedrock": "textures/twilightforest/models/armor/phantom_layer_1",
         "tf": "src/main/resources/assets/twilightforest/textures/models/armor/phantom_layer_1.png"
       },
-      "material": "entity_alphablend"
+      "material": "entity_alphatest"
     }
   ],
   "bones": [
@@ -92,5 +92,6 @@
       "rotation": [0, 15, -45],
       "cubes": 1
     }
-  ]
+  ],
+  "notes": ["KnightPhantomModel.renderTrophy draws the helmet with phantom_layer_1 and the vertex colour FastColor.ARGB32.colorFromFloat(0.0625F, 1, 1, 1) under RenderType.entityCutoutNoCull. That alpha has no visible effect: the 1.21.1 shader rendertype_entity_cutout_no_cull.fsh discards on the texture alpha alone (< 0.1) before it multiplies the vertex colour, and the render type draws without blending, so the horned helmet shows opaque over the phantomskeleton head (block, wall and item forms, GUI included). phantom_layer_1 has only alpha 0 and 255, so entity_alphatest matches it exactly."]
 }

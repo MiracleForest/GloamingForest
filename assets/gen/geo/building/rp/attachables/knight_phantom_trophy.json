@@ -5,11 +5,11 @@
       "identifier": "twilightforest:knight_phantom_trophy",
       "materials": {
         "default": "entity_alphatest",
-        "part1": "entity_alphablend",
+        "part1": "entity_alphatest",
         "part2": "entity_alphatest",
-        "part3": "entity_alphablend",
+        "part3": "entity_alphatest",
         "part4": "entity_alphatest",
-        "part5": "entity_alphablend",
+        "part5": "entity_alphatest",
         "enchanted": "entity_alphatest_glint"
       },
       "textures": {
