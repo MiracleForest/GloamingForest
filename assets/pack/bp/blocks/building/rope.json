@@ -1,0 +1,301 @@
+{
+  "format_version": "1.26.50",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:rope",
+      "menu_category": {
+        "category": "construction"
+      },
+      "states": {
+        "twilightforest:x": [
+          false,
+          true
+        ],
+        "twilightforest:y": [
+          true,
+          false
+        ],
+        "twilightforest:z": [
+          false,
+          true
+        ]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0.3
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 15
+      },
+      "minecraft:geometry": {
+        "identifier": "geometry.tf.twilightforest.block.rope.multipart",
+        "bone_visibility": {
+          "part0": "q.block_state('twilightforest:y')",
+          "part1": "q.block_state('twilightforest:x')",
+          "part2": "q.block_state('twilightforest:z')",
+          "part3": "(q.block_state('twilightforest:x') && q.block_state('twilightforest:y')) || (q.block_state('twilightforest:y') && q.block_state('twilightforest:z')) || (q.block_state('twilightforest:x') && q.block_state('twilightforest:z'))"
+        }
+      },
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_rope",
+          "render_method": "alpha_test"
+        },
+        "t_twilightforest_block_rope": {
+          "texture": "tf_block_rope",
+          "render_method": "alpha_test"
+        },
+        "t_twilightforest_block_rope_knot": {
+          "texture": "tf_block_rope_knot",
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:light_dampening": 0,
+      "minecraft:liquid_detection": {
+        "detection_rules": [
+          {
+            "liquid_type": "water",
+            "can_contain_liquid": true,
+            "on_liquid_touches": "no_reaction"
+          }
+        ]
+      },
+      "minecraft:collision_box": false,
+      "minecraft:selection_box": {
+        "origin": [
+          -1.5,
+          0,
+          -1.5
+        ],
+        "size": [
+          3.0,
+          16,
+          3.0
+        ]
+      }
+    },
+    "permutations": [
+      {
+        "condition": "!q.block_state('twilightforest:x') && !q.block_state('twilightforest:y') && q.block_state('twilightforest:z')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -1.5,
+              6.5,
+              -8
+            ],
+            "size": [
+              3.0,
+              3.0,
+              16
+            ]
+          },
+          "minecraft:collision_box": {
+            "origin": [
+              -1.5,
+              6.5,
+              -8
+            ],
+            "size": [
+              3.0,
+              3.0,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:x') && q.block_state('twilightforest:y') && !q.block_state('twilightforest:z')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -1.5,
+              0,
+              -1.5
+            ],
+            "size": [
+              3.0,
+              16,
+              3.0
+            ]
+          },
+          "minecraft:collision_box": false
+        }
+      },
+      {
+        "condition": "!q.block_state('twilightforest:x') && q.block_state('twilightforest:y') && q.block_state('twilightforest:z')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -1.5,
+              0,
+              -8
+            ],
+            "size": [
+              3.0,
+              16,
+              16
+            ]
+          },
+          "minecraft:collision_box": {
+            "origin": [
+              -1.5,
+              6.5,
+              -8
+            ],
+            "size": [
+              3.0,
+              3.0,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:x') && !q.block_state('twilightforest:y') && !q.block_state('twilightforest:z')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              6.5,
+              -1.5
+            ],
+            "size": [
+              16,
+              3.0,
+              3.0
+            ]
+          },
+          "minecraft:collision_box": {
+            "origin": [
+              -8,
+              6.5,
+              -1.5
+            ],
+            "size": [
+              16,
+              3.0,
+              3.0
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:x') && !q.block_state('twilightforest:y') && q.block_state('twilightforest:z')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              6.5,
+              -8
+            ],
+            "size": [
+              16,
+              3.0,
+              16
+            ]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                6.5,
+                -1.5
+              ],
+              "size": [
+                16,
+                3.0,
+                3.0
+              ]
+            },
+            {
+              "origin": [
+                -1.5,
+                6.5,
+                -8
+              ],
+              "size": [
+                3.0,
+                3.0,
+                16
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:x') && q.block_state('twilightforest:y') && !q.block_state('twilightforest:z')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -1.5
+            ],
+            "size": [
+              16,
+              16,
+              3.0
+            ]
+          },
+          "minecraft:collision_box": {
+            "origin": [
+              -8,
+              6.5,
+              -1.5
+            ],
+            "size": [
+              16,
+              3.0,
+              3.0
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:x') && q.block_state('twilightforest:y') && q.block_state('twilightforest:z')",
+        "components": {
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              16,
+              16
+            ]
+          },
+          "minecraft:collision_box": [
+            {
+              "origin": [
+                -8,
+                6.5,
+                -1.5
+              ],
+              "size": [
+                16,
+                3.0,
+                3.0
+              ]
+            },
+            {
+              "origin": [
+                -1.5,
+                6.5,
+                -8
+              ],
+              "size": [
+                3.0,
+                3.0,
+                16
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

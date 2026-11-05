@@ -1,0 +1,67 @@
+{
+  "tf_building_hydra4": {
+    "textures": "textures/twilightforest/entity/hydra4"
+  },
+  "tf_building_minoshroomtaur": {
+    "textures": "textures/twilightforest/entity/minoshroomtaur"
+  },
+  "tf_building_nagahead": {
+    "textures": "textures/twilightforest/entity/nagahead"
+  },
+  "tf_building_phantom_layer_1": {
+    "textures": "textures/twilightforest/models/armor/phantom_layer_1"
+  },
+  "tf_building_phantomskeleton": {
+    "textures": "textures/twilightforest/entity/phantomskeleton"
+  },
+  "tf_building_questram": {
+    "textures": "textures/twilightforest/entity/questram"
+  },
+  "tf_building_questram_lines": {
+    "textures": "textures/twilightforest/entity/questram_lines"
+  },
+  "tf_building_rune_blue": {
+    "textures": [
+      {
+        "path": "textures/twilightforest/block/castleblock_magic_0",
+        "tint_color": "#00ffff"
+      }
+    ]
+  },
+  "tf_building_rune_pink": {
+    "textures": [
+      {
+        "path": "textures/twilightforest/block/castleblock_magic_0",
+        "tint_color": "#ff00ff"
+      }
+    ]
+  },
+  "tf_building_rune_violet": {
+    "textures": [
+      {
+        "path": "textures/twilightforest/block/castleblock_magic_0",
+        "tint_color": "#4b0082"
+      }
+    ]
+  },
+  "tf_building_rune_yellow": {
+    "textures": [
+      {
+        "path": "textures/twilightforest/block/castleblock_magic_0",
+        "tint_color": "#ffff00"
+      }
+    ]
+  },
+  "tf_building_snowqueen": {
+    "textures": "textures/twilightforest/entity/snowqueen"
+  },
+  "tf_building_towerboss": {
+    "textures": "textures/twilightforest/entity/towerboss"
+  },
+  "tf_building_twilightlich64": {
+    "textures": "textures/twilightforest/entity/twilightlich64"
+  },
+  "tf_building_yetialpha": {
+    "textures": "textures/twilightforest/entity/yetialpha"
+  }
+}

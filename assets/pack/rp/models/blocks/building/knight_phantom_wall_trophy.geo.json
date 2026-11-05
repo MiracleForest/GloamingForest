@@ -1,0 +1,622 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.building.knight_phantom_wall_trophy",
+        "texture_width": 64,
+        "texture_height": 32,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3,
+        "visible_bounds_offset": [
+          0,
+          0.75,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "trophy",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0.0,
+            0
+          ]
+        },
+        {
+          "name": "knight_phantom_wall_trophy_0",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "parent": "trophy",
+          "rotation": [
+            0,
+            180,
+            0
+          ]
+        },
+        {
+          "name": "head_0",
+          "pivot": [
+            0,
+            4,
+            3.984
+          ],
+          "parent": "knight_phantom_wall_trophy_0",
+          "cubes": [
+            {
+              "origin": [
+                -4,
+                4,
+                -0.016
+              ],
+              "size": [
+                8,
+                8,
+                8
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    8,
+                    8
+                  ],
+                  "uv_size": [
+                    8,
+                    8
+                  ]
+                },
+                "east": {
+                  "uv": [
+                    0,
+                    8
+                  ],
+                  "uv_size": [
+                    8,
+                    8
+                  ]
+                },
+                "south": {
+                  "uv": [
+                    24,
+                    8
+                  ],
+                  "uv_size": [
+                    8,
+                    8
+                  ]
+                },
+                "west": {
+                  "uv": [
+                    16,
+                    8
+                  ],
+                  "uv_size": [
+                    8,
+                    8
+                  ]
+                },
+                "up": {
+                  "uv": [
+                    8,
+                    0
+                  ],
+                  "uv_size": [
+                    8,
+                    8
+                  ]
+                },
+                "down": {
+                  "uv": [
+                    16,
+                    8
+                  ],
+                  "uv_size": [
+                    8,
+                    -8
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "knight_phantom_wall_trophy_armor_1",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "parent": "trophy",
+          "rotation": [
+            0,
+            180,
+            0
+          ]
+        },
+        {
+          "name": "helmet_1",
+          "pivot": [
+            0,
+            3.52,
+            3.984
+          ],
+          "parent": "knight_phantom_wall_trophy_armor_1",
+          "cubes": [
+            {
+              "origin": [
+                -4.675,
+                3.245,
+                -0.691
+              ],
+              "size": [
+                9.35,
+                9.35,
+                9.35
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    8,
+                    8
+                  ],
+                  "uv_size": [
+                    8,
+                    8
+                  ],
+                  "material_instance": "helmet"
+                },
+                "east": {
+                  "uv": [
+                    0,
+                    8
+                  ],
+                  "uv_size": [
+                    8,
+                    8
+                  ],
+                  "material_instance": "helmet"
+                },
+                "south": {
+                  "uv": [
+                    24,
+                    8
+                  ],
+                  "uv_size": [
+                    8,
+                    8
+                  ],
+                  "material_instance": "helmet"
+                },
+                "west": {
+                  "uv": [
+                    16,
+                    8
+                  ],
+                  "uv_size": [
+                    8,
+                    8
+                  ],
+                  "material_instance": "helmet"
+                },
+                "up": {
+                  "uv": [
+                    8,
+                    0
+                  ],
+                  "uv_size": [
+                    8,
+                    8
+                  ],
+                  "material_instance": "helmet"
+                },
+                "down": {
+                  "uv": [
+                    16,
+                    8
+                  ],
+                  "uv_size": [
+                    8,
+                    -8
+                  ],
+                  "material_instance": "helmet"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "right_horn_1_1",
+          "pivot": [
+            -4.4,
+            10.67,
+            3.984
+          ],
+          "parent": "helmet_1",
+          "rotation": [
+            0,
+            -25,
+            45
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -10.725,
+                8.745,
+                2.059
+              ],
+              "size": [
+                6.05,
+                3.85,
+                3.85
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    27,
+                    3
+                  ],
+                  "uv_size": [
+                    5,
+                    3
+                  ],
+                  "material_instance": "helmet"
+                },
+                "east": {
+                  "uv": [
+                    24,
+                    3
+                  ],
+                  "uv_size": [
+                    3,
+                    3
+                  ],
+                  "material_instance": "helmet"
+                },
+                "south": {
+                  "uv": [
+                    35,
+                    3
+                  ],
+                  "uv_size": [
+                    5,
+                    3
+                  ],
+                  "material_instance": "helmet"
+                },
+                "west": {
+                  "uv": [
+                    32,
+                    3
+                  ],
+                  "uv_size": [
+                    3,
+                    3
+                  ],
+                  "material_instance": "helmet"
+                },
+                "up": {
+                  "uv": [
+                    27,
+                    0
+                  ],
+                  "uv_size": [
+                    5,
+                    3
+                  ],
+                  "material_instance": "helmet"
+                },
+                "down": {
+                  "uv": [
+                    32,
+                    3
+                  ],
+                  "uv_size": [
+                    5,
+                    -3
+                  ],
+                  "material_instance": "helmet"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "right_horn_2_1",
+          "pivot": [
+            -9.35,
+            10.67,
+            3.984
+          ],
+          "parent": "right_horn_1_1",
+          "rotation": [
+            0,
+            -15,
+            45
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -13.475,
+                9.295,
+                2.609
+              ],
+              "size": [
+                3.85,
+                2.75,
+                2.75
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    56,
+                    18
+                  ],
+                  "uv_size": [
+                    3,
+                    2
+                  ],
+                  "material_instance": "helmet"
+                },
+                "east": {
+                  "uv": [
+                    54,
+                    18
+                  ],
+                  "uv_size": [
+                    2,
+                    2
+                  ],
+                  "material_instance": "helmet"
+                },
+                "south": {
+                  "uv": [
+                    61,
+                    18
+                  ],
+                  "uv_size": [
+                    3,
+                    2
+                  ],
+                  "material_instance": "helmet"
+                },
+                "west": {
+                  "uv": [
+                    59,
+                    18
+                  ],
+                  "uv_size": [
+                    2,
+                    2
+                  ],
+                  "material_instance": "helmet"
+                },
+                "up": {
+                  "uv": [
+                    56,
+                    16
+                  ],
+                  "uv_size": [
+                    3,
+                    2
+                  ],
+                  "material_instance": "helmet"
+                },
+                "down": {
+                  "uv": [
+                    59,
+                    18
+                  ],
+                  "uv_size": [
+                    3,
+                    -2
+                  ],
+                  "material_instance": "helmet"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "left_horn_1_1",
+          "pivot": [
+            4.4,
+            10.67,
+            3.984
+          ],
+          "parent": "helmet_1",
+          "rotation": [
+            0,
+            25,
+            -45
+          ],
+          "cubes": [
+            {
+              "origin": [
+                4.675,
+                8.745,
+                2.059
+              ],
+              "size": [
+                6.05,
+                3.85,
+                3.85
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    32,
+                    3
+                  ],
+                  "uv_size": [
+                    -5,
+                    3
+                  ],
+                  "material_instance": "helmet"
+                },
+                "east": {
+                  "uv": [
+                    35,
+                    3
+                  ],
+                  "uv_size": [
+                    -3,
+                    3
+                  ],
+                  "material_instance": "helmet"
+                },
+                "south": {
+                  "uv": [
+                    40,
+                    3
+                  ],
+                  "uv_size": [
+                    -5,
+                    3
+                  ],
+                  "material_instance": "helmet"
+                },
+                "west": {
+                  "uv": [
+                    27,
+                    3
+                  ],
+                  "uv_size": [
+                    -3,
+                    3
+                  ],
+                  "material_instance": "helmet"
+                },
+                "up": {
+                  "uv": [
+                    32,
+                    0
+                  ],
+                  "uv_size": [
+                    -5,
+                    3
+                  ],
+                  "material_instance": "helmet"
+                },
+                "down": {
+                  "uv": [
+                    37,
+                    3
+                  ],
+                  "uv_size": [
+                    -5,
+                    -3
+                  ],
+                  "material_instance": "helmet"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "left_horn_2_1",
+          "pivot": [
+            9.35,
+            10.67,
+            3.984
+          ],
+          "parent": "left_horn_1_1",
+          "rotation": [
+            0,
+            15,
+            -45
+          ],
+          "cubes": [
+            {
+              "origin": [
+                9.625,
+                9.295,
+                2.609
+              ],
+              "size": [
+                3.85,
+                2.75,
+                2.75
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    56,
+                    18
+                  ],
+                  "uv_size": [
+                    3,
+                    2
+                  ],
+                  "material_instance": "helmet"
+                },
+                "east": {
+                  "uv": [
+                    54,
+                    18
+                  ],
+                  "uv_size": [
+                    2,
+                    2
+                  ],
+                  "material_instance": "helmet"
+                },
+                "south": {
+                  "uv": [
+                    61,
+                    18
+                  ],
+                  "uv_size": [
+                    3,
+                    2
+                  ],
+                  "material_instance": "helmet"
+                },
+                "west": {
+                  "uv": [
+                    59,
+                    18
+                  ],
+                  "uv_size": [
+                    2,
+                    2
+                  ],
+                  "material_instance": "helmet"
+                },
+                "up": {
+                  "uv": [
+                    56,
+                    16
+                  ],
+                  "uv_size": [
+                    3,
+                    2
+                  ],
+                  "material_instance": "helmet"
+                },
+                "down": {
+                  "uv": [
+                    59,
+                    18
+                  ],
+                  "uv_size": [
+                    3,
+                    -2
+                  ],
+                  "material_instance": "helmet"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
