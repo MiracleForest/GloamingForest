@@ -1,0 +1,45 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "twilightforest:hydra_part",
+      "is_spawnable": false,
+      "is_summonable": true,
+      "is_experimental": false,
+      "properties": {
+        "twilightforest:part": { "type": "int", "range": [0, 43], "default": 0, "client_sync": true },
+        "twilightforest:active": { "type": "bool", "default": true, "client_sync": true },
+        "twilightforest:mouth": { "type": "float", "range": [0.0, 1.0], "default": 0.0, "client_sync": true },
+        "twilightforest:red": { "type": "bool", "default": false, "client_sync": true }
+      }
+    },
+    "components": {
+      "minecraft:type_family": { "family": ["twilightforest", "hydra_part", "inanimate"] },
+      "minecraft:health": { "value": 1000, "max": 1000 },
+      "minecraft:collision_box": { "width": 2.0, "height": 2.0 },
+      "minecraft:physics": { "has_gravity": false, "has_collision": false },
+      "minecraft:pushable": { "is_pushable": false, "is_pushable_by_piston": false },
+      "minecraft:knockback_resistance": { "value": 1.0 },
+      "minecraft:fire_immune": {},
+      "minecraft:breathable": { "breathes_air": true, "breathes_water": true, "breathes_lava": true, "breathes_solids": true },
+      "minecraft:damage_sensor": {
+        "triggers": [
+          { "cause": "suffocation", "deals_damage": "no" },
+          { "cause": "drowning", "deals_damage": "no" },
+          { "cause": "fall", "deals_damage": "no" },
+          { "cause": "fire", "deals_damage": "no" },
+          { "cause": "fire_tick", "deals_damage": "no" },
+          { "cause": "lava", "deals_damage": "no" },
+          { "cause": "magma", "deals_damage": "no" },
+          { "cause": "contact", "deals_damage": "no" },
+          { "cause": "freezing", "deals_damage": "no" },
+          { "cause": "starve", "deals_damage": "no" },
+          { "cause": "fly_into_wall", "deals_damage": "no" },
+          { "cause": "campfire", "deals_damage": "no" },
+          { "cause": "soul_campfire", "deals_damage": "no" },
+          { "cause": "stalagmite", "deals_damage": "no" }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:hydra_part",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/hydra4"
+      },
+      "geometry": {
+        "head": "geometry.twilightforest.hydra_head",
+        "neck": "geometry.twilightforest.hydra_neck"
+      },
+      "animations": {
+        "head_pose": "animation.twilightforest.hydra_head.pose",
+        "neck_pose": "animation.twilightforest.hydra_neck.base"
+      },
+      "scripts": {
+        "pre_animation": [
+          "v.is_head = q.property('twilightforest:part') >= 2 && math.mod(q.property('twilightforest:part') - 2, 6) == 0;"
+        ],
+        "animate": [
+          { "head_pose": "v.is_head" },
+          { "neck_pose": "!v.is_head" }
+        ],
+        "should_update_bones_and_effects_offscreen": true
+      },
+      "render_controllers": ["controller.render.twilightforest.hydra_part"]
+    }
+  }
+}
