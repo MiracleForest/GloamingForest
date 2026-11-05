@@ -110,11 +110,12 @@ std::string const& idOf(Biome const& b) {
 }
 
 /// The flat colours of TF's biome JSON for the biomes that have one without a modifier (the fire
-/// swamp, the snowy forest): drawn by the mod too, since the game does not apply every client biome
-/// colour (Bedrock draws oak leaves green in the snowy forest whatever its foliage_appearance says).
+/// swamp, the snowy forest's grass). Not the snowy forest's foliage: in a cold biome Bedrock's leaf
+/// colour is not a colour but the coordinates of its seasons map (textures/environment/seasons:
+/// green leaves with snow), and a white "colour" there draws the map's red corner.
 std::optional<int> flatColour(std::string_view biome, bool foliage) {
     if (biome == "twilightforest:fire_swamp") return foliage ? 0x64260F : 0x572E23;
-    if (biome == "twilightforest:snowy_forest") return 0xFFFFFF;
+    if (biome == "twilightforest:snowy_forest" && !foliage) return 0xFFFFFF;
     return std::nullopt;
 }
 
@@ -132,6 +133,11 @@ int tfColour(std::string const& biome, int x, int z, bool foliage, unsigned game
 /// colour of its biome (modifiers, position-dependent colours, flat colours) or, without one, the
 /// game's (nullopt: no column has a TF colour, the game's colour stays).
 std::optional<unsigned> fromRegion(BlockSource& region, BlockPos const& pos, unsigned game, bool foliage) {
+    if (foliage) {
+        // leaves in TF's cold biomes: the game's tint addresses its seasons map (see flatColour)
+        std::string const& here = idOf(region.getBiome(pos));
+        if (here == "twilightforest:snowy_forest" || here == "twilightforest:glacier") return std::nullopt;
+    }
     bool any = false;
     int  c   = colors::blend(pos.x, pos.z, radius(), [&](int x, int z) {
         std::string const& biome = idOf(region.getBiome(BlockPos{x, pos.y, z}));

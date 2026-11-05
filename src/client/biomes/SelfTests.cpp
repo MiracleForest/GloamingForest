@@ -119,13 +119,14 @@ GF_REGISTER_SELFTEST("biomes.grass_tint", [](Context& ctx) -> ll::coro::CoroTask
             ctx.check(g == 0x79C05A, std::format("the forest keeps the game's grass colour (#{:06X})", g));
         }
     }
-    // the snowy forest's flat white (the game draws oak leaves green there whatever the client biome
-    // file says): the mod draws TF's colour
+    // the snowy forest: TF's flat white grass; its leaves keep the game's colour (in a cold biome the
+    // game's leaf "colour" addresses its seasons map, see Tints.cpp)
     if (auto at = inside("twilightforest:snowy_forest")) {
         core::GlobalPos gp{ctx.dimension(), at->x, at->y, at->z};
         if (co_await ctx.ensureLoaded(gp)) {
             unsigned f = foliageAt(ctx.region(), *at, plain), g = grassAt(ctx.region(), *at, plain);
-            ctx.check(f == 0xFFFFFF && g == 0xFFFFFF, std::format("the snowy forest's foliage and grass are TF's white (#{:06X}, #{:06X})", f, g));
+            ctx.check(g == 0xFFFFFF, std::format("the snowy forest's grass is TF's white (#{:06X})", g));
+            ctx.check(f == 0x59AE30, std::format("the snowy forest's leaves keep the game's colour (#{:06X})", f));
         }
     }
     // the client draws the world: the vanilla tint hook applied the registry to vanilla blocks
