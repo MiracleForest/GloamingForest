@@ -167,11 +167,14 @@ GF_REGISTER_SELFTEST("darktower.reflected_fireball", [](Context& ctx) -> ll::cor
     // the lethal hit is recorded and survived (a real death would leave the boss's death chest)
     static bool sHooked = false;
     if (!std::exchange(sHooked, true))
-        death::onLethal(100000, [](Actor& victim, combat::DamageInfo const& d) {
-            if (sReflectWatch == 0 || uidOf(victim) != sReflectWatch) return false;
-            sReflectLethal = d.amount;
-            return true;
+    {
+        // the amount the game's hurt gets (after every incoming handler), and the lethal hit survived
+        combat::onIncoming(combat::priority::Lowest - 100, [](combat::DamageInfo& d) {
+            if (sReflectWatch != 0 && uidOf(d.victim) == sReflectWatch) sReflectLethal = d.amount;
+            return combat::Verdict::Pass;
         });
+        death::onLethal(100000, [](Actor& victim, combat::DamageInfo const&) { return sReflectWatch != 0 && uidOf(victim) == sReflectWatch; });
+    }
     sReflectWatch = urId;
     // UrGhast#hurt divides by 10 in a tantrum, then Ghast#hurt deals 1000 to a reflected fireball
     for (bool tantrum : {false, true}) {
@@ -216,11 +219,13 @@ GF_REGISTER_SELFTEST("darktower.reflected_ghastguard_fireball", [](Context& ctx)
     auto guardId = uidOf(*guard);
     static bool sHooked = false;
     if (!std::exchange(sHooked, true))
-        death::onLethal(100000, [](Actor& victim, combat::DamageInfo const& d) {
-            if (sGuardWatch == 0 || uidOf(victim) != sGuardWatch) return false;
-            sGuardLethal = d.amount;
-            return true;
+    {
+        combat::onIncoming(combat::priority::Lowest - 100, [](combat::DamageInfo& d) {
+            if (sGuardWatch != 0 && uidOf(d.victim) == sGuardWatch) sGuardLethal = d.amount;
+            return combat::Verdict::Pass;
         });
+        death::onLethal(100000, [](Actor& victim, combat::DamageInfo const&) { return sGuardWatch != 0 && uidOf(victim) == sGuardWatch; });
+    }
     sGuardWatch  = urId;
     sGuardLethal = -1.0f;
     auto* fb = ghasts::shootLargeFireball(*guard, Vec3{at.x + 16.5f, at.y + 9.0f, at.z + 0.5f}, Vec3{-1.0f, 0.0f, 0.0f});
