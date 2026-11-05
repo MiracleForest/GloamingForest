@@ -56,8 +56,6 @@ struct Advancement {
 /// The loaded advancements (TF's 45; empty before the mod dir is known), in display order.
 [[nodiscard]] std::vector<Advancement> const& advancements();
 [[nodiscard]] Advancement const* find(std::string const& id);
-/// Loads (again) from <mod>/data/twilightforest/advancement/*.json.
-void reload();
 
 /// The biome restrictions (twilightforest:restrictions), by biome id.
 [[nodiscard]] std::map<std::string, core::progression::Restriction> const& restrictions();

@@ -231,16 +231,18 @@ bool doneCriterion(Player const& p, std::string const& adv, std::string const& c
     return pr::has(p, adv) || pr::done(p, adv, crit);
 }
 
-/// Grants every criterion of `trigger` whose test passes for `player`.
-void awardWhere(Player& player, std::string const& trigger, std::function<bool(Advancement const&, Criterion const&)> const& test) {
+/// Grants every criterion of `triggers` whose test passes for `player` (the player's view is
+/// built at most once).
+void awardWhere(Player& player, std::initializer_list<std::string> triggers, std::function<bool(Advancement const&, Criterion const&)> const& test) {
     std::vector<std::pair<std::string, std::string>> grants;
     {
-        auto&           s = loaded();
-        std::lock_guard lock(s.mutex);
-        auto            it = s.byTrigger.find(trigger);
-        if (it == s.byTrigger.end()) return;
+        auto&                                       s = loaded();
+        std::lock_guard                             lock(s.mutex);
+        std::vector<std::pair<std::size_t, std::size_t>> list;
+        for (auto const& t : triggers)
+            if (auto it = s.byTrigger.find(t); it != s.byTrigger.end()) list.insert(list.end(), it->second.begin(), it->second.end());
         std::optional<cp::EntityView> self;
-        for (auto const& [ai, ci] : it->second) {
+        for (auto const& [ai, ci] : list) {
             auto const& adv  = s.list[ai];
             auto const& crit = adv.criteria[ci];
             if (doneCriterion(player, adv.id, crit.name)) continue;
@@ -262,6 +264,10 @@ void awardWhere(Player& player, std::string const& trigger, std::function<bool(A
         log().info("progression: {} met {} / {}", player.getRealName(), adv, crit);
         pr::grant(player, adv, crit);
     }
+}
+
+void awardWhere(Player& player, std::string const& trigger, std::function<bool(Advancement const&, Criterion const&)> const& test) {
+    awardWhere(player, {trigger}, test);
 }
 
 std::vector<cp::ItemView> inventoryOf(Player& player) {
@@ -297,7 +303,10 @@ public:
         static bool registered = false;
         if (registered) return;
         registered = true;
-        game::db::onWorldReady([] { reload(); });
+        // the data files are the mod's own and never change while it runs: loaded once (on the first
+        // world or the first use), so the references advancements() / restrictions() hand out stay
+        // valid on every thread (the client mod reads them on the client thread)
+        game::db::onWorldReady([] { (void)loaded(); });
 
         pr::events::onInventoryChanged([](Player& p) { evaluateInventory(p); });
 
@@ -415,12 +424,6 @@ Advancement const* find(std::string const& id) {
     return it == s.index.end() ? nullptr : &s.list[it->second];
 }
 
-void reload() {
-    auto&           s = store();
-    std::lock_guard lock(s.mutex);
-    loadLocked(s);
-}
-
 std::map<std::string, cp::Restriction> const& restrictions() { return loaded().restrictions; }
 
 cp::Restriction const* restrictionFor(Player const& player, std::string const& biome) {
@@ -519,8 +522,7 @@ cp::EntityView playerView(Player& player) {
 
 void evaluatePlayerCriteria(Player& player) {
     // LocationTrigger / PlayerTrigger(TICK): only the player predicate
-    awardWhere(player, "minecraft:tick", [](Advancement const&, Criterion const&) { return true; });
-    awardWhere(player, "minecraft:location", [](Advancement const&, Criterion const&) { return true; });
+    awardWhere(player, {std::string("minecraft:tick"), std::string("minecraft:location")}, [](Advancement const&, Criterion const&) { return true; });
 }
 
 void evaluateInventory(Player& player) {
