@@ -163,6 +163,7 @@ private:
             sky        = light.sky->mValue;
             block      = light.block->mValue;
         }
+        if (mMoodiness.size() > 1024) mMoodiness.clear(); // players long gone (a moodiness restarts at 0)
         float& moodiness = mMoodiness[player.getUuid().asString()];
         if (!mood::step(moodiness, sky, block, s)) return;
         auto at  = mood::soundPosition(mood::Vec{feet.x, eyeY, feet.z}, pos.x, pos.y, pos.z, s);

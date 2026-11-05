@@ -47,6 +47,7 @@
 #include "mc/world/level/biome/Biome.h"
 #include "mc/world/level/biome/biome_color_sampling/BiomeColorSampling.h"
 #include "mc/world/level/block/Block.h"
+#include "mc/world/level/block/BlockRenderLayer.h"
 #include "mc/world/level/block/LeavesBlock.h"
 #include "mc/world/level/block/TintMethod.h"
 
@@ -243,13 +244,35 @@ LL_TYPE_INSTANCE_HOOK(
     bool game = origin(block, region, p);
     if (!game) return false;
     try {
-        if (client::biomes::isTfBiome(client::biomes::biomeIdOf(region.getBiome(p)))) {
+        std::string const biome = client::biomes::biomeIdOf(region.getBiome(p));
+        if (client::biomes::isTfBiome(biome)) {
             if (gSeasonsOff.fetch_add(1, std::memory_order_relaxed) == 0)
-                gf::log().info("biomes: leaves at {} {} {} drawn without Bedrock's seasons map (TF's biome {})", p.x, p.y, p.z, client::biomes::biomeIdOf(region.getBiome(p)));
+                gf::log().info("biomes: leaves at {} {} {} drawn without Bedrock's seasons map (TF's biome {})", p.x, p.y, p.z, biome);
             return false;
         }
     } catch (...) {}
     return true;
+}
+
+// ... and in the render layer the leaves of any other biome use (the seasons layers read the tint as
+// a place in the seasons map): seasons opaque -> opaque, seasons alpha test -> alpha test.
+LL_TYPE_INSTANCE_HOOK(
+    TwilightLeavesLayerHook,
+    ll::memory::HookPriority::Normal,
+    LeavesBlock,
+    &LeavesBlock::$getRenderLayer,
+    BlockRenderLayer,
+    Block const&    block,
+    BlockSource&    region,
+    BlockPos const& pos
+) {
+    BlockRenderLayer game = origin(block, region, pos);
+    if (game != BlockRenderLayer::RenderlayerSeasonsOpaque && game != BlockRenderLayer::RenderlayerSeasonsAlphatestToOpaque) return game;
+    try {
+        if (client::biomes::isTfBiome(client::biomes::biomeIdOf(region.getBiome(pos))))
+            return game == BlockRenderLayer::RenderlayerSeasonsOpaque ? BlockRenderLayer::RenderlayerOpaque : BlockRenderLayer::RenderlayerAlphatestToOpaque;
+    } catch (...) {}
+    return game;
 }
 
 // BiomeSpecialEffects#waterColor of TF's biomes (the sampler of the water tessellation policy and
@@ -264,10 +287,11 @@ LL_STATIC_HOOK(
 ) {
     int game = origin(biome, pos);
     try {
-        if (auto w = colors::water(client::biomes::biomeIdOf(biome))) {
+        std::string const id = client::biomes::biomeIdOf(biome);
+        if (auto w = colors::water(id)) {
             int tf = static_cast<int>((static_cast<unsigned>(game) & 0xFF000000u) | static_cast<unsigned>(*w));
             if (gWaterApplied.fetch_add(1, std::memory_order_relaxed) == 0)
-                gf::log().info("biomes: water colour hook applied TF's water of {} at {} {} {} (#{:06X}, the game's #{:08X})", client::biomes::biomeIdOf(biome), pos.x, pos.y, pos.z, *w, static_cast<unsigned>(game));
+                gf::log().info("biomes: water colour hook applied TF's water of {} at {} {} {} (#{:06X}, the game's #{:08X})", id, pos.x, pos.y, pos.z, *w, static_cast<unsigned>(game));
             return tf;
         }
     } catch (...) {}
@@ -278,7 +302,7 @@ struct VanillaTintModule {
     void install() {
         int a = VanillaGrassTintHook::hook();
         int b = VanillaFoliageTintHook::hook();
-        int c = TwilightLeavesSeasonsHook::hook();
+        int c = TwilightLeavesSeasonsHook::hook() | TwilightLeavesLayerHook::hook();
         int d = TwilightWaterColorHook::hook();
         gf::log().info(
             "biomes: vanilla tint hooks installed (grass {}, foliage {}, seasons {}, water {})",
@@ -292,6 +316,7 @@ struct VanillaTintModule {
         VanillaGrassTintHook::unhook();
         VanillaFoliageTintHook::unhook();
         TwilightLeavesSeasonsHook::unhook();
+        TwilightLeavesLayerHook::unhook();
         TwilightWaterColorHook::unhook();
     }
 };

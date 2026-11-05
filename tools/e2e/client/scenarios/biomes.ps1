@@ -73,8 +73,9 @@ foreach ($name in $places.Keys) {
     Invoke-Chat "/fill $($x - 8) $y $($z - 8) $($x + 8) $y $($z + 8) grass_block"
     Invoke-Chat "/fill $($x - 8) $($y + 1) $($z - 8) $($x + 8) $($y + 4) $($z + 8) air"
     Invoke-Chat "/fill $($x - 7) $($y + 1) $($z + 2) $($x - 3) $($y + 1) $($z + 6) short_grass"
-    # the pool: a 7x7 basin of grass, 5x5 of water three blocks deep
-    Invoke-Chat "/fill $($x + 1) $($y - 3) $($z + 1) $($x + 7) $y $($z + 7) grass_block"
+    # the pool: a 7x7 basin of white concrete (a neutral bottom: the water's own colour shows), 5x5
+    # of water three blocks deep
+    Invoke-Chat "/fill $($x + 1) $($y - 3) $($z + 1) $($x + 7) $y $($z + 7) white_concrete"
     Invoke-Chat "/fill $($x + 2) $($y - 2) $($z + 2) $($x + 6) $y $($z + 6) water"
     Invoke-Chat "/fill $($x - 1) $($y + 1) $($z + 6) $($x + 1) $($y + 2) $($z + 7) oak_leaves"
     Invoke-Chat "/fill $($x - 3) $($y + 1) $($z + 6) $($x - 2) $($y + 2) $($z + 7) twilightforest:twilight_oak_leaves"
@@ -92,6 +93,10 @@ foreach ($name in $places.Keys) {
         $wshot = Save-Screenshot "water_$name"
         $water[$name] = Get-MeanColour $wshot 0.40 0.60 0.40 0.60
         Write-Step "$name water: $(Format-Tint $water[$name])"
+        # inside the pool: the water fog (TF's water fog colour) proves the water is there
+        Invoke-Teleport "/tp @s $($x + 4.5) $($y - 1.5) $($z + 4.5) 180 0"
+        Start-Sleep -Seconds 2
+        Save-Screenshot "underwater_$name" | Out-Null
     }
 }
 

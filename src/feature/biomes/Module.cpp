@@ -145,8 +145,8 @@ static int applyWaterColours() {
         auto  water = core::biomes::colors::water(id);
         if (!biome || !water) continue;
         auto old              = static_cast<unsigned>(static_cast<int>(biome->mMapWaterColor));
-        unsigned alpha        = old & 0xFF000000u ? old & 0xFF000000u : 0xFF000000u;
-        biome->mMapWaterColor = static_cast<int>(alpha | static_cast<unsigned>(*water));
+        // the colour only: the high byte keeps whatever the game stores there
+        biome->mMapWaterColor = static_cast<int>((old & 0xFF000000u) | static_cast<unsigned>(*water));
         ++n;
     }
     return n;
