@@ -501,10 +501,11 @@ GF_REGISTER_SELFTEST("tgmove.creative_fly", [](Context& ctx) -> ll::coro::CoroTa
     // a may-fly player pressing jump twice within 6 ticks starts flying: no double jump
     p2.getAbilities().setAbility(AbilitiesIndex::MayFly, true);
     tm::stateOf(p2).hasDoubleJump = true;
+    tm::stateOf(p2).airborne      = false;
+    tm::onInputEdge(p2, static_cast<int>(Edge::JumpPressed)); // the jump from the ground
     tm::onInputEdge(p2, static_cast<int>(Edge::LeftGround));
-    tm::onInputEdge(p2, static_cast<int>(Edge::JumpPressed));
     tm::onInputEdge(p2, static_cast<int>(Edge::JumpReleased));
-    tm::onInputEdge(p2, static_cast<int>(Edge::JumpPressed));
+    tm::onInputEdge(p2, static_cast<int>(Edge::JumpPressed)); // pressed again at once, in the air
     ctx.check(tm::stateOf(p2).hasDoubleJump, "may fly, two presses within 6 ticks: no double jump (avoidCreativeFly)");
     // without may-fly the same press is the double jump
     p2.getAbilities().setAbility(AbilitiesIndex::MayFly, false);
@@ -523,13 +524,16 @@ GF_REGISTER_SELFTEST("tgmove.mobs", [](Context& ctx) -> ll::coro::CoroTask<> {
     co_await place(ctx, g);
     auto& p      = ctx.player();
     auto& region = p.getDimensionBlockSource();
-    Actor* a     = gf::spawn::spawnMob(region, "minecraft:zombie", at(g, 10), gf::spawn::SpawnReason::Command);
-    ctx.require(a != nullptr, "a zombie");
-    auto zid = a->getOrCreateUniqueID();
+    // a pig (leashable) wearing the wings, and a bat (not leashable) with the leash override tag
+    Actor* a = gf::spawn::spawnMob(region, "minecraft:pig", at(g, 10), gf::spawn::SpawnReason::Command);
+    Actor* b = gf::spawn::spawnMob(region, "minecraft:bat", at(g, 3), gf::spawn::SpawnReason::Command);
+    ctx.require(a != nullptr && b != nullptr, "a pig and a bat");
+    auto pigId = a->getOrCreateUniqueID();
+    auto batId = b->getOrCreateUniqueID();
     a->addTag(tm::kLeashOverrideTag);
-    a->setArmor(Slot::Legs, *gf::game::items::make("twilightforest:travellers_wings", 1));
+    b->addTag(tm::kLeashOverrideTag);
     {
-        auto wings = a->getArmor(Slot::Legs);
+        auto wings = *gf::game::items::make("twilightforest:travellers_wings", 1);
         gf::game::items::setData(wings, "gear", {{"twilightforest:gradual_glide", 1}});
         a->setArmor(Slot::Legs, wings);
     }
@@ -539,15 +543,19 @@ GF_REGISTER_SELFTEST("tgmove.mobs", [](Context& ctx) -> ll::coro::CoroTask<> {
     ctx.check(std::abs(a->getPosDelta().y + 0.6f * 5 / 6) < 1e-3f, "a mob glides whenever it falls: vy " + num(a->getPosDelta().y));
     ctx.check(a->getEffect(8u) && a->getEffect(8u)->mAmplifier == tg::kHighJumpAmplifier, "a mob jumps high");
     co_await ctx.ticks(2);
-    auto* z = ll::service::getLevel()->fetchEntity(zid, false);
-    ctx.require(z != nullptr, "the zombie is still there");
-    ctx.check(!z->hasTag(tm::kLeashOverrideTag), "leashed_pathfinder_override is dropped from a mob that cannot be leashed");
-    z->setArmor(Slot::Legs, ItemStack::EMPTY_ITEM());
+    auto* lv  = ll::service::getLevel().as_ptr();
+    auto* pig = lv->fetchEntity(pigId, false);
+    auto* bat = lv->fetchEntity(batId, false);
+    ctx.require(pig != nullptr && bat != nullptr, "the pig and the bat are still there");
+    ctx.check(pig->hasTag(tm::kLeashOverrideTag), "leashed_pathfinder_override stays on a leashable mob");
+    ctx.check(!bat->hasTag(tm::kLeashOverrideTag), "leashed_pathfinder_override is dropped from a mob that cannot be leashed");
+    pig->setArmor(Slot::Legs, ItemStack::EMPTY_ITEM());
     co_await ctx.ticks(1);
-    if (auto* z2 = ll::service::getLevel()->fetchEntity(zid, false)) {
-        ctx.check(z2->getEffect(8u) == nullptr, "the gear came off: no Jump Boost");
-        z2->despawn();
+    if (auto* p2 = ll::service::getLevel()->fetchEntity(pigId, false)) {
+        ctx.check(p2->getEffect(8u) == nullptr, "the gear came off: no Jump Boost");
+        p2->despawn();
     }
+    if (auto* b2 = ll::service::getLevel()->fetchEntity(batId, false)) b2->despawn();
 });
 
 GF_REGISTER_SELFTEST("tgmove.aquatic_mining", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -580,12 +588,13 @@ GF_REGISTER_SELFTEST("tgmove.armor_time", [](Context& ctx) -> ll::coro::CoroTask
     slot       = nullptr;
     gf::combat::hurt(p, 1.0f, "minecraft:fall");
     ctx.check(gf::entity::data(p, tm::kLastDamageArmorTimeKey).is_null(), "fall damage bypasses armour: no armour time");
-    gf::combat::hurt(p, 1.0f, "minecraft:generic");
-    auto const& t = gf::entity::data(p, tm::kLastDamageArmorTimeKey);
-    ctx.check(t.is_number_integer() && std::abs(t.get<long long>() - tm::gameTime()) <= 1, "last_damage_armor_time = the game time: " + t.dump());
-    unequipAll(p);
-    p.heal(20);
-    co_return;
+    co_await ctx.ticks(20); // past the hurt cooldown of the fall
+    auto& p1  = ctx.player();
+    bool  hit = gf::combat::hurt(p1, 1.0f, "minecraft:cactus");
+    auto const& t = gf::entity::data(p1, tm::kLastDamageArmorTimeKey);
+    ctx.check(t.is_number_integer() && std::abs(t.get<long long>() - tm::gameTime()) <= 1, "last_damage_armor_time = the game time: " + t.dump() + (hit ? "" : " (the hit did not land)"));
+    unequipAll(p1);
+    p1.heal(20);
 });
 
 // The client e2e scenario's helpers. They act only on real players that carry the entity tag

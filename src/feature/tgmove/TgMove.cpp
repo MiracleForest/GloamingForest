@@ -933,12 +933,22 @@ public:
         // last_damage_armor_time (TravellersGearEvents#setLastDamageArmorTime): armour takes damage
         // from what it protects against; U11's auto repair reads it by name (F8's entity data).
         combat::onDealt(combat::priority::Normal, [](combat::DamageInfo const& d) {
-            if (d.amount <= 0 || tags::has(tags::Registry::DamageType, "minecraft:bypasses_armor", d.type)) return;
-            for (int s = 0; s < 4; ++s)
-                if (!game::items::isEmpty(armor(d.victim, s)) && armor(d.victim, s).isDamageableItem()) {
-                    entity::data(d.victim, kLastDamageArmorTimeKey) = gameTime();
-                    break;
-                }
+            // #minecraft:bypasses_armor: vanilla's members (1.21.1) and the data's (TF's)
+            static std::unordered_set<std::string> const vanilla{
+                "minecraft:on_fire", "minecraft:in_wall", "minecraft:cramming", "minecraft:drown", "minecraft:fly_into_wall", "minecraft:generic",
+                "minecraft:wither", "minecraft:dragon_breath", "minecraft:starve", "minecraft:fall", "minecraft:freeze", "minecraft:stalagmite",
+                "minecraft:magic", "minecraft:indirect_magic", "minecraft:out_of_world", "minecraft:generic_kill", "minecraft:sonic_boom",
+                "minecraft:outside_border"};
+            if (d.amount <= 0 || vanilla.contains(d.type) || tags::has(tags::Registry::DamageType, "minecraft:bypasses_armor", d.type)) return;
+            // only the wearers of Travellers' gear need it (U11's auto repair): no data on every armoured mob
+            bool damageable = false, travellers = false;
+            for (int s = 0; s < 4; ++s) {
+                auto const& stack = armor(d.victim, s);
+                if (game::items::isEmpty(stack)) continue;
+                damageable = damageable || stack.isDamageableItem();
+                travellers = travellers || game::items::idOf(stack).starts_with("twilightforest:travellers_");
+            }
+            if (damageable && travellers) entity::data(d.victim, kLastDamageArmorTimeKey) = gameTime();
         });
         // aquatic agility: player.submerged_mining_speed +4 multiply-total (x5 with the eyes under water)
         ext::mining::addModifier([](Player& p, Block const&) {

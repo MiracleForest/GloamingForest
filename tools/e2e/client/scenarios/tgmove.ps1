@@ -54,6 +54,7 @@ Invoke-Chat '/fill 298 -61 296 322 -61 322 grass_block'
 Invoke-Chat '/setblock 305 -60 300 stone'
 Invoke-Chat '/fill 310 -61 300 314 -61 306 water'
 Invoke-Chat '/fill 316 -63 300 321 -61 316 water'      # the swimming pool, 3 deep
+Invoke-Chat '/fill 316 -60 300 321 -60 316 glass'      # its lid: the swimmer stays under water (no water walking)
 Invoke-Chat '/fill 298 -61 314 308 -61 315 soul_sand'
 Invoke-Chat '/fill 298 -60 318 308 -59 319 web'
 Invoke-Chat '/setblock 300 -61 322 honey_block'

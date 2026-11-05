@@ -132,11 +132,10 @@ Local& local() {
     return l;
 }
 
-/// Other entities' wing states and glides (TravellersWingsStatePacket / GradualGlidePacket) and
+/// Other entities' wing states (TravellersWingsStatePacket) and
 /// their animation (TravellersWingsAnimAttachment).
 struct Remote {
     std::map<std::int64_t, tg::Wings>     wings;
-    std::map<std::int64_t, bool>          gliding;
     std::map<std::int64_t, tg::WingsAnim> anim;
     std::map<std::int64_t, std::pair<int, float>> walk; ///< last tick, walkAnimation speed
     tg::WingState                         loggedState = tg::WingState::Idle;
@@ -495,7 +494,8 @@ public:
             w.doubleJumpTimer = msg.value("double_jump_timer", 0);
             w.sidestepTimer   = msg.value("sidestep_timer", 0);
         });
-        net::client::on("tgmove.gradual_glide", [](Json const& msg) { remote().gliding[msg.value("player", std::int64_t{0})] = msg.value("gliding", false); });
+        // GradualGlidePacket: the glide itself is in the server's motion of the other player; nothing to keep
+        net::client::on("tgmove.gradual_glide", [](Json const&) {});
     }
     void uninstall() {}
 };
