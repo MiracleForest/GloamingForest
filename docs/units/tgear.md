@@ -92,7 +92,9 @@ its vanilla fallbacks and its deviations from TF 4.8 (for A8's deviation list).
   easing). Java's ComputeFovModifierEvent multiplies the FOV every frame; on Bedrock the world projection
   comes from the vanilla camera's FOV component, which neither F12's `camera::addFovModifier`
   (`LocalPlayer::getFieldOfViewModifier`) nor `LevelRendererPlayer::getFov` / `CameraAPI::tryGetFOV`
-  reach (rounds 1-2). The turn slowdown (`LocalPlayer::localPlayerTurn`, TF's slowZoomSensitivity at
+  reach (rounds 1-2). The vanilla camera takes custom FOVs within [30, 110] only (content log of round 3:
+  "Custom FOV value must be within [30.0, 110.0]"), so TF's 70 x 0.3 = 21 degrees is drawn at 30 degrees
+  (x 0.43 at the default FOV; any client FOV of 100 or more gets TF's exact x 0.3). The turn slowdown (`LocalPlayer::localPlayerTurn`, TF's slowZoomSensitivity at
   Java's default sensitivity) stays a client hook. Speed / sprint FOV changes during a zoom keep the
   zoomed FOV (the instruction fixes the camera FOV).
 - Worn models (gloves on the vest, slim gloves, the belt on swap-hotbar wings, the goggles' "down"
@@ -107,9 +109,14 @@ its vanilla fallbacks and its deviations from TF 4.8 (for A8's deviation list).
   the posed bone matrices (Java's RenderLayer) would let U11 draw TravellersGearModels /
   TravellersWingsModel's belt / the goggles' down texture with drawGeo. The client already tracks the
   other players' zoom (`tgear.goggles_zoom`).
-- Item icon overlays: drawn through F12's Gui item renderer (InventoryItemRenderer::render, after the slot
-  batch) with the slot's absolute position and no translation of another control; the client logs the
-  first draws ("tgear: gear icon ... drawn at").
+- Item icon overlays (TravellersGearItemModel: the `*_broken` texture, the per-modifier and gloves
+  overlays): NOT VISIBLE. U11 registers them with F12's Gui item renderer (`registerItemRenderer(id,
+  drawGearIcon, Gui)`), which never calls them for the inventory or hotbar slots: in round 3 the client
+  logged no "tgear: gear icon ... drawn" line while inventory.png showed the worn gear and a broken vest
+  in the hotbar (F12's InventoryItemRenderer::render hook does not fire for these slots in 1.26.51; its
+  Gui path was only ever tested by registration, ClientTests.cpp). Routed to F12: once its Gui context
+  fires, U11's overlays draw without a change here. Bedrock item icons are static per item
+  (`minecraft:icon`), so there is no data-driven alternative.
 - Tooltip images (TravellersBeltTooltipComponent, ItemDisplayTooltipComponent: the bundle background, the
   slot sprites, the *_display.png placeholders): Bedrock's hover text is one string
   (`ItemStackBase::getFormattedHovertext`, drawn by the JSON UI's hover text label); F12's `tooltip::add`

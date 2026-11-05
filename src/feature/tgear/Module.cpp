@@ -320,7 +320,9 @@ void sendZoomFov(Player& player, bool zoom, float fov) {
     auto  packet = MinecraftPackets::createPacket(MinecraftPacketIds::CameraInstruction);
     auto& pkt    = static_cast<CameraInstructionPacket&>(*packet);
     CameraInstructionOptions::FovInstruction f{};
-    f.mFov         = zoom ? std::clamp(fov, 1.f, 179.f) : 0.f;
+    // the camera takes custom FOVs within [30, 110] only (content log: "Custom FOV value must be within
+    // [30.0, 110.0]"): TF's 70 x 0.3 = 21 degrees becomes 30
+    f.mFov         = zoom ? std::clamp(fov, 30.f, 110.f) : 0.f;
     f.mFovClear    = !zoom;
     f.mFovEaseTime = 0.f;
     f.mFovEaseType = EasingType::Linear;
