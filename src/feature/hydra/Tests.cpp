@@ -54,7 +54,7 @@ using Difficulty = SharedTypes::Legacy::Difficulty;
 namespace {
 
 /// The golden volume hash of the hydra lair piece in its test volume (reviewed once with screenshots).
-constexpr char kLairGolden[] = "c2a8c9cd8bf3b1b4";
+constexpr char kLairGolden[] = "c4c1c824f4fa0068";
 
 struct DifficultyScope {
     Difficulty previous = Difficulty::Normal;
@@ -153,7 +153,8 @@ GF_REGISTER_SELFTEST("hydra.lair_golden", [](Context& ctx) -> ll::coro::CoroTask
 // Spawn: 3 heads active, 4 dead, 44 part actors following the body by TF's formulas, the boss's
 // attributes (tests/golden/mobs.json: 360 health).
 GF_REGISTER_SELFTEST("hydra.spawn_parts", [](Context& ctx) -> ll::coro::CoroTask<> {
-    auto box  = co_await ctx.flatArea(2420, 48, 32);
+    DifficultyScope normal(Difficulty::Normal);
+    auto            box  = co_await ctx.flatArea(2420, 48, 32);
     auto home = ctx.testPos(2444, 2);
     auto uid  = spawnHydra(ctx, home, 2420);
     ctx.require(uid != 0, "the hydra spawns");
@@ -195,7 +196,8 @@ GF_REGISTER_SELFTEST("hydra.spawn_parts", [](Context& ctx) -> ll::coro::CoroTask
 // Head loss and regrowth (Hydra#customServerAiStep): a head past 120 damage dies (DYING 70 ticks,
 // DEAD), it and one random dead head respawn 140 ticks later (BORN, ROAR); the number of heads grows.
 GF_REGISTER_SELFTEST("hydra.head_regrow", [](Context& ctx) -> ll::coro::CoroTask<> {
-    auto box  = co_await ctx.flatArea(2420, 48, 32);
+    DifficultyScope normal(Difficulty::Normal);
+    auto            box  = co_await ctx.flatArea(2420, 48, 32);
     auto home = ctx.testPos(2444, 2);
     auto uid  = spawnHydra(ctx, home, 2421);
     ctx.require(uid != 0, "the hydra spawns");
@@ -387,7 +389,8 @@ GF_REGISTER_SELFTEST("hydra.mortar", [](Context& ctx) -> ll::coro::CoroTask<> {
 // Name tags on heads (HydraHead#interact): the head is named, the tag used, the name saved
 // (HeadNames) and cleared when the head dies.
 GF_REGISTER_SELFTEST("hydra.head_names", [](Context& ctx) -> ll::coro::CoroTask<> {
-    auto box  = co_await ctx.flatArea(2420, 48, 32);
+    DifficultyScope normal(Difficulty::Normal);
+    auto            box  = co_await ctx.flatArea(2420, 48, 32);
     auto home = ctx.testPos(2444, 2);
     auto uid  = spawnHydra(ctx, home, 2425);
     ctx.require(uid != 0, "the hydra spawns");

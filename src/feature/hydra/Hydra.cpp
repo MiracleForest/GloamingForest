@@ -1070,6 +1070,7 @@ bool hurt(Actor& self, float& amount, std::string const& type, Actor* attacker) 
     }
     auto* rt = find(fe::uidOf(self));
     if (!rt) return true;
+    log().info("hydra: {} takes {} of {} from {} (range {:.1f}, fire {}, mouth {:.2f})", part, amount, type, attacker ? attacker->getTypeName() : std::string("-"), attacker ? fe::mobs::distanceSqr(self, *attacker) : -1.0, gf::tags::has(gf::tags::Registry::DamageType, "minecraft:is_fire", type), rt->heads[0].head.currentMouthOpen());
     // a fire-immune boss ignores fire, except its own mortars
     if (type != "twilightforest:hydra_mortar" && gf::tags::has(gf::tags::Registry::DamageType, "minecraft:is_fire", type)) return false;
     // TF's parts are no level entities: explosions (the mortars' too) never reach them
@@ -1096,6 +1097,7 @@ bool hurt(Actor& self, float& amount, std::string const& type, Actor* attacker) 
     rt->ticksSinceDamaged = 0;
     rt->hurtTime          = kHurtTime;
     rt->damageTaken += amount;
+    log().info("hydra: {} hit ({}) for {}", part, type, amount);
     return true;
 }
 
