@@ -182,6 +182,8 @@ void tomeAiStep(Actor& a) {
     if (tomeOnLectern(a)) {
         auto& region = m->getDimensionBlockSource();
         auto  at     = game::blockPosOf(m->getFeetPos());
+        // the tome stands in the lectern's block, or on its top (0.875 high) when the engine lifted it
+        if (!isLecternAt(region, at)) at.y -= 1;
         if (isLecternAt(region, at)) {
             // face the lectern's FACING (Bedrock: direction 0 south .. 3 east -> yaw)
             int   dir = game::intState(region.getBlock(at), "direction").value_or(0);

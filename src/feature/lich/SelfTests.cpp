@@ -9,6 +9,7 @@
 #include "ll/api/service/Bedrock.h"
 
 #include "mc/deps/core/math/Vec2.h"
+#include "mc/deps/shared_types/legacy/Difficulty.h"
 #include "mc/server/sim/LookDuration.h"
 #include "mc/server/SimulatedPlayer.h"
 #include "mc/world/actor/Actor.h"
@@ -74,6 +75,22 @@ int countAround(Context& ctx, core::GlobalPos const& p, char const* id, float r)
     return n;
 }
 
+/// The difficulty of the level while a test runs (bosses and monsters leave a peaceful world).
+struct DifficultyScope {
+    SharedTypes::Legacy::Difficulty previous = SharedTypes::Legacy::Difficulty::Peaceful;
+    DifficultyScope() {
+        if (auto level = ll::service::getLevel()) {
+            previous = level->getDifficulty();
+            level->setDifficulty(SharedTypes::Legacy::Difficulty::Easy);
+        }
+    }
+    ~DifficultyScope() {
+        if (auto level = ll::service::getLevel()) level->setDifficulty(previous);
+    }
+    DifficultyScope(DifficultyScope const&)            = delete;
+    DifficultyScope& operator=(DifficultyScope const&) = delete;
+};
+
 float attr(Actor& a, Attribute const& h) {
     auto i = a.getAttribute(h);
     return i.mPtr ? i.mPtr->mCurrentValue : -1.0f;
@@ -83,6 +100,7 @@ float attr(Actor& a, Attribute const& h) {
 
 // Lich#getPhase: shield up -> 1; no shield, minions left -> 2; neither -> 3.
 GF_REGISTER_SELFTEST("lich.phases", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope easy; // bosses and monsters leave a peaceful world
     co_await ctx.flatArea(2100, 16);
     auto c    = ctx.testPos(2108, 2);
     Mob* lich = spawnAt(ctx, kLich, c, 1.0f);
@@ -103,6 +121,7 @@ GF_REGISTER_SELFTEST("lich.phases", [](Context& ctx) -> ll::coro::CoroTask<> {
 
 // Lich#hurt: a lich bolt (breaks_lich_shields, 6 > 2) takes one shield; a melee hit only blocks.
 GF_REGISTER_SELFTEST("lich.shield_break", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope easy; // bosses and monsters leave a peaceful world
     co_await ctx.flatArea(2120, 16);
     auto c    = ctx.testPos(2128, 2);
     Mob* lich = spawnAt(ctx, kLich, c, 1.0f);
@@ -126,6 +145,7 @@ GF_REGISTER_SELFTEST("lich.shield_break", [](Context& ctx) -> ll::coro::CoroTask
 
 // LichShadowsGoal#checkAndSpawnClones: never more than clone_count (2) clones.
 GF_REGISTER_SELFTEST("lich.clone_cap", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope easy; // bosses and monsters leave a peaceful world
     co_await ctx.flatArea(2140, 64);
     auto c    = ctx.testPos(2172, 2);
     Mob* lich = spawnAt(ctx, kLich, c, 1.0f);
@@ -156,6 +176,7 @@ GF_REGISTER_SELFTEST("lich.clone_cap", [](Context& ctx) -> ll::coro::CoroTask<> 
 
 // LichMinionsGoal#checkAndSpawnMinions: at most 3 alive, 9 summons in all.
 GF_REGISTER_SELFTEST("lich.minions", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope easy; // bosses and monsters leave a peaceful world
     co_await ctx.flatArea(2140, 64);
     auto c    = ctx.testPos(2172, 2);
     Mob* lich = spawnAt(ctx, kLich, c, 1.0f);
@@ -199,6 +220,7 @@ GF_REGISTER_SELFTEST("lich.minions", [](Context& ctx) -> ll::coro::CoroTask<> {
 // LichBolt#hurt: a hit re-shoots the bolt along the attacker's look with the attacker as owner; a
 // player-owned bolt breaks a shield of a phase-1 lich.
 GF_REGISTER_SELFTEST("lich.bolt_reflect", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope easy; // bosses and monsters leave a peaceful world
     co_await ctx.flatArea(2100, 16);
     auto c    = ctx.testPos(2108, 2);
     Mob* lich = spawnAt(ctx, kLich, c, 1.0f);
@@ -242,6 +264,7 @@ GF_REGISTER_SELFTEST("lich.bolt_reflect", [](Context& ctx) -> ll::coro::CoroTask
 
 // DeathTome on a lectern: a player looking at it within 3 blocks wakes it; it leaves the lectern.
 GF_REGISTER_SELFTEST("lich.death_tome_lectern", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope easy; // bosses and monsters leave a peaceful world
     co_await ctx.flatArea(2120, 16);
     auto lect = ctx.testPos(2128, 2).offset(0, 1, 0);
     ctx.setBlock(lect, "minecraft:lectern");
@@ -276,6 +299,7 @@ GF_REGISTER_SELFTEST("lich.death_tome_lectern", [](Context& ctx) -> ll::coro::Co
 
 // RisingZombie: rises for 130 ticks, then becomes a vanilla zombie.
 GF_REGISTER_SELFTEST("lich.rising_zombie_converts", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope easy; // bosses and monsters leave a peaceful world
     co_await ctx.flatArea(2100, 16);
     auto c = ctx.testPos(2104, 2).offset(0, 1, 0);
     Mob* z = spawnAt(ctx, kRising, c);
@@ -297,6 +321,7 @@ GF_REGISTER_SELFTEST("lich.rising_zombie_converts", [](Context& ctx) -> ll::coro
 
 // Attributes against TF (tests/golden/mobs.json).
 GF_REGISTER_SELFTEST("lich.attributes", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope easy; // bosses and monsters leave a peaceful world
     co_await ctx.flatArea(2100, 16);
     struct Row {
         char const* id;
@@ -344,6 +369,7 @@ GF_REGISTER_SELFTEST("lich.loot", [](Context& ctx) {
 
 // LichSpawnerBlockEntity: a player counts only above the spawner's y - 4.
 GF_REGISTER_SELFTEST("lich.spawner_range", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope easy; // bosses and monsters leave a peaceful world
     co_await ctx.flatArea(2140, 32);
     auto spawner = ctx.testPos(2156, 2).offset(0, 8, 0);
     ctx.require(ctx.setBlock(spawner, kSpawner), "the lich spawner is placed");
@@ -368,6 +394,7 @@ GF_REGISTER_SELFTEST("lich.spawner_range", [](Context& ctx) -> ll::coro::CoroTas
 // wings (U22's rooms or the placeholder rooms). The piece boxes relative to the start give the
 // layout hash (logged; the e2e scenario compares it between runs of the same seed).
 GF_REGISTER_SELFTEST("lich.tower_layout", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope easy; // bosses and monsters leave a peaceful world
     auto center = ctx.testPos(2150, 2).offset(0, 0, 400);
     gf::landmark::ext::ScopedStart forced(kTowerKey, center);
     ctx.require(forced && forced->generated, "forced a lich tower start");
@@ -400,6 +427,7 @@ GF_REGISTER_SELFTEST("lich.tower_layout", [](Context& ctx) -> ll::coro::CoroTask
 // a half-risen zombie and the projectiles in front of the real player for `hold` seconds, then a
 // lich tower generated 48 blocks ahead of it.
 GF_REGISTER_SELFTEST("lich.client_showcase", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope easy; // bosses and monsters leave a peaceful world
     Player* real = nullptr;
     if (auto level = ll::service::getLevel())
         level->forEachPlayer(std::function<bool(Player&)>([&](Player& p) {
