@@ -454,11 +454,10 @@ void urTick(Actor& self) {
 
 void startTantrum(Mob& m, UrState& s) {
     s.phase.setTantrum(true);
-    auto& region = m.getDimensionBlockSource();
     double ang = random().nextInt(360) * std::numbers::pi / 180.0;
     auto   p   = m.getFeetPos();
     // Vec3(18, 0, 0).yRot(angle)
-    visualLightning(region, Vec3{float(p.x + 18.0 * std::cos(ang)), p.y, float(p.z - 18.0 * std::sin(ang))});
+    visualLightning(m, Vec3{float(p.x + 18.0 * std::cos(ang)), p.y, float(p.z - 18.0 * std::sin(ang))});
     spawnGhastsAtTraps(m);
     gf::log().info("darktower: the Ur-Ghast throws a tantrum");
 }
@@ -475,7 +474,7 @@ void switchPhase(Mob& m, UrState& s) {
 
 void spawnMinionGhastsAt(Mob& boss, int x, int y, int z) {
     auto& region = boss.getDimensionBlockSource();
-    visualLightning(region, Vec3{float(x), float(y + 4), float(z)});
+    visualLightning(boss, Vec3{float(x), float(y + 4), float(z)});
     auto& r = random();
     int   spawns = 0;
     for (int i = 0; i < 24; i++) {
@@ -843,7 +842,7 @@ void install() {
             [](Actor& self, std::string const&, Actor*) {
                 auto p = self.getFeetPos();
                 auto b = self.getAABB();
-                visualLightning(self.getDimensionBlockSource(), Vec3{p.x, p.y + (b.max.y - b.min.y) * 0.5f, p.z});
+                visualLightning(self, Vec3{p.x, p.y + (b.max.y - b.min.y) * 0.5f, p.z});
                 states().erase(uidOf(self));
                 gf::log().info("darktower: the Ur-Ghast died");
             },

@@ -167,6 +167,7 @@ void tick() {
     if (!s.loadedFromDb && game::db::available()) load();
     auto t = now();
     if (++s.ticks % 10 == 0) flushGenerated();
+    tickVisualLightning();
     // scheduled ticks that are due (Java runs them in due order; a handler may schedule more)
     std::vector<std::pair<GlobalPos, std::string>> due;
     for (auto it = s.pending.begin(); it != s.pending.end();) {

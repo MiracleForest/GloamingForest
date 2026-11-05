@@ -13,7 +13,11 @@
 #include "mc/legacy/ActorUniqueID.h"
 #include "mc/network/MinecraftPacketIds.h"
 #include "mc/network/MinecraftPackets.h"
+#include "mc/network/packet/AddActorPacket.h"
+#include "mc/network/packet/AddActorPacketPayload.h"
+#include "mc/network/packet/RemoveActorPacket.h"
 #include "mc/network/packet/SetActorMotionPacket.h"
+#include "mc/world/actor/state/PropertySyncData.h"
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/ActorCategory.h"
 #include "mc/world/actor/ActorDefinitionIdentifier.h"
@@ -252,10 +256,62 @@ Mob* spawnMob(BlockSource& region, std::string const& entityId, Vec3 const& at, 
     return mob;
 }
 
+namespace {
+/// The client-only bolts still on screen: (unique id, tick to remove them).
+std::vector<std::pair<std::int64_t, std::uint64_t>>& bolts() {
+    static std::vector<std::pair<std::int64_t, std::uint64_t>> v;
+    return v;
+}
+} // namespace
+
 void visualLightning(BlockSource& region, Vec3 const& at) {
-    // Bedrock's lightning bolt has no visual-only flag: the thunder alone (no fire, no damage)
+    // LightningBolt#setVisualOnly(true): the thunder (no fire, no damage)
     fx::sound(region.getDimension(), "entity.lightning_bolt.thunder", at, 10000.0f, 0.8f);
     fx::sound(region.getDimension(), "entity.lightning_bolt.impact", at, 2.0f, 0.5f);
+}
+
+void visualLightning(Actor& source, Vec3 const& at) {
+    auto& region = source.getDimensionBlockSource();
+    visualLightning(region, at);
+    auto* l = level();
+    if (!l) return;
+    // Bedrock's bolt has no visual-only flag: the players near see a bolt actor that exists only on
+    // their clients (an AddActorPacket with a fresh id, removed again after a second), so nothing is
+    // set on fire or hurt on the server
+    AddActorPacketPayload payload(source);
+    auto                  uid = l->getNewUniqueID();
+    payload.mEntityId         = uid;
+    payload.mRuntimeId        = l->getNextRuntimeID();
+    *payload.mActorType       = "minecraft:lightning_bolt";
+    payload.mPos              = at;
+    payload.mVelocity         = Vec3{0.0f, 0.0f, 0.0f};
+    payload.mAttributes->clear();
+    payload.mLinks->clear();
+    *payload.mSynchedProperties = PropertySyncData{};
+    AddActorPacket pkt(std::move(payload));
+    for (auto* p : playersNear(dimOf(region), at, 512.0, true)) pkt.sendTo(*p);
+    bolts().emplace_back(uid.rawID, now() + 20);
+}
+
+void tickVisualLightning() {
+    auto t = now();
+    auto& v = bolts();
+    for (auto it = v.begin(); it != v.end();) {
+        if (it->second > t) {
+            ++it;
+            continue;
+        }
+        auto pkt = MinecraftPackets::createPacket(MinecraftPacketIds::RemoveActor);
+        if (pkt) {
+            static_cast<RemoveActorPacket&>(*pkt).mEntityId->rawID = it->first;
+            if (auto* lv = level())
+                lv->forEachPlayer([&](Player& p) {
+                    pkt->sendTo(p);
+                    return true;
+                });
+        }
+        it = v.erase(it);
+    }
 }
 
 int deathTime(Actor const& actor) {

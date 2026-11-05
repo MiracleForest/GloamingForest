@@ -119,6 +119,10 @@ void push(Actor& actor, Vec3 const& delta);
 Mob* spawnMob(BlockSource& region, std::string const& entityId, Vec3 const& at, float yaw = 0.0f);
 /// A visual-only lightning bolt (LightningBolt#setVisualOnly: no fire, no damage).
 void visualLightning(BlockSource& region, Vec3 const& at);
+/// A visual-only bolt at t (client-only actor for the players near, plus the thunder).
+void visualLightning(Actor& source, Vec3 const& at);
+/// Removes the client-only bolts after their second (runtime tick).
+void tickVisualLightning();
 [[nodiscard]] int deathTime(Actor const& actor);
 [[nodiscard]] bool dying(Actor const& actor);
 
