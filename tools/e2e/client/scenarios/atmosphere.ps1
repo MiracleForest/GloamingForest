@@ -151,7 +151,9 @@ function Enter-Twilight {
         }
     }
     Start-Sleep -Seconds 6 # the chunks around the arrival load
-    # no level weather: the views show TF's own weather only
+    # no level weather and creative mode: the views show only what each preview asks for (the real
+    # progression locks the glacier in survival: TF draws its blizzard there)
+    Invoke-Chat '/gamemode creative'
     Invoke-Chat '/gamerule doweathercycle false'
     Invoke-Chat '/weather clear'
     Invoke-Chat '/fill ~-3 99 ~-3 ~3 99 ~3 glass'
@@ -212,7 +214,7 @@ function Invoke-AtmosphereViews([string]$mode) {
     $clearUp = Show-Atmosphere 'show_forest' "$mode-aurora-clear" '' 3
     $aurora  = Show-Atmosphere 'show_glacier' "$mode-aurora" 'atmosphere: aurora drawn' 6
     $a = (Get-AtmosphereSignature $aurora).Aurora - (Get-AtmosphereSignature $clearUp).Aurora
-    Test-AtmosphereSignature "$mode aurora coverage" ([Math]::Round($a, 4)) 0.01 0.6
+    Test-AtmosphereSignature "$mode aurora coverage" ([Math]::Round($a, 4)) 0.05 0.6
 
     # the void plate (below the floor of the dimension; forced) darkens the lower sky
     Set-View 0 10
@@ -233,7 +235,7 @@ function Invoke-AtmosphereViews([string]$mode) {
     Show-Atmosphere 'show_ur_ghast' "$mode-ur-ghast-rain" 'atmosphere: Ur-Ghast rain splashes' 3 | Out-Null
     if ($calibrate) {
         Set-View 0 -50
-        foreach ($m in 'aurora_sky_ui', 'aurora_world_blend', 'aurora_world_wire', 'aurora_sky_blend', 'glacier_stars_material') {
+        foreach ($m in 'aurora_world_blend', 'aurora_sky_blend') {
             $shot = Show-Atmosphere "show_$m" "$mode-cal-$m" 'atmosphere: aurora drawn' 6
             Write-Step "calibration $mode $m aurora coverage $((Get-AtmosphereSignature $shot).Aurora)"
         }

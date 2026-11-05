@@ -754,8 +754,12 @@ void pushQuad(std::vector<ColourVertex>& out, ColourVertex const& a, ColourVerte
 
 AuroraMode auroraModeFor(Preview const& preview, bool inTwilightSky) {
     if (preview.auroraMode != AuroraMode::Auto) return preview.auroraMode;
-    // the sky pass exists only in the TF provider's dimension and only Classic shows it
-    return inTwilightSky && !vibrantVisuals() ? AuroraMode::SkyUi : AuroraMode::WorldBlend;
+    // the sky pass exists only in the TF provider's dimension and only Classic shows it; there the
+    // particle engine's blend material over a white texture blends the vertex colours over the sky
+    // as TF's shader does (SRC_ALPHA, ONE_MINUS_SRC_ALPHA) and is not fogged (the e2e calibration:
+    // ui_fill_gradient draws nothing in the sky pass, the stars material ignores vertex alpha,
+    // wireframe is opaque, the world pass fogs the far cells into the fog colour)
+    return inTwilightSky && !vibrantVisuals() ? AuroraMode::SkyBlend : AuroraMode::WorldBlend;
 }
 StarsMode starsModeFor(Preview const& preview) {
     if (preview.starsMode != StarsMode::Auto) return preview.starsMode;
