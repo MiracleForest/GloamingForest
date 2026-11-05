@@ -50,6 +50,7 @@ enum Flags : std::uint16_t {
     kSurface    = 1 << 5, ///< grass block, mycelium, podzol, dirt path
     kDirt       = 1 << 6, ///< Blocks.DIRT
     kBaseStone  = 1 << 7, ///< #minecraft:base_stone_overworld
+    kLayerFluid = 1 << 8, ///< the fluid is in Bedrock's liquid layer (a waterlogged block): a write must empty it
 };
 
 std::uint16_t flagsOf(State const& s, Block const& b) {
@@ -66,7 +67,7 @@ std::uint16_t flagsOf(State const& s, Block const& b) {
     // BlockState#getFluidState: water and lava (still and flowing), and the blocks whose fluid state
     // is always water (bubble columns and the underwater plants Java builds waterlogged). A
     // waterlogged block keeps its water in Bedrock's liquid layer: Carver::flags adds that layer's
-    // fluid (ext::liquidLayerBlock) for the game's chunks
+    // fluid (ext::LiquidLayer) for the game's chunks
     if (kit::isWater(b) || id == "minecraft:bubble_column" || id == "minecraft:kelp" || id == "minecraft:kelp_plant" || id == "minecraft:seagrass" ||
         id == "minecraft:tall_seagrass")
         f |= kWater | kFluid;
@@ -116,26 +117,30 @@ struct Carver {
     int                          minY, maxY;      ///< the chunk's build range
     int                          genMinY, genDepth; ///< WorldGenerationContext
     Block const*                 caveAir;
-    bool                         liquidLayer; ///< a game chunk: waterlogged blocks hold their water in Bedrock's liquid layer
+    gf::terrain::ext::LiquidLayer liquid; ///< a game chunk's liquid layer, where waterlogged blocks hold their water
 
     Block const& get(int x, int y, int z) const {
         int lx = x - chunk.chunkX() * 16, lz = z - chunk.chunkZ() * 16;
         if (y < minY || y >= maxY || lx < 0 || lz < 0 || lx > 15 || lz > 15) return *s.block(code::Air);
         return chunk.getBlock(lx, y, lz);
     }
-    void set(int x, int y, int z, Block const& b) const {
+    /// `f`: flags() of the position written (its kLayerFluid says whether it holds a liquid layer).
+    void set(int x, int y, int z, Block const& b, std::uint16_t f) const {
         int lx = x - chunk.chunkX() * 16, lz = z - chunk.chunkZ() * 16;
         if (y < minY || y >= maxY || lx < 0 || lz < 0 || lx > 15 || lz > 15) return;
         chunk.setBlock(lx, y, lz, b);
         // Java's setBlockState replaces the whole state, the fluid of a waterlogged one included
-        if (liquidLayer) gf::terrain::ext::clearLiquidLayer(chunk, lx, y, lz, *s.block(code::Air));
+        if (f & kLayerFluid) liquid.clear(lx, y, lz, *s.block(code::Air));
     }
     std::uint16_t flags(int x, int y, int z) const {
         std::uint16_t f = flagsOf(s, get(x, y, z));
-        if (liquidLayer && !(f & kFluid)) {
+        if (liquid && !(f & kFluid)) {
             // a waterlogged block: BlockState#getFluidState is its water
             int lx = x - chunk.chunkX() * 16, lz = z - chunk.chunkZ() * 16;
-            if (auto const* l = gf::terrain::ext::liquidLayerBlock(chunk, lx, y, lz)) f |= flagsOf(s, *l) & (kWater | kFluid);
+            if (auto const* l = liquid.at(lx, y, lz)) {
+                std::uint16_t lf = flagsOf(s, *l) & (kWater | kFluid);
+                if (lf) f |= lf | kLayerFluid;
+            }
         }
         return f;
     }
@@ -211,13 +216,13 @@ struct Carver {
             place = randomFromPos->nextBoolean() ? s.rootedDirt : s.coarseDirt;
         }
         if (!place) return false;
-        set(x, y, z, *place);
-        if (isSurface && (flags(x, y - 1, z) & kDirt)) {
+        set(x, y, z, *place, f);
+        if (std::uint16_t below = isSurface ? flags(x, y - 1, z) : 0; below & kDirt) {
             // CarvingContext#topMaterial(biome, chunk, below, hasFluid = false)
             if (!cols) cols = std::make_unique<ChunkColumns>(s, chunk.chunkX(), chunk.chunkZ());
             auto top = s.gen->surface().topMaterial(x, y - 1, z, false, [&](int bx, int by, int bz) -> std::string const& { return cols->blockBiome(bx, by, bz); });
             if (top)
-                if (auto const* b = s.block(*top)) set(x, y - 1, z, *b);
+                if (auto const* b = s.block(*top)) set(x, y - 1, z, *b, below);
         }
         postCarveBlock(x, y, z, *randomFromPos);
         return true;
@@ -230,15 +235,17 @@ struct Carver {
             int         rx = x + d[0], ry = y + d[1], rz = z + d[2];
             if (!insideChunk(rx, rz)) continue;
             if (highlands) {
-                if (rand.nextInt(4) == 0 && canReplaceBlock(flags(rx, ry, rz))) {
+                if (rand.nextInt(4) == 0) {
+                    std::uint16_t nf = flags(rx, ry, rz);
+                    if (!canReplaceBlock(nf)) continue;
                     BlockPos p(rx, ry, rz);
-                    if (auto const* w = kit::sampleState(wallProvider(true), rand, p)) set(rx, ry, rz, *w);
+                    if (auto const* w = kit::sampleState(wallProvider(true), rand, p)) set(rx, ry, rz, *w, nf);
                 }
             } else if (di != 0 && (di == 1 || (flags(rx, ry + 1, rz) & kAir) || checkNoiseThreshold(rx, ry, rz))) {
                 std::uint16_t nf = flags(rx, ry, rz);
                 if ((nf & kBaseStone) || (nf & kWater)) {
                     BlockPos p(rx, ry, rz);
-                    if (auto const* w = kit::sampleState(wallProvider(false), rand, p)) set(rx, ry, rz, *w);
+                    if (auto const* w = kit::sampleState(wallProvider(false), rand, p)) set(rx, ry, rz, *w, nf);
                 }
             }
         }
@@ -387,9 +394,18 @@ void carveWith(State const& st, bool highlands, worldgen::Chunk& chunk, worldgen
     auto start = std::chrono::steady_clock::now();
     auto shape = s->gen->shape();
     Carver c{highlands, *s, chunk, *ctx, {}, cfg, chunk.minY(), chunk.maxY(), std::max(chunk.minY(), shape.minY), std::min(chunk.maxY() - chunk.minY(), shape.height), s->caveAir,
-             gf::terrain::ext::hasLiquidLayer(chunk)};
+             gf::terrain::ext::LiquidLayer::of(chunk)};
     c.carve(random);
     addChunkMs(std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count());
+}
+
+bool carveBlockAt(State const& s, bool highlands, worldgen::Chunk& chunk, worldgen::ext::CarverContext& ctx, int x, int y, int z) {
+    static Json const empty = Json::object();
+    auto              shape = s.gen->shape();
+    Carver c{highlands, s, chunk, ctx, {}, ctx.config ? *ctx.config : empty, chunk.minY(), chunk.maxY(), std::max(chunk.minY(), shape.minY), std::min(chunk.maxY() - chunk.minY(), shape.height), s.caveAir,
+             gf::terrain::ext::LiquidLayer::of(chunk)};
+    bool isSurface = false;
+    return c.carveBlock(x, y, z, isSurface);
 }
 
 } // namespace gf::feature::terrain

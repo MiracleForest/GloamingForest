@@ -13,6 +13,7 @@
 #     pwsh tests/terrain/oracle/skylight.ps1 -AcceptEula -Check     # reproducible? (exit 1 on a difference)
 #
 # Exit 2 = NOT RUN (no bds slot in time). Only derived numbers are written (no TF asset, R10/R11).
+#     pwsh tests/terrain/oracle/skylight.ps1 -MarkGoldens    # adds source.settings to the committed goldens (no server)
 param(
     [long[]]$Seeds,
     [switch]$Check,
@@ -20,7 +21,8 @@ param(
     [int]$MemoryMB = 4096,
     [int]$TimeoutMinutes = 180,
     [int]$StartupMinutes = 15,
-    [int]$DumpMinutes = 30
+    [int]$DumpMinutes = 30,
+    [switch]$MarkGoldens
 )
 $ErrorActionPreference = 'Stop'
 $repo = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
@@ -33,12 +35,27 @@ $kinds = @('density', 'heights')
 $spec = Get-Content (Join-Path $repo 'tools/oracle/spec.json') -Raw | ConvertFrom-Json -AsHashtable
 $pins = Get-OraclePins
 if (-not $Seeds) { $Seeds = @($spec.seeds | ForEach-Object { [long]$_ }) }
+$golden = Join-Path $PSScriptRoot '../golden/skylight'
+function Get-SeedName([long]$Seed) { if ($Seed -lt 0) { "seed-m$(-[decimal]$Seed)" } else { "seed-$Seed" } }
+$settingsId = 'twilightforest:skylight_noise_gen'
+# The dumper writes its own "source" object (TF, Minecraft and NeoForge versions) and ignores the
+# spec's: the settings the dimension used are added to it here, so every golden names them.
+function Add-SourceSettings([string]$Path) {
+    $text = [IO.File]::ReadAllText($Path)
+    if ($text -match '"source": \{[^\n}]*"settings":') { return }
+    $re = [regex]'("source": \{[^\n}]*)\}'
+    if (-not $re.IsMatch($text)) { throw "no source object in $Path" }
+    [IO.File]::WriteAllText($Path, $re.Replace($text, "`$1, `"settings`": `"$settingsId`"}", 1))
+}
+if ($MarkGoldens) {
+    Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot '../golden/skylight') -Recurse -Filter '*.json' | ForEach-Object { Add-SourceSettings $_.FullName }
+    Say 'the committed goldens name their settings'
+    exit 0
+}
 if (-not ($AcceptEula -or $env:GF_ORACLE_ACCEPT_EULA -eq '1')) {
     Write-Host '[skylight-oracle] this starts a Minecraft server: pass -AcceptEula (https://aka.ms/MinecraftEULA)' -ForegroundColor Red
     exit 1
 }
-$golden = Join-Path $PSScriptRoot '../golden/skylight'
-function Get-SeedName([long]$Seed) { if ($Seed -lt 0) { "seed-m$(-[decimal]$Seed)" } else { "seed-$Seed" } }
 
 # The datapack: TF's own dimension JSON with the Skylight settings.
 $dimension = [ordered]@{
@@ -147,11 +164,20 @@ try {
         $proc = $null
         $errs = @(Select-String -LiteralPath $log -Pattern '/ERROR\] \[gf_oracle/|gf_oracle: dump .* failed' -ErrorAction SilentlyContinue)
         if ($errs.Count) { throw "the dumper logged errors: $($errs[0].Line)" }
-        # the dumps really are Skylight's: its final density is bounded by sqrt (TF's skylight_terrain)
+        foreach ($kind in $kinds) { Add-SourceSettings (Join-Path $dumpDir "$kind/$(Get-SeedName $seed).json") }
+        # the dumps really are Skylight's (TF's skylight_terrain): neither the final density nor the
+        # heights equal twilight_noise_gen's (F13's goldens)
         $density = Get-Content (Join-Path $dumpDir "density/$(Get-SeedName $seed).json") -Raw | ConvertFrom-Json
         $twilight = Get-Content (Join-Path $repo "tests/golden/density/$(Get-SeedName $seed).json") -Raw | ConvertFrom-Json
         if (($density.router.final_density.values -join ',') -eq ($twilight.router.final_density.values -join ',')) {
             throw "seed $seed`: the final density equals twilight_noise_gen's: the datapack did not apply"
+        }
+        $heights = Get-Content (Join-Path $dumpDir "heights/$(Get-SeedName $seed).json") -Raw | ConvertFrom-Json
+        $twilightHeights = Get-Content (Join-Path $repo "tests/golden/heights/$(Get-SeedName $seed).json") -Raw | ConvertFrom-Json
+        foreach ($field in 'worldSurfaceWg', 'oceanFloorWg') {
+            if ((($heights.$field | ForEach-Object { $_ -join ',' }) -join ';') -eq (($twilightHeights.$field | ForEach-Object { $_ -join ',' }) -join ';')) {
+                throw "seed $seed`: the $field heights equal twilight_noise_gen's: the datapack did not apply"
+            }
         }
     }
 

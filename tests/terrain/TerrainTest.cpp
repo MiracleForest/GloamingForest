@@ -206,6 +206,23 @@ void checkHeightsGolden(std::string const& settingsName, fs::path const& dir) {
 TEST(TerrainGolden, BaseHeightsMatch) { checkHeightsGolden("twilight_noise_gen", golden::goldenDir()); }
 TEST(TerrainSkylight, BaseHeightsMatchOracle) { checkHeightsGolden("skylight_noise_gen", skylightGoldenDir()); }
 
+// Every Skylight golden names the settings its dimension used, and none equals the
+// twilight_noise_gen golden of its seed (a datapack that did not apply would dump those).
+TEST(TerrainSkylight, GoldensAreSkylights) {
+    for (auto seed : seeds()) {
+        json density  = golden::readJson(skylightGoldenDir() / "density" / seedFile(seed));
+        json heights  = golden::readJson(skylightGoldenDir() / "heights" / seedFile(seed));
+        json tDensity = golden::readJson(golden::goldenDir() / "density" / seedFile(seed));
+        json tHeights = golden::readJson(golden::goldenDir() / "heights" / seedFile(seed));
+        ASSERT_FALSE(density.is_discarded() || heights.is_discarded() || tDensity.is_discarded() || tHeights.is_discarded()) << seedFile(seed);
+        for (json const* g : {&density, &heights})
+            EXPECT_EQ(g->at("source").value("settings", std::string()), "twilightforest:skylight_noise_gen") << seedFile(seed) << " " << g->at("kind");
+        EXPECT_NE(density.at("router").at("final_density").at("values"), tDensity.at("router").at("final_density").at("values")) << seedFile(seed);
+        EXPECT_NE(heights.at("worldSurfaceWg"), tHeights.at("worldSurfaceWg")) << seedFile(seed);
+        EXPECT_NE(heights.at("oceanFloorWg"), tHeights.at("oceanFloorWg")) << seedFile(seed);
+    }
+}
+
 
 constexpr int kLandmarkRadius = 48;
 

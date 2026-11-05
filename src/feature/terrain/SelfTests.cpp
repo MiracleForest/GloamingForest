@@ -15,6 +15,7 @@
 #include "mc/deps/core/math/Vec3.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/level/BlockPos.h"
+#include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/dimension/DimensionType.h"
 #include "mc/world/level/block/Block.h"
@@ -25,6 +26,7 @@
 #include "feature/ext/landmark/LandmarkExt.h"
 #include "feature/ext/landmark/LandmarkTest.h"
 #include "feature/ext/terrain/PieceBeard.h"
+#include "feature/ext/terrain/Pipeline.h"
 #include "feature/landmark/Landmark.h"
 #include "feature/ext/worldgen/Carving.h"
 #include "feature/ext/worldgen/FeatureKit.h"
@@ -843,6 +845,131 @@ GF_REGISTER_SELFTEST("terrain.live_view_restore", [](Context& ctx) {
         (void)gf::world::teleport(*shown, DimensionType(v->value("dim", 0)), back, 0.0F);
     }
     gf::log().info("terrain live view: the player is back");
+});
+
+// ---- the grid handoff and the passes it trusts ---------------------------------------------------------------
+
+// The noise grid goes to the surface step only in a pass whose writers are known: F5's global
+// providers take it (no other writer on main), a pass on a copy of them with another unit's
+// Stage::Noise step reads the chunk, so the surface sees that step's blocks (an air pocket under
+// the top stone stays air instead of taking the stale grid's dirt).
+GF_REGISTER_SELFTEST("terrain.handoff_pass", [](Context& ctx) {
+    auto s = anyState();
+    ctx.require(s != nullptr, "generator");
+    auto noiseSteps   = gf::terrain::ext::stageStepIds(worldgen::Stage::Noise);
+    bool otherWriters = std::any_of(noiseSteps.begin(), noiseSteps.end(), [](std::string const& id) { return id != "terrain.pass_probe"; });
+    ctx.check(std::find(noiseSteps.begin(), noiseSteps.end(), "terrain.pass_probe") != noiseSteps.end(), "the pass probe is the global providers' Stage::Noise step");
+    auto before = handoffCounts();
+    (void)worldgen::ext::runInMemory(s->seed, 40, -40, 2, 2);
+    auto after = handoffCounts();
+    ctx.info("global providers: " + std::to_string(after.first - before.first) + " grids taken, " + std::to_string(after.second - before.second) + " read back");
+    if (!otherWriters) ctx.check(after.first > before.first, "a pass on F5's global providers hands its grids on");
+    // a copy with a foreign Stage::Noise writer: air pockets under every column's top stone
+    auto const* air   = kit::javaBlock("minecraft:air");
+    auto const* stone = kit::javaBlock("minecraft:stone");
+    ctx.require(air && stone, "air and stone");
+    std::vector<std::array<int, 3>> pockets;
+    before = handoffCounts();
+    gf::terrain::ext::generateOnCopyWithNoiseStep(
+        s->seed, 41, -40, -32, 256,
+        [&](worldgen::Chunk& c, worldgen::Region&) {
+            if (c.chunkX() != 41 || c.chunkZ() != -40) return;
+            for (int z = 0; z < 16; ++z)
+                for (int x = 0; x < 16; ++x) {
+                    int y = c.maxY() - 1;
+                    while (y > c.minY() && kit::isAir(c.getBlock(x, y, z))) --y;
+                    if (&c.getBlock(x, y, z) != stone || y - 2 <= c.minY()) continue; // water or bedrock on top: no pocket
+                    c.setBlock(x, y - 1, z, *air);
+                    c.setBlock(x, y - 2, z, *air);
+                    pockets.push_back({x, y - 1, z});
+                }
+        },
+        [&](worldgen::Chunk& c) {
+            int filled = 0;
+            for (auto const& [x, y, z] : pockets)
+                if (!kit::isAir(c.getBlock(x, y, z))) ++filled;
+            ctx.info(std::to_string(pockets.size()) + " pockets, " + std::to_string(filled) + " filled after the surface");
+            ctx.check(!pockets.empty(), "the foreign writer made pockets");
+            ctx.check(filled == 0, "the surface step saw the foreign writer's blocks (no stale grid)");
+        });
+    after = handoffCounts();
+    ctx.check(after.second > before.second, "the pass on a copy of the providers reads the chunk back");
+});
+
+// ---- Bedrock's liquid layer -----------------------------------------------------------------------------------
+
+// TFCavesCarver asks BlockState#getFluidState: a waterlogged block (Bedrock: water in the liquid
+// layer of a real game chunk) is no replaceable block, and a water neighbour stops a carve. Runs
+// the carver's carveBlock on a loaded Twilight Forest chunk with water put into the liquid layer.
+GF_REGISTER_SELFTEST("terrain.liquid_layer", [](Context& ctx) -> ll::coro::CoroTask<> {
+    if (!gf::world::twilight()) {
+        ctx.info("the Twilight Forest dimension is not registered (F4)");
+        co_return;
+    }
+    ctx.require(co_await ctx.inTwilight(), "the test moves into the Twilight Forest");
+    auto s = anyState();
+    ctx.require(s != nullptr, "generator");
+    auto base = ctx.testPos(270, 2);
+    // P with both x neighbours inside its chunk, in the air over the test row (the stones around it go
+    // back to air afterwards)
+    int  px   = ((base.x & 15) == 0) ? base.x + 1 : (((base.x & 15) == 15) ? base.x - 1 : base.x);
+    core::GlobalPos P{base.dim, px, base.y + 3, base.z};
+    ctx.require(co_await ctx.ensureLoaded(P), "the test chunk is loaded");
+    auto* region = ctx.region();
+    ctx.require(region != nullptr, "block source");
+    for (int dx = -1; dx <= 1; ++dx)
+        for (int dy = -1; dy <= 3; ++dy)
+            for (int dz = -1; dz <= 1; ++dz) ctx.setBlock({P.dim, P.x + dx, P.y + dy, P.z + dz}, "minecraft:stone");
+    auto chunk = gf::terrain::ext::loadedGameChunk(*region, P.x >> 4, P.z >> 4);
+    ctx.require(chunk != nullptr, "the game chunk");
+    auto layer = gf::terrain::ext::LiquidLayer::of(*chunk);
+    ctx.require(static_cast<bool>(layer), "the liquid layer of a game chunk is readable (x-z-y order verified)");
+    auto const* water = kit::javaBlock("minecraft:water");
+    auto const* air   = kit::javaBlock("minecraft:air");
+    ctx.require(water && air, "water and air");
+    int  lx = P.x & 15, lz = P.z & 15;
+    auto stoneAt = [&](int x) { return ctx.blockAt({P.dim, x, P.y, P.z}) == "minecraft:stone"; };
+    worldgen::ext::CarvingMask   mask(chunk->minY(), chunk->maxY());
+    worldgen::ext::CarverContext cc{P.x >> 4, P.z >> 4, 0, "twilightforest:tf_caves", nullptr, &mask};
+    // 1. a waterlogged block holds water: the carver keeps it
+    layer.set(lx, P.y, lz, *water);
+    ctx.check(layer.at(lx, P.y, lz) == water, "the liquid layer holds the water");
+    ctx.check(chunk->getBlock(lx, P.y, lz).getTypeName() == "minecraft:stone", "the standard layer keeps the stone");
+    ctx.check(!carveBlockAt(*s, false, *chunk, cc, P.x, P.y, P.z), "a waterlogged block is not carved");
+    ctx.check(stoneAt(P.x) && layer.at(lx, P.y, lz) == water, "the waterlogged block survives with its water");
+    // 2. emptying the layer
+    layer.clear(lx, P.y, lz, *air);
+    ctx.check(layer.at(lx, P.y, lz) == nullptr, "clear empties the liquid layer");
+    // 3. a waterlogged neighbour stops the carve
+    layer.set(lx + 1, P.y, lz, *water);
+    ctx.check(!carveBlockAt(*s, false, *chunk, cc, P.x, P.y, P.z), "a waterlogged neighbour stops the carve");
+    ctx.check(stoneAt(P.x), "the block next to the water stays");
+    layer.clear(lx + 1, P.y, lz, *air);
+    ctx.check(layer.at(lx + 1, P.y, lz) == nullptr, "the neighbour's water is gone");
+    // 4. without water the same block carves
+    ctx.check(carveBlockAt(*s, false, *chunk, cc, P.x, P.y, P.z), "a dry block carves");
+    ctx.check(!stoneAt(P.x), "the carved block is air (" + ctx.blockAt({P.dim, P.x, P.y, P.z}) + ")");
+    // leave no water behind (the stones and the carved block go back to air with the test's cleanup)
+    layer.clear(lx, P.y, lz, *air);
+    layer.clear(lx + 1, P.y, lz, *air);
+});
+
+// ---- the world preset's saved-chunk check ------------------------------------------------------------------
+
+// onWorldReady counts the Twilight Forest's saved chunks (their version records in the world DB)
+// when a world has no kept preset: the scan reads the records the game saved (a new world may have
+// saved none yet, so the counts are reported, not checked).
+GF_REGISTER_SELFTEST("terrain.saved_chunks", [](Context& ctx) {
+    auto start     = std::chrono::steady_clock::now();
+    auto overworld = savedChunkCount(0);
+    ctx.require(overworld.has_value(), "the world DB is readable");
+    int  dim      = gf::world::twilight() ? static_cast<int>(*gf::world::twilight()) : -1;
+    auto twilight = dim >= 0 ? savedChunkCount(dim) : std::optional<std::size_t>{};
+    double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
+    ctx.info("saved chunks: overworld " + std::to_string(*overworld) + ", Twilight Forest " + (twilight ? std::to_string(*twilight) : std::string("-")) + " (" +
+             std::to_string(static_cast<int>(ms)) + " ms)");
+    auto stored = game::db::get("gf:terrain:skylight");
+    ctx.check(stored && stored->is_boolean(), "the world keeps its preset");
 });
 } // namespace
 } // namespace gf::feature::terrain

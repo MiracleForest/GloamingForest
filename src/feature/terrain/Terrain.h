@@ -8,7 +8,9 @@
 #include <array>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "nlohmann/json.hpp"
@@ -151,5 +153,16 @@ void clearBeardCache();
 /// The stage before handed this thread's chunk its grid (0: noise, 1: surface) and the chunk still
 /// holds it where the next stage looks: moves it into `out`.
 [[nodiscard]] bool takeHandedGrid(State const& s, worldgen::Chunk& chunk, int stage, Grid& out);
+/// How many grids the stages took from the stage before (first) and how many they read from the chunk
+/// instead because something else could have written it (second), since the module loaded.
+[[nodiscard]] std::pair<std::uint64_t, std::uint64_t> handoffCounts();
+
+/// The saved chunks of dimension `dim` in the loaded world's DB (nullopt without a level): a world
+/// without a kept preset whose Twilight Forest has some stays twilight_noise_gen.
+[[nodiscard]] std::optional<std::size_t> savedChunkCount(int dim);
+
+/// TFCavesCarver#carveBlock (and its postCarveBlock) at one world position of `chunk`, as a tunnel
+/// reaching it would run it (selftests: the fluid tests on Bedrock's liquid layer). True: carved.
+bool carveBlockAt(State const& s, bool highlands, worldgen::Chunk& chunk, worldgen::ext::CarverContext& ctx, int x, int y, int z);
 
 } // namespace gf::feature::terrain
