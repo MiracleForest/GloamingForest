@@ -107,6 +107,9 @@ void remove(BlockSource& region, BlockPos const& pos) {
 bool quietEdit(BlockSource&, BlockPos const&) { return gQuietDepth > 0; }
 
 void destroy(BlockSource& region, BlockPos const& pos, bool drops) {
+    // destroyBlock(pos, false) runs no dropResources (no spawnAfterBreak): quiet like removeBlock
+    std::optional<QuietScope> quiet;
+    if (!drops) quiet.emplace();
     region.getLevel().destroyBlock(region, pos, drops, BlockChangeContext{});
 }
 
@@ -196,19 +199,18 @@ void sparkle(BlockSource& region, BlockPos const& pos) {
 }
 
 double animateTickChance(BlockSource& region, BlockPos const& pos) {
-    // ClientLevel#animateTick: 667 x doAnimateTick(16) + 667 x doAnimateTick(32), each a uniform
-    // position in [-r, r) on every axis around the player (2r = 32 / 64 positions per axis)
+    // ClientLevel#animateTick: 667 x doAnimateTick(16) + 667 x doAnimateTick(32) around the player
     auto* p = nearestPlayer(dimOf(region), center(pos), 64.0);
     if (!p) return 0.0;
-    auto   q    = p->getFeetPos();
-    auto   in   = [&](int r) {
-        int px = int(std::floor(q.x)), py = int(std::floor(q.y)), pz = int(std::floor(q.z));
-        return pos.x >= px - r && pos.x < px + r && pos.y >= py - r && pos.y < py + r && pos.z >= pz - r && pos.z < pz + r;
+    auto q  = p->getFeetPos();
+    int  dx = std::abs(pos.x - int(std::floor(q.x))), dy = std::abs(pos.y - int(std::floor(q.y))), dz = std::abs(pos.z - int(std::floor(q.z)));
+    // each axis is x + nextInt(r) - nextInt(r): offset d has the chance (r - |d|) / r^2
+    auto axes = [&](int r) {
+        if (dx >= r || dy >= r || dz >= r) return 0.0;
+        double rr = double(r) * r;
+        return (r - dx) / rr * ((r - dy) / rr) * ((r - dz) / rr);
     };
-    double chance = 0.0;
-    if (in(16)) chance += 667.0 / (32.0 * 32.0 * 32.0);
-    if (in(32)) chance += 667.0 / (64.0 * 64.0 * 64.0);
-    return chance;
+    return std::min(1.0, 667.0 * axes(16) + 667.0 * axes(32));
 }
 
 namespace {

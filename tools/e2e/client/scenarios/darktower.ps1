@@ -12,13 +12,15 @@
 #                       eyes open while it charges and fires (urghast_attack)
 #   tower_outside       a dark tower placed with /tf place, seen from outside
 #   tower_inside        the first main tower's ground floor
+#   urghast_tantrum     in the Twilight Forest, an Ur-Ghast in a tantrum: boss tears falling under it and
+#                       the tantrum rain the client mod fades in (TFWeatherRenderer.urGhastAlive)
 # Screenshots: out/darktower/*.png
 Save-Screenshot 'hud' | Out-Null
 if ($script:Mode -eq 'local') {
     Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
     $r = Invoke-SelfTest 'darktower.*' -TimeoutSeconds 1200
     if ($r.Fail -gt 0) { throw "$($r.Fail) darktower selftest(s) failed" }
-    if ($r.Pass -lt 14) { throw "expected 14 darktower selftests to pass, got $($r.Pass)" }
+    if ($r.Pass -lt 17) { throw "expected 17 darktower selftests to pass, got $($r.Pass)" }
 
     Invoke-Chat '/gamemode creative'
     Invoke-Chat '/difficulty easy'
@@ -107,6 +109,24 @@ if ($script:Mode -eq 'local') {
     Invoke-Teleport '/tp @s 818 -58 818 135 10'
     Start-Sleep -Seconds 4
     Save-Screenshot 'tower_inside' | Out-Null
+
+    # ---- the Ur-Ghast's tantrum in the Twilight Forest: tears and the client's rain ----
+    $mark = Get-Date
+    Invoke-Chat '/tf tp'
+    Wait-LogLine 'dimension: .* travelled from minecraft:overworld to twilightforest:twilight_forest' 60 -Since $mark | Out-Null
+    Start-Sleep -Seconds 4
+    Invoke-Chat '/gamemode creative'
+    Invoke-Chat '/time set noon'
+    Invoke-Chat '/tp @s ~ ~ ~ 0 -20'
+    Invoke-Chat '/summon twilightforest:ur_ghast ~ ~12 ~26'
+    Start-Sleep -Seconds 2
+    Invoke-Chat '/damage @e[type=twilightforest:ur_ghast,c=1] 12 entity_attack'
+    Wait-LogLine 'darktower: the Ur-Ghast throws a tantrum' 20 -Since $mark | Out-Null
+    Wait-LogLine 'darktower: client Ur-Ghast tantrum rain' 20 -Since $mark | Out-Null
+    Start-Sleep -Seconds 3
+    Save-Screenshot 'urghast_tantrum' | Out-Null
+    Invoke-Chat '/kill @e[type=twilightforest:ur_ghast]'
+    Invoke-Chat '/kill @e[type=twilightforest:carminite_ghastling]'
 } else {
     Wait-LogLine '\[host\].*GloamingForest world ready' 120 | Out-Null
 }

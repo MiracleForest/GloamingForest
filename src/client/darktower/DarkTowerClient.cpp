@@ -49,6 +49,7 @@
 #include "mc/client/game/ClientInstance.h"
 #include "mc/client/player/LocalPlayer.h"
 #include "mc/client/sound/SoundEngine.h"
+#include "mc/deps/audio/ServerSoundHandle.h"
 #include "mc/comprehensive/ParticleType.h"
 #include "mc/deps/core/math/Vec3.h"
 #include "mc/deps/core/string/HashedString.h"
@@ -110,6 +111,7 @@ struct State {
     float                                   urGhastRain = 0.0f; ///< TFWeatherRenderer.urGhastRain
     bool                                    controlling = false;
     float                                   vanillaRain = 0.0f; ///< the dimension's own level, followed while raised
+    Weather const*                          raised      = nullptr; ///< the weather whose level is raised
     bool                                    loggedRain  = false;
     bool                                    loggedTears = false;
     ll::event::ListenerPtr                  listener;
@@ -178,6 +180,7 @@ void tickRain(Dimension& dim, bool alive) {
     auto& s = st();
     s.urGhastRain = alive ? std::min(1.0f, s.urGhastRain + 0.1f) : std::max(0.0f, s.urGhastRain - 0.02f);
     Weather* w = dim.mWeather->get();
+    if (s.controlling && s.raised != w) s.controlling = false; // another dimension now: nothing to restore here
     if (!w) return;
     float& level  = w->mRainLevel;
     float& old    = w->mOldRainLevel;
@@ -185,6 +188,7 @@ void tickRain(Dimension& dim, bool alive) {
     if (s.urGhastRain > 0.0f && gf::world::isTwilight(dim)) {
         if (!s.controlling) {
             s.controlling = true;
+            s.raised      = w;
             s.vanillaRain = level;
         } else {
             // Weather::tick moves the level towards its target by 0.01 a tick

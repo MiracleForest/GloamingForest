@@ -75,7 +75,6 @@ bool hasVanished(std::string const& id) { return id == id::ReappearingBlock; }
 
 BlockPos rel(BlockPos const& p, int f) { return offset(p, static_cast<Facing>(f)); }
 
-Json statesOf(Block const& block) { return blockStates(block); }
 
 // ---- animateTick sparkles -----------------------------------------------------------------------------
 
@@ -111,7 +110,7 @@ void tickSparkles() {
 void setStates(BlockSource& region, BlockPos const& pos, Json const& changes) {
     Block const& b  = region.getBlock(pos);
     auto         id = game::blockId(b);
-    Json         s  = statesOf(b);
+    Json         s  = blockStates(b);
     for (auto const& [k, v] : changes.items()) s[k] = v;
     set(region, pos, id, s);
 }
@@ -589,7 +588,8 @@ struct TrapIndex {
             auto arr = game::db::get("gf:darktower:traps:" + std::to_string(dim));
             if (!arr || !arr->is_array()) continue;
             for (auto const& e : *arr)
-                if (e.is_array() && e.size() == 3) byDim[dim].insert({e[0].get<int>(), e[1].get<int>(), e[2].get<int>()});
+                if (e.is_array() && e.size() == 3 && e[0].is_number_integer() && e[1].is_number_integer() && e[2].is_number_integer())
+                    byDim[dim].insert({e[0].get<int>(), e[1].get<int>(), e[2].get<int>()});
         }
     }
     void save() {
@@ -734,7 +734,7 @@ void trapDevice(BlockSource& region, BlockPos const& pos, Block const& block) {
 //  - a player's break: onDestroy notes the player's tool first (creative: no drops; silk touch /
 //    #minecraft:prevents_infested_spawns: no borer);
 //  - Level#removeBlock / setBlock (no drops: Java spawns nothing): the unit's own edits go through
-//    Util's remove() / set(), which mark the position (quietEdits);
+//    Util's remove() / set(), which mark the change as their own (quietEdit);
 //  - otherwise (an explosion, a destroyBlock with drops): a borer pops out.
 
 /// The infested blocks a player is breaking now: whether the break spawns a borer.
@@ -761,11 +761,16 @@ void infestedRemoved(BlockSource& region, BlockPos const& pos, Block const&) {
     if (quietEdit(region, pos)) return;                // removeBlock / setBlock: no drops
     if (!region.getBlock(pos).isAir()) return;          // replaced by another block (setBlock), not broken
     if (!spawn || !doTileDrops()) return;
-    if (auto* borer = spawnMob(region, id::Borer, Vec3{pos.x + 0.5f, float(pos.y), pos.z + 0.5f})) {
-        (void)borer;
-        particle(region, "minecraft:poof", center(pos)); // spawnAnim
-        gf::log().info("darktower: a towerwood borer popped out of infested towerwood at {}", gp.key());
-    }
+    // the mob joins after the block change (not from inside the game's setBlock)
+    ia::nextTick([gp] {
+        auto* r = game::regionOf(gp.dim);
+        if (!r) return;
+        auto p = game::blockPos(gp);
+        if (spawnMob(*r, id::Borer, Vec3{p.x + 0.5f, float(p.y), p.z + 0.5f})) {
+            particle(*r, "minecraft:poof", center(p)); // spawnAnim
+            gf::log().info("darktower: a towerwood borer popped out of infested towerwood at {}", gp.key());
+        }
+    });
 }
 
 // ---- placement and removal --------------------------------------------------------------------------
@@ -933,7 +938,7 @@ void install() {
     for (auto const* id : {id::Builder, id::Antibuilder, id::GhastTrap, id::Reactor, id::ReactorDebris})
         blockevents::onPlaced(id, onDevicePlaced);
     // infested towerwood
-    ia::onDestroy({.block = id::InfestedTowerwood}, infestedBreaking, ia::priority::Lowest);
+    ia::onDestroy({.block = id::InfestedTowerwood}, infestedBreaking, ia::priority::Fallback);
     blockevents::onRemoved(id::InfestedTowerwood, infestedRemoved);
     // ghast trap POIs
     blockevents::onRemoved(id::GhastTrap, [](BlockSource& r, BlockPos const& p, Block const&) { indexGhastTrap(dimOf(r), p, false); });
