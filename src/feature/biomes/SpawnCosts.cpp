@@ -142,7 +142,10 @@ void registerSpawnCosts() {
         bool anyCost = false;
         for (auto const& e : it->second) anyCost = anyCost || b->second.contains(e.entityId);
         if (!anyCost) return std::nullopt;
-        return costFiltered(biome, category, potentialOf(static_cast<int>(region.getDimensionId())), pos);
+        // nothing over budget: pass (the spawner keeps the list it has; later special spawns are asked)
+        auto out = costFiltered(biome, category, potentialOf(static_cast<int>(region.getDimensionId())), pos);
+        if (out.size() == it->second.size()) return std::nullopt;
+        return out;
     });
     gf::log().info("biomes: spawn costs applied to the natural spawner ({} biomes with costs)", costs().size());
 }
