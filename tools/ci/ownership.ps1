@@ -24,29 +24,36 @@
   usually behind origin/main, and a stale base lists other units' merged changes as violations
   (fetch first: git fetch origin). A -Base that does not exist is tried as origin/<Base>.
 
+  -PackProbes checks instead that every probe of checks.packPathProbes (tools/xmake/merges.json)
+  resolves here to its expected owner, the same expectation assemble.lua holds its own owner_of to
+  (tools/assemble.ps1 -Check runs it).
+
   Exit code 0 = the change is owned, 1 = violations (listed).
 
 .EXAMPLE
   pwsh tools/ci/ownership.ps1 -Unit f0                       # against origin/main (main without a remote)
   pwsh tools/ci/ownership.ps1 -Unit biomes -Base origin/main
+  pwsh tools/ci/ownership.ps1 -PackProbes
 #>
 param(
-    [Parameter(Mandatory)][string]$Unit,
+    [string]$Unit,
     [string]$Base,
-    [string]$Owners
+    [string]$Owners,
+    [switch]$PackProbes
 )
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path "$PSScriptRoot/../..").Path
 if (-not $Owners) { $Owners = Join-Path $root 'docs/spec/owners.tsv' }
 $rules = Get-Content (Join-Path $root 'tools/spec/owners.rules.json') -Raw | ConvertFrom-Json -AsHashtable
 
+if (-not $Unit -and -not $PackProbes) { Write-Host '[ownership] usage: ownership.ps1 -Unit <u> [-Base <ref>] | -PackProbes' -ForegroundColor Red; exit 1 }
 # unit id from an id or a name
 $unitId = $null
 foreach ($k in $rules.units.Keys) {
     if ($k -ieq $Unit -or $rules.units[$k].name -ieq $Unit) { $unitId = $k; break }
 }
-if (-not $unitId) { Write-Host "[ownership] unknown unit '$Unit'" -ForegroundColor Red; exit 1 }
-$unitName = $rules.units[$unitId].name
+if (-not $unitId -and -not $PackProbes) { Write-Host "[ownership] unknown unit '$Unit'" -ForegroundColor Red; exit 1 }
+$unitName = if ($unitId) { $rules.units[$unitId].name } else { $null }
 
 function Get-GlobRegexes([string]$glob) {
     # brace alternatives and "**/" (zero or more directories) as in tools/xmake/assemble.lua
@@ -126,6 +133,33 @@ function Get-PathOwner([string]$path) {
     }
     if ($tie) { return @{ owner = $null; why = "ambiguous: $($best.rule.glob) ($($best.rule.owner)) vs $($tie.rule.glob) ($($tie.rule.owner))" } }
     return @{ owner = $best.rule.owner; why = $best.rule.glob; mode = $best.rule.mode }
+}
+
+# -PackProbes: the probes of checks.packPathProbes (tools/xmake/merges.json) must resolve here to the
+# owner assemble.lua's owner_of gives them, so both implementations of the rule agree
+if ($PackProbes) {
+    $merges = Get-Content (Join-Path $root 'tools/xmake/merges.json') -Raw | ConvertFrom-Json -AsHashtable
+    $probes = @(if ($merges.checks.packPathProbes) { $merges.checks.packPathProbes })
+    $bad = 0
+    foreach ($p in $probes) {
+        if ($p -isnot [hashtable] -or $p.file -isnot [string] -or $p.owner -isnot [string]) {
+            Write-Host "[ownership] probe entry $($probes.IndexOf($p) + 1) needs a string file and owner" -ForegroundColor Red
+            $bad++
+            continue
+        }
+        $o = Get-PathOwner $p.file
+        if ($o.owner -ne $p.owner) {
+            $who = if ($o.owner) { "$($o.owner) ($($o.why))" } else { $o.why }
+            Write-Host "[ownership] probe $($p.file): owned by $who, expected $($p.owner)" -ForegroundColor Red
+            $bad++
+        }
+    }
+    if ($bad -or -not $probes.Count) {
+        if (-not $probes.Count) { Write-Host '[ownership] no checks.packPathProbes in tools/xmake/merges.json' -ForegroundColor Red }
+        exit 1
+    }
+    Write-Host "[ownership] OK: $($probes.Count) pack path probe(s) resolve to their expected owners" -ForegroundColor Green
+    exit 0
 }
 
 # changed files since the merge base; the default base is origin/main (the local main of a worktree
