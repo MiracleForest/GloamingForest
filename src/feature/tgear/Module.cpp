@@ -35,6 +35,7 @@
 #include "ll/api/event/player/PlayerDisconnectEvent.h"
 #include "ll/api/event/world/ServerLevelTickEvent.h"
 #include "ll/api/event/world/SpawnMobEvent.h"
+#include "ll/api/command/CommandRegistrar.h"
 #include "ll/api/service/Bedrock.h"
 
 #include "mc/deps/ecs/gamerefs_entity/EntityContext.h"
@@ -44,11 +45,8 @@
 #include "mc/entity/components/FreezingImmuneComponent.h"
 #include "mc/entity/components_json_legacy/InsomniaComponent.h"
 #include "mc/entity/components_json_legacy/ProjectileComponent.h"
-#include "mc/deps/core/math/EasingType.h"
-#include "mc/deps/minecraft_camera/camera_instruction_options/FovInstruction.h"
-#include "mc/network/MinecraftPacketIds.h"
-#include "mc/network/MinecraftPackets.h"
-#include "mc/network/packet/CameraInstructionPacket.h"
+#include "mc/server/commands/CommandPermissionLevel.h"
+#include "mc/server/commands/ServerCommandOrigin.h"
 #include "mc/world/actor/ActorCategory.h"
 #include "mc/world/actor/ActorDefinitionIdentifier.h"
 #include "mc/world/actor/Mob.h"
@@ -82,6 +80,7 @@
 #include "game/Blocks.h"
 #include "game/Items.h"
 #include "game/WorldDb.h"
+#include "mod/Commands.h"
 #include "mod/I18n.h"
 #include "mod/Log.h"
 #include "mod/Module.h"
@@ -312,24 +311,25 @@ void tickWearer(Actor& wearer, std::int64_t now) {
 }
 
 /// ComputeFovModifierEvent (FOV x zoom) on the zooming player's own camera: Bedrock's world projection
-/// comes from the vanilla camera (its FOV component), which a camera FOV instruction sets
-/// (CameraInstructionPacket: "camera <player> fov_set <fov>" / "fov_clear", no easing). `fov` is the
-/// client's FOV times the zoom (the client sends it with the zoom state).
+/// comes from the vanilla camera (its custom FOV), which the camera command sets for one player
+/// ("camera <player> fov_set <fov>" / "fov_clear", run as the server). The round-3 e2e probes: the
+/// command narrows the view (49 % of the pixels change) while a hand-built CameraInstructionPacket with
+/// the same FOV instruction is accepted without effect. `fov` is the client's FOV times the zoom; the
+/// camera takes [30, 110] only ("Custom FOV value must be within [30.0, 110.0]"), so TF's 21 degrees
+/// becomes 30.
 void sendZoomFov(Player& player, bool zoom, float fov) {
     if (player.isSimulatedPlayer()) return;
-    auto  packet = MinecraftPackets::createPacket(MinecraftPacketIds::CameraInstruction);
-    auto& pkt    = static_cast<CameraInstructionPacket&>(*packet);
-    CameraInstructionOptions::FovInstruction f{};
-    // the camera takes custom FOVs within [30, 110] only (content log: "Custom FOV value must be within
-    // [30.0, 110.0]"): TF's 70 x 0.3 = 21 degrees becomes 30
-    f.mFov         = zoom ? std::clamp(fov, 30.f, 110.f) : 0.f;
-    f.mFovClear    = !zoom;
-    f.mFovEaseTime = 0.f;
-    f.mFovEaseType = EasingType::Linear;
-    pkt.mCameraInstruction->mFieldOfView = f;
-    pkt.sendTo(player);
+    auto level = ll::service::getLevel();
+    if (!level) return;
+    auto name = player.getRealName();
+    std::erase(name, '"');
+    auto cmd = zoom ? fmt::format("camera \"{}\" fov_set {:.1f}", name, std::clamp(fov, 30.f, 110.f)) : fmt::format("camera \"{}\" fov_clear", name);
+    ServerCommandOrigin origin("gloamingforest-tgear", level->asServer(), CommandPermissionLevel::Owner, player.getDimensionId());
+    ++commands::detail::quietCommandErrors;
+    auto out = ll::command::CommandRegistrar::getServerInstance().executeCommand(cmd, origin);
+    --commands::detail::quietCommandErrors;
+    if (out.mSuccessCount <= 0) log().warn("tgear: '{}' failed for {}", cmd, player.getRealName());
 }
-
 void applyZoom(Player& player, bool zoom, float fov) {
     sendZoomFov(player, zoom, fov > 0 ? fov : 70.f * static_cast<float>(numberOf(ids::kZoom, 0.3)));
     log().info("tgear: {} zoom {} (fov {})", player.getRealName(), zoom ? "in" : "out", zoom ? fov : 0.f);

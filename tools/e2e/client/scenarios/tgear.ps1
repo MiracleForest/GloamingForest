@@ -17,6 +17,7 @@
 # Remote modes run arm / check on the host; a vanilla client presses nothing (no keys) and only proves
 # that the gear, its lore and the red thread blocks load: out/tgear/{inventory,red-thread}.png.
 $script:IsLocal = $script:Mode -eq 'local'
+$script:ZoomFailure = $null
 $hostPrefix = if ($script:IsLocal) { '' } else { '\[host\].*' }
 Wait-LogLine "${hostPrefix}GloamingForest world ready" 120 | Out-Null
 Wait-HudReady | Out-Null
@@ -84,7 +85,8 @@ if ($script:Mode -ne 'remote-vanilla') {
     $offShot = Save-Screenshot 'zoom-off'
     $diff = Get-ImageDiff $zoomShot $offShot
     Write-Host "zoom vs zoom-off: $([Math]::Round($diff * 100, 1)) % of the pixels differ"
-    if ($diff -lt 0.05) { throw "the zoom did not narrow the FOV: zoom.png and zoom-off.png differ by $([Math]::Round($diff * 100, 1)) % (< 5 %)" }
+    # checked at the end (the red thread screenshots are taken either way)
+    if ($diff -lt 0.05) { $script:ZoomFailure = "the zoom did not narrow the FOV: zoom.png and zoom-off.png differ by $([Math]::Round($diff * 100, 1)) % (< 5 %)" }
 
     # 3. map cycle key
     $mark = Get-LogMark
@@ -135,3 +137,5 @@ if ($script:Mode -ne 'remote-vanilla') {
 }
 
 Invoke-Chat '/clear @s'
+
+if ($script:ZoomFailure) { throw $script:ZoomFailure }

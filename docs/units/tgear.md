@@ -87,9 +87,10 @@ its vanilla fallbacks and its deviations from TF 4.8 (for A8's deviation list).
   `*_broken` texture, then one overlay per modifier and the gloves overlay (from `broken/` while
   broken). Without the mod the base icon shows.
 - Zoom FOV: the client mod sends the zoom state with its FOV times the zoom (`LevelRendererPlayer::getFov`
-  without the variable modifiers, x 0.3); the server narrows that player's camera with a camera FOV
-  instruction (`CameraInstructionPacket`, the `camera fov_set` / `fov_clear` of the vanilla camera, no
-  easing). Java's ComputeFovModifierEvent multiplies the FOV every frame; on Bedrock the world projection
+  without the variable modifiers, x 0.3); the server narrows that player's camera with the camera command
+  (`camera "<player>" fov_set <fov>` / `fov_clear`, run as the server: the vanilla camera's custom FOV).
+  Round-3 probes: the command changes 49 % of the pixels, a hand-built `CameraInstructionPacket` with the
+  same FOV instruction is accepted without any effect. Java's ComputeFovModifierEvent multiplies the FOV every frame; on Bedrock the world projection
   comes from the vanilla camera's FOV component, which neither F12's `camera::addFovModifier`
   (`LocalPlayer::getFieldOfViewModifier`) nor `LevelRendererPlayer::getFov` / `CameraAPI::tryGetFOV`
   reach (rounds 1-2). The vanilla camera takes custom FOVs within [30, 110] only (content log of round 3:
