@@ -1,0 +1,285 @@
+{
+  "patch": {
+    "rp/entity/death_tome.entity.json": [
+      {
+        "op": "replace",
+        "path": "/minecraft:client_entity/description",
+        "value": {
+          "identifier": "twilightforest:death_tome",
+          "materials": {
+            "default": "entity_alphatest"
+          },
+          "textures": {
+            "default": "textures/entity/enchanting_table_book"
+          },
+          "geometry": {
+            "default": "geometry.twilightforest.death_tome"
+          },
+          "scripts": {
+            "animate": [
+              {
+                "base": "!query.property('gf:on_lectern')"
+              },
+              {
+                "lectern": "query.property('gf:on_lectern')"
+              }
+            ]
+          },
+          "animations": {
+            "base": "animation.twilightforest.death_tome.base",
+            "lectern": "animation.twilightforest.death_tome.lectern"
+          },
+          "render_controllers": [
+            "controller.render.twilightforest.death_tome"
+          ],
+          "spawn_egg": {
+            "base_color": "#774e22",
+            "overlay_color": "#dbcdbe"
+          }
+        }
+      }
+    ],
+    "rp/entity/lich_bolt.entity.json": [
+      {
+        "op": "replace",
+        "path": "/minecraft:client_entity/description",
+        "value": {
+          "identifier": "twilightforest:lich_bolt",
+          "materials": {
+            "default": "snowball"
+          },
+          "textures": {
+            "default": "textures/twilightforest/particle/twilight_orb"
+          },
+          "geometry": {
+            "default": "geometry.item_sprite"
+          },
+          "render_controllers": [
+            "controller.render.item_sprite"
+          ],
+          "animations": {
+            "flying": "animation.actor.billboard"
+          },
+          "scripts": {
+            "animate": [
+              "flying"
+            ]
+          }
+        }
+      }
+    ],
+    "rp/entity/lich_bomb.entity.json": [
+      {
+        "op": "replace",
+        "path": "/minecraft:client_entity/description",
+        "value": {
+          "identifier": "twilightforest:lich_bomb",
+          "materials": {
+            "default": "snowball"
+          },
+          "textures": {
+            "default": "textures/items/magma_cream"
+          },
+          "geometry": {
+            "default": "geometry.item_sprite"
+          },
+          "render_controllers": [
+            "controller.render.item_sprite"
+          ],
+          "animations": {
+            "flying": "animation.actor.billboard"
+          },
+          "scripts": {
+            "pre_animation": [
+              "variable.f = (math.sin(query.life_time * 20 * 57.2958) + 1) * 0.5;",
+              "variable.f1 = 1 + math.sin(variable.f * 100 * 57.2958) * variable.f * 0.01;",
+              "variable.g = math.pow(math.clamp(variable.f, 0, 1), 4);"
+            ],
+            "scaleX": "(1 + variable.g * 0.4) * variable.f1",
+            "scaleY": "(1 + variable.g * 0.1) / variable.f1",
+            "scaleZ": "(1 + variable.g * 0.4) * variable.f1",
+            "animate": [
+              "flying"
+            ]
+          }
+        }
+      }
+    ],
+    "rp/entity/lich_minion.entity.json": [
+      {
+        "op": "replace",
+        "path": "/minecraft:client_entity/description",
+        "value": {
+          "identifier": "twilightforest:lich_minion",
+          "materials": {
+            "default": "zombie"
+          },
+          "textures": {
+            "default": "textures/entity/zombie/zombie"
+          },
+          "geometry": {
+            "default": "geometry.twilightforest.lich_minion"
+          },
+          "scripts": {
+            "initialize": [
+              "variable.gliding_speed_value = 1.0;"
+            ],
+            "pre_animation": [
+              "variable.tcos0 = (math.cos(query.modified_distance_moved * 38.17) * query.modified_move_speed / variable.gliding_speed_value) * 57.3;"
+            ],
+            "animate": [
+              "humanoid_base_pose",
+              "look_at_target",
+              "move",
+              "attack_bare_hand",
+              "bob",
+              "base"
+            ]
+          },
+          "animations": {
+            "humanoid_base_pose": "animation.humanoid.base_pose",
+            "look_at_target": "animation.humanoid.look_at_target.default",
+            "move": "animation.humanoid.move",
+            "attack_bare_hand": "animation.zombie.attack_bare_hand",
+            "bob": "animation.humanoid.bob",
+            "base": "animation.twilightforest.lich_minion.base"
+          },
+          "render_controllers": [
+            "controller.render.default"
+          ],
+          "enable_attachables": true
+        }
+      }
+    ],
+    "rp/entity/lich.entity.json": [
+      {
+        "op": "replace",
+        "path": "/minecraft:client_entity/description",
+        "value": {
+          "identifier": "twilightforest:lich",
+          "materials": {
+            "default": "entity_alphatest",
+            "clone": "entity_alphablend",
+            "eyes": "entity_emissive_alpha"
+          },
+          "textures": {
+            "default": "textures/twilightforest/entity/twilightlich64",
+            "clone": "textures/twilightforest/lich/tf-derived/twilightlich64_clone",
+            "eyes": "textures/twilightforest/entity/twilightlich64_eyes"
+          },
+          "geometry": {
+            "default": "geometry.twilightforest.lich"
+          },
+          "scripts": {
+            "scale": "1.125",
+            "pre_animation": [
+              "variable.death_time = query.property('twilightforest:death_time');",
+              "variable.limb = query.modified_move_speed * 0.75;"
+            ],
+            "animate": [
+              "base_pose",
+              "look_at_target",
+              "legs",
+              "base",
+              "death"
+            ]
+          },
+          "animations": {
+            "base_pose": "animation.humanoid.base_pose",
+            "look_at_target": "animation.humanoid.look_at_target.default",
+            "legs": "animation.twilightforest.lich.legs",
+            "base": "animation.twilightforest.lich.base",
+            "death": "animation.twilightforest.lich.death"
+          },
+          "render_controllers": [
+            {
+              "controller.render.twilightforest.lich": "!query.property('twilightforest:clone')"
+            },
+            {
+              "controller.render.twilightforest.lich_clone": "query.property('twilightforest:clone')"
+            },
+            {
+              "controller.render.twilightforest.lich_clone_eyes": "query.property('twilightforest:clone')"
+            }
+          ],
+          "enable_attachables": true,
+          "spawn_egg": {
+            "base_color": "#aca489",
+            "overlay_color": "#360472"
+          }
+        }
+      }
+    ],
+    "rp/entity/rising_zombie.entity.json": [
+      {
+        "op": "replace",
+        "path": "/minecraft:client_entity/description",
+        "value": {
+          "identifier": "twilightforest:rising_zombie",
+          "materials": {
+            "default": "zombie"
+          },
+          "textures": {
+            "default": "textures/entity/zombie/zombie"
+          },
+          "geometry": {
+            "default": "geometry.twilightforest.rising_zombie"
+          },
+          "scripts": {
+            "pre_animation": [
+              "variable.rise_t = query.property('twilightforest:rising_ticks');",
+              "variable.rise_a = (80 - math.min(80, variable.rise_t)) / 80;",
+              "variable.rise_b = (40 - math.min(40, math.max(0, variable.rise_t - 80))) / 40;",
+              "variable.rise_angle = 120 * variable.rise_a - 30 * variable.rise_b;",
+              "variable.rise_drop = 16 * (variable.rise_a + variable.rise_b);"
+            ],
+            "animate": [
+              "humanoid_base_pose",
+              "zombie_arms",
+              "base",
+              "rise"
+            ]
+          },
+          "animations": {
+            "humanoid_base_pose": "animation.humanoid.base_pose",
+            "zombie_arms": "animation.zombie.attack_bare_hand",
+            "base": "animation.twilightforest.rising_zombie.base",
+            "rise": "animation.twilightforest.rising_zombie.rise"
+          },
+          "render_controllers": [
+            "controller.render.default"
+          ]
+        }
+      }
+    ],
+    "rp/entity/tome_bolt.entity.json": [
+      {
+        "op": "replace",
+        "path": "/minecraft:client_entity/description",
+        "value": {
+          "identifier": "twilightforest:tome_bolt",
+          "materials": {
+            "default": "snowball"
+          },
+          "textures": {
+            "default": "textures/items/paper"
+          },
+          "geometry": {
+            "default": "geometry.item_sprite"
+          },
+          "render_controllers": [
+            "controller.render.item_sprite"
+          ],
+          "animations": {
+            "flying": "animation.actor.billboard"
+          },
+          "scripts": {
+            "animate": [
+              "flying"
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

@@ -7,12 +7,26 @@
         "default": "entity_alphatest"
       },
       "textures": {
-        "default": "textures/misc/missing_texture"
+        "default": "textures/entity/enchanting_table_book"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.death_tome"
+        "default": "geometry.twilightforest.death_tome"
       },
-      "render_controllers": ["controller.render.default"],
+      "scripts": {
+        "animate": [
+          {
+            "base": "!query.property('gf:on_lectern')"
+          },
+          {
+            "lectern": "query.property('gf:on_lectern')"
+          }
+        ]
+      },
+      "animations": {
+        "base": "animation.twilightforest.death_tome.base",
+        "lectern": "animation.twilightforest.death_tome.lectern"
+      },
+      "render_controllers": ["controller.render.twilightforest.death_tome"],
       "spawn_egg": {
         "base_color": "#774e22",
         "overlay_color": "#dbcdbe"
