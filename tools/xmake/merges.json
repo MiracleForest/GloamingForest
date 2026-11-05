@@ -64,8 +64,10 @@
       { "file": "assets/pack/bp/entities/entity/gf_pack_probe.json", "owner": "F8" },
       { "file": "assets/pack/rp/textures/blocks/lich/gf_pack_probe.png", "owner": "U21" },
       { "file": "assets/pack/rp/textures/biomes/combat/gf_pack_probe.png", "owner": "F10",
-        "comment": "unit folders tied in specificity (biomes, combat): the deepest one owns the file" },
-      { "file": "assets/pack/rp/particles/combat/biomes/gf_pack_probe.json", "owner": "U1" }
+        "comment": "unit-folder rules compete as one group: the folder nearest the file (combat) owns it" },
+      { "file": "assets/pack/rp/particles/combat/biomes/gf_pack_probe.json", "owner": "U1" },
+      { "file": "assets/pack/rp/entity/hydra/gf_pack_probe.json", "owner": "U24",
+        "comment": "a unit folder inside a W0 unit's folder (F8's entity) belongs to the inner unit" }
     ],
     "arrBlobs": "tools/ci/arr-blobs.txt",
     "arrScan": { "extensions": ["ogg", "nbt", "fsb", "wav", "mp3", "mcstructure"], "dirs": ["sounds", "structures", "music"] }

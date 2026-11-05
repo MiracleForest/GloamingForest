@@ -141,7 +141,7 @@ U24's). A more specific rule that is not a unit-folder rule, such as `assets/pac
 the group; other rules tied in specificity with different owners fail as ambiguous. A particle effect's `particle_effect.description.identifier`, like a block's, item's or
 entity's identifier, may appear once per layer; a manual file with a generated file's identifier replaces it. The
 assemble check `checks.packPathProbes` (merges.json) builds a probe file in each granted folder (F10's
-`particles/fx` and `particles/combat`, one folder of F6, F8 and a W1 unit, and two nested unit folders) into a
+`particles/fx` and `particles/combat`, one folder of F6, F8 and a W1 unit, three nested unit folders, among them `entity/hydra`) into a
 scratch pack and fails unless it reaches the same path below the pack (`assets/pack/<bp|rp>/<p>` -> `<p>`) and
 `owners.tsv` gives it to that unit; `tools/assemble.ps1 -Check` also runs `tools/ci/ownership.ps1 -PackProbes`, which
 holds the CI ownership gate to the same expectations.
