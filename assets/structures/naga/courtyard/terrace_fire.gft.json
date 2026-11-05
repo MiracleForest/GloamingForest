@@ -1,0 +1,26 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "twilightforest:courtyard/terrace_fire",
+  "size": [12, 5, 12],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"minecraft:air"},
+    {"Name":"minecraft:stone_bricks"},
+    {"Name":"minecraft:sandstone_slab","Properties":{"type":"double"}},
+    {"Name":"minecraft:sandstone_slab","Properties":{"type":"bottom"}},
+    {"Name":"minecraft:stone_brick_stairs","Properties":{"facing":"south","half":"bottom","shape":"straight","waterlogged":"false"}},
+    {"Name":"minecraft:stone_brick_stairs","Properties":{"facing":"north","half":"bottom","shape":"straight","waterlogged":"false"}},
+    {"Name":"minecraft:stone_brick_stairs","Properties":{"facing":"east","half":"bottom","shape":"straight","waterlogged":"false"}},
+    {"Name":"minecraft:stone_brick_stairs","Properties":{"facing":"west","half":"bottom","shape":"straight","waterlogged":"false"}},
+    {"Name":"minecraft:mossy_stone_bricks"},
+    {"Name":"twilightforest:etched_nagastone","Properties":{"facing":"up"}},
+    {"Name":"minecraft:netherrack"},
+    {"Name":"minecraft:fire","Properties":{"age":"0","east":"false","north":"false","south":"false","up":"false","west":"false"}}
+  ],
+  "blocks": [
+    [2, 32], [9, 1], [2, 5], [9, 1], [2, 13], [10, 4], [2, 8], [10, 1], [11, 2], [10, 1], [2, 8], [10, 1], [11, 2], [10, 1], [2, 8], [10, 4],
+    [2, 1], [9, 1], [2, 5], [9, 1], [2, 15], [9, 1], [2, 45], [5, 2], [2, 42], [7, 1], [2, 3], [12, 2], [2, 3], [8, 1], [2, 2], [7, 1],
+    [2, 3], [12, 2], [2, 3], [8, 1], [2, 42], [6, 2], [2, 17], [3, 144], [4, 1], [1, 10], [4, 1], [1, 120], [4, 1], [1, 10], [4, 1], [1, 144]
+  ]
+}

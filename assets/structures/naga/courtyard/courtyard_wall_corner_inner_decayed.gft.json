@@ -1,0 +1,14 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "twilightforest:courtyard/courtyard_wall_corner_inner_decayed",
+  "size": [3, 6, 3],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"minecraft:mossy_cobblestone"},
+    {"Name":"minecraft:air"}
+  ],
+  "blocks": [
+    [0, 9], [1, 13], [0, 1], [1, 8], [0, 1], [1, 13], [2, 9]
+  ]
+}

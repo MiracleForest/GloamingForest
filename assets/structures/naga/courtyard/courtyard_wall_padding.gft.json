@@ -1,0 +1,16 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "twilightforest:courtyard/courtyard_wall_padding",
+  "size": [1, 6, 3],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"minecraft:smooth_stone"},
+    {"Name":"minecraft:stone_bricks"},
+    {"Name":"minecraft:stone_brick_slab","Properties":{"type":"bottom","waterlogged":"false"}},
+    {"Name":"twilightforest:nagastone_pillar","Properties":{"axis":"y"}}
+  ],
+  "blocks": [
+    [1, 3], [4, 15]
+  ]
+}

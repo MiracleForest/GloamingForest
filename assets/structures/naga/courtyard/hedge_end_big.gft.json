@@ -1,0 +1,14 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "twilightforest:courtyard/hedge_end_big",
+  "size": [5, 5, 5],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"minecraft:oak_leaves","Properties":{"distance":"1","persistent":"true"}}
+  ],
+  "blocks": [
+    [0, 25], [1, 4], [0, 5], [1, 1], [0, 4], [1, 1], [0, 4], [1, 5], [0, 1], [1, 4], [0, 5], [1, 1], [0, 4], [1, 1], [0, 4], [1, 5],
+    [0, 6], [1, 4], [0, 1], [1, 4], [0, 1], [1, 4], [0, 18], [1, 1], [0, 12]
+  ]
+}
