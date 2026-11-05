@@ -9,11 +9,13 @@
 #   as the control, fresh chunks it writes minecraft:desert into.
 # At each place a screenshot is taken and worldgen.custom_biome_view logs the biome the server and
 # the client's own level hold under the player: they must be the same.
-# Remote modes (a BDS host without the probe): the painted desert 3000 blocks south reaches the
-# client through the chunk data; the client mod is not involved (remote-vanilla: no client mod), so
-# the evidence is the screenshot: its ground must be tinted unlike the home ground.
+# Remote modes (a BDS host with the probe, installed by worldgen.host-prelaunch.ps1): the painted
+# probe 3000 blocks east and the painted desert 3000 blocks south reach the client through the chunk
+# data; the client mod is not involved (remote-vanilla: no client mod), so the evidence is the
+# screenshots: the desert's ground must be tinted unlike the home ground, the probe's magenta
+# (Assert-ProbeTint, in the local mode too).
 # Screenshots: out/worldgen/{world,home,custom_biome,custom_biome_desert,generated_probe,generated_desert,selftest}.png
-#              remote: out/worldgen/{world,home,remote_desert,selftest}.png
+#              remote: out/worldgen/{world,home,remote_probe,remote_desert,selftest}.png
 
 # The mean colour of the ground in front of the player (the bottom middle of a screenshot).
 function Get-GroundTint([string]$path) {
@@ -29,6 +31,15 @@ function Get-GroundTint([string]$path) {
     } finally { $bmp.Dispose() }
 }
 function Format-Tint($t) { '#{0:X2}{1:X2}{2:X2} (R-G {3:N1})' -f [int]$t.R, [int]$t.G, [int]$t.B, $t.RminusG }
+# The probe's client biome file tints grass and foliage #FF00FF: the ground turns magenta (red over green,
+# blue over green) where the plains grass is green. Measured: home R-G -23.7, probe +22.1 (remote vanilla) /
+# +37.2 (client build), blue over green by 22 / 28. Fails when the probe draws like plains, for example when
+# the host's test resource pack stops reaching the client.
+function Assert-ProbeTint($homeTint, $probeTint, [string]$who) {
+    if ($probeTint.RminusG - $homeTint.RminusG -lt 15 -or $probeTint.B - $probeTint.G -lt 8) {
+        throw "the $who does not draw the probe biome's magenta tint (home $(Format-Tint $homeTint), probe $(Format-Tint $probeTint))"
+    }
+}
 
 Save-Screenshot 'world' | Out-Null
 if ($script:Mode -eq 'local') {
@@ -39,8 +50,7 @@ if ($script:Mode -eq 'local') {
     if ($r.Pass -lt 26) { throw "expected 26 worldgen selftests to pass, got $($r.Pass)" }
     if (-not (Get-LeviLog -Since $mark | Select-String -Pattern 'worldgen timing: 200 chunks' -Quiet)) { throw 'no 200-chunk timing line logged' }
     if (-not (Get-LeviLog -Since $mark | Select-String -Pattern 'worldgen custom biome: \S+ written and read back' -Quiet)) { throw 'the custom probe biome was not written into a chunk' }
-    # worldgen.landmark_rules forces F6 starts only in the harness's fresh world GF-Test: required here
-    if (-not (Get-LeviLog -Since $mark | Select-String -Pattern 'worldgen landmark rules: forced starts checked' -Quiet)) { throw 'worldgen.landmark_rules did not check the forced starts (is the world GF-Test?)' }
+    if (-not (Get-LeviLog -Since $mark | Select-String -Pattern 'worldgen landmark rules: forced starts checked' -Quiet)) { throw 'worldgen.landmark_rules did not check the forced starts' }
 
     # The biome the server and the client level hold under the player: the same, and the expected one.
     function Write-BiomeView([string]$where, [string]$expected) {
@@ -74,6 +84,7 @@ if ($script:Mode -eq 'local') {
     $desertTint = Get-GroundTint (Save-Screenshot 'custom_biome_desert')
     Write-BiomeView 'painted desert (south)' 'minecraft:desert'
     Write-Step "ground tint: home $(Format-Tint $homeTint), probe $(Format-Tint $probeTint), desert $(Format-Tint $desertTint)"
+    Assert-ProbeTint $homeTint $probeTint 'client build'
     Invoke-Teleport '/tp @s ~ ~ ~-3000'
     $restore = Invoke-SelfTest 'worldgen.custom_biome_restore'
     if ($restore.Fail -gt 0) { throw 'worldgen.custom_biome_restore failed' }
@@ -107,27 +118,41 @@ if ($script:Mode -eq 'local') {
     Start-Sleep -Seconds 5
     if (-not (Get-GameProcess)) { throw 'the game closed while connected to the host' }
 
-    # a painted vanilla biome reaches this client through the chunk data (no probe on the host)
+    # painted biomes reach this client through the chunk data: the probe (installed on the host by
+    # worldgen.host-prelaunch.ps1; its client look comes with the host's world resource packs) 3000
+    # blocks east, a vanilla biome (the desert) 3000 blocks south
+    function Assert-HostBiome([string]$expected) {
+        $viewMark = Get-LogMark
+        $v = Invoke-SelfTest 'worldgen.custom_biome_view'
+        if ($v.Fail -gt 0) { throw 'worldgen.custom_biome_view failed on the host' }
+        $seen = Get-LeviLog -Since $viewMark | Select-String -Pattern 'the server has (\S+), the client level has' | Select-Object -Last 1
+        if (-not $seen -or $seen.Matches[0].Groups[1].Value -ne $expected) { throw "the host does not hold $expected under the player" }
+    }
     $homeTint = Get-GroundTint (Save-Screenshot 'home')
     Invoke-Chat '/tag @s add gf_worldgen_biome_show'
     Start-Sleep -Milliseconds 800
     $paintMark = Get-LogMark
     $p = Invoke-SelfTest 'worldgen.custom_biome'
     if ($p.Fail -gt 0) { throw 'worldgen.custom_biome failed on the host while painting' }
-    $painted = Get-LeviLog -Since $paintMark | Select-String -Pattern 'worldgen custom biome: painted (\d+) columns 3000 blocks south of \S+ with minecraft:desert' | Select-Object -Last 1
+    $paintLog = Get-LeviLog -Since $paintMark
+    $painted = $paintLog | Select-String -Pattern 'worldgen custom biome: painted (\d+) columns 3000 blocks south of \S+ with minecraft:desert' | Select-Object -Last 1
     if (-not $painted) { throw 'the host did not paint the desert 3000 blocks south' }
-    Write-Step "the host painted $($painted.Matches[0].Groups[1].Value) columns 3000 blocks south with minecraft:desert"
-    Invoke-Teleport '/tp @s ~ ~ ~3000'
+    $probePainted = $paintLog | Select-String -Pattern 'worldgen custom biome: painted (\d+) columns 3000 blocks east of \S+ with gf_test:worldgen_probe' | Select-Object -Last 1
+    if (-not $probePainted) { throw 'the host did not paint the probe 3000 blocks east (is worldgen.host-prelaunch.ps1 run?)' }
+    Write-Step "the host painted $($probePainted.Matches[0].Groups[1].Value) columns 3000 blocks east with gf_test:worldgen_probe and $($painted.Matches[0].Groups[1].Value) south with minecraft:desert"
+    Invoke-Teleport '/tp @s ~3000 ~ ~'
+    Start-Sleep -Seconds 12
+    $probe = Get-GroundTint (Save-Screenshot 'remote_probe')
+    Assert-HostBiome 'gf_test:worldgen_probe'
+    if (-not (Get-GameProcess)) { throw 'the game closed on the painted custom biome' }
+    Invoke-Teleport '/tp @s ~-3000 ~ ~3000'
     Start-Sleep -Seconds 12
     $desert = Get-GroundTint (Save-Screenshot 'remote_desert')
-    $viewMark = Get-LogMark
-    $v = Invoke-SelfTest 'worldgen.custom_biome_view'
-    if ($v.Fail -gt 0) { throw 'worldgen.custom_biome_view failed on the host' }
-    $seen = Get-LeviLog -Since $viewMark | Select-String -Pattern 'the server has (\S+), the client level has' | Select-Object -Last 1
-    if (-not $seen -or $seen.Matches[0].Groups[1].Value -ne 'minecraft:desert') { throw 'the host does not hold minecraft:desert under the player' }
-    Write-Step "ground tint ($script:Mode client): home $(Format-Tint $homeTint), painted desert $(Format-Tint $desert)"
+    Assert-HostBiome 'minecraft:desert'
+    Write-Step "ground tint ($script:Mode client): home $(Format-Tint $homeTint), painted probe $(Format-Tint $probe), painted desert $(Format-Tint $desert)"
     # plains grass #91BD59 (R-G -44), desert grass #BFB755 (R-G +8): the client draws the desert
     if ($desert.RminusG - $homeTint.RminusG -lt 15) { throw "the client does not draw the painted desert (ground R-G $($homeTint.RminusG) at home, $($desert.RminusG) on the desert)" }
+    Assert-ProbeTint $homeTint $probe "$script:Mode client"
     Invoke-Teleport '/tp @s ~ ~ ~-3000'
     $restore = Invoke-SelfTest 'worldgen.custom_biome_restore'
     if ($restore.Fail -gt 0) { throw 'worldgen.custom_biome_restore failed on the host' }
