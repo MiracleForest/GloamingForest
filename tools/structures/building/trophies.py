@@ -273,7 +273,7 @@ def floor_block(boss, geo_id):
                 "identifier": NS + boss + "_trophy",
                 "menu_category": {"category": "none"},
                 "states": {
-                    NS + "powered": [False, True],
+                    NS + "powered": [True, False],  # F1 skeleton order (import.bool_defaults)
                     NS + "rotation": list(range(16)),
                 },
             },
@@ -317,7 +317,7 @@ def wall_block(boss, geo_id):
                 "menu_category": {"category": "none"},
                 "states": {
                     NS + "facing": ["north", "south", "west", "east"],
-                    NS + "powered": [False, True],
+                    NS + "powered": [True, False],  # F1 skeleton order (import.bool_defaults)
                 },
             },
             "components": comps,

@@ -14,8 +14,8 @@
           "east"
         ],
         "twilightforest:powered": [
-          false,
-          true
+          true,
+          false
         ]
       }
     },

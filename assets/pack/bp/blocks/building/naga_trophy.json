@@ -8,8 +8,8 @@
       },
       "states": {
         "twilightforest:powered": [
-          false,
-          true
+          true,
+          false
         ],
         "twilightforest:rotation": [
           0,
