@@ -1,0 +1,16 @@
+{
+  "format_version": "1.16.100",
+  "minecraft:fog_settings": {
+    "description": {
+      "identifier": "twilightforest:dark_forest_center_near"
+    },
+    "distance": {
+      "air": {
+        "fog_start": 0.05,
+        "fog_end": 0.5,
+        "fog_color": "#493000",
+        "render_distance_type": "render"
+      }
+    }
+  }
+}
