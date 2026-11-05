@@ -280,18 +280,15 @@ void visualLightning(Actor& source, Vec3 const& at) {
     // Bedrock's bolt has no visual-only flag: the players near see a bolt actor that exists only on
     // their clients (an AddActorPacket with a fresh id, removed again after a second), so nothing is
     // set on fire or hurt on the server
-    AddActorPacketPayload payload(source);
-    auto                  uid = l->getNewUniqueID();
-    payload.mEntityId         = uid;
-    payload.mRuntimeId        = l->getNextRuntimeID();
-    *payload.mActorType       = "minecraft:lightning_bolt";
-    payload.mPos              = at;
-    payload.mVelocity         = Vec3{0.0f, 0.0f, 0.0f};
-    payload.mAttributes->clear();
-    payload.mLinks->clear();
-    payload.mSynchedProperties->mIntEntries->clear();
-    payload.mSynchedProperties->mFloatEntries->clear();
-    AddActorPacket pkt(std::move(payload));
+    auto packet = MinecraftPackets::createPacket(MinecraftPacketIds::AddActor);
+    if (!packet) return;
+    auto& pkt       = static_cast<AddActorPacket&>(*packet);
+    auto  uid       = l->getNewUniqueID();
+    pkt.mEntityId   = uid;
+    pkt.mRuntimeId  = l->getNextRuntimeID();
+    *pkt.mActorType = "minecraft:lightning_bolt";
+    pkt.mPos        = at;
+    pkt.mVelocity   = Vec3{0.0f, 0.0f, 0.0f};
     for (auto* p : playersNear(dimOf(region), at, 512.0, true)) pkt.sendTo(*p);
     bolts().emplace_back(uid.rawID, now() + 20);
 }
