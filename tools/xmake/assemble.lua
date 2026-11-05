@@ -24,8 +24,9 @@
 --            references in BP / data (per kind: a `block` key must name a block; the values of
 --            tag-valued keys name tags; the reviewed ids of tools/import/known-ids.json are known
 --            by kind, its tfDangling references are warnings), every asset file has an owner
---            (docs/spec/owners.tsv), and the ARR hash guard (no TF .ogg / .nbt content,
---            tools/ci/arr-blobs.txt).
+--            (docs/spec/owners.tsv), the pack path probes (checks.packPathProbes: a file in a
+--            directory granted to a unit reaches the assembled pack and belongs to that unit), and
+--            the ARR hash guard (no TF .ogg / .nbt content, tools/ci/arr-blobs.txt).
 --
 -- "${version}" in pack manifests is replaced by the mod version as a JSON array [major, minor, patch]
 -- (untagged builds: [0, 0, <stamp of the pack sources>], so games never reuse a stale cached pack).
@@ -1080,6 +1081,52 @@ local function build_pack(projectdir, cfg, pack, outdir, version, with_gen)
     return dst, jsons
 end
 
+-- The pack paths units are granted (checks.packPathProbes of merges.json): each probe writes a
+-- file at `file` (a manual-layer path, assets/pack/<root>/...) into a scratch project, builds that
+-- pack with build_pack and fails unless the file arrives at `out` in the pack (same bytes) and
+-- docs/spec/owners.tsv gives the path to `owner` (the rule tools/ci/ownership.ps1 applies). It proves
+-- a granted directory is neither dropped by the assembly (fragment directories, "*.d", are merged,
+-- never copied) nor unowned, before the unit's first file lands there. Returns the probe count.
+local function probe_pack_paths(projectdir, cfg, owners)
+    local probes = cfg.checks.packPathProbes or {}
+    if #probes == 0 then return 0 end
+    local scratch = os.tmpfile() .. ".packprobe"
+    os.tryrm(scratch)
+    for i, probe in ipairs(probes) do
+        local pack
+        for _, p in ipairs(cfg.packs) do
+            if not p.test and probe.file:sub(1, #p.manual + 1) == p.manual .. "/" then pack = p end
+        end
+        if not pack then
+            fail("packPathProbes: %s is not under the manual directory of a shipped pack", probe.file)
+        else
+            local proj = path.join(scratch, tostring(i))
+            local manifest = path.join(projectdir, pack.manual, "manifest.json")
+            os.mkdir(path.join(proj, pack.manual))
+            os.cp(manifest, path.join(proj, pack.manual, "manifest.json"))
+            local text = string.format('{"gf_pack_probe": "%s"}\n', probe.file)
+            os.mkdir(path.directory(path.join(proj, probe.file)))
+            io.writefile(path.join(proj, probe.file), text)
+            -- test = true: no licence files (they are copied from the real project, not the scratch one)
+            local scratch_pack = {name = pack.name, dir = pack.dir, root = pack.root, manual = pack.manual, test = true}
+            local dst = build_pack(proj, cfg, scratch_pack, path.join(proj, "out"), {0, 0, 0}, false)
+            local got = path.join(dst, probe.out)
+            if not os.isfile(got) then
+                fail("packPathProbes: %s did not reach %s/%s in the assembled pack", probe.file, pack.name, probe.out)
+            elseif io.readfile(got) ~= text then
+                fail("packPathProbes: %s reached %s/%s with other content", probe.file, pack.name, probe.out)
+            end
+            local owner, why = owner_of(owners, probe.file)
+            if owner ~= probe.owner then
+                fail("packPathProbes: %s is owned by %s in %s, expected %s", probe.file, owner or why or "nobody",
+                    cfg.checks.owners, probe.owner)
+            end
+        end
+    end
+    os.tryrm(scratch)
+    return #probes
+end
+
 local function merge_lang(projectdir, cfg, outdir)
     local dst = path.join(outdir, "lang")
     os.tryrm(dst)
@@ -1356,13 +1403,14 @@ local function assemble_content(projectdir, outdir, version)
     local permutations = check_blocks(bpdirs, cfg)
     local owners = load_owners(projectdir, cfg)
     local owned = check_owners(projectdir, cfg, owners)
+    local probed = probe_pack_paths(projectdir, cfg, owners)
     local langkeys = check_lang_owners(projectdir, owners)
     local reviewed = load_reviewed(projectdir, cfg)
     local refs = check_dangling(alljsons, known_ids(bpdirs, outdir, owners, reviewed), cfg, path.join(outdir, "data"), reviewed)
     local scanned = check_arr(projectdir, cfg)
     report(outdir)
-    return string.format("%d block permutations, %s, %d owned files, %d owned lang keys, %d references (%d warning(s)), %d files hash-checked",
-        permutations, families_summary, owned, langkeys, refs, #warnings, scanned)
+    return string.format("%d block permutations, %s, %d owned files, %d pack path probes, %d owned lang keys, %d references (%d warning(s)), %d files hash-checked",
+        permutations, families_summary, owned, probed, langkeys, refs, #warnings, scanned)
 end
 
 function main(target, target_type)

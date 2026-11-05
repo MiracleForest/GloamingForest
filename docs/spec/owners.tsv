@@ -5465,6 +5465,7 @@ path	assets/lang/*/weapons.json	U8	manual
 path	assets/lang/*/woodwork.json	U4	manual
 path	assets/lang/*/worldgen.json	F5	manual
 path	assets/LICENSE	F0	manual
+path	assets/pack/{bp,rp}/**/{combat,fx}/**	F10	manual
 path	assets/pack/{bp,rp}/**/{entity,boss}/**	F8	manual
 path	assets/pack/{bp,rp}/**/armory/**	U7	manual
 path	assets/pack/{bp,rp}/**/artifacts/**	U9	manual

@@ -122,6 +122,20 @@ files by its unit name `<n>` (R3): `**/*.d/<n>.json` (pack fragments, tag unions
 `tools/import/overrides/<n>.json` and `tools/sounds/recipes/<n>.json` (its sound refinements, R10). F8's are named
 `entity`, F10's `combat`, F12's `ui`, F11's `families` (for example `assets/lang/en_us/families.json`).
 
+### Pack folders
+
+Plain (non-fragment) pack files live in a per-unit folder below their Bedrock pack directory:
+`assets/pack/{bp,rp}/<pack dir>/<n>/**` is copied to `<pack dir>/<n>/**` of the assembled pack (for example
+`assets/pack/rp/particles/landmark/protection.json` -> `particles/landmark/protection.json`). Every W1 unit owns
+`assets/pack/{bp,rp}/**/<n>/**`; of the W0 units F4 (`dimension`), F6 (`landmark`), F8 (`entity`, `boss`), F10
+(`combat`, `fx`) and F12 (`ui`). F10's own particle effects (the `fx` contract: Java's portal colour and coloured
+`DustParticleOptions` motion, which no vanilla Bedrock effect reproduces) go to `assets/pack/rp/particles/fx/<name>.json`
+-> `particles/fx/<name>.json`. Folders ending in `.d` are fragment directories: they are merged by a
+`tools/xmake/merges.json` entry and never copied, so a `.d` folder without a merge entry ships nothing. The assemble
+check `checks.packPathProbes` (merges.json) builds a probe file in each granted folder (F10's `particles/fx` and
+`particles/combat`, and one folder of F6, F8 and a W1 unit) into a scratch pack and fails unless it reaches the pack
+and `owners.tsv` gives it to that unit.
+
 ### Subcommands (R14)
 
 A `subcommand` row's id is the literal path below `/twilightforest` (aliases `/tf`, `/tffeature`) without its
@@ -209,7 +223,7 @@ Implement every contract behind the W0a headers, build the asset toolchains (imp
 | F7 | Structure kit, template toolkit and shared piece libraries | 5700-5799 | `assets/data/structure/**`, `src/feature/structure/**`, `tests/structure/**`, `tools/e2e/*/scenarios/structure{,.*}.ps1`, `tools/structures/*`, `tools/structures/lib/**`, and its per-unit files as `structure` (R3) | lang 9, registry 5, registry_entry 44, structure_piece_type 2, structure_processor 17, subcommand 14 | structure, template, loot, spawn |
 | F8 | Entities, AI, multipart, projectiles and boss kit (spike S4) | 5800-5899 | `**/*.d/{entity,boss}.json`, `assets/lang/*/{entity,boss}.json`, `assets/pack/{bp,rp}/**/{entity,boss}/**`, `docs/spikes/S4.md`, `src/client/entity/**`, `src/feature/{entity,projectile,boss}/**`, `tools/e2e/*/scenarios/{entity,boss}{,.*}.ps1`, and its per-unit files as `entity` (R3) | attachment 1, block_entity 10, config_key 2, data_serializer 1, lang 9, sound_event 1, trigger 1 | entity, projectile, boss, combat, loot, inventory, landmark |
 | F9 | Items, enchantments, effects, recipes, tags, data maps, stats, gear query (spike S6) | 5900-5999 | `**/*.d/item.json`, `assets/lang/*/item.json`, `docs/spikes/S6.md`, `src/client/item/**`, `src/feature/{item,enchant,effects,recipes,tags,datamaps,stats,traits,gear,catalog}/**`, `tools/e2e/*/scenarios/item{,.*}.ps1`, and its per-unit files as `item` (R3) | config_key 1, creative_tab 4, data_map 2, lang 202, registry 1, tag 37 | item, enchant+effects, recipes, data |
-| F10 | Combat, death, loot, inventories/containers, progression bus, gamerules, fx (spike S3) | 6000-6099 | `**/*.d/combat.json`, `assets/data/containers/combat.json`, `assets/lang/*/combat.json`, `docs/spikes/S3.md`, `src/client/inventory/**`, `src/feature/{combat,death,loot,inventory,progression,gamerules,fx}/**`, `tools/e2e/*/scenarios/combat{,.*}.ps1`, and its per-unit files as `combat` (R3) | lang 70, loot_condition 1, loot_function 1, loot_number_provider 2, loot_table 4, subcommand 1 | combat, death, loot, inventory, progression, rules+fx, interactions |
+| F10 | Combat, death, loot, inventories/containers, progression bus, gamerules, fx (spike S3) | 6000-6099 | `**/*.d/combat.json`, `assets/data/containers/combat.json`, `assets/lang/*/combat.json`, `assets/pack/{bp,rp}/**/{combat,fx}/**`, `docs/spikes/S3.md`, `src/client/inventory/**`, `src/feature/{combat,death,loot,inventory,progression,gamerules,fx}/**`, `tools/e2e/*/scenarios/combat{,.*}.ps1`, and its per-unit files as `combat` (R3) | lang 70, loot_condition 1, loot_function 1, loot_number_provider 2, loot_table 4, subcommand 1 | combat, death, loot, inventory, progression, rules+fx, interactions |
 | F11 | Block families kit and block event dispatch | 6100-6199 | `src/client/families/**`, `src/feature/families/**`, `tools/e2e/*/scenarios/families{,.*}.ps1`, `tools/families/**`, and its per-unit files as `families` (R3) | lang 4, mod_entity 1 | families+blockevents, blockdata+redstone, interactions, inventory |
 | F12 | Client frameworks and vanilla UI fallbacks (spike S5) | 6200-6299 | `**/*.d/ui.json`, `assets/lang/*/ui.json`, `assets/pack/{bp,rp}/**/ui/**`, `docs/spikes/S5.md`, `src/client/{ui,render,world,input}/**`, `src/feature/{ui,movement}/**`, `tools/e2e/*/scenarios/ui{,.*}.ps1`, and its per-unit files as `ui` (R3) | config_key 1, lang 18 | client.ui, client.render, client.world, client.input+movement |
 | F13 | Java oracle (derived goldens only) | 6300-6399 | `tests/golden/**`, `tools/e2e/*/scenarios/oracle{,.*}.ps1`, `tools/oracle/**`, and its per-unit files as `oracle` (R3) | - | selftest |

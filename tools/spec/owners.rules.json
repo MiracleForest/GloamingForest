@@ -76,7 +76,7 @@
              "paths": ["src/feature/{item,enchant,effects,recipes,tags,datamaps,stats,traits,gear,catalog}/**", "src/client/item/**", "docs/spikes/S6.md", "assets/lang/*/item.json", "**/*.d/item.json", "tools/e2e/*/scenarios/item{,.*}.ps1"],
              "worlddb": ["gf:item:", "gf:stats:", "gf:traits:"], "config": ["items"], "e2e": ["item"], "unitFiles": true },
     "F10": { "name": "combat", "wave": "W0b", "title": "Combat, death, loot, inventories, progression bus, gamerules, fx (S3)", "dx": [6000, 6099],
-             "paths": ["src/feature/{combat,death,loot,inventory,progression,gamerules,fx}/**", "src/client/inventory/**", "docs/spikes/S3.md", "assets/lang/*/combat.json", "**/*.d/combat.json", "assets/data/containers/combat.json", "tools/e2e/*/scenarios/combat{,.*}.ps1"],
+             "paths": ["src/feature/{combat,death,loot,inventory,progression,gamerules,fx}/**", "src/client/inventory/**", "docs/spikes/S3.md", "assets/pack/{bp,rp}/**/{combat,fx}/**", "assets/lang/*/combat.json", "**/*.d/combat.json", "assets/data/containers/combat.json", "tools/e2e/*/scenarios/combat{,.*}.ps1"],
              "worlddb": ["gf:combat:", "gf:loot:", "gf:inventory:", "gf:progression:", "gf:gamerules:"], "gfSubcommands": ["gamerule"], "e2e": ["combat"], "unitFiles": true },
     "F11": { "name": "families", "wave": "W0b", "title": "Block families kit and block event dispatch", "dx": [6100, 6199],
              "paths": ["src/feature/families/**", "src/client/families/**", "tools/families/**", "tools/e2e/*/scenarios/families{,.*}.ps1"],

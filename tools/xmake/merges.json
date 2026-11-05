@@ -54,6 +54,14 @@
     "knownIds": "tools/import/known-ids.json",
     "owners": "docs/spec/owners.tsv",
     "ownedRoots": ["assets/pack", "assets/gen", "assets/data", "assets/lang", "assets/tags", "assets/structures", "assets/test"],
+    "packPathProbes": [
+      { "file": "assets/pack/rp/particles/fx/gf_pack_probe.json", "out": "particles/fx/gf_pack_probe.json", "owner": "F10",
+        "comment": "F10's own particle effects (fx contract): assets/pack/rp/particles/fx/<name>.json -> particles/fx/<name>.json" },
+      { "file": "assets/pack/rp/particles/combat/gf_pack_probe.json", "out": "particles/combat/gf_pack_probe.json", "owner": "F10" },
+      { "file": "assets/pack/rp/particles/landmark/gf_pack_probe.json", "out": "particles/landmark/gf_pack_probe.json", "owner": "F6" },
+      { "file": "assets/pack/bp/entities/entity/gf_pack_probe.json", "out": "entities/entity/gf_pack_probe.json", "owner": "F8" },
+      { "file": "assets/pack/rp/textures/blocks/lich/gf_pack_probe.png", "out": "textures/blocks/lich/gf_pack_probe.png", "owner": "U21" }
+    ],
     "arrBlobs": "tools/ci/arr-blobs.txt",
     "arrScan": { "extensions": ["ogg", "nbt", "fsb", "wav", "mp3", "mcstructure"], "dirs": ["sounds", "structures", "music"] }
   }
