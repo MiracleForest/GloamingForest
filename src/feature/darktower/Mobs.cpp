@@ -106,7 +106,7 @@ void summonTick(Actor& self, Borer& b) {
 void hideTick(Mob& self) {
     if (actorById(self.mTargetId->rawID)) return;
     // Silverfish.SilverfishMergeWithStoneGoal#canUse: getNavigation().isDone() (no path in progress)
-    if (auto nav = self.getEntityContext().tryGetComponent<NavigationComponent>(); nav && nav->mPath->get() != nullptr) return;
+    if (auto nav = self.getEntityContext().tryGetComponent<NavigationComponent>(); nav && *nav->mPath != nullptr) return;
     if (!mobGriefing()) return;
     auto& r = random();
     if (r.nextInt(10) != 0) return; // reducedTickDelay(10)
