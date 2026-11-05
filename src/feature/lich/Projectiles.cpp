@@ -23,6 +23,9 @@
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/ActorCategory.h"
 #include "mc/world/actor/Mob.h"
+#include "mc/world/actor/item/ItemActor.h"
+#include "mc/world/level/Spawner.h"
+#include "mc/world/phys/AABB.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/effect/EffectDuration.h"
 #include "mc/world/effect/MobEffectInstance.h"
@@ -195,7 +198,30 @@ void explodeBomb(Actor& bomb) {
     auto uid = uidOf(bomb);
     if (!exploding.insert(uid).second) return;
     auto pos = bomb.getPosition();
-    level->explode(bomb.getDimensionBlockSource(), &bomb, pos, 2.0F, false, false, FLT_MAX, false);
+    // EntityEvents#lichBombsDontBlowUpItems: the item entities in reach keep their place (the
+    // damage pipeline cancels their damage; one the engine removed by other means comes back)
+    struct Kept {
+        std::int64_t uid;
+        ItemStack    stack;
+        Vec3         at;
+        Vec3         motion;
+    };
+    std::vector<Kept> kept;
+    auto&             region = bomb.getDimensionBlockSource();
+    AABB              reach{Vec3{pos.x - 5.0f, pos.y - 5.0f, pos.z - 5.0f}, Vec3{pos.x + 5.0f, pos.y + 5.0f, pos.z + 5.0f}};
+    for (auto* a : actorsIn(region, dimOf(bomb), reach))
+        if (a && a->getTypeName() == "minecraft:item")
+            kept.push_back(Kept{uidOf(*a), static_cast<ItemActor*>(a)->item(), a->getPosition(), a->getPosDelta()});
+    level->explode(region, &bomb, pos, 2.0F, false, false, FLT_MAX, false);
+    for (auto const& k : kept) {
+        auto* a = actorById(k.uid);
+        if (a && a->isAlive()) {
+            teleportTo(*a, k.at); // no knockback either: Java's explosion leaves them out entirely
+            setMotion(*a, k.motion);
+            continue;
+        }
+        if (auto* again = level->getSpawner().spawnItem(region, k.stack, nullptr, k.at, 0)) setMotion(*again, k.motion);
+    }
     exploding.erase(uid);
     owners().erase(uid);
     discard(bomb);

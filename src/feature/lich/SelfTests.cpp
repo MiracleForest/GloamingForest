@@ -348,7 +348,9 @@ GF_REGISTER_SELFTEST("lich.projectile_hits", [](Context& ctx) -> ll::coro::CoroT
     auto level = ll::service::getLevel();
     auto bone  = game::items::make("minecraft:bone", 1);
     ctx.require(level && bone && ctx.region(), "an item to drop");
-    level->getSpawner().spawnItem(*ctx.region(), *bone, nullptr, Vec3{front.x, float(c.y + 1), front.z + 1.0f}, 0);
+    auto* dropped = level->getSpawner().spawnItem(*ctx.region(), *bone, nullptr, Vec3{front.x, float(c.y + 1), front.z + 1.0f}, 0);
+    ctx.require(dropped != nullptr, "the bone was dropped");
+    auto boneId = uidOf(*dropped);
     co_await ctx.ticks(2);
     int items = countAround(ctx, c, "minecraft:item", 8.0f);
     ctx.require(items >= 1, "the bone lies next to the bomb");
@@ -366,7 +368,7 @@ GF_REGISTER_SELFTEST("lich.projectile_hits", [](Context& ctx) -> ll::coro::CoroT
         co_await ctx.ticks(2);
     }
     ctx.check(actorById(bombId) == nullptr, "the attacked bomb exploded");
-    ctx.check(countAround(ctx, c, "minecraft:item", 8.0f) >= items, "the explosion left the dropped item alone");
+    ctx.check(countAround(ctx, c, "minecraft:item", 8.0f) >= items, "the explosion left the dropped item alone (" + std::to_string(countAround(ctx, c, "minecraft:item", 8.0f)) + " of " + std::to_string(items) + " items near" + (actorById(boneId) ? "" : ", the bone was put back") + ")");
     removeAround(ctx, c, "minecraft:item", 6.0f);
     removeAround(ctx, c, kLichBolt, 16.0f);
     removeById(uid);
