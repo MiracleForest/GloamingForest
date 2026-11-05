@@ -12,7 +12,7 @@
         "dazed": "textures/twilightforest/entity/nagahead_dazed"
       },
       "geometry": {
-        "default": "geometry.twilightforest.naga"
+        "default": "geometry.twilightforest.naga_upright"
       },
       "scripts": {
         "scale": "2.01",

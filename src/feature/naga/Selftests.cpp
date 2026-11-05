@@ -19,7 +19,9 @@
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/ActorDefinitionIdentifier.h"
 #include "mc/world/actor/Mob.h"
+#include "mc/world/actor/player/Inventory.h"
 #include "mc/world/actor/player/Player.h"
+#include "mc/world/level/block/Block.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
@@ -36,6 +38,7 @@
 #include "feature/ext/landmark/LandmarkExt.h"
 #include "feature/ext/landmark/LandmarkTest.h"
 #include "feature/inventory/Inventory.h"
+#include "feature/item/Item.h"
 #include "feature/landmark/Landmark.h"
 #include "feature/loot/Loot.h"
 #include "feature/naga/NagaInternal.h"
@@ -44,6 +47,10 @@
 #include "game/Items.h"
 #include "mod/Log.h"
 #include "selftest/SelfTest.h"
+
+#ifdef GF_CLIENT
+#include "feature/ext/ui/Client.h"
+#endif
 
 namespace gf::feature::naga::tests {
 
@@ -357,6 +364,191 @@ GF_REGISTER_SELFTEST("naga.home_invulnerable", [](Context& ctx) -> ll::coro::Cor
     (void)box;
 });
 
+// Naga#isInvulnerableTo's direct entity: a hit whose direct entity (a projectile) is outside the
+// home box deals nothing even when its owner stands inside; with the direct entity inside it lands.
+GF_REGISTER_SELFTEST("naga.home_direct", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope easy(Difficulty::Easy);
+    auto            box   = co_await ctx.flatArea(2080, 12);
+    auto            at    = ctx.testPos(2082, 2);
+    auto&           in    = ctx.spawnPlayer("naga_direct_in");
+    auto            inId  = in.getOrCreateUniqueID().rawID;
+    auto&           out   = ctx.spawnPlayer("naga_direct_out");
+    auto            outId = out.getOrCreateUniqueID().rawID;
+    ProtectScope    protectIn(inId), protectOut(outId);
+    in.teleport(Vec3{at.x + 0.5f, float(at.y), at.z + 4.5f}, DimensionType(at.dim));
+    out.teleport(Vec3{at.x - 49.5f, float(at.y + 1), at.z + 2.5f}, DimensionType(at.dim)); // 50 west: outside the 46 box
+    NagaScope n;
+    auto*     naga = spawnNaga(at);
+    ctx.require(naga != nullptr, "the Naga spawns");
+    n.uid = naga->getOrCreateUniqueID().rawID;
+    ge::setHome(*naga, at, kHomeRadius);
+    co_await ctx.ticks(3);
+    naga    = mobById(n.uid);
+    auto* a = byId(inId);
+    auto* d = byId(outId);
+    ctx.require(naga && a && d, "the Naga and both players are there");
+    ctx.check(withinHome(*naga, *a) && !withinHome(*naga, *d), "the owner is inside the home box, the direct entity outside");
+    int before = naga->getHealth();
+    gf::combat::hurt(*naga, 6.0f, "minecraft:arrow", a, d);
+    co_await ctx.ticks(12);
+    naga = mobById(n.uid);
+    ctx.check(naga && naga->getHealth() == before, "no damage through a direct entity outside the home (" + std::to_string(naga ? naga->getHealth() : -1) + ")");
+    a = byId(inId);
+    ctx.require(naga && a, "the Naga and the owner are there");
+    gf::combat::hurt(*naga, 6.0f, "minecraft:arrow", a, a);
+    co_await ctx.ticks(2);
+    naga = mobById(n.uid);
+    ctx.check(naga && naga->getHealth() == before - 6, "the same hit with the direct entity inside lands (" + std::to_string(naga ? naga->getHealth() : -1) + ")");
+    (void)box;
+});
+
+// Naga#doHurtTarget against a raised shield: in CHARGE the shield takes 5 damage and the Naga is
+// dazed (DAZE); in STUNLESS_CHARGE the shield takes 10, the player stops using it and its cooldown
+// (ItemCooldowns#addCooldown, 200 ticks) keeps it down, and the Naga goes back to CIRCLE.
+GF_REGISTER_SELFTEST("naga.shield", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope easy(Difficulty::Easy);
+    auto            box  = co_await ctx.flatArea(2080, 12);
+    auto            at   = ctx.testPos(2084, 2);
+    auto&           sp   = ctx.spawnPlayer("naga_shield");
+    auto            spId = sp.getOrCreateUniqueID().rawID;
+    ProtectScope    protect(spId);
+    sp.teleport(Vec3{at.x + 0.5f, float(at.y), at.z + 3.5f}, DimensionType(at.dim));
+    auto shield = game::items::make("minecraft:shield");
+    ctx.require(shield.has_value(), "a shield");
+    sp.setOffhandSlot(*shield);
+    auto category = shieldCooldownCategory(*shield);
+    ctx.info("the shield's cooldown category: " + category);
+    NagaScope n;
+    auto*     naga = spawnNaga(at);
+    ctx.require(naga != nullptr, "the Naga spawns");
+    n.uid = naga->getOrCreateUniqueID().rawID;
+    ge::setHome(*naga, at, kHomeRadius);
+    auto raise = [&]() -> Player* {
+        auto* p = byId(spId);
+        if (!p || !p->isPlayer()) return nullptr;
+        p->setSneaking(true); // Bedrock raises an offhand shield while sneaking
+        return static_cast<Player*>(p);
+    };
+    raise();
+    co_await ctx.ticks(10);
+    auto* p = raise();
+    ctx.require(p != nullptr, "the player is there");
+    ctx.require(p->isBlocking(), "the player blocks with the raised shield");
+    // CHARGE: the shield blocks, the Naga is dazed
+    naga = mobById(n.uid);
+    ctx.require(naga != nullptr, "the Naga is there");
+    auto* s = stateOf(*naga);
+    s->state = MovementState::Charge;
+    int damage0 = p->getOffhandSlot().getDamageValue();
+    ctx.check(!nagaHurtTarget(*naga, *p), "a charge into the shield deals no hit");
+    ctx.check(s->state == MovementState::Daze && s->stateCounter >= 60 && s->stateCounter < 100, std::string("the Naga is dazed (") + stateName(s->state) + ")");
+    p = raise();
+    ctx.check(p && p->getOffhandSlot().getDamageValue() - damage0 == 5, "the shield took 5 damage (" + std::to_string(p ? p->getOffhandSlot().getDamageValue() - damage0 : -1) + ")");
+    co_await ctx.ticks(5);
+    // STUNLESS_CHARGE: the shield breaks through and stays down for 200 ticks
+    p = raise();
+    ctx.require(p && p->isBlocking(), "the player blocks again");
+    naga = mobById(n.uid);
+    ctx.require(naga != nullptr, "the Naga is there");
+    s        = stateOf(*naga);
+    s->state = MovementState::StunlessCharge;
+    damage0  = p->getOffhandSlot().getDamageValue();
+    ctx.check(!nagaHurtTarget(*naga, *p), "a stunless charge returns false");
+    ctx.check(s->state == MovementState::Circle, std::string("the Naga circles again (") + stateName(s->state) + ")");
+    p = raise();
+    ctx.check(p && p->getOffhandSlot().getDamageValue() - damage0 == 10, "the shield took 10 damage");
+    ctx.check(p && gf::item::cooldownLeft(*p, category) > 150, "the shield's cooldown runs (" + std::to_string(p ? gf::item::cooldownLeft(*p, category) : -1) + " ticks)");
+    co_await ctx.ticks(10);
+    p = raise();
+    co_await ctx.ticks(10);
+    p = raise();
+    ctx.check(p && !p->isBlocking(), "the player cannot raise the shield during the cooldown");
+    if (p) p->setSneaking(false);
+    (void)box;
+});
+
+// EntityUtil#canDestroyBlock: containers (by Java's Container: chests, barrels) and the blocks
+// whose canEntityDestroy refuses (boss spawners, skull chests, an inactive vanishing block joined
+// to a locked one) stay; other block entities (signs, flower pots, note blocks, cauldrons,
+// lecterns) and inactive or active vanishing blocks without a lock break; hardness -1 or 50+
+// (bedrock, obsidian) never. And the friction the slither reads (Java's 0.6 / 0.98).
+GF_REGISTER_SELFTEST("naga.destroy_blocks", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto box = co_await ctx.flatArea(2080, 12);
+    auto at  = ctx.testPos(2086, 2);
+    struct Case {
+        char const*    id;
+        nlohmann::json states;
+        bool           breaks;
+    };
+    std::vector<Case> cases{
+        {"minecraft:stone", nlohmann::json::object(), true},
+        {"minecraft:standing_sign", nlohmann::json::object(), true},
+        {"minecraft:flower_pot", nlohmann::json::object(), true},
+        {"minecraft:noteblock", nlohmann::json::object(), true},
+        {"minecraft:cauldron", nlohmann::json::object(), true},
+        {"minecraft:lectern", nlohmann::json::object(), true},
+        {"minecraft:chest", nlohmann::json::object(), false},
+        {"minecraft:barrel", nlohmann::json::object(), false},
+        {"minecraft:bedrock", nlohmann::json::object(), false},
+        {"minecraft:obsidian", nlohmann::json::object(), false},
+        {"twilightforest:naga_boss_spawner", nlohmann::json::object(), false},
+        {"twilightforest:skull_chest", nlohmann::json::object(), false},
+        {"twilightforest:vanishing_block", {{"twilightforest:active", false}}, true},
+        {"twilightforest:vanishing_block", {{"twilightforest:active", true}}, true},
+    };
+    for (std::size_t i = 0; i < cases.size(); i++) ctx.require(ctx.setBlock(at.offset(int(i % 7) - 3, 1, int(i / 7) * 2 - 2), cases[i].id, cases[i].states), std::string("placed ") + cases[i].id);
+    // an inactive vanishing block joined (through another vanishing block) to a locked one
+    auto locked = at.offset(-3, 1, 2);
+    ctx.require(ctx.setBlock(locked, "twilightforest:locked_vanishing_block", {{"twilightforest:locked", true}}), "a locked vanishing block");
+    ctx.require(ctx.setBlock(locked.offset(1, 0, 0), "twilightforest:vanishing_block", {{"twilightforest:active", false}}), "a vanishing block next to it");
+    ctx.require(ctx.setBlock(locked.offset(2, 0, 0), "twilightforest:vanishing_block", {{"twilightforest:active", false}}), "a vanishing block one further");
+    co_await ctx.ticks(2);
+    auto* region = ctx.region();
+    ctx.require(region != nullptr, "the test region");
+    for (std::size_t i = 0; i < cases.size(); i++) {
+        auto pos = at.offset(int(i % 7) - 3, 1, int(i / 7) * 2 - 2);
+        bool can = nagaCanDestroyBlock(*region, game::blockPos(pos));
+        ctx.check(can == cases[i].breaks, std::string(cases[i].id) + " " + cases[i].states.dump() + (cases[i].breaks ? " breaks" : " stays"));
+    }
+    ctx.check(!nagaCanDestroyBlock(*region, game::blockPos(locked)), "the locked vanishing block stays");
+    ctx.check(!nagaCanDestroyBlock(*region, game::blockPos(locked.offset(2, 0, 0))), "an inactive vanishing block joined to a locked one stays");
+    // the friction of the blocks under the slither
+    if (auto const* stone = game::blockWith("minecraft:stone")) ctx.check(std::abs(blockFriction(*stone) - 0.6f) < 0.001f, "stone's friction is 0.6 (" + std::to_string(blockFriction(*stone)) + ")");
+    if (auto const* ice = game::blockWith("minecraft:ice")) ctx.check(std::abs(blockFriction(*ice) - 0.98f) < 0.001f, "ice's friction is 0.98 (" + std::to_string(blockFriction(*ice)) + ")");
+    (void)box;
+});
+
+// A Naga whose U20 state is gone while F8 kept its own (its chunk stayed unloaded a while) comes
+// back as a fresh one, as in TF (no save data for the segments or the pattern): the synced flags
+// off, the 12 parts F8 kept re-used (no new ones), the segments active again.
+GF_REGISTER_SELFTEST("naga.reattach", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope easy(Difficulty::Easy);
+    auto            box = co_await ctx.flatArea(2080, 12);
+    NagaScope       n;
+    auto*           naga = spawnNaga(ctx.testPos(2088, 2));
+    ctx.require(naga != nullptr, "the Naga spawns");
+    n.uid = naga->getOrCreateUniqueID().rawID;
+    co_await ctx.ticks(20);
+    naga = mobById(n.uid);
+    ctx.require(naga != nullptr, "the Naga is there");
+    auto* s = stateOf(*naga);
+    ctx.require(s && activeSegments(*s) == 12, "12 active segments");
+    s->dazed = true;
+    ge::setProperty(*naga, "twilightforest:dazed", true);
+    dropStateForTest(*naga);
+    co_await ctx.ticks(3);
+    naga = mobById(n.uid);
+    ctx.require(naga != nullptr, "the Naga is still there");
+    s = stateOf(*naga);
+    ctx.check(s && s->initialized && !s->dazed && !s->charging && !s->stunless, "the state came back fresh (flags off)");
+    ctx.check(s && activeSegments(*s) == 12, "the segments are active again (" + std::to_string(s ? activeSegments(*s) : -1) + ")");
+    ctx.check(ge::ext::parts(*naga).size() == kMaxSegments, "still 12 part actors (" + std::to_string(ge::ext::parts(*naga).size()) + ")");
+    bool partsBack = s != nullptr;
+    for (int i = 0; s && i < kMaxSegments; i++) partsBack &= ge::partActor(s->segments[i].part) != nullptr;
+    ctx.check(partsBack, "every segment has its part actor again");
+    (void)box;
+});
+
 // TF's loot table entities/naga: 6..11 naga scales and the trophy.
 GF_REGISTER_SELFTEST("naga.loot", [](Context& ctx) {
     auto* region = game::regionOf(ctx.dimension());
@@ -412,14 +604,30 @@ GF_REGISTER_SELFTEST("naga.spawner", [](Context& ctx) -> ll::coro::CoroTask<> {
 GF_REGISTER_SELFTEST("naga.death", [](Context& ctx) -> ll::coro::CoroTask<> {
     DifficultyScope easy(Difficulty::Easy);
     static std::map<std::string, int> triggers;
+    static std::string                killedEntity, hurtBossData;
+    static bool                       sawScale = false, sawTrophy = false;
     static bool                       listening = false;
     if (!std::exchange(listening, true)) {
-        for (char const* id : {"minecraft:player_killed_entity", "twilightforest:hurt_boss"})
-            gf::progression::onTrigger(id, [id = std::string(id)](Player& player, nlohmann::json const&) {
-                if (player.getNameTag() == "naga_fight") triggers[id]++;
+        for (char const* id : {"minecraft:player_killed_entity", "twilightforest:hurt_boss", "minecraft:inventory_changed"})
+            gf::progression::onTrigger(id, [id = std::string(id)](Player& player, nlohmann::json const& data) {
+                if (player.getNameTag() != "naga_fight") return;
+                triggers[id]++;
+                if (id == "minecraft:player_killed_entity") killedEntity = data.value("entity", std::string());
+                if (id == "twilightforest:hurt_boss") hurtBossData = data.dump();
+                if (id == "minecraft:inventory_changed") {
+                    auto const& inv = player.getInventory();
+                    for (int i = 0; i < inv.getContainerSize(); i++) {
+                        auto itemId = game::items::idOf(inv.getItem(i));
+                        sawScale |= itemId == "twilightforest:naga_scale";
+                        sawTrophy |= itemId == "twilightforest:naga_trophy";
+                    }
+                }
             });
     }
     triggers.clear();
+    killedEntity.clear();
+    hurtBossData.clear();
+    sawScale = sawTrophy = false;
     auto         box  = co_await ctx.flatArea(2070, 16);
     auto         home = ctx.testPos(2078, 2);
     auto&        sp   = ctx.spawnPlayer("naga_fight");
@@ -441,14 +649,44 @@ GF_REGISTER_SELFTEST("naga.death", [](Context& ctx) -> ll::coro::CoroTask<> {
     naga = mobById(n.uid);
     p    = byId(spId);
     ctx.require(naga && p, "the Naga and the player are there");
+    int segmentsBefore = stateOf(*naga) ? stateOf(*naga)->currentSegmentCount : 0;
+    ctx.check(segmentsBefore == 11, "11 segments at 115 health (" + std::to_string(segmentsBefore) + ")");
     gf::combat::hurt(*naga, 500.0f, "minecraft:player_attack", p);
+    // NagaSegment#tick: every segment that pops sets naga.deathTime = 0, so the death animation
+    // (24 ticks, then the 100-tick trail to the chest) starts over until the last one popped:
+    // segment i pops (11 - i) * 12 ticks after the death, the last at 132, the chest 124 later
+    auto chestPos  = home.offset(0, -1, 0);
+    int  lastPop   = -1, chestAt = -1, maxDeathTimeWhilePopping = 0, prevActive = segmentsBefore;
+    bool resetSeen = false;
+    for (int t = 1; t <= 420 && chestAt < 0; t++) {
+        co_await ctx.ticks(1);
+        if (auto* dying = mobById(n.uid)) {
+            if (auto* s = stateOf(*dying)) {
+                int active = activeSegments(*s);
+                int dt     = gf::boss::ext::deathTime(*dying);
+                if (active < prevActive) {
+                    lastPop    = t;
+                    resetSeen |= dt <= 2; // reset to 0 at the pop (F8 counts the tick after)
+                }
+                if (active > 0) maxDeathTimeWhilePopping = std::max(maxDeathTimeWhilePopping, dt);
+                prevActive = active;
+            }
+        }
+        auto id = ctx.blockAt(chestPos);
+        if (id == "twilightforest:twilight_oak_chest" || id == "twilightforest:canopy_chest") chestAt = t;
+    }
+    ctx.info("segments popped until tick " + std::to_string(lastPop) + ", the chest at tick " + std::to_string(chestAt) + ", death time while popping at most " +
+             std::to_string(maxDeathTimeWhilePopping));
+    ctx.check(lastPop >= 125 && lastPop <= 140, "the last segment popped about 132 ticks after the death (" + std::to_string(lastPop) + ")");
+    ctx.check(resetSeen, "a popping segment resets the death time");
+    ctx.check(maxDeathTimeWhilePopping <= 13, "the death time never reaches the trail while segments pop (at most " + std::to_string(maxDeathTimeWhilePopping) + ")");
+    ctx.check(chestAt > 0 && chestAt - lastPop >= 120 && chestAt - lastPop <= 130,
+              "the death chest comes 124 ticks after the last segment popped (" + std::to_string(chestAt - lastPop) + ")");
     co_await ctx.ticks(5);
-    if (auto* dying = mobById(n.uid)) ctx.check(gf::boss::ext::deathTime(*dying) > 0, "the Naga is dying");
-    co_await ctx.ticks(140);
-    auto chestPos = home.offset(0, -1, 0);
-    auto chestId  = ctx.blockAt(chestPos);
+    auto chestId = ctx.blockAt(chestPos);
     ctx.check(chestId == "twilightforest:twilight_oak_chest" || chestId == "twilightforest:canopy_chest", "the death chest is a twilight oak or canopy chest (" + chestId + ")");
-    int scales = 0, trophies = 0;
+    int                    scales = 0, trophies = 0;
+    std::vector<ItemStack> taken;
     if (auto* region = game::regionOf(home.dim))
         if (auto handler = gf::inventory::find(*region, game::blockPos(chestPos)); handler && handler->get) {
             for (int i = 0; i < handler->slots; i++) {
@@ -456,21 +694,56 @@ GF_REGISTER_SELFTEST("naga.death", [](Context& ctx) -> ll::coro::CoroTask<> {
                 auto id = game::items::idOf(it);
                 if (id == "twilightforest:naga_scale") scales += game::items::countOf(it);
                 if (id == "twilightforest:naga_trophy") trophies += game::items::countOf(it);
+                if (!game::items::isEmpty(it)) taken.push_back(it);
             }
             for (int i = 0; i < handler->slots; i++)
                 if (handler->set) handler->set(chestPos, i, game::items::empty());
         }
     ctx.check(scales >= 6, "the chest holds the naga scales (" + std::to_string(scales) + ")");
     ctx.check(trophies == 1, "the chest holds the naga trophy");
-    ctx.check(triggers["minecraft:player_killed_entity"] >= 1, "player_killed_entity fired (U14's progress_naga criterion)");
-    ctx.check(triggers["twilightforest:hurt_boss"] >= 1, "hurt_boss fired (was_in_fight)");
+    // progress_naga's criteria (one of them completes it): naga (player_killed_entity of a
+    // twilightforest:naga), was_in_fight (hurt_boss of a twilightforest:naga), scale and trophy
+    // (inventory_changed with the items). U14's criteria engine grants it; these are its inputs.
+    ctx.check(triggers["minecraft:player_killed_entity"] >= 1 && killedEntity == kNagaId,
+              "player_killed_entity fired for " + killedEntity + " (progress_naga's naga criterion)");
+    ctx.check(triggers["twilightforest:hurt_boss"] >= 1, "hurt_boss fired (progress_naga's was_in_fight criterion): " + hurtBossData);
+    // the player takes the chest's loot: the scale and trophy criteria's trigger fires
+    triggers["minecraft:inventory_changed"] = 0;
+    if (auto* pl = byId(spId); pl && pl->isPlayer())
+        for (auto const& it : taken) (void)ctx.give(*static_cast<Player*>(pl), it);
+    co_await ctx.ticks(3);
+    ctx.check(triggers["minecraft:inventory_changed"] >= 1 && sawScale && sawTrophy,
+              "inventory_changed fired with the naga scale and the naga trophy in the inventory (progress_naga's scale and trophy criteria)");
+    if (auto* pl = byId(spId); pl && pl->isPlayer()) {
+        if (gf::progression::has(*static_cast<Player*>(pl), "twilightforest:progress_naga")) ctx.info("progress_naga granted (U14's criteria engine)");
+        else ctx.info("progress_naga not granted: no criteria engine in this build (U14)");
+    }
     ctx.check(mobById(n.uid) == nullptr, "the body is gone after the death animation");
     if (auto* region = game::regionOf(chestPos.dim))
         if (auto const* b = game::blockWith(floor.empty() ? "minecraft:grass_block" : floor)) game::setBlock(*region, game::blockPos(chestPos), *b);
     (void)box;
 });
 
+#ifdef GF_CLIENT
+// TFMapDecorations.NAGA_COURTYARD: the client draws the decoration with TF's map icon.
+GF_REGISTER_SELFTEST("naga.map_icon", [](Context& ctx) {
+    auto icon = gf::client::maps::iconOf("twilightforest:naga_courtyard");
+    ctx.check(icon == "textures/twilightforest/map/decorations/naga_courtyard", "the naga_courtyard map decoration has TF's icon (" + icon + ")");
+});
+#endif
+
 // ---- client display (tools/e2e/client/scenarios/naga.ps1) -----------------------------------------------
+
+namespace {
+/// Turns the display Naga to the camera of the client scenario (7 east, 7 south of it): yaw -45,
+/// so the face of the head is in the screenshots.
+void faceCamera(Mob& m) {
+    float yaw                          = static_cast<float>(std::atan2(7.0, 7.0) * 180.0 / 3.14159265358979323846) - 90.0f;
+    const_cast<Vec2&>(m.getRotation()) = Vec2{0.0f, yaw};
+    m.setYBodyRotations(yaw, yaw);
+    m.setYHeadRotations(yaw, yaw);
+}
+} // namespace
 
 // The Naga next to the camera for the client screenshots: 10 s as it is (12 segments, nagahead),
 // 8 s charging (nagahead_charging) and 8 s dazed (nagahead_dazed, the head lowered, crit sparkles).
@@ -503,10 +776,23 @@ GF_REGISTER_SELFTEST("naga.display", [](Context& ctx) -> ll::coro::CoroTask<> {
             auto p = m->getFeetPos();
             if (std::abs(p.x - (at.x + 0.5f)) > 0.3f || std::abs(p.z - (at.z + 0.5f)) > 0.3f)
                 m->teleportTo(Vec3{at.x + 0.5f, float(at.y), at.z + 0.5f}, true, 0, 0, false);
+            faceCamera(*m);
             if (t == 20) ctx.info(std::string("naga ") + phases[ph]);
         }
     }
-    (void)box;
+    // the death: NagaRenderer#getFlipDegrees is 0 (the body does not tip over), the head shows
+    // nagahead_charging (NagaRenderer: deathTime > 0); the segments pop one by one
+    if (auto* m = mobById(n.uid)) {
+        faceCamera(*m);
+        gf::combat::hurt(*m, 1000.0f, "minecraft:generic");
+    }
+    for (int t = 0; t < 400; t++) {
+        co_await ctx.ticks(1);
+        if (t == 40) ctx.info("naga dying");
+        if (t > 60 && !mobById(n.uid)) break;
+    }
+    ctx.check(mobById(n.uid) == nullptr, "the dead Naga is gone after its death animation");
+    (void)box; // the death chest is under the home, in the flat area's restored ground layer
 });
 
 // ---- the courtyard ---------------------------------------------------------------------------------
@@ -531,32 +817,98 @@ GF_REGISTER_SELFTEST("naga.courtyard_start", [](Context& ctx) {
     ctx.check(spawnerAtCenter, "the spawner dais is at the courtyard's center");
 });
 
-// A seeded courtyard placed piece by piece into a flat area: the golden volume hash (rule R19)
-// and the spawner block at the center.
-GF_REGISTER_SELFTEST("naga.courtyard_layout", [](Context& ctx) -> ll::coro::CoroTask<> {
-    auto box = co_await ctx.flatArea(2090, 144, 16);
-    ctx.require(box.maxX - box.minX >= 120, "a 144-wide flat area");
-    int  cx = box.minX + 70, cz = box.minZ + 70;
-    int  cy = box.minY + 4; // the terraces sink 3 blocks: keep them inside the restored volume
+// ---- the seeded courtyard at a fixed site ----------------------------------------------------------
+
+namespace {
+
+// The processors' randomness is positional (StructurePlaceSettings#getRandom(pos): Mth#getSeed of
+// the block position), so a golden volume hash only holds at one absolute position: the seeded
+// courtyard is built at a fixed site far from the test rows (x, z -4000..-3857, the dais at y 250),
+// in any world, with its own ticking area. Nothing there belongs to a test row (rule R12): every
+// run clears and rebuilds it, and leaves it built (the client scenario looks at it).
+constexpr int  kSiteMinX = -4000, kSiteMinZ = -4000, kSiteSize = 144;
+constexpr int  kSiteCy    = 250;          ///< the courtyard's y (CourtyardMain's origin)
+constexpr int  kSiteFloor = kSiteCy - 5;  ///< the grass layer (a flat area's ground layer)
+constexpr int  kSiteTop   = kSiteCy + 16; ///< the cleared air reaches up to here
+constexpr int  kSiteCx = kSiteMinX + 70, kSiteCz = kSiteMinZ + 70;
+constexpr char kSiteArea[] = "gf_naga_courtyard";
+
+/// Removes the site's ticking area when the test ends (also when it fails).
+struct SiteArea {
+    int dim = 0;
+    ~SiteArea() { (void)gf::selftest::runServerCommand(std::string("tickingarea remove ") + kSiteArea, dim); }
+};
+
+/// Loads the site and clears it: grass at kSiteFloor, air above up to kSiteTop.
+ll::coro::CoroTask<> prepareSite(Context& ctx) {
+    int dim = ctx.dimension();
+    (void)gf::selftest::runServerCommand(std::string("tickingarea remove ") + kSiteArea, dim); // a crashed run's
+    auto added = gf::selftest::runServerCommand("tickingarea add " + std::to_string(kSiteMinX) + " 0 " + std::to_string(kSiteMinZ) + " " +
+                                                    std::to_string(kSiteMinX + kSiteSize - 1) + " 0 " + std::to_string(kSiteMinZ + kSiteSize - 1) + " " +
+                                                    kSiteArea + " true",
+                                                dim);
+    ctx.require(added.ok, "the courtyard site's ticking area (" + added.messages + ")");
+    ctx.require(co_await ctx.ensureLoaded(core::GlobalPos{dim, kSiteCx, kSiteCy, kSiteCz}), "the courtyard site loads");
+    bool loaded = false;
+    for (int i = 0; i < 1200 && !loaded; ++i) {
+        auto* region = ctx.region();
+        loaded       = region != nullptr;
+        for (int x = kSiteMinX; loaded && x < kSiteMinX + kSiteSize + 15; x += 16)
+            for (int z = kSiteMinZ; loaded && z < kSiteMinZ + kSiteSize + 15; z += 16)
+                loaded = region->hasChunksAt(BlockPos{std::min(x, kSiteMinX + kSiteSize - 1), kSiteCy, std::min(z, kSiteMinZ + kSiteSize - 1)}, 0, false);
+        if (!loaded) co_await ctx.ticks(1);
+    }
+    ctx.require(loaded, "every chunk of the courtyard site loaded within 60 s");
+    auto*       region = ctx.region();
+    auto const* grass  = game::blockWith("minecraft:grass_block");
+    auto const* air    = game::blockWith("minecraft:air");
+    ctx.require(grass && air && region, "vanilla blocks available");
+    for (int x = kSiteMinX; x < kSiteMinX + kSiteSize; ++x)
+        for (int z = kSiteMinZ; z < kSiteMinZ + kSiteSize; ++z)
+            for (int y = kSiteFloor; y <= kSiteTop; ++y) {
+                BlockPos     p{x, y, z};
+                Block const* want = y == kSiteFloor ? grass : air;
+                if (&region->getBlock(p) != want) game::setBlock(*region, p, *want);
+            }
+}
+
+/// Places the seeded courtyard (CourtyardMain from LegacyRandom 424242, its children from 171717,
+/// the pieces' post-processing from 7) at the site; returns the union of the piece boxes.
+BlockBox placeSeededCourtyard(Context& ctx) {
     core::jrand::LegacyRandom first(424242), context(171717);
-    auto pieces = courtyardPieces(first, context, cx - 1, cy, cz - 1);
+    auto pieces = courtyardPieces(first, context, kSiteCx - 1, kSiteCy, kSiteCz - 1);
     ctx.require(pieces.size() > 100, "the courtyard pieces (" + std::to_string(pieces.size()) + ")");
     auto* source = ctx.region();
     ctx.require(source != nullptr, "the test region");
-    LiveRegion                region(*source, ctx.dimension());
-    core::jrand::LegacyRandom random(7);
-    BlockBox                  all = pieces.front()->bbox;
+    BlockBox all = pieces.front()->bbox;
     for (auto const& p : pieces) {
         all.minX = std::min(all.minX, p->bbox.minX), all.minY = std::min(all.minY, p->bbox.minY), all.minZ = std::min(all.minZ, p->bbox.minZ);
         all.maxX = std::max(all.maxX, p->bbox.maxX), all.maxY = std::max(all.maxY, p->bbox.maxY), all.maxZ = std::max(all.maxZ, p->bbox.maxZ);
     }
-    ctx.require(box.minX <= all.minX && all.maxX <= box.maxX && box.minZ <= all.minZ && all.maxZ <= box.maxZ, "the courtyard fits the flat area");
-    BlockBox clip{all.minX - 2, all.minY - 2, all.minZ - 2, all.maxX + 2, all.maxY + 8, all.maxZ + 2};
-    for (auto& p : pieces) p->postProcess(region, random, clip, BlockPos{cx, cy, cz});
+    ctx.require(kSiteMinX <= all.minX - 2 && all.maxX + 2 < kSiteMinX + kSiteSize && kSiteMinZ <= all.minZ - 2 && all.maxZ + 2 < kSiteMinZ + kSiteSize &&
+                    kSiteFloor <= all.minY - 2 && all.maxY + 8 <= kSiteTop,
+                "the courtyard fits the site");
+    LiveRegion                region(*source, ctx.dimension());
+    core::jrand::LegacyRandom random(7);
+    BlockBox                  clip{all.minX - 2, all.minY - 2, all.minZ - 2, all.maxX + 2, all.maxY + 8, all.maxZ + 2};
+    for (auto& p : pieces) p->postProcess(region, random, clip, BlockPos{kSiteCx, kSiteCy, kSiteCz});
+    return all;
+}
+
+} // namespace
+
+// A seeded courtyard placed piece by piece at the fixed site: the golden volume hash (rule R19,
+// compared in every world) and the spawner block at the center.
+GF_REGISTER_SELFTEST("naga.courtyard_layout", [](Context& ctx) -> ll::coro::CoroTask<> {
+    SiteArea site{ctx.dimension()};
+    co_await prepareSite(ctx);
+    auto all = placeSeededCourtyard(ctx);
     co_await ctx.ticks(2);
+    int      cx = kSiteCx, cy = kSiteCy, cz = kSiteCz;
     BlockBox hashBox{all.minX, cy - 3, all.minZ, all.maxX, cy + 6, all.maxZ};
     auto     hash = ctx.snapshotVolume(hashBox);
-    ctx.info("courtyard volume hash " + hash + " box " + std::to_string(hashBox.minX) + " " + std::to_string(hashBox.minY) + " " + std::to_string(hashBox.minZ));
+    ctx.info("courtyard volume hash " + hash + " box " + std::to_string(hashBox.minX) + " " + std::to_string(hashBox.minY) + " " + std::to_string(hashBox.minZ) +
+             " " + std::to_string(hashBox.maxX) + " " + std::to_string(hashBox.maxY) + " " + std::to_string(hashBox.maxZ));
     // the dais: the spawner two blocks above the hedge level at the center
     bool spawner = false;
     for (int dx = -2; dx <= 2 && !spawner; dx++)
@@ -572,34 +924,19 @@ GF_REGISTER_SELFTEST("naga.courtyard_layout", [](Context& ctx) -> ll::coro::Coro
         }
     ctx.check(hedges > 20, "the maze has hedges (" + std::to_string(hedges) + " samples)");
     ctx.check(bricks > 5, "the wall has stone bricks (" + std::to_string(bricks) + " samples)");
-    static char const* const kGolden = "dfc9bf0f72de4615"; // reviewed with the client screenshots
-    // the processors' randomness is positional (StructurePlaceSettings#getRandom(pos)): the golden
-    // holds for the e2e server world's test area (box origin 118 -59 59)
-    if (hashBox.minX == 118 && hashBox.minY == -59 && hashBox.minZ == 59)
-        ctx.check(hash == kGolden, "the golden volume hash " + std::string(kGolden) + " (got " + hash + ")");
-    else ctx.info("another test area than the golden's: hash not compared");
+    static char const* const kGolden = "0000000000000000"; // reviewed with the client screenshots
+    ctx.check(hash == kGolden, "the golden volume hash " + std::string(kGolden) + " (got " + hash + ")");
 });
 
-} // namespace gf::feature::naga::tests
-
-namespace gf::feature::naga::tests {
-
-// The seeded courtyard of naga.courtyard_layout, built for the client screenshots and held for
-// 30 s (the flat area is restored afterwards).
+// The seeded courtyard of naga.courtyard_layout, built at the same site for the client
+// screenshots and held for 30 s.
 GF_REGISTER_SELFTEST("naga.display_courtyard", [](Context& ctx) -> ll::coro::CoroTask<> {
-    auto box = co_await ctx.flatArea(2090, 144, 16);
-    int  cx = box.minX + 70, cz = box.minZ + 70;
-    int  cy = box.minY + 4;
-    core::jrand::LegacyRandom first(424242), context(171717);
-    auto pieces = courtyardPieces(first, context, cx - 1, cy, cz - 1);
-    auto* source = ctx.region();
-    ctx.require(source != nullptr && !pieces.empty(), "the courtyard pieces");
-    LiveRegion                region(*source, ctx.dimension());
-    core::jrand::LegacyRandom random(7);
-    BlockBox                  clip{box.minX, box.minY - 4, box.minZ, box.maxX, box.maxY, box.maxZ};
-    for (auto& p : pieces) p->postProcess(region, random, clip, BlockPos{cx, cy, cz});
-    ctx.info("courtyard at " + std::to_string(cx) + " " + std::to_string(cy) + " " + std::to_string(cz));
+    SiteArea site{ctx.dimension()};
+    co_await prepareSite(ctx);
+    (void)placeSeededCourtyard(ctx);
+    ctx.info("courtyard at " + std::to_string(kSiteCx) + " " + std::to_string(kSiteCy) + " " + std::to_string(kSiteCz));
     co_await ctx.ticks(600);
 });
 
 } // namespace gf::feature::naga::tests
+

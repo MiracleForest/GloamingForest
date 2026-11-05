@@ -4,6 +4,9 @@
     "animation.twilightforest.naga.pose": {
       "loop": true,
       "bones": {
+        "root": {
+          "rotation": [0, 0, "query.is_alive ? 0.0 : -math.min(math.sqrt(math.max(0.0, (query.death_ticks - 1.0) / 20.0 * 1.6)), 1.0) * 90.0"]
+        },
         "head": {
           "position": [0, "query.property('twilightforest:dazed') ? -17.2 : -12.0", "query.property('twilightforest:dazed') ? 2.8 : 0.0"]
         }

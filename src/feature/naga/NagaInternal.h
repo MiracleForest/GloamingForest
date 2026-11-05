@@ -24,6 +24,10 @@
 #include "feature/structure/Structure.h"
 
 class Actor;
+class Block;
+class BlockPos;
+class BlockSource;
+class ItemStack;
 class Mob;
 
 namespace gf::feature::naga {
@@ -71,7 +75,8 @@ struct NagaState {
     // the navigation (PathNavigation's moveTo / isDone / stop / isStuck)
     bool  navActive = false;
     Vec3  navDest{};
-    float navSpeed  = 1.0f;
+    float navSpeed  = 0.0f; ///< Mob#speed's modifier: 0 until the first path
+    bool  initialized = false; ///< onSpawn (or the reattach after a reload) ran for this state
     int   navTicks  = 0;
     Vec3  stuckCheckPos{};
     bool  stuck     = false;
@@ -88,15 +93,24 @@ struct NagaState {
 [[nodiscard]] NagaState* stateOf(Actor& naga);
 /// The Naga's movement pattern state (selftests).
 void seedNagaForTest(Actor& naga, std::int64_t seed);
+/// Forgets the U20 state of a Naga, as when its chunk stayed unloaded longer than the state lives
+/// while F8 kept its own (selftests: the reattach path).
+void dropStateForTest(Actor& naga);
 /// NagaMovementPattern#doDaze / #doCircle / #forceCircle (selftests drive the shield cases).
 void doDaze(Mob& naga);
 void doCircle(Mob& naga);
+/// The cooldown category of an item (Item#getCooldownCategory; its path when it has none).
+[[nodiscard]] std::string shieldCooldownCategory(ItemStack const& stack);
 /// Naga#doHurtTarget (selftests).
 bool nagaHurtTarget(Mob& naga, Actor& target);
 /// Naga#isMobWithinHomeArea.
 [[nodiscard]] bool withinHome(Mob& naga, Actor& entity);
 /// Naga#setSegmentsPerHealth's formula.
 [[nodiscard]] int segmentsFor(float health, float healthPerSegment);
+/// BlockBehaviour#getFriction (Java's values: 0.6 by default, ice 0.98, slime 0.8).
+[[nodiscard]] float blockFriction(Block const& block);
+/// EntityUtil#canDestroyBlock for the Naga (selftests).
+[[nodiscard]] bool nagaCanDestroyBlock(BlockSource& region, BlockPos const& pos);
 
 // ---- courtyard (Courtyard.cpp) ------------------------------------------------------------------
 

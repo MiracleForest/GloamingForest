@@ -26,10 +26,14 @@
 
 #include <algorithm>
 #include <cmath>
+#include <deque>
 #include <limits>
 #include <numbers>
 #include <random>
+#include <set>
+#include <tuple>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "ll/api/service/Bedrock.h"
 
@@ -64,6 +68,12 @@
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/BlockChangeContext.h"
 #include "mc/world/level/block/BlockType.h"
+#include "mc/world/level/block/actor/BlockActor.h"
+#include "mc/world/level/block/actor/BlockActorType.h"
+#include "mc/entity/components/PushableByEntityComponent.h"
+#include "mc/entity/components/PushablePreset.h"
+#include "mc/deps/core/string/HashedString.h"
+#include "mc/world/item/Item.h"
 #include "mc/world/level/dimension/Dimension.h"
 #include "mc/world/level/pathfinder/Path.h"
 #include "mc/world/level/storage/GameRuleId.h"
@@ -74,6 +84,7 @@
 #include "feature/combat/Combat.h"
 #include "feature/ext/entity/EntityExt.h"
 #include "feature/fx/Fx.h"
+#include "feature/inventory/Inventory.h"
 #include "feature/item/Item.h"
 #include "feature/movement/Movement.h"
 #include "feature/tags/Tags.h"
@@ -129,6 +140,19 @@ bool attackable(Actor& a) {
     return true;
 }
 
+/// LivingEntity#isDeadOrDying.
+bool isDeadOrDying(Actor const& a) { return !a.isAlive() || a.getHealth() <= 0; }
+
+/// Entity#isPushable: Bedrock's minecraft:pushable (is_pushable) puts the PushableByEntityComponent
+/// on what entities may push; LivingEntity#isPushable adds alive and not a spectator.
+/// Players are pushable in Java whatever Bedrock's player entity declares.
+bool isPushable(Actor& a) {
+    if (a.isPlayer()) return !isDeadOrDying(a) && !static_cast<Player&>(a).isSpectator();
+    if (!a.getEntityContext().hasComponent<PushableByEntityComponent>()) return false;
+    if (a.hasCategory(ActorCategory::Mob) && isDeadOrDying(a)) return false;
+    return true;
+}
+
 /// Entity#blockPosition.
 BlockPos blockPosOf(Actor const& a) {
     auto p = a.getFeetPos();
@@ -170,24 +194,105 @@ bool hasCollision(BlockSource& region, BlockPos const& pos) {
     return b.max.x - b.min.x > 1e-6f && b.max.y - b.min.y > 1e-6f && b.max.z - b.min.z > 1e-6f;
 }
 
+/// The blocks whose Block#canEntityDestroy always refuses (BossSpawnerBlock, ForceFieldBlock,
+/// StrongholdShieldBlock, SkullChestBlock).
+std::unordered_set<std::string> const kRefusesEntityDestroy{
+    "twilightforest:naga_boss_spawner",       "twilightforest:lich_boss_spawner",          "twilightforest:hydra_boss_spawner",
+    "twilightforest:ur_ghast_boss_spawner",   "twilightforest:knight_phantom_boss_spawner", "twilightforest:snow_queen_boss_spawner",
+    "twilightforest:minoshroom_boss_spawner", "twilightforest:alpha_yeti_boss_spawner",     "twilightforest:final_boss_boss_spawner",
+    "twilightforest:violet_force_field",      "twilightforest:pink_force_field",           "twilightforest:orange_force_field",
+    "twilightforest:green_force_field",       "twilightforest:blue_force_field",           "twilightforest:stronghold_shield",
+    "twilightforest:skull_chest",
+};
+/// The VanishingBlock family (`instanceof VanishingBlock`).
+std::unordered_set<std::string> const kVanishingBlocks{
+    "twilightforest:vanishing_block",
+    "twilightforest:unbreakable_vanishing_block",
+    "twilightforest:locked_vanishing_block",
+    "twilightforest:reappearing_block",
+};
+
 bool isLeaves(Block const& block) {
     auto id = game::blockId(block);
     if (gf::tags::has(gf::tags::Registry::Block, "minecraft:leaves", id)) return true;
     return id.size() > 6 && id.compare(id.size() - 6, 6, "leaves") == 0;
 }
 
-/// EntityUtil#canDestroyBlock (hardness 0..50, not air, no container, and the blocks whose
-/// canEntityDestroy refuses: boss spawners, force fields, stronghold shields, locked / active
-/// vanishing blocks and the skull chest).
+/// `world.getBlockEntity(pos) instanceof Container`: a TF container (gf::inventory, custom blocks
+/// keep no block entity) or a vanilla block entity whose Java counterpart implements Container
+/// (chests, furnaces, hoppers, dispensers, droppers, barrels, shulker boxes, brewing stands,
+/// crafters, jukeboxes, decorated pots, chiseled bookshelves; Bedrock's shelf). Signs, banners,
+/// beds, skulls, flower pots, cauldrons, note blocks, lecterns, enchanting tables, spawners and the
+/// other block entities are not containers: an entity may destroy them.
+bool isContainer(BlockSource& region, BlockPos const& pos) {
+    if (gf::inventory::find(region, pos)) return true;
+    auto* be = region.getBlockEntity(pos);
+    if (!be) return false;
+    switch (be->getType()) {
+    case BlockActorType::Furnace:
+    case BlockActorType::BlastFurnace:
+    case BlockActorType::Smoker:
+    case BlockActorType::Chest:
+    case BlockActorType::BrewingStand:
+    case BlockActorType::Dispenser:
+    case BlockActorType::Dropper:
+    case BlockActorType::Hopper:
+    case BlockActorType::ShulkerBox:
+    case BlockActorType::BarrelBlock:
+    case BlockActorType::Crafter:
+    case BlockActorType::Jukebox:
+    case BlockActorType::DecoratedPot:
+    case BlockActorType::ChiseledBookshelf:
+    case BlockActorType::Shelf:
+        return true;
+    default:
+        return false;
+    }
+}
+
+/// VanishingBlock#areBlocksLocked: a locked locked_vanishing_block among the vanishing blocks
+/// connected to `start` (at most 512 positions looked at).
+bool vanishingBlocksLocked(BlockSource& region, BlockPos const& start) {
+    std::deque<BlockPos> queue{start};
+    std::set<std::tuple<int, int, int>> checked;
+    for (int iter = 0; !queue.empty() && iter < 512; iter++) {
+        BlockPos cur = queue.front(); // ArrayDeque#pop takes the head
+        queue.pop_front();
+        Block const& block = region.getBlock(cur);
+        auto         id    = game::blockId(block);
+        if (id == "twilightforest:locked_vanishing_block" && game::intState(block, "twilightforest:locked").value_or(0) != 0) return true;
+        checked.insert({cur.x, cur.y, cur.z});
+        if (kVanishingBlocks.contains(id))
+            for (auto [dx, dy, dz] : {std::tuple{0, -1, 0}, std::tuple{0, 1, 0}, std::tuple{0, 0, -1}, std::tuple{0, 0, 1}, std::tuple{-1, 0, 0}, std::tuple{1, 0, 0}}) {
+                BlockPos n{cur.x + dx, cur.y + dy, cur.z + dz};
+                if (!checked.contains({n.x, n.y, n.z})) queue.push_back(n); // Deque#offer adds at the tail
+            }
+    }
+    return false;
+}
+
+/// Block#canEntityDestroy of TF's blocks that override it (by id, R2; their states read as TF
+/// reads them): BossSpawnerBlock, ForceFieldBlock, StrongholdShieldBlock and SkullChestBlock refuse;
+/// VanishingBlock (vanishing, unbreakable vanishing, reappearing) refuses an inactive block whose
+/// connected vanishing blocks are locked; LockedVanishingBlock refuses while locked, else as a
+/// VanishingBlock. Every other block lets entities destroy it.
+bool canEntityDestroy(BlockSource& region, BlockPos const& pos, Block const& block) {
+    auto id = game::blockId(block);
+    if (kRefusesEntityDestroy.contains(id)) return false;
+    if (id == "twilightforest:locked_vanishing_block" && game::intState(block, "twilightforest:locked").value_or(0) != 0) return false;
+    if (kVanishingBlocks.contains(id) && game::intState(block, "twilightforest:active").value_or(0) == 0) return !vanishingBlocksLocked(region, pos);
+    return true;
+}
+
+/// EntityUtil#canDestroyBlock: hardness in 0..50, not air, not a Container, canEntityDestroy, and
+/// EventHooks#onEntityDestroyBlock (the mobGriefing rule).
 bool canDestroyBlock(BlockSource& region, BlockPos const& pos) {
     Block const& block = region.getBlock(pos);
     if (block.isAir()) return false;
     float hardness = block.getBlockType().getDestroySpeed();
     if (hardness < 0.0f || hardness >= 50.0f) return false;
-    if (region.getBlockEntity(pos)) return false; // containers (Bedrock keeps them in block entities)
-    auto id = game::blockId(block);
-    for (char const* refused : {"_boss_spawner", "force_field", "stronghold_shield", "vanishing", "skull_chest"})
-        if (id.find(refused) != std::string::npos) return false;
+    if (isContainer(region, pos)) return false;
+    if (!canEntityDestroy(region, pos, block)) return false;
     return mobGriefing();
 }
 
@@ -409,6 +514,11 @@ void applySpeedBoost(Mob& naga, int segments) {
 
 } // namespace
 
+float blockFriction(Block const& block) {
+    float f = block.getBlockType().mFriction;
+    return f > 0.0F && f <= 1.5F ? f : 0.6F; // Block's default friction 0.6 (ice 0.98, slime 0.8)
+}
+
 int segmentsFor(float health, float healthPerSegment) {
     return std::clamp(static_cast<int>((health / healthPerSegment) + (health > 0 ? 2 : 0)), 0, kMaxSegments);
 }
@@ -457,10 +567,12 @@ void tickSegment(Mob& naga, NagaState& s, int i) {
                     return true;
                 }));
             for (auto* e : others) {
-                if (ge::ext::parentOf(*e) == &naga || e == &naga) continue; // NagaSegment#is: the Naga and its own parts
-                auto const& t = e->getTypeName();
-                if (t == "twilightforest:naga_part" || t == "gloamingforest:part" || t == "minecraft:item" || t == "minecraft:xp_orb") continue;
-                if (e->isPlayer() && static_cast<Player*>(e)->isSpectator()) continue;
+                if (e == &naga) continue; // NagaSegment#is: the Naga and its own parts
+                if (ge::ext::parentOf(*e)) continue; // parts (TFPart, PartEntity) are not pushable
+                // Entity#isPushable: living entities (alive, not spectators), boats and minecarts;
+                // Bedrock's minecraft:pushable is_pushable (absent on items, XP orbs, arrows, falling
+                // blocks and armor stands, false on the Naga and the parts)
+                if (!isPushable(*e)) continue;
                 // Entity#push(Entity): apart along the larger horizontal axis
                 auto   ep = e->getFeetPos();
                 double dx = ep.x - seg.pos.x, dz = ep.z - seg.pos.z;
@@ -473,7 +585,7 @@ void tickSegment(Mob& naga, NagaState& s, int i) {
                     push(*e, Vec3{float(dx), 0.0f, float(dz)});
                 }
                 // attack anything that's not us
-                if (e->hasCategory(ActorCategory::Mob) && e->getTypeName() != kNagaId && !s.dazed && naga.isAlive()) {
+                if (e->hasCategory(ActorCategory::Mob) && e->getTypeName() != kNagaId && !s.dazed && !isDeadOrDying(naga)) {
                     int attackStrength = 2;
                     if (e->hasCategory(ActorCategory::Animal)) attackStrength *= 3; // get rid of nearby deer & look impressive
                     gf::combat::hurt(*e, static_cast<float>(attackStrength), "minecraft:mob_attack", &naga, &naga);
@@ -487,6 +599,9 @@ void tickSegment(Mob& naga, NagaState& s, int i) {
             makePoofAt(naga, s, seg.pos);
             float pitch = (voicePitch(s.random) * 0.75F) + (0.5F * s.random.nextFloat());
             gf::fx::sound(naga.getDimension(), "entity.twilightforest.naga.hurt", naga.getFeetPos(), 0.25F, pitch);
+            // naga.deathTime = 0: while segments still pop, the death animation (the trail, the
+            // chest) waits for the last one (no effect on a live Naga)
+            gf::boss::ext::setDeathTime(naga, 0);
             setSegmentActive(naga, seg, false);
         }
     }
@@ -668,6 +783,10 @@ void tickPattern(Mob& naga, NagaState& s) {
     case MovementState::Intimidate:
         navStop(naga, s);
         if (target) turnTowards(naga, *target, 30.0F);
+        // TF sets naga.zza = 0.1 here, but in the same Mob#serverAiStep the MoveControl ticks after
+        // the goals with its operation at WAIT (the path is done: nothing set a wanted position)
+        // and MoveControl#tick's WAIT branch calls mob.setZza(0): travel() never sees the 0.1, the
+        // Naga does not creep forward in TF either. Nothing to port.
         if (!s.stunCalculated) {
             // the stunless charge has a higher chance to happen the lower the naga's health gets;
             // difficulty is also factored in
@@ -1073,6 +1192,21 @@ void customServerAiStep(Mob& naga, NagaState& s) {
     }
 }
 
+/// LivingEntity#getFrictionInfluencedSpeed(blockFriction) of the Naga: on the ground getSpeed()
+/// (Mob#setSpeed by the MoveControl: the path's speed modifier times the movement speed with the
+/// segment boost; 0 before the first path) * 0.216 / friction^3 (1 on blocks of friction 0.6), in
+/// the air Mob#getFlyingSpeed 0.02. The friction is the block's 0.500001 under the feet
+/// (Entity#getBlockPosBelowThatAffectsMyMovement).
+float slitherSpeed(Mob& naga, NagaState& s) {
+    if (!naga.isOnGround()) return 0.02F;
+    double boost = s.currentSegmentCount > 0 ? double(static_cast<float>(kMaxSegments) / s.currentSegmentCount * 0.02F) : 0.0;
+    float  speed = s.navSpeed * static_cast<float>(kDefaultSpeed + boost);
+    auto   p     = naga.getFeetPos();
+    BlockPos below{int(std::floor(p.x)), int(std::floor(p.y - 0.500001)), int(std::floor(p.z))};
+    float  f = blockFriction(naga.getDimensionBlockSource().getBlock(below));
+    return speed * (0.21600002F / (f * f * f));
+}
+
 /// NagaMoveControl#tick (after customServerAiStep): the slither on top of the engine's move
 /// control, which walks the path.
 void moveControl(Mob& naga) {
@@ -1083,10 +1217,10 @@ void moveControl(Mob& naga) {
     if (s.state == MovementState::Daze) s.xxa = 0.0F;
     else if (s.state != MovementState::Charge && s.state != MovementState::Intimidate) s.xxa = std::cos(s.tickCount * 0.3F) * 0.6F;
     else s.xxa *= 0.8F;
-    if (s.xxa == 0.0F) return;
-    // LivingEntity#moveRelative of (xxa, 0, 0): the speed the move control last set
-    float speed = s.navSpeed * static_cast<float>(kDefaultSpeed + (s.currentSegmentCount > 0 ? double(kMaxSegments) / s.currentSegmentCount * 0.02F : 0.0));
-    float amount = naga.isOnGround() ? speed : 0.02F;
+    // LivingEntity#aiStep: xxa *= 0.98 (kept in the field) before travel
+    s.xxa *= 0.98F;
+    if (std::abs(s.xxa) * std::abs(s.xxa) < 1.0E-7F) return; // moveRelative: no input
+    float amount = slitherSpeed(naga, s);
     float yaw    = naga.getRotation().y * static_cast<float>(kPi) / 180.0F;
     float x      = s.xxa * amount;
     push(naga, Vec3{x * std::cos(yaw), 0.0f, x * std::sin(yaw)});
@@ -1249,7 +1383,33 @@ void onSpawn(Actor& self) {
     ge::setProperty(self, "twilightforest:dazed", s.dazed);
     ge::setProperty(self, "twilightforest:charging", s.charging);
     ge::setProperty(self, "twilightforest:stunless", s.stunless);
+    s.initialized = true;
     log().info("naga: {} spawned with {} health ({} segments)", s.uid, naga->getHealth(), segmentsFor(float(naga->getHealth()), s.healthPerSegment));
+}
+
+/// A Naga whose U20 state was dropped while F8 kept its own (its chunk was unloaded for a while,
+/// F8 did not run onSpawn again): TF saves neither the segments nor the movement pattern nor the
+/// synced flags (Naga#addAdditionalSaveData has none of them), so it comes back as a fresh one:
+/// DATA_DAZE / DATA_CHARGE / DATA_STUNLESS off (the entity properties Bedrock saved are reset), the
+/// segments re-attached to the part actors F8 kept and inactive until setSegmentsPerHealth activates
+/// them, CIRCLE with a counter of 15. The goals and the move control F8 kept find this state by id.
+void reattach(Mob& naga, NagaState& s) {
+    s.initialized      = true;
+    s.healthPerSegment = 120.0F / 10.0F;
+    auto parts         = ge::ext::parts(naga);
+    if (parts.size() >= static_cast<std::size_t>(kMaxSegments)) {
+        auto feet = naga.getFeetPos();
+        for (int i = 0; i < kMaxSegments; i++) {
+            auto& seg = s.segments[i];
+            seg.part  = parts[i];
+            seg.pos   = feet;
+            setSegmentActive(naga, seg, false);
+        }
+    } else addSegments(naga, s);
+    ge::setProperty(naga, "twilightforest:dazed", false);
+    ge::setProperty(naga, "twilightforest:charging", false);
+    ge::setProperty(naga, "twilightforest:stunless", false);
+    log().info("naga: {} came back without its state: reset (health {})", s.uid, naga.getHealth());
 }
 
 /// Drops the states of Nagas that were not seen for 200 ticks (unloaded or removed).
@@ -1262,6 +1422,7 @@ void onTick(Actor& self) {
     auto* naga = asMob(self);
     if (!naga) return;
     auto& s = stateFor(self);
+    if (!s.initialized) reattach(*naga, s);
     s.tickCount++;
     if (s.tickCount % 200 == 0) sweepStates();
     tickEffects(*naga, s);
@@ -1309,6 +1470,8 @@ NagaState* stateOf(Actor& naga) {
     return &stateFor(naga);
 }
 
+void dropStateForTest(Actor& naga) { R().states.erase(uidOf(naga)); }
+
 void seedNagaForTest(Actor& naga, std::int64_t seed) {
     auto it = R().states.find(uidOf(naga));
     if (it != R().states.end()) it->second->random.setSeed(seed);
@@ -1324,6 +1487,18 @@ void doCircle(Mob& naga) {
 
 bool withinHome(Mob& naga, Actor& entity) { return homeContains(naga, entity); }
 
+bool nagaCanDestroyBlock(BlockSource& region, BlockPos const& pos) { return canDestroyBlock(region, pos); }
+
+std::string shieldCooldownCategory(ItemStack const& stack) {
+    if (!stack.isNull() && stack.mItem) {
+        auto const& category = stack.mItem->getCooldownCategory();
+        if (!category.getString().empty()) return category.getString();
+    }
+    auto id = game::items::idOf(stack);
+    auto colon = id.find(':');
+    return colon == std::string::npos ? id : id.substr(colon + 1);
+}
+
 /// Naga#doHurtTarget.
 bool nagaHurtTarget(Mob& naga, Actor& toAttack) {
     auto* sp = stateOf(naga);
@@ -1334,7 +1509,7 @@ bool nagaHurtTarget(Mob& naga, Actor& toAttack) {
             Vec3 motion = naga.getPosDelta();
             if (toAttack.isPlayer()) {
                 auto& player = static_cast<Player&>(toAttack);
-                // the used item (the raised shield) takes 5 durability; MovePlayerPacket's push
+                // the used item (the raised shield) takes 5 durability
                 bool offhand = game::items::idOf(player.getOffhandSlot()).find("shield") != std::string::npos;
                 ItemStack used = offhand ? player.getOffhandSlot() : player.getCarriedItem();
                 if (!game::items::isEmpty(used)) {
@@ -1342,7 +1517,11 @@ bool nagaHurtTarget(Mob& naga, Actor& toAttack) {
                     if (offhand) player.setOffhandSlot(used);
                     else player.setCarriedItem(used);
                 }
-                gf::movement::applyMotion(player, Vec3{motion.x * 1.5f + motion.x * 3.0f, 0.5f + motion.y + 0.75f, motion.z * 1.5f + motion.z * 3.0f});
+                // toAttack.push on a ServerPlayer only changes the server's copy of its motion (no
+                // hurtMarked: nothing is sent to its own client); what moves the player is the
+                // MovePlayerPacket, whose handler pushes the client by (x * 3, y + 0.75, z * 3)
+                auto v = player.getPosDelta();
+                gf::movement::applyMotion(player, Vec3{v.x + motion.x * 3.0f, v.y + motion.y + 0.75f, v.z + motion.z * 3.0f});
             } else push(toAttack, Vec3{motion.x * 1.5f, 0.5f, motion.z * 1.5f});
             push(naga, Vec3{motion.x * -1.25f, 0.5f, motion.z * -1.25f});
             gf::combat::hurt(naga, 2.0F, "minecraft:generic");
@@ -1356,12 +1535,14 @@ bool nagaHurtTarget(Mob& naga, Actor& toAttack) {
                 auto& player  = static_cast<Player&>(toAttack);
                 bool  offhand = game::items::idOf(player.getOffhandSlot()).find("shield") != std::string::npos;
                 ItemStack used = offhand ? player.getOffhandSlot() : player.getCarriedItem();
-                std::string usedId = game::items::idOf(used);
                 if (!game::items::isEmpty(used)) {
+                    // ItemCooldowns#addCooldown(item, 200): the item's own cooldown category
+                    // (Bedrock's shield: the one an axe hit also disables it through)
+                    std::string category = shieldCooldownCategory(used);
                     used.hurtAndBreak(10, &player);
                     if (offhand) player.setOffhandSlot(used);
                     else player.setCarriedItem(used);
-                    gf::item::cooldown(player, usedId, 200);
+                    gf::item::cooldown(player, category, 200);
                 }
                 player.stopUsingItem();
                 // entity event 30: the shield break sound
@@ -1426,6 +1607,21 @@ void installNaga() {
     });
     if (!H().installed) {
         H().installed = true;
+        // Naga#isInvulnerableTo's direct entity: a projectile (or any direct entity) outside the
+        // 46 / 7 home box deals nothing, whoever shot it (the causing entity is checked in hurt);
+        // a hit on a segment is the Naga's (NagaSegment#hurt -> parent.hurt with the same source)
+        gf::combat::onIncoming(gf::combat::priority::High, [](gf::combat::DamageInfo& d) {
+            if (!d.direct) return gf::combat::Verdict::Pass;
+            Actor* target = &d.victim;
+            if (target->getTypeName() != kNagaId) {
+                auto* parent = ge::ext::parentOf(*target);
+                if (!parent || parent->getTypeName() != kNagaId) return gf::combat::Verdict::Pass;
+                target = parent;
+            }
+            auto* naga = asMob(*target);
+            if (naga && !homeContains(*naga, *d.direct)) return gf::combat::Verdict::Cancel;
+            return gf::combat::Verdict::Pass;
+        });
         // Naga#hurt: a hit that landed resets the healing timer, adds to the stun damage and is
         // remembered for HurtByTargetGoal (LivingEntity#lastHurtByMob)
         gf::combat::onDealt(gf::combat::priority::Normal, [](gf::combat::DamageInfo const& d) {

@@ -381,15 +381,27 @@ std::vector<std::unique_ptr<st::Piece>> courtyardPieces(st::RandomSource& firstP
 
 namespace {
 
-/// The beardifier of the start (vanilla's Beardifier: every piece box with the structure's terrain
-/// adaptation BEARD_THIN; the terraces' PieceBeardifierModifier BEARD_BOX is approximated by the
-/// same kernel) plus TF's inverted pyramid terraformer (CustomDensitySource, 3, 4). The boxes near
-/// a chunk are gathered once per chunk and thread.
+/// The beardifier of the start, as NeoForge's Beardifier builds its rigids: a piece implementing
+/// PieceBeardifierModifier gives Rigid(getBeardifierBox, getTerrainAdjustment, getGroundLevelDelta)
+/// unless its adjustment is NONE (the terraces CourtyardTerrace / CourtyardTerraceHedge: BEARD_BOX
+/// with a ground level delta of 3; the spawner's TwilightJigsawPiece: its pool entry's adjustment,
+/// NONE for courtyard/center), every other piece Rigid(box, the structure's BEARD_THIN, 0); plus
+/// TF's inverted pyramid terraformer (CustomDensitySource, 3, 4). Vanilla's rigid term is
+/// BoxDensityFunction's with the box's bottom raised by the delta (dYMin), so boxDensity computes
+/// it exactly. The boxes near a chunk are gathered once per chunk and thread.
 struct BeardCache {
     std::int64_t          key = 0;
     int                   chunkX = 0, chunkZ = 0;
-    std::vector<BlockBox> near;
+    std::vector<BlockBox> thin;    ///< BEARD_THIN, delta 0
+    std::vector<BlockBox> terrace; ///< BEARD_BOX, delta 3
 };
+
+/// The beardifier kind of a piece type: 0 BEARD_THIN, 1 BEARD_BOX (delta 3), 2 none.
+int beardKind(std::string const& type) {
+    if (type == "twilightforest:TFNCTe" || type == "twilightforest:TFNCHe") return 1;
+    if (type == "twilightforest:TFJigsawTemplate") return 2;
+    return 0;
+}
 
 double terraform(gf::landmark::Start const& start, int x, int y, int z) {
     thread_local BeardCache cache;
@@ -400,13 +412,27 @@ double terraform(gf::landmark::Start const& start, int x, int y, int z) {
         cache.key    = key;
         cache.chunkX = cx;
         cache.chunkZ = cz;
-        cache.near.clear();
+        cache.thin.clear();
+        cache.terrace.clear();
         BlockBox around{(cx << 4) - 24, -4096, (cz << 4) - 24, (cx << 4) + 39, 4096, (cz << 4) + 39};
-        for (auto const& b : start.pieceBoxes)
-            if (b.intersects(around)) cache.near.push_back(b);
+        // the piece types come with the start's record; a start the store does not hold (no
+        // types) beards every box thin
+        auto pieces = gf::landmark::ext::startPieces(start);
+        bool typed  = !pieces.empty() && !pieces.front().type.empty();
+        if (typed) {
+            for (auto const& p : pieces) {
+                if (!p.box.intersects(around)) continue;
+                int kind = beardKind(p.type);
+                if (kind == 0) cache.thin.push_back(p.box);
+                else if (kind == 1) cache.terrace.push_back(p.box);
+            }
+        } else
+            for (auto const& b : start.pieceBoxes)
+                if (b.intersects(around)) cache.thin.push_back(b);
     }
     double d = gf::landmark::ext::invertedPyramid(start, 3, 4, x, y, z);
-    if (!cache.near.empty()) d += gf::landmark::ext::boxDensity(cache.near, 0, 0, "beard_thin", x, y, z);
+    if (!cache.thin.empty()) d += gf::landmark::ext::boxDensity(cache.thin, 0, 0, "beard_thin", x, y, z);
+    if (!cache.terrace.empty()) d += gf::landmark::ext::boxDensity(cache.terrace, 3, 0, "beard_box", x, y, z);
     return d;
 }
 
