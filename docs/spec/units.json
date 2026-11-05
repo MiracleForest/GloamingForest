@@ -216,7 +216,9 @@
           "paths": [
             "src/feature/{combat,death,loot,inventory,progression,gamerules,fx}/**",
             "src/client/inventory/**",
-            "docs/spikes/S3.md"
+            "docs/spikes/S3.md",
+            "assets/pack/{bp,rp}/**/combat/**",
+            "assets/pack/rp/particles/fx/**"
           ],
           "content": "Single hurt hook (onIncoming/onDealt; DamageSources ASM equivalent), 40 damage types + 70 death messages, death pipeline (lethal, keepers, drops remaining, respawn: CharmEvents host), loot interpreter for 634 tables with TF functions multiplayer_addition, multiplayer_rolls, looting_rolls, condition mod_exists, slots for TF conditions/modifiers registered by owners, placeContainer (native loot field / setLootTable), data-declared generic chest-like container + native/vanilla screen; S3 (data-driven block actors / container component gated by experiments, level-data flag, persistence, JSON-UI title skin) deciding the inventory backend; progression store (has/grant/revoke), trigger bus, central events (inventory changed, killed, consumed, dimension changed, biome entered, tick), MissingAdvancementToast request API; gamerule store (+ /tf gamerule) for tfEnforcedProgression and portal delays; fx particle/sound by id.",
           "description": "All engine-wide hooks that several units need live here, one hook per engine event (rule R5).",
