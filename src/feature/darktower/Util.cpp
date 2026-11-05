@@ -59,8 +59,9 @@ int dimOf(BlockSource& region) { return static_cast<int>(region.getDimensionId()
 std::string idAt(BlockSource& region, BlockPos const& pos) { return game::blockIdAt(region, pos); }
 
 bool boolState(Block const& block, char const* state) {
-    auto v = game::intState(block, state);
-    return v && *v != 0;
+    // by the serialized value: an integer read is the value's position in the state's list, and
+    // some TF booleans are declared [true, false] (locked)
+    return textState(block, state) == "true";
 }
 
 bool boolStateAt(BlockSource& region, BlockPos const& pos, char const* state) { return boolState(region.getBlock(pos), state); }

@@ -19,6 +19,7 @@
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
+#include "mc/deps/shared_types/legacy/Difficulty.h"
 #include "mc/world/level/GameType.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/block/Block.h"
@@ -86,6 +87,21 @@ void removeAround(Context& ctx, core::GlobalPos const& c, std::string const& typ
         if (a && typeOf(*a) == type) a->remove();
 }
 
+/// The mob tests need a non-peaceful world (the boss kit turns a boss back into its spawner on
+/// peaceful, and peaceful removes hostile mobs).
+struct DifficultyScope {
+    SharedTypes::Legacy::Difficulty previous = SharedTypes::Legacy::Difficulty::Peaceful;
+    DifficultyScope() {
+        if (auto* l = level()) {
+            previous = l->getDifficulty();
+            l->setDifficulty(SharedTypes::Legacy::Difficulty::Easy);
+        }
+    }
+    ~DifficultyScope() {
+        if (auto* l = level()) l->setDifficulty(previous);
+    }
+};
+
 } // namespace
 
 // vanishing blocks: a click starts a chain reaction through the connected family (2-6 ticks each)
@@ -119,9 +135,9 @@ GF_REGISTER_SELFTEST("darktower.reappearing_cycle", [](Context& ctx) -> ll::coro
     devices::activateVanishing(*region, bp(a));
     co_await ctx.ticks(7);
     ctx.check(boolAt(ctx, a, "twilightforest:vanished") && !boolAt(ctx, a, "twilightforest:active"), "vanished within 2..6 ticks");
-    co_await ctx.ticks(75);
+    co_await ctx.ticks(70);
     ctx.check(boolAt(ctx, a, "twilightforest:vanished") && !boolAt(ctx, a, "twilightforest:active"), "still vanished before 80 ticks");
-    co_await ctx.ticks(8);
+    co_await ctx.ticks(13);
     ctx.check(boolAt(ctx, a, "twilightforest:vanished") && boolAt(ctx, a, "twilightforest:active"), "the 15-tick warning after 80 ticks");
     co_await ctx.ticks(16);
     ctx.check(ctx.blockAt(a) == id::ReappearingBlock && !boolAt(ctx, a, "twilightforest:vanished") && !boolAt(ctx, a, "twilightforest:active"),
@@ -234,6 +250,7 @@ GF_REGISTER_SELFTEST("darktower.antibuilder", [](Context& ctx) -> ll::coro::Coro
 
 // carminite reactor: six redstone blocks fire it up; fake gold/diamond at tick 5; it explodes at 350
 GF_REGISTER_SELFTEST("darktower.reactor", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope easy;
     auto box = co_await ctx.flatArea(2645, 24, 40);
     (void)box;
     auto c = ctx.testPos(2657, 2).offset(0, 18, 0);
@@ -283,6 +300,7 @@ GF_REGISTER_SELFTEST("darktower.slider", [](Context& ctx) -> ll::coro::CoroTask<
 // the scripted fight: three dying ghastlings charge the trap, power fires it and it downs the
 // Ur-Ghast (tantrum off, trapped, pulled, activate_ghast_trap for the players around)
 GF_REGISTER_SELFTEST("darktower.ghast_trap_fight", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope easy;
     auto box = co_await ctx.flatArea(2600, 30, 48);
     (void)box;
     auto trap = ctx.testPos(2615, 2).offset(0, 1, 0);
@@ -334,6 +352,7 @@ GF_REGISTER_SELFTEST("darktower.ghast_trap_fight", [](Context& ctx) -> ll::coro:
 
 // Ur-Ghast phases: 10 damage starts a tantrum, which divides damage by 10; 18 more ends it
 GF_REGISTER_SELFTEST("darktower.urghast_phases", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope easy;
     auto box = co_await ctx.flatArea(2620, 24, 32);
     (void)box;
     auto at = ctx.testPos(2632, 2).offset(0, 6, 0);
@@ -344,13 +363,13 @@ GF_REGISTER_SELFTEST("darktower.urghast_phases", [](Context& ctx) -> ll::coro::C
     auto* ur = spawnMob(*region, id::UrGhast, Vec3{at.x + 0.5f, float(at.y), at.z + 0.5f});
     ctx.require(ur != nullptr, "the Ur-Ghast spawned");
     auto id = uidOf(*ur);
-    co_await ctx.ticks(2);
-    ctx.check(!ghasts::inTantrum(*ur), "it starts calm");
     auto alive = [&]() -> Actor& {
         auto* a = actorById(id);
         ctx.require(a != nullptr, "the Ur-Ghast is still there");
         return *a;
     };
+    co_await ctx.ticks(2);
+    ctx.check(!ghasts::inTantrum(alive()), "it starts calm");
     combat::hurt(alive(), 11.0f, "minecraft:player_attack", &ctx.player());
     co_await ctx.ticks(12);
     ctx.check(ghasts::inTantrum(alive()), "10 damage started the tantrum");
