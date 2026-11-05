@@ -250,7 +250,7 @@ GF_REGISTER_SELFTEST("hydra.part_damage", [](Context& ctx) -> ll::coro::CoroTask
     ctx.require(co_await ready(uid), "the hydra ticks");
     auto& sp   = ctx.spawnPlayer();
     auto  spId = sp.getOrCreateUniqueID().rawID;
-    sp.teleport(Vec3{home.x + 0.5f, float(home.y), home.z - 8.5f}, DimensionType(home.dim));
+    sp.teleport(Vec3{home.x + 0.5f, float(home.y), home.z + 6.5f}, DimensionType(home.dim));
     co_await ctx.ticks(3);
     auto* h  = byId(uid);
     auto* pl = fe::playerById(spId);
@@ -354,7 +354,7 @@ GF_REGISTER_SELFTEST("hydra.mortar", [](Context& ctx) -> ll::coro::CoroTask<> {
     // a reflected mortar: the player becomes its owner and it hurts the hydra
     auto& sp   = ctx.spawnPlayer();
     auto  spId = sp.getOrCreateUniqueID().rawID;
-    sp.teleport(Vec3{home.x + 0.5f, float(home.y), home.z - 10.5f}, DimensionType(home.dim));
+    sp.teleport(Vec3{home.x + 0.5f, float(home.y), home.z + 7.5f}, DimensionType(home.dim));
     co_await ctx.ticks(2);
     h = byId(uid);
     ctx.require(h != nullptr, "the hydra is there");
@@ -397,7 +397,7 @@ GF_REGISTER_SELFTEST("hydra.head_names", [](Context& ctx) -> ll::coro::CoroTask<
     ctx.require(co_await ready(uid), "the hydra ticks");
     auto& sp   = ctx.spawnPlayer();
     auto  spId = sp.getOrCreateUniqueID().rawID;
-    sp.teleport(Vec3{home.x + 0.5f, float(home.y), home.z - 6.5f}, DimensionType(home.dim));
+    sp.teleport(Vec3{home.x + 0.5f, float(home.y), home.z + 6.5f}, DimensionType(home.dim));
     co_await ctx.ticks(2);
     auto* pl = fe::playerById(spId);
     auto* h  = byId(uid);
