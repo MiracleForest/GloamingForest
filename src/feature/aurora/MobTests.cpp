@@ -419,7 +419,15 @@ GF_REGISTER_SELFTEST("aurora.snow_queen_beam", [](Context& ctx) -> ll::coro::Cor
     if (auto* q = mobById(uid)) {
         auto pp = ctx.player().getFeetPos();
         q->teleportTo(Vec3{pp.x - 2.0f, pp.y + 0.2f, pp.z}, false, 0, 1, false);
-        q->setYHeadRot(-90.0f); // facing +x
+    }
+    co_await ctx.ticks(1);
+    if (auto* q = mobById(uid)) {
+        auto qp = q->getFeetPos();
+        auto pp = ctx.player().getFeetPos();
+        // straight at the player, level
+        float yaw = static_cast<float>(-std::atan2(pp.x - qp.x, pp.z - qp.z) * 180.0 / 3.14159265358979);
+        q->setRotationWrapped(Vec2{0.0f, yaw});
+        q->setYHeadRot(yaw);
         dealt().hits.clear();
         ctx.player().heal(20);
         rayAttackForTest(*q);
