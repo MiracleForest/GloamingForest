@@ -127,7 +127,7 @@ void minionWaterConversion(Mob& m) {
             if (++inWater >= 600) conversion = 300; // startUnderWaterConversion(300)
         } else inWater = -1;
     }
-    d = Json{{"in", inWater}, {"conversion", conversion}};
+    if (!d.is_object() || d.value("in", 0) != inWater || d.value("conversion", -1) != conversion) d = Json{{"in", inWater}, {"conversion", conversion}};
 }
 
 void minionAiStep(Actor& a) {

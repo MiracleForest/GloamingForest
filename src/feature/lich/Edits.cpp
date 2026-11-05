@@ -51,11 +51,10 @@ namespace ge = gf::entity;
 
 namespace {
 
-/// A non-mob actor (leash knot, painting) or a mob, by id.
+/// A non-mob actor (leash knot, painting) by id.
 Actor* spawnActor(BlockSource& region, std::string const& id, Vec3 const& pos, float yaw = 0.0F) {
     auto level = ll::service::getLevel();
     if (!level) return nullptr;
-    if (Mob* m = spawnMob(region, id, pos, yaw)) return m;
     auto owned = level->getActorFactory().createSpawnedActor(ActorDefinitionIdentifier(id), nullptr, pos, Vec2{0.0F, yaw});
     return owned ? level->addEntity(region, std::move(owned)) : nullptr;
 }

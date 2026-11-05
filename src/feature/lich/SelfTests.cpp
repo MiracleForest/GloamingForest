@@ -780,6 +780,8 @@ GF_REGISTER_SELFTEST("lich.client_showcase", [](Context& ctx) -> ll::coro::CoroT
     // ---- the tower, generated ahead, seen from afar and from its yard ----
     Vec3 towerAt   = ahead(140, 0);
     Vec3 viewpoint = ahead(20, 0, 55.0f);
+    real           = realPlayer(); // never kept across ticks (R16)
+    if (!real) co_return;
     lookFrom(*real, viewpoint, Vec3{towerAt.x, towerAt.y + 45.0f, towerAt.z});
     co_await ctx.ticks(20 * 6); // the chunks around the tower load
     real = realPlayer();

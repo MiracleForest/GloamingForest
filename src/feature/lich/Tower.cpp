@@ -590,7 +590,7 @@ protected:
             // vines; a plant when the tree does not fit
             static char const* const kTrees[] = {"minecraft:oak", "minecraft:spruce", "minecraft:birch", "minecraft:jungle_tree_no_vine"};
             char const*              tree     = kTrees[random.nextInt(4)];
-            if (!chunk.contains(pos.x, pos.y, pos.z) || !gf::features::place(tree, region, pos, random))
+            if (!gf::features::place(tree, region, pos, random))
                 placeBlock(region, kPlants[random.nextInt(6)], Json::object(), pos.x, pos.y, pos.z, chunk);
         }
     }
@@ -1207,7 +1207,7 @@ void WingRoom::handleDataParams(BlockPos const& pos, Region& region, RandomSourc
         gs::TemplateSettings s;
         s.processors.push_back(sx::compileSpawnerProcessor(range, 0.0F, {{mob, 1}}));
         s.clip = chunk;
-        s.seed = random.nextLong();
+        s.seed = core::lich::blockPosAsLong(pos.x, pos.y, pos.z); // no draw from the piece random (TF draws none here)
         bool placed = gs::templates::place(gid(k == "spawner" ? "stamp/spawner" : "stamp/sinister_spawner"), region, pos, s);
         if (!placed) placeSpawner(region, chunk, pos.x, pos.y, pos.z, mob);
         if (k == "sinister_spawner") {
@@ -2242,6 +2242,7 @@ void placeForTest(std::function<std::unique_ptr<Region>(BlockPos const&)> const&
     pending::Suppress quiet;
     gf::core::jrand::LegacyRandom random(seed);
     for (auto& p : testPieces()) {
+        if (p->bbox.minY > clip.maxY || p->bbox.maxY < clip.minY) continue; // nothing of it inside the area
         // one call per chunk column the piece meets, each clipped to `clip` (Java's postProcess per chunk)
         for (int cx = (std::max(p->bbox.minX, clip.minX)) >> 4; cx <= (std::min(p->bbox.maxX, clip.maxX)) >> 4; ++cx)
             for (int cz = (std::max(p->bbox.minZ, clip.minZ)) >> 4; cz <= (std::min(p->bbox.maxZ, clip.maxZ)) >> 4; ++cz) {
