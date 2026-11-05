@@ -64,6 +64,7 @@
 #include "mc/world/phys/AABB.h"
 
 #include "core/jrand/JRand.h"
+#include "core/trees/JavaHashSet.h"
 #include "feature/common/Interactions.h"
 #include "feature/ext/trees/RandomTicks.h"
 #include "feature/ext/worldgen/FeatureKit.h"
@@ -221,11 +222,12 @@ bool vanillaTicker(std::string const& id) {
     return ids.contains(id);
 }
 
-/// `state.getOcclusionShape(level, pos).max(Y)` (block-relative; nullopt: an empty shape). Blocks
-/// built with noOcclusion() (leaves, glass, ...) have an empty occlusion shape in Java; the others'
-/// is their shape, here the block's outline box.
+/// `state.getOcclusionShape(level, pos).max(Y)` (block-relative; nullopt: an empty shape). In
+/// 1.21.1 BlockBehaviour#getOcclusionShape is `state.getShape(level, pos)` for every block
+/// noOcclusion() included (that flag only empties the cached face occlusion; LeavesBlock overrides
+/// getBlockSupportShape, glass getVisualShape): leaves and glass get their full box's top like any
+/// other block, here the block's outline box. Shapeless blocks (air, plants without a box) have none.
 std::optional<double> occlusionTop(BlockSource& region, BlockPos const& pos, Block const& state) {
-    if (kit::isLeaves(state) || kit::javaId(state).find("glass") != std::string::npos) return std::nullopt;
     AABB        buffer{};
     AABB const& box = state.getBlockType().getOutline(state, region, pos, buffer);
     if (!(box.max.y > box.min.y) && !(box.max.x > box.min.x)) return std::nullopt; // empty
@@ -433,11 +435,13 @@ std::map<std::string, std::string> treeOres() {
 
 bool safeReplace(Block const& b) { return gf::tags::has(gf::tags::Registry::Block, "twilightforest:ore_magnet/ore_safe_replace_block", b.getTypeName()); }
 
-void findVein(BlockSource& region, BlockPos const& here, Block const& ore, std::vector<BlockPos>& vein) {
-    if (std::find(vein.begin(), vein.end(), here) != vein.end()) return;
+/// OreMagnetItem#findVein into a java.util.HashSet<BlockPos> (its iteration order is the order the
+/// vein moves in: with overlapping offsets a block may land where another vein block still is).
+void findVein(BlockSource& region, BlockPos const& here, Block const& ore, core::trees::JavaHashSet& vein) {
+    if (vein.contains({here.x, here.y, here.z})) return;
     if (vein.size() >= 24) return; // 24 blocks at a time
     if (&region.getBlock(here) != &ore) return;
-    vein.push_back(here);
+    vein.add({here.x, here.y, here.z});
     for (Dir d : kAll) findVein(region, rel(here, d), ore, vein);
 }
 
@@ -466,12 +470,13 @@ int doMagnet(BlockSource& region, BlockPos const& usePos, BlockPos const& destPo
     if (!basePos || !foundPos || !ore) return 0;
     Block const* repl = game::blockWith(replacement);
     if (!repl) return 0;
-    std::vector<BlockPos> vein;
+    core::trees::JavaHashSet vein;
     findVein(region, *foundPos, *ore, vein);
     int   offX = basePos->x - foundPos->x, offY = basePos->y - foundPos->y, offZ = basePos->z - foundPos->z;
     int   moved = 0;
     auto& dim   = region.getDimension();
-    for (auto const& c : vein) {
+    for (auto const& e : vein.elements()) {
+        BlockPos     c{e.x, e.y, e.z};
         BlockPos     replacePos = at(c, offX, offY, offZ);
         Block const& rs         = region.getBlock(replacePos);
         if (!(safeReplace(rs) || kit::isReplaceable(rs) || rs.isAir())) continue;

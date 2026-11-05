@@ -14,11 +14,18 @@
 //   trees.snow_under_trees                snow under leaves
 #include <algorithm>
 #include <cmath>
+#include <filesystem>
+#include <functional>
+#include <optional>
 #include <map>
+#include <memory>
 #include <set>
 #include <tuple>
 
+#include "ll/api/chrono/GameChrono.h"
 #include "ll/api/coro/CoroTask.h"
+#include "ll/api/service/Bedrock.h"
+#include "ll/api/thread/ServerThreadExecutor.h"
 
 #include "mc/deps/core/math/Vec3.h"
 #include "mc/server/SimulatedPlayer.h"
@@ -45,9 +52,12 @@
 #include "mc/world/level/chunk/SubChunk.h"
 
 #include "core/jrand/JRand.h"
+#include "feature/dimension/AreaLoader.h"
 #include "feature/ext/trees/PickBlock.h"
 #include "feature/ext/trees/RandomTicks.h"
+#include "feature/ext/worldgen/FeatureKit.h"
 #include "feature/features/Features.h"
+#include "feature/item/DataFiles.h"
 #include "feature/loot/Loot.h"
 #include "feature/spawn/Internal.h"
 #include "feature/trees/Trees.h"
@@ -64,11 +74,13 @@ namespace {
 using gf::core::BlockBox;
 using gf::core::GlobalPos;
 using gf::selftest::Context;
+namespace kit = gf::features::kit;
 
 /// The showcase's undo log: the first original block of every position it (or a tree it places)
 /// changed, so trees.zz_showcase_restore can put the world back (rule R12: nothing left behind).
 struct ShowcaseLog {
     bool                                      active = false;
+    std::vector<std::function<void()>>        undo; ///< what else to put back (biomes, overrides), run newest first
     std::map<std::tuple<int, int, int, int>, Block const*> originals;
     std::vector<std::tuple<int, int, int, int>>             order;
 };
@@ -220,17 +232,104 @@ GF_REGISTER_SELFTEST("trees.features_c", [](Context& ctx) -> ll::coro::CoroTask<
 
 namespace {
 
+/// The Java oracle's trees (data/gf/java_goldens/trees.json, from TF 4.8 on NeoForge 1.21.1 placed at
+/// the same absolute positions as these selftests: tests/trees/oracle): a case's box, block by block.
+struct JavaCase {
+    BlockBox                       box{};
+    std::vector<Block const*>      palette;
+    std::vector<std::string>       paletteText;
+    std::vector<std::pair<int, int>> rle; ///< [count, palette index], x outermost, then y, then z
+};
+std::optional<JavaCase> javaCase(std::string const& name) {
+    static nlohmann::json const all = [] {
+        auto file = gf::feature::item::data::root() / "gf" / "java_goldens" / "trees.json";
+        std::error_code ec;
+        if (!std::filesystem::exists(file, ec)) return nlohmann::json();
+        return gf::feature::item::data::read(file);
+    }();
+    if (!all.is_object() || !all.contains("cases")) return std::nullopt;
+    for (auto const& c : all["cases"]) {
+        if (c.value("name", std::string()) != name) continue;
+        JavaCase out;
+        auto const& b = c["box"];
+        out.box       = BlockBox{b[0].get<int>(), b[1].get<int>(), b[2].get<int>(), b[3].get<int>(), b[4].get<int>(), b[5].get<int>()};
+        for (auto const& p : c["palette"]) {
+            auto props = p.value("Properties", nlohmann::json::object());
+            out.palette.push_back(kit::javaBlock(p.value("Name", std::string()), props));
+            out.paletteText.push_back(p.value("Name", std::string()) + (props.empty() ? "" : props.dump()));
+        }
+        for (auto const& r : c["rle"]) out.rle.emplace_back(r[0].get<int>(), r[1].get<int>());
+        return out;
+    }
+    return std::nullopt;
+}
+
+/// The block a Bedrock world shows for a Java state and the one there match (Bedrock's own update
+/// bit of its leaves aside).
+bool sameBlock(Block const& here, Block const* java) {
+    if (!java) return false;
+    if (&here == java) return true;
+    if (here.getTypeName() != java->getTypeName()) return false;
+    auto a = game::statesOf(here), b = game::statesOf(*java);
+    a.erase("update_bit");
+    b.erase("update_bit");
+    return a == b;
+}
+
+/// Compares the box of `name` with the Java oracle's (when the oracle placed it at this very box:
+/// the positions depend on the world's spawn); returns false when there is nothing to compare.
+bool compareWithJava(Context& ctx, std::string const& name, BlockBox const& box) {
+    auto jc = javaCase(name);
+    if (!jc) {
+        ctx.info(name + ": no Java oracle case");
+        return false;
+    }
+    if (jc->box.minX != box.minX || jc->box.minY != box.minY || jc->box.minZ != box.minZ || jc->box.maxX != box.maxX || jc->box.maxY != box.maxY || jc->box.maxZ != box.maxZ) {
+        ctx.info(name + ": the Java oracle placed it at another box (this world's spawn differs): not compared");
+        return false;
+    }
+    auto* region = ctx.region();
+    if (!region) return false;
+    int                      x = box.minX, y = box.minY, z = box.minZ, mismatches = 0, nonAir = 0;
+    std::vector<std::string> first;
+    for (auto const& [count, index] : jc->rle) {
+        for (int i = 0; i < count; ++i) {
+            Block const& here = region->getBlock(BlockPos{x, y, z});
+            Block const* java = jc->palette[static_cast<std::size_t>(index)];
+            if (!here.isAir()) ++nonAir;
+            if (!sameBlock(here, java)) {
+                ++mismatches;
+                if (first.size() < 12)
+                    first.push_back(std::to_string(x) + " " + std::to_string(y) + " " + std::to_string(z) + ": Java " + jc->paletteText[static_cast<std::size_t>(index)] + ", here " + here.getTypeName() + nlohmann::json(game::statesOf(here)).dump());
+            }
+            if (++z > box.maxZ) {
+                z = box.minZ;
+                if (++y > box.maxY) {
+                    y = box.minY;
+                    ++x;
+                }
+            }
+        }
+    }
+    for (auto const& f : first) ctx.info(name + " differs at " + f);
+    ctx.check(mismatches == 0, name + " matches TF 4.8 on Java block for block (" + std::to_string(mismatches) + " of " + std::to_string(box.volume()) + " differ; " + std::to_string(nonAir) + " blocks here)");
+    return true;
+}
+
 /// Golden volume hashes of seeded trees (filled from the first reviewed run; empty: record only).
 ll::coro::CoroTask<> golden(Context& ctx, int dx, std::string const& id, std::string const& want) {
     auto     box = co_await ctx.flatArea(dx, 48, 48);
     BlockPos pos{box.minX + 24, box.minY, box.minZ + 24};
     co_await ctx.ensureLoaded(game::globalPos(ctx.dimension(), pos));
     auto writes = leafDistanceWrites();
+    ctx.info(id + " at " + std::to_string(pos.x) + " " + std::to_string(pos.y) + " " + std::to_string(pos.z) + " (box " + std::to_string(box.minX) + " " +
+             std::to_string(box.minY) + " " + std::to_string(box.minZ) + " .. " + std::to_string(box.maxX) + " " + std::to_string(box.maxY) + " " + std::to_string(box.maxZ) + ")");
     ctx.require(placeSeeded(ctx, id, pos, 20240611), id + " placed");
     ctx.info(id + ": updateLeaves wrote " + std::to_string(leafDistanceWrites() - writes) + " leaf distances");
     auto hash = ctx.snapshotVolume(box);
     ctx.info(id + " volume hash " + hash);
     if (!want.empty()) ctx.check(hash == want, id + " matches its golden hash " + want + " (got " + hash + ")");
+    compareWithJava(ctx, "golden_" + id.substr(id.rfind('/') + 1), box);
 }
 
 } // namespace
@@ -325,6 +424,8 @@ GF_REGISTER_SELFTEST("trees.sapling_hashes", [](Context& ctx) -> ll::coro::CoroT
         ctx.require(region != nullptr, "a region");
         if (id == "twilightforest:time_sapling") p = game::globalPos(ctx.dimension(), pedestal(*region, bp(p)));
         ctx.require(ctx.setBlock(p, id), id + " planted");
+        ctx.info(id + " at " + std::to_string(p.x) + " " + std::to_string(p.y) + " " + std::to_string(p.z) + " (cell " + std::to_string(cell.minX) + " " +
+                 std::to_string(cell.minY) + " " + std::to_string(cell.minZ) + " .. " + std::to_string(cell.maxX) + " " + std::to_string(cell.maxY) + " " + std::to_string(cell.maxZ) + ")");
         core::jrand::LegacyRandom random(77000 + i);
         for (int step = 0; step < 2; ++step) gf::feature::families::detail::advanceSaplingWith(*region, bp(p), random);
         bool grown = ctx.blockAt(p) != id;
@@ -332,6 +433,7 @@ GF_REGISTER_SELFTEST("trees.sapling_hashes", [](Context& ctx) -> ll::coro::CoroT
         auto hash = ctx.snapshotVolume(cell);
         ctx.info(id + " tree volume hash " + hash);
         if (*g.hash) ctx.check(hash == g.hash, id + " matches its golden hash " + std::string(g.hash) + " (got " + hash + ")");
+        compareWithJava(ctx, std::string("sapling_") + g.sapling, cell);
     }
 });
 
@@ -381,6 +483,48 @@ GF_REGISTER_SELFTEST("trees.mega_2x2", [](Context& ctx) -> ll::coro::CoroTask<> 
     ctx.check(trunk >= 70, "a 2x2 mega canopy trunk (" + std::to_string(trunk) + " logs in the lowest 20 layers)");
 });
 
+GF_REGISTER_SELFTEST("trees.leaf_distance_after_growth", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // TFTreeFeature#place runs TreeFeature.updateLeaves with the leaves as sources and writes with
+    // UPDATE_KNOWN_SHAPE: every leaf with a leaf beside it gets distance 1 and keeps it (no shape
+    // update recomputes it), so a grown TF tree's outer leaves never decay in TF. F11's leaves
+    // recompute the true distance after a placement (onPlaced / onNeighborChanged); this test grows
+    // a mega canopy tree, counts the decay-bound leaves (distance 7) right away and 40 ticks later
+    // and reports the difference (routed to F11: skip the recompute for feature-placed blocks).
+    auto      box = co_await ctx.flatArea(362, 64, 64);
+    GlobalPos p   = game::globalPos(ctx.dimension(), BlockPos{box.minX + 30, box.minY, box.minZ + 30});
+    for (auto [dx, dz] : {std::pair{0, 0}, std::pair{1, 0}, std::pair{0, 1}, std::pair{1, 1}}) ctx.require(ctx.setBlock(p.offset(dx, 0, dz), "twilightforest:canopy_sapling"), "sapling planted");
+    auto* region = ctx.region();
+    ctx.require(region != nullptr, "a region");
+    core::jrand::LegacyRandom random(5150);
+    for (int step = 0; step < 2 && ctx.blockAt(p) == "twilightforest:canopy_sapling"; ++step) gf::feature::families::detail::advanceSaplingWith(*region, bp(p), random);
+    ctx.require(ctx.blockAt(p) != "twilightforest:canopy_sapling", "the 2x2 canopy saplings grew (" + ctx.blockAt(p) + ")");
+    auto count = [&](int& leaves, int& decaying, int& one) {
+        leaves = decaying = one = 0;
+        auto* r = ctx.region();
+        if (!r) return;
+        for (int x = box.minX; x <= box.maxX; ++x)
+            for (int z = box.minZ; z <= box.maxZ; ++z)
+                for (int y = box.minY; y <= box.maxY; ++y) {
+                    auto const& b = r->getBlock(BlockPos{x, y, z});
+                    auto        d = game::intState(b, "twilightforest:distance");
+                    if (!d || b.getTypeName() != "twilightforest:canopy_leaves") continue;
+                    ++leaves;
+                    if (*d == 7 || *d == 0) ++decaying;
+                    if (*d == 1) ++one;
+                }
+    };
+    int leaves = 0, decaying = 0, one = 0;
+    count(leaves, decaying, one);
+    ctx.info("right after growth: " + std::to_string(leaves) + " canopy leaves, " + std::to_string(one) + " at distance 1, " + std::to_string(decaying) + " decay-bound");
+    ctx.check(leaves > 0 && one * 2 > leaves, "updateLeaves gave most leaves distance 1 as TF does (" + std::to_string(one) + " of " + std::to_string(leaves) + ")");
+    co_await ctx.ticks(40);
+    int leaves2 = 0, decaying2 = 0, one2 = 0;
+    count(leaves2, decaying2, one2);
+    ctx.info("40 ticks later: " + std::to_string(leaves2) + " canopy leaves, " + std::to_string(one2) + " at distance 1, " + std::to_string(decaying2) + " decay-bound");
+    if (decaying2 > decaying)
+        ctx.info("PARITY GAP (F11): " + std::to_string(decaying2 - decaying) + " more leaves became decay-bound after F11 recomputed the distances; in TF they keep "
+                 "updateLeaves' distances and stay");
+});
 GF_REGISTER_SELFTEST("trees.core_toggle_held_item", [](Context& ctx) -> ll::coro::CoroTask<> {
     GlobalPos core = ctx.testPos(370, 2);
     ctx.require(ctx.setBlock(core, "twilightforest:time_log_core", {{"twilightforest:axis", "y"}}), "a timewood clock");
@@ -826,46 +970,84 @@ GF_REGISTER_SELFTEST("trees.hardened_dark_leaves", [](Context& ctx) -> ll::coro:
 });
 
 
+namespace {
+
+/// Bumped whenever the showcase log is put back (the probe's own timed restore then has nothing to do).
+std::uint64_t gRestoreGeneration = 0;
+
+/// Puts back every block of the showcase log, newest first (positions in unloaded chunks are skipped
+/// when `loadedOnly`); returns how many.
+int restoreShowcase(bool loadedOnly) {
+    auto& log  = showcaseLog();
+    log.active = false;
+    int restored = 0;
+    auto undo = std::move(log.undo);
+    log.undo.clear();
+    for (auto it = undo.rbegin(); it != undo.rend(); ++it) (*it)();
+    for (auto it = log.order.rbegin(); it != log.order.rend(); ++it) {
+        auto [dim, x, y, z] = *it;
+        auto* region        = game::regionOf(dim);
+        if (!region) continue;
+        BlockPos p{x, y, z};
+        if (loadedOnly && !region->hasChunksAt(p, 0, false)) continue;
+        game::setBlock(*region, p, *log.originals[*it]);
+        ++restored;
+    }
+    log.originals.clear();
+    log.order.clear();
+    ++gRestoreGeneration;
+    return restored;
+}
+
+/// How long the probe stands before it puts itself back (the client scenario photographs it well
+/// within this; trees.zz_showcase_restore takes it down earlier).
+constexpr int kProbeTicks = 2400;
+
+} // namespace
+
 // Client e2e (remote modes: run on the host): a probe the client photographs, the leaves of
-// transformation shedding runes over the time core ticking wheat; trees.zz_showcase_restore removes it (the restore runs last in a trees.* run).
+// transformation shedding runes over an active time core ticking wheat. It stands away from every
+// unit's test rows (250 blocks east and 64 north of this unit's row, beyond the time core's reach of
+// any row), and it puts itself back after kProbeTicks whatever runs next, so a 'full' run or a glob
+// matching only the probe leaves nothing behind (R12); trees.zz_showcase_restore takes it down at once.
 GF_REGISTER_SELFTEST("trees.vanilla_probe", [](Context& ctx) -> ll::coro::CoroTask<> {
     showcaseLog().active = true;
-    GlobalPos base = ctx.testPos(398, 2);
+    GlobalPos base = ctx.testPos(398, 2).offset(250, 0, -64);
     co_await ctx.ensureLoaded(base);
     auto* region = ctx.region();
     ctx.require(region != nullptr, "a region");
     auto set = [&](GlobalPos const& p, char const* id, nlohmann::json const& states) {
         if (auto const* b = game::blockWithStates(id, states)) showcaseSet(*region, bp(p), *b);
     };
+    // a grass floor under the probe (whatever the flat world has there)
+    for (int dx = -2; dx <= 2; ++dx)
+        for (int dz = -2; dz <= 2; ++dz) set(base.offset(dx, -1, dz), "minecraft:grass_block", nlohmann::json::object());
     for (int dx = -1; dx <= 1; ++dx)
         for (int dz = -1; dz <= 1; ++dz) set(base.offset(dx, 4, dz), "twilightforest:transformation_leaves", {{"twilightforest:persistent", true}});
     set(base.offset(-1, 0, 0), "minecraft:farmland", {{"moisturized_amount", 7}});
     set(base.offset(-1, 1, 0), "minecraft:wheat", {{"growth", 0}});
     set(base, "twilightforest:time_log_core", {{"twilightforest:axis", "y"}, {"twilightforest:active", true}});
     showcaseLog().active = false;
+    ll::coro::keepThis([generation = gRestoreGeneration, dim = base.dim, at = bp(base)]() -> ll::coro::CoroTask<> {
+        co_await ll::chrono::ticks(kProbeTicks);
+        if (generation != gRestoreGeneration || !ll::service::getLevel()) co_return;
+        // the probe's chunks, loaded again if everybody left them (F4's transient ticking area)
+        auto area = co_await gf::feature::dimension::loadArea(dim, at, 16);
+        if (generation != gRestoreGeneration || !ll::service::getLevel()) co_return;
+        int n = restoreShowcase(true);
+        gf::log().info("trees: the probe put itself back ({} blocks{})", n, area ? "" : ", its area did not load");
+    }).launch(ll::thread::ServerThreadExecutor::getDefault());
     ctx.info("trees probe at " + std::to_string(base.x) + " " + std::to_string(base.y) + " " + std::to_string(base.z));
 });
 
 // Client e2e: puts back every block trees.showcase / trees.vanilla_probe changed (newest first), after
 // the screenshots.
 GF_REGISTER_SELFTEST("trees.zz_showcase_restore", [](Context& ctx) -> ll::coro::CoroTask<> {
-    auto& log = showcaseLog();
-    log.active = false;
-    int   restored = 0;
-    for (auto it = log.order.rbegin(); it != log.order.rend(); ++it) {
-        auto [dim, x, y, z] = *it;
-        GlobalPos gp{dim, x, y, z};
-        co_await ctx.ensureLoaded(gp);
-        auto* region = game::regionOf(dim);
-        if (!region) continue;
-        game::setBlock(*region, BlockPos{x, y, z}, *log.originals[*it]);
-        ++restored;
-    }
-    log.originals.clear();
-    log.order.clear();
+    auto order = showcaseLog().order;
+    for (auto const& [dim, x, y, z] : order) co_await ctx.ensureLoaded(GlobalPos{dim, x, y, z});
+    int restored = restoreShowcase(false);
     ctx.info("trees showcase restored " + std::to_string(restored) + " blocks");
 });
-
 } // namespace gf::feature::trees
 
 #ifdef GF_CLIENT
@@ -940,12 +1122,102 @@ GF_REGISTER_SELFTEST("trees.showcase", [](Context& ctx) -> ll::coro::CoroTask<> 
         ctx.check(b != nullptr, id + " exists");
         if (b) showcaseSet(*region, bp(p), *b);
     }
+    // the game's own cap blocks with the cap skin on every face (huge_mushroom_bits 14), beside the
+    // row: the brown canopy mushroom's caps must look like the first of them
+    for (auto [i, id] : {std::pair{0, "minecraft:brown_mushroom_block"}, std::pair{1, "minecraft:red_mushroom_block"}}) {
+        GlobalPos p = row.offset(72 + i * 2, 0, 0);
+        if (auto const* g = game::blockWith("minecraft:grass_block")) showcaseSet(*region, bp(p.offset(0, -1, 0)), *g);
+        if (auto const* b = game::blockWithStates(id, {{"huge_mushroom_bits", 14}})) showcaseSet(*region, bp(p), *b);
+    }
     ctx.info("trees showcase blocks at " + std::to_string(row.x) + " " + std::to_string(row.y) + " " + std::to_string(row.z));
     showcaseLog().active = false;
     ctx.info("trees showcase changed " + std::to_string(showcaseLog().order.size()) + " blocks (trees.zz_showcase_restore puts them back)");
 });
-
-
+// Client e2e only (local mode): the sorting and the transformation particles in flight and the
+// transformation core's chunk resend reaching the real client. A sortingwood engine between two
+// chests and a heart of transformation (range 4, the stand-in biome minecraft:mesa when the world has
+// no enchanted forest: its grass is brown, so the resent chunk shows the change) run their effect
+// every 10 / 20 ticks for kParticleTicks; the chests are refilled before each cycle and the biomes put
+// back before each transformation (one fresh 4x4 cell per cycle). trees.zz_showcase_restore stops it
+// and puts the blocks, biomes and overrides back.
+GF_REGISTER_SELFTEST("trees.particles_probe", [](Context& ctx) -> ll::coro::CoroTask<> {
+    constexpr int kParticleTicks = 1200;
+    showcaseLog().active = true;
+    GlobalPos base = ctx.testPos(399, 2).offset(250, 0, -96);
+    co_await ctx.ensureLoaded(base);
+    auto* region = ctx.region();
+    ctx.require(region != nullptr, "a region");
+    auto set = [&](GlobalPos const& p, char const* id, nlohmann::json const& states) {
+        if (auto const* b = game::blockWithStates(id, states)) showcaseSet(*region, bp(p), *b);
+    };
+    for (int dx = -8; dx <= 8; ++dx)
+        for (int dz = -8; dz <= 8; ++dz) {
+            set(base.offset(dx, -1, dz), "minecraft:grass_block", nlohmann::json::object());
+            for (int dy = 0; dy < 6; ++dy)
+                if (!region->getBlock(bp(base.offset(dx, dy, dz))).isAir()) set(base.offset(dx, dy, dz), "minecraft:air", nlohmann::json::object());
+        }
+    GlobalPos sorter = base.offset(-4, 0, 0), in = sorter.offset(2, 0, 0), out = sorter.offset(-2, 0, 0), trans = base.offset(4, 0, 0);
+    set(sorter, "twilightforest:sorting_log_core", {{"twilightforest:axis", "y"}});
+    set(in, "minecraft:chest", nlohmann::json::object());
+    set(out, "minecraft:chest", nlohmann::json::object());
+    set(trans, "twilightforest:transformation_log_core", {{"twilightforest:axis", "y"}});
+    showcaseLog().active = false;
+    co_await ctx.ticks(2);
+    region = ctx.region();
+    ctx.require(region != nullptr, "a region");
+    // the stand-in biome and the biomes the transformation may touch (range 4: the 4x4 cells within 7)
+    bool standIn = !hasTransformationTarget(*region);
+    if (standIn) setTransformationTargetForTest("minecraft:mesa");
+    auto saved = std::make_shared<std::map<std::pair<int, int>, Biome const*>>();
+    BlockPos t = bp(trans);
+    for (int dx = -8; dx <= 8; ++dx)
+        for (int dz = -8; dz <= 8; ++dz) (*saved)[{t.x + dx, t.z + dz}] = &region->getBiome(BlockPos{t.x + dx, t.y, t.z + dz});
+    int dim = trans.dim;
+    auto putBiomesBack = [saved, dim, y = t.y] {
+        auto* r = game::regionOf(dim);
+        if (!r) return;
+        for (auto const& [xz, b] : *saved)
+            if (auto* lc = r->getChunkAt(BlockPos{xz.first, y, xz.second}))
+                lc->_setBiome(*b, ChunkBlockPos{static_cast<uchar>(xz.first & 15), ChunkLocalHeight{0}, static_cast<uchar>(xz.second & 15)}, true);
+    };
+    showcaseLog().undo.push_back([putBiomesBack, standIn] {
+        putBiomesBack();
+        if (standIn) setTransformationTargetForTest("");
+    });
+    auto before = chunkResendStats();
+    ll::coro::keepThis([generation = gRestoreGeneration, dim, s = bp(sorter), i = bp(in), o = bp(out), t, putBiomesBack, before]() -> ll::coro::CoroTask<> {
+        for (int tick = 0; tick < kParticleTicks && generation == gRestoreGeneration; tick += 10) {
+            auto* r = game::regionOf(dim);
+            if (!r || !r->hasChunksAt(s, 0, false) || !r->hasChunksAt(t, 0, false)) {
+                co_await ll::chrono::ticks(10);
+                continue;
+            }
+            auto* ci = chestAt(*r, i);
+            auto* co = chestAt(*r, o);
+            if (ci && co) {
+                ci->removeAllItems();
+                co->removeAllItems();
+                if (auto st = game::items::make("minecraft:stick", 3)) ci->setItem(0, *st);
+                if (auto st = game::items::make("minecraft:stick", 1)) co->setItem(5, *st);
+                RangeGuard guard;
+                gf::config::mut<TreesConfig>().sortingCoreRange = 4;
+                performCoreEffect(Core::Sorting, *r, s);
+            }
+            if (tick % 20 == 0) {
+                putBiomesBack();
+                RangeGuard guard;
+                gf::config::mut<TreesConfig>().transformationCoreRange = 4;
+                for (int k = 0; k < 8 && performCoreEffect(Core::Transformation, *r, t) == 0; ++k) {}
+            }
+            if (tick == 200) {
+                auto now = chunkResendStats();
+                gf::log().info("trees: particles probe: {} chunk resends sent to real clients, {} refused", now.sent - before.sent, now.refused - before.refused);
+            }
+            co_await ll::chrono::ticks(10);
+        }
+    }).launch(ll::thread::ServerThreadExecutor::getDefault());
+    ctx.info("trees particles probe at " + std::to_string(base.x) + " " + std::to_string(base.y) + " " + std::to_string(base.z) + (standIn ? " (stand-in biome minecraft:mesa)" : ""));
+});
 
 } // namespace gf::feature::trees
 #endif

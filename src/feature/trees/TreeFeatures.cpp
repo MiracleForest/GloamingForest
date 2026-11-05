@@ -19,14 +19,15 @@
 // U3 trees: TF's own tree feature types. TFTreeFeature subclasses read TFTreeFeatureConfig and
 // generate through a trunk, a leaves and a decoration (root) setter; the dark canopy tree and the
 // snow tree are TreeFeature copies that delegate the tree itself to the minecraft:tree interpreter
-// after their own checks. Leaf distances are not written: the families kit computes them on the
-// first random tick (distance 0 = not computed yet); TF's own tree features run TreeFeature.updateLeaves.
+// after their own checks and then run their own (older) updateLeaves through a decorator appended
+// to the interpreter's list; TF's own tree features run 1.21's TreeFeature.updateLeaves.
 #include "feature/trees/Trees.h"
 
 #include <algorithm>
 #include <cmath>
 #include <atomic>
 #include <optional>
+#include <unordered_set>
 #include <string>
 #include <vector>
 
@@ -199,6 +200,77 @@ void updateLeaves(Region& region, std::vector<BlockPos> const& sources, std::vec
         }
         ++k1;
     }
+}
+
+/// DarkCanopyTreeFeature#updateLeaves / SnowTreeFeature#updateLeaves (both a copy of the older
+/// TreeFeature.updateLeaves, called with the trunk set): every block with a distance next to a
+/// trunk block (and not one itself) gets distance 1, then five rounds lower the distance of the
+/// blocks next to the last round's to l + 1 where theirs is higher. Unlike 1.21's TreeFeature it
+/// does not stop at the tree's box and has no `full` set; the result does not depend on the
+/// HashSets' order (a block is lowered once per round to the same value), only the writes' order
+/// would, which leaves no trace. The shape it returns only feeds StructureTemplate.updateShapeAtEdge
+/// (Bedrock connects block shapes itself).
+void knownShapeUpdateLeaves(Region& region, std::vector<BlockPos> const& logs) {
+    auto key = [](BlockPos const& p) { return (static_cast<std::int64_t>(p.x) & 0x3FFFFFF) << 38 | (static_cast<std::int64_t>(p.z) & 0x3FFFFFF) << 12 | (static_cast<std::int64_t>(p.y) & 0xFFF); };
+    auto distanceOf = [](Block const& b) -> std::optional<int> {
+        auto d = game::intState(b, "twilightforest:distance");
+        if (!d) return std::nullopt;
+        return *d == 0 ? 7 : *d; // 0: not computed yet (F11), Java's placed 7
+    };
+    auto write = [&](BlockPos const& p, Block const& state, int distance) {
+        Block const& with = withDistance(state, distance);
+        if (&with == &state) return;
+        region.setBlock(p, with, 19);
+        ++gLeafDistanceWrites;
+    };
+    std::unordered_set<std::int64_t> trunk;
+    for (auto const& p : logs) trunk.insert(key(p));
+    struct Round {
+        std::vector<BlockPos>            list;
+        std::unordered_set<std::int64_t> set;
+        bool add(BlockPos const& p, std::int64_t k) {
+            if (!set.insert(k).second) return false;
+            list.push_back(p);
+            return true;
+        }
+    };
+    std::vector<Round> rounds(6);
+    for (auto const& log : logs)
+        for (Dir d : kAll) {
+            BlockPos n = rel(log, d);
+            auto     k = key(n);
+            if (trunk.contains(k)) continue;
+            Block const& state = region.getBlock(n);
+            if (!distanceOf(state)) continue;
+            rounds[0].add(n, k);
+            write(n, state, 1);
+        }
+    for (int l = 1; l < 6; ++l) {
+        auto& prev = rounds[static_cast<std::size_t>(l - 1)];
+        auto& next = rounds[static_cast<std::size_t>(l)];
+        for (auto const& p : prev.list)
+            for (Dir d : kAll) {
+                BlockPos n = rel(p, d);
+                auto     k = key(n);
+                if (prev.set.contains(k) || next.set.contains(k)) continue;
+                Block const& state = region.getBlock(n);
+                auto         dist  = distanceOf(state);
+                if (!dist || *dist <= l + 1) continue;
+                write(n, state, l + 1);
+                next.add(n, k);
+            }
+    }
+}
+
+/// The tree interpreter's decorator that runs knownShapeUpdateLeaves last (appended to the dark
+/// canopy and snow trees' decorators: TF runs it after the decorators).
+constexpr char kKnownShapeLeaves[] = "gf_trees:known_shape_update_leaves";
+
+Json withKnownShapeLeaves(Json config) {
+    if (!config.is_object()) return config;
+    if (!config.contains("decorators") || !config["decorators"].is_array()) config["decorators"] = Json::array();
+    config["decorators"].push_back(Json{{"type", kKnownShapeLeaves}});
+    return config;
 }
 
 /// TFTreeFeature#place: the setters, generate, then the config's decorators.
@@ -628,7 +700,7 @@ bool timeTree(Gen& g) {
 // ---- DarkCanopyTreeFeature / SnowTreeFeature ---------------------------------------------------------------
 
 bool placeVanillaTree(FeatureContext const& c, BlockPos const& origin) {
-    Json feature{{"type", "minecraft:tree"}, {"config", c.config}};
+    Json feature{{"type", "minecraft:tree"}, {"config", withKnownShapeLeaves(c.config)}};
     return gf::features::placeJson(feature, c.region, origin, c.random);
 }
 
@@ -707,7 +779,7 @@ bool darkCanopy(FeatureContext const& c) {
     bool const hasClip = size.contains("min_clipped_height");
     if (!(k1 >= i || (hasClip && k1 >= size["min_clipped_height"].get<int>()))) return false;
     ReplayRandom replay(c.random, {a, b});
-    Json         feature{{"type", "minecraft:tree"}, {"config", config}};
+    Json         feature{{"type", "minecraft:tree"}, {"config", withKnownShapeLeaves(config)}};
     return gf::features::placeJson(feature, c.region, pos, replay);
 }
 
@@ -751,6 +823,7 @@ void registerTreeFeatures() {
     // SnowTreeFeature: a copy of TreeFeature (trees on any sturdy ground: the placement checks it)
     registerType("twilightforest:anywhere_tree", [](FeatureContext const& c) { return placeVanillaTree(c, c.origin); });
     registerType("twilightforest:snow_under_trees", snowUnderTrees);
+    gf::features::registerTreeDecorator(kKnownShapeLeaves, [](gf::features::TreeContext& t, Json const&) { knownShapeUpdateLeaves(t.region, t.logs); });
 }
 
 } // namespace gf::feature::trees

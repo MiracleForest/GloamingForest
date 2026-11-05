@@ -8,7 +8,7 @@
 # clock ticking wheat); the host sends the leaf runes to the vanilla client itself, and the time core's
 # particles come as resource pack effects (the content log must stay clean of Molang errors).
 # Compare with TF's textures (textures/block/*leaves*, *sapling*, *_log_core*) and TF's tree shapes.
-# Screenshots: out/trees*/{tree-<n>-<name>,brown-cap-top,blocks,blocks-close,cores,cores-particles,runes,vanilla-probe,selftest}.png
+# Screenshots: out/trees*/{tree-<n>-<name>,brown-cap-top,blocks,blocks-close,mushroom-blocks,cores,cores-particles,particles-<n>,runes,leaf-items,leaf-items-hardened,vanilla-probe,selftest}.png
 Save-Screenshot 'hud' | Out-Null
 if ($script:Mode -eq 'local') {
     Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
@@ -56,6 +56,27 @@ if ($script:Mode -eq 'local') {
     Save-Screenshot 'cores' | Out-Null
     Start-Sleep -Milliseconds 1200
     Save-Screenshot 'cores-particles' | Out-Null
+    # the game's own brown and red cap blocks (huge_mushroom_bits 14) at the end of the row: the
+    # brown canopy mushroom's caps (brown-cap-top) must show the same skin
+    Invoke-Teleport "/tp @s $($bx + 73) $($by + 2) $($bz + 4) 180 25"
+    Start-Sleep -Seconds 2
+    Save-Screenshot 'mushroom-blocks' | Out-Null
+    # the sorting particles between two chests and the transformation particles around a fresh cell
+    # of the stand-in biome (brown mesa grass), the chunk resent to this client
+    $r = Invoke-SelfTest 'trees.particles_probe'
+    if ($r.Fail -gt 0) { throw 'trees.particles_probe failed' }
+    $q = Get-LeviLog | Select-String -Pattern 'trees particles probe at (-?\d+) (-?\d+) (-?\d+)' | Select-Object -Last 1
+    if (-not $q) { throw 'the particles probe logged no position' }
+    $qx = [int]$q.Matches[0].Groups[1].Value; $qy = [int]$q.Matches[0].Groups[2].Value; $qz = [int]$q.Matches[0].Groups[3].Value
+    Invoke-Teleport "/tp @s $($qx + 0.5) $($qy + 5) $($qz + 9) 180 30"
+    Wait-LogLine 'trees: the transformation core at .* \(chunk resent to [1-9]\d* players\)' 60 | Out-Null
+    Start-Sleep -Milliseconds 400
+    Save-Screenshot 'particles-1' | Out-Null
+    Start-Sleep -Milliseconds 300
+    Save-Screenshot 'particles-2' | Out-Null
+    Start-Sleep -Milliseconds 300
+    Save-Screenshot 'particles-3' | Out-Null
+    Wait-LogLine 'trees: particles probe: [1-9]\d* chunk resends sent to real clients' 60 | Out-Null
     # leaves of transformation 4 blocks up shed runes (drawn by the client mod), over an active
     # timewood clock ticking wheat
     $r = Invoke-SelfTest 'trees.vanilla_probe'
@@ -67,6 +88,22 @@ if ($script:Mode -eq 'local') {
     Wait-LogLine 'trees: the client draws the leaf runes' 30 | Out-Null
     Start-Sleep -Seconds 1
     Save-Screenshot 'runes' | Out-Null
+    # the ten leaves as items (Java: the item colour without a world; the magic leaves at fade 0)
+    Invoke-Chat '/gamemode creative'
+    Invoke-Chat '/clear @s'
+    $i = 0
+    foreach ($leaf in 'twilight_oak_leaves', 'canopy_leaves', 'mangrove_leaves', 'dark_leaves', 'rainbow_oak_leaves', 'time_leaves', 'transformation_leaves', 'mining_leaves', 'sorting_leaves') {
+        Invoke-Chat "/replaceitem entity @s slot.hotbar $i twilightforest:$leaf"
+        $i++
+    }
+    Invoke-Teleport "/tp @s $($px + 0.5) $($py + 1) $($pz + 12) 180 -60"
+    Start-Sleep -Seconds 2
+    Save-Screenshot 'leaf-items' | Out-Null
+    Invoke-Chat '/replaceitem entity @s slot.hotbar 0 twilightforest:hardened_dark_leaves'
+    Start-Sleep -Seconds 1
+    Save-Screenshot 'leaf-items-hardened' | Out-Null
+    Invoke-Chat '/clear @s'
+    Invoke-Chat '/gamemode spectator'
     $r = Invoke-SelfTest 'trees.zz_showcase_restore'
     if ($r.Fail -gt 0) { throw 'trees.zz_showcase_restore failed' }
 } else {
