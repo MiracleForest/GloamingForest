@@ -554,6 +554,20 @@ Click 0.5 0.5 -Relative -Right
 Start-Sleep -Seconds 2
 Save-Screenshot 'families-29-tf-slab-in-water' | Out-Null
 Invoke-Build "replaceitem entity @a slot.weapon.mainhand 0 air"
+# the server confirms the slab went into the water and holds it (the screenshot alone hardly tells a
+# waterlogged slab from the floor): families.water_slab_probe names a twilight_oak_slab with water
+# in its extra layer near this client's player
+$mark = Get-LogMark
+$r = Invoke-SelfTest 'families.water_slab_probe'
+if ($r.Pass -ne 1) { throw 'families.water_slab_probe did not pass' }
+$wetLine = "twilightforest:twilight_oak_slab in water at $px $($y - 1) $z"
+try { Wait-LogLine ([regex]::Escape($wetLine)) 15 -Since $mark | Out-Null; $wet = $true }
+catch { if ("$_" -match '^Game exited') { throw }; $wet = $false }
+if (-not $wet) {
+    $seen = @(Get-LeviLog -Since $mark | Select-String -Pattern 'twilight_oak_slab|nothing to probe|near the client players' | ForEach-Object { $_.Line })
+    throw "the slab placed into the water is not a waterlogged twilight_oak_slab at $px $($y - 1) $z on the server ($($seen -join '; '))"
+}
+Write-Step "the server holds a waterlogged twilight_oak_slab at $px $($y - 1) $z"
 
 # The text of a sign written by the server (families.sign_a_write): the client mod draws it on the
 # board (front: four lines), a vanilla client shows the name tag of the side facing it (the front:

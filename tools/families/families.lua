@@ -2122,8 +2122,12 @@ local function sound_event(def)
     return out
 end
 
--- Adds place_in_water to the sound type of every waterloggable family block of `result`, and the
--- chest events to the sound type of every chest family block, in the pack's sounds.json.
+-- Adds place_in_water to the sound type of every waterloggable family block of `by_id`, and the
+-- chest events to the sound type of every chest family block, in the pack's sounds.json. Every
+-- family entry counts, the generated blocks and the ones a unit makes by hand (a manual BP file:
+-- the kit leaves its document alone, but its sound type still needs the events). Such a block
+-- without any sound type in the pack's blocks.json fails: the game would look the events up on a
+-- type nobody defined them for.
 local function add_family_sound_events(rpdir, result, by_id, errors)
     local blocks = try_json(path.join(rpdir, "blocks.json")) or {}
     local function type_of(id)
@@ -2131,13 +2135,18 @@ local function add_family_sound_events(rpdir, result, by_id, errors)
         return type(b) == "table" and type(b.sound) == "string" and b.sound or nil
     end
     local in_water, chests = {}, {}
-    for id, _ in pairs(result.waterloggable) do
-        local t = type_of(id)
-        if t then in_water[t] = in_water[t] or id end
-    end
-    for id, _ in pairs(result.chests) do
-        local t = by_id[id] and type_of(id)
-        if t then chests[t] = chests[t] or id end
+    for _, id in ipairs(sorted_keys(by_id)) do
+        local g = by_id[id]
+        local chest = g.shape == "chest" or g.shape == "trapped_chest"
+        if g.modifiers.waterloggable or chest then
+            local t = type_of(id)
+            if t == nil then
+                table.insert(errors, string.format("families: %s is a %s family block without a block sound type in the resource pack's blocks.json (params.sound, or its blocks.d fragment), so it has no %s event", id, chest and "chest" or "waterloggable", chest and "chest.open / chest.closed" or "place_in_water"))
+            else
+                if g.modifiers.waterloggable then in_water[t] = in_water[t] or id end
+                if chest then chests[t] = chests[t] or id end
+            end
+        end
     end
     if table.empty(in_water) and table.empty(chests) then return end
     merge_json_file(path.join(rpdir, "sounds.json"), function (doc)
@@ -2303,6 +2312,12 @@ local function generate_set(entries, bpdir, rpdir, opts, errors)
             return doc
         end)
     end
+    -- the family blocks whose sound type the manual layer set (id -> sound): the runtime's check
+    -- (families.sound_events) takes these as they are, as the merge above does
+    result.manual_sounds = {}
+    for id, _ in pairs(by_id) do
+        if manual_sounds[id] then result.manual_sounds[id] = manual_sounds[id].sound end
+    end
     add_family_sound_events(rpdir, result, by_id, errors)
     return result
 end
@@ -2361,6 +2376,17 @@ local function write_ct_corners(outdir, corners, name, files)
     local file = path.join(outdir, "data", "gf", "families_render", name)
     os.mkdir(path.directory(file))
     json.savefile(file, {ct_corners = corners})
+    table.insert(files, file)
+end
+
+-- The family blocks whose block sound type the hand-made RP layer sets (data/gf/families_sounds/<name>):
+-- {manual: {id: sound}}. The manual layer wins per id over the family's sound (FORCED_SOUND too),
+-- and families.sound_events accepts these as the merge kept them.
+local function write_manual_sounds(outdir, sounds, name, files)
+    if table.empty(sounds) then return end
+    local file = path.join(outdir, "data", "gf", "families_sounds", name)
+    os.mkdir(path.directory(file))
+    json.savefile(file, {manual = sounds})
     table.insert(files, file)
 end
 
@@ -2536,6 +2562,7 @@ function generate(projectdir, outdir, opts)
             for id, shape in pairs(r.chests) do summary.chests[id] = shape; summary.chest_tags[id] = r.tags[id] end
             declare_chests(outdir, r.chests, "families.json", summary.files)
             write_ct_corners(outdir, r.ct_corners, "families.json", summary.files)
+            write_manual_sounds(outdir, r.manual_sounds, "families.json", summary.files)
             mark(bp, r.blocks)
         end
     end
@@ -2557,6 +2584,7 @@ function generate(projectdir, outdir, opts)
             for id, shape in pairs(r.chests) do summary.chests[id] = shape; summary.chest_tags[id] = r.tags[id] end
             declare_chests(outdir, r.chests, "families_test.json", summary.files)
             write_ct_corners(outdir, r.ct_corners, "families_test.json", summary.files)
+            write_manual_sounds(outdir, r.manual_sounds, "families_test.json", summary.files)
             mark(tbp, r.blocks)
             -- fixture textures (vanilla texture paths) and names
             merge_json_file(path.join(trp, "textures", "terrain_texture.json"), function (doc)

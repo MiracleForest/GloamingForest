@@ -43,6 +43,7 @@
 #include <vector>
 
 #include "ll/api/memory/Hook.h"
+#include "ll/api/service/Bedrock.h"
 
 #include "mc/deps/core/math/Vec3.h"
 #include "mc/deps/shared_types/legacy/LevelSoundEvent.h"
@@ -480,6 +481,17 @@ GF_REGISTER_SELFTEST("families.sound_events", [](Context& ctx) {
                 if (def.is_object() && def.contains("events") && def["events"].is_object())
                     for (auto const& [e, v] : def["events"].items()) events[t][e] = v;
     }
+    // the family blocks whose sound type the hand-made RP layer set (tools/families:
+    // data/gf/families_sounds): the manual layer wins per id, also over the hanging signs' type
+    std::map<std::string, std::string> manualSound;
+    std::error_code                    ec;
+    for (fs::directory_iterator it(dir / "data" / "gf" / "families_sounds", ec), end; !ec && it != end; it.increment(ec)) {
+        if (it->path().extension() != ".json") continue;
+        auto doc = read(it->path());
+        if (doc.is_object() && doc.contains("manual") && doc["manual"].is_object())
+            for (auto const& [id, s] : doc["manual"].items())
+                if (s.is_string()) manualSound[id] = s.get<std::string>();
+    }
     auto event = [&](std::string const& t, char const* e) -> JsonT const* {
         auto it = events.find(t);
         return it != events.end() && it->second.contains(e) ? &it->second[e] : nullptr;
@@ -492,15 +504,23 @@ GF_REGISTER_SELFTEST("families.sound_events", [](Context& ctx) {
             // CeilingHangingSignBlock / WallHangingSignBlock: properties.sound(woodType.hangingSignSoundType()),
             // SoundType.HANGING_SIGN for TF's wood types
             ++hanging;
-            if (it == soundOf.end() || it->second != "hanging_sign")
+            auto byHand = manualSound.find(e->id);
+            if (it != soundOf.end() && byHand != manualSound.end() && byHand->second == it->second) {
+                ctx.info(e->id + " keeps the manual layer's sound type " + it->second);
+            } else if (it == soundOf.end() || it->second != "hanging_sign")
                 missing.insert("hanging_sign sound type (" + e->id + ": " + (it == soundOf.end() ? std::string("none") : it->second) + ")");
         }
-        if (it == soundOf.end()) continue;
+        bool const chest = e->family == fam::Family::Chest || e->family == fam::Family::TrappedChest;
+        if (it == soundOf.end()) {
+            // (tools/families fails such a block at assemble: the events need a type to live on)
+            if ((e->has(fam::Waterloggable) || chest) && gf::game::blockWith(e->id)) missing.insert("a sound type (" + e->id + ")");
+            continue;
+        }
         if (e->has(fam::Waterloggable)) {
             ++checked;
             if (!event(it->second, "place_in_water")) missing.insert(it->second + " place_in_water (" + e->id + ")");
         }
-        if (e->family == fam::Family::Chest || e->family == fam::Family::TrappedChest) {
+        if (chest) {
             ++chests;
             for (auto const* name : {"chest.open", "chest.closed"}) {
                 auto const* v = event(it->second, name);
@@ -642,4 +662,40 @@ GF_REGISTER_SELFTEST("families.place_in_water_sound", [](Context& ctx) -> ll::co
         ctx.setBlock(w, "minecraft:air");
     }
     (void)box;
+});
+
+GF_REGISTER_SELFTEST("families.water_slab_probe", [](Context& ctx) {
+    // the client e2e's check (tools/e2e/client/scenarios/families.ps1) that the slab its player placed
+    // into water from the water's edge is there and holds the water, on the server: a TF waterloggable
+    // slab with water in its extra layer within a few blocks of a player that is no simulated player.
+    // Without such a player (the server scenarios, full) there is nothing to look at.
+    constexpr char kSlab[] = "twilightforest:twilight_oak_slab";
+    auto level = ll::service::getLevel();
+    if (!level) {
+        ctx.info("no level");
+        return;
+    }
+    int  players = 0;
+    bool found   = false;
+    auto xyz     = [](BlockPos const& q) { return std::to_string(q.x) + " " + std::to_string(q.y) + " " + std::to_string(q.z); };
+    level->forEachPlayer([&](Player& player) {
+        if (player.isSimulatedPlayer()) return true;
+        ++players;
+        auto&      region = player.getDimensionBlockSource();
+        auto const feet   = player.getFeetBlockPos();
+        // every slab in reach is named (another one nearby must not hide the one the client placed)
+        for (int dx = -4; dx <= 4; ++dx)
+            for (int dy = -3; dy <= 1; ++dy)
+                for (int dz = -4; dz <= 4; ++dz) {
+                    BlockPos const q{feet.x + dx, feet.y + dy, feet.z + dz};
+                    if (region.getBlock(q).getTypeName() != kSlab) continue;
+                    auto const& extra = region.getExtraBlock(q).getTypeName();
+                    bool const  wet   = extra == "minecraft:water" || extra == "minecraft:flowing_water";
+                    found             = found || wet;
+                    ctx.info(std::string(kSlab) + (wet ? " in water at " : " without water at ") + xyz(q) + (wet ? std::string() : " (" + extra + ")"));
+                }
+        return true;
+    });
+    if (players == 0) ctx.info("no client player: nothing to probe");
+    else if (!found) ctx.info("no " + std::string(kSlab) + " in water near the client players");
 });
