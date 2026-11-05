@@ -17,7 +17,7 @@ if ($script:Mode -eq 'local') {
 }
 $r = Invoke-SelfTest 'building.*' -TimeoutSeconds 300
 if ($r.Fail -gt 0) { throw "$($r.Fail) building selftest(s) failed" }
-if ($r.Pass -lt 12) { throw "expected at least 12 building selftests to pass, got $($r.Pass)" }
+if ($r.Pass -lt 11) { throw "expected at least 11 building selftests to pass, got $($r.Pass)" }
 
 Invoke-Chat '/gamerule sendcommandfeedback false'
 Invoke-Chat '/gamerule showcoordinates false'

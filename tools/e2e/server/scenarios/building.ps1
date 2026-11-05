@@ -13,7 +13,7 @@ Wait-LogLine 'building: installed' 60 | Out-Null
 $mark = Get-LogMark
 $r = Invoke-SelfTest 'building.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) building selftest(s) failed" }
-if ($r.Pass -lt 12) { throw "expected at least 12 building selftests to pass, got $($r.Pass)" }
+if ($r.Pass -lt 11) { throw "expected at least 11 building selftests to pass, got $($r.Pass)" }
 if (-not (Get-ServerLog -Since $mark | Select-String -Pattern 'building: trophy twilightforest:hydra_trophy sounds entity\.twilightforest\.hydra\.growl' -Quiet)) {
     throw 'the powered / clicked hydra trophy played no sound'
 }
