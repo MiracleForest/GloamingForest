@@ -8,7 +8,7 @@
       "air": {
         "fog_start": 0.1875,
         "fog_end": 0.25,
-        "fog_color": "#50465D",
+        "fog_color": "#827391",
         "render_distance_type": "render"
       }
     }
