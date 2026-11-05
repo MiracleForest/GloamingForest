@@ -1,0 +1,19 @@
+{
+  "format_version": "1.21.70",
+  "minecraft:client_biome": {
+    "description": {
+      "identifier": "twilightforest:enchanted_forest"
+    },
+    "components": {
+      "minecraft:sky_color": {
+        "sky_color": "#20224A"
+      },
+      "minecraft:grass_appearance": {
+        "color": "#00FF80"
+      },
+      "minecraft:foliage_appearance": {
+        "color": "#00FF80"
+      }
+    }
+  }
+}

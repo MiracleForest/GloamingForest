@@ -1,0 +1,18 @@
+{
+  "format_version": "1.21.110",
+  "minecraft:biome": {
+    "description": {
+      "identifier": "twilightforest:highlands"
+    },
+    "components": {
+      "minecraft:climate": {
+        "temperature": 0.4,
+        "downfall": 0.7,
+        "snow_accumulation": [
+          0.0,
+          0.125
+        ]
+      }
+    }
+  }
+}

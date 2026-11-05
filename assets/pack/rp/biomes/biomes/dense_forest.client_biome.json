@@ -1,0 +1,19 @@
+{
+  "format_version": "1.21.70",
+  "minecraft:client_biome": {
+    "description": {
+      "identifier": "twilightforest:dense_forest"
+    },
+    "components": {
+      "minecraft:sky_color": {
+        "sky_color": "#20224A"
+      },
+      "minecraft:fog_appearance": {
+        "fog_identifier": "gloamingforest:dense_forest_fog"
+      },
+      "minecraft:water_appearance": {
+        "surface_color": "#005522"
+      }
+    }
+  }
+}

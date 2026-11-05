@@ -1,0 +1,18 @@
+{
+  "format_version": "1.21.110",
+  "minecraft:biome": {
+    "description": {
+      "identifier": "twilightforest:oak_savannah"
+    },
+    "components": {
+      "minecraft:climate": {
+        "temperature": 0.9,
+        "downfall": 0.0,
+        "snow_accumulation": [
+          0.0,
+          0.125
+        ]
+      }
+    }
+  }
+}

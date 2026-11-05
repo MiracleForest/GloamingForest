@@ -1,0 +1,25 @@
+{
+  "format_version": "1.21.70",
+  "minecraft:client_biome": {
+    "description": {
+      "identifier": "twilightforest:swamp"
+    },
+    "components": {
+      "minecraft:sky_color": {
+        "sky_color": "#002112"
+      },
+      "minecraft:fog_appearance": {
+        "fog_identifier": "gloamingforest:swamp_fog"
+      },
+      "minecraft:water_appearance": {
+        "surface_color": "#95B55F"
+      },
+      "minecraft:grass_appearance": {
+        "color": "#5C694E"
+      },
+      "minecraft:foliage_appearance": {
+        "color": "#496137"
+      }
+    }
+  }
+}

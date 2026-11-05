@@ -1,0 +1,25 @@
+{
+  "format_version": "1.21.110",
+  "minecraft:biome": {
+    "description": {
+      "identifier": "twilightforest:dark_forest_center"
+    },
+    "components": {
+      "minecraft:climate": {
+        "temperature": 0.5,
+        "downfall": 0.5,
+        "snow_accumulation": [
+          0.0,
+          0.125
+        ]
+      },
+      "minecraft:map_tints": {
+        "foliage": "#F9821E",
+        "grass": {
+          "type": "tint",
+          "tint": "#667540"
+        }
+      }
+    }
+  }
+}

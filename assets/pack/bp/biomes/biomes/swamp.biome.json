@@ -1,0 +1,25 @@
+{
+  "format_version": "1.21.110",
+  "minecraft:biome": {
+    "description": {
+      "identifier": "twilightforest:swamp"
+    },
+    "components": {
+      "minecraft:climate": {
+        "temperature": 0.8,
+        "downfall": 0.9,
+        "snow_accumulation": [
+          0.0,
+          0.125
+        ]
+      },
+      "minecraft:map_tints": {
+        "foliage": "#496137",
+        "grass": {
+          "type": "tint",
+          "tint": "#5C694E"
+        }
+      }
+    }
+  }
+}

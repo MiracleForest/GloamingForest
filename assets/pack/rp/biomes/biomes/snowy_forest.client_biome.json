@@ -1,0 +1,22 @@
+{
+  "format_version": "1.21.70",
+  "minecraft:client_biome": {
+    "description": {
+      "identifier": "twilightforest:snowy_forest"
+    },
+    "components": {
+      "minecraft:sky_color": {
+        "sky_color": "#808080"
+      },
+      "minecraft:fog_appearance": {
+        "fog_identifier": "gloamingforest:snowy_forest_fog"
+      },
+      "minecraft:grass_appearance": {
+        "color": "#FFFFFF"
+      },
+      "minecraft:foliage_appearance": {
+        "color": "#FFFFFF"
+      }
+    }
+  }
+}

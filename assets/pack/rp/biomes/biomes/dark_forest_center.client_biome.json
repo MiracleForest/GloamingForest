@@ -1,0 +1,22 @@
+{
+  "format_version": "1.21.70",
+  "minecraft:client_biome": {
+    "description": {
+      "identifier": "twilightforest:dark_forest_center"
+    },
+    "components": {
+      "minecraft:sky_color": {
+        "sky_color": "#000000"
+      },
+      "minecraft:fog_appearance": {
+        "fog_identifier": "gloamingforest:dark_forest_center_fog"
+      },
+      "minecraft:grass_appearance": {
+        "color": "#667540"
+      },
+      "minecraft:foliage_appearance": {
+        "color": "#F9821E"
+      }
+    }
+  }
+}

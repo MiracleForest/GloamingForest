@@ -1,0 +1,13 @@
+{
+  "format_version": "1.21.70",
+  "minecraft:client_biome": {
+    "description": {
+      "identifier": "twilightforest:oak_savannah"
+    },
+    "components": {
+      "minecraft:sky_color": {
+        "sky_color": "#20224A"
+      }
+    }
+  }
+}
