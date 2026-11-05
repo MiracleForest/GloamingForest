@@ -1,0 +1,25 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:naga_part",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/nagasegment"
+      },
+      "geometry": {
+        "default": "geometry.twilightforest.naga_segment"
+      },
+      "scripts": {
+        "scale": "2.0",
+        "animate": ["pose"]
+      },
+      "animations": {
+        "pose": "animation.twilightforest.naga_segment.pose"
+      },
+      "render_controllers": ["controller.render.twilightforest.naga_segment"]
+    }
+  }
+}
