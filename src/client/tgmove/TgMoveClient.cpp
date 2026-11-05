@@ -23,9 +23,10 @@
 // Bedrock's movement is server authoritative: the server applies the same modifiers to its copy
 // of the player and pushes the double jump and the sidestep itself (feature/tgmove); a jump of the
 // client's own would be put back. The wings' animation (TravellersWingsModel) is computed here
-// every frame from the synced wing state and handed to the wings' attachable as Molang variables
-// (assets/pack/rp/animations/tgmove). Each user-visible action logs one line ("tgmove: ...") that
-// the e2e scenario measures.
+// every frame from the synced wing state and set as Molang variables on the wearer, which
+// animation.twilightforest.travellers_wings (assets/pack/rp/animations/tgmove) turns into the wing
+// bases' pose once the wings' attachable (U11 / F2) plays it. Each user-visible action logs one
+// line ("tgmove: ...") that the e2e scenario measures.
 
 #ifdef GF_CLIENT
 

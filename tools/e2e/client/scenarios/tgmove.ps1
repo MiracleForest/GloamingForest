@@ -5,7 +5,7 @@
 # the client mod measures each move (one "tgmove: ..." line per move, src/client/tgmove), compared
 # with TF:
 #   double jump  SPACE, then SPACE in the air: the second jump rises 0.62 (Jump Boost II) ->
-#                about 2.5 blocks above where it started; the wings take the DOUBLE_JUMP pose and
+#                about 2.5 blocks above where it started; the client computes the wings' DOUBLE_JUMP pose and
 #                the double_jump particles fall from them (screenshots right after the jump)
 #   sidestep     A, A within 4 ticks on the ground: a 1.6 push left, about 3.5 blocks
 #   glide        SHIFT held while falling: y velocity x 5/6 each tick -> about 0.36 blocks per tick
