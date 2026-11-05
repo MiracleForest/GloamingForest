@@ -424,6 +424,7 @@ MapItemSavedData* createData(Player& player, int centerX, int centerZ, int scale
     data.mScale     = static_cast<schar>(scale);
     data.mDimension.get() = player.getDimensionId();
     data.mLocked    = true; // painted by U13, never by Bedrock's terrain sampling
+    data.mParentMapId.get() = ActorUniqueID{-1}; // no zoom chain (Java's maps have none either)
     data.mUnlimitedTracking = false;
     data.mPixels.get().assign(128 * 128, 0u);
     data.mDirtyForSave = true;
@@ -637,6 +638,7 @@ ItemStack locatorMap(int dimension, int x, int z) {
     data.mScale             = 4;
     data.mDimension.get()  = DimensionType(dimension);
     data.mUnlimitedTracking = true;
+    data.mParentMapId.get() = ActorUniqueID{-1};
     data.mDirtyForSave      = true;
     // addTargetDecoration(stack, pos, "+", RED_X)
     if (auto at = cu::decorationPos(x, z, cx, cz, 4, 180.0)) putVanillaDecoration(data, MapDecoration::Type::XWhite, x, z, 2, *at);
@@ -703,6 +705,7 @@ private:
         // EmptyMagicMapItem#use
         gf::item::registerItem("twilightforest:magic_map", {.use = [](Player& player, ItemStack& held) {
                                    if (!gf::world::isTwilight(player.getDimension())) {
+                                       log().info("uncraftmaps: the magic map of {} faltered in dimension {}", player.getRealName(), static_cast<int>(player.getDimensionId()));
                                        actionBar(player, trFor(player, "misc.twilightforest.magic_map_fail", "The Magic faltered. Perhaps it doesn't work here?"));
                                        return gf::item::Result::Fail;
                                    }

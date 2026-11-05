@@ -35,6 +35,9 @@ Invoke-Build 'gamerule sendcommandfeedback false'
 
 $y = -60 # the flat world's first air layer
 $tx = 40; $tz = 70
+# stand there first: setblock needs the chunks loaded
+Invoke-Teleport "/tp $who $($tx + 2) $($y + 1) $($tz + 4) 180 25"
+Start-Sleep -Seconds 3
 Invoke-Build "setblock $tx $y $tz twilightforest:uncrafting_table"
 Invoke-Build "setblock $($tx + 3) $($y - 1) $tz amethyst_block"
 Invoke-Build "setblock $($tx + 3) $y $tz twilightforest:uncrafting_table"
@@ -101,10 +104,12 @@ foreach ($i in 'magic_map', 'maze_map', 'ore_map', 'magic_map_focus', 'maze_map_
 Start-Sleep -Seconds 1
 Save-Screenshot 'uncraftmaps-6-items' | Out-Null
 $mark = Get-LogMark
-Invoke-Build "twilightforest tp $(if ($script:Mode -eq 'local') { '' } else { '@a' })".Trim()
+if ($script:Mode -eq 'local') { Invoke-Chat '/twilightforest tp' } else { Send-HostConsole "execute as @a at @s run twilightforest tp" }
 Start-Sleep -Seconds 8
 Invoke-Build "replaceitem entity $who slot.hotbar 0 twilightforest:magic_map"
 Press-Key '1'
+# look up into the air and use the empty map (EmptyMagicMapItem#use)
+Invoke-Teleport "/tp $who ~ ~ ~ 0 -45"
 Start-Sleep -Seconds 1
 Click 0.5 0.5 -Relative -Right
 Wait-LogLine 'uncraftmaps: magic map -?\d+ for' 30 -Since $mark | Out-Null
