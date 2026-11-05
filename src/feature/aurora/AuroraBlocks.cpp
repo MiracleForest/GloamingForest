@@ -74,7 +74,8 @@ struct Mining {
     int          face        = 0;
     int          ticks       = 0;
     bool         progressed  = false; ///< the server saw destroy progress (server-authoritative breaking)
-    int          idle        = 0;     ///< ticks at progress 0 since then
+    int          idle        = 0;     ///< ticks without the engine's own progress since then
+    float        written     = 0.0F;  ///< the progress this wrote last tick
 };
 std::map<std::int64_t, Mining>& mining() {
     static std::map<std::int64_t, Mining> m;
@@ -103,7 +104,8 @@ void tickMining() {
         float const     progress = gameMode->mDestroyProgress;
         if (progress > 0.0F && at == m.pos) m.progressed = true;
         // stopDestroyBlock resets the progress; one tick at 0 can be the engine's own restart
-        m.idle       = (m.progressed && progress <= 0.0F) ? m.idle + 1 : 0;
+        // (stopped: the engine reset it, or it no longer adds its own progress to what this wrote)
+        m.idle       = (m.progressed && (progress <= 0.0F || (m.written > 0.0F && progress <= m.written + 1e-6F))) ? m.idle + 1 : 0;
         bool stopped = m.progressed && (!(at == m.pos) || m.idle >= 2);
         if (stopped && m.ticks > 0) {
             gf::log().info("aurora: aurora block mining stopped after {} ticks", m.ticks);
@@ -115,7 +117,8 @@ void tickMining() {
         if (m.progressed) {
             // server-authoritative breaking: the engine's own progress becomes TF's 0.1 a tick, so the
             // engine breaks the block itself (drops, sound, particles) when it reaches 1
-            gameMode->mDestroyProgress = std::max(static_cast<float>(gameMode->mDestroyProgress), std::min(1.0F, 0.1F * static_cast<float>(m.ticks)));
+            m.written                  = std::max(static_cast<float>(gameMode->mDestroyProgress), std::min(1.0F, 0.1F * static_cast<float>(m.ticks)));
+            gameMode->mDestroyProgress = m.written;
             if (m.ticks <= 12) {
                 ++it;
                 continue;

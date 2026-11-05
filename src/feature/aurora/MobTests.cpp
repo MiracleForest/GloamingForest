@@ -414,6 +414,19 @@ GF_REGISTER_SELFTEST("aurora.snow_queen_beam", [](Context& ctx) -> ll::coro::Cor
     std::string types;
     for (auto const& [type, amount] : dealt().hits) types += type + " ";
     ctx.info("damage the player took: " + (types.empty() ? std::string("none") : types));
+    ctx.check(breathing, "she beams once in place");
+    // the ray itself: one doRayAttack along a view straight at the player
+    if (auto* q = mobById(uid)) {
+        auto pp = ctx.player().getFeetPos();
+        q->teleportTo(Vec3{pp.x - 2.0f, pp.y + 0.2f, pp.z}, false, 0, 1, false);
+        q->setYHeadRot(-90.0f); // facing +x
+        dealt().hits.clear();
+        ctx.player().heal(20);
+        rayAttackForTest(*q);
+        for (auto const& [type, amount] : dealt().hits)
+            if (type == "twilightforest:chilling_breath") breath++;
+        ctx.info("ray hits: " + std::to_string(dealt().hits.size()));
+    }
     ctx.check(breath > 0, "the beam hit the player with chilling_breath");
     dealt().victim = 0;
     ctx.player().setPlayerGameType(GameType::Creative);
@@ -443,7 +456,7 @@ GF_REGISTER_SELFTEST("aurora.snow_queen_shields", [](Context& ctx) -> ll::coro::
     ctx.require(arrow != nullptr, "an arrow");
     if (auto pc = arrow->getEntityContext().tryGetComponent<ProjectileComponent>()) pc->mPiercingEnchantLevel = 1;
     ctx.check(pierceLevelForTest(*arrow) == 1, "the arrow pierces: level " + std::to_string(pierceLevelForTest(*arrow)));
-    gf::projectile::ext::setVelocity(*arrow, Vec3{1.2f, 0.0f, 0.0f});
+    fe::setMotion(*arrow, Vec3{1.2f, 0.0f, 0.0f});
     auto arrowId = uidOf(*arrow);
     float maxX   = sp.x - 2.5f;
     for (int i = 0; i < 8; i++) {

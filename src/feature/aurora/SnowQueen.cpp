@@ -555,6 +555,7 @@ private:
         mBeamY     = feet(target).y;
         mSeekTimer = 0;
     }
+public:
     static void doRayAttack(Mob& m) {
         double range = 20.0, offset = 10.0;
         auto   p     = feet(m);
@@ -750,7 +751,7 @@ void installSnowQueen() {
             return gf::combat::Verdict::Pass;
         }
         auto arrow = d.direct->getOrCreateUniqueID().rawID;
-        auto v     = gf::projectile::ext::velocity(*d.direct);
+        auto v     = gf::projectile::ext::isProjectile(*d.direct) ? gf::projectile::ext::velocity(*d.direct) : d.direct->getPosDelta();
         auto at    = feet(*d.direct);
         gf::interactions::nextTick([arrow, v, at] {
             auto* a = fe::actorById(arrow);
@@ -761,7 +762,8 @@ void installSnowQueen() {
                 float k = static_cast<float>(1.0 / len);
                 a->teleportTo(Vec3{at.x + v.x * k, at.y + v.y * k, at.z + v.z * k}, false, 0, 1, false);
             }
-            gf::projectile::ext::setVelocity(*a, v);
+            if (gf::projectile::ext::isProjectile(*a)) gf::projectile::ext::setVelocity(*a, v);
+            else fe::setMotion(*a, v); // a vanilla arrow: its motion
         });
         gf::log().info("aurora: a piercing arrow passes a snow queen shield");
         return gf::combat::Verdict::Cancel;
@@ -802,6 +804,7 @@ int  queenDropsForTest(Actor& queen, int* maxDrops) {
 }
 int  queenBeamDamageForTest(Actor& queen) { return stateOf(queen).damageWhileBeaming; }
 bool queenBreathingForTest(Actor& queen) { return stateOf(queen).breathing; }
+void rayAttackForTest(Mob& queen) { HoverBeamGoal::doRayAttack(queen); }
 int  pierceLevelForTest(Actor& projectile) { return pierceLevel(projectile); }
 
 } // namespace gf::feature::aurora
