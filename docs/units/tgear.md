@@ -136,17 +136,29 @@ its vanilla fallbacks and its deviations from TF 4.8 (for A8's deviation list).
   every unsupported book enchantment, leaving no result); a vanilla client may still preview a result,
   which the server refuses when it is taken.
 - Belts and storage (canFitInsideContainerItems): a belt with its container is refused by shulker box
-  slots, a shulker box's hopper input and bundles (server-side validation).- Red thread: the block model draws TF's 2 x 2 centre piece per face for everyone; the client mod draws the
-  connections (same block, next thread, round the corner unless a full face is in the way) with the
-  cutout material at the block's light, and while red thread is held or the vision is on, everything full
-  bright through walls (the UI textured material: no depth test). MultifaceSpreader: TF's red thread is not
-  bonemealable, so the spreader is never used. A face whose support goes is removed without a drop (Java's
-  updateShape); breaking the block drops one thread per face (the imported loot table). Selection boxes are
-  one box per state (63 permutations; the union of the 1 px face slabs: Bedrock has a single selection
-  box per block).
+  slots, a shulker box's hopper input and bundles (server-side validation).- Red thread: the block model draws TF's 2 x 2 centre piece per face for everyone (red, as TF). The
+  client mod draws the connections (same block, next thread, round the corner unless a full face is in the
+  way) and, while red thread is held or the vision is on, everything through walls. MultifaceSpreader: TF's
+  red thread is not bonemealable, so the spreader is never used. A face whose support goes is removed
+  without a drop (Java's updateShape); breaking the block drops one thread per face (the imported loot
+  table). Selection boxes are one box per state (63 permutations; the union of the 1 px face slabs:
+  Bedrock has a single selection box per block).
+- Red thread connections' colour: NOT ACHIEVED. The connection quads are drawn (the client logs "red thread
+  drawn") in the right places, but their pixels come out neutral grey / black (RGB 32..80, no red) in the
+  round-3 screenshots, with every combination tried: TF's texture loaded through the texture group
+  (round 2), the terrain atlas entry `tf_tgear_red_thread` with BlockGraphics' UV set (round 3), a
+  tf-derived copy with the thread red bled into the transparent texels (filtering cannot darken it), the
+  moving block's alpha-test material with the block light and per-vertex lightmap UVs, and `ui_textured`
+  with a white shader colour for the glow. Since even the unlit UI material gives grey, the sampled texels
+  are not the thread's: the atlas UV set or the immediate-mode texture binding of MeshHelpers does not map
+  to the atlas tile on 1.26.51. F12's drawGeo uses the same immediate path and has only been checked with a
+  file texture (its fixture). Routed to F12 with these screenshots
+  (tools/e2e/client/out/tgear/red-thread*.png): a verified "textured world quad" helper (or the geometry
+  drawn by drawGeo with a pack texture) would let U11 draw the connections without a change to its maths.
 - Wing visuals: the per-state wing animation is U12's (`tgmove`, TravellersWingsModel's animation).
 - Item display HUD map: the client e2e makes a real map (an empty map used in the hand) that
   `tgear.real_arm` stores, so the map widget is screenshotted with its colours.
 - Keys are keyboard bindings of the client mod (`tgear.zoom` Z, `tgear.swap_hotbar` V,
   `tgear.item_display_map_cycle` C, `tgear.red_thread_vision` unbound), TF's defaults. Bedrock's own keyboard
-  binding of Z also opens a screen over the view: remap one of the two in the controls to zoom without it.
+  binding of Z opens the mob effects screen, which takes the key while it is open: remap one of the two in
+  the controls to zoom (the client e2e unbinds the effects key for its run, tgear.prelaunch.ps1).
