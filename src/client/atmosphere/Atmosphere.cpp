@@ -253,13 +253,12 @@ std::shared_ptr<AtmosphereConfigView const> config() {
 /// skipped (TF's own biomes always count, the client may not have their definitions yet).
 void checkAuroraBiomes(Level& level, AtmosphereConfigView const& cfg) {
     std::lock_guard lock(unknownBiomes().mutex);
+    auto const&     reg = std::as_const(level).getBiomeRegistry();
+    if (reg.lookupByName("plains") == nullptr) return; // the world's biomes are not known yet
     for (auto const& name : cfg.auroraBiomes) {
         if (!unknownBiomes().checked.insert(name).second) continue;
         bool known = ca::biomeLook(name).has_value();
-        if (!known) {
-            auto const& reg = std::as_const(level).getBiomeRegistry();
-            known           = reg.lookupByName(name) != nullptr || reg.lookupByName("minecraft:" + name) != nullptr;
-        }
+        if (!known) known = reg.lookupByName(name) != nullptr || reg.lookupByName("minecraft:" + name) != nullptr;
         if (known) unknownBiomes().unknown.erase(name);
         else {
             unknownBiomes().unknown.insert(name);

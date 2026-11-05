@@ -83,6 +83,8 @@ FogState& fogState() {
     return s;
 }
 std::atomic<std::uint64_t> gPackets{0};
+/// A sent stack no real stack equals: the next update sends whatever it computes.
+constexpr char kStale[] = "\x01stale";
 
 std::int64_t keyOf(Player const& player) { return player.getOrCreateUniqueID().rawID; }
 
@@ -123,9 +125,10 @@ bool updateFog(Player& player, std::optional<std::string> const& biomeOverride) 
     }
     {
         std::lock_guard lock(fogState().mutex);
-        // a vanilla client resets its fog stack on a dimension change: send again after one
+        // a vanilla client may reset its fog stack on a dimension change: send the new stack (an
+        // empty one too, which clears TF's fog) whatever was sent before
         int const dim = static_cast<int>(player.getDimensionId());
-        if (auto d = fogState().dims.find(keyOf(player)); d != fogState().dims.end() && d->second != dim) fogState().sent.erase(keyOf(player));
+        if (auto d = fogState().dims.find(keyOf(player)); d != fogState().dims.end() && d->second != dim) fogState().sent[keyOf(player)] = {kStale};
         fogState().dims[keyOf(player)] = dim;
         auto it                        = fogState().sent.find(keyOf(player));
         if (it == fogState().sent.end() ? stack.empty() : it->second == stack) return false;
@@ -179,7 +182,10 @@ public:
         });
         // a respawned vanilla client starts from its default fog stack: the next update sends again
         mRespawn = bus.emplaceListener<ll::event::PlayerRespawnEvent>([](auto& ev) {
-            forgetFog(ev.self());
+            {
+                std::lock_guard lock(fogState().mutex);
+                fogState().sent[keyOf(ev.self())] = {kStale};
+            }
             log().info("atmosphere: fog of {} resent after the respawn", ev.self().getRealName());
         });
     }

@@ -150,17 +150,23 @@ void drawSmoothQuads(ScreenContext& screen, mce::MaterialPtr const& material, mc
     if (quads.size() < 4) return;
     Tessellator&      tess = screen.tessellator;
     WhiteShaderColour white(screen);
-    tess.begin(Tessellator::DebugContextCallback{}, mce::PrimitiveMode::QuadList, static_cast<int>(quads.size()), false);
-    for (auto const& v : quads) {
-        tess.color(v.r, v.g, v.b, v.a);
-        if (tex) tess.mNextUV[0] = glm::vec2{0.5f, 0.5f};
-        tess.vertex(v.x, v.y, v.z);
-    }
-    if (tex) {
-        std::variant<std::monostate, mce::TexturePtr, mce::ClientTexture, mce::ServerTexture> variant{*tex};
-        MeshHelpers::renderMeshImmediately(screen, tess, material, variant, OffscreenCaptureDescription{});
-    } else {
-        MeshHelpers::renderMeshImmediately(screen, tess, material, OffscreenCaptureDescription{});
+    // batches of at most 16 000 quads: an immediate mesh stays within 16-bit indices
+    constexpr std::size_t kBatch = 16000 * 4;
+    for (std::size_t from = 0; from + 3 < quads.size(); from += kBatch) {
+        std::size_t to = std::min(quads.size() - quads.size() % 4, from + kBatch);
+        tess.begin(Tessellator::DebugContextCallback{}, mce::PrimitiveMode::QuadList, static_cast<int>(to - from), false);
+        for (std::size_t i = from; i < to; ++i) {
+            auto const& v = quads[i];
+            tess.color(v.r, v.g, v.b, v.a);
+            if (tex) tess.mNextUV[0] = glm::vec2{0.5f, 0.5f};
+            tess.vertex(v.x, v.y, v.z);
+        }
+        if (tex) {
+            std::variant<std::monostate, mce::TexturePtr, mce::ClientTexture, mce::ServerTexture> variant{*tex};
+            MeshHelpers::renderMeshImmediately(screen, tess, material, variant, OffscreenCaptureDescription{});
+        } else {
+            MeshHelpers::renderMeshImmediately(screen, tess, material, OffscreenCaptureDescription{});
+        }
     }
 }
 

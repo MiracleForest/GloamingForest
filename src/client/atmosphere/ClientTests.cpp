@@ -130,7 +130,7 @@ GF_REGISTER_SELFTEST("atmosphere.client_weather_real", [](Context& ctx) -> ll::c
     }
     auto* lp = gf::client::currentPlayer();
     if (!lp) co_return;
-    bool const creative = lp->isCreative();
+    std::string const mode = lp->isCreative() ? "creative" : lp->isSpectator() ? "spectator" : lp->isAdventure() ? "adventure" : "survival";
     (void)gf::selftest::runServerCommand("tag @a add gf_atmosphere_real");
     (void)gf::selftest::runServerCommand("gamemode survival @a[tag=gf_atmosphere_real]");
     bool const locked = gf::progression::client::biomeLocked("twilightforest:snowy_forest");
@@ -143,7 +143,7 @@ GF_REGISTER_SELFTEST("atmosphere.client_weather_real", [](Context& ctx) -> ll::c
     co_await ctx.ticks(25);
     ctx.check(!atc::state().nearLocked, "the forest has no restriction");
     atc::setPreview(nlohmann::json::object());
-    if (creative) (void)gf::selftest::runServerCommand("gamemode creative @a[tag=gf_atmosphere_real]");
+    (void)gf::selftest::runServerCommand("gamemode " + mode + " @a[tag=gf_atmosphere_real]");
     (void)gf::selftest::runServerCommand("tag @a remove gf_atmosphere_real");
 });
 
