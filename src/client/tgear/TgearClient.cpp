@@ -142,7 +142,7 @@ void tickZoom(Player& player) {
     if (zoom == st().zooming.load()) return;
     st().zooming = zoom;
     feature::net::client::send("tgear.goggles_zoom", {{"zoom", zoom}});
-    log().info("tgear: zoom {} (fov x{}, world fov calls {})", zoom ? "in" : "out", zoom ? z : 1.f, ext::tgear::client::fovCalls());
+    log().info("tgear: zoom {} (fov x{}, base fov {}, world fov calls {})", zoom ? "in" : "out", zoom ? z : 1.f, ext::tgear::client::lastBaseFov(), ext::tgear::client::fovCalls());
 }
 
 bool holdingThread(Player const& player) {
@@ -645,7 +645,7 @@ public:
             if (auto* p = currentPlayer()) {
                 tickZoom(*p);
                 tickThreads(*p);
-                tickWornModels(*p);
+                tickWornModels(*p); // the wearer state as molang variables (no attachable can read them yet)
             }
         });
         hud::addLayer("tgear.item_display", 100, drawHud);

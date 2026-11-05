@@ -12,6 +12,7 @@
 #include "mc/client/player/LocalPlayer.h"
 #include "mc/client/renderer/game/LevelRendererPlayer.h"
 #include "mc/deps/core/math/Vec2.h"
+#include "mc/deps/vanilla_camera/CameraAPI.h"
 #include "mc/world/containers/SlotData.h"
 #include "mc/world/item/ItemStack.h"
 
@@ -63,9 +64,20 @@ namespace tc = gf::ext::tgear::client;
 LL_TYPE_INSTANCE_HOOK(TgearWorldFovHook, ll::memory::HookPriority::Normal, LevelRendererPlayer, &LevelRendererPlayer::getFov, float, float a, bool enableVariableFOV) {
     float fov = origin(a, enableVariableFOV);
     tc::gCalls.fetch_add(1, std::memory_order_relaxed);
-    tc::gLastBase.store(fov, std::memory_order_relaxed);
     float f = tc::gFov.load(std::memory_order_relaxed);
+    if (f == 1.f) tc::gLastBase.store(fov, std::memory_order_relaxed); // the FOV without the zoom
     return f == 1.f ? fov : fov * f;
+}
+
+// the vanilla camera's FOV (what the world camera is drawn with): while a factor is set, the camera's
+// own FOV (a camera preset's), else the level renderer's, times the factor
+LL_TYPE_INSTANCE_HOOK(TgearCameraFovHook, ll::memory::HookPriority::Normal, CameraAPI, &CameraAPI::$tryGetFOV, ::std::optional<float>) {
+    auto  fov = origin();
+    float f   = tc::gFov.load(std::memory_order_relaxed);
+    if (f == 1.f) return fov;
+    float base = fov ? *fov : tc::gLastBase.load(std::memory_order_relaxed);
+    if (base <= 1.f) return fov;
+    return base * f;
 }
 
 LL_TYPE_INSTANCE_HOOK(TgearTurnHook, ll::memory::HookPriority::Normal, LocalPlayer, &LocalPlayer::localPlayerTurn, void, ::Vec2 const& deltaRot) {
@@ -93,12 +105,14 @@ void installHooks() {
     TgearPlaceOneHook::hook();
     TgearTakeHalfHook::hook();
     TgearWorldFovHook::hook();
+    TgearCameraFovHook::hook();
     TgearTurnHook::hook();
 }
 void uninstallHooks() {
     TgearPlaceOneHook::unhook();
     TgearTakeHalfHook::unhook();
     TgearWorldFovHook::unhook();
+    TgearCameraFovHook::unhook();
     TgearTurnHook::unhook();
 }
 
