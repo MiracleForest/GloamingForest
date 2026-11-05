@@ -104,8 +104,11 @@ try {
     Save-Screenshot 'advancement-toast' | Out-Null
     Start-Sleep -Seconds 6
 
-    # the locked biome toast
-    if (Test-ClientTrace) {
+    # the locked biome toast (the client mod's countdown is driven by client selftests, which exist
+    # only in the client build: local mode; over a remote server the host runs the server build)
+    if ($script:Mode -eq 'remote-mod') {
+        Write-Step 'progression: the locked biome toast of the client mod is covered in local mode'
+    } elseif (Test-ClientTrace) {
         Invoke-Checked 'progression.client_toast' | Out-Null
         Start-Sleep -Seconds 6
         $mark = Get-LogMark
