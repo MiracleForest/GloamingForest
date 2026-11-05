@@ -687,7 +687,7 @@ Preview previewNow() {
 /// The fog thinning under Vibrant Visuals: F12 turns the provider's far plane into a uniform air fog
 /// (extinction 3 / end); Vibrant Visuals fogs its sky with it too, so at TF's planes the sky is the
 /// fog colour. The planes are stretched by this factor there (the fog colour stays TF's).
-constexpr float kVibrantFogStretch = 8.0f;
+constexpr float kVibrantFogStretch = 3.0f;
 
 std::optional<sky::FogSpec> fogFor(std::string const& playerBiome) {
     auto cfg = config();

@@ -202,8 +202,7 @@ function Invoke-AtmosphereViews([string]$mode) {
     $forest = Show-Atmosphere 'show_forest' "$mode-fog-forest" 'atmosphere: fog of twilightforest:forest' 4
     $spooky = Show-Atmosphere 'show_spooky' "$mode-fog-spooky" 'atmosphere: fog of twilightforest:spooky_forest' 12
     $d = Get-ColourDistance (Get-AtmosphereColour $forest) (Get-AtmosphereColour $spooky)
-    Write-Step "$mode fog forest vs spooky forest: colour distance $d"
-    if ($d -lt 4) { throw "the spooky forest fog does not show ($d)" }
+    Test-AtmosphereSignature "$mode fog forest vs spooky forest colour distance" $d 4 1000
     Show-Atmosphere 'show_dark_forest' "$mode-fog-dark-forest" 'atmosphere: fog of twilightforest:dark_forest' 4 | Out-Null
     $boss = Show-Atmosphere 'show_boss_fog' "$mode-fog-boss" 'atmosphere: fog of twilightforest:forest' 12
     $d = Get-ColourDistance (Get-AtmosphereColour $forest) (Get-AtmosphereColour $boss)
@@ -292,9 +291,11 @@ $script:AtmosphereSessionMark = 0
 Enter-Twilight
 foreach ($rx in 'atmosphere: sun, moon and vanilla stars hidden', 'atmosphere: TF stars drawn', 'atmosphere: cloud colour and sunrise of the frame overridden') { Wait-LogLine $rx 60 | Out-Null }
 Invoke-AtmosphereTest 'atmosphere.*' | Out-Null
-Invoke-Chat "/tag @s add $tag"
-Invoke-AtmosphereViews 'classic'
-Invoke-Chat "/tag @s remove $tag"
+if (-not ($calibrate -and $env:GF_ATMOSPHERE_VV_ONLY -eq '1')) { # (a calibration of Vibrant Visuals alone)
+    Invoke-Chat "/tag @s add $tag"
+    Invoke-AtmosphereViews 'classic'
+    Invoke-Chat "/tag @s remove $tag"
+}
 
 if (-not $remote) {
     # Vibrant Visuals: the same views after a restart with graphics_mode 2
