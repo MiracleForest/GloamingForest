@@ -15,6 +15,13 @@
         "op": "add",
         "path": "/config/trunk_placer/height_rand_b",
         "value": 0
+      },
+      {
+        "op": "add",
+        "path": "/config/decorators/-",
+        "value": {
+          "type": "gf_trees:update_leaves"
+        }
       }
     ],
     "bp/blocks/twilight_oak_leaves.json": [
@@ -339,6 +346,141 @@
             "destroy_speed": 1.333333
           }
         ]
+      }
+    ],
+    "data/twilightforest/worldgen/configured_feature/tree/canopy_tree.json": [
+      {
+        "op": "add",
+        "path": "/config/decorators/-",
+        "value": {
+          "type": "gf_trees:update_leaves"
+        }
+      }
+    ],
+    "data/twilightforest/worldgen/configured_feature/tree/dead_canopy_tree.json": [
+      {
+        "op": "add",
+        "path": "/config/decorators/-",
+        "value": {
+          "type": "gf_trees:update_leaves"
+        }
+      }
+    ],
+    "data/twilightforest/worldgen/configured_feature/tree/firefly_canopy_tree.json": [
+      {
+        "op": "add",
+        "path": "/config/decorators/-",
+        "value": {
+          "type": "gf_trees:update_leaves"
+        }
+      }
+    ],
+    "data/twilightforest/worldgen/configured_feature/tree/large_rainbow_oak.json": [
+      {
+        "op": "add",
+        "path": "/config/decorators/-",
+        "value": {
+          "type": "gf_trees:update_leaves"
+        }
+      }
+    ],
+    "data/twilightforest/worldgen/configured_feature/tree/large_twilight_oak_tree.json": [
+      {
+        "op": "add",
+        "path": "/config/decorators/-",
+        "value": {
+          "type": "gf_trees:update_leaves"
+        }
+      }
+    ],
+    "data/twilightforest/worldgen/configured_feature/tree/mega_spruce_tree.json": [
+      {
+        "op": "add",
+        "path": "/config/decorators/-",
+        "value": {
+          "type": "gf_trees:update_leaves"
+        }
+      }
+    ],
+    "data/twilightforest/worldgen/configured_feature/tree/oak_bush.json": [
+      {
+        "op": "add",
+        "path": "/config/decorators/-",
+        "value": {
+          "type": "gf_trees:update_leaves"
+        }
+      }
+    ],
+    "data/twilightforest/worldgen/configured_feature/tree/rainbow_oak.json": [
+      {
+        "op": "add",
+        "path": "/config/decorators/-",
+        "value": {
+          "type": "gf_trees:update_leaves"
+        }
+      }
+    ],
+    "data/twilightforest/worldgen/configured_feature/tree/smaller_jungle_tree.json": [
+      {
+        "op": "add",
+        "path": "/config/decorators/-",
+        "value": {
+          "type": "gf_trees:update_leaves"
+        }
+      }
+    ],
+    "data/twilightforest/worldgen/configured_feature/tree/sorting_tree.json": [
+      {
+        "op": "add",
+        "path": "/config/decorators/-",
+        "value": {
+          "type": "gf_trees:update_leaves"
+        }
+      }
+    ],
+    "data/twilightforest/worldgen/configured_feature/tree/swampy_oak_tree.json": [
+      {
+        "op": "add",
+        "path": "/config/decorators/-",
+        "value": {
+          "type": "gf_trees:update_leaves"
+        }
+      }
+    ],
+    "data/twilightforest/worldgen/configured_feature/tree/transformation_tree.json": [
+      {
+        "op": "add",
+        "path": "/config/decorators/-",
+        "value": {
+          "type": "gf_trees:update_leaves"
+        }
+      }
+    ],
+    "data/twilightforest/worldgen/configured_feature/tree/twilight_oak_tree.json": [
+      {
+        "op": "add",
+        "path": "/config/decorators/-",
+        "value": {
+          "type": "gf_trees:update_leaves"
+        }
+      }
+    ],
+    "data/twilightforest/worldgen/configured_feature/tree/vanilla_birch_tree.json": [
+      {
+        "op": "add",
+        "path": "/config/decorators/-",
+        "value": {
+          "type": "gf_trees:update_leaves"
+        }
+      }
+    ],
+    "data/twilightforest/worldgen/configured_feature/tree/vanilla_oak_tree.json": [
+      {
+        "op": "add",
+        "path": "/config/decorators/-",
+        "value": {
+          "type": "gf_trees:update_leaves"
+        }
       }
     ]
   }

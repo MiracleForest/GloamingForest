@@ -63,7 +63,9 @@ clamped to TF's `defineInRange(0, 128)`; a range of 0 disables the core.
 - Hardened dark leaves: no natural spawn stands on them (an empty spawn list there through
   `gf::spawn::onSpecialSpawn`); pick block gives dark leaves (`PickBlock` extension).
 - Leaf runes: the client mod runs ClientLevel#animateTick's sampling itself; the server does it only
-  for players without the client mod and sends each rune to that player alone (at most 16 a tick).
+  for players without the client mod and sends each rune to that player alone (at most 16 a tick),
+  and only while leaves of transformation are within the samples' reach (a block palette look over
+  the sub-chunks within 31 blocks, refreshed every 20 ticks per player).
 
 ## Tree features
 
@@ -73,15 +75,54 @@ seven work sets iterate in Java's HashSet order, `core::trees::JavaHashSet`).
 F11 recomputes leaf distances on neighbour changes). The decorators get their position sets in
 Java's HashSet order, then sorted by y. `dark_canopy_tree` checks DarkCanopyTreeFeature's own free
 height (logs are not free) before the tree interpreter, which replays the two trunk height draws.
+`dark_canopy_tree` and `anywhere_tree` (SnowTreeFeature) then run their own copy of the older
+`TreeFeature.updateLeaves` (distance 1 next to the trunk, five rounds lowering to `l + 1`, not
+bounded by the tree's box): a decorator `gf_trees:known_shape_update_leaves` appended to the
+interpreter's decorator list runs it last, with the interpreter's trunk set (F5's `minecraft:tree`
+itself writes no leaf distances).
+
+### Java oracle comparison
+
+`trees.golden_*` and `trees.sapling_hashes` also compare their box block by block with TF 4.8 on
+NeoForge 1.21.1 (`data/gf/java_goldens/trees.json`, from `assets/data/java_goldens/trees.json`), when
+the oracle placed the tree at the same absolute box (the positions follow the world's spawn: the
+server e2e world's). The dump comes from a `trees` kind of the F13 oracle dumper
+(`tests/trees/oracle/`: the Java source, the spec section and how to run it): each case clears the
+flat area as `flatArea` does, places the configured feature with `LegacyRandomSource(seed)` or plants
+the sapling and calls `SaplingBlock#advanceTree` twice with one, and dumps the box.
+
+## Client e2e probes
+
+`trees.showcase` (client builds) builds every tree and block for the screenshots, plus the game's own
+brown and red cap blocks (`huge_mushroom_bits` 14) to compare the brown canopy mushroom's caps with.
+`trees.particles_probe` (client builds) drives a sortingwood engine between two chests and a heart of
+transformation (range 4, the stand-in biome `minecraft:mesa` without U1) every 10 / 20 ticks for a
+minute: the sorting and transformation particles in flight, and the chunk resend reaching the real
+client (`chunk resent to 1 players`, the brown mesa cell on screen). `trees.vanilla_probe` (both
+builds: the remote modes run it on the host) stands 250 blocks east and 64 north of the unit's row and
+puts itself back after 2400 ticks (loading its area again through F4's `loadArea` if needed), so a
+`full` run or a glob with only the probe leaves nothing behind; `trees.zz_showcase_restore` puts
+everything (blocks, biomes, the stand-in) back at once.
 
 ## Known gaps (other units)
 
 - Hollow oak sapling: the clearance (HollowTreeStructure#checkSaplingClearance) runs here; the hollow
   tree itself is U18's landmark generator (`twilightforest:hollow_tree`); until it lands the sapling
-  stays, as TF's grower leaves it without a valid start.
+  stays, as TF's grower leaves it without a valid start. The landmark contract has no validate-only
+  step, so the sapling stays in place while `generateAt` builds the start: a failed start changes
+  nothing (no block update, no F11 events); after a valid one the sapling goes unless a piece put
+  something else there (TF removes it before placing; its pieces overwrite that air).
 - Transformation core: needs U1's enchanted forest biome.
 - F11 recomputes leaf distances when leaves are placed (Java's tree placement uses
-  UPDATE_KNOWN_SHAPE, which does not); TF's quirky distances from `updateLeaves` are therefore
-  replaced by the true distances a tick later.
+  UPDATE_KNOWN_SHAPE, which does not); TF's distances from `updateLeaves` are therefore replaced by
+  the true distances a tick later. `trees.leaf_distance_after_growth` measures it on a sapling-grown
+  mega canopy tree (right after growth 3911 of 4008 leaves at distance 1 and 97 decay-bound, as TF
+  keeps them; 40 ticks later 1153 at distance 1 and none decay-bound) and logs `PARITY GAP (F11)`.
+- Vanilla clients see the magic leaves (time, transformation, mining, sorting, rainbow oak) in the
+  biome's foliage colour: the families kit gives them `tint_method: default_foliage` so the client
+  mod's position tint (F12's `PositionDependentTintResolver` hook, which the game calls only for
+  tinted materials) can draw ColorHandler's colours; Bedrock's tint methods are all biome colours, and
+  a pre-tinted texture would be multiplied again by that tint. The fix belongs to F11 / F12 (see the
+  PR's routing notes).
 - F5's natural spawner does not check `BlockState#isValidSpawn`; hardened dark leaves use the
   special spawn list instead (a landmark's own list registered before it wins there).

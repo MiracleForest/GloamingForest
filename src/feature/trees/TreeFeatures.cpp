@@ -36,6 +36,7 @@
 #include "core/jrand/JavaOrder.h"
 #include "core/trees/JavaHashSet.h"
 #include "feature/ext/worldgen/FeatureKit.h"
+#include "feature/features/Internal.h"
 #include "feature/trees/TreeUtil.h"
 #include "game/Blocks.h"
 #include "mod/Log.h"
@@ -142,12 +143,14 @@ std::optional<int> optionalDistanceAt(Block const& b) {
 /// decides the order of the writes. StructureTemplate.updateShapeAtEdge, which follows in Java,
 /// recomputes the shapes of the blocks around the box's filled cells: Bedrock connects block shapes
 /// itself, and F11 recomputes leaf distances on neighbour changes.
-void updateLeaves(Region& region, std::vector<BlockPos> const& sources, std::vector<BlockPos> const& trunk, std::vector<BlockPos> const& roots) {
+/// `boxOnly` adds positions to the box only (vanilla's foliage set).
+void updateLeaves(Region& region, std::vector<BlockPos> const& sources, std::vector<BlockPos> const& trunk, std::vector<BlockPos> const& roots,
+                  std::vector<BlockPos> const& boxOnly = {}) {
     using core::trees::JavaHashSet;
     // BoundingBox.encapsulatingPositions(set, set1, set2, set3)
     bool any  = false;
     int  minX = 0, minY = 0, minZ = 0, maxX = 0, maxY = 0, maxZ = 0;
-    for (auto const* list : {&trunk, &sources, &roots})
+    for (auto const* list : {&trunk, &sources, &roots, &boxOnly})
         for (auto const& p : *list) {
             if (!any) {
                 minX = maxX = p.x;
@@ -264,7 +267,10 @@ void knownShapeUpdateLeaves(Region& region, std::vector<BlockPos> const& logs) {
 
 /// The tree interpreter's decorator that runs knownShapeUpdateLeaves last (appended to the dark
 /// canopy and snow trees' decorators: TF runs it after the decorators).
-constexpr char kKnownShapeLeaves[] = "gf_trees:known_shape_update_leaves";
+constexpr char kKnownShapeLeaves[] = "gf_trees:legacy_update_leaves";
+
+/// TreeFeature.updateLeaves after F5's minecraft:tree (data: the import override appends it).
+constexpr char kTreeUpdateLeaves[] = "gf_trees:update_leaves";
 
 Json withKnownShapeLeaves(Json config) {
     if (!config.is_object()) return config;
@@ -824,6 +830,15 @@ void registerTreeFeatures() {
     registerType("twilightforest:anywhere_tree", [](FeatureContext const& c) { return placeVanillaTree(c, c.origin); });
     registerType("twilightforest:snow_under_trees", snowUnderTrees);
     gf::features::registerTreeDecorator(kKnownShapeLeaves, [](gf::features::TreeContext& t, Json const&) { knownShapeUpdateLeaves(t.region, t.logs); });
+    // TreeFeature#place's own updateLeaves (1.21.1: the trunk is the source, the decorations and roots
+    // are filled, the box holds every set), which F5's minecraft:tree interpreter does not run: TF's
+    // vanilla-type trees (tools/import/overrides/trees.json appends it as their last decorator)
+    gf::features::registerTreeDecorator(kTreeUpdateLeaves, [](gf::features::TreeContext& t, Json const&) {
+        auto& state = static_cast<gf::features::detail::TreeState&>(t); // the interpreter's own context
+        std::vector<BlockPos> filled = state.decorations;
+        filled.insert(filled.end(), t.roots.begin(), t.roots.end());
+        updateLeaves(t.region, t.logs, filled, {}, t.leaves);
+    });
 }
 
 } // namespace gf::feature::trees

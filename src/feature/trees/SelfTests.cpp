@@ -193,8 +193,11 @@ int countBlocks(BlockSource& region, BlockBox const& box, std::string_view needl
     return n;
 }
 
-/// Places every feature of `ids` on a 4 x 4 grid of 36-block cells in one flat area.
-ll::coro::CoroTask<> placeAll(Context& ctx, int dx, std::vector<std::string> const& ids) {
+bool compareWithJava(Context& ctx, std::string const& name, BlockBox const& box);
+
+/// Places every feature of `ids` on a 4 x 4 grid of 36-block cells in one flat area, then compares the
+/// area with the Java oracle's `name` case.
+ll::coro::CoroTask<> placeAll(Context& ctx, int dx, std::string name, std::vector<std::string> const& ids) {
     auto box = co_await ctx.flatArea(dx, 144, 72);
     for (std::size_t i = 0; i < ids.size(); ++i) {
         int      cx  = static_cast<int>(i % 4), cz = static_cast<int>(i / 4);
@@ -205,6 +208,7 @@ ll::coro::CoroTask<> placeAll(Context& ctx, int dx, std::vector<std::string> con
         ctx.check(ok, ids[i] + " placed");
         if (ok) ctx.info(ids[i] + " placed");
     }
+    compareWithJava(ctx, name, box);
 }
 
 std::string tree(char const* path) { return std::string("twilightforest:tree/") + path; }
@@ -212,21 +216,21 @@ std::string tree(char const* path) { return std::string("twilightforest:tree/") 
 } // namespace
 
 GF_REGISTER_SELFTEST("trees.features_a", [](Context& ctx) -> ll::coro::CoroTask<> {
-    co_await placeAll(ctx, 300, {tree("twilight_oak_tree"), tree("large_twilight_oak_tree"), tree("swampy_oak_tree"), tree("canopy_tree"),
+    co_await placeAll(ctx, 300, "features_a", {tree("twilight_oak_tree"), tree("large_twilight_oak_tree"), tree("swampy_oak_tree"), tree("canopy_tree"),
                                  tree("firefly_canopy_tree"), tree("dead_canopy_tree"), tree("mega_canopy_tree"), tree("forest_mega_oak_tree"),
                                  tree("savannah_mega_oak_tree"), tree("mangrove_tree"), tree("darkwood_tree"), tree("homegrown_darkwood_tree"),
                                  tree("darkwood_lantern_tree"), tree("dark_forest_oak_tree"), tree("dark_forest_birch_tree"), tree("dark_oak_bush")});
 });
 
 GF_REGISTER_SELFTEST("trees.features_b", [](Context& ctx) -> ll::coro::CoroTask<> {
-    co_await placeAll(ctx, 310, {tree("oak_bush"), tree("rainbow_oak"), tree("large_rainbow_oak"), tree("time_tree"), tree("transformation_tree"),
+    co_await placeAll(ctx, 310, "features_b", {tree("oak_bush"), tree("rainbow_oak"), tree("large_rainbow_oak"), tree("time_tree"), tree("transformation_tree"),
                                  tree("mining_tree"), tree("sorting_tree"), tree("snowy_spruce_tree"), tree("mega_spruce_tree"), tree("large_winter_tree"),
                                  tree("smaller_jungle_tree"), tree("vanilla_oak_tree"), tree("vanilla_birch_tree"), "twilightforest:mushroom/brown_canopy_mushroom",
                                  "twilightforest:mushroom/canopy_red_vanilla_mushroom", "twilightforest:mushroom/canopy_red_smooth_mushroom"});
 });
 
 GF_REGISTER_SELFTEST("trees.features_c", [](Context& ctx) -> ll::coro::CoroTask<> {
-    co_await placeAll(ctx, 320, {"twilightforest:mushroom/canopy_red_spheroid_mushroom", "twilightforest:mushroom/canopy_red_flat_mushroom", "minecraft:huge_brown_mushroom",
+    co_await placeAll(ctx, 320, "features_c", {"twilightforest:mushroom/canopy_red_spheroid_mushroom", "twilightforest:mushroom/canopy_red_flat_mushroom", "minecraft:huge_brown_mushroom",
                                  "minecraft:huge_red_mushroom"});
 });
 
@@ -240,6 +244,23 @@ struct JavaCase {
     std::vector<std::string>       paletteText;
     std::vector<std::pair<int, int>> rle; ///< [count, palette index], x outermost, then y, then z
 };
+/// The features kit maps Java states without the leaves' distance (0: not computed yet, F11): the
+/// Java distance put back, for the comparison.
+Block const* withJavaDistance(Block const* b, nlohmann::json const& props) {
+    if (!b || !props.contains("distance")) return b;
+    auto states = game::statesOf(*b);
+    if (!states.contains("twilightforest:distance")) return b;
+    nlohmann::json all = nlohmann::json::object();
+    for (auto const& [k, v] : states) {
+        if (v == "true" || v == "false") all[k] = v == "true";
+        else if (!v.empty() && v.find_first_not_of("-0123456789") == std::string::npos) all[k] = std::stoi(v);
+        else all[k] = v;
+    }
+    all["twilightforest:distance"] = std::stoi(props["distance"].get<std::string>());
+    auto const* with = game::blockWithStates(b->getTypeName(), all);
+    return with ? with : b;
+}
+
 std::optional<JavaCase> javaCase(std::string const& name) {
     static nlohmann::json const all = [] {
         auto file = gf::feature::item::data::root() / "gf" / "java_goldens" / "trees.json";
@@ -255,7 +276,7 @@ std::optional<JavaCase> javaCase(std::string const& name) {
         out.box       = BlockBox{b[0].get<int>(), b[1].get<int>(), b[2].get<int>(), b[3].get<int>(), b[4].get<int>(), b[5].get<int>()};
         for (auto const& p : c["palette"]) {
             auto props = p.value("Properties", nlohmann::json::object());
-            out.palette.push_back(kit::javaBlock(p.value("Name", std::string()), props));
+            out.palette.push_back(withJavaDistance(kit::javaBlock(p.value("Name", std::string()), props), props));
             out.paletteText.push_back(p.value("Name", std::string()) + (props.empty() ? "" : props.dump()));
         }
         for (auto const& r : c["rle"]) out.rle.emplace_back(r[0].get<int>(), r[1].get<int>());
@@ -264,8 +285,9 @@ std::optional<JavaCase> javaCase(std::string const& name) {
     return std::nullopt;
 }
 
-/// The block a Bedrock world shows for a Java state and the one there match (Bedrock's own update
-/// bit of its leaves aside).
+/// The block a Bedrock world shows for a Java state and the one there match: the same permutation, or
+/// the same type with every state of the mapped block equal (Bedrock's own update bit of its leaves
+/// aside).
 bool sameBlock(Block const& here, Block const* java) {
     if (!java) return false;
     if (&here == java) return true;
@@ -273,6 +295,8 @@ bool sameBlock(Block const& here, Block const* java) {
     auto a = game::statesOf(here), b = game::statesOf(*java);
     a.erase("update_bit");
     b.erase("update_bit");
+    // a distance not computed yet (0: F5 places leaves so, F11 computes it) stands for Java's 7
+    if (auto ia = a.find("twilightforest:distance"), ib = b.find("twilightforest:distance"); ia != a.end() && ib != b.end() && ia->second == "0" && ib->second == "7") a.erase(ia), b.erase(ib);
     return a == b;
 }
 
@@ -300,7 +324,9 @@ bool compareWithJava(Context& ctx, std::string const& name, BlockBox const& box)
             if (!sameBlock(here, java)) {
                 ++mismatches;
                 if (first.size() < 12)
-                    first.push_back(std::to_string(x) + " " + std::to_string(y) + " " + std::to_string(z) + ": Java " + jc->paletteText[static_cast<std::size_t>(index)] + ", here " + here.getTypeName() + nlohmann::json(game::statesOf(here)).dump());
+                    first.push_back(std::to_string(x) + " " + std::to_string(y) + " " + std::to_string(z) + ": Java " + jc->paletteText[static_cast<std::size_t>(index)] + " (" +
+                                    (java ? java->getTypeName() + nlohmann::json(game::statesOf(*java)).dump() : std::string("unmapped")) + "), here " + here.getTypeName() +
+                                    nlohmann::json(game::statesOf(here)).dump());
             }
             if (++z > box.maxZ) {
                 z = box.minZ;
@@ -405,7 +431,7 @@ struct SaplingGolden {
     char const* hash;
 };
 constexpr SaplingGolden kSaplingGoldens[] = {
-    {"twilight_oak_sapling", "c6a4d9e80098f181"}, {"canopy_sapling", "0a0cc183b669d7be"},         {"mangrove_sapling", "4b6a6ead7e3e9a70"},       {"darkwood_sapling", "41b40f3a39632b3b"},
+    {"twilight_oak_sapling", "c6a4d9e80098f181"}, {"canopy_sapling", "0a0cc183b669d7be"},         {"mangrove_sapling", "4b6a6ead7e3e9a70"},       {"darkwood_sapling", "8d2cb57d8fbc026a"},
     {"time_sapling", "9bbf36011e7d5572"},         {"transformation_sapling", "c9279f5eb98e039c"}, {"mining_sapling", "cb9cad4efe78e3c1"},         {"sorting_sapling", "1708556a4aa85b3a"},
     {"rainbow_oak_sapling", "9614215514eda961"},
 };
@@ -521,9 +547,9 @@ GF_REGISTER_SELFTEST("trees.leaf_distance_after_growth", [](Context& ctx) -> ll:
     int leaves2 = 0, decaying2 = 0, one2 = 0;
     count(leaves2, decaying2, one2);
     ctx.info("40 ticks later: " + std::to_string(leaves2) + " canopy leaves, " + std::to_string(one2) + " at distance 1, " + std::to_string(decaying2) + " decay-bound");
-    if (decaying2 > decaying)
-        ctx.info("PARITY GAP (F11): " + std::to_string(decaying2 - decaying) + " more leaves became decay-bound after F11 recomputed the distances; in TF they keep "
-                 "updateLeaves' distances and stay");
+    if (decaying2 != decaying || one2 != one)
+        ctx.info("PARITY GAP (F11): F11 recomputed the distances updateLeaves wrote (TF keeps them: UPDATE_KNOWN_SHAPE): decay-bound leaves " + std::to_string(decaying) +
+                 " in TF, " + std::to_string(decaying2) + " here; at distance 1 " + std::to_string(one) + " in TF, " + std::to_string(one2) + " here");
 });
 GF_REGISTER_SELFTEST("trees.core_toggle_held_item", [](Context& ctx) -> ll::coro::CoroTask<> {
     GlobalPos core = ctx.testPos(370, 2);
