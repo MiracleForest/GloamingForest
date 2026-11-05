@@ -11,6 +11,10 @@
 #include "mc/world/Container.h"
 #include "mc/world/actor/player/Inventory.h"
 #include "mc/world/actor/player/Player.h"
+#include "mc/world/actor/player/PlayerUISlot.h"
+#include "mc/deps/shared_types/legacy/ContainerType.h"
+#include "mc/world/inventory/network/ContainerScreenContext.h"
+#include "mc/world/inventory/network/ItemStackNetManagerBase.h"
 #include "mc/world/level/Level.h"
 #include "mc/server/sim/LookDuration.h"
 #include "mc/world/gamemode/GameMode.h"
@@ -62,9 +66,26 @@ using gf::core::GlobalPos;
 namespace b = gf::feature::building;
 using Facing = ScriptModuleMinecraft::ScriptFacing;
 
-// The client scenario's showcase marker: with a lapis block here the test keeps its banners up for
-// the camera (tools/e2e/client/scenarios/building.ps1), else it cleans up at once
-constexpr int kMarker[3] = {16, -61, 140};
+// The client scenario's markers are tags on its real player (tools/e2e/client/scenarios/building.ps1:
+// /tag @s add ...), never blocks at fixed positions that another unit's test could touch (R12):
+// gf_building_banners keeps building.banner_loom's banners up for the camera (else it cleans up at
+// once); gf_building_shield makes building.shield_pattern give the player a shield with TF's naga
+// pattern. The real loom craft is building.loom_request (LoomRequestTest.cpp).
+constexpr char const* kShowBanners = "gf_building_banners";
+constexpr char const* kShield      = "gf_building_shield";
+constexpr char const* kLoomFill    = "gf_building_loom";
+
+/// Whether a real (not simulated) player carries `tag`.
+bool realPlayerTagged(char const* tag) {
+    auto* level = ll::service::getLevel().as_ptr();
+    if (!level) return false;
+    bool found = false;
+    level->forEachPlayer([&](Player& player) {
+        if (!player.isSimulatedPlayer() && player.hasTag(tag)) found = true;
+        return !found;
+    });
+    return found;
+}
 
 GF_REGISTER_SELFTEST("building.banner_loom", [](Context& ctx) -> ll::coro::CoroTask<> {
     // TFBannerPatterns: nine patterns, each unlocked by its own pattern item in the loom
@@ -107,7 +128,7 @@ GF_REGISTER_SELFTEST("building.banner_loom", [](Context& ctx) -> ll::coro::CoroT
     ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
     auto* region = ctx.region();
     ctx.require(region != nullptr, "region");
-    bool  show = b::idAt(*region, BlockPos{kMarker[0], kMarker[1], kMarker[2]}) == "minecraft:lapis_block";
+    bool  show = realPlayerTagged(kShowBanners);
     auto& sp   = static_cast<SimulatedPlayer&>(ctx.player());
     std::vector<GlobalPos> placed;
     int                    i = 0;
@@ -144,44 +165,7 @@ GF_REGISTER_SELFTEST("building.banner_loom", [](Context& ctx) -> ll::coro::CoroT
     for (auto it = placed.rbegin(); it != placed.rend(); ++it) ctx.cleanupBlock(*it);
 });
 
-// The client scenario's loom craft (tools/e2e/client/scenarios/building.ps1): the player put a white
-// banner, red dye and the naga banner pattern into a real loom, picked TF's naga pattern in the
-// loom screen and took the result, so the client's CraftLoom request went through the server's
-// validation (LoomMaterialContainerValidation, BannerPattern::matchesPatternItem, CraftHandlerLoom).
-// With the emerald marker this test requires that a (real) player now holds such a banner; without
-// it (every other run) there is nothing to check.
-constexpr int kLoomMarker[3] = {17, -61, 140};
-
-GF_REGISTER_SELFTEST("building.loom_crafted", [](Context& ctx) {
-    auto* region = ctx.region();
-    ctx.require(region != nullptr, "region");
-    if (b::idAt(*region, BlockPos{kLoomMarker[0], kLoomMarker[1], kLoomMarker[2]}) != "minecraft:emerald_block") {
-        ctx.info("no loom craft to check (no marker)");
-        return;
-    }
-    auto* level = ll::service::getLevel().as_ptr();
-    ctx.require(level != nullptr, "level");
-    int  players = 0;
-    bool found   = false;
-    level->forEachPlayer([&](Player& player) {
-        if (player.isSimulatedPlayer()) return true;
-        ++players;
-        auto const& inv = player.getInventory();
-        for (int i = 0; i < inv.getContainerSize() && !found; ++i) {
-            auto const& stack = inv.getItem(i);
-            if (stack.isNull() || gf::game::items::idOf(stack) != "minecraft:banner") continue;
-            for (auto const& [p, color] : BannerItem::getPatternAndColorPairsFromItemStack(stack))
-                if (p && *p->mNameID == "tf_naga") {
-                    found = true;
-                    gf::log().info("building: loom result in {}'s slot {}: a banner with tf_naga (colour {})", player.getRealName(), i, static_cast<int>(color));
-                }
-        }
-        return true;
-    });
-    ctx.require(players > 0, "a real player is online");
-    ctx.check(found, "the loom's result (a banner with TF's naga pattern) is in the player's inventory");
-});
-// The client scenario's shield: with the emerald marker, every real player holds a shield with TF's
+// The client scenario's shield: with the gf_building_shield tag, every real player holds a shield with TF's
 // naga pattern in the off-hand (Bedrock's shield draws banner patterns from the banner textures, so a
 // TF pattern on a shield needs no shield atlas: Java's textures/entity/shield/<boss>.png has no
 // Bedrock counterpart).
@@ -193,9 +177,7 @@ GF_REGISTER_SELFTEST("building.shield_pattern", [](Context& ctx) {
     shield->setUserData(std::make_unique<CompoundTag>(std::move(*tag)));
     auto layers = BannerItem::getPatternAndColorPairsFromItemStack(*shield);
     ctx.check(std::any_of(layers.begin(), layers.end(), [](auto const& l) { return l.first && *l.first->mNameID == "tf_naga"; }), "the shield carries TF's naga pattern");
-    auto* region = ctx.region();
-    ctx.require(region != nullptr, "region");
-    if (b::idAt(*region, BlockPos{kLoomMarker[0], kLoomMarker[1], kLoomMarker[2]}) != "minecraft:emerald_block") return;
+    if (!realPlayerTagged(kShield)) return;
     auto* level = ll::service::getLevel().as_ptr();
     ctx.require(level != nullptr, "level");
     level->forEachPlayer([&](Player& player) {
@@ -206,4 +188,36 @@ GF_REGISTER_SELFTEST("building.shield_pattern", [](Context& ctx) {
         return true;
     });
 });
+// The client scenario's loom screen: with the gf_building_loom tag, a real player who has a loom
+// open gets a white banner, red dye and the naga banner pattern in the loom's slots (as if moved
+// there), so the client's loom screen lists the patterns it offers for them (the client mod's
+// registry: TF's naga pattern; a vanilla client: none) for the screenshot.
+GF_REGISTER_SELFTEST("building.loom_fill", [](Context& ctx) -> ll::coro::CoroTask<> {
+    if (!realPlayerTagged(kLoomFill)) co_return;
+    auto banner  = gf::game::items::make("minecraft:banner", 1, 15);
+    auto dye     = gf::game::items::make("minecraft:red_dye", 1);
+    auto pattern = gf::game::items::make("twilightforest:naga_banner_pattern", 1);
+    ctx.require(banner && dye && pattern, "the loom's items");
+    // the scenario opens the loom after starting this test: wait up to 40 s for its screen
+    int filled = 0;
+    for (int t = 0; t < 40 * 20 && filled == 0; t += 5) {
+        co_await ctx.ticks(5);
+        auto* level = ll::service::getLevel().as_ptr();
+        ctx.require(level != nullptr, "level");
+        level->forEachPlayer([&](Player& player) {
+            if (player.isSimulatedPlayer() || !player.hasTag(kLoomFill)) return true;
+            auto* net = player.mItemStackNetManager.get();
+            if (!net || net->getScreenContext().mScreenContainerType != SharedTypes::Legacy::ContainerType::Loom) return true;
+            player.setPlayerUIItem(PlayerUISlot::LoomInput, *banner, false);
+            player.setPlayerUIItem(PlayerUISlot::LoomDye, *dye, false);
+            player.setPlayerUIItem(PlayerUISlot::LoomMaterial, *pattern, false);
+            player.sendInventory(true);
+            gf::log().info("building: loom slots of {} filled", player.getRealName());
+            ++filled;
+            return true;
+        });
+    }
+    ctx.check(filled > 0, "a tagged player opened a loom");
+});
+
 } // namespace

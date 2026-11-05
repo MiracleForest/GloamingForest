@@ -8,7 +8,8 @@
 # item extending a chain), the iron ladder (placement, left / right, breaking without support), the
 # knightmetal / fiery / arctic fur blocks, the banner pattern recipes, every stonecutting recipe of
 # the unit, every block's hardness / explosion resistance / tool / tier (Appendix A), and TF's banner
-# patterns (registered, unlocked by their items, the loom's result banner, placed banners).
+# patterns (registered, unlocked by their items, the loom's result banner, placed banners, and a real
+# loom craft: the bytes of a client's CraftLoom request read and validated by the server).
 Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
 Wait-LogLine 'building: installed' 60 | Out-Null
 
@@ -22,4 +23,5 @@ if (-not (Get-ServerLog -Since $mark | Select-String -Pattern 'building: trophy 
 }
 if (-not (Get-ServerLog -Since $mark | Select-String -Pattern 'building: dispenser put twilightforest:minoshroom_trophy on' -Quiet)) { throw 'the dispenser did not equip the trophy' }
 if (-not (Get-ServerLog -Since $mark | Select-String -Pattern 'building: rope at .* broke' -Quiet)) { throw 'no rope broke without support' }
+if (-not (Get-ServerLog -Since $mark | Select-String -Pattern 'building: the server''s loom crafted a banner with tf_naga' -Quiet)) { throw 'the server did not craft a TF banner from a loom request' }
 Write-Step "building selftests: pass=$($r.Pass)"

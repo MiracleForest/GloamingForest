@@ -91,7 +91,13 @@ int registerBannerPatterns() {
     int   added    = 0;
     // one allocation for all nine: the vector moves at most once, before the engine holds pattern
     // pointers (both builds append before a world exists)
+    auto const* before   = patterns.data();
+    auto const  capacity = patterns.capacity();
     patterns.reserve(patterns.size() + bannerPatterns().size());
+    // the evidence for the review: whether the vanilla patterns moved (they move only when the
+    // vector had no room; nothing in the engine keeps BannerPattern pointers across this: banners
+    // and block actors store pattern ids, BannerItem resolves layers on demand)
+    log().info("building: banner pattern registry {} (capacity {} -> {})", patterns.data() == before ? "kept in place" : "moved once, before any world", capacity, patterns.capacity());
     short type     = kFirstPatternItemType;
     for (auto const& s : bannerPatterns()) {
         bool known = std::any_of(patterns.begin(), patterns.end(), [&](BannerPattern const& p) { return *p.mNameID == s.nameId; });

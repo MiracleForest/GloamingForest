@@ -188,7 +188,13 @@ void tooHigh(Player& player, int maxHeight) {
 bool putRope(BlockSource& region, BlockPos const& pos, int dir) {
     auto const* b = blockAt(region, pos);
     if (!b) return false;
-    if (isRope(b)) return setStates(region, pos, {{axisState(axisOf(dir)), true}});
+    if (isRope(b)) {
+        // BlockItem#canPlace: the rope with the added strand must survive here
+        auto const* added = game::blockWithStates(kRope,
+            Json{{axisState(0), axisOf(dir) == 0 || ropeHasAxis(*b, 0)}, {axisState(1), axisOf(dir) == 1 || ropeHasAxis(*b, 1)}, {axisState(2), axisOf(dir) == 2 || ropeHasAxis(*b, 2)}});
+        if (!added || !ropeCanSurvive(region, pos, *added)) return false;
+        return setStates(region, pos, {{axisState(axisOf(dir)), true}});
+    }
     Json s{{axisState(0), axisOf(dir) == 0}, {axisState(1), axisOf(dir) == 1}, {axisState(2), axisOf(dir) == 2}};
     auto const* rope = game::blockWithStates(kRope, s);
     if (!rope || !ropeCanSurvive(region, pos, *rope)) return false; // BlockItem#canPlace

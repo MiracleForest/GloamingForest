@@ -93,9 +93,9 @@ Invoke-Chat '/clear @s'
 Start-Sleep -Seconds 1
 
 # TF's banner patterns on placed banners: building.banner_loom keeps its nine banners up for 20 s
-# while the lapis marker of the showcase is there (local: the client mod's registry and textures;
-# remote-vanilla: a client without the patterns draws each as a plain field)
-Invoke-Chat '/setblock 16 -61 140 lapis_block'
+# while the player carries the gf_building_banners tag (local: the client mod's registry and
+# textures; remote-vanilla: a client without the patterns draws each as a plain field)
+Invoke-Chat '/tag @s add gf_building_banners'
 Start-Sleep -Seconds 1
 $mark = Get-LogMark
 Invoke-Chat '/twilightforest selftest "building.banner_loom"'
@@ -111,13 +111,10 @@ if ($shown -match 'shown at (-?\d+) (-?\d+) (-?\d+)') {
 }
 $done = Wait-LogLine 'SELFTEST DONE pass=\d+ fail=\d+' 120 -Since $mark
 if ($done -notmatch 'fail=0') { throw "building.banner_loom failed: $done" }
-Invoke-Chat '/setblock 16 -61 140 grass_block'
+Invoke-Chat '/tag @s remove gf_building_banners'
 
-# a real loom craft with TF's naga pattern: the client's loom screen lists the pattern for the naga
-# banner pattern item, the client sends the CraftLoom request, the (integrated or BDS) server
-# validates it; building.loom_crafted then finds the banner in the player's inventory
-# (local and remote-mod: the client mod's registry; remote-vanilla: the loom screen of a client
-# without the patterns, photographed only)
+# the loom screen of a real loom (the real CraftLoom request with tf_naga is building.loom_request:
+# the client's request bytes read and validated by the integrated or BDS server)
 Invoke-Chat '/gamemode creative'
 Invoke-Chat '/clear @s'
 Invoke-Chat '/fill 38 -60 147 42 -57 153 air'
@@ -128,18 +125,31 @@ Invoke-Chat '/give @s twilightforest:naga_banner_pattern 1'
 Invoke-Teleport '/tp @s 40.5 -60 150.5 180 35'
 Start-Sleep -Seconds 2
 Save-Screenshot 'loom-before' | Out-Null
+# building.loom_fill waits for the loom screen and puts the banner, the dye and TF's pattern item
+# into the loom's slots: the screen then lists TF's naga pattern (the client mod's registry)
+Invoke-Chat '/tag @s add gf_building_loom'
+$mark = Get-LogMark
+Invoke-Chat '/twilightforest selftest "building.loom_fill"'
 Focus-Game
 Press-Key '1'
 Click 0.5 0.5 -Relative -Right
 Start-Sleep -Seconds 2
 Save-Screenshot 'loom-open' | Out-Null
 Write-Step "building: loom screen $(Get-ClientScreen)"
+$filled = Wait-LogLine 'building: loom slots of .* filled' 45 -Since $mark
+if (-not $filled) { throw 'building.loom_fill did not fill the loom' }
+Start-Sleep -Seconds 2
+Save-Screenshot 'loom-filled' | Out-Null
 Close-Screen
+$done = Wait-LogLine 'SELFTEST DONE pass=\d+ fail=\d+' 60 -Since $mark
+if ($done -notmatch 'fail=0') { throw "building.loom_fill failed: $done" }
+Invoke-Chat '/tag @s remove gf_building_loom'
+Invoke-Chat '/clear @s'
 
 # a shield with TF's naga pattern in the off-hand, from the front (Bedrock draws shield patterns
 # from the banner textures)
 Invoke-Chat '/clear @s'
-Invoke-Chat '/setblock 17 -61 140 emerald_block'
+Invoke-Chat '/tag @s add gf_building_shield'
 Invoke-Chat '/twilightforest selftest "building.shield_pattern"'
 Start-Sleep -Seconds 2
 Invoke-Teleport '/tp @s 40.5 -60 150.5 0 10'
@@ -148,7 +158,7 @@ Start-Sleep -Seconds 3
 Save-Screenshot 'shield' | Out-Null
 Invoke-Chat '/camera @s clear'
 Invoke-Chat '/clear @s'
-Invoke-Chat '/setblock 17 -61 140 grass_block'
+Invoke-Chat '/tag @s remove gf_building_shield'
 
 Invoke-Chat '/clear @s'
 Invoke-Chat '/function gfbuilding/clear'

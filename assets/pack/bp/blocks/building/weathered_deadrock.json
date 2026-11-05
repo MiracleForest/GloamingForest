@@ -1,0 +1,53 @@
+{
+  "format_version": "1.26.50",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:weathered_deadrock",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 100
+      },
+      "minecraft:destructible_by_explosion": false,
+      "minecraft:tags": [
+        "minecraft:is_pickaxe_item_destructible",
+        "minecraft:diamond_tier_destructible"
+      ],
+      "minecraft:map_color": "#707070",
+      "minecraft:geometry": "minecraft:geometry.full_block",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_building_var_weathered_deadrock_north",
+          "render_method": "opaque"
+        },
+        "up": {
+          "texture": "tf_building_var_weathered_deadrock_up",
+          "render_method": "opaque"
+        },
+        "down": {
+          "texture": "tf_building_var_weathered_deadrock_down",
+          "render_method": "opaque"
+        },
+        "north": {
+          "texture": "tf_building_var_weathered_deadrock_north",
+          "render_method": "opaque"
+        },
+        "south": {
+          "texture": "tf_building_var_weathered_deadrock_south",
+          "render_method": "opaque"
+        },
+        "east": {
+          "texture": "tf_building_var_weathered_deadrock_east",
+          "render_method": "opaque"
+        },
+        "west": {
+          "texture": "tf_building_var_weathered_deadrock_west",
+          "render_method": "opaque"
+        }
+      }
+    }
+  }
+}

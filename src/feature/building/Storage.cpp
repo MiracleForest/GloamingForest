@@ -48,11 +48,7 @@ constexpr char const* kArcticFur   = "twilightforest:arctic_fur_block";
 
 bool gInstalled = false;
 
-/// Fire seen above a fiery block, and fire a player put out this tick.
-std::set<core::GlobalPos>& burning() {
-    static std::set<core::GlobalPos> s;
-    return s;
-}
+/// Fire a player put out this tick (not lit again).
 std::set<core::GlobalPos>& putOut() {
     static std::set<core::GlobalPos> s;
     return s;
@@ -81,10 +77,7 @@ void installStorage() {
     if (gInstalled) return;
     gInstalled = true;
     // the client opens many worlds in one process: positions belong to one world
-    game::db::onWorldClosed([] {
-        burning().clear();
-        putOut().clear();
-    });
+    game::db::onWorldClosed([] { putOut().clear(); });
     // TFBlocks: the fiery block's item is rarity UNCOMMON (and fireResistant: its BP item's
     // minecraft:fire_resistant); the client mod colours its name
     item::ext::setRarity(kFiery, item::ext::Rarity::Uncommon);
@@ -96,19 +89,14 @@ void installStorage() {
         if (fieryHurts(entity)) combat::hurt(entity, kFieryDamage, "twilightforest:fiery");
     });
     // FieryBlock#isFireSource (Direction.UP): fire on top burns forever, FireBlock#tick never puts it
-    // out (age, rain). Bedrock's fire knows only its own infiniburn blocks: fire that goes out on
-    // its own above a fiery block is lit again the next tick; a player putting it out (a hit on
-    // the fire or on the face under it) is not undone.
-    blockevents::onNeighborChanged(kFiery, [](BlockSource& region, BlockPos const& pos, BlockPos const& neighbor) {
-        BlockPos above{pos.x, pos.y + 1, pos.z};
-        if (!(neighbor == above)) return;
-        auto gp = game::globalPos(region, above);
-        auto id = idAt(region, above);
-        if (id == "minecraft:fire") {
-            burning().insert(gp);
-            return;
-        }
-        if (!burning().erase(gp) || id != "minecraft:air" || putOut().erase(gp)) return;
+    // out (age, rain). Bedrock's fire knows only its own infiniburn blocks: any fire above a fiery
+    // block that goes out on its own (whoever lit it: a player, a structure, before a reload) is
+    // lit again the next tick; a player putting it out (a hit on the fire or on the face under it)
+    // is not undone.
+    blockevents::onRemoved("minecraft:fire", [](BlockSource& region, BlockPos const& pos, Block const&) {
+        auto gp = game::globalPos(region, pos);
+        if (putOut().erase(gp)) return;
+        if (idAt(region, BlockPos{pos.x, pos.y - 1, pos.z}) != kFiery || idAt(region, pos) != "minecraft:air") return;
         interactions::nextTick([gp] {
             auto* r = game::regionOf(gp.dim);
             if (!r) return;
@@ -125,7 +113,8 @@ void installStorage() {
                 p.y += 1;
             }
             putOut().insert(p);
-            interactions::nextTick([p] { putOut().erase(p); });
+            // kept two ticks: the fire's removal reaches onRemoved through the families' deferred queue
+            interactions::nextTick([p] { interactions::nextTick([p] { putOut().erase(p); }); });
             return interactions::Result::Pass;
         });
     }

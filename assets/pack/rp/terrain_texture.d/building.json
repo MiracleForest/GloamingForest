@@ -2,6 +2,15 @@
   "tf_building_hydra4": {
     "textures": "textures/twilightforest/entity/hydra4"
   },
+  "tf_building_icon_cracked_towerwood": {
+    "textures": "textures/twilightforest/block/cracked_towerwood"
+  },
+  "tf_building_icon_mossy_towerwood": {
+    "textures": "textures/twilightforest/block/mossy_towerwood"
+  },
+  "tf_building_icon_towerwood": {
+    "textures": "textures/twilightforest/block/towerwood"
+  },
   "tf_building_minoshroomtaur": {
     "textures": "textures/twilightforest/entity/minoshroomtaur"
   },
@@ -212,6 +221,2178 @@
   },
   "tf_building_twilightlich64": {
     "textures": "textures/twilightforest/entity/twilightlich64"
+  },
+  "tf_building_var_carminite_block_bottom": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/carminite_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/carminite_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/carminite_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r270",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_carminite_block_bottom2": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r270",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_carminite_block_east": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/carminite_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/carminite_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/carminite_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/carminite_block",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_carminite_block_east2": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_carminite_block_north": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/carminite_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/carminite_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/carminite_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/carminite_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r90",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_carminite_block_north2": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r90",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_carminite_block_south": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/carminite_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/carminite_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/carminite_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/carminite_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r270",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_carminite_block_south2": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r270",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_carminite_block_top": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/carminite_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/carminite_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/carminite_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r270",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_carminite_block_top2": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r270",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_carminite_block_west": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/carminite_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/carminite_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/carminite_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/carminite_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_carminite_block_west2": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/carminite_block_overlay",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_castle_roof_tile_down": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/castle_roof_tile",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castle_roof_tile",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castle_roof_tile",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r270",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_castle_roof_tile_east": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/castle_roof_tile",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castle_roof_tile",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castle_roof_tile",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castle_roof_tile",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_castle_roof_tile_north": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/castle_roof_tile",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castle_roof_tile",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castle_roof_tile",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castle_roof_tile",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r90",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_castle_roof_tile_south": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/castle_roof_tile",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castle_roof_tile",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castle_roof_tile",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castle_roof_tile",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r270",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_castle_roof_tile_up": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/castle_roof_tile",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castle_roof_tile",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castle_roof_tile",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r270",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_castle_roof_tile_west": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/castle_roof_tile",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castle_roof_tile",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castle_roof_tile",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castle_roof_tile",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_cracked_deadrock_down": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/cracked_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/cracked_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/cracked_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r270",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_cracked_deadrock_east": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/cracked_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/cracked_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/cracked_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/cracked_deadrock",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_cracked_deadrock_north": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/cracked_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/cracked_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/cracked_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/cracked_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r90",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_cracked_deadrock_south": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/cracked_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/cracked_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/cracked_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/cracked_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r270",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_cracked_deadrock_up": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/cracked_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/cracked_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/cracked_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r270",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_cracked_deadrock_west": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/cracked_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/cracked_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/cracked_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/cracked_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_cracked_towerwood_down": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/cracked_towerwood",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_towerwood_fv",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/cracked_towerwood_alt",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_towerwood_alt_fv",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_cracked_towerwood_east": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/cracked_towerwood",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_towerwood_fv",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/cracked_towerwood_alt",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_towerwood_alt_fv",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_cracked_towerwood_north": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/cracked_towerwood",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_towerwood_fv",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/cracked_towerwood_alt",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_towerwood_alt_fv",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_cracked_towerwood_south": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/cracked_towerwood",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_towerwood_fv",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/cracked_towerwood_alt",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_towerwood_alt_fv",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_cracked_towerwood_up": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/cracked_towerwood",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_towerwood_fv",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/cracked_towerwood_alt",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_towerwood_alt_fv",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_cracked_towerwood_west": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/cracked_towerwood",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_towerwood_fv",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/cracked_towerwood_alt",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/cracked_towerwood_alt_fv",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_deadrock_down": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/deadrock_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/deadrock_r270",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_deadrock_east": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/deadrock",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_deadrock_north": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/deadrock",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_deadrock_south": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/deadrock",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_deadrock_up": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/deadrock_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/deadrock_r90",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_deadrock_west": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/deadrock",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_mazestone_down": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/blocks/building/tf-derived/mazestone_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/mazestone_r270",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_mazestone_east": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/blocks/building/tf-derived/mazestone_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/mazestone",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_mazestone_north": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/blocks/building/tf-derived/mazestone_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/mazestone_r90",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_mazestone_south": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/blocks/building/tf-derived/mazestone_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/mazestone_r270",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_mazestone_up": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/blocks/building/tf-derived/mazestone_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/mazestone_r270",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_mazestone_west": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/mazestone",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/mazestone_r180",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_mossy_towerwood_down": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/mossy_towerwood",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/mossy_towerwood_fv",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_mossy_towerwood_east": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/mossy_towerwood",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/mossy_towerwood_fv",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_mossy_towerwood_north": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/mossy_towerwood",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/mossy_towerwood_fv",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_mossy_towerwood_south": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/mossy_towerwood",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/mossy_towerwood_fv",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_mossy_towerwood_up": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/mossy_towerwood",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/mossy_towerwood_fv",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_mossy_towerwood_west": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/mossy_towerwood",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/mossy_towerwood_fv",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_steeleaf_block_down": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/steeleaf_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/steeleaf_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/steeleaf_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r270",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_steeleaf_block_east": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/steeleaf_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/steeleaf_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/steeleaf_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/steeleaf_block",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_steeleaf_block_north": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/steeleaf_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/steeleaf_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/steeleaf_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/steeleaf_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r90",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_steeleaf_block_south": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/steeleaf_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/steeleaf_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/steeleaf_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/steeleaf_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r270",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_steeleaf_block_up": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/steeleaf_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/steeleaf_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/steeleaf_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r270",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_steeleaf_block_west": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/steeleaf_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/steeleaf_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/steeleaf_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/steeleaf_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_towerwood_down": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/towerwood",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/towerwood_fv",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_towerwood_east": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/towerwood",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/towerwood_fv",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_towerwood_north": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/towerwood",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/towerwood_fv",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_towerwood_south": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/towerwood",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/towerwood_fv",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_towerwood_up": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/towerwood",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/towerwood_fv",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_towerwood_west": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/towerwood",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/towerwood_fv",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_weathered_deadrock_down": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/weathered_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/weathered_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/weathered_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r270",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_weathered_deadrock_east": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/weathered_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/weathered_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/weathered_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/weathered_deadrock",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_weathered_deadrock_north": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/weathered_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/weathered_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/weathered_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/weathered_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r90",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_weathered_deadrock_south": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/weathered_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/weathered_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/weathered_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/weathered_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r270",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_weathered_deadrock_up": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/weathered_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/weathered_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/weathered_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r270",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "tf_building_var_weathered_deadrock_west": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/weathered_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/weathered_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/weathered_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/weathered_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "weight": 1
+        }
+      ]
+    }
   },
   "tf_building_yetialpha": {
     "textures": "textures/twilightforest/entity/yetialpha"

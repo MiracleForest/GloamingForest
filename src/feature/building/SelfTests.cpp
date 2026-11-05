@@ -561,6 +561,10 @@ GF_REGISTER_SELFTEST("building.storage_blocks", [](Context& ctx) -> ll::coro::Co
         ctx.setBlock(flame, "minecraft:air"); // as FireBlock#tick removes it
         co_await ctx.ticks(3);
         ctx.check(ctx.blockAt(flame) == "minecraft:fire", "fire on a fiery block burns forever (" + ctx.blockAt(flame) + ")");
+        // fire the module never saw being lit (a structure's, one from before a reload) too
+        ctx.setBlock(flame, "minecraft:air");
+        co_await ctx.ticks(3);
+        ctx.check(ctx.blockAt(flame) == "minecraft:fire", "relit fire goes on burning (" + ctx.blockAt(flame) + ")");
         ctx.setBlock(source, "minecraft:air");
         co_await ctx.ticks(1);
         ctx.setBlock(flame, "minecraft:air");

@@ -289,7 +289,7 @@ bool dispenseOnHead(BlockSource& region, BlockPos const& dispenser, int facing, 
         auto one = game::items::withCount(stack, 1);
         // MobCanWearArmorEntitySelector: a Mob only when it can pick up loot (Mob#canPickUpLoot);
         // players and armour stands always
-        bool wearer = a->isPlayer() || a->getTypeName() == "minecraft:armor_stand" || a->mCanPickupItems || a->canPickupItem(one);
+        bool wearer = a->isPlayer() || a->getTypeName() == "minecraft:armor_stand" || a->mCanPickupItems;
         if (!wearer) continue;
         a->setArmor(SharedTypes::Legacy::ArmorSlot::Head, one);
         stack.remove(1);
