@@ -3,7 +3,8 @@
 # can read what the game made of them (docs/spikes/S7.md). The pack lives only in this run's slot; nothing ships.
 # Forms: "legacy" ("tag:<id>": {} components), "object" ("minecraft:tags": {"tags": [...]}, the item form), "array"
 # ("minecraft:tags": [...]); "array_entity" / "legacy_entity" add minecraft:block_entity (F10's native container
-# backend). A form a format rejects logs a content error, which fails the run: the run is the evidence, not a gate.
+# backend). A form a format rejects logs content errors: import.s7.ps1 requires exactly the expected set of them (its
+# evidence) and fails the run only on a missing or an unexpected one.
 #
 # The family blocks: F11's families kit rewrites them at assemble in its format 1.26.0 from the import's skeleton.
 # To show that the import's whole skeleton loads at 1.26.50, this run replaces the kit's file of every family block in
