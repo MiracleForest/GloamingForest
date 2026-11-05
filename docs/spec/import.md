@@ -47,7 +47,7 @@ Paths are relative to `assets/gen/import/<unit>/`. Fragment files in `*.d` direc
 | `worldgen` | 306 worldgen JSON, dimension, dimension type | `data/<ns>/worldgen/**`, `data/<ns>/dimension{,_type}/**`. The 21 structure JSON carry TF's landmark descriptors (advancements_required, controlled_spawns, decoration_clearance, hint_creature, spawn_overrides, structure_icon) for F6 |
 | `datamaps` | 5 TF + NeoForge compostables, furnace_fuels, parrot_imitations | `data/<ns>/data_maps/**` (rule R7) |
 | `registries` | 290 + 9 `twilight/*` entries, banner patterns, damage types, jukebox songs, trim materials, enchantments, 6 functions | `data/<ns>/<registry>/**` |
-| `particles` | 28 particle JSON | `rp/particles/<id>.json` skeleton effects and `data/gf/particles/<unit>.json` (every frame). TF sprites: the first frame of the TF texture; vanilla sprites: their cell of Bedrock's legacy particle atlas `textures/particle/particles` (128 x 128, Java's pre-1.14 `particles.png` layout: `generic_N` row 0, `flame` (0, 24), `angry` (8, 40), `effect_N` row 8, `sga_*` from index 225), animated by age as a flipbook in Java's sprite order, a random glyph for `sga_*`. A sprite without a cell (`glint`, used by `protection`) emits nothing until F12's native particle (a documented deviation: *Particles without a Bedrock sprite* below) |
+| `particles` | 28 particle JSON | `rp/particles/<id>.json` skeleton effects and `data/gf/particles/<unit>.json` (every frame). TF sprites: the first frame of the TF texture; vanilla sprites: their cell of Bedrock's legacy particle atlas `textures/particle/particles` (128 x 128, Java's pre-1.14 `particles.png` layout: `generic_N` row 0, `flame` (0, 24), `angry` (8, 40), `glint` (16, 40), the happy villager cell that Java 1.14 split out as `glint.png` (`protection`), `effect_N` row 8, `sga_*` from index 225), animated by age as a flipbook in Java's sprite order, a random glyph for `sga_*`. A sprite newer than the atlas (e.g. 1.17's `glow`) has no cell: a warning, and the effect emits nothing until F12's native particle |
 | `sounds` | `sounds.json` (328 events, 288 subtitles) | **No `sound_definitions`** (see below). Validates that every event has an owner in owners.tsv (a missing one fails the run) and writes a plain, non-merged listing `data/gf/sound_events/<unit>.json`: event -> Bedrock category, subtitle key, sound *names* (TF file paths without namespace, vanilla events). The subtitle texts come with the `lang` kind |
 | `skeleton` | TFItems, TFToolMaterials, TFEntities, models/item | `bp/items/<id>.json` (254 items, the tiered tools with `minecraft:digger` and Bedrock's tool tags, and the block items whose Java item model is a flat icon: `minecraft:block_placer` with `replace_block_item`), `bp/entities/<id>.json` (80, collision box, health, type family, `is_spawnable` for the 51 with eggs), `rp/entity/<id>.entity.json` + `rp/models/entity/skeleton/<id>.geo.json` (a placeholder box of the entity's size with its TF texture, spawn egg colours), `data/gf/import/skeleton.json` (the id list the `import.*` selftests check), `data/gf/import/harvest.json` (every block's tools, tier and drop rule: read by the runtime, below, and the selftests) |
 | `catalog` | TFCreativeTabs (4 tabs) | `bp/item_catalog.d/import.json` (Bedrock creative groups: blocks -> construction, items and food -> items, equipment -> equipment) and `data/gf/catalog/import.json` (`gf::catalog` groups in TF's order) |
@@ -339,21 +339,6 @@ sv_se files are empty (`{}`) and TF has no en_gb, fr_ca or pt_pt file, so the ot
 fr_CA, pt_PT, nl_NL, bg_BG, da_DK, fi_FI, hu_HU, id_ID, nb_NO, sk_SK, sv_SE) get no import file: Bedrock falls
 back to en_US for a key a locale's texts lack, and so does `gf::tr`. The 29 locales therefore show TF's texts, in
 English where TF has no translation (as in Java).
-## Particles without a Bedrock sprite
-
-`twilightforest:protection` (the landmark protection sparkles, `ProtectionParticle`, a `SuspendedTownParticle` at
-full brightness, white) is drawn in Java with the vanilla sprite `minecraft:glint` (`textures/particle/glint.png`).
-Bedrock 1.26.51 has no counterpart: its legacy atlas `textures/particle/particles` (Java's pre-1.14 `particles.png`
-layout, which predates `glint`) has no such cell, and none of the game's vanilla resource packs (`vanilla` and every
-`vanilla_<version>` up to 1.26.50, checked in the client's `data/resource_packs/*/__brarchive/textures/particle`)
-ships a glint texture: their particle textures are `particles`, `campfire_smoke`, `soul`, the sculk, cherry, leaves,
-gust, omen, vault, geyser and sulfur sprites. The sprite is Mojang's texture, not one of TF's CC BY-NC-SA assets, so
-the import cannot ship it either, and no other cell is the same image. So no faithful mapping exists: the skeleton
-effect `rp/particles/protection.json` keeps the particle id (emitting it is not an error) but emits nothing, and its
-`data/gf/particles/landmark.json` entry keeps the Java frame `minecraft:particle/glint` for a native particle
-(F12's `particles::registerNative`, owned by F6 for this id) that brings its own original sprite. The import lists
-the sprite in `Skeleton.NoBedrockSprite` (with the reason) and logs the deviation as a plain line instead of a
-warning; a particle using any other vanilla sprite without a cell is still a warning.
 
 ## Chest boats
 

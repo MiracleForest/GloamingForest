@@ -62,7 +62,7 @@ $s7ExpectedCount = ($s7Expected.Values | ForEach-Object { $_.Count } | Measure-O
 
 # The probe pack's lines: "ERR [Server] [Blocks] block_definitions | <pack> | blocks/<name>.json | <message>", where
 # the legacy parser repeats "<pack> | blocks/<name>.json | gf_s7:<name> | " before the component path.
-$s7LineRegex = '\bERR \[Server\] \[Blocks\] block_definitions \| (?<pack>\S*/GloamingForest_S7_BP) \| blocks/(?<name>[A-Za-z0-9_]+)\.json \| (?<msg>.*)$'
+$s7LineRegex = '\bERR \[Server\] \[Blocks\] block_definitions \| (?<pack>[^|]*?[\\/]GloamingForest_S7_BP) \| blocks/(?<name>[A-Za-z0-9_]+)\.json \| (?<msg>.*)$'
 $s7Matched = [System.Collections.Generic.List[string]]::new()
 $s7Unexpected = [System.Collections.Generic.List[string]]::new()
 $s7Errors = @(Get-ErrorLines)
@@ -92,7 +92,9 @@ Write-Step "S7: $($s7Unexpected.Count) unexpected probe pack error(s), $($s7Miss
 $s7Unexpected | ForEach-Object { Write-Step "  unexpected: $_" }
 $s7Missing | ForEach-Object { Write-Step "  missing: $_" }
 
-# run.ps1's final check: every error line but the expected probe lines matched above (each once)
+# run.ps1's final check: every error line but the expected probe lines matched above (each once). The harness has no
+# expected-errors hook yet, so this relies on run.ps1 dot-sourcing the scenario at script level and calling
+# Get-ErrorLines in its final check; if either changes, the override stops applying and the run fails again (safe).
 $script:S7ExpectedLines = [System.Collections.Generic.List[string]]::new([string[]]$s7Matched)
 $script:S7BaseErrorLines = ${function:Get-ErrorLines}
 function script:Get-ErrorLines {

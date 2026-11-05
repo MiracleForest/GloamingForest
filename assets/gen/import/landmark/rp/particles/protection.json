@@ -10,7 +10,7 @@
     },
     "components": {
       "minecraft:emitter_rate_instant": {
-        "num_particles": 0
+        "num_particles": 1
       },
       "minecraft:emitter_lifetime_once": {
         "active_time": 0
@@ -27,7 +27,7 @@
         "uv": {
           "texture_width": 128,
           "texture_height": 128,
-          "uv": [0, 0],
+          "uv": [16, 40],
           "uv_size": [8, 8]
         }
       }
