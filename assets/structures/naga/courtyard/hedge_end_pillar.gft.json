@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:courtyard/hedge_end_pillar",
+  "id": "gloamingforest:courtyard/hedge_end_pillar",
   "size": [5, 4, 5],
   "palette": [
     {"Name":"minecraft:structure_void"},

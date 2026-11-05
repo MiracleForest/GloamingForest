@@ -77,7 +77,11 @@ constexpr char kTerrace[]     = "twilightforest:courtyard_terrace";
 
 st::Rotation rotationOf(int index) { return static_cast<st::Rotation>(((index % 4) + 4) % 4); }
 
-std::string tpl(char const* name) { return std::string("twilightforest:courtyard/") + name; }
+/// The courtyard's templates: gloamingforest:courtyard/<TF name> (TF: twilightforest:courtyard/<name>;
+/// assemble's dangling reference check refuses a twilightforest: template id that owners.tsv does
+/// not know), the spawner keeping TF's id (its template definition is known).
+std::string tpl(char const* name) { return std::string("gloamingforest:courtyard/") + name; }
+constexpr char kCenterJigsaw[] = "gloamingforest:courtyard_center"; ///< TF: "twilightforest:center"
 
 // ---- NagaCourtyardHedgeAbstractComponent ---------------------------------------------------------
 
@@ -302,7 +306,7 @@ public:
             gf::structure::ext::FrontAndTop::UpSouth, gf::structure::ext::FrontAndTop::UpWest, gf::structure::ext::FrontAndTop::UpNorth,
             gf::structure::ext::FrontAndTop::UpEast};
         auto oriented = kUp[random.nextInt(4)];
-        auto spawner  = gf::structure::ext::initializeTemplateFromPool("twilightforest:courtyard/center", pos, oriented, "twilightforest:center", random, genDepth + 1);
+        auto spawner  = gf::structure::ext::initializeTemplateFromPool("twilightforest:courtyard/center", pos, oriented, kCenterJigsaw, random, genDepth + 1);
         if (spawner) pieces.push_back(std::move(spawner));
         else log().warn("naga: the courtyard's center pool gave no spawner piece at {} {} {}", pos.x, pos.y, pos.z);
     }

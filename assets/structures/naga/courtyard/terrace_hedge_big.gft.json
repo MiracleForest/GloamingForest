@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:courtyard/terrace_hedge_big",
+  "id": "gloamingforest:courtyard/terrace_hedge_big",
   "size": [12, 5, 12],
   "palette": [
     {"Name":"minecraft:structure_void"},

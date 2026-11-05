@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:courtyard/terrace_statue",
+  "id": "gloamingforest:courtyard/terrace_statue",
   "size": [12, 5, 12],
   "palette": [
     {"Name":"minecraft:structure_void"},

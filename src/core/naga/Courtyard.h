@@ -67,7 +67,7 @@ struct PieceRecord {
     int         genDepth = 0;
     int         x = 0, y = 0, z = 0;
     int         rotation = 0;
-    std::string terraceTemplate; ///< "twilightforest:courtyard/terrace_*" (Terrace only)
+    std::string terraceTemplate; ///< "gloamingforest:courtyard/terrace_*" (Terrace only)
 };
 
 /// CourtyardMain's boxes for a start at (x, y, z) (the piece's own coordinates: TF's x + 1, z + 1).

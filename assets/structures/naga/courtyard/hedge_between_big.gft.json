@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:courtyard/hedge_between_big",
+  "id": "gloamingforest:courtyard/hedge_between_big",
   "size": [1, 5, 5],
   "palette": [
     {"Name":"minecraft:structure_void"},

@@ -18,6 +18,6 @@
     [0, 12], [6, 1], [0, 12]
   ],
   "jigsaw": [
-    {"pos":[2,1,2],"front":"down","top":"north","pool":"minecraft:empty","name":"twilightforest:center","target":"minecraft:empty"}
+    {"pos":[2,1,2],"front":"down","top":"north","pool":"minecraft:empty","name":"gloamingforest:courtyard_center","target":"minecraft:empty"}
   ]
 }

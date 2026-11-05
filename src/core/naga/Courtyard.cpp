@@ -242,23 +242,23 @@ std::vector<PieceRecord> layoutPieces(Maze const& maze, CornerClipping const& co
                     break;
                 default:
                     if (random.nextInt(150) == 0) {
-                        add(PieceKind::Terrace, m, xBB - 6, yBB - 3, zBB - 6, kNone, "twilightforest:courtyard/terrace_statue");
+                        add(PieceKind::Terrace, m, xBB - 6, yBB - 3, zBB - 6, kNone, "gloamingforest:courtyard/terrace_statue");
                     } else {
                         switch (random.nextInt(5)) {
                         case 1:
-                            add(PieceKind::Terrace, m, xBB - 6, yBB - 3, zBB - 6, kNone, "twilightforest:courtyard/terrace_duct");
+                            add(PieceKind::Terrace, m, xBB - 6, yBB - 3, zBB - 6, kNone, "gloamingforest:courtyard/terrace_duct");
                             break;
                         case 2:
-                            add(PieceKind::Terrace, m, xBB - 6, yBB - 3, zBB - 6, kNone, "twilightforest:courtyard/terrace_channel");
+                            add(PieceKind::Terrace, m, xBB - 6, yBB - 3, zBB - 6, kNone, "gloamingforest:courtyard/terrace_channel");
                             break;
                         case 3:
-                            add(PieceKind::Terrace, m, xBB - 6, yBB - 3, zBB - 6, kNone, "twilightforest:courtyard/terrace_reservoir");
+                            add(PieceKind::Terrace, m, xBB - 6, yBB - 3, zBB - 6, kNone, "gloamingforest:courtyard/terrace_reservoir");
                             break;
                         case 4:
-                            add(PieceKind::TerraceHedge, m, xBB - 6, yBB - 3, zBB - 6, kNone, "twilightforest:courtyard/terrace_hedge");
+                            add(PieceKind::TerraceHedge, m, xBB - 6, yBB - 3, zBB - 6, kNone, "gloamingforest:courtyard/terrace_hedge");
                             break;
                         default:
-                            add(PieceKind::Terrace, m, xBB - 6, yBB - 3, zBB - 6, kNone, "twilightforest:courtyard/terrace_fire");
+                            add(PieceKind::Terrace, m, xBB - 6, yBB - 3, zBB - 6, kNone, "gloamingforest:courtyard/terrace_fire");
                         }
                     }
                     break;

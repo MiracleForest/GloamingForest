@@ -10,7 +10,7 @@
 #                   markers CourtyardTerraceTemplateProcessor fits to the terrain
 #   walls           11 x 6 x 3 runs, 1 x 6 x 3 padding, 3 x 6 x 3 corners; the "_decayed" overlays
 #                   are placed at 10 % integrity with cobble variants
-#   spawner         the center dais of pool twilightforest:courtyard/center, its jigsaw
+#   spawner         the center dais of pool gloamingforest:courtyard/center, its jigsaw
 #                   "twilightforest:center" facing down, the Naga's boss spawner on top
 
 $hedge  = 'twilightforest:hedge'
@@ -38,7 +38,7 @@ function Get-Arms([string[]]$Sides) {
 
 function New-HedgePair([string]$Name, [string[]]$Sides, [switch]$Pillar) {
     $cells = Get-Arms $Sides
-    $t = New-Gft -Id "twilightforest:courtyard/$Name" -Size 5, 4, 5
+    $t = New-Gft -Id "gloamingforest:courtyard/$Name" -Size 5, 4, 5
     foreach ($key in $cells.Keys) {
         $x, $z = $key.Split(',') | ForEach-Object { [int]$_ }
         Set-GftBox $t $x 0 $z $x 2 $z $hedge
@@ -49,7 +49,7 @@ function New-HedgePair([string]$Name, [string[]]$Sides, [switch]$Pillar) {
         Set-GftBlock $t 2 1 2 'twilightforest:etched_nagastone' @{ facing = 'up' }
     }
     Save-Gft $t
-    $big = New-Gft -Id "twilightforest:courtyard/${Name}_big" -Size 5, 5, 5
+    $big = New-Gft -Id "gloamingforest:courtyard/${Name}_big" -Size 5, 5, 5
     foreach ($key in $cells.Keys) {
         $x, $z = $key.Split(',') | ForEach-Object { [int]$_ }
         if (-not ($Pillar -and $x -eq 2 -and $z -eq 2)) { Set-GftBlock $big $x 3 $z $leaves.Name $leaves.Properties }
@@ -72,17 +72,17 @@ New-HedgePair 'hedge_line' @('east', 'west')
 New-HedgePair 'hedge_intersection' @('north', 'south', 'east', 'west')
 
 # the 1 x 5 padder between a cell and a line
-$t = New-Gft -Id 'twilightforest:courtyard/hedge_between' -Size 1, 4, 5
+$t = New-Gft -Id 'gloamingforest:courtyard/hedge_between' -Size 1, 4, 5
 Set-GftBox $t 0 0 1 0 2 3 $hedge
 Save-Gft $t
-$t = New-Gft -Id 'twilightforest:courtyard/hedge_between_big' -Size 1, 5, 5
+$t = New-Gft -Id 'gloamingforest:courtyard/hedge_between_big' -Size 1, 5, 5
 Set-GftBox $t 0 3 1 0 3 3 $leaves.Name $leaves.Properties
 Set-GftBox $t 0 1 0 0 2 0 $leaves.Name $leaves.Properties
 Set-GftBox $t 0 1 4 0 2 4 $leaves.Name $leaves.Properties
 Save-Gft $t
 
 # ---- the pathway: a worn stone brick floor tile ----------------------------------------------------------
-$t = New-Gft -Id 'twilightforest:courtyard/pathway' -Size 7, 1, 7
+$t = New-Gft -Id 'gloamingforest:courtyard/pathway' -Size 7, 1, 7
 Set-GftLayer $t -Y 0 -Key @{ 'b' = $bricks; 'm' = $mossy; 'c' = $cracked; 'e' = @{ Name = 'twilightforest:etched_nagastone'; Properties = @{ facing = 'up' } }; 'g' = 'minecraft:grass_block' } -Rows @(
     'bbmbbmb',
     'bcbbbbm',
@@ -98,7 +98,7 @@ $slabDouble = @{ Name = 'minecraft:sandstone_slab'; Properties = @{ type = 'doub
 $slab       = @{ Name = 'minecraft:sandstone_slab'; Properties = @{ type = 'bottom' } }
 
 function New-Terrace([string]$Name) {
-    $t = New-Gft -Id "twilightforest:courtyard/$Name" -Size 12, 5, 12
+    $t = New-Gft -Id "gloamingforest:courtyard/$Name" -Size 12, 5, 12
     # clear the basin and the air above the rim
     Set-GftBox $t 0 3 0 11 4 11 'minecraft:air'
     Set-GftBox $t 1 1 1 10 2 10 'minecraft:air'
@@ -161,7 +161,7 @@ $t = New-Terrace 'terrace_hedge'
 Set-GftBox $t 4 1 4 7 2 7 $hedge
 Set-GftBox $t 4 0 4 7 0 7 'minecraft:grass_block'
 Save-Gft $t
-$t = New-Gft -Id 'twilightforest:courtyard/terrace_hedge_big' -Size 12, 5, 12
+$t = New-Gft -Id 'gloamingforest:courtyard/terrace_hedge_big' -Size 12, 5, 12
 Set-GftBox $t 4 3 4 7 3 7 $leaves.Name $leaves.Properties
 Set-GftBox $t 3 1 4 3 2 7 $leaves.Name $leaves.Properties
 Set-GftBox $t 8 1 4 8 2 7 $leaves.Name $leaves.Properties
@@ -171,7 +171,7 @@ Save-Gft $t
 
 # ---- the perimeter wall -----------------------------------------------------------------------------------
 function New-WallPair([string]$Name, [int]$SizeX, [int]$SizeZ) {
-    $t = New-Gft -Id "twilightforest:courtyard/$Name" -Size $SizeX, 6, $SizeZ
+    $t = New-Gft -Id "gloamingforest:courtyard/$Name" -Size $SizeX, 6, $SizeZ
     $mx = $SizeX - 1; $mz = $SizeZ - 1
     Set-GftBox $t 0 0 0 $mx 0 $mz 'minecraft:smooth_stone'
     Set-GftBox $t 0 1 0 $mx 4 $mz $bricks
@@ -188,7 +188,7 @@ foreach ($x in @(2, 5, 8)) {
 Set-GftBox $t 0 2 1 10 2 1 'minecraft:cobblestone'
 foreach ($x in 0..10) { if ($x % 2 -eq 0) { Set-GftBlock $t $x 5 1 $bricks } }
 Save-Gft $t
-$t = New-Gft -Id 'twilightforest:courtyard/courtyard_wall_decayed' -Size 11, 6, 3
+$t = New-Gft -Id 'gloamingforest:courtyard/courtyard_wall_decayed' -Size 11, 6, 3
 Set-GftBox $t 0 1 0 10 4 2 $mossy
 Set-GftBox $t 0 2 1 10 2 1 'minecraft:mossy_cobblestone'
 Set-GftBox $t 0 5 0 10 5 2 'minecraft:air'
@@ -197,7 +197,7 @@ Save-Gft $t
 $t = New-WallPair 'courtyard_wall_padding' 1 3
 Set-GftBox $t 0 1 0 0 5 2 'twilightforest:nagastone_pillar' @{ axis = 'y' }
 Save-Gft $t
-$t = New-Gft -Id 'twilightforest:courtyard/courtyard_wall_padding_decayed' -Size 1, 6, 3
+$t = New-Gft -Id 'gloamingforest:courtyard/courtyard_wall_padding_decayed' -Size 1, 6, 3
 Set-GftBox $t 0 1 0 0 4 2 'twilightforest:mossy_nagastone_pillar' @{ axis = 'y' }
 Save-Gft $t
 
@@ -209,13 +209,13 @@ foreach ($corner in @('courtyard_wall_corner', 'courtyard_wall_corner_inner')) {
         foreach ($c in @(@(0, 0), @(2, 0), @(0, 2), @(2, 2))) { Set-GftBlock $t $c[0] 5 $c[1] $bricks }
     }
     Save-Gft $t
-    $t = New-Gft -Id "twilightforest:courtyard/${corner}_decayed" -Size 3, 6, 3
+    $t = New-Gft -Id "gloamingforest:courtyard/${corner}_decayed" -Size 3, 6, 3
     Set-GftBox $t 0 1 0 2 4 2 'minecraft:mossy_cobblestone' -Hollow
     Set-GftBox $t 0 5 0 2 5 2 'minecraft:air'
     Save-Gft $t
 }
 
-# ---- the spawner dais (pool twilightforest:courtyard/center) ------------------------------------------------
+# ---- the spawner dais (pool gloamingforest:courtyard/center) ------------------------------------------------
 $t = New-Gft -Id 'twilightforest:courtyard/spawner' -Size 5, 3, 5
 Set-GftLayer $t -Y 0 -Key @{ 'b' = $bricks; 'm' = $mossy; 'e' = @{ Name = 'twilightforest:etched_nagastone'; Properties = @{ facing = 'up' } } } -Rows @(
     'bmbmb',
@@ -226,5 +226,5 @@ Set-GftLayer $t -Y 0 -Key @{ 'b' = $bricks; 'm' = $mossy; 'e' = @{ Name = 'twili
 Set-GftBlock $t 2 1 2 'minecraft:chiseled_stone_bricks'
 foreach ($c in @(@(0, 0), @(4, 0), @(0, 4), @(4, 4))) { Set-GftBlock $t $c[0] 1 $c[1] 'twilightforest:nagastone_pillar' @{ axis = 'y' } }
 Set-GftBlock $t 2 2 2 'twilightforest:naga_boss_spawner'
-Add-GftJigsaw $t 2 1 2 -Front down -Top north -Pool 'minecraft:empty' -Name 'twilightforest:center' -Target 'minecraft:empty'
+Add-GftJigsaw $t 2 1 2 -Front down -Top north -Pool 'minecraft:empty' -Name 'gloamingforest:courtyard_center' -Target 'minecraft:empty'
 Save-Gft $t
