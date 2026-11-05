@@ -107,7 +107,7 @@ Invoke-Build "replaceitem entity $who slot.hotbar 0 twilightforest:magic_map"
 Press-Key '1'
 Start-Sleep -Seconds 1
 Click 0.5 0.5 -Relative -Right
-Wait-LogLine 'uncraftmaps: magic map \d+ for' 30 -Since $mark | Out-Null
+Wait-LogLine 'uncraftmaps: magic map -?\d+ for' 30 -Since $mark | Out-Null
 Start-Sleep -Seconds 6
 Invoke-Teleport "/tp $who ~ ~ ~ 0 60"
 Start-Sleep -Seconds 2

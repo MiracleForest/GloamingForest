@@ -13,7 +13,7 @@ foreach ($t in 'uncraftmaps.iron_pickaxe', 'uncraftmaps.damaged_parts', 'uncraft
                'uncraftmaps.screen', 'uncraftmaps.sync_config', 'uncraftmaps.powered', 'uncraftmaps.magic_map', 'uncraftmaps.maze_map', 'uncraftmaps.magic_cloning', 'uncraftmaps.commands') {
     if (-not (Get-ServerLog -Since $mark | Select-String -Pattern "SELFTEST PASS $([regex]::Escape($t))$" -Quiet)) { throw "$t did not pass" }
 }
-if (-not (Get-ServerLog -Since $mark | Select-String -Pattern 'uncraftmaps: magic map \d+ for .* centred at' -Quiet)) { throw 'no magic map was made' }
-if (-not (Get-ServerLog -Since $mark | Select-String -Pattern 'uncraftmaps: ore map \d+ for' -Quiet)) { throw 'no ore map was made' }
+if (-not (Get-ServerLog -Since $mark | Select-String -Pattern 'uncraftmaps: magic map -?\d+ for .* centred at' -Quiet)) { throw 'no magic map was made' }
+if (-not (Get-ServerLog -Since $mark | Select-String -Pattern 'uncraftmaps: ore map -?\d+ for' -Quiet)) { throw 'no ore map was made' }
 if (-not (Get-ServerLog -Since $mark | Select-String -Pattern 'uncraftmaps: biomepng on a dedicated server' -Quiet)) { throw 'biomepng did not take the dedicated server path' }
 Write-Step 'uncrafting, recrafting, the config, the maps and the commands work'
