@@ -1,0 +1,121 @@
+// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+#pragma once
+
+// U2 (terrain), internal: the per-world generator state shared by the terrain, surface and blanket
+// providers (Terrain.cpp), the carvers (Carvers.cpp) and the selftests (SelfTests.cpp). Not a
+// contract; other units reach terrain only through the worldgen / landmark contracts.
+
+#include <array>
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <vector>
+
+#include "nlohmann/json.hpp"
+
+#include "core/terrain/Density.h"
+#include "core/terrain/Functions.h"
+#include "core/terrain/Surface.h"
+#include "feature/ext/worldgen/Carving.h"
+#include "feature/worldgen/Worldgen.h"
+
+class Block;
+
+namespace gf::feature::terrain {
+
+using namespace gf::core::terrain;
+
+/// Config section "terrain" (rule R13; docs/spec/config.md).
+struct TerrainConfig {
+    int  version = 1;
+    /// Generate new worlds with TF's "Skylight" preset (twilightforest:skylight_noise_gen: floating
+    /// islands over the void). Read when a world is first generated, then kept in the world
+    /// (gf:terrain:skylight).
+    bool skylight = false;
+    /// Per-chunk generation budget in milliseconds (noise + surface + blanket + carvers) the
+    /// terrain.timing selftest checks the p95 against.
+    int chunkBudgetMs = 50;
+    /// terrain.showcase (client e2e screenshots): ticks each generated sample stays in the world
+    /// before the next one (0: none).
+    int showcaseHoldTicks = 0;
+};
+
+/// The data TF's terrain reads (from <mod>/data, loaded once).
+struct Data {
+    nlohmann::json                         twilight, skylight; ///< noise settings
+    std::map<std::string, nlohmann::json>  densities;          ///< twilightforest:<path> -> density function
+    nlohmann::json                         biomeGrid;          ///< biome_terrain_data/twilightforest:biome_grid
+    std::map<std::string, nlohmann::json>  blankets;           ///< chunk_blanket_processors/<id>
+};
+[[nodiscard]] Data const& data();
+
+/// Everything one world (seed + preset) generates with.
+struct State {
+    std::int64_t                     seed     = 0;
+    bool                             skylight = false;
+    std::int64_t                     zoomSeed = 0;
+    TerrainGrid                      grid;
+    BlockTable                       table;
+    std::shared_ptr<Generator const> gen;
+    Blankets                         blankets;
+    std::vector<Block const*>        blocks; ///< code -> Block (codes from the table; nullptr: unknown)
+    Block const*                     stone = nullptr; ///< the default block
+    std::string                      error;
+    std::unique_ptr<core::jrand::PositionalRandomFactory> oreRandom; ///< RandomState#oreRandom
+
+    [[nodiscard]] Block const* block(std::uint16_t c) const { return c < blocks.size() ? blocks[c] : nullptr; }
+    /// The terrain column of a quart (U1's main biome through worldgen::mainBiomeAt; the forest's
+    /// column when no biome source answers, so the terrain stays sane without U1).
+    [[nodiscard]] TerrainColumn const* columnAt(int quartX, int quartZ) const;
+    /// TFBiomeProvider#getNoiseBiome from the main biome and the column's layers.
+    [[nodiscard]] std::string const& noiseBiome(int quartX, int quartY, int quartZ) const;
+    /// BiomeManager#getBiome: the zoom over the noise biomes.
+    [[nodiscard]] std::string const& blockBiome(int x, int y, int z) const;
+};
+
+/// The state of the world being generated (built for the current seed and preset on first use).
+/// nullptr while the data or the generator cannot be built (the error is logged once).
+[[nodiscard]] std::shared_ptr<State const> state();
+/// A state for any seed / preset (selftests; not cached).
+[[nodiscard]] std::shared_ptr<State const> makeState(std::int64_t seed, bool skylight);
+/// Whether the current world uses the skylight preset.
+[[nodiscard]] bool skylightWorld();
+
+/// A per-chunk cache of the quart columns around a chunk (sampleTerrain reaches 3 quarts, the zoom
+/// and the canopy 2, the canopy's 5 x 5 cells 5): quarts chunk * 4 - 4 .. chunk * 4 + 8.
+class ChunkColumns {
+public:
+    ChunkColumns(State const& s, int chunkX, int chunkZ);
+    [[nodiscard]] TerrainColumn const* column(int qx, int qz) const;
+    [[nodiscard]] std::string const&   noiseBiome(int qx, int qy, int qz) const;
+    [[nodiscard]] std::string const&   blockBiome(int x, int y, int z) const;
+    [[nodiscard]] TerrainSampler       sampler() const;
+    /// The distinct quart biomes of the chunk's sections (y range of the chunk).
+    [[nodiscard]] std::vector<std::string> chunkBiomes(int minY, int maxY) const;
+
+private:
+    static constexpr int kPad = 4, kSide = 13;
+    State const&                                            mS;
+    int                                                     mQx0, mQz0;
+    std::array<TerrainColumn const*, kSide * kSide>         mCols{};
+};
+
+/// Fills a grid from a chunk (blocks classified into codes) and writes the changed codes back.
+void readGrid(State const& s, worldgen::Chunk& chunk, Grid& grid);
+int  writeGrid(State const& s, worldgen::Chunk& chunk, Grid const& before, Grid const& after);
+
+/// The providers (Terrain.cpp) and carvers (Carvers.cpp), for the in-memory selftests.
+void terrainProvider(worldgen::Chunk& chunk);
+void surfaceProvider(worldgen::Chunk& chunk, worldgen::Region& region);
+void blanketProvider(worldgen::Chunk& chunk, worldgen::Region& region);
+void carve(bool highlands, worldgen::Chunk& chunk, worldgen::Region& region, core::jrand::RandomSource& random);
+/// TFCavesCarver#isStartChunk + #carve with an explicit context (source chunk, config, mask).
+void carveWith(State const& s, bool highlands, worldgen::Chunk& chunk, worldgen::ext::CarverContext& ctx, core::jrand::RandomSource& random);
+
+/// Milliseconds of the last chunks' terrain work (noise, surface, blanket, carvers), for terrain.timing.
+void recordChunkMs(double ms);
+/// Adds to the terrain time of the chunk being generated on this thread (the carvers).
+void addChunkMs(double ms);
+[[nodiscard]] std::vector<double> chunkTimes();
+
+} // namespace gf::feature::terrain
