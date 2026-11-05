@@ -18,6 +18,7 @@ public:
         installBoats();
         installBookshelves();
         installFuel();
+        installMaterials();
         log().info("woodwork: installed ({} banisters, {} drying racks, {} hollow log sets)", banisterIds().size(), dryingRackIds().size(), hollowLogs().size());
     }
     void uninstall() {

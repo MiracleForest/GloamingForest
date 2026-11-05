@@ -23,7 +23,7 @@
 #ifdef GF_CLIENT
 
 #include <atomic>
-#include <chrono>
+#include <cstdlib>
 #include <cmath>
 #include <filesystem>
 #include <fstream>
@@ -86,27 +86,26 @@ struct Rack {
 
 namespace {
 
+/// What the render thread reads: an immutable snapshot, swapped whole by the net handler.
+struct Snapshot {
+    std::map<Key, std::shared_ptr<Rack const>> racks;
+    std::set<std::int64_t>                     displays; ///< the display entities of the racks drawn here
+};
 struct Store {
-    std::mutex                                     mutex;
-    std::map<Key, std::shared_ptr<Rack const>>     racks;
-    std::set<std::int64_t>                         displays; ///< the display entities of the racks drawn here
+    std::mutex                                   writer; ///< serialises the writers (main thread)
+    std::atomic<std::shared_ptr<Snapshot const>> snap{std::make_shared<Snapshot const>()};
 };
 Store& store() {
     static auto* s = new Store; // kept for the process
     return *s;
 }
+std::shared_ptr<Snapshot const> snapshot() { return store().snap.load(std::memory_order_acquire); }
 
 std::optional<Key> keyOf(Json const& p) {
     if (!p.is_array() || p.size() != 4) return std::nullopt;
     for (auto const& v : p)
         if (!v.is_number_integer()) return std::nullopt;
     return Key{p[0].get<int>(), p[1].get<int>(), p[2].get<int>(), p[3].get<int>()};
-}
-
-void rebuildDisplays(Store& s) {
-    s.displays.clear();
-    for (auto const& [k, r] : s.racks)
-        if (r->display) s.displays.insert(r->display);
 }
 
 std::atomic<bool> gReceived{false};
@@ -116,11 +115,12 @@ void onRacks(Json const& msg) {
     std::size_t n = 0;
     {
         auto&           s = store();
-        std::lock_guard lock(s.mutex);
-        if (msg.value("reset", false)) s.racks.clear();
+        std::lock_guard lock(s.writer);
+        auto            next = std::make_shared<Snapshot>();
+        if (!msg.value("reset", false)) next->racks = s.snap.load()->racks;
         if (auto g = msg.find("gone"); g != msg.end() && g->is_array())
             for (auto const& p : *g)
-                if (auto k = keyOf(p)) s.racks.erase(*k);
+                if (auto k = keyOf(p)) next->racks.erase(*k);
         if (auto list = msg.find("racks"); list != msg.end() && list->is_array()) {
             for (auto const& e : *list) {
                 if (!e.is_object()) continue;
@@ -129,51 +129,49 @@ void onRacks(Json const& msg) {
                 auto r = std::make_shared<Rack>();
                 if (auto it = e.find("item"); it != e.end()) r->item = game::items::fromJson(*it);
                 if (game::items::isEmpty(r->item)) {
-                    s.racks.erase(*k);
+                    next->racks.erase(*k);
                     continue;
                 }
                 int face  = ww::faceOf(e.value("facing", std::string("north")));
                 r->facing = face < 2 ? 2 : face;
                 r->lower  = e.value("lower", false);
                 if (auto d = e.find("display"); d != e.end() && d->is_number_integer()) r->display = d->get<std::int64_t>();
-                s.racks[*k] = std::move(r);
+                next->racks[*k] = std::move(r);
                 ++n;
             }
         }
-        rebuildDisplays(s);
+        for (auto const& [k, r] : next->racks)
+            if (r->display) next->displays.insert(r->display);
+        s.snap.store(std::move(next), std::memory_order_release);
     }
     if (n && !gReceived.exchange(true)) log().info("woodwork: drying rack items received for the client mod ({} racks)", n);
 }
 
 void clearRacks() {
     auto&           s = store();
-    std::lock_guard lock(s.mutex);
-    s.racks.clear();
-    s.displays.clear();
+    std::lock_guard lock(s.writer);
+    s.snap.store(std::make_shared<Snapshot const>(), std::memory_order_release);
 }
 
-std::shared_ptr<Rack const> rackAt(int dim, BlockPos const& p) {
-    auto&           s = store();
-    std::lock_guard lock(s.mutex);
-    auto            it = s.racks.find(Key{dim, p.x, p.y, p.z});
-    return it == s.racks.end() ? nullptr : it->second;
+std::shared_ptr<Rack const> rackAt(Snapshot const& snap, int dim, BlockPos const& p) {
+    auto it = snap.racks.find(Key{dim, p.x, p.y, p.z});
+    return it == snap.racks.end() ? nullptr : it->second;
 }
 
 bool isRackDisplay(Actor const& a) {
     if (a.getTypeName() != "gloamingforest:drying_rack_item") return false;
-    auto            id = const_cast<Actor&>(a).getOrCreateUniqueID().rawID;
-    auto&           s  = store();
-    std::lock_guard lock(s.mutex);
-    return s.displays.contains(id);
+    auto snap = snapshot();
+    if (snap->displays.empty()) return false;
+    return snap->displays.contains(const_cast<Actor&>(a).getOrCreateUniqueID().rawID);
 }
-
 // ---- the item transform's last step: the game's item mesh in Java's item space ------------------------
 //
 // ItemInHandRenderer::renderItem with the matrix as it is draws the game's item mesh in the game's
-// own item units; this maps Java's item model space (a 16 px item centred on the origin) onto it,
-// measured in game (tools/e2e/client/scenarios/woodwork.ps1, the rack close-ups). A development
-// file <mod>/woodwork_rack_calibration.json {"item": {"scale", "offset": [x, y, z], "rotation":
-// [x, y, z]}, "block": {...}} replaces it while it exists (read every second).
+// own item units; kItem / kBlock map Java's item model space (a 16 px item centred on the origin)
+// onto it, measured in game (tools/e2e/client/scenarios/woodwork.ps1, the rack close-ups). For
+// measuring only: with the environment variable GF_WOODWORK_RACK_CALIBRATION=1 the development file
+// <mod>/woodwork_rack_calibration.json {"item": {"scale", "offset": [x, y, z], "rotation": [x, y, z]},
+// "block": {...}} replaces them, read once when the module installs (never on the render thread).
 
 struct Calibration {
     float     scale = 1.0f;
@@ -181,9 +179,18 @@ struct Calibration {
     glm::vec3 rotation{0.0f};
 };
 struct Calibrations {
-    Calibration item{1.0f, glm::vec3{0.0f}, glm::vec3{0.0f}};
-    Calibration block{1.0f, glm::vec3{0.0f}, glm::vec3{0.0f}};
+    Calibration item;
+    Calibration block;
 };
+
+/// The measured constants (see above).
+constexpr float kItemScale  = 1.0f;
+constexpr float kBlockScale = 1.0f;
+
+Calibrations& calibrations() {
+    static Calibrations cal{Calibration{kItemScale, glm::vec3{0.0f}, glm::vec3{0.0f}}, Calibration{kBlockScale, glm::vec3{0.0f}, glm::vec3{0.0f}}};
+    return cal;
+}
 
 Calibration calibrationOf(Json const& j, Calibration fallback) {
     if (!j.is_object()) return fallback;
@@ -199,28 +206,21 @@ Calibration calibrationOf(Json const& j, Calibration fallback) {
     return c;
 }
 
-Calibrations const& calibrations() {
-    static Calibrations cal;
-    static auto         last = std::chrono::steady_clock::time_point{};
-    auto                now  = std::chrono::steady_clock::now();
-    if (now - last < std::chrono::seconds(1)) return cal;
-    last = now;
+/// The development override (GF_WOODWORK_RACK_CALIBRATION=1), once at install.
+void loadCalibrationOverride() {
+    char const* flag = std::getenv("GF_WOODWORK_RACK_CALIBRATION");
+    if (!flag || std::string(flag) != "1") return;
     try {
         auto path = gf::Mod::getInstance().getSelf().getModDir() / "woodwork_rack_calibration.json";
-        if (!std::filesystem::exists(path)) {
-            cal = Calibrations{};
-            return cal;
-        }
+        if (!std::filesystem::exists(path)) return;
         std::ifstream in(path);
         auto          doc = Json::parse(in, nullptr, false);
-        Calibrations  c;
-        c.item  = calibrationOf(doc.value("item", Json()), c.item);
-        c.block = calibrationOf(doc.value("block", Json()), c.block);
-        cal     = c;
+        auto&         cal = calibrations();
+        cal.item          = calibrationOf(doc.value("item", Json()), cal.item);
+        cal.block         = calibrationOf(doc.value("block", Json()), cal.block);
+        log().info("woodwork: drying rack calibration override loaded from {}", path.string());
     } catch (...) {}
-    return cal;
 }
-
 glm::mat4 apply(glm::mat4 m, Calibration const& c) {
     m = glm::translate(m, c.offset);
     m = glm::rotate(m, glm::radians(c.rotation.y), glm::vec3{0, 1, 0});
@@ -248,7 +248,9 @@ std::atomic<bool> gDrawn{false};
 void drawRack(render::RenderContext& ctx, BlockPos const& pos, Block const&, float) {
     auto* player = currentPlayer();
     if (!player || !ctx.actors) return;
-    auto rack = rackAt(static_cast<int>(player->getDimensionId()), pos);
+    auto snap = snapshot();
+    if (snap->racks.empty()) return;
+    auto rack = rackAt(*snap, static_cast<int>(player->getDimensionId()), pos);
     if (!rack) return;
     float dx = pos.x + 0.5f - ctx.camera.x, dy = pos.y + 0.5f - ctx.camera.y, dz = pos.z + 0.5f - ctx.camera.z;
     if (dx * dx + dy * dy + dz * dz > kViewDistance * kViewDistance) return;
@@ -311,6 +313,7 @@ void watchClimb(movement::MoveState& s) {
 class WoodworkClientModule {
 public:
     void install() {
+        loadCalibrationOverride();
         net::client::on("woodwork.rack", onRacks);
         mJoin = ll::event::EventBus::getInstance().emplaceListener<ll::event::ClientJoinLevelEvent>([](auto&) { clearRacks(); });
         mExit = ll::event::EventBus::getInstance().emplaceListener<ll::event::ClientExitLevelEvent>([](auto&) { clearRacks(); });

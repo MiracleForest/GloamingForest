@@ -17,6 +17,8 @@
 #include "mc/client/renderer/actor/ActorRenderDispatcher.h"
 #include "mc/client/renderer/actor/ActorRenderer.h"
 #include "mc/client/renderer/actor/DataDrivenRenderer.h"
+#include "mc/deps/core/math/Vec2.h"
+#include "mc/deps/core/math/Vec3.h"
 #include "mc/deps/core/string/HashedString.h"
 #include "mc/world/actor/Actor.h"
 
@@ -96,12 +98,6 @@ LL_TYPE_INSTANCE_HOOK(
     if (!wr::gAny.load(std::memory_order_relaxed)) return origin(actor);
     try {
         auto rules = wr::snap();
-        for (auto const& [handle, fn] : rules->hidden) {
-            if (fn(actor)) {
-                if (wr::gHidden.fetch_add(1) == 0) gf::log().info("woodwork: an entity drawn by the client mod is hidden ({})", actor.getTypeName());
-                return nullptr;
-            }
-        }
         if (!rules->dataDriven.empty()) {
             auto const& type = actor.getTypeName();
             if (rules->dataDriven.contains(type)) {
@@ -115,10 +111,66 @@ LL_TYPE_INSTANCE_HOOK(
     return origin(actor);
 }
 
+namespace {
+/// Whether a hide rule takes `actor` (the render calls skip it; _getRenderer never returns null).
+bool hiddenActor(Actor& actor) {
+    if (!wr::gAny.load(std::memory_order_relaxed)) return false;
+    try {
+        auto rules = wr::snap();
+        for (auto const& [handle, fn] : rules->hidden) {
+            if (fn(actor)) {
+                if (wr::gHidden.fetch_add(1) == 0) gf::log().info("woodwork: an entity drawn by the client mod is hidden ({})", actor.getTypeName());
+                return true;
+            }
+        }
+    } catch (...) {}
+    return false;
+}
+} // namespace
+
+LL_TYPE_INSTANCE_HOOK(
+    WoodworkExtRenderHook,
+    ll::memory::HookPriority::Normal,
+    ActorRenderDispatcher,
+    static_cast<void (ActorRenderDispatcher::*)(BaseActorRenderContext&, Actor&, Vec3 const&, Vec3 const&, Vec2 const&, bool)>(&ActorRenderDispatcher::render),
+    void,
+    BaseActorRenderContext& context,
+    Actor&                  actor,
+    Vec3 const&             cameraTargetPos,
+    Vec3 const&             pos,
+    Vec2 const&             rot,
+    bool                    ignoreLighting
+) {
+    if (hiddenActor(actor)) return;
+    origin(context, actor, cameraTargetPos, pos, rot, ignoreLighting);
+}
+
+LL_TYPE_INSTANCE_HOOK(
+    WoodworkExtRenderShortHook,
+    ll::memory::HookPriority::Normal,
+    ActorRenderDispatcher,
+    static_cast<void (ActorRenderDispatcher::*)(BaseActorRenderContext&, Actor&, bool)>(&ActorRenderDispatcher::render),
+    void,
+    BaseActorRenderContext& context,
+    Actor&                  actor,
+    bool                    ignoreLighting
+) {
+    if (hiddenActor(actor)) return;
+    origin(context, actor, ignoreLighting);
+}
+
 namespace gf::woodwork_ext::renderers {
 
-void install() { WoodworkExtRendererHook::hook(); }
-void uninstall() { WoodworkExtRendererHook::unhook(); }
+void install() {
+    WoodworkExtRendererHook::hook();
+    WoodworkExtRenderHook::hook();
+    WoodworkExtRenderShortHook::hook();
+}
+void uninstall() {
+    WoodworkExtRenderShortHook::unhook();
+    WoodworkExtRenderHook::unhook();
+    WoodworkExtRendererHook::unhook();
+}
 
 } // namespace gf::woodwork_ext::renderers
 

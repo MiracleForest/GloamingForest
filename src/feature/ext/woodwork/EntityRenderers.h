@@ -6,7 +6,8 @@
 // The game picks an entity's renderer by its runtime identifier: a data-driven entity running on a
 // game entity (a BP runtime_identifier such as minecraft:boat) is drawn by the game's own renderer
 // for that entity (BoatRenderer: the vanilla boat textures), never with the client entity of its
-// resource pack. Two rules on the renderer the game picks (ActorRenderDispatcher::_getRenderer):
+// resource pack. Two rules: the renderer the game picks (ActorRenderDispatcher::_getRenderer, never
+// null), and the entities ActorRenderDispatcher::render skips:
 //
 //     // TF's boats: the geometry, TF textures and paddle animation of their client entities
 //     gf::woodwork_ext::renderers::useDataDriven("twilightforest:boat");

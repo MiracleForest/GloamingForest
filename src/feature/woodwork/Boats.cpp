@@ -31,6 +31,7 @@
 #include "mc/legacy/ActorUniqueID.h"
 #include "mc/server/commands/CommandUtils.h"
 #include "mc/world/actor/Actor.h"
+#include "mc/world/actor/ActorCategory.h"
 #include "mc/world/actor/ActorDefinitionIdentifier.h"
 #include "mc/world/actor/ActorDamageSource.h"
 #include "mc/world/level/BlockPos.h"
@@ -95,6 +96,32 @@ std::optional<std::string> dropItemOf(Actor& boat) {
     return std::string(kNs) + std::string(kTfWoods[static_cast<std::size_t>(wood)]) + (chest ? "_chest_boat" : "_boat");
 }
 
+/// Entity#isPickable of Java (living entities, boats, minecarts, hanging entities, end crystals,
+/// primed TNT, falling blocks, fireballs and shulker bullets; never items, experience orbs, arrows,
+/// thrown items, area effect clouds, fishing hooks or evoker fangs); spectators never count.
+bool isPickable(Actor& e) {
+    if (!e.isAlive() || e.isSpectator()) return false;
+    if (e.hasCategory(ActorCategory::Mob) || e.hasCategory(ActorCategory::Boat) || e.hasCategory(ActorCategory::Minecart)) return true;
+    static constexpr std::string_view kPickable[] = {"minecraft:painting", "minecraft:leash_knot", "minecraft:ender_crystal", "minecraft:tnt", "minecraft:falling_block",
+                                                     "minecraft:fireball", "minecraft:small_fireball", "minecraft:dragon_fireball", "minecraft:wither_skull",
+                                                     "minecraft:wither_skull_dangerous", "minecraft:shulker_bullet", "minecraft:wind_charge_projectile",
+                                                     "minecraft:breeze_wind_charge_projectile"};
+    auto const& type = e.getTypeName();
+    return std::find(std::begin(kPickable), std::end(kPickable), type) != std::end(kPickable);
+}
+
+/// Boat#canCollideWith (Boat.canVehicleCollide): other.canBeCollidedWith() (boats, shulkers) or
+/// other.isPushable() (living entities that are alive, not spectators and not on a ladder; boats;
+/// minecarts; never armor stands).
+bool collidesWithBoat(Actor& e) {
+    if (!e.isAlive() || e.isSpectator()) return false;
+    if (e.hasCategory(ActorCategory::Boat) || e.hasCategory(ActorCategory::Minecart)) return true;
+    if (!e.hasCategory(ActorCategory::Mob)) return false;
+    auto const& type = e.getTypeName();
+    if (type == "minecraft:armor_stand") return false;
+    return type == "minecraft:shulker" || !e.canBeginOrContinueClimbingLadder();
+}
+
 /// BoatItem#use: the player's view hits a block or a fluid within reach; no entity contains the
 /// player's eyes; the boat (at the hit, turned the player's way) collides with no block.
 ia::Result useBoatItem(ia::UseContext const& c, int wood, bool chest) {
@@ -115,13 +142,19 @@ ia::Result useBoatItem(ia::UseContext const& c, int wood, bool chest) {
     search.min  = Vec3{std::min(search.min.x, search.min.x + view.x * 5.f) - 1.f, std::min(search.min.y, search.min.y + view.y * 5.f) - 1.f, std::min(search.min.z, search.min.z + view.z * 5.f) - 1.f};
     search.max  = Vec3{std::max(search.max.x, search.max.x + view.x * 5.f) + 1.f, std::max(search.max.y, search.max.y + view.y * 5.f) + 1.f, std::max(search.max.z, search.max.z + view.z * 5.f) + 1.f};
     for (Actor* e : region.getEntities(search, 0.0f)) {
-        if (!e || e == &player || e->getTypeName() == "minecraft:item") continue;
-        auto const& b = e->getAABB();
+        if (!e || e == &player || !isPickable(*e)) continue; // EntitySelector.NO_SPECTATORS.and(Entity::isPickable)
+        auto const& b = e->getAABB();                        // inflated by getPickRadius (0)
         if (eye.x >= b.min.x && eye.x <= b.max.x && eye.y >= b.min.y && eye.y <= b.max.y && eye.z >= b.min.z && eye.z <= b.max.z) return ia::Result::Pass;
     }
-    // Boat dimensions 1.375 x 0.5625 (Java); the level must have room for it
+    // Boat dimensions 1.375 x 0.5625 (Java); level.noCollision(boat, box): no block shape and no
+    // entity the boat collides with (Boat#canCollideWith: canBeCollidedWith or isPushable)
     AABB box{Vec3{at.x - 0.6875f, at.y, at.z - 0.6875f}, Vec3{at.x + 0.6875f, at.y + 0.5625f, at.z + 0.6875f}};
     if (!region.fetchCollisionShapes(box, false, std::nullopt, nullptr).empty()) return ia::Result::Deny;
+    for (Actor* e : region.getEntities(box, 0.0f)) {
+        if (!e || !collidesWithBoat(*e)) continue;
+        auto const& b = e->getAABB();
+        if (b.min.x < box.max.x && b.max.x > box.min.x && b.min.y < box.max.y && b.max.y > box.min.y && b.min.z < box.max.z && b.max.z > box.min.z) return ia::Result::Deny;
+    }
     std::string event = std::string(kNs) + std::string(kTfWoods[static_cast<std::size_t>(wood)]);
     ActorUniqueID id{};
     auto*         boat = CommandUtils::spawnEntityAt(region, at, ActorDefinitionIdentifier("twilightforest", chest ? "chest_boat" : "boat", event), id, nullptr);

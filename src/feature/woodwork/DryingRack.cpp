@@ -21,6 +21,7 @@
 #include "feature/woodwork/DryingRack.h"
 
 #include <algorithm>
+#include <cmath>
 #include <random>
 #include <map>
 #include <set>
@@ -41,7 +42,9 @@
 #include "feature/common/BlockData.h"
 #include "feature/common/Interactions.h"
 #include "feature/fx/Fx.h"
+#include "feature/ext/woodwork/ParticleTo.h"
 #include "feature/inventory/Inventory.h"
+#include "feature/loot/Loot.h"
 #include "feature/recipes/Recipes.h"
 #include "feature/tags/Tags.h"
 #include "feature/woodwork/Woodwork.h"
@@ -207,12 +210,9 @@ void setTheItem(BlockSource& region, BlockPos const& pos, RackState& r, ItemStac
     (void)pos;
 }
 
-/// Java's addParticle of ParticleUtils.spawnParticleOnFace(level, pos, dir, DRYING_RACK, ZERO, 0.3).
-void dryingParticle(BlockSource& region, BlockPos const& pos, int face) {
-    auto level = ll::service::getLevel();
-    if (!level) return;
-    auto dim = level->getDimension(region.getDimensionId()).lock();
-    if (!dim) return;
+/// Java's addParticle of ParticleUtils.spawnParticleOnFace(level, pos, dir, DRYING_RACK, ZERO, 0.3)
+/// on one client.
+void dryingParticle(Player& player, BlockPos const& pos, int face) {
     // the block centre, `offset` (0.3) along the face's axis, a random -0.5..0.5 on the two others;
     // the speed is Vec3.ZERO (0 on the face's axis, speed.x / y / z = 0 on the others)
     auto                                   step = faceStep(face);
@@ -221,7 +221,31 @@ void dryingParticle(BlockSource& region, BlockPos const& pos, int face) {
     double x = pos.x + 0.5 + (step[0] == 0 ? u(rng()) : step[0] * kOffset);
     double y = pos.y + 0.5 + (step[1] == 0 ? u(rng()) : step[1] * kOffset);
     double z = pos.z + 0.5 + (step[2] == 0 ? u(rng()) : step[2] * kOffset);
-    fx::particle(*dim, "twilightforest:drying_rack", Vec3{static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)}, Vec3{0.f, 0.f, 0.f});
+    woodwork_ext::particles::particleTo(player, "twilightforest:drying_rack", Vec3{static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)});
+}
+
+/// DryingRackBlock#animateTick runs on each client only when ClientLevel#animateTick's random
+/// sampling around that client's player hits the rack (about 0.18 times a tick next to the player,
+/// nearly never beyond 16 blocks, never beyond 31), and then spawns the particle 1 time in 5. The
+/// server rolls that for every player of the dimension and shows the particle to that player only.
+void animateTick(BlockSource& region, BlockPos const& pos) {
+    auto level = ll::service::getLevel();
+    if (!level) return;
+    auto dimId = region.getDimensionId();
+    int  face  = -2;
+    std::uniform_real_distribution<double> u01(0.0, 1.0);
+    level->forEachPlayer([&](Player& player) {
+        if (player.getDimensionId() != dimId) return true;
+        Vec3 feet = player.getFeetPos();
+        int  dx   = pos.x - static_cast<int>(std::floor(feet.x));
+        int  dy   = pos.y - static_cast<int>(std::floor(feet.y));
+        int  dz   = pos.z - static_cast<int>(std::floor(feet.z));
+        double chance = woodwork_ext::particles::animateTickChance(dx, dy, dz) / 5.0; // random.nextInt(5) == 0
+        if (chance <= 0.0 || u01(rng()) >= chance) return true;
+        if (face == -2) face = faceOf(stateOf(region.getBlock(pos), "twilightforest:facing"));
+        dryingParticle(player, pos, face < 0 ? 2 : face);
+        return true;
+    });
 }
 
 /// One tick of one rack (DryingRackBlockEntity#tick); false when the rack is gone.
@@ -260,12 +284,9 @@ bool tickRack(GlobalPos const& gp) {
             changed = true;
             log().info("woodwork: the drying rack at {} {} {} dried {}", pos.x, pos.y, pos.z, recipe->id);
         }
-        // DryingRackBlock#animateTick (client, every tick, 1 in 5): the particle on the facing face
-        if (std::uniform_int_distribution<int>(0, 4)(rng()) == 0) {
-            int face = faceOf(stateOf(region->getBlock(pos), "twilightforest:facing"));
-            dryingParticle(*region, pos, face < 0 ? 2 : face);
-        }
     }
+    // DryingRackBlock#animateTick (client side, while isDrying()): the particle on the facing face
+    if (r.drying) animateTick(*region, pos);
     store(*region, pos, r, changed);
     if (changed) notify(gp);
     return true;
@@ -368,7 +389,34 @@ inventory::Handler handler() {
             store(*region, bp, r);
             notify(pos);
         }
-        return game::items::withCount(stack, game::items::countOf(stack) - 1);
+        int left = game::items::countOf(stack) - 1;
+        return left <= 0 ? ItemStack{} : game::items::withCount(stack, left);
+    };
+    // DryingRackBlockEntity#fillFromLootTable (the structure kit's loot markers, loot::placeContainer):
+    // the table is rolled at once (LootContextParamSets.CHEST, ORIGIN = the block centre) and every
+    // rolled stack overwrites the rack's (getRandomItemsRaw's consumer `this.stack = lootStack`), so
+    // the LAST stack stays, whole. Java sets the field directly, not through setTheItem: the timers
+    // keep their values (a fresh rack: total_dry_time 0), so a dryable item turns into its result on
+    // the rack's next tick (dry_time 1 >= 0), as in TF.
+    h.setLootTable = [](GlobalPos const& pos, std::string const& tableId, std::int64_t seed) {
+        auto* region = regionFor(pos);
+        if (!region) return;
+        BlockPos          bp = game::blockPos(pos);
+        loot::LootContext ctx;
+        ctx.region = region;
+        ctx.origin = Vec3{bp.x + 0.5f, bp.y + 0.5f, bp.z + 0.5f};
+        ctx.seed   = seed;
+        auto rolled = loot::roll(tableId, ctx);
+        if (rolled.empty()) {
+            log().info("woodwork: the loot table {} gave the drying rack at {} {} {} nothing", tableId, bp.x, bp.y, bp.z);
+            return;
+        }
+        RackState r   = load(*region, bp);
+        r.waterlogged = waterSourceAt(*region, bp);
+        r.item        = rolled.back();
+        store(*region, bp, r);
+        notify(pos);
+        log().info("woodwork: the drying rack at {} {} {} got {} x{} from {}", bp.x, bp.y, bp.z, game::items::idOf(r.item), game::items::countOf(r.item), tableId);
     };
     h.extract = [](GlobalPos const& pos, int slot, int count, bool simulate) -> ItemStack {
         auto* region = regionFor(pos);

@@ -11,9 +11,12 @@
 //         return "twilightforest:canopy_boat";
 //     });
 //
-// Only the boat items that boat's own destroy call spawned are replaced (items that appeared while
-// the game ran that call): a boat destroyed next to it in the same tick keeps its drop. The
-// replacement keeps the count, the position, the motion and the pickup delay of the game's item.
+// Only the boat's own drop is replaced: an item actor that appeared while the game ran that boat's
+// destroy call, of exactly the item of the boat's variant (Boat::getWoodID; <wood>_chest_boat for
+// a chest boat), one plain item; at most one per boat. A chest boat's contents (a vanilla boat item
+// in its chest) and a boat destroyed next to it keep their items; a nested Boat::$destroy inside
+// ChestBoat::$destroy does not replace twice. The replacement keeps the position, the motion and
+// the pickup delay of the game's item.
 // Server thread. One replacement function (a later call replaces it; an empty one removes it).
 
 #include <functional>
@@ -26,6 +29,10 @@ namespace gf::woodwork_ext::boatdrops {
 
 using ReplacementFn = std::function<std::optional<std::string>(Actor& boat)>;
 void setReplacement(ReplacementFn fn);
+
+/// The game's own drop of a boat or chest boat actor ("minecraft:oak_boat", "minecraft:oak_chest_boat";
+/// "" for an unknown wood).
+[[nodiscard]] std::string vanillaDropOf(Actor& boat);
 
 /// Installs / removes the Boat::$destroy and ChestBoat::$destroy hooks.
 void install();

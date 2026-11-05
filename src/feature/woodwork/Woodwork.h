@@ -19,6 +19,7 @@
 #include "nlohmann/json.hpp"
 
 #include "core/GlobalPos.h"
+#include "feature/recipes/Recipes.h"
 
 class Actor;
 class Block;
@@ -122,6 +123,10 @@ void installBoats();
 void uninstallBoats();
 void installBookshelves();
 void installFuel();
+/// The dried slime drops' food effects and tannin's craft remainder (Materials.cpp; process-wide).
+void installMaterials();
+/// Tannin's craft remainder per grid slot (a glass bottle for each tannin).
+[[nodiscard]] std::vector<ItemStack> craftRemainders(recipes::CraftingGrid const& grid);
 void uninstallFuel();
 /// Java's fuel value (ticks) of a wood set item from the vanilla fuel tags (nullopt: none).
 [[nodiscard]] std::optional<int> javaFuelTicks(std::string const& itemId);

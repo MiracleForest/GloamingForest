@@ -18,7 +18,17 @@
       },
       "minecraft:tags": {
         "tags": ["c:foods", "twilightforest:lower_on_drying_rack"]
-      }
+      },
+      "minecraft:food": {
+        "nutrition": 1,
+        "saturation_modifier": 0.2,
+        "can_always_eat": false
+      },
+      "minecraft:use_modifiers": {
+        "use_duration": 1.6,
+        "movement_modifier": 0.2
+      },
+      "minecraft:use_animation": "eat"
     }
   }
 }
