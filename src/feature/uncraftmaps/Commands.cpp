@@ -143,10 +143,10 @@ std::optional<Found> search(int dim, std::string const& printable, std::vector<s
         if (auto hit = gf::landmark::ext::locate(dim, printable, x, z, 100, skip)) return Found{hit->key, hit->pos.x, hit->pos.z};
     }
     // Minecraft's structures: Bedrock's own search
-    auto level = ll::service::getLevel();
-    if (!level) return std::nullopt;
-    auto dimension = level->getDimension(dim).lock();
-    if (!dimension || !dimension->mWorldGenerator) return std::nullopt;
+    auto* region = game::regionOf(dim);
+    if (!region) return std::nullopt;
+    auto* dimension = &region->getDimension();
+    if (!dimension->mWorldGenerator) return std::nullopt;
     std::optional<Found> best;
     double               bestDist = 0;
     for (auto const& k : holders) {

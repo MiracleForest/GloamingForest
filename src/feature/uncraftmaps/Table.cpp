@@ -78,10 +78,7 @@ void actionBar(Player& player, std::string const& text) {
 }
 
 BlockSource* regionOf(GlobalPos const& pos) {
-    auto level = ll::service::getLevel();
-    if (!level) return nullptr;
-    auto dim = level->getDimension(pos.dim).lock();
-    return dim ? &dim->getBlockSourceFromMainChunkSource() : nullptr;
+    return game::regionOf(pos.dim);
 }
 
 /// AbstractContainerMenu#stillValid(access, player, block): the table is there and the player within

@@ -10,6 +10,7 @@
 #include "ll/api/coro/CoroTask.h"
 #include "ll/api/service/Bedrock.h"
 
+#include "mc/deps/core/math/Vec3.h"
 #include "mc/world/actor/player/AbilitiesIndex.h"
 #include "mc/world/actor/player/Inventory.h"
 #include "mc/world/actor/player/Player.h"
@@ -374,7 +375,7 @@ GF_REGISTER_SELFTEST("uncraftmaps.magic_map", [](Context& ctx) -> ll::coro::Coro
     ctx.require(data != nullptr, "the map data exists");
     auto pos            = p.getFeetPos();
     auto [ecx, ecz]     = cu::magicMapCenter(static_cast<int>(std::floor(pos.x)), static_cast<int>(std::floor(pos.z)));
-    ctx.check(data->mOrigin->x == ecx && data->mOrigin->z == ecz, "centred on the magic map grid");
+    ctx.check(data->mOrigin.get().x == ecx && data->mOrigin.get().z == ecz, "centred on the magic map grid");
     ctx.check(data->mScale == 4, "scale 4");
     updateHeldMap(p, map);
     data = mapData(id);
@@ -431,7 +432,7 @@ GF_REGISTER_SELFTEST("uncraftmaps.maze_map", [](Context& ctx) -> ll::coro::CoroT
     auto* data = mapData(id);
     ctx.require(data != nullptr, "the map data");
     auto [cx, cz] = cu::mazeMapCenter(static_cast<int>(std::floor(p.getFeetPos().x)), static_cast<int>(std::floor(p.getFeetPos().z)), 0);
-    ctx.check(data->mOrigin->x == cx && data->mOrigin->z == cz && data->mScale == 0, "scale 0 on the 128-block grid");
+    ctx.check(data->mOrigin.get().x == cx && data->mOrigin.get().z == cz && data->mScale == 0, "scale 0 on the 128-block grid");
     // a diamond ore and a stone block at yCenter next to the holder
     int  px = static_cast<int>(std::floor(p.getFeetPos().x)), pz = static_cast<int>(std::floor(p.getFeetPos().z));
     auto oreAt   = core::GlobalPos{stand.dim, px + 2, y, pz};

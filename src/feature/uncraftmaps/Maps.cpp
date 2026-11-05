@@ -195,13 +195,13 @@ bool setPixel(MapItemSavedData& data, int x, int z, std::uint32_t argb) {
 MapItemTrackedActor::UniqueId decorationId(int x, int z, int salt) {
     MapItemTrackedActor::UniqueId id{};
     id.type        = MapItemTrackedActor::Type::Other;
-    id.keyEntityId = ActorUniqueID{-1 - salt};
-    id.keyBlockPos = BlockPos{x, salt, z};
+    id.keyEntityId.get() = ActorUniqueID{-1 - salt};
+    id.keyBlockPos.get() = BlockPos{x, salt, z};
     return id;
 }
 
 bool sameId(MapItemTrackedActor::UniqueId const& a, MapItemTrackedActor::UniqueId const& b) {
-    return a.type == b.type && a.keyEntityId->rawID == b.keyEntityId->rawID && a.keyBlockPos.get() == b.keyBlockPos.get();
+    return a.type == b.type && a.keyEntityId.get().rawID == b.keyEntityId.get().rawID && a.keyBlockPos.get() == b.keyBlockPos.get();
 }
 
 /// Adds (or updates) a vanilla decoration at world (x, z) and puts it at the map coordinates TF
@@ -277,7 +277,7 @@ bool conqueredAt(int dim, int x, int z, std::string const& key) {
 /// MagicMapItem#update.
 void updateMagic(Player& player, std::int64_t id, MapRecord& r, MapItemSavedData& data) {
     int  dim     = static_cast<int>(player.getDimensionId());
-    int  centerX = data.mOrigin->x, centerZ = data.mOrigin->z;
+    int  centerX = data.mOrigin.get().x, centerZ = data.mOrigin.get().z;
     auto pos     = player.getFeetPos();
     int  viewerX = cu::viewerPixel(pos.x, centerX, cu::kMagicBlocksPerPixel);
     int  viewerZ = cu::viewerPixel(pos.z, centerZ, cu::kMagicBlocksPerPixel);
@@ -337,7 +337,7 @@ std::optional<std::uint32_t> blockColour(BlockSource& region, BlockPos const& po
 void updateMaze(Player& player, MapRecord& r, MapItemSavedData& data) {
     auto& region   = player.getDimensionBlockSource();
     int   bpp      = 1 << data.mScale;
-    int   centerX  = data.mOrigin->x, centerZ = data.mOrigin->z;
+    int   centerX  = data.mOrigin.get().x, centerZ = data.mOrigin.get().z;
     auto  pos      = player.getFeetPos();
     int   viewerX  = cu::viewerPixel(pos.x, centerX, bpp);
     int   viewerZ  = cu::viewerPixel(pos.z, centerZ, bpp);
@@ -400,7 +400,7 @@ void updateMaze(Player& player, MapRecord& r, MapItemSavedData& data) {
     int yProximity = static_cast<int>(std::floor(pos.y - static_cast<float>(r.yCenter)));
     if (yProximity < -3 || yProximity > 3) {
         for (auto& [k, d] : data.mDecorations.get())
-            if (d && k.type == MapItemTrackedActor::Type::Entity && k.keyEntityId->rawID == uid && d->mImage == MapDecoration::Type::Player)
+            if (d && k.type == MapItemTrackedActor::Type::Entity && k.keyEntityId.get().rawID == uid && d->mImage == MapDecoration::Type::Player)
                 d->mImage = MapDecoration::Type::PlayerOffMap;
     }
 }
@@ -409,9 +409,9 @@ MapItemSavedData* createData(Player& player, int centerX, int centerZ, int scale
     auto& level = player.getLevel();
     auto  id    = level.getNewUniqueID();
     auto& data  = level.createMapSavedData(id, BlockPos{centerX, 0, centerZ}, player.getDimensionId(), scale);
-    data.mOrigin    = BlockPos{centerX, 0, centerZ};
+    data.mOrigin.get() = BlockPos{centerX, 0, centerZ};
     data.mScale     = static_cast<schar>(scale);
-    data.mDimension = player.getDimensionId();
+    data.mDimension.get() = player.getDimensionId();
     data.mLocked    = true; // painted by U13, never by Bedrock's terrain sampling
     data.mUnlimitedTracking = false;
     data.mPixels.get().assign(128 * 128, 0u);
@@ -517,7 +517,7 @@ ItemStack setupMagicMap(Player& player) {
     auto [cx, cz]       = cu::magicMapCenter(static_cast<int>(std::floor(pos.x)), static_cast<int>(std::floor(pos.z)));
     auto* data          = createData(player, cx, cz, 4);
     if (!data) return {};
-    auto  id            = data->mMapId->rawID;
+    auto  id            = data->mMapId.get().rawID;
     auto& r             = records()[id];
     r                   = MapRecord{};
     r.kind              = MapKind::Magic;
@@ -555,7 +555,7 @@ ItemStack setupMazeMap(Player& player, bool ore) {
     auto [cx, cz] = mazeCenterFor(static_cast<int>(player.getDimensionId()), x, z);
     auto* data = createData(player, cx, cz, 0);
     if (!data) return {};
-    auto  id   = data->mMapId->rawID;
+    auto  id   = data->mMapId.get().rawID;
     auto& r    = records()[id];
     r          = MapRecord{};
     r.kind     = ore ? MapKind::Ore : MapKind::Maze;
@@ -572,7 +572,7 @@ void updateHeldMap(Player& player, ItemStack const& stack) {
     auto* data = mapData(id);
     auto* r    = recordOf(id);
     if (!data || !r) return;
-    if (data->mDimension != player.getDimensionId()) return; // level.dimension() == data.dimension
+    if (static_cast<int>(data->mDimension.get()) != static_cast<int>(player.getDimensionId())) return; // level.dimension() == data.dimension
     static std::uint64_t tick = 0;
     ++tick;
     if (r->kind == MapKind::Magic) updateMagic(player, id, *r, *data);
@@ -610,9 +610,9 @@ ItemStack locatorMap(int dimension, int x, int z) {
     auto [cx, cz] = cu::mazeMapCenter(x, z, 4); // MapItemSavedData#createFresh's snapping
     auto  id      = level->getNewUniqueID();
     auto& data    = level->createMapSavedData(id, BlockPos{cx, 0, cz}, DimensionType(dimension), 4);
-    data.mOrigin            = BlockPos{cx, 0, cz};
+    data.mOrigin.get()     = BlockPos{cx, 0, cz};
     data.mScale             = 4;
-    data.mDimension         = DimensionType(dimension);
+    data.mDimension.get()  = DimensionType(dimension);
     data.mUnlimitedTracking = true;
     data.mDirtyForSave      = true;
     // addTargetDecoration(stack, pos, "+", RED_X)
