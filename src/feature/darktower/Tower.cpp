@@ -738,8 +738,8 @@ void Bridge::postProcess(Region& region, RandomSource&, BlockBox const& sbb, Blo
 
 BlockBox Bridge::getWingBB() const {
     auto o    = getOrientation().value_or(Orientation::North);
-    auto dest = offsetTowerCoords(4, 1, 2, dSize, o);
-    return componentBox(dest[0], dest[1], dest[2], 0, 0, 0, dSize - 1, dHeight - 1, dSize - 1, o);
+    auto dest = offsetTowerCoords(4, 1, 2, dSize, Orientation::North);
+    return componentBox(dest[0], dest[1], dest[2], 0, 0, 0, dSize - 1, dHeight - 1, dSize - 1, Orientation::North);
 }
 
 EntranceBridge::EntranceBridge(int i, int x, int y, int z, int pSize, int pHeight, Orientation direction)
@@ -1091,16 +1091,15 @@ void registerPieces() {
             return p;
         });
     };
-    constexpr auto o = Orientation::North;
-    reg(kWing, [] { return std::make_unique<Wing>(kWing, 0, 0, 0, 0, 9, 9, o); });
+    reg(kWing, [] { return std::make_unique<Wing>(kWing, 0, 0, 0, 0, 9, 9, Orientation::North); });
     reg(kMain, [] { return std::make_unique<Main>(); });
-    reg(kBridge, [] { return std::make_unique<Bridge>(kBridge, 0, 0, 0, 0, 0, 0, o); });
-    reg(kEntranceBridge, [] { return std::make_unique<EntranceBridge>(0, 0, 0, 0, 0, 0, o); });
-    reg(kMainBridge, [] { return std::make_unique<MainBridge>(0, 0, 0, 0, 0, 0, o); });
-    reg(kBossBridge, [] { return std::make_unique<BossBridge>(0, 0, 0, 0, 0, 0, o); });
-    reg(kEntrance, [] { return std::make_unique<Entrance>(0, 0, 0, 0, 9, 9, o); });
-    reg(kBossTrap, [] { return std::make_unique<BossTrap>(0, 0, 0, 0, 11, 9, o); });
-    reg(kBalcony, [] { return std::make_unique<Balcony>(0, 0, 0, 0, o); });
+    reg(kBridge, [] { return std::make_unique<Bridge>(kBridge, 0, 0, 0, 0, 0, 0, Orientation::North); });
+    reg(kEntranceBridge, [] { return std::make_unique<EntranceBridge>(0, 0, 0, 0, 0, 0, Orientation::North); });
+    reg(kMainBridge, [] { return std::make_unique<MainBridge>(0, 0, 0, 0, 0, 0, Orientation::North); });
+    reg(kBossBridge, [] { return std::make_unique<BossBridge>(0, 0, 0, 0, 0, 0, Orientation::North); });
+    reg(kEntrance, [] { return std::make_unique<Entrance>(0, 0, 0, 0, 9, 9, Orientation::North); });
+    reg(kBossTrap, [] { return std::make_unique<BossTrap>(0, 0, 0, 0, 11, 9, Orientation::North); });
+    reg(kBalcony, [] { return std::make_unique<Balcony>(0, 0, 0, 0, Orientation::North); });
     reg(kBeard, [] { return std::make_unique<Beard>(); });
     reg(kRoof, [] { return std::make_unique<Roof>(kRoof); });
     reg(kRoofAntenna, [] { return std::make_unique<RoofAntenna>(kRoofAntenna); });

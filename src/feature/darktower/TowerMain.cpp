@@ -837,12 +837,12 @@ void Main::placeTreePlanter(Region& region, int treeNum, int x, int y, int z, Ro
     }
     // grow a tree with world.getRandom() (the region's random)
     for (int i = 0; i < 100; i++)
-        if (features::place(treeGen, region, pos, ::gf::structure::regionRandom(region))) break;
+        if (::gf::features::place(treeGen, region, pos, ::gf::structure::regionRandom(region))) break;
 }
 
 void Main::placeRandomPlant(Region& region, RandomSource& decoRNG, int x, int y, int z, Rotation rotation, BlockBox const& sbb) {
     // BuiltInRegistries.BLOCK.getTag(DARK_TOWER_ALLOWED_POTS).flatMap(tag -> tag.getRandomElement(decoRNG))
-    auto const                 pots = tags::members(tags::Registry::Block, "twilightforest:dark_tower_allowed_pots");
+    auto const                 pots = ::gf::tags::members(::gf::tags::Registry::Block, "twilightforest:dark_tower_allowed_pots");
     std::optional<std::string> optional;
     if (!pots.empty()) optional = pots[static_cast<std::size_t>(decoRNG.nextInt(static_cast<int>(pots.size())))];
     std::string plant = decoRNG.nextInt(10) != 0 && optional ? *optional : std::string{"minecraft:flower_pot"};

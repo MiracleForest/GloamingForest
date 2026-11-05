@@ -12,6 +12,7 @@
 #include "mc/deps/core/math/Vec3.h"
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/Mob.h"
+#include "mc/world/attribute/Attribute.h"
 #include "mc/world/attribute/AttributeInstance.h"
 #include "mc/world/attribute/AttributeInstanceRef.h"
 #include "mc/world/attribute/MutableAttributeWithContext.h"

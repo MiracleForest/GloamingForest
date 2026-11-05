@@ -287,7 +287,8 @@ void visualLightning(Actor& source, Vec3 const& at) {
     payload.mVelocity         = Vec3{0.0f, 0.0f, 0.0f};
     payload.mAttributes->clear();
     payload.mLinks->clear();
-    *payload.mSynchedProperties = PropertySyncData{};
+    payload.mSynchedProperties->mIntEntries->clear();
+    payload.mSynchedProperties->mFloatEntries->clear();
     AddActorPacket pkt(std::move(payload));
     for (auto* p : playersNear(dimOf(region), at, 512.0, true)) pkt.sendTo(*p);
     bolts().emplace_back(uid.rawID, now() + 20);
