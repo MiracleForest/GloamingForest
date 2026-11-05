@@ -52,11 +52,6 @@ std::vector<ia::HandlerId>& handlerIds() {
     return ids;
 }
 
-BlockPos offset(BlockPos const& p, int face) {
-    auto s = faceStep(face);
-    return BlockPos{p.x + s[0], p.y + s[1], p.z + s[2]};
-}
-
 bool isHorizontalFace(int face) { return face >= 2 && face <= 5; }
 
 /// HorizontalHollowLogBlock.isInside: 2..14 px on y and on the cross axis.

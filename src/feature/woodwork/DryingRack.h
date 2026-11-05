@@ -40,4 +40,9 @@ void onChange(ChangeFn fn);
 /// The racks that hold an item (they tick).
 [[nodiscard]] std::vector<GlobalPos> activeRacks();
 
+/// The display entity of the item on racks (DryingRackDisplay.cpp): installed once; refreshDisplay
+/// makes the rack at `pos` show its item (or nothing).
+void installDisplay();
+void refreshDisplay(GlobalPos const& pos);
+
 } // namespace gf::feature::woodwork::rack

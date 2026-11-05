@@ -1,0 +1,23 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "gloamingforest:drying_rack_item",
+      "is_spawnable": false,
+      "is_summonable": true,
+      "is_experimental": false
+    },
+    "components": {
+      "minecraft:type_family": {"family": ["inanimate", "gloamingforest_display"]},
+      "minecraft:collision_box": {"width": 0.01, "height": 0.01},
+      "minecraft:physics": {"has_gravity": false, "has_collision": false},
+      "minecraft:pushable": {"is_pushable": false, "is_pushable_by_piston": false},
+      "minecraft:damage_sensor": {"triggers": {"cause": "all", "deals_damage": false}},
+      "minecraft:knockback_resistance": {"value": 1.0},
+      "minecraft:health": {"value": 1, "max": 1},
+      "minecraft:fire_immune": {},
+      "minecraft:persistent": {},
+      "minecraft:conditional_bandwidth_optimization": {}
+    }
+  }
+}

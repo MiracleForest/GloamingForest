@@ -20,12 +20,14 @@
 #include <algorithm>
 #include <cmath>
 #include <optional>
+#include <variant>
 
 #include "ll/api/memory/Hook.h"
 #include "ll/api/service/Bedrock.h"
 
 #include "mc/deps/core/math/Vec2.h"
 #include "mc/deps/core/math/Vec3.h"
+#include "mc/deps/ecs/gamerefs_entity/EntityContext.h"
 #include "mc/legacy/ActorUniqueID.h"
 #include "mc/server/commands/CommandUtils.h"
 #include "mc/world/actor/Actor.h"
@@ -125,7 +127,7 @@ ia::Result useBoatItem(ia::UseContext const& c, int wood, bool chest) {
     entity::setProperty(*boat, kWood, wood);
     // Java: the boat's yRot is the player's; Bedrock's boat rows along its local x, its seat turns
     // the rider by -90 degrees, so the body faces the player's yaw + 90
-    boat->setRotationWrapped(Vec2{0.0f, player.getRotation().y + 90.0f});
+    boat->teleport(at, player.getDimensionId(), Vec2{0.0f, player.getRotation().y + 90.0f});
     consumeOne(player, c.item);
     log().info("woodwork: {} placed a {} {}", player.getRealName(), std::string(kTfWoods[static_cast<std::size_t>(wood)]), chest ? "chest boat" : "boat");
     return ia::Result::Consume;

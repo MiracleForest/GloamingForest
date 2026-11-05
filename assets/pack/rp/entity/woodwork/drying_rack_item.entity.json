@@ -1,0 +1,13 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "gloamingforest:drying_rack_item",
+      "materials": {"default": "entity_alphatest"},
+      "textures": {"default": "textures/blocks/stone"},
+      "geometry": {"default": "geometry.gloamingforest.drying_rack_item"},
+      "render_controllers": ["controller.render.default"],
+      "enable_attachables": true
+    }
+  }
+}

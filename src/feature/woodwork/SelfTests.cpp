@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <optional>
 
 #include "ll/api/coro/CoroTask.h"
@@ -17,7 +18,6 @@
 #include "mc/world/actor/item/ItemActor.h"
 #include "mc/world/actor/player/Inventory.h"
 #include "mc/world/actor/player/Player.h"
-#include "mc/world/actor/player/PlayerInventory.h"
 #include "mc/world/gamemode/GameMode.h"
 #include "mc/world/item/enchanting/EnchantUtils.h"
 #include "mc/world/item/HandSlot.h"
@@ -39,6 +39,7 @@
 #include "game/Blocks.h"
 #include "game/Items.h"
 #include "game/WorldDb.h"
+#include "mod/Log.h"
 #include "selftest/SelfTest.h"
 
 namespace {
@@ -599,6 +600,32 @@ GF_REGISTER_SELFTEST("woodwork.boats", [](Context& ctx) -> ll::coro::CoroTask<> 
         clearItemsNear(ctx, c);
         clearItemsNear(ctx, at(c, 0, 0, 2));
     }
+});
+
+// ---- a showcase for the client scenario's pictures -----------------------------------------------------
+
+GF_REGISTER_SELFTEST("woodwork.showcase", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // six racks against a wall holding items (kelp drying), left in the unit's row (dz 2..3) for
+    // the client scenario to photograph
+    auto p = ctx.testPos(495, 2);
+    ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
+    auto* region = ctx.region();
+    char const* items[] = {"minecraft:kelp", "minecraft:rotten_flesh", "minecraft:oak_sapling", "twilightforest:treated_leather", "minecraft:oak_log"};
+    auto const* rackBlock = gf::game::blockWithStates("twilightforest:oak_drying_rack", {{"twilightforest:facing", "south"}});
+    auto const* wall      = gf::game::blockWith("minecraft:stone");
+    ctx.require(region && rackBlock && wall, "blocks");
+    for (int i = 0; i < 5; ++i) {
+        auto r = at(p, i, 1, 0);
+        gf::game::setBlock(*region, gf::game::blockPos(at(r, 0, 0, 1)), *wall);
+        gf::game::setBlock(*region, gf::game::blockPos(r), *rackBlock);
+        if (auto h = gf::inventory::find(*region, gf::game::blockPos(r)); h && h->set) {
+            if (auto s = gf::game::items::make(items[i])) h->set(r, 0, *s);
+        }
+    }
+    co_await ctx.ticks(2);
+    auto r0 = rack::at(at(p, 0, 1, 0));
+    ctx.check(r0 && r0->drying, "the kelp is drying");
+    gf::log().info("woodwork: showcase racks at {} {} {}", p.x, p.y + 1, p.z);
 });
 
 // ---- a rack across a restart (the server scenario runs a, restarts, runs b) ------------------------------

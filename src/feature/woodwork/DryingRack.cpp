@@ -274,8 +274,12 @@ void tickAll() {
     if (s.active.empty()) return;
     std::vector<GlobalPos> gone;
     std::vector<GlobalPos> racks(s.active.begin(), s.active.end());
+    // every 2 s the display entities are checked (a /kill, a display that loaded late)
+    static unsigned tick    = 0;
+    bool            refresh = (++tick % 40) == 0;
     for (auto const& p : racks) {
         if (!tickRack(p)) gone.push_back(p);
+        else if (refresh) refreshDisplay(p);
     }
     for (auto const& p : gone) track(p, false);
 }
@@ -416,6 +420,7 @@ void installDryingRacks() {
     }
     if (!once) {
         once = true;
+        r::installDisplay();
         game::db::onWorldReady([] { r::loadIndex(); });
         game::db::onWorldSave([] { r::saveIndex(); });
         game::db::onWorldClosed([] {
