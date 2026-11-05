@@ -42,9 +42,9 @@ types in `#minecraft:bypasses_armor` do not count), which U11's auto repair read
 
 `leashed_pathfinder_override` is the entity tag `twilightforest:leashed_pathfinder_override` (U21 adds it by string to
 the lich tower's fenced mobs); it is dropped from a mob that can no longer be leashed (no `LeashableComponent`), as
-TF's `handleLeashPathingOverrides`. Its effect, no stay-close pathing within 6 blocks of the holder, is how Bedrock's
-leash always works: `LeashableSystem` only pulls a leashed mob with a spring beyond the preset's soft distance
-(`LeashablePreset` soft / hard / max distance) and never paths it to the holder, so a marked mob needs nothing more.
+TF's `handleLeashPathingOverrides`. Its effect, no stay-close pathing within 6 blocks of the holder: see the last
+item of "Bedrock adaptations" (the leash pulls a marked mob only beyond 6 blocks; Bedrock's own approach to the holder
+is not reachable).
 
 ## Wings animation
 
@@ -74,11 +74,33 @@ the attachable plays the animation, the wings stay in the geometry's rest pose.
 
 - Safe fall distance and fall damage: Bedrock has no safe fall attribute; the double jump's +2 is 2 less fall damage
   (F10's combat hook), which is what Java's attribute does; slimy soles decides on that reduced damage.
-- Unrestrained: Bedrock's `BlockMovementSlowdownImmunityComponent` for cobweb, sweet berry bush, powder snow, honey
-  block and soul sand (client and server copy) instead of clearing `stuckSpeedMultiplier` / the block factors; the
-  e2e measures soul sand and cobweb speed and the honey block jump with and without it. WaterSprint: TF only treats a
-  player standing on water as "not in water" (`unrestrainedSprintingInWater` returns `isInWater` unless
-  `canStandOnFluid`), so sprinting is kept while water walking and nowhere else, as here.
+- Unrestrained, stuck speed (ResetStuckUnrestrained): Bedrock's `BlockMovementSlowdownImmunityComponent` for cobweb,
+  sweet berry bush and powder snow (client and server copy), the blocks whose slowdown that component covers
+  (`EntityInsideSystemImpl::tickWebMovementSlowdown` / `tickPowderSnowMovementSlowdown`).
+- Unrestrained on the ground (BlockHooks#resetBlockFrictionWithUnrestrained, #resetSlimeMomentumWithUnrestrained,
+  #stopBouncing; EntityHooks#resetFactorWithUnrestrained): Bedrock has no per-entity block friction, so
+  `applyUnrestrained` corrects the velocity before each engine step, in the client mod and in the server copy alike:
+  the drag of the last step (friction x 0.91 and the engine's own slowdown) is turned into TF's 0.6 x 0.91, and the
+  input acceleration of the coming step gets the difference between 0.6's factor (0.21600002 / 0.6^3) and the
+  block's (`core::tgmove::unrestrainedStep`, gtested against a simulated engine: same positions and velocities as
+  Java's 0.6 step). What Bedrock does on each block was measured (`tgmove.unrestrained_blocks`, a 0.4 push and a 20
+  tick walk of a simulated player, without and with the boots):
+
+  | Block | Bedrock | Unrestrained here (TF) |
+  |---|---|---|
+  | ice / packed ice / blue ice | friction 0.98 / 0.98 / 0.989: a 0.4 push slides 3.66 / 3.66 / 3.94 blocks | 0.881, as on grass (0.881) |
+  | slime | friction 0.8 and Java's step-on factor 0.4 + 0.2 x \|vy\| on the velocity: 0.57; walk 0.058 | 0.881; walk 0.19 (grass 0.20); no walking bounce |
+  | honey block | the same as slime (friction 0.8, factor 0.4 + 0.2 x \|vy\|): 0.57; walk 0.058; jump 0.514 high (power 0.42 x 0.6) | 0.881; walk 0.19; jump 1.252, as on grass |
+  | soul sand | a slide is not slowed; the walk's acceleration x 0.544 (walk 0.110) | walk 0.193 |
+
+  A slime landing slower than 0.08 (a walk) does not bounce (`stopBouncing`: the engine's bounce of it is taken back);
+  a fall still bounces. The honey jump: the engine's weaker jump is made up in the next step (the height it lost is
+  added to that step's velocity and taken off the one after). Without the input (mobs; simulated players) the input
+  acceleration is the one the last two engine steps agree on (a push or knockback is not taken for input). A vanilla
+  client's server copy keeps the engine's friction (its client simulates the engine's; correcting it every tick would
+  pull it back and forth).
+  WaterSprint: TF only treats a player standing on water as "not in water" (`unrestrainedSprintingInWater` returns
+  `isInWater` unless `canStandOnFluid`), so sprinting is kept while water walking and nowhere else, as here.
 - Swift swim: water movement efficiency +1 is Depth Strider III (`WaterWalkSpeedEnchantComponent`); e2e measures the
   swimming speed with and without the vest.
 - Agile ranger: Java multiplies the input by 5 (cancelling the 0.2 use slowdown); Bedrock applies the bow's slowdown
@@ -92,7 +114,29 @@ the attachable plays the animation, the wings stay in the geometry's rest pose.
   both builds), the same x5 Java's +4 multiply-total gives over the attribute's base.
 - Efficient eater (ReduceMovementFoodExhaustion): the server halves Java's movement exhaustion (sprint 0.1 / m, swim
   and under water 0.01 / m in 3D, wading 0.01 / m horizontally) and the exhaustion of ground jumps (0.05 / 0.2) and
-  double jumps.
+  double jumps. It takes back at most half of what the exhaustion value actually grew by in the tick (the exhaustion
+  of mining or attacking stays), and a move of more than a block in a tick (a teleport, a push) is not movement.
+- Companion packets: Java's move packets come before PerformDoubleJumpPacket / PerformSidestepPacket; Bedrock's auth
+  input of the same tick can come after the custom packet. A packet the server copy refuses when it comes is tried
+  again on the next 3 ticks (`processPending`) and only then counts for TF's validator (`tgmove.packet_before_move`).
+- Straight ahead's FOV (PlayerHooks#straightAheadNullify): the client compensates only while the synced movement
+  speed attribute carries the `twilightforest:travellers_gear.boots_straight_ahead` modifier, by its amount, with the
+  walk speed ability; the e2e compares the FOV factor walking with straight ahead (compensated) and without it.
+- Gliding with sneak (speedUpControlledWhileSneaking): Java's impulses carry the 0.3 sneak factor before TF's / 0.2.
+  When Bedrock's input is the unscaled one (longer than 0.35 while sneaking: its factor comes later), the client
+  hands the engine 1 / 0.3 of the unit input so that Bedrock's factor brings it back to TF's full input; the e2e
+  measures the horizontal glide speed with SHIFT + W.
+- Water walk splash: only while the server copy stands on the water (a companion water walking), as TF's
+  processWaterWalking.
+- Per tick, each player's (and wearer mob's) active modifiers are one mask (one gear lookup per armour slot); mobs
+  are looked for every 20 ticks and their wearers ticked until the gear comes off. The client drops the wing state
+  of entities it has not drawn for 200 frames; each wing wearer's flap starts at a random phase
+  (TravellersWingsAnimAttachment).
+- leashed_pathfinder_override: measured (`tgmove.leash`): Bedrock's leashed pigs 3.5 blocks from the holder come to
+  about 1 block of it within 5 s (the leash's default preset is soft 4 / hard 7 / max 12; the approach is not the
+  leash spring). A marked mob's leash presets get a soft distance of at least 6 (Java pulls a marked mob only beyond
+  6 blocks); Bedrock's approach within the soft distance is an AI path of the engine that LeviLamina does not expose
+  (MoveTowardsRestrictionGoal and the leash systems have no callable members), so marked mobs still come closer.
 
 ## Vanilla clients (best effort)
 

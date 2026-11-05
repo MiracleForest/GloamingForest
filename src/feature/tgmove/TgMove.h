@@ -205,6 +205,8 @@ struct EngineSlowdown {
 /// Bedrock's soul sand: the walk's input acceleration x this (measured: 0.544 of the walking speed
 /// on grass; a slide on it is not slowed).
 inline constexpr double kSoulSandAccel = 0.544;
+/// Bedrock's honey block jump: 0.6 of the jump power (measured: 0.514 blocks high, 1.252 on grass).
+inline constexpr double kHoneyJumpFactor = 0.6;
 
 /// A companion's tgmove.double_jump / tgmove.sidestep (PerformDoubleJumpPacket / PerformSidestep-
 /// Packet#handle): performed now, or retried on the next ticks, then a validator strike.

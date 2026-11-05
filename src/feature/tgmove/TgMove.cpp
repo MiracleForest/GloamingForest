@@ -344,7 +344,11 @@ Vec3 applyUnrestrained(Actor& a, PlayerState& st, bool on, Vec3 v, bool onGround
     }
     // resetFactorWithUnrestrained (getBlockJumpFactor): the engine's jump off honey was weaker
     if (on && st.unrHoney && !onGround && v.y > 0 && st.unrVyPre <= 0) {
-        if (auto j = tg::unrestrainedJump(v.y, tg::jumpPower(effectAmplifier(a, kJumpBoostId)))) {
+        double power       = tg::jumpPower(effectAmplifier(a, kJumpBoostId));
+        double enginePower = v.y / 0.98 + tg::kGravity;
+        // only the engine's honey jump (measured: 0.6 of the power), not a bounce or a push
+        auto j = std::abs(enginePower - power * kHoneyJumpFactor) < 0.03 ? tg::unrestrainedJump(v.y, power) : std::nullopt;
+        if (j) {
             v.y            = static_cast<float>(j->vy);
             st.unrJumpLost = j->lost;
         }
@@ -375,8 +379,10 @@ Vec3 applyUnrestrained(Actor& a, PlayerState& st, bool on, Vec3 v, bool onGround
         st.unrAccelRawValid = have;
     }
     tg::Velocity acc = move ? tg::inputAcceleration(move->x, move->y, a.getRotation().y, speed) : st.unrAccel;
-    double f    = blockFriction(block);
-    auto   slow = engineSlowdown(id, v.y, steppingCarefully);
+    // standing on a liquid (water walking): no block friction of its own to undo
+    bool   liquidBelow = id == "minecraft:water" || id == "minecraft:flowing_water" || id == "minecraft:lava" || id == "minecraft:flowing_lava";
+    double f           = liquidBelow ? tg::kUnrestrainedFriction : blockFriction(block);
+    auto   slow        = liquidBelow ? EngineSlowdown{} : engineSlowdown(id, v.y, steppingCarefully);
     auto   step = tg::unrestrainedStep({v.x, v.y, v.z}, st.unrRescale, acc, f, slow.drag, onGround, on, slow.accel);
     st.unrRescale = step.nextRescale;
     st.unrSlime   = on && onGround && id == "minecraft:slime";
@@ -466,9 +472,6 @@ unsigned modMask(Actor const& entity) {
     for (int slot = 0; slot < 4; ++slot) {
         auto const& stack = armor(entity, slot);
         if (game::items::isEmpty(stack) || brokenGear(stack)) continue;
-        bool any = false;
-        for (Mod m : kAllMods) any = any || modSlot(m) == slot;
-        if (!any) continue;
         auto mods = gear::modifiers(stack);
         if (mods.empty()) continue;
         for (Mod m : kAllMods) {
@@ -880,8 +883,10 @@ void tickPlayer(Player& player) {
     if (simulatesClient && (unrestrained || st.unrRescale != 1.0)) {
         Vec2 move{};
         if (in) move = in->mMove;
-        // simulated players walk without an input component of their own: the estimate of mobs
-        Vec3 nv = applyUnrestrained(player, st, unrestrained, delta, onGround, player.isSneaking(), player.isSimulated() ? nullptr : &move);
+        // simulated players walk without an input of their own, and a server input that reads 0 may
+        // not carry the auth input: then the estimate of mobs (the acceleration the steps agree on)
+        bool useInput = !player.isSimulated() && (move.x * move.x + move.y * move.y) > 1e-8f;
+        Vec3 nv       = applyUnrestrained(player, st, unrestrained, delta, onGround, player.isSneaking(), useInput ? &move : nullptr);
         if (nv != delta) {
             delta = nv;
             setPosDelta(player, delta);

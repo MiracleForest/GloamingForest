@@ -31,6 +31,7 @@
 #ifdef GF_CLIENT
 
 #include <algorithm>
+#include <atomic>
 #include <cmath>
 #include <map>
 #include <optional>
@@ -93,6 +94,9 @@ constexpr double kToDeg = 180.0 / kPi;
 constexpr char   kStraightName[] = "twilightforest:travellers_gear.boots_straight_ahead";
 constexpr int    kStaleFrames    = 200; ///< a remote entity unseen for this many frames is dropped
 
+/// The FOV factor the engine last asked for and what it got (render thread; read by the tick's log).
+std::atomic<float> gFovIn{0}, gFovOut{0};
+
 /// A stretch of ticks the e2e scenario measures the walking speed over.
 struct SpeedRun {
     std::string what;
@@ -118,7 +122,7 @@ struct Local {
     bool             waterWalking = false;
     bool             sneakScaledLater = false; ///< Bedrock applies its sneak factor after MoveInputComponent::mMove
     bool             loggedSneakInput = false;
-    float            fovIn = 0, fovOut = 0;    ///< the last FOV factor the engine asked for and what it got
+    bool             sneakChecked = false;     ///< this glide's first sneaking input was looked at
     // measurements for the e2e scenario
     std::optional<double> jumpBaseY;  ///< double jump: the y it started at
     double                jumpPeakY = 0;
@@ -311,6 +315,7 @@ void tick(movement::MoveState& s) {
     if (glide != l.gliding) {
         l.gliding = glide;
         if (connected()) net::client::send("tgmove.gradual_glide", {{"gliding", glide}});
+        l.sneakChecked = false;
         if (glide) {
             log().info("tgmove: glide started at y {:.2f}", feet.y);
             l.glideTicks = 0;
@@ -341,8 +346,12 @@ void tick(movement::MoveState& s) {
             // speedUpControlledWhileSneaking: Java's impulses carry the 0.3 sneak factor before TF's
             // / 0.2; when Bedrock's input is the unscaled one (longer than 0.3 while sneaking), its
             // factor comes later and is undone in advance
+            // decided on the glide's first sneaking tick, before any of this unit's own writes
             float len = std::sqrt(move.x * move.x + move.y * move.y);
-            if (len > 0.35f) l.sneakScaledLater = true;
+            if (!l.sneakChecked && len > 0.01f) {
+                l.sneakChecked     = true;
+                l.sneakScaledLater = len > 0.35f;
+            }
             if (!l.loggedSneakInput && len > 0.01f) {
                 l.loggedSneakInput = true;
                 log().info("tgmove: gliding with sneak, input length {:.3f} (the engine's sneak factor {})", len,
@@ -406,7 +415,7 @@ void tick(movement::MoveState& s) {
         if (what != l.run.what) {
             if (l.run.ticks >= 10 && !l.run.what.empty()) {
                 log().info("tgmove: speed {} {:.4f} blocks per tick over {} ticks", l.run.what, l.run.distance / l.run.ticks, l.run.ticks);
-                if (l.run.what == "forward") log().info("tgmove: fov forward in {:.4f} out {:.4f}", l.fovIn, l.fovOut);
+                if (l.run.what == "forward") log().info("tgmove: fov forward in {:.4f} out {:.4f}", gFovIn.load(), gFovOut.load());
             }
             l.run = SpeedRun{what};
         } else if (!what.empty() && l.hasLastFeet) {
@@ -525,10 +534,14 @@ void renderWings(float partialTicks) {
                 r.seen[id] = r.frame;
                 continue;
             }
-            r.wings.erase(id);
+            // the animation goes; the synced state (sent only when it changes) stays while the entity
+            // is in the world
             r.anim.erase(id);
             r.walk.erase(id);
-            r.seen.erase(id);
+            if (!lv.fetchEntity(ActorUniqueID{id}, false)) {
+                r.wings.erase(id);
+                r.seen.erase(id);
+            }
         }
     }
 }
@@ -545,9 +558,8 @@ public:
         });
         // PlayerHooks#straightAheadNullify / Restore: the FOV ignores straight ahead's speed
         camera::addFovModifier([](float fov) {
-            auto& l  = local();
-            l.fovIn  = fov;
-            l.fovOut = fov;
+            gFovIn  = fov;
+            gFovOut = fov;
             auto* p  = currentPlayer();
             if (!p) return fov;
             // only while the synced movement speed carries straight ahead's modifier (PlayerHooks#
@@ -565,13 +577,13 @@ public:
                 if (w > 0) walk = w;
             }
             float k  = tg::straightAheadFovCompensation(attr.mPtr->mCurrentValue, walk, mult);
-            l.fovOut = fov * k;
+            gFovOut = fov * k;
             static bool logged = false;
             if (!logged) {
                 logged = true;
                 log().info("tgmove: straight ahead fov x{:.3f} (speed {:.4f}, modifier x{:.2f}, walk speed {:.3f})", k, attr.mPtr->mCurrentValue, mult, walk);
             }
-            return l.fovOut;
+            return fov * k;
         });
         render::onWorld([](render::RenderContext&, float partialTicks) {
             try {
