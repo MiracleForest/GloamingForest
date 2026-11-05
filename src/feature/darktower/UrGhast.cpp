@@ -13,7 +13,7 @@
 //
 // Bedrock: the Ur-Ghast is a native flyer (F8's NoClip move control and wanted position until it
 // reaches its first flight point, then Java's noPhysics is cleared by the BP event
-// twilightforest:solid) with its goals translated below. The carminite ghastguard and ghastling run
+// "solid") with its goals translated below. The carminite ghastguard and ghastling run
 // TF's goals natively too (GhastguardHomedFlightGoal, GhastguardRandomFlyGoal, Ghast.GhastLookGoal,
 // GhastguardAttackGoal, NearestAttackableTargetGoal) with vanilla's GhastMoveControl, as their BP
 // has no navigation or vanilla AI. The Ur-Ghast's fireballs are vanilla minecraft:fireball actors
@@ -201,7 +201,7 @@ void flightGoal(Mob& m, UrState& s) {
         s.solid = true;
         VariantParameterList params{};
         params.mSelf = &m;
-        m.executeEvent("twilightforest:solid", params);
+        m.executeEvent("solid", params);
         ge::data(m, "darktower:solid") = true;
     }
 }
@@ -825,7 +825,7 @@ void install() {
                     stateOf(self).solid = true;
                     VariantParameterList params{};
                     params.mSelf = &self;
-                    self.executeEvent("twilightforest:solid", params);
+                    self.executeEvent("solid", params);
                 }
                 auto& d = ge::data(self, kData);
                 if (d.is_object() && d.value("inTantrum", false)) stateOf(self).phase.setTantrum(true);
