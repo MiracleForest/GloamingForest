@@ -148,6 +148,7 @@ GF_REGISTER_SELFTEST("atmosphere.show_forest", [](Context& ctx) { preview(ctx, {
 GF_REGISTER_SELFTEST("atmosphere.show_spooky", [](Context& ctx) { preview(ctx, {{"biome", "twilightforest:spooky_forest"}}); });
 GF_REGISTER_SELFTEST("atmosphere.show_dark_forest", [](Context& ctx) { preview(ctx, {{"biome", "twilightforest:dark_forest"}}); });
 GF_REGISTER_SELFTEST("atmosphere.show_glacier", [](Context& ctx) { preview(ctx, {{"biome", "twilightforest:glacier"}}); });
+GF_REGISTER_SELFTEST("atmosphere.show_glacier_stars_material", [](Context& ctx) { preview(ctx, {{"biome", "twilightforest:glacier"}, {"auroraMode", 1}}); });
 GF_REGISTER_SELFTEST("atmosphere.show_blizzard", [](Context& ctx) { preview(ctx, {{"biome", "twilightforest:snowy_forest"}, {"locked", true}}); });
 GF_REGISTER_SELFTEST("atmosphere.show_mosquitoes", [](Context& ctx) { preview(ctx, {{"biome", "twilightforest:swamp"}, {"locked", true}}); });
 GF_REGISTER_SELFTEST("atmosphere.show_ashes", [](Context& ctx) { preview(ctx, {{"biome", "twilightforest:fire_swamp"}, {"locked", true}}); });

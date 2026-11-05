@@ -54,7 +54,14 @@ function Enter-Twilight {
     Start-Sleep -Seconds 1
     $mark = Get-LogMark
     Invoke-Chat '/twilightforest tp'
-    if (-not $vanilla) { Wait-LogLine 'client dimension twilightforest:twilight_forest: y -32\.\.256' 90 -Since $mark | Out-Null }
+    if (-not $vanilla) {
+        try { Wait-LogLine 'client dimension twilightforest:twilight_forest: y -32\.\.256' 90 -Since $mark | Out-Null }
+        catch {
+            # a restarted game may come back into the world inside the Twilight Forest already
+            if (-not (Get-LeviLog -Since $script:AtmosphereSessionMark | Select-String -Pattern 'client dimension twilightforest:twilight_forest' -Quiet)) { throw }
+            Write-Step 'already in the Twilight Forest'
+        }
+    }
     Start-Sleep -Seconds 6 # the chunks around the arrival load
     Invoke-Chat '/fill ~-3 99 ~-3 ~3 99 ~3 glass'
     Invoke-Chat '/tp @s ~ 100 ~'
@@ -114,6 +121,9 @@ function Invoke-AtmosphereViews([string]$mode) {
     # the Ur-Ghast's tantrum: rain splashes and sounds
     Show-Atmosphere 'show_ur_ghast' "$mode-ur-ghast-rain" 'atmosphere: Ur-Ghast rain splashes' 3 | Out-Null
     if ($env:GF_ATMOSPHERE_CALIBRATE -eq '1') {
+        # the aurora with the stars material (additive, premultiplied colours) next to the blend one
+        Set-View 0 -50
+        Show-Atmosphere 'show_glacier_stars_material' "$mode-aurora-stars-material" 'atmosphere: aurora drawn' 5 | Out-Null
         # which quad side the engine's materials draw: the aurora and a weather the other way round and both
         foreach ($w in 'reversed', 'both') {
             Invoke-AtmosphereTest "atmosphere.show_winding_$w" | Out-Null
@@ -129,7 +139,7 @@ function Invoke-AtmosphereViews([string]$mode) {
 if ($vanilla) {
     Enter-Twilight
     Invoke-Chat "/tag @s add $tag"
-    Set-View 0 0
+    Set-View 0 55 # down at the ground below the platform: the fog lies over it
     $mark = Get-LogMark
     Invoke-AtmosphereTest 'atmosphere.show_vanilla_clear' | Out-Null
     Start-Sleep -Seconds 3
@@ -152,6 +162,7 @@ if ($vanilla) {
     return
 }
 
+$script:AtmosphereSessionMark = 0
 Enter-Twilight
 foreach ($rx in 'atmosphere: sun, moon and vanilla stars hidden', 'atmosphere: TF stars drawn') { Wait-LogLine $rx 60 | Out-Null }
 Invoke-AtmosphereTest 'atmosphere.*' | Out-Null
@@ -169,6 +180,7 @@ if (-not $remote) {
     Enter-TestWorld -Attempts 2
     Wait-HudReady
     Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
+    $script:AtmosphereSessionMark = [Math]::Max(0, (Get-LogMark) - 400) # this game's lines (the world load)
     Enter-Twilight
     Invoke-Chat "/tag @s add $tag"
     Invoke-AtmosphereViews 'vibrant'

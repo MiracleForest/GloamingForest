@@ -43,6 +43,9 @@ struct ColourVertex {
 
 /// Draws quads (4 vertices each, colours per vertex) with `material` (no texture).
 void drawColouredQuads(ScreenContext& screen, mce::MaterialPtr const& material, std::vector<ColourVertex> const& quads);
+/// Draws quads (4 vertices each) with a textured material and `tex`: each quad in the mean colour of
+/// its corners (the tessellator's quads take one colour), uv 0..1 across it.
+void drawTintedQuads(ScreenContext& screen, mce::MaterialPtr const& material, mce::TexturePtr const& tex, std::vector<ColourVertex> const& quads);
 /// Draws TF weather columns with `material` and `tex`, the uv wrapped by splitting each column at
 /// the texture's edges (TF draws them with a repeating sampler); `brightness` scales the colour of
 /// the columns lit by the world (big rain).

@@ -114,6 +114,20 @@ void drawColouredQuads(ScreenContext& screen, mce::MaterialPtr const& material, 
     MeshHelpers::renderMeshImmediately(screen, tess, material, OffscreenCaptureDescription{});
 }
 
+void drawTintedQuads(ScreenContext& screen, mce::MaterialPtr const& material, mce::TexturePtr const& tex, std::vector<ColourVertex> const& quads) {
+    if (quads.size() < 4) return;
+    Tessellator&      tess = screen.tessellator;
+    WhiteShaderColour white(screen);
+    tess.begin(Tessellator::DebugContextCallback{}, mce::PrimitiveMode::QuadList, 0, false);
+    for (std::size_t i = 0; i + 3 < quads.size(); i += 4) {
+        auto const* q = &quads[i];
+        tess.color((q[0].r + q[1].r + q[2].r + q[3].r) / 4, (q[0].g + q[1].g + q[2].g + q[3].g) / 4, (q[0].b + q[1].b + q[2].b + q[3].b) / 4, (q[0].a + q[1].a + q[2].a + q[3].a) / 4);
+        tess.simpleQuad(Vec3{q[0].x, q[0].y, q[0].z}, Vec2{0, 0}, Vec3{q[1].x, q[1].y, q[1].z}, Vec2{1, 0}, Vec3{q[2].x, q[2].y, q[2].z}, Vec2{1, 1}, Vec3{q[3].x, q[3].y, q[3].z}, Vec2{0, 1});
+    }
+    std::variant<std::monostate, mce::TexturePtr, mce::ClientTexture, mce::ServerTexture> variant{tex};
+    MeshHelpers::renderMeshImmediately(screen, tess, material, variant, OffscreenCaptureDescription{});
+}
+
 void drawColumns(ScreenContext& screen, mce::MaterialPtr const& material, mce::TexturePtr const& tex, std::vector<ca::Column> const& columns, float brightness) {
     if (columns.empty()) return;
     Tessellator&      tess = screen.tessellator;

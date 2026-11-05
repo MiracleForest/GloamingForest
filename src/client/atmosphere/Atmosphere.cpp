@@ -104,6 +104,7 @@ struct Preview {
     std::optional<std::vector<std::pair<core::BlockBox, bool>>>   boxes;   ///< protected boxes instead of F6's
     bool                                                          urGhast = false;
     int                                                           winding = 0; ///< 0 one side, 1 the other, 2 both
+    int                                                           auroraMode = 0; ///< 0 the blend material, 1 the stars material
 };
 
 /// The aurora grid the worker computed: camera-relative positions (at `cam`) and colours.
@@ -573,7 +574,7 @@ void pushQuad(std::vector<ColourVertex>& out, ColourVertex const& a, ColourVerte
 
 void drawAurora(render::RenderContext& ctx, float partial) {
     std::shared_ptr<AuroraGrid const> grid;
-    int                               last = 0, cur = 0, winding = 0;
+    int                               last = 0, cur = 0, winding = 0, mode = 0;
     {
         auto&           s = shared();
         std::lock_guard lock(s.mutex);
@@ -581,10 +582,15 @@ void drawAurora(render::RenderContext& ctx, float partial) {
         last    = s.lastAurora;
         cur     = s.aurora;
         winding = s.preview.winding;
+        mode    = s.preview.auroraMode;
     }
     if (!grid || (cur == 0 && last == 0)) return;
-    auto const* mat = starsMaterial();
-    if (!mat) return;
+    // TF blends the aurora over the sky (SRC_ALPHA, 1 - SRC_ALPHA): the particle engine's blend
+    // material with a white texture; the stars material (additive, no alpha) needs premultiplied
+    // colours (preview auroraMode 1, the e2e calibration)
+    auto const* mat = mode == 1 ? starsMaterial() : particleBlendMaterial();
+    auto const* tex = texture("textures/atmosphere/white");
+    if (!mat || (mode != 1 && !tex)) return;
     float const mod = ca::auroraAlpha(last, cur, partial);
     // the grid moved with the camera since the worker computed it; the plane is at y 256 and is drawn
     // scaled towards the camera (1/8: the same picture, inside the sky's depth range)
@@ -600,6 +606,7 @@ void drawAurora(render::RenderContext& ctx, float partial) {
         v.z            = (v.z + oz) * k;
         v.y            = y;
         v.a            = std::clamp(v.a * mod, 0.0f, 1.0f);
+        if (mode == 1) v = ColourVertex{v.x, v.y, v.z, v.r * v.a, v.g * v.a, v.b * v.a, v.a};
         return v;
     };
     for (int j = 0; j < n; ++j)
@@ -608,8 +615,9 @@ void drawAurora(render::RenderContext& ctx, float partial) {
             if (a.a <= 0.002f && b.a <= 0.002f && c.a <= 0.002f && d.a <= 0.002f) continue;
             pushQuad(quads, a, b, c, d, winding);
         }
-    drawColouredQuads(ctx.screen, *mat, quads);
-    logOnce("aurora_drawn", fmt::format("atmosphere: aurora drawn ({} quads, alpha {:.2f})", quads.size() / 4, mod));
+    if (mode == 1) drawColouredQuads(ctx.screen, *mat, quads);
+    else drawTintedQuads(ctx.screen, *mat, *tex, quads);
+    logOnce("aurora_drawn", fmt::format("atmosphere: aurora drawn ({} quads, alpha {:.2f}, {})", quads.size() / 4, mod, mode == 1 ? "stars material" : "blend material"));
 }
 
 /// Publishes the aurora shader's uniforms for the worker (render thread, once per frame).
@@ -778,6 +786,7 @@ void applyPreview(Json const& msg) {
     p.locked  = msg.value("locked", false);
     p.urGhast = msg.value("urGhast", false);
     p.winding = msg.value("winding", 0);
+    p.auroraMode = msg.value("auroraMode", 0);
     if (msg.contains("protected") && msg["protected"].is_array()) {
         std::vector<std::pair<core::BlockBox, bool>> boxes;
         for (auto const& b : msg["protected"])
