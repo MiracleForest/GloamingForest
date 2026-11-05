@@ -18,6 +18,7 @@
 #include "feature/aurora/MushroomTower.h"
 #include "feature/ext/landmark/LandmarkExt.h"
 #include "feature/landmark/Landmark.h"
+#include "mod/Log.h"
 #include "mod/Module.h"
 
 namespace gf::feature::aurora {
@@ -40,6 +41,24 @@ void layoutMushroomTower(structure::RandomSource& firstPieceRandom, structure::R
 
 namespace {
 
+/// Where the client scenario looks into a new palace (one line per start): the Snow Queen's room
+/// and a wing's lowest floor.
+void logPalaceViews(structure::bases::PieceList const& pieces) {
+    bool boss = false, wing = false;
+    for (auto const& p : pieces) {
+        if (!boss && p->typeId == "twilightforest:TFITBoss") {
+            boss    = true;
+            auto at = p->getWorldPos(7, 29, 2), look = p->getWorldPos(7, 34, 7);
+            gf::log().info("aurora: snow queen room view {} {} {} facing {} {} {}", at.x, at.y, at.z, look.x, look.y, look.z);
+        }
+        if (!wing && p->typeId == "twilightforest:TFITWin") {
+            wing    = true;
+            auto at = p->getWorldPos(2, 2, 2), look = p->getWorldPos(6, 2, 6);
+            gf::log().info("aurora: palace wing view {} {} {} facing {} {} {}", at.x, at.y, at.z, look.x, look.y, look.z);
+        }
+    }
+}
+
 class AuroraModule {
 public:
     void install() {
@@ -47,10 +66,12 @@ public:
         registerMushroomTowerPieces();
         installMobs();
         installSnowQueen();
+        installAuroraBlocks();
         gf::landmark::registerGenerator(kAuroraPalace, {.layout = [](gf::landmark::LayoutContext& ctx) {
                                         auto ctxRandom = gf::landmark::ext::contextRandom(ctx.start);
                                         auto const& c  = ctx.start.center;
                                         layoutAuroraPalace(ctx.random, *ctxRandom, c.x, c.y, c.z, ctx.pieces);
+                                        logPalaceViews(ctx.pieces);
                                         return true;
                                     }});
         gf::landmark::registerGenerator(kMushroomTower, {.layout = [](gf::landmark::LayoutContext& ctx) {

@@ -23,31 +23,55 @@
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_block_aurora_pillar",
-          "render_method": "opaque"
+          "render_method": "opaque",
+          "tint_method": "water"
         },
         "up": {
           "texture": "tf_block_aurora_pillar_top",
-          "render_method": "opaque"
+          "render_method": "opaque",
+          "tint_method": "water"
         },
         "down": {
           "texture": "tf_block_aurora_pillar_top",
-          "render_method": "opaque"
+          "render_method": "opaque",
+          "tint_method": "water"
         },
         "north": {
           "texture": "tf_block_aurora_pillar",
-          "render_method": "opaque"
+          "render_method": "opaque",
+          "tint_method": "water"
         },
         "south": {
           "texture": "tf_block_aurora_pillar",
-          "render_method": "opaque"
+          "render_method": "opaque",
+          "tint_method": "water"
         },
         "east": {
           "texture": "tf_block_aurora_pillar",
-          "render_method": "opaque"
+          "render_method": "opaque",
+          "tint_method": "water"
         },
         "west": {
           "texture": "tf_block_aurora_pillar",
-          "render_method": "opaque"
+          "render_method": "opaque",
+          "tint_method": "water"
+        }
+      },
+      "minecraft:item_visual": {
+        "geometry": "minecraft:geometry.full_block",
+        "material_instances": {
+          "*": {
+            "texture": "tf_aurora_item_aurora_pillar",
+            "render_method": "opaque"
+          },
+          "up": {
+            "texture": "tf_aurora_item_aurora_pillar_top",
+            "render_method": "opaque"
+          },
+          "down": {
+            "texture": "tf_aurora_item_aurora_pillar_top",
+            "render_method": "opaque"
+          }
         }
       }
     },
@@ -59,31 +83,38 @@
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_aurora_pillar",
-              "render_method": "opaque"
+              "render_method": "opaque",
+              "tint_method": "water"
             },
             "up": {
               "texture": "tf_block_aurora_pillar_top",
-              "render_method": "opaque"
+              "render_method": "opaque",
+              "tint_method": "water"
             },
             "down": {
               "texture": "tf_block_aurora_pillar_top",
-              "render_method": "opaque"
+              "render_method": "opaque",
+              "tint_method": "water"
             },
             "north": {
               "texture": "tf_block_aurora_pillar",
-              "render_method": "opaque"
+              "render_method": "opaque",
+              "tint_method": "water"
             },
             "south": {
               "texture": "tf_block_aurora_pillar",
-              "render_method": "opaque"
+              "render_method": "opaque",
+              "tint_method": "water"
             },
             "east": {
               "texture": "tf_block_aurora_pillar",
-              "render_method": "opaque"
+              "render_method": "opaque",
+              "tint_method": "water"
             },
             "west": {
               "texture": "tf_block_aurora_pillar",
-              "render_method": "opaque"
+              "render_method": "opaque",
+              "tint_method": "water"
             }
           },
           "minecraft:transformation": {
@@ -100,31 +131,38 @@
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_aurora_pillar",
-              "render_method": "opaque"
+              "render_method": "opaque",
+              "tint_method": "water"
             },
             "up": {
               "texture": "tf_block_aurora_pillar_top",
-              "render_method": "opaque"
+              "render_method": "opaque",
+              "tint_method": "water"
             },
             "down": {
               "texture": "tf_block_aurora_pillar_top",
-              "render_method": "opaque"
+              "render_method": "opaque",
+              "tint_method": "water"
             },
             "north": {
               "texture": "tf_block_aurora_pillar",
-              "render_method": "opaque"
+              "render_method": "opaque",
+              "tint_method": "water"
             },
             "south": {
               "texture": "tf_block_aurora_pillar",
-              "render_method": "opaque"
+              "render_method": "opaque",
+              "tint_method": "water"
             },
             "east": {
               "texture": "tf_block_aurora_pillar",
-              "render_method": "opaque"
+              "render_method": "opaque",
+              "tint_method": "water"
             },
             "west": {
               "texture": "tf_block_aurora_pillar",
-              "render_method": "opaque"
+              "render_method": "opaque",
+              "tint_method": "water"
             }
           },
           "minecraft:transformation": {
@@ -141,31 +179,38 @@
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_aurora_pillar",
-              "render_method": "opaque"
+              "render_method": "opaque",
+              "tint_method": "water"
             },
             "up": {
               "texture": "tf_block_aurora_pillar_top",
-              "render_method": "opaque"
+              "render_method": "opaque",
+              "tint_method": "water"
             },
             "down": {
               "texture": "tf_block_aurora_pillar_top",
-              "render_method": "opaque"
+              "render_method": "opaque",
+              "tint_method": "water"
             },
             "north": {
               "texture": "tf_block_aurora_pillar",
-              "render_method": "opaque"
+              "render_method": "opaque",
+              "tint_method": "water"
             },
             "south": {
               "texture": "tf_block_aurora_pillar",
-              "render_method": "opaque"
+              "render_method": "opaque",
+              "tint_method": "water"
             },
             "east": {
               "texture": "tf_block_aurora_pillar",
-              "render_method": "opaque"
+              "render_method": "opaque",
+              "tint_method": "water"
             },
             "west": {
               "texture": "tf_block_aurora_pillar",
-              "render_method": "opaque"
+              "render_method": "opaque",
+              "tint_method": "water"
             }
           },
           "minecraft:transformation": {

@@ -15,6 +15,7 @@
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/block/Block.h"
 
+#include "core/GlobalPos.h"
 #include "core/VolumeHash.h"
 #include "core/jrand/JRand.h"
 #include "feature/aurora/IceTower.h"
@@ -22,8 +23,9 @@
 #include "feature/aurora/Structures.h"
 #include "feature/ext/landmark/LandmarkTest.h"
 #include "feature/landmark/Landmark.h"
-#include "feature/structure/Internal.h"
+#include "feature/ext/aurora/W0Internals.h"
 #include "game/Blocks.h"
+#include "ll/api/coro/CoroTask.h"
 #include "selftest/SelfTest.h"
 
 namespace gf::feature::aurora::tests {
@@ -222,6 +224,42 @@ GF_REGISTER_SELFTEST("aurora.mushroom_tower_hash", [](Context& ctx) {
     golden(ctx, "mushroom_tower_hash", kMushroomHash, mem.hash());
 });
 
+// R19: the Snow Queen's tower placed into the world (a live region, block entities and the spawner
+// at once), hashed with snapshotVolume. Recorded from the translation (GloamingForest's golden).
+constexpr char kBossWingWorldHash[] = "";
+
+GF_REGISTER_SELFTEST("aurora.boss_wing_in_world", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto box = co_await ctx.flatArea(2830, 24, 64);
+    // the boss wing at the flat area's corner (its own box decides where it reaches)
+    IceTowerBossWing probe(0, 0, 0, 0, 15, 41, structure::Orientation::North);
+    int const        ox = box.minX + 4 - probe.bbox.minX, oy = box.minY + 1 - probe.bbox.minY, oz = box.minZ + 4 - probe.bbox.minZ;
+    IceTowerBossWing wing(0, ox, oy, oz, 15, 41, structure::Orientation::North);
+    ctx.require(wing.bbox.maxY < box.minY + 64 && wing.bbox.maxX <= box.maxX && wing.bbox.maxZ <= box.maxZ, "the tower fits the flat area");
+    {
+        structure::BlockSourceRegion live(*ctx.region(), BlockPos{(wing.bbox.minX + wing.bbox.maxX) / 2, wing.bbox.minY, (wing.bbox.minZ + wing.bbox.maxZ) / 2});
+        core::jrand::LegacyRandom    r(0);
+        wing.postProcess(live, r, wing.bbox, BlockPos{0, 0, 0});
+    }
+    auto spawner = wing.getWorldPos(7, 34, 7);
+    ctx.check(ctx.blockAt(core::GlobalPos{ctx.dimension(), spawner.x, spawner.y, spawner.z}) == "twilightforest:snow_queen_boss_spawner", "the spawner at (7, 34, 7)");
+    int auroraBlocks = 0, variants = 0, packedIce = 0;
+    for (int x = wing.bbox.minX; x <= wing.bbox.maxX; x++)
+        for (int y = wing.bbox.minY; y <= wing.bbox.maxY; y++)
+            for (int z = wing.bbox.minZ; z <= wing.bbox.maxZ; z++) {
+                auto const& b  = ctx.region()->getBlock(BlockPos{x, y, z});
+                auto        id = game::blockId(b);
+                if (id == "twilightforest:aurora_block") {
+                    auroraBlocks++;
+                    if (game::intState(b, "gloamingforest:variant").value_or(0) != 0) variants++;
+                } else if (id == "minecraft:packed_ice") packedIce++;
+            }
+    ctx.check(auroraBlocks > 300 && variants > auroraBlocks / 4, "aurora block walls with TF's texture variants: " + std::to_string(auroraBlocks) + " / " + std::to_string(variants));
+    ctx.check(packedIce > 50, "packed ice floors and stairs: " + std::to_string(packedIce));
+    core::BlockBox vol{wing.bbox.minX, wing.bbox.minY, wing.bbox.minZ, wing.bbox.maxX, wing.bbox.maxY, wing.bbox.maxZ};
+    golden(ctx, "boss_wing_in_world", kBossWingWorldHash, ctx.snapshotVolume(vol));
+    // the spawner would wake the queen for the test player: nothing is left behind
+    game::clearBlock(*ctx.region(), spawner);
+});
 GF_REGISTER_SELFTEST("aurora.palace_start", [](Context& ctx) -> ll::coro::CoroTask<> {
     ctx.require(co_await ctx.inTwilight(), "the Twilight Forest is available");
     // a start forced far from the test rows (removed afterwards): its pieces generate in loaded

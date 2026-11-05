@@ -13,17 +13,21 @@
         "default": "geometry.twilightforest.stable_ice_core"
       },
       "scripts": {
-        "animate": ["base", "spikes", "bob_render"]
+        "animate": ["base", "spikes", "bob_render", "snow_aura"]
       },
       "animations": {
         "base": "animation.twilightforest.stable_ice_core.base",
         "spikes": "animation.twilightforest.stable_ice_core.spikes",
-        "bob_render": "animation.twilightforest.ice_core.bob"
+        "bob_render": "animation.twilightforest.ice_core.bob",
+        "snow_aura": "controller.animation.twilightforest.ice_mob.snow"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {
         "base_color": "#a1bff3",
         "overlay_color": "#7000f8"
+      },
+      "particle_effects": {
+        "snow_aura": "gloamingforest:aurora_snow_core"
       }
     }
   }

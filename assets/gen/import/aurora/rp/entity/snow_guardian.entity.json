@@ -15,7 +15,15 @@
       "enable_attachables": true,
       "scripts": {
         "pre_animation": ["v.tcos0 = (math.cos(q.modified_distance_moved * 38.17) * q.modified_move_speed) * 57.3;"],
-        "animate": ["humanoid_base_pose", "move", "bob_render"]
+        "animate": [
+          "humanoid_base_pose",
+          "move",
+          "bob_render",
+          "snow_aura",
+          {
+            "attack": "v.attack_time > 0.0"
+          }
+        ]
       },
       "animations": {
         "humanoid_base_pose": "animation.humanoid.base_pose",
@@ -23,12 +31,16 @@
         "move": "animation.humanoid.move",
         "attack": "animation.humanoid.attack.rotations",
         "bob": "animation.humanoid.bob",
-        "bob_render": "animation.twilightforest.ice_mob.bob"
+        "bob_render": "animation.twilightforest.ice_mob.bob",
+        "snow_aura": "controller.animation.twilightforest.ice_mob.snow"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {
         "base_color": "#d3e7bc",
         "overlay_color": "#fefefe"
+      },
+      "particle_effects": {
+        "snow_aura": "gloamingforest:aurora_snow_guardian"
       }
     }
   }

@@ -20,6 +20,15 @@
           "type": "bool",
           "default": false,
           "client_sync": true
+        },
+        "twilightforest:shield_tick": {
+          "type": "int",
+          "range": [
+            0,
+            71
+          ],
+          "default": 0,
+          "client_sync": true
         }
       }
     },

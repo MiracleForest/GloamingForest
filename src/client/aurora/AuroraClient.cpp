@@ -8,7 +8,9 @@
 // The client mod's aurora colours (U28): ColorHandler's per-position aurora block colour and the
 // pale colour of the aurora pillar, slab and auroralized glass, through F12's tint registry (the
 // blocks' materials carry a tint method so the chunk builder asks for it). Vanilla clients see the
-// tint method's biome colour instead.
+// tint method's biome colour instead. The block items' colours (ColorHandler#registerItemColors:
+// the colour without a level, hue 0.45 and its pale form) need no client code: the blocks'
+// minecraft:item_visual draws them with pre-tinted textures, the same on every client.
 #ifdef GF_CLIENT
 
 #include "mc/world/level/BlockPos.h"

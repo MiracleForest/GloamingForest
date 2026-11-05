@@ -781,7 +781,7 @@
         "shields": {
           "rotation": [
             0,
-            "-((q.life_time * 20) * 5) - q.body_y_rotation",
+            "-(v.shield_t * 5) - q.body_y_rotation",
             0
           ]
         }

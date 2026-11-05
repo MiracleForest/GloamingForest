@@ -27,6 +27,18 @@
           ]
         }
       }
+    },
+    "controller.animation.twilightforest.ice_mob.snow": {
+      "initial_state": "default",
+      "states": {
+        "default": {
+          "particle_effects": [
+            {
+              "effect": "snow_aura"
+            }
+          ]
+        }
+      }
     }
   }
 }

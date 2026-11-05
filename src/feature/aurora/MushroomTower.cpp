@@ -19,7 +19,7 @@
 #include "core/jrand/JavaOrder.h"
 #include "core/jrand/Mth.h"
 #include "feature/aurora/StructureUtil.h"
-#include "feature/structure/Internal.h"
+#include "feature/ext/aurora/W0Internals.h"
 #include "game/Blocks.h"
 #include "mod/Log.h"
 

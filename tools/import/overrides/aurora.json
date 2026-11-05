@@ -23,7 +23,11 @@
             "pre_animation": [
               "v.tcos0 = (math.cos(q.modified_distance_moved * 38.17) * q.modified_move_speed / v.gliding_speed_value) * 57.3;",
               "v.gliding_speed_value = 1.0;",
-              "v.attack_time = v.attack_time ?? 0;"
+              "v.attack_time = v.attack_time ?? 0;",
+              "v.shield_last = v.shield_last ?? -1;",
+              "v.shield_sync = (q.property('twilightforest:shield_tick') != v.shield_last) ? q.life_time : (v.shield_sync ?? q.life_time);",
+              "v.shield_last = q.property('twilightforest:shield_tick');",
+              "v.shield_t = q.property('twilightforest:shield_tick') + (q.life_time - v.shield_sync) * 20;"
             ],
             "animate": [
               "humanoid_base_pose",
@@ -31,7 +35,10 @@
               "move",
               "base",
               "phase",
-              "shields_spin"
+              "shields_spin",
+              {
+                "attack": "v.attack_time > 0.0"
+              }
             ]
           },
           "animations": {
@@ -55,6 +62,23 @@
             "overlay_color": "#87006e"
           }
         }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:client_entity/description/particle_effects",
+        "value": {
+          "snow_aura": "gloamingforest:aurora_snow_queen"
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:client_entity/description/animations/snow_aura",
+        "value": "controller.animation.twilightforest.ice_mob.snow"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:client_entity/description/scripts/animate/-",
+        "value": "snow_aura"
       }
     ],
     "rp/entity/snow_guardian.entity.json": [
@@ -99,6 +123,30 @@
             "overlay_color": "#fefefe"
           }
         }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:client_entity/description/particle_effects",
+        "value": {
+          "snow_aura": "gloamingforest:aurora_snow_guardian"
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:client_entity/description/animations/snow_aura",
+        "value": "controller.animation.twilightforest.ice_mob.snow"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:client_entity/description/scripts/animate/-",
+        "value": "snow_aura"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:client_entity/description/scripts/animate/-",
+        "value": {
+          "attack": "v.attack_time > 0.0"
+        }
       }
     ],
     "rp/entity/stable_ice_core.entity.json": [
@@ -136,6 +184,23 @@
             "overlay_color": "#7000f8"
           }
         }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:client_entity/description/particle_effects",
+        "value": {
+          "snow_aura": "gloamingforest:aurora_snow_core"
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:client_entity/description/animations/snow_aura",
+        "value": "controller.animation.twilightforest.ice_mob.snow"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:client_entity/description/scripts/animate/-",
+        "value": "snow_aura"
       }
     ],
     "rp/entity/unstable_ice_core.entity.json": [
@@ -182,6 +247,23 @@
             "overlay_color": "#9b0fa5"
           }
         }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:client_entity/description/particle_effects",
+        "value": {
+          "snow_aura": "gloamingforest:aurora_snow_core"
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:client_entity/description/animations/snow_aura",
+        "value": "controller.animation.twilightforest.ice_mob.snow"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:client_entity/description/scripts/animate/-",
+        "value": "snow_aura"
       }
     ],
     "rp/entity/ice_crystal.entity.json": [
@@ -219,6 +301,23 @@
             "overlay_color": "#adcafb"
           }
         }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:client_entity/description/particle_effects",
+        "value": {
+          "snow_aura": "gloamingforest:aurora_snow_core"
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:client_entity/description/animations/snow_aura",
+        "value": "controller.animation.twilightforest.ice_mob.snow"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:client_entity/description/scripts/animate/-",
+        "value": "snow_aura"
       }
     ],
     "rp/entity/ice_snowball.entity.json": [
@@ -922,6 +1021,339 @@
             ]
           }
         ]
+      }
+    ],
+    "bp/blocks/aurora_pillar.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/*/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/up/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/down/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/north/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/south/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/east/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/west/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/0/components/minecraft:material_instances/*/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/0/components/minecraft:material_instances/up/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/0/components/minecraft:material_instances/down/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/0/components/minecraft:material_instances/north/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/0/components/minecraft:material_instances/south/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/0/components/minecraft:material_instances/east/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/0/components/minecraft:material_instances/west/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/1/components/minecraft:material_instances/*/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/1/components/minecraft:material_instances/up/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/1/components/minecraft:material_instances/down/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/1/components/minecraft:material_instances/north/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/1/components/minecraft:material_instances/south/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/1/components/minecraft:material_instances/east/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/1/components/minecraft:material_instances/west/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/2/components/minecraft:material_instances/*/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/2/components/minecraft:material_instances/up/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/2/components/minecraft:material_instances/down/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/2/components/minecraft:material_instances/north/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/2/components/minecraft:material_instances/south/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/2/components/minecraft:material_instances/east/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/2/components/minecraft:material_instances/west/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:item_visual",
+        "value": {
+          "geometry": "minecraft:geometry.full_block",
+          "material_instances": {
+            "*": {
+              "texture": "tf_aurora_item_aurora_pillar",
+              "render_method": "opaque"
+            },
+            "up": {
+              "texture": "tf_aurora_item_aurora_pillar_top",
+              "render_method": "opaque"
+            },
+            "down": {
+              "texture": "tf_aurora_item_aurora_pillar_top",
+              "render_method": "opaque"
+            }
+          }
+        }
+      }
+    ],
+    "bp/blocks/aurora_slab.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/*/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/bottom/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/side/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/top/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/0/components/minecraft:material_instances/*/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/0/components/minecraft:material_instances/bottom/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/0/components/minecraft:material_instances/side/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/0/components/minecraft:material_instances/top/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/1/components/minecraft:material_instances/*/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/1/components/minecraft:material_instances/up/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/1/components/minecraft:material_instances/down/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/1/components/minecraft:material_instances/north/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/1/components/minecraft:material_instances/south/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/1/components/minecraft:material_instances/east/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/1/components/minecraft:material_instances/west/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/2/components/minecraft:material_instances/*/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/2/components/minecraft:material_instances/bottom/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/2/components/minecraft:material_instances/side/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/2/components/minecraft:material_instances/top/tint_method",
+        "value": "water"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:item_visual",
+        "value": {
+          "geometry": "geometry.tf.twilightforest.block.aurora_slab",
+          "material_instances": {
+            "*": {
+              "texture": "tf_aurora_item_aurora_slab_side",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_aurora_item_aurora_slab_side",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_aurora_item_aurora_pillar_top",
+              "render_method": "opaque"
+            },
+            "bottom": {
+              "texture": "tf_aurora_item_aurora_pillar_top",
+              "render_method": "opaque"
+            }
+          }
+        }
+      }
+    ],
+    "data/gf/families/aurora.json": [
+      {
+        "op": "add",
+        "path": "/2/params/render_method",
+        "value": "blend"
+      },
+      {
+        "op": "add",
+        "path": "/2/params/textures",
+        "value": {
+          "*": "tf_aurora_ct_base",
+          "overlay": "tf_block_auroralized_glass",
+          "connected": "tf_block_auroralized_glass_ct"
+        }
+      },
+      {
+        "op": "add",
+        "path": "/2/params/components",
+        "value": {
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_aurora_ct_base",
+              "render_method": "blend"
+            },
+            "overlay": {
+              "texture": "tf_block_auroralized_glass",
+              "render_method": "blend",
+              "tint_method": "water"
+            },
+            "connected": {
+              "texture": "tf_block_auroralized_glass_ct",
+              "render_method": "blend",
+              "tint_method": "water"
+            }
+          },
+          "minecraft:light_dampening": 0,
+          "minecraft:item_visual": {
+            "geometry": "minecraft:geometry.full_block",
+            "material_instances": {
+              "*": {
+                "texture": "tf_aurora_item_auroralized_glass",
+                "render_method": "blend"
+              }
+            }
+          }
+        }
       }
     ]
   }

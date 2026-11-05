@@ -2,7 +2,9 @@
 #   palace-*        the aurora palace placed with /twilightforest place (the aurora tint on its walls:
 #                   ColorHandler's per-position colour with the client mod, the tint method's colour
 #                   on vanilla clients), its bridge and the Snow Queen's tower
-#   blocks          aurora block, pillar, slab and auroralized glass
+#   palace-wing-floor, palace-boss-room   inside a wing (floor decorators, chests) and the queen's room
+#   blocks          aurora block (TF's animated variants), pillar, slab and auroralized glass
+#   block-items     the four block items (TF's item colours)
 #   snow-queen, snow-guardian, ice-cores, ice-crystal   the mobs (the queen with her ice shields)
 #   mushroom-tower  the mushroom tower
 # Out: out/aurora[-<mode>]/*.png - open each one and compare it with TF's textures and models.
@@ -30,6 +32,8 @@ Start-Sleep -Seconds 4
 $mark = Get-LogMark
 Invoke-Chat "/twilightforest place twilightforest:aurora_palace $x $y $z"
 Wait-LogLine "landmark: placed twilightforest:aurora_palace at $x $y $z" 60 -Since $mark | Out-Null
+$bossView = Wait-LogLine 'aurora: snow queen room view (-?\d+) (-?\d+) (-?\d+) facing (-?\d+) (-?\d+) (-?\d+)' 10 -Since $mark
+$wingView = Wait-LogLine 'aurora: palace wing view (-?\d+) (-?\d+) (-?\d+) facing (-?\d+) (-?\d+) (-?\d+)' 10 -Since $mark
 Start-Sleep -Seconds 3
 # the main tower floats at y + 40 (x + 11 .. x + 21): look at it from the south-east, then from below
 Set-Camera ($x + 60) ($y + 75) ($z + 60) "$($x + 16) $($y + 55) $($z + 16)"
@@ -38,6 +42,19 @@ Set-Camera ($x - 30) ($y + 60) ($z + 40) "$($x + 5) $($y + 50) $($z + 16)"
 Save-Screenshot 'palace-wall' | Out-Null
 Set-Camera ($x + 16.5) ($y + 46) ($z + 16.5) "$($x + 16) $($y + 46) $($z + 25)"
 Save-Screenshot 'palace-inside' | Out-Null
+# R19: inside the palace: a wing's lowest floor (floor decorators, chests) and the Snow Queen's room
+function Show-View([string]$line, [string]$shot) {
+    if ($line -notmatch 'view (-?\d+) (-?\d+) (-?\d+) facing (-?\d+) (-?\d+) (-?\d+)') { throw "no view in '$line'" }
+    $v = $Matches
+    # the chunks there generate (with the palace's pieces) once the player is near
+    Invoke-Teleport "/tp @s $([int]$v[1] + 0.5) $([int]$v[2] + 30) $([int]$v[3] + 0.5)"
+    Start-Sleep -Seconds 5
+    Invoke-Teleport "/tp @s $([int]$v[1] + 0.5) $([int]$v[2]) $([int]$v[3] + 0.5) facing $([int]$v[4] + 0.5) $([int]$v[5] + 0.5) $([int]$v[6] + 0.5)"
+    Start-Sleep -Seconds 3
+    Save-Screenshot $shot | Out-Null
+}
+Show-View $wingView 'palace-wing-floor'
+Show-View $bossView 'palace-boss-room'
 
 # ---- blocks -------------------------------------------------------------------------------------
 $bx = 4200; $bz = 4200; $by = -60
@@ -49,19 +66,25 @@ Invoke-Chat "/setblock $($bx + 3) $($by + 1) $($bz - 1) twilightforest:aurora_sl
 Invoke-Chat "/setblock $($bx + 5) $($by + 1) $($bz - 1) twilightforest:auroralized_glass"
 Start-Sleep -Seconds 2
 Save-Screenshot 'blocks' | Out-Null
+# the block items in the hotbar (ColorHandler's item colours: hue 0.45, the pale colour)
+Invoke-Chat '/clear @s'
+foreach ($i in 'aurora_block', 'aurora_pillar', 'aurora_slab', 'auroralized_glass') { Invoke-Chat "/give @s twilightforest:$i" }
+Start-Sleep -Seconds 1
+Save-Screenshot 'block-items' | Out-Null
 
 # ---- mobs -----------------------------------------------------------------------------------------
-function Show-Mob([string]$id, [string]$shot, [double]$dy = 0, [double]$dist = 4) {
+function Show-Mob([string]$id, [string]$shot, [double]$dy = 0, [double]$dist = 4, [double]$wait = 1.2) {
     $mx = 4400; $mz = 4400; $my = -60
     Invoke-Teleport "/tp @s $($mx + $dist) $($my) $($mz + 0.5) facing $($mx + 0.5) $($my + 1 + $dy) $($mz + 0.5)"
     Start-Sleep -Seconds 2
     Invoke-Chat "/summon $id $($mx + 0.5) $($my + $dy) $($mz + 0.5) facing @p"
-    Start-Sleep -Milliseconds 1200
+    Start-Sleep -Milliseconds ([int]($wait * 1000))
     Save-Screenshot $shot | Out-Null
     Invoke-Chat "/kill @e[type=$id]"
 }
 Show-Mob 'twilightforest:snow_queen' 'snow-queen' 1 6
-Show-Mob 'twilightforest:snow_guardian' 'snow-guardian'
+# its gear (a TF sword, chestplate and helmet) reaches the client with the equipment packets
+Show-Mob 'twilightforest:snow_guardian' 'snow-guardian' 0 3 2.5
 Show-Mob 'twilightforest:stable_ice_core' 'ice-core-stable'
 Show-Mob 'twilightforest:unstable_ice_core' 'ice-core-unstable'
 Show-Mob 'twilightforest:ice_crystal' 'ice-crystal'

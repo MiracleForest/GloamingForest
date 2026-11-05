@@ -19,6 +19,8 @@
 // and block transformation, and the ice crystal's 30 second life.
 #include "feature/aurora/Mobs.h"
 
+#include <algorithm>
+#include <bitset>
 #include <cmath>
 #include <map>
 #include <set>
@@ -28,12 +30,16 @@
 
 #include "mc/deps/core/math/Vec3.h"
 #include "mc/deps/core/string/HashedString.h"
+#include "mc/deps/shared_types/legacy/Difficulty.h"
 #include "mc/deps/shared_types/legacy/EquipmentSlot.h"
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/ActorCategory.h"
 #include "mc/world/actor/Mob.h"
 #include "mc/world/actor/player/Player.h"
-#include "mc/world/gamemode/GameMode.h"
+#include "mc/world/item/Item.h"
+#include "mc/world/item/ItemStack.h"
+#include "mc/world/item/enchanting/Enchant.h"
+#include "mc/world/item/enchanting/EnchantUtils.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/storage/GameRules.h"
@@ -47,20 +53,21 @@
 
 #include "core/jrand/JRand.h"
 #include "feature/combat/Combat.h"
-#include "feature/common/Interactions.h"
 #include "feature/death/Death.h"
 #include "feature/dimension/World.h"
+#include "feature/ext/dimension/DimensionType.h"
 #include "feature/entity/Entity.h"
-#include "feature/entity/EntityInternal.h"
 #include "feature/ext/entity/EntityExt.h"
+#include "feature/ext/aurora/W0Internals.h"
 #include "feature/fx/Fx.h"
-#include "feature/progression/Progression.h"
+#include "feature/loot/Loot.h"
 #include "feature/projectile/Projectile.h"
 #include "feature/spawn/Spawn.h"
 #include "feature/tags/Tags.h"
 #include "feature/worldgen/Worldgen.h"
 #include "game/Blocks.h"
 #include "game/Items.h"
+#include "game/WorldDb.h"
 #include "mod/Log.h"
 #include "mod/Module.h"
 
@@ -99,11 +106,12 @@ std::string biomeIdAt(Actor& actor) {
 }
 
 /// #minecraft:snow_golem_melts (vanilla hot biomes, TF's oak savannah and fire swamp).
-bool meltsSnow(Actor& actor) {
-    auto id = biomeIdAt(actor);
+bool meltsSnowIn(std::string const& id) {
     if (id == "twilightforest:oak_savannah" || id == "twilightforest:fire_swamp") return true;
     return gf::tags::has(gf::tags::Registry::Biome, "minecraft:snow_golem_melts", id);
 }
+
+bool meltsSnow(Actor& actor) { return meltsSnowIn(biomeIdAt(actor)); }
 
 float eyeHeightOf(std::string const& type) {
     if (type == kStableIceCore || type == kUnstableIceCore) return 1.35f;
@@ -111,23 +119,17 @@ float eyeHeightOf(std::string const& type) {
     return 1.53f;
 }
 
-void snowParticles(Actor& self, float eyeHeight, int count) {
-    // (r - r) * 0.3 / 0.5 / 0.3 around the eyes: fx's gaussian spread of a similar width
-    auto p = feet(self);
-    gf::fx::particle(self.getDimension(), "twilightforest:snow_guardian", Vec3{p.x, p.y + eyeHeight, p.z}, Vec3{}, count,
-                 nlohmann::json{{"spread", {0.12, 0.2, 0.12}}});
-}
-
 namespace {
 
 constexpr char kIceSnowball[] = "twilightforest:ice_snowball";
 
-/// BaseIceMob#aiStep: slow fall, snow particles, burning in hot biomes.
+/// BaseIceMob#aiStep: slow fall, burning in hot biomes. The snow particles around the eyes (3 a tick,
+/// the snow guardian 3 more) are client side as in TF: a looping emitter of the client entity
+/// (gloamingforest:aurora_snow_*, controller.animation.twilightforest.ice_mob.snow).
 void baseIceMobTick(Actor& self, std::string const& type) {
     if (!self.isAlive()) return;
     auto v = self.getPosDelta();
     if (!self.isOnGround() && v.y < 0.0f) fe::setMotion(self, Vec3{v.x, v.y * 0.6f, v.z});
-    snowParticles(self, eyeHeightOf(type), type == kSnowGuardian ? 6 : 3); // the snow guardian adds 3 of its own
     bool melts = meltsSnow(self);
     if (melts) {
         auto p = feet(self);
@@ -143,6 +145,57 @@ void baseIceMobTick(Actor& self, std::string const& type) {
 
 // ---- SnowGuardian#populateDefaultEquipmentSlots ----------------------------------------------------
 
+using Slot = SharedTypes::Legacy::EquipmentSlot;
+constexpr Slot kGuardianSlots[] = {Slot::Mainhand, Slot::Torso, Slot::Head};
+
+/// DifficultyInstance#getSpecialMultiplier of the region (no chunk inhabited time on Bedrock: 0).
+float specialMultiplier(Actor&) {
+    auto level = ll::service::getLevel();
+    if (!level) return 0.0F;
+    auto diff = level->getDifficulty();
+    if (diff == SharedTypes::Legacy::Difficulty::Peaceful) return 0.0F;
+    bool  hard = diff == SharedTypes::Legacy::Difficulty::Hard;
+    // DifficultyInstance#calculateDifficulty(difficulty, dayTime, inhabitedTime = 0, moonBrightness)
+    float f  = 0.75F;
+    float f1 = std::clamp((static_cast<float>(level->getTime()) + -72000.0F) / 1440000.0F, 0.0F, 1.0F) * 0.25F;
+    f += f1;
+    float f2      = 0.0F;
+    // DimensionType.MOON_BRIGHTNESS_PER_PHASE[moonPhase(dayTime)]
+    static constexpr float kMoon[] = {1.0F, 0.75F, 0.5F, 0.25F, 0.0F, 0.25F, 0.5F, 0.75F};
+    float moon    = kMoon[(static_cast<long long>(level->getTime()) / 24000LL % 8 + 8) % 8];
+    f2           += std::clamp(moon * 0.25F, 0.0F, f1);
+    if (diff == SharedTypes::Legacy::Difficulty::Easy) f2 *= 0.5F;
+    f += f2;
+    float effective = static_cast<float>(static_cast<int>(diff)) * f;
+    (void)hard;
+    // getSpecialMultiplier: 0 below 2, 1 above 4
+    if (effective < 2.0F) return 0.0F;
+    return effective > 4.0F ? 1.0F : (effective - 2.0F) / 2.0F;
+}
+
+/// Mob#populateDefaultEquipmentEnchantments: the weapon (chance 0.25) and each armour piece (0.5) times
+/// the special multiplier, enchanted by VanillaEnchantmentProviders.MOB_SPAWN_EQUIPMENT (cost 5 ..
+/// 5 + multiplier x 17).
+void enchantSpawnedEquipment(Mob& mob, float special) {
+    auto level = ll::service::getLevel();
+    if (!level) return;
+    for (auto slot : kGuardianSlots) {
+        float chance = slot == Slot::Mainhand ? 0.25F : 0.5F;
+        ItemStack stack(mob.getItemSlot(slot));
+        if (gf::game::items::isEmpty(stack) || !(rng().nextFloat() < chance * special)) continue;
+        int maxCost = 5 + static_cast<int>(special * 17.0F);
+        int cost    = 5 + rng().nextInt(maxCost - 5 + 1);
+        EnchantUtils::randomlyEnchant(level->getIRandom(), stack, cost, 0, false);
+        mob.setItemSlot(slot, stack);
+    }
+}
+
+void syncEquipment(Mob& mob) {
+    // MobEquipment / MobArmorEquipment packets to every client that sees the guardian
+    mob.sendInventory(false);
+    mob.sendArmor(std::bitset<5>{0b1111});
+}
+
 void equipSnowGuardian(Actor& self) {
     auto* mob = fe::asMob(self);
     if (!mob) return;
@@ -150,10 +203,45 @@ void equipSnowGuardian(Actor& self) {
     static char const* swords[]  = {"twilightforest:ironwood_sword", "twilightforest:steeleaf_sword", "twilightforest:knightmetal_sword", "twilightforest:knightmetal_sword"};
     static char const* chests[]  = {"twilightforest:ironwood_chestplate", "twilightforest:steeleaf_chestplate", "twilightforest:knightmetal_chestplate", "twilightforest:arctic_chestplate"};
     static char const* helmets[] = {"twilightforest:ironwood_helmet", "twilightforest:steeleaf_helmet", "twilightforest:knightmetal_helmet", "twilightforest:arctic_helmet"};
-    using Slot = SharedTypes::Legacy::EquipmentSlot;
     if (auto s = gf::game::items::make(swords[type], 1, 0)) mob->setItemSlot(Slot::Mainhand, *s);
     if (auto s = gf::game::items::make(chests[type], 1, 0)) mob->setItemSlot(Slot::Torso, *s);
     if (auto s = gf::game::items::make(helmets[type], 1, 0)) mob->setItemSlot(Slot::Head, *s);
+    enchantSpawnedEquipment(*mob, specialMultiplier(self));
+    syncEquipment(*mob);
+}
+
+/// Mob#dropCustomDeathLoot for the guardian's gear: drop chance 0.085 per slot (+ 0.01 per looting
+/// level of the killer's weapon), only when a player hit it recently, damaged at random.
+void dropSnowGuardianGear(Actor& dead, std::vector<ItemStack>& drops, gf::loot::LootContext const& ctx) {
+    auto* mob = fe::asMob(dead);
+    if (!mob) return;
+    int looting = 0;
+    if (ctx.attacker) {
+        if (auto* killer = fe::asMob(*ctx.attacker))
+            looting = EnchantUtils::getEnchantLevel(Enchant::Type::Looting, killer->getCarriedItem());
+    }
+    for (auto slot : kGuardianSlots) {
+        ItemStack stack(mob->getItemSlot(slot));
+        if (gf::game::items::isEmpty(stack)) continue;
+        float chance = 0.085F + 0.01F * static_cast<float>(looting);
+        if (ctx.player != nullptr && rng().nextFloat() < chance) {
+            if (stack.isDamageableItem()) {
+                int maxDamage = stack.getItem() ? stack.getItem()->getMaxDamage() : 0;
+                if (maxDamage > 0) stack.setDamageValue(static_cast<short>(maxDamage - rng().nextInt(1 + rng().nextInt(std::max(maxDamage - 3, 1)))));
+            }
+            drops.push_back(stack);
+        }
+        // the engine never drops it again (dropEquipmentOnDeath)
+        mob->setItemSlot(slot, gf::game::items::empty());
+    }
+}
+
+/// Monster#checkMonsterSpawnRules: not on peaceful, dark enough unless a spawner places it.
+bool checkMonsterSpawnRules(BlockSource& region, std::string const&, BlockPos const& pos, gf::spawn::SpawnReason reason, gf::core::jrand::RandomSource& random) {
+    auto level = ll::service::getLevel();
+    if (!level || level->getDifficulty() == SharedTypes::Legacy::Difficulty::Peaceful) return false;
+    if (reason == gf::spawn::SpawnReason::Spawner || reason == gf::spawn::SpawnReason::TrialSpawner) return true;
+    return gf::world::ext::isDarkEnoughToSpawn(region, pos, random);
 }
 
 // ---- StableIceCore: RangedAttackGoal(1.25, 20, 10) + performRangedAttack -------------------------
@@ -262,34 +350,43 @@ char const* closestDye(unsigned blockColor) {
     return best;
 }
 
+/// UnstableIceCore#isBlockNormalBounds: Block.isShapeFullBlock(state.getShape(level, pos)), the outline.
+bool isBlockNormalBounds(BlockSource& region, BlockPos const& pos, Block const& state) {
+    AABB        buffer{};
+    AABB const& shape = state.getBlockType().getOutline(state, region, pos, buffer);
+    auto        span  = [](float lo, float hi) { return hi - lo >= 0.999F; };
+    return span(shape.min.x, shape.max.x) && span(shape.min.y, shape.max.y) && span(shape.min.z, shape.max.z);
+}
+
 void transformBlock(BlockSource& region, BlockPos const& pos) {
     Block const& state = region.getBlock(pos);
     if (state.isAir()) return;
     auto const& type = state.getBlockType();
     // getExplosionResistance() < 8 and breakable (destroy speed >= 0)
     if (type.getExplosionResistance() >= 8.0f * 5.0f || type.getDestroySpeed() < 0.0f) return; // Bedrock keeps Java resistance x 5
+    // MapColor#col: Bedrock's block map colours are Java's MapColor palette for vanilla blocks
+    // (aurora.map_colors checks stone, ice, dirt, grass and snow against Java's values)
     auto     c     = type.getMapColor(region, pos, state);
     unsigned color = (static_cast<unsigned>(c.r * 255.0f + 0.5f) << 16) | (static_cast<unsigned>(c.g * 255.0f + 0.5f) << 8) |
                      static_cast<unsigned>(c.b * 255.0f + 0.5f);
-    auto id        = gf::game::blockId(state);
-    bool fullCube  = state._isSolid() || id == "minecraft:ice" || id == "twilightforest:aurora_block" || id.find("leaves") != std::string::npos;
-    bool solid     = state._isSolid();
-    bool glassLike = fullCube && (!solid || gf::tags::has(gf::tags::Registry::Block, "minecraft:leaves", id) || id == "minecraft:ice" || id == "twilightforest:aurora_block");
+    auto id    = gf::game::blockId(state);
+    bool solid = state._isSolid();
+    // shouldTransformGlass: a full-cube shape and (not solid, leaves, ice or the aurora block)
+    bool glassLike = isBlockNormalBounds(region, pos, state) &&
+                     (!solid || gf::tags::has(gf::tags::Registry::Block, "minecraft:leaves", id) || id == "minecraft:ice" || id == "twilightforest:aurora_block");
     if (glassLike) {
         if (auto const* b = gf::game::blockWithStates(std::string("minecraft:") + closestDye(color) + "_stained_glass", nlohmann::json::object()))
             gf::game::setBlock(region, pos, *b);
-    } else if (solid) {
-        // a redstone conductor: terracotta
+    } else if (solid && isBlockNormalBounds(region, pos, state)) {
+        // shouldTransformClay: a redstone conductor (a solid full cube on Bedrock): terracotta
         if (auto const* b = gf::game::blockWithStates(std::string("minecraft:") + closestDye(color) + "_terracotta", nlohmann::json::object()))
             gf::game::setBlock(region, pos, *b);
     }
 }
+} // namespace
 
-void transformBlocks(Actor& self) {
-    int   range = 4;
-    auto  p     = feet(self);
-    auto& reg   = self.getDimensionBlockSource();
-    BlockPos at{static_cast<int>(std::floor(p.x)), static_cast<int>(std::floor(p.y)), static_cast<int>(std::floor(p.z))};
+void transformBlocksAt(BlockSource& reg, BlockPos const& at) {
+    int range = 4;
     for (int dx = -range; dx <= range; dx++)
         for (int dy = -range; dy <= range; dy++)
             for (int dz = -range; dz <= range; dz++) {
@@ -297,6 +394,13 @@ void transformBlocks(Actor& self) {
                 float  randRange = static_cast<float>(range) + rr() * 2.0F;
                 if (distance < randRange) transformBlock(reg, BlockPos{at.x + dx, at.y + dy, at.z + dz});
             }
+}
+
+namespace {
+
+void transformBlocks(Actor& self) {
+    auto p = feet(self);
+    transformBlocksAt(self.getDimensionBlockSource(), BlockPos{static_cast<int>(std::floor(p.x)), static_cast<int>(std::floor(p.y)), static_cast<int>(std::floor(p.z))});
 }
 
 void unstableCoreTick(Actor& self) {
@@ -327,45 +431,6 @@ std::set<std::int64_t>& goalsAdded() {
     return s;
 }
 
-// ---- the aurora block's progress with progress_glacier ----------------------------------------------
-
-struct Mining {
-    BlockPos     pos;
-    int          face  = 0;
-    std::int64_t ticks = 0;
-};
-std::map<std::int64_t, Mining>& mining() {
-    static std::map<std::int64_t, Mining> m;
-    return m;
-}
-
-void tickMining() {
-    auto level = ll::service::getLevel();
-    if (!level) return;
-    for (auto it = mining().begin(); it != mining().end();) {
-        auto* actor = fe::actorById(it->first);
-        auto& m     = it->second;
-        if (!actor || !actor->isPlayer() || !actor->isAlive()) {
-            it = mining().erase(it);
-            continue;
-        }
-        // AuroraBrickBlock#getDestroyProgress: 0.1 per tick (10 ticks) once the player has progress_glacier
-        if (++m.ticks >= 10) {
-            auto& player = static_cast<Player&>(*actor);
-            auto& region = player.getDimensionBlockSource();
-            auto* gameMode = player.mGameMode.get();
-            if (gf::game::blockId(region.getBlock(m.pos)) == "twilightforest:aurora_block" && gameMode) {
-                auto eye = player.getEyePos();
-                double dx = m.pos.x + 0.5 - eye.x, dy = m.pos.y + 0.5 - eye.y, dz = m.pos.z + 0.5 - eye.z;
-                if (dx * dx + dy * dy + dz * dz <= 36.0) gameMode->destroyBlock(m.pos, static_cast<uchar>(m.face));
-            }
-            it = mining().erase(it);
-            continue;
-        }
-        ++it;
-    }
-}
-
 } // namespace
 
 void installMobs() {
@@ -387,20 +452,36 @@ void installMobs() {
                 if (max.is_number_integer() && max.get<int>() > 0 && a >= max.get<int>()) fe::removeLater(self.getOrCreateUniqueID().rawID);
             }
         };
-        if (type == kSnowGuardian) b.onSpawn = [](Actor& self) {
-            auto& done = gf::entity::data(self, "aurora:equipped");
-            if (done.is_boolean()) return;
-            done = true;
-            equipSnowGuardian(self);
-        };
+        if (type == kSnowGuardian) {
+            b.onSpawn = [](Actor& self) {
+                auto& done = gf::entity::data(self, "aurora:equipped");
+                if (done.is_boolean()) return;
+                done = true;
+                equipSnowGuardian(self);
+            };
+            // players who come into view later: the gear again once a second for the first minute,
+            // then every 10 seconds (no tracking event in the contracts)
+            b.tick = [inner = b.tick](Actor& self) {
+                inner(self);
+                int t = self.mTickCount;
+                if ((t < 1200 && t % 20 == 5) || t % 200 == 5)
+                    if (auto* mob = fe::asMob(self)) syncEquipment(*mob);
+            };
+        }
+        if (type == kStableIceCore) b.die = [](Actor& self, std::string const&, Actor*) { goalsAdded().erase(self.getOrCreateUniqueID().rawID); };
         if (type == kUnstableIceCore) b.hurt = [](Actor& self, float&, std::string const&, Actor*) {
             // the body is invulnerable while it waits for the explosion
             return !gf::entity::data(self, "aurora:dying").is_number_integer();
         };
         gf::entity::registerType(id, b);
-        gf::spawn::registerPlacement(id, gf::spawn::PlacementRule::OnGround);
+        // RegistrationEvents: ON_GROUND, MOTION_BLOCKING_NO_LEAVES, Monster::checkMonsterSpawnRules
+        gf::spawn::registerPlacement(id, gf::spawn::PlacementRule::OnGround, checkMonsterSpawnRules);
     }
-    gf::spawn::registerPlacement(kSnowQueen, gf::spawn::PlacementRule::OnGround);
+    gf::spawn::registerPlacement(kSnowQueen, gf::spawn::PlacementRule::OnGround, checkMonsterSpawnRules);
+    gf::loot::onEntityDrops([](Actor& dead, std::vector<ItemStack>& drops, gf::loot::LootContext const& ctx) {
+        if (dead.getTypeName() == kSnowGuardian) dropSnowGuardianGear(dead, drops, ctx);
+    });
+    gf::game::db::onWorldClosed([] { goalsAdded().clear(); });
 
     // UnstableIceCore#tickDeath: the corpse stays 60 ticks, then explodes
     gf::death::onLethal(0, [](Actor& victim, gf::combat::DamageInfo const&) {
@@ -435,13 +516,8 @@ void installMobs() {
     };
     gf::projectile::registerType(kIceSnowball, snowball);
 
-    gf::interactions::onStartDestroy({.block = "twilightforest:aurora_block"}, [](gf::interactions::DestroyContext const& ctx) {
-        if (gf::progression::has(ctx.player, "twilightforest:progress_glacier"))
-            mining()[ctx.player.getOrCreateUniqueID().rawID] = Mining{BlockPos{ctx.pos.x, ctx.pos.y, ctx.pos.z}, ctx.face, 0};
-        return gf::interactions::Result::Pass;
-    });
-    fe::onLevelTick(tickMining);
 }
+
 
 void markSummonedCrystal(Actor& crystal) { gf::entity::data(crystal, "aurora:max_age") = 600; }
 

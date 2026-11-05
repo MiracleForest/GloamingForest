@@ -21,8 +21,9 @@
 #include "mc/world/level/block/Block.h"
 
 #include "core/aurora/FloorPlan.h"
+#include "feature/aurora/Structures.h"
 #include "feature/aurora/StructureUtil.h"
-#include "feature/structure/Internal.h"
+#include "feature/ext/aurora/W0Internals.h"
 #include "mod/Log.h"
 
 namespace gf::feature::aurora {
@@ -204,6 +205,7 @@ void IceTowerWing::postProcess(Region& region, RandomSource& rand, BlockBox cons
 
     makeFloorsForTower(region, decoRNG, sbb);
     makeOpenings(region, sbb);
+    applyAuroraVariants(region, bbox, sbb);
 }
 
 void IceTowerWing::makeFloorsForTower(Region& region, RandomSource& decoRNG, BlockBox const& sbb) {
@@ -797,6 +799,7 @@ void IceTowerBridge::postProcess(Region& region, RandomSource&, BlockBox const& 
         fill(region, sbb, x, 1, extraZlength, x, 5, extraZlength, *deco->pillarState, *deco->pillarState, false);
         fill(region, sbb, x, 1, extraZlength + 4, x, 5, extraZlength + 4, *deco->pillarState, *deco->pillarState, false);
     }
+    applyAuroraVariants(region, bbox, sbb);
 }
 
 // ==== IceTowerStairsComponent ==================================================================================
@@ -823,6 +826,7 @@ void IceTowerStairs::postProcess(Region& region, RandomSource&, BlockBox const& 
         }
     }
     placeBlock(region, *deco->blockState, 0, stairsLength - 1, stairsLength, sbb);
+    applyAuroraVariants(region, bbox, sbb);
 }
 
 void IceTowerStairs::placeStairs(Region& region, BlockBox const& sbb, int x, int y, int z) {
@@ -851,6 +855,7 @@ void IceTowerRoof::postProcess(Region& region, RandomSource& rand, BlockBox cons
             int rHeight = javaRound(javaSqrt(static_cast<float>(x * x + z * z)));
             for (int y = 0; y < rHeight; y++) placeBlock(region, *deco->blockState, x, y, z, sbb);
         }
+    applyAuroraVariants(region, bbox, sbb);
 }
 
 // ==== IceTowerBeardComponent ===================================================================================
@@ -884,6 +889,7 @@ void IceTowerBeard::postProcess(Region& region, RandomSource&, BlockBox const& s
             int rHeight = javaRound(javaSqrt(static_cast<float>(x * x + z * z)));
             for (int y = 0; y < rHeight; y++) placeBlock(region, *deco->blockState, x, height - y, z, sbb);
         }
+    applyAuroraVariants(region, bbox, sbb);
 }
 
 // ==== registration =============================================================================================

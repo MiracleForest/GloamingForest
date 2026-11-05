@@ -13,6 +13,7 @@
 #include "mc/deps/core/math/Vec2.h"
 #include "mc/deps/shared_types/legacy/Difficulty.h"
 #include "mc/server/SimulatedPlayer.h"
+#include "mc/server/sim/LookDuration.h"
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/ActorDefinitionIdentifier.h"
 #include "mc/world/actor/Mob.h"
@@ -24,12 +25,20 @@
 #include "mc/world/level/Level.h"
 #include "mc/world/level/Spawner.h"
 #include "mc/world/phys/AABB.h"
+#include "mc/entity/components_json_legacy/ProjectileComponent.h"
+#include "mc/scripting/modules/minecraft/ScriptFacing.h"
+#include "mc/world/actor/item/ItemActor.h"
+#include "mc/deps/shared_types/legacy/EquipmentSlot.h"
 
+#include "core/aurora/AuroraColor.h"
 #include "feature/aurora/Mobs.h"
+#include "feature/aurora/Structures.h"
+#include "feature/progression/Progression.h"
+#include "feature/projectile/Projectile.h"
 #include "feature/combat/Combat.h"
 #include "feature/entity/Entity.h"
-#include "feature/entity/EntityInternal.h"
 #include "feature/ext/entity/EntityExt.h"
+#include "feature/ext/aurora/W0Internals.h"
 #include "game/Blocks.h"
 #include "game/Items.h"
 #include "selftest/SelfTest.h"
@@ -139,21 +148,26 @@ GF_REGISTER_SELFTEST("aurora.ice_crystal_lifetime", [](Context& ctx) -> ll::coro
 
 GF_REGISTER_SELFTEST("aurora.unstable_ice_core", [](Context& ctx) -> ll::coro::CoroTask<> {
     DifficultyScope normal(Difficulty::Normal);
-    auto            box = co_await ctx.flatArea(2850, 12);
-    auto            pos = core::GlobalPos{ctx.dimension(), box.minX + 6, box.minY + 1, box.minZ + 6};
+    auto            box    = co_await ctx.flatArea(2850, 12);
+    auto            pos    = core::GlobalPos{ctx.dimension(), box.minX + 6, box.minY + 1, box.minZ + 6};
     auto*           region = ctx.region();
-    // a stone block (a redstone conductor: terracotta) and an ice block (stained glass) two blocks away
-    auto stonePos = at(pos, 2, 1, 0), icePos = at(pos, -2, 1, 0);
+    // a stone block (a redstone conductor: terracotta) and an ice block (stained glass) one block
+    // away: closer than 2, always inside transformBlocks' random range 4 + (r - r) x 2
+    auto stonePos = at(pos, 1, 1, 0), icePos = at(pos, -1, 1, 0);
     ctx.require(game::setBlock(*region, game::blockPos(stonePos), *game::blockWithStates("minecraft:stone", nlohmann::json::object())), "stone placed");
     ctx.require(game::setBlock(*region, game::blockPos(icePos), *game::blockWithStates("minecraft:ice", nlohmann::json::object())), "ice placed");
     auto* core = spawnAt(pos, kUnstableIceCore);
     ctx.require(core != nullptr, "an unstable ice core");
     auto uid = uidOf(*core);
-    co_await ctx.ticks(2);
-    if (auto* c = mobById(uid)) gf::combat::hurt(*c, 1000.0f, "minecraft:generic");
+    // killed on the tick it appears: its goals never move it away from the blocks
+    gf::combat::hurt(*core, 1000.0f, "minecraft:generic");
     co_await ctx.ticks(20);
     auto* dying = fe::actorById(uid);
     ctx.check(dying && dying->isAlive(), "the core waits 60 ticks after its death");
+    if (dying) {
+        auto f = dying->getFeetPos();
+        ctx.check(std::abs(f.x - (pos.x + 0.5f)) < 1.0f && std::abs(f.z - (pos.z + 0.5f)) < 1.0f, "the dying core lies still");
+    }
     co_await ctx.ticks(60);
     ctx.check(!fe::actorById(uid) || !fe::actorById(uid)->isAlive(), "then it explodes and is gone");
     auto stone = game::blockIdAt(*region, game::blockPos(stonePos));
@@ -163,6 +177,52 @@ GF_REGISTER_SELFTEST("aurora.unstable_ice_core", [](Context& ctx) -> ll::coro::C
     discardAround(pos, 10);
 });
 
+GF_REGISTER_SELFTEST("aurora.transform_blocks", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // UnstableIceCore#transformBlocks from a fixed spot: glass (a non-solid full cube) -> stained
+    // glass, stone -> terracotta, a torch (no full cube) and obsidian (resistance >= 8) stay
+    auto  box    = co_await ctx.flatArea(2850, 12);
+    auto  pos    = core::GlobalPos{ctx.dimension(), box.minX + 6, box.minY + 2, box.minZ + 6};
+    auto* region = ctx.region();
+    struct Case {
+        int         dx;
+        char const* id;
+        char const* expectSuffix; ///< "" = unchanged
+    };
+    std::vector<Case> const cases{{1, "minecraft:glass", "_stained_glass"},     {-1, "minecraft:stone", "_terracotta"},
+                                  {0, "minecraft:obsidian", ""},                {2, "minecraft:oak_leaves", "_stained_glass"}};
+    for (auto const& k : cases) ctx.require(ctx.setBlock(at(pos, k.dx, 0, 1), k.id), std::string("placed ") + k.id);
+    ctx.require(ctx.setBlock(at(pos, 0, -1, -1), "minecraft:stone") && ctx.setBlock(at(pos, 0, 0, -1), "minecraft:torch"), "a torch on stone");
+    transformBlocksAt(*region, game::blockPos(pos));
+    for (auto const& k : cases) {
+        auto got = ctx.blockAt(at(pos, k.dx, 0, 1));
+        if (*k.expectSuffix) ctx.check(got.ends_with(k.expectSuffix), std::string(k.id) + " -> " + got);
+        else ctx.check(got == k.id, std::string(k.id) + " stays: " + got);
+    }
+    ctx.check(ctx.blockAt(at(pos, 0, 0, -1)) == "minecraft:torch", "the torch stays: " + ctx.blockAt(at(pos, 0, 0, -1)));
+});
+
+GF_REGISTER_SELFTEST("aurora.map_colors", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // transformBlock reads MapColor#col: Bedrock's block map colours are Java's palette
+    auto  box    = co_await ctx.flatArea(2850, 8);
+    auto* region = ctx.region();
+    struct Row {
+        char const* id;
+        unsigned    java;
+    };
+    int i = 0;
+    for (auto r : {Row{"minecraft:stone", 0x707070}, Row{"minecraft:ice", 0xA0A0FF}, Row{"minecraft:dirt", 0x976D4D}, Row{"minecraft:snow", 0xFFFFFF},
+                   Row{"minecraft:packed_ice", 0xA0A0FF}}) {
+        auto p = core::GlobalPos{ctx.dimension(), box.minX + 1 + i++, box.minY + 1, box.minZ + 2};
+        ctx.require(ctx.setBlock(p, r.id), std::string("placed ") + r.id);
+        auto        bp = game::blockPos(p);
+        auto const& b  = region->getBlock(bp);
+        auto        c  = b.getBlockType().getMapColor(*region, bp, b);
+        unsigned    rgb = (static_cast<unsigned>(c.r * 255.0f + 0.5f) << 16) | (static_cast<unsigned>(c.g * 255.0f + 0.5f) << 8) | static_cast<unsigned>(c.b * 255.0f + 0.5f);
+        char buf[96];
+        std::snprintf(buf, sizeof buf, "%s map colour #%06X, Java #%06X", r.id, rgb, r.java);
+        ctx.check(rgb == r.java, buf);
+    }
+});
 GF_REGISTER_SELFTEST("aurora.stable_ice_core_snowballs", [](Context& ctx) -> ll::coro::CoroTask<> {
     DifficultyScope normal(Difficulty::Normal);
     static int      snowballHits = 0;
@@ -244,6 +304,290 @@ GF_REGISTER_SELFTEST("aurora.snow_queen_fight", [](Context& ctx) -> ll::coro::Co
     discardAround(pos, 30);
 });
 
+namespace {
+
+/// Damage the tests count (combat::onDealt; registered once per process).
+struct DealtLog {
+    std::vector<std::pair<std::string, float>> hits; ///< (type, amount) on the test player
+    std::int64_t                               victim = 0;
+};
+DealtLog& dealt() {
+    static DealtLog log;
+    static bool     registered = false;
+    if (!registered) {
+        registered = true;
+        gf::combat::onDealt(0, [](gf::combat::DamageInfo const& d) {
+            if (dealt().victim && d.victim.getOrCreateUniqueID().rawID == dealt().victim) dealt().hits.push_back({d.type, d.amount});
+        });
+    }
+    return log;
+}
+
+int countIce(BlockSource& region, core::BlockBox const& b) {
+    int n = 0;
+    for (int x = b.minX; x <= b.maxX; x++)
+        for (int y = b.minY; y <= b.maxY; y++)
+            for (int z = b.minZ; z <= b.maxZ; z++)
+                if (game::blockIdAt(region, BlockPos{x, y, z}) == "minecraft:ice") n++;
+    return n;
+}
+
+} // namespace
+
+GF_REGISTER_SELFTEST("aurora.snow_queen_drop", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // HoverThenDropGoal: hover 6 above the target, then fall through ice (destroyBlocksInAABB),
+    // 2..4 drops, then BEAM
+    DifficultyScope normal(Difficulty::Normal);
+    auto            box    = co_await ctx.flatArea(2870, 24, 24);
+    auto            pos    = core::GlobalPos{ctx.dimension(), box.minX + 12, box.minY + 1, box.minZ + 12};
+    auto*           region = ctx.region();
+    // an ice ceiling 3 above the player, 9 x 9
+    core::BlockBox ceiling{pos.x - 4, pos.y + 3, pos.z - 4, pos.x + 4, pos.y + 3, pos.z + 4};
+    for (int x = ceiling.minX; x <= ceiling.maxX; x++)
+        for (int z = ceiling.minZ; z <= ceiling.maxZ; z++) ctx.setBlock(core::GlobalPos{pos.dim, x, ceiling.minY, z}, "minecraft:ice");
+    int const before = countIce(*region, ceiling);
+    auto*     queen  = spawnAt(pos, kSnowQueen, 0.5f, 8.0f);
+    ctx.require(queen != nullptr, "the Snow Queen");
+    auto uid = uidOf(*queen);
+    ctx.player().setPlayerGameType(GameType::Survival);
+    ctx.player().teleportTo(Vec3{pos.x + 0.5f, float(pos.y), pos.z + 0.5f}, true, 0, 1, false);
+    setQueenPhaseForTest(*queen, 1);
+    int maxDrops = 0;
+    (void)queenDropsForTest(*queen, &maxDrops);
+    ctx.check(maxDrops >= 2 && maxDrops <= 4, "2..4 drops: " + std::to_string(maxDrops));
+    int  bestDrops = 0;
+    bool beam      = false;
+    for (int i = 0; i < 70 && !beam; i++) {
+        if (auto* q = mobById(uid)) {
+            q->setTarget(&ctx.player());
+            bestDrops = std::max(bestDrops, queenDropsForTest(*q, nullptr));
+            beam      = queenPhaseForTest(*q) == 2;
+        }
+        co_await ctx.ticks(10);
+    }
+    int const after = countIce(*region, ceiling);
+    ctx.check(after < before, "her drops broke ice: " + std::to_string(before) + " -> " + std::to_string(after));
+    ctx.check(bestDrops >= 1 || beam, "the drops count: " + std::to_string(bestDrops));
+    ctx.check(beam, "after her drops she beams");
+    ctx.player().setPlayerGameType(GameType::Creative);
+    if (auto* q = fe::actorById(uid)) q->remove();
+    discardAround(pos, 30);
+});
+
+GF_REGISTER_SELFTEST("aurora.snow_queen_beam", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // HoverBeamGoal: once in place, a ray of 4 chilling_breath damage per hit
+    DifficultyScope normal(Difficulty::Normal);
+    auto            box   = co_await ctx.flatArea(2870, 24, 24);
+    auto            pos   = core::GlobalPos{ctx.dimension(), box.minX + 12, box.minY + 1, box.minZ + 12};
+    auto*           queen = spawnAt(pos, kSnowQueen, 3.5f, 3.0f);
+    ctx.require(queen != nullptr, "the Snow Queen");
+    auto uid = uidOf(*queen);
+    ctx.player().setPlayerGameType(GameType::Survival);
+    ctx.player().teleportTo(Vec3{pos.x + 0.5f, float(pos.y), pos.z + 0.5f}, true, 0, 1, false);
+    dealt().hits.clear();
+    dealt().victim = uidOf(ctx.player());
+    setQueenPhaseForTest(*queen, 2);
+    int breath = 0;
+    for (int i = 0; i < 40 && breath == 0; i++) {
+        if (auto* q = mobById(uid)) q->setTarget(&ctx.player());
+        if (auto* pl = &ctx.player()) pl->setHealth(20); // stay alive through the test
+        co_await ctx.ticks(10);
+        for (auto const& [type, amount] : dealt().hits)
+            if (type == "twilightforest:chilling_breath") {
+                breath++;
+                ctx.check(std::abs(amount - 4.0f) < 0.01f || amount < 4.0f, "a ray hit deals BREATH_DAMAGE 4 (armour may lower it): " + std::to_string(amount));
+            }
+    }
+    ctx.check(breath > 0, "the beam hit the player with chilling_breath");
+    dealt().victim = 0;
+    ctx.player().setPlayerGameType(GameType::Creative);
+    if (auto* q = fe::actorById(uid)) q->remove();
+    discardAround(pos, 30);
+});
+
+GF_REGISTER_SELFTEST("aurora.snow_queen_shields", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope normal(Difficulty::Normal);
+    auto            box   = co_await ctx.flatArea(2870, 24, 24);
+    auto            pos   = core::GlobalPos{ctx.dimension(), box.minX + 12, box.minY + 1, box.minZ + 12};
+    auto*           queen = spawnAt(pos, kSnowQueen, 0.5f, 2.0f);
+    ctx.require(queen != nullptr, "the Snow Queen");
+    auto uid = uidOf(*queen);
+    co_await ctx.ticks(2);
+    auto* q = mobById(uid);
+    ctx.require(q && gf::entity::ext::parts(*q).size() == 7, "seven shields");
+    // a piercing arrow passes a shield: no damage to her, the arrow flies on at its speed
+    auto* shield = gf::entity::partActor(gf::entity::ext::parts(*q)[0]);
+    ctx.require(shield != nullptr, "a shield");
+    auto  sp    = shield->getFeetPos();
+    auto  level = ll::service::getLevel();
+    auto* arrow = level->getSpawner().spawnProjectile(*ctx.region(), ActorDefinitionIdentifier("minecraft:arrow"), &ctx.player(),
+                                                      Vec3{sp.x - 3.0f, sp.y + 0.3f, sp.z}, Vec3{1.0f, 0.0f, 0.0f});
+    ctx.require(arrow != nullptr, "an arrow");
+    if (auto* pc = arrow->getEntityContext().tryGetComponent<ProjectileComponent>()) pc->mPiercingEnchantLevel = 1;
+    gf::projectile::ext::setVelocity(*arrow, Vec3{1.5f, 0.0f, 0.0f});
+    float before = static_cast<float>(q->getHealth());
+    gf::combat::hurt(*shield, 6.0f, "minecraft:arrow", &ctx.player(), arrow);
+    auto arrowId = uidOf(*arrow);
+    co_await ctx.ticks(1);
+    q = mobById(uid);
+    ctx.require(q != nullptr, "the queen is still there");
+    ctx.check(static_cast<float>(q->getHealth()) >= before, "the piercing arrow did not hurt her");
+    if (auto* a = fe::actorById(arrowId)) {
+        auto v = gf::projectile::ext::velocity(*a);
+        ctx.check(v.x > 0.5f, "the arrow flies on through the shield: vx " + std::to_string(v.x));
+        a->remove();
+    }
+    // whatever touches a shield is hurt and lifted by 0.4 (applyShieldCollisions)
+    ctx.player().setPlayerGameType(GameType::Survival);
+    dealt().hits.clear();
+    dealt().victim = uidOf(ctx.player());
+    bool lifted = false, hurt = false;
+    for (int i = 0; i < 20 && !(lifted && hurt); i++) {
+        q = mobById(uid);
+        if (!q) break;
+        auto parts = gf::entity::ext::parts(*q);
+        if (auto* s = parts.empty() ? nullptr : gf::entity::partActor(parts[0])) {
+            auto at = s->getFeetPos();
+            ctx.player().teleportTo(Vec3{at.x, at.y - 0.6f, at.z}, false, 0, 1, false);
+            float y0 = ctx.player().getPosDelta().y;
+            co_await ctx.ticks(1);
+            if (!dealt().hits.empty()) hurt = true;
+            if (ctx.player().getPosDelta().y > y0 + 0.2f) lifted = true;
+        } else co_await ctx.ticks(1);
+        ctx.player().setHealth(20);
+    }
+    ctx.check(hurt, "a shield hurts the player who touches it");
+    ctx.check(lifted, "and lifts them (motion y + 0.4)");
+    dealt().victim = 0;
+    ctx.player().setPlayerGameType(GameType::Creative);
+    if (auto* qq = fe::actorById(uid)) qq->remove();
+    discardAround(pos, 30);
+});
+
+GF_REGISTER_SELFTEST("aurora.snow_queen_death", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // F8's boss kit: the death chest (twilight oak) with her loot; the kill grants progress_glacier
+    DifficultyScope normal(Difficulty::Normal);
+    auto            box   = co_await ctx.flatArea(2870, 24, 24);
+    auto            pos   = core::GlobalPos{ctx.dimension(), box.minX + 12, box.minY + 1, box.minZ + 12};
+    auto*           queen = spawnAt(pos, kSnowQueen, 0.5f, 0.0f);
+    ctx.require(queen != nullptr, "the Snow Queen");
+    auto uid = uidOf(*queen);
+    gf::progression::revoke(ctx.player(), "twilightforest:progress_glacier");
+    ctx.player().teleportTo(Vec3{pos.x + 3.5f, float(pos.y), pos.z + 0.5f}, true, 0, 1, false);
+    co_await ctx.ticks(2);
+    if (auto* q = mobById(uid)) gf::combat::hurt(*q, 10000.0f, "minecraft:player_attack", &ctx.player(), &ctx.player());
+    bool chest = false;
+    for (int i = 0; i < 30 && !chest; i++) {
+        co_await ctx.ticks(10);
+        for (int dx = -12; dx <= 12 && !chest; dx++)
+            for (int dy = -2; dy <= 12 && !chest; dy++)
+                for (int dz = -12; dz <= 12 && !chest; dz++)
+                    if (ctx.blockAt(at(pos, dx, dy, dz)) == "twilightforest:twilight_oak_chest") chest = true;
+    }
+    ctx.check(chest, "a twilight oak death chest");
+    ctx.check(gf::progression::has(ctx.player(), "twilightforest:progress_glacier"), "the kill grants progress_glacier");
+    discardAround(pos, 30);
+});
+
+GF_REGISTER_SELFTEST("aurora.aurora_block_mining", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // AuroraBrickBlock#getDestroyProgress: 0.1 a tick with progress_glacier (10 ticks of mining);
+    // a tap does not break it
+    auto  box   = co_await ctx.flatArea(2840, 8);
+    auto& sp    = ctx.spawnPlayer("aurora_miner");
+    auto  spId  = uidOf(sp);
+    auto  block = core::GlobalPos{ctx.dimension(), box.minX + 4, box.minY + 1, box.minZ + 2};
+    sp.teleportTo(Vec3{block.x + 0.5f, float(block.y), block.z - 1.5f}, true, 0, 1, false);
+    sp.setPlayerGameType(GameType::Survival);
+    gf::progression::grant(sp, "twilightforest:progress_glacier");
+    ctx.require(gf::progression::has(sp, "twilightforest:progress_glacier"), "the miner has progress_glacier");
+    ctx.require(ctx.setBlock(block, "twilightforest:aurora_block"), "an aurora block");
+    co_await ctx.ticks(2);
+    // a tap: start, stop at once
+    auto* p = static_cast<SimulatedPlayer*>(fe::actorById(spId));
+    ctx.require(p != nullptr, "the miner");
+    p->simulateLookAt(game::blockPos(block), sim::LookDuration::Instant);
+    ctx.check(p->simulateDestroyBlock(game::blockPos(block), ScriptModuleMinecraft::ScriptFacing::North), "mining starts");
+    co_await ctx.ticks(2);
+    if (auto* pp = static_cast<SimulatedPlayer*>(fe::actorById(spId))) pp->simulateStopDestroyingBlock();
+    co_await ctx.ticks(15);
+    ctx.check(ctx.blockAt(block) == "twilightforest:aurora_block", "a tap does not break it: " + ctx.blockAt(block));
+    // held: broken in about 10 ticks (far below the 15 s of a hardness 10 block)
+    p = static_cast<SimulatedPlayer*>(fe::actorById(spId));
+    ctx.require(p != nullptr, "the miner");
+    ctx.check(p->simulateDestroyBlock(game::blockPos(block), ScriptModuleMinecraft::ScriptFacing::North), "mining starts again");
+    int broken = -1;
+    for (int t = 1; t <= 30 && broken < 0; t++) {
+        co_await ctx.ticks(1);
+        if (ctx.blockAt(block) != "twilightforest:aurora_block") broken = t;
+    }
+    ctx.check(broken > 0 && broken <= 14, "held mining breaks it in ~10 ticks: " + std::to_string(broken));
+    if (auto* pp = static_cast<SimulatedPlayer*>(fe::actorById(spId))) {
+        pp->simulateStopDestroyingBlock();
+        gf::progression::revoke(*pp, "twilightforest:progress_glacier");
+    }
+    ctx.cleanupBlock(block);
+});
+
+GF_REGISTER_SELFTEST("aurora.aurora_block_variant", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // NoiseVaryingModel: the variant of a placed aurora block is calcVariant of its position
+    auto box = co_await ctx.flatArea(2840, 8);
+    int  differs = 0;
+    for (int i = 0; i < 6; i++) {
+        auto p = core::GlobalPos{ctx.dimension(), box.minX + 1 + i, box.minY + 1, box.minZ + 2};
+        ctx.require(ctx.setBlock(p, "twilightforest:aurora_block"), "placed");
+        auto const* expected = auroraBlockAt(p.x, p.y, p.z);
+        ctx.require(expected != nullptr, "the variants resolve");
+        int want = game::intState(*expected, "gloamingforest:variant").value_or(-1);
+        ctx.check(want == core::aurora::calcVariant(p.x, p.y, p.z, 16), "auroraBlockAt follows calcVariant");
+        if (want != 0) differs++;
+    }
+    ctx.check(differs > 0, "positions get different variants");
+    // a structure's plain aurora blocks get theirs
+    auto* region = ctx.region();
+    auto  p      = core::GlobalPos{ctx.dimension(), box.minX + 1, box.minY + 2, box.minZ + 3};
+    ctx.require(ctx.setBlock(p, "twilightforest:aurora_block"), "placed plain");
+    structure::BlockSourceRegion live(*region, game::blockPos(p));
+    structure::BlockBox          one{p.x, p.y, p.z, p.x, p.y, p.z};
+    applyAuroraVariants(live, one, one);
+    auto got = game::intState(region->getBlock(game::blockPos(p)), "gloamingforest:variant").value_or(-1);
+    ctx.check(got == core::aurora::calcVariant(p.x, p.y, p.z, 16), "applyAuroraVariants sets " + std::to_string(got));
+});
+
+GF_REGISTER_SELFTEST("aurora.ice_mobs_melt", [](Context& ctx) {
+    // BaseIceMob#aiStep: #snow_golem_melts biomes (TF's fire swamp and oak savannah too) burn ice mobs
+    ctx.check(meltsSnowIn("twilightforest:fire_swamp"), "the fire swamp melts ice mobs");
+    ctx.check(meltsSnowIn("twilightforest:oak_savannah"), "the oak savannah melts ice mobs");
+    ctx.check(!meltsSnowIn("twilightforest:glacier"), "the glacier does not");
+    ctx.check(!meltsSnowIn("twilightforest:snowy_forest"), "the snowy forest does not");
+});
+
+GF_REGISTER_SELFTEST("aurora.snow_guardian_gear", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // populateDefaultEquipmentSlots: a sword, a chestplate and a helmet of one tier; no gear drops
+    // unless a player hit it (Mob#dropCustomDeathLoot: recentlyHit)
+    DifficultyScope normal(Difficulty::Normal);
+    auto            box = co_await ctx.flatArea(2820, 16);
+    auto            pos = core::GlobalPos{ctx.dimension(), box.minX + 8, box.minY + 1, box.minZ + 8};
+    auto*           g   = spawnAt(pos, kSnowGuardian);
+    ctx.require(g != nullptr, "a snow guardian");
+    auto uid = uidOf(*g);
+    co_await ctx.ticks(3);
+    g = mobById(uid);
+    ctx.require(g != nullptr, "still there");
+    using Slot = SharedTypes::Legacy::EquipmentSlot;
+    auto chest = game::items::idOf(g->getItemSlot(Slot::Torso));
+    auto head  = game::items::idOf(g->getItemSlot(Slot::Head));
+    ctx.check(chest.ends_with("_chestplate") && head.ends_with("_helmet"), "armour: " + chest + ", " + head);
+    gf::combat::hurt(*g, 1000.0f, "minecraft:generic");
+    co_await ctx.ticks(25);
+    int gear = 0;
+    for (auto* a : around(pos, "minecraft:item", 6)) {
+        auto id = game::items::idOf(static_cast<ItemActor*>(a)->item());
+        if (id.ends_with("_sword") || id.ends_with("_chestplate") || id.ends_with("_helmet")) gear++;
+    }
+    ctx.check(gear == 0, "no gear drops without a player's hit: " + std::to_string(gear));
+    for (auto* a : around(pos, "minecraft:item", 6)) a->remove();
+    discardAround(pos, 10);
+});
 GF_REGISTER_SELFTEST("aurora.snow_queen_spawner", [](Context& ctx) -> ll::coro::CoroTask<> {
     DifficultyScope normal(Difficulty::Normal);
     auto            box     = co_await ctx.flatArea(2880, 12, 16);

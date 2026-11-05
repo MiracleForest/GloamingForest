@@ -34,15 +34,24 @@
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/dimension/Dimension.h"
 #include "mc/world/phys/AABB.h"
+#include "mc/entity/components_json_legacy/ProjectileComponent.h"
+#include "mc/world/actor/ActorSwingSource.h"
+#include "mc/world/attribute/AttributeInstance.h"
+#include "mc/world/attribute/SharedAttributes.h"
+#include "mc/world/item/HandSlot.h"
+#include "mc/world/item/enchanting/EnchantUtils.h"
 
 #include "feature/aurora/Mobs.h"
 #include "feature/aurora/Structures.h"
 #include "feature/boss/Boss.h"
 #include "feature/combat/Combat.h"
 #include "feature/entity/Entity.h"
-#include "feature/entity/EntityInternal.h"
 #include "feature/ext/entity/EntityExt.h"
+#include "feature/ext/aurora/W0Internals.h"
+#include "feature/common/Interactions.h"
 #include "feature/fx/Fx.h"
+#include "feature/projectile/Projectile.h"
+#include "game/WorldDb.h"
 #include "feature/spawn/Spawn.h"
 #include "feature/tags/Tags.h"
 #include "game/Blocks.h"
@@ -196,11 +205,91 @@ void destroyBlocksInAABB(Actor& self, AABB const& box) {
             }
 }
 
-/// SnowQueen#doHurtTarget: squish during DROP, else the mob attack.
+/// SnowQueen#doHurtTarget -> EntityUtil#properlyApplyCustomDamageSource: the ATTACK_DAMAGE attribute
+/// plus the weapon's enchantment bonus, as squish during DROP, else as a mob attack.
 bool doHurtTarget(Mob& self, Actor& target) {
-    if (stateOf(self).phase == Phase::Drop) return gf::combat::hurt(target, 7.0f, "twilightforest:squish", &self, &self);
-    return mobs::doHurtTarget(self, target);
+    float damage = 7.0F;
+    auto  ref    = self.getAttribute(SharedAttributes::ATTACK_DAMAGE());
+    if (auto const* inst = static_cast<AttributeInstance const*>(ref.mPtr)) damage = inst->mCurrentValue;
+    damage += EnchantUtils::getMeleeDamageBonus(target, self);
+    char const* type = stateOf(self).phase == Phase::Drop ? "twilightforest:squish" : "minecraft:mob_attack";
+    return gf::combat::hurt(target, damage, type, &self, &self);
 }
+
+/// Java's MeleeAttackGoal(mob, 1.0, followingTargetEvenIfNotSeen = true) (priority 6).
+class MeleeAttackGoal final : public gf::entity::Goal {
+public:
+    MeleeAttackGoal(Mob& mob, double speed) : mUid(uidOf(mob)), mSpeed(speed) { flags = Move | Look; }
+    bool canUse() override {
+        auto* m = mobOf(mUid);
+        if (!m) return false;
+        long long now = m->mTickCount;
+        if (now - mLastCanUseCheck < 20) return false;
+        mLastCanUseCheck = now;
+        auto* t          = mobs::target(*m);
+        if (!t || !t->isAlive()) return false;
+        return mobs::moveTo(*m, feet(*t), 0.0) || withinReach(*m, *t);
+    }
+    bool canContinueToUse() override {
+        auto* m = mobOf(mUid);
+        auto* t = m ? mobs::target(*m) : nullptr;
+        if (!t || !t->isAlive()) return false;
+        if (auto home = gf::entity::home(*m)) {
+            auto   p = feet(*t);
+            double dx = p.x - home->pos.x, dy = p.y - home->pos.y, dz = p.z - home->pos.z;
+            if (home->radius > 0 && dx * dx + dy * dy + dz * dz >= static_cast<double>(home->radius) * home->radius) return false;
+        }
+        if (t->isPlayer()) {
+            auto& pl = static_cast<Player&>(*t);
+            if (pl.isCreative() || pl.isSpectator()) return false;
+        }
+        return true;
+    }
+    void start() override {
+        if (auto* m = mobOf(mUid))
+            if (auto* t = mobs::target(*m)) mobs::moveTo(*m, feet(*t), mSpeed);
+        mRecalc     = 0;
+        mNextAttack = 0;
+    }
+    void stop() override {
+        if (auto* m = mobOf(mUid)) mobs::stopNavigation(*m);
+    }
+    bool requiresUpdateEveryTick() override { return true; }
+    void tick() override {
+        auto* m = mobOf(mUid);
+        auto* t = m ? mobs::target(*m) : nullptr;
+        if (!t) return;
+        mobs::lookAt(*m, *t, 30.0F, 30.0F);
+        mRecalc = std::max(mRecalc - 1, 0);
+        if (mRecalc <= 0) {
+            mRecalc  = 4 + rng().nextInt(7);
+            double d = mobs::distanceSqr(*m, *t);
+            if (d > 1024.0) mRecalc += 10;
+            else if (d > 256.0) mRecalc += 5;
+            if (!mobs::moveTo(*m, feet(*t), mSpeed)) mRecalc += 15;
+        }
+        mNextAttack = std::max(mNextAttack - 1, 0);
+        if (mNextAttack <= 0 && withinReach(*m, *t) && mobs::hasLineOfSight(*m, *t)) {
+            mNextAttack = 20;
+            m->swing(ActorSwingSource::Attack, HandSlot::Mainhand);
+            doHurtTarget(*m, *t);
+        }
+    }
+
+private:
+    /// Mob#isWithinMeleeAttackRange: the box inflated by DEFAULT_ATTACK_REACH (sqrt(2.04) - 0.6) across.
+    static bool withinReach(Mob& m, Actor& t) {
+        AABB        a     = boxOf(m);
+        AABB        b     = boxOf(t);
+        float const reach = static_cast<float>(std::sqrt(2.04) - 0.6);
+        return a.min.x - reach < b.max.x && a.max.x + reach > b.min.x && a.min.y < b.max.y && a.max.y > b.min.y && a.min.z - reach < b.max.z &&
+               a.max.z + reach > b.min.z;
+    }
+    std::int64_t mUid;
+    double       mSpeed;
+    long long    mLastCanUseCheck = -100;
+    int          mRecalc = 0, mNextAttack = 0;
+};
 
 // ---- hover goals ---------------------------------------------------------------------------------
 
@@ -239,13 +328,29 @@ protected:
         mHoverPosY = hy;
         mHoverPosZ = hz;
     }
+    /// HoverBaseGoal#isPositionOccupied: !isUnobstructed (entities that block) || !noCollision (block
+    /// collision shapes) for the queen's box at the spot.
     static bool isPositionOccupied(Mob& m, double hx, double hy, double hz) {
         float radius = kWidth / 2.0F;
+        AABB  box{Vec3{static_cast<float>(hx - radius), static_cast<float>(hy), static_cast<float>(hz - radius)},
+                 Vec3{static_cast<float>(hx + radius), static_cast<float>(hy + kHeight), static_cast<float>(hz + radius)}};
         auto& region = m.getDimensionBlockSource();
-        for (int x = static_cast<int>(std::floor(hx - radius)); x <= static_cast<int>(std::floor(hx + radius)); x++)
-            for (int y = static_cast<int>(std::floor(hy)); y <= static_cast<int>(std::floor(hy + kHeight)); y++)
-                for (int z = static_cast<int>(std::floor(hz - radius)); z <= static_cast<int>(std::floor(hz + radius)); z++)
-                    if (!region.getBlock(BlockPos{x, y, z}).isAir()) return true;
+        for (int x = static_cast<int>(std::floor(box.min.x)); x <= static_cast<int>(std::floor(box.max.x)); x++)
+            for (int y = static_cast<int>(std::floor(box.min.y)) - 1; y <= static_cast<int>(std::floor(box.max.y)); y++)
+                for (int z = static_cast<int>(std::floor(box.min.z)); z <= static_cast<int>(std::floor(box.max.z)); z++) {
+                    BlockPos     pos{x, y, z};
+                    Block const& block = region.getBlock(pos);
+                    if (block.isAir()) continue;
+                    AABB s = block.getBlockType().getCollisionShape(block, region, pos, nullptr);
+                    if (s.max.x - s.min.x <= 0.0F || s.max.y - s.min.y <= 0.0F || s.max.z - s.min.z <= 0.0F) continue;
+                    if (s.min.x < box.max.x && s.max.x > box.min.x && s.min.y < box.max.y && s.max.y > box.min.y && s.min.z < box.max.z && s.max.z > box.min.z)
+                        return true;
+                }
+        // Entity#blocksBuilding: living things (not the queen, her shields or the dead)
+        for (auto* e : fe::actorsIn(region, static_cast<int>(m.getDimensionId()), box)) {
+            if (!e || e == &m || !e->isAlive() || gf::entity::ext::parentOf(*e) == &m) continue;
+            if (e->hasCategory(ActorCategory::Mob)) return true;
+        }
         return false;
     }
     double distanceToHoverSqr(Mob& m) const { return mobs::distanceSqr(m, Vec3{static_cast<float>(mHoverPosX), static_cast<float>(mHoverPosY), static_cast<float>(mHoverPosZ)}); }
@@ -536,6 +641,9 @@ void queenTick(Actor& actor) {
 
     ensureShields(*self);
     applyShieldCollisions(*self);
+    // the shields' angle is 60 x i + tick x 5 (shieldAngle): the client entity turns its shield
+    // geometry from this anchor and its own clock (snow_queen.entity.json, v.shield_t)
+    if (self->mTickCount % 20 == 0) gf::entity::setProperty(*self, "twilightforest:shield_tick", static_cast<int>(self->mTickCount % 72));
 
     // switch phases
     if (q.phase == Phase::Summon && q.summonsRemaining == 0 && countMyMinions(*self) <= 0) setCurrentPhase(*self, Phase::Drop);
@@ -543,8 +651,8 @@ void queenTick(Actor& actor) {
     if (q.phase == Phase::Beam && q.damageWhileBeaming >= MAX_DAMAGE_WHILE_BEAMING) setCurrentPhase(*self, Phase::Summon);
 
     // the client effects (SnowQueen#spawnParticles), sent through fx
+    // (the snow around her is the client entity's emitter, gloamingforest:aurora_snow_queen)
     auto& dim = self->getDimension();
-    snowParticles(*self, 2.125f, 3);
     if (q.phase == Phase::Drop)
         for (auto const& h : gf::entity::ext::parts(*self))
             if (auto* part = gf::entity::partActor(h)) gf::fx::particle(dim, "twilightforest:snow_warning", feet(*part), Vec3{}, 1, nlohmann::json{{"spread", {0.2, 0.2, 0.2}}});
@@ -572,20 +680,27 @@ void queenSpawn(Actor& actor) {
     gf::entity::addGoal(*self, 2, std::make_shared<HoverThenDropGoal>(*self, 80, 20));
     gf::entity::addGoal(*self, 3, std::make_shared<HoverBeamGoal>(*self, 80, 100));
     gf::entity::addGoal(*self, 5, gf::entity::goals::goHome(*self, 1.25));
-    gf::entity::addGoal(*self, 6, gf::entity::goals::simplifiedAttack(*self));
+    gf::entity::addGoal(*self, 6, std::make_shared<MeleeAttackGoal>(*self, 1.0));
     ensureShields(*self);
 }
 
-bool queenHurt(Actor& actor, float& amount, std::string const&, Actor*) {
+bool queenHurt(Actor& actor, float&, std::string const&, Actor*) {
     auto const& part = gf::entity::ext::hurtPart();
     if (part.starts_with("shield_")) {
-        // SnowQueenIceShield#hurt: blocked, with the break sound (a piercing arrow passes, harmless)
+        // SnowQueenIceShield#hurt: blocked, with the break sound (a piercing arrow never gets here:
+        // it passes the shield, see installSnowQueen)
         gf::fx::sound(actor.getDimension(), "entity.twilightforest.snow_queen.break", feet(actor), 1.0F, (rr() * 0.7F + 1.0F) * 2.0F);
         return false;
     }
-    auto& q = stateOf(actor);
-    if (q.phase == Phase::Beam) q.damageWhileBeaming += static_cast<int>(amount);
+    // BEAM's damage counts once the hurt went through (SnowQueen#hurt: result && phase == BEAM):
+    // the combat::onDealt handler of installSnowQueen
     return true;
+}
+
+/// The piercing level of an arrow (ProjectileComponent; 0 for anything else).
+int pierceLevel(Actor& projectile) {
+    auto* pc = projectile.getEntityContext().tryGetComponent<ProjectileComponent>();
+    return pc ? static_cast<int>(pc->mPiercingEnchantLevel) : 0;
 }
 
 } // namespace
@@ -599,7 +714,44 @@ void installSnowQueen() {
         .onSpawn = queenSpawn,
         .tick    = queenTick,
         .hurt    = queenHurt,
-        .die     = [](Actor& self, std::string const&, Actor*) { queens().erase(uidOf(self)); },
+        .die     = [](Actor& self, std::string const&, Actor*) {
+            queens().erase(uidOf(self));
+            queenGoals().erase(uidOf(self));
+        },
+    });
+    // a client opens many worlds in one process and unique ids repeat: no state outlives its world
+    gf::game::db::onWorldClosed([] {
+        queens().clear();
+        queenGoals().clear();
+    });
+    // SnowQueen#hurt: damageWhileBeaming += damage when the hurt succeeded (not the shields' hits)
+    gf::combat::onDealt(gf::combat::priority::Normal, [](gf::combat::DamageInfo const& d) {
+        if (d.victim.getTypeName() != kSnowQueen || d.amount <= 0.0F) return;
+        auto it = queens().find(uidOf(d.victim));
+        if (it != queens().end() && it->second.phase == Phase::Beam) it->second.damageWhileBeaming += static_cast<int>(d.amount);
+    });
+    // SnowQueenIceShield#hurt: `source.getDirectEntity() instanceof AbstractArrow arrow && arrow.getPierceLevel() > 0`
+    // returns true without any effect: the piercing arrow flies on through the shield
+    gf::combat::onIncoming(gf::combat::priority::Highest, [](gf::combat::DamageInfo& d) {
+        auto* parent = gf::entity::ext::parentOf(d.victim);
+        if (!parent || parent->getTypeName() != kSnowQueen || !d.direct) return gf::combat::Verdict::Pass;
+        if (pierceLevel(*d.direct) <= 0) return gf::combat::Verdict::Pass;
+        auto arrow = d.direct->getOrCreateUniqueID().rawID;
+        auto v     = gf::projectile::ext::velocity(*d.direct);
+        auto at    = feet(*d.direct);
+        gf::interactions::nextTick([arrow, v, at] {
+            auto* a = fe::actorById(arrow);
+            if (!a || !a->isAlive()) return;
+            // past the shield (0.75 wide) along its flight, with the speed it had
+            double len = std::sqrt(static_cast<double>(v.x) * v.x + static_cast<double>(v.y) * v.y + static_cast<double>(v.z) * v.z);
+            if (len > 1e-6) {
+                float k = static_cast<float>(1.0 / len);
+                a->teleportTo(Vec3{at.x + v.x * k, at.y + v.y * k, at.z + v.z * k}, false, 0, 1, false);
+            }
+            gf::projectile::ext::setVelocity(*a, v);
+        });
+        gf::log().info("aurora: a piercing arrow passes a snow queen shield");
+        return gf::combat::Verdict::Cancel;
     });
     gf::boss::registerBoss({
         .entityId        = kSnowQueen,

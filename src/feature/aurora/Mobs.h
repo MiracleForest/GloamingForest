@@ -8,6 +8,8 @@
 #include "core/jrand/JRand.h"
 
 class Actor;
+class BlockPos;
+class BlockSource;
 class Vec3;
 
 namespace gf::feature::aurora {
@@ -23,10 +25,12 @@ inline constexpr char kIceCrystal[]      = "twilightforest:ice_crystal";
 /// (random.nextFloat() - random.nextFloat()).
 [[nodiscard]] float rr();
 [[nodiscard]] Vec3  feet(Actor const& actor);
+/// BaseIceMob: the #minecraft:snow_golem_melts biomes and TF's oak savannah and fire swamp.
+[[nodiscard]] bool meltsSnowIn(std::string const& biomeId);
 /// The mobGriefing gamerule (EventHooks#canEntityGrief).
 [[nodiscard]] bool mobGriefing();
-/// The three snow guardian particles per tick around the eyes (BaseIceMob, SnowQueen#spawnParticles).
-void snowParticles(Actor& self, float eyeHeight, int count);
+/// UnstableIceCore#transformBlocks around `at` (range 4 + (r - r) x 2): stained glass / terracotta.
+void transformBlocksAt(BlockSource& region, BlockPos const& at);
 /// IceCrystal#setToDieIn30Seconds.
 void markSummonedCrystal(Actor& crystal);
 
