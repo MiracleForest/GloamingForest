@@ -490,11 +490,12 @@ void unstableCoreTick(Actor& self) {
         Actor*      attacker = lethal.is_object() ? fe::actorById(lethal.value("attacker", std::int64_t{0})) : nullptr;
         Actor*      direct   = lethal.is_object() ? fe::actorById(lethal.value("direct", std::int64_t{0})) : nullptr;
         if (direct && !direct->isAlive()) direct = attacker;
-        float health = static_cast<float>(std::max(self.getHealth(), 1));
-        // a hit of its remaining health: onDealt listeners (stats, damage dealt) see no inflated amount
-        if (!gf::combat::hurt(self, health, type, attacker, direct) && self.isAlive()) {
-            if (!gf::combat::hurt(self, health, "minecraft:generic", attacker, attacker) && self.isAlive()) self.kill();
-        }
+        // a hit of its remaining health (getHealth() truncates: + 1 covers a fractional rest), so
+        // onDealt listeners (stats, damage dealt) see no inflated amount
+        float health = static_cast<float>(std::max(self.getHealth(), 0) + 1);
+        if (!gf::combat::hurt(self, health, type, attacker, direct) && self.isAlive())
+            gf::combat::hurt(self, health, "minecraft:generic", attacker, attacker);
+        if (self.isAlive() && self.getHealth() > 0) self.kill();
     }
 }
 

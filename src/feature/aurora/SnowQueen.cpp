@@ -36,6 +36,7 @@
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
+#include "mc/world/level/Tick.h"
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/dimension/Dimension.h"
 #include "mc/world/phys/AABB.h"
@@ -821,8 +822,8 @@ std::unordered_map<std::int64_t, ArrowSnap>& arrowSnaps() {
 }
 
 void recordArrows(Mob& self) {
-    static std::uint64_t clock = 0;
-    auto                 now   = ++clock;
+    // the level's tick (every queen records into one map: a counter of their own would age it faster)
+    std::uint64_t now = self.getLevel().getCurrentServerTick().tickID;
     AABB                 b     = boxOf(self);
     AABB                 around{Vec3{b.min.x - 6.0f, b.min.y - 6.0f, b.min.z - 6.0f}, Vec3{b.max.x + 6.0f, b.max.y + 6.0f, b.max.z + 6.0f}};
     for (auto* e : fe::actorsIn(self.getDimensionBlockSource(), static_cast<int>(self.getDimensionId()), around)) {
