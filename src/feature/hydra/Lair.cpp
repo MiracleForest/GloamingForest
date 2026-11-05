@@ -291,7 +291,9 @@ BlockBox placeLairForTest(BlockSource& source, BlockBox const& clip, int x, int 
         BlockBox    shifted{lair.bbox.minX, lair.bbox.minY - y, lair.bbox.minZ, lair.bbox.maxX, lair.bbox.maxY - y, lair.bbox.maxZ};
         auto        solid = [&](int bx, int by, int bz) {
             int yr = by - y;
-            return -(static_cast<double>(yr) + 0.5) + ch::lairTerraformer(shifted, bx, yr, bz) > 0.0;
+            // the ground below y, a nearly flat density above it: the hill is the terraformer's own shape
+            double ground = yr < 0 ? 1.0 : -0.01 * (static_cast<double>(yr) + 0.5);
+            return ground + ch::lairTerraformer(shifted, bx, yr, bz) > 0.0;
         };
         if (dirt && grass && air)
             for (int bx = clip.minX; bx <= clip.maxX; ++bx)
