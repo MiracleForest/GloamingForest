@@ -1,11 +1,11 @@
 // The molang variables gf::fx gives particle effects (FxInternal.h): `variable.velocity`,
-// `variable.direction`, `variable.color` and `variable.note_color`, for the server's
+// `variable.direction`, `variable.color`, `variable.note_color`, `variable.dust_size` and `variable.dust_ticks`, for the server's
 // SpawnParticleEffectPackets (vanilla clients) and the client's resource pack effects (companions
 // whose particle has no native factory).
 //
 // noteColor follows Java Edition's NoteParticle colour (the hue of the x speed); particleMotion,
-// splashDirection and critDirection follow the initial motion of Java Edition's Particle,
-// SplashParticle (WaterDropParticle) and CritParticle; effectVelocity converts Java's velocity to
+// splashDirection, critDirection and dustDirection follow the initial motion of Java Edition's
+// Particle, SplashParticle (WaterDropParticle), CritParticle and DustParticleBase; effectVelocity converts Java's velocity to
 // the convention of Bedrock's explosion_particle.
 
 #include <algorithm>
@@ -70,19 +70,25 @@ void MolangMap::setColor(char const* name, Rgba const& color, bool alpha) {
     get().setMolangVariable(HashedString(name), arg);
 }
 
+void MolangMap::setFloat(char const* name, float value) { get().setMolangVariable(HashedString(name), MolangScriptArg{value}); }
+
 std::size_t MolangMap::size() const { return get().mVariables->size(); }
 
 void fillVariables(MolangMap& map, Vec3 const& velocity) {
     if (velocity.x != 0.f || velocity.y != 0.f || velocity.z != 0.f) map.setVelocity(velocity);
 }
 
-void fillEffectVariables(MolangMap& map, std::uint32_t vars, Vec3 const& velocity, Vec3 const& direction, Rgba const& color) {
+void fillEffectVariables(MolangMap& map, std::uint32_t vars, Vec3 const& velocity, Vec3 const& direction, Rgba const& color, DustLook const& dust) {
     bool const moving = velocity.x != 0.f || velocity.y != 0.f || velocity.z != 0.f;
     if (moving || (vars & kVarVelocity)) map.setVelocity(effectVelocity(vars, velocity));
     if (vars & kVarDirection) map.setVec3("variable.direction", direction);
     if (vars & kVarColorRgba) map.setColor("variable.color", color, true);
     else if (vars & kVarColorRgb) map.setColor("variable.color", color, false);
     if (vars & kVarNoteColor) map.setColor("variable.note_color", noteColor(velocity.x), false);
+    if (vars & kVarDustLook) {
+        map.setFloat("variable.dust_size", dust.size);
+        map.setFloat("variable.dust_ticks", dust.ticks);
+    }
 }
 
 Rgba noteColor(float xSpeed) {
@@ -122,6 +128,32 @@ Vec3 critDirection(std::mt19937& rng, Vec3 const& velocity) {
     // CritParticle: super(level, x, y, z, 0, 0, 0); d *= 0.1; d += speed * 0.4
     auto m = particleMotion(rng, Vec3{});
     return Vec3{m.x * 0.1f + velocity.x * 0.4f, m.y * 0.1f + velocity.y * 0.4f, m.z * 0.1f + velocity.z * 0.4f};
+}
+
+Vec3 dustDirection(std::mt19937& rng, Vec3 const& velocity) {
+    // DustParticleBase: super(level, x, y, z, xSpeed, ySpeed, zSpeed); xd *= 0.1F; yd *= 0.1F; zd *= 0.1F
+    auto m = particleMotion(rng, velocity);
+    return Vec3{m.x * 0.1f, m.y * 0.1f, m.z * 0.1f};
+}
+
+float dustScale(nlohmann::json const& params) {
+    // ScalableParticleOptionsBase: SCALE codec Codec.floatRange(0.01F, 4.0F), REDSTONE scale 1
+    if (!params.is_object()) return 1.f;
+    auto s = params.find("scale");
+    if (s == params.end() || !s->is_number()) return 1.f;
+    return std::clamp(s->get<float>(), 0.01f, 4.f);
+}
+
+DustLook dustLook(std::mt19937& rng, float scale) {
+    std::uniform_real_distribution<float>  uf(0.f, 1.f);
+    std::uniform_real_distribution<double> ud(0.0, 1.0);
+    // SingleQuadParticle: quadSize = 0.1F * (random.nextFloat() * 0.5F + 0.5F) * 2.0F;
+    // DustParticleBase: quadSize *= 0.75F * scale
+    float const size = 0.1f * (uf(rng) * 0.5f + 0.5f) * 2.0f * 0.75f * scale;
+    // int i = (int)(8.0 / (random.nextDouble() * 0.8 + 0.2)); lifetime = (int)Math.max(i * scale, 1.0F)
+    int const i     = static_cast<int>(8.0 / (ud(rng) * 0.8 + 0.2));
+    int const ticks = static_cast<int>(std::max(static_cast<float>(i) * scale, 1.0f));
+    return DustLook{size, static_cast<float>(ticks)};
 }
 
 Rgba colorOf(nlohmann::json const& params, std::optional<Rgba> const& fallback) {

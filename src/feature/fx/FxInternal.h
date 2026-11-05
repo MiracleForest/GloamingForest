@@ -15,6 +15,8 @@
 
 #include "mc/deps/core/math/Vec3.h"
 
+class Block;
+class BlockSource;
 class MolangVariableMap;
 
 namespace gf::fx {
@@ -32,7 +34,14 @@ enum EffectVar : std::uint32_t {
     kVarBlock           = 1u << 7, ///< legacy data: params "block" (id, optional "states")
     kVarExplosionVelocity = 1u << 8, ///< with kVarVelocity: explosion_particle's `-velocity * 10` blocks/s (effectVelocity)
     kVarCritDirection   = 1u << 9,  ///< with kVarDirection: CritParticle's motion (critDirection)
-    kVarDustColor       = 1u << 10, ///< params "color" (DustParticleOptions) picks the particle (dustFor)
+    kVarDustDirection   = 1u << 10, ///< with kVarDirection: DustParticleBase's motion (dustDirection)
+    kVarDustLook        = 1u << 11, ///< `variable.dust_size` and `variable.dust_ticks`: DustParticleBase's size and lifetime (dustLook)
+};
+
+/// DustParticleBase's random size and lifetime for DustParticleOptions' scale (dustLook).
+struct DustLook {
+    float size  = 0.15f * 0.75f; ///< quadSize: 0.1 * (0.5..1) * 2 * 0.75 * scale
+    float ticks = 8.f;           ///< lifetime: max((int)(8 / (0.2..1)) * scale, 1) ticks
 };
 
 struct Rgba {
@@ -64,6 +73,8 @@ struct Resolved {
 [[nodiscard]] Resolved resolveParticle(std::string const& particleId);
 /// The Bedrock sound name of a sound event ("" = unknown, warned once).
 [[nodiscard]] std::string resolveSound(std::string const& event);
+/// Whether the mod's resource pack(s) define the particle effect `effectId` (selftests).
+[[nodiscard]] bool packHasEffect(std::string const& effectId);
 /// Forgets the resource pack ids (reloaded on the next use).
 void resetKnown();
 
@@ -122,6 +133,8 @@ public:
     void setVec3(char const* name, Vec3 const& value);
     /// `name` as a struct {r, g, b} or, with `alpha`, {r, g, b, a}.
     void setColor(char const* name, Rgba const& color, bool alpha);
+    /// `name` as a number.
+    void setFloat(char const* name, float value);
     /// How many variables the map holds (selftests).
     [[nodiscard]] std::size_t size() const;
 
@@ -134,8 +147,9 @@ void fillVariables(MolangMap& map, Vec3 const& velocity);
 
 /// The variables an effect with `vars` (EffectVar bits) reads: `variable.velocity` when it moves
 /// or kVarVelocity asks for it, `variable.direction` (`direction`), `variable.color` (`color`),
-/// `variable.note_color` (NoteParticle's colour of `velocity.x`).
-void fillEffectVariables(MolangMap& map, std::uint32_t vars, Vec3 const& velocity, Vec3 const& direction, Rgba const& color);
+/// `variable.note_color` (NoteParticle's colour of `velocity.x`), `variable.dust_size` and
+/// `variable.dust_ticks` (`dust`).
+void fillEffectVariables(MolangMap& map, std::uint32_t vars, Vec3 const& velocity, Vec3 const& direction, Rgba const& color, DustLook const& dust = {});
 
 /// NoteParticle's colour for the x speed (0..1: the note / 24).
 [[nodiscard]] Rgba noteColor(float xSpeed);
@@ -159,10 +173,17 @@ void fillEffectVariables(MolangMap& map, std::uint32_t vars, Vec3 const& velocit
 /// CritParticle's motion: Particle's motion of a still particle times 0.1 plus 0.4 * the speed.
 [[nodiscard]] Vec3 critDirection(std::mt19937& rng, Vec3 const& velocity);
 
-/// How a dust particle (kVarDustColor) of DustParticleOptions' colour (params "color", `r.color`
-/// without) is shown: Java's redstone red (1, 0, 0) as Bedrock's legacy RedDust (its data is no
-/// colour: the game draws it red), any other colour as the falling_dust effect tinted with it.
-[[nodiscard]] Resolved dustFor(Resolved r, nlohmann::json const& params);
+/// DustParticleBase's motion: Particle's motion for the speed times 0.1 (blocks per tick; the
+/// effect gf:dust then slows it by the friction 0.96 per tick).
+[[nodiscard]] Vec3 dustDirection(std::mt19937& rng, Vec3 const& velocity);
+
+/// DustParticleOptions' scale: params "scale" clamped to 0.01..4 as its codec clamps it, 1 without
+/// (DustParticleOptions.REDSTONE).
+[[nodiscard]] float dustScale(nlohmann::json const& params);
+
+/// DustParticleBase's size and lifetime of one particle for `scale` (Java's random draws; the
+/// server rolls them so the effect needs no emitter expression).
+[[nodiscard]] DustLook dustLook(std::mt19937& rng, float scale);
 
 /// The colour a particle gets: params "color", else `fallback` (white without). An integer is
 /// 0xAARRGGBB (Java's ColorParticleOption ARGB int) when any of bits 24-31 is set, else an opaque
@@ -173,10 +194,16 @@ void fillEffectVariables(MolangMap& map, std::uint32_t vars, Vec3 const& velocit
 /// FallingDustParticle's colour of a block (FxBlockColor.cpp): a FallingBlock's dust colour, else
 /// the block's BlockColor without a level (vanilla's and TF's, tint index 0) as 0xRRGGBB, -1 for
 /// one that draws white; nullopt when the block has none (the map colour applies). `intState`
-/// reads the block's integer states (redstone_signal, growth, facing_direction).
-[[nodiscard]] std::optional<int> fallingDustColor(std::string const& blockId, std::function<std::optional<int>(std::string_view)> const& intState);
+/// reads the block's integer states (redstone_signal, growth, facing_direction, fill_level),
+/// `stringState` its string states (cauldron_liquid).
+[[nodiscard]] std::optional<int> fallingDustColor(std::string const& blockId, std::function<std::optional<int>(std::string_view)> const& intState,
+                                                  std::function<std::optional<std::string>(std::string_view)> const& stringState = {});
 /// A fallingDustColor value as a colour (-1: white).
 [[nodiscard]] Rgba dustRgb(int color);
+/// FallingDustParticle's colour of `block` (Fx.cpp): fallingDustColor with the block's integer and
+/// string states, else the block state's map colour at `pos` of `region` (BlockColors#getColor:
+/// state.getMapColor(level, pos)), the type's map colour without a region.
+[[nodiscard]] Rgba blockDustColor(Block const& block, BlockSource* region, Vec3 const& pos);
 
 #ifdef GF_CLIENT
 namespace client {

@@ -11,8 +11,10 @@
 //     particle up to 8 per call (kMaxVanillaParticles), offset by params "spread" (Java's
 //     gaussian x distance), with the velocity as the molang variable `variable.velocity` {x, y, z}
 //     (FxMolang.cpp; an effect that does not read it moves on its own) and the variables the
-//     mapped vanilla effect reads (`variable.direction`, `variable.color`, `variable.note_color`;
-//     see vanillaParticles). Java's item and block particles go as Bedrock's legacy particles.
+//     mapped vanilla effect reads (`variable.direction`, `variable.color`, `variable.note_color`,
+//     `variable.dust_size`, `variable.dust_ticks`; see vanillaParticles). Java's portal and dust particles are F10's own
+//     effects gf:portal and gf:dust (assets/pack/rp/particles/fx), which every client gets with the
+//     resource pack. Java's item and block particles go as Bedrock's legacy particles.
 // Sounds: TF's sound events ("entity.twilightforest.naga.hiss", the sound_definitions names F3
 // generates) and the vanilla events TF plays ("minecraft:entity.ghast.shoot", mapped to Bedrock's
 // names) go out as PlaySoundPacket to the players in range (16 blocks, more for volume > 1, as
@@ -25,6 +27,7 @@
 #include <cmath>
 #include <filesystem>
 #include <fstream>
+#include <map>
 #include <mutex>
 #include <optional>
 #include <random>
@@ -48,6 +51,7 @@
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
+#include "mc/world/level/BlockSource.h"
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/BlockType.h"
 #include "mc/world/level/Level.h"
@@ -66,19 +70,18 @@ namespace gf::fx {
 
 namespace {
 
-// Java vanilla particle types TF spawns -> Bedrock particle effects (best match), with the molang
+// Java vanilla particle types TF spawns -> Bedrock particle effects (best match; gf: effects are
+// F10's own, in the mod's resource pack), with the molang
 // variables the effect reads (Bedrock's vanilla effects of 1.26.51; an effect that reads a variable
 // nobody set logs a content-log error per particle) and where Bedrock draws a Java type through a
 // legacy particle (LevelEventPacket) instead of an effect.
-//   - portal: portal_directional is Java's PortalParticle (the same lifetime, size and path:
-//     start + direction * (1 - (2a^2 - a)) at age fraction a) except that Java adds (1 - a) to y
-//     where Bedrock subtracts a: spawned one block higher, it follows Java's path exactly (from
-//     pos + speed + (0, 1, 0) down to pos). Its colour is not Java's: with f = 0.4..1 Bedrock tints
-//     (f, 0.3f, 0.9f) where Java tints (0.9f, 0.3f, f), so the specks are pinker than Java's
-//     blue-violet. No vanilla effect has the portal path with a settable colour (mob_portal and
-//     portal_east_west compute their own); exact colours need an own copy of the effect in the
-//     resource pack, a path F10 does not own yet (owners.rules.json has no
-//     assets/pack/rp/**/combat/** for F10).
+//   - portal: F10's own effect gf:portal (assets/pack/rp/particles/fx/portal.json), Java's
+//     PortalParticle: the path pos + direction * (1 - (2a^2 - a)) + (0, 1 - a, 0) at age fraction a
+//     (from pos + speed + (0, 1, 0) down to pos), the colour (0.9f, 0.3f, 1) * f with f = 0.4..1
+//     (blue-violet; Bedrock's portal_directional tints (f, 0.3f, 0.9f), pink-magenta), the size
+//     0.1 * (0.5..0.7) * (1 - (1 - a)^2), a lifetime of 40..49 ticks and a random generic sprite.
+//     Java brightens the particle towards its end (sky light + 240 * a^4); the effect is lit by the
+//     world all its life.
 //   - enchant: enchanting_table_particle flies from pos + direction to pos (FlyTowardsPositionParticle).
 //   - electric_spark: the effect's shape direction is Java's velocity.
 //   - splash: the direction is SplashParticle's motion (splashDirection: the x/z speed with y 0.1
@@ -87,15 +90,20 @@ namespace {
 //     still particle * 0.1 plus 0.4 * the speed), so a still crit scatters as in Java.
 //   - poof: explosion_particle's speed is -variable.velocity * 10 blocks/s plus its own noise
 //     (always set): it gets -2 * velocity, Java's ExplodeParticle speed of velocity blocks/tick.
-//   - dust: DustParticleOptions' colour (params "color", red by default) picks the particle
-//     (dustFor): redstone red is Bedrock's legacy RedDust (always red: its data is no colour, a
-//     client check showed purple data drawn red), any other colour the falling_dust effect tinted
-//     with it (a small square drifting for 1.4..7 s, Java's DustParticle lives 0.4..2 s and hovers).
-//     The scale is not carried.
+//   - dust: F10's own effect gf:dust (assets/pack/rp/particles/fx/dust.json), Java's DustParticle
+//     for DustParticleOptions' colour (params "color", red by default: REDSTONE) and scale (params
+//     "scale", 1 by default): the motion of Particle for the speed times 0.1 (dustDirection,
+//     `variable.direction`: a slight upward drift) slowed by the friction 0.96 per tick, colliding
+//     with blocks; each channel (0.8..1) * colour * (0.6..1); the size 0.1..0.2 * 0.75 * scale,
+//     growing over the first 1/32 of the life, and a lifetime of max(floor(8 / (0.2..1)) * scale, 1)
+//     ticks, rolled here (dustLook: `variable.dust_size`, `variable.dust_ticks`); the generic
+//     sprites 7 to 0 over the life.
 //   - note: note_particle's colour is NoteParticle's hue from the x speed.
 //   - entity_effect / effect: mobspell_emitter's colour (params "color", white by default).
-//   - falling_dust: params "color", else FallingDustParticle's colour of params "block" (its dust
-//     colour, its BlockColor without a level or its map colour; FxBlockColor.cpp).
+//   - falling_dust: params "color", else FallingDustParticle's colour of params "block" (+ "states"):
+//     its dust colour, its BlockColor without a level (FxBlockColor.cpp; the water cauldron's is
+//     white), else the block state's map colour at the particle's position (BlockColors#getColor:
+//     state.getMapColor(level, pos)).
 //   - colours (params "color"): an integer is 0xAARRGGBB when any of bits 24-31 is set, else an
 //     opaque 0xRRGGBB (pass [r, g, b, 0] for alpha 0); an array is [r, g, b(, a)] in 0..1.
 //   - crimson_spore / white_ash: Bedrock has no effect for them (its own are drawn by the engine
@@ -104,7 +112,6 @@ namespace {
 //     (legacy IconCrack and Terrain with params "item" / "block"); item_snowball and item_slime are
 //     the legacy SnowballPoof and Slime. Legacy particles carry no velocity.
 std::unordered_map<std::string, VanillaParticle> const& vanillaParticles() {
-    static Vec3 const                                                   up{0.f, 1.f, 0.f};
     static std::unordered_map<std::string, VanillaParticle> const m{
         {"minecraft:smoke", {"minecraft:basic_smoke_particle"}},
         {"minecraft:large_smoke", {"minecraft:large_explosion"}},
@@ -127,7 +134,7 @@ std::unordered_map<std::string, VanillaParticle> const& vanillaParticles() {
         {"minecraft:witch", {"minecraft:witchspell_emitter"}},
         {"minecraft:crimson_spore", {"minecraft:falling_dust", kVarColorRgb, {}, 0, Rgba{0.9f, 0.4f, 0.5f, 1.f}}},
         {"minecraft:white_ash", {"minecraft:falling_dust", kVarColorRgb, {}, 0, Rgba{0.7294118f, 0.69411767f, 0.7607843f, 1.f}}},
-        {"minecraft:portal", {"minecraft:portal_directional", kVarDirection, up}},
+        {"minecraft:portal", {"gf:portal", kVarDirection}},
         {"minecraft:mycelium", {"minecraft:mycelium_dust_particle"}},
         {"minecraft:lava", {"minecraft:lava_particle"}},
         {"minecraft:enchant", {"minecraft:enchanting_table_particle", kVarDirection}},
@@ -137,7 +144,7 @@ std::unordered_map<std::string, VanillaParticle> const& vanillaParticles() {
         {"minecraft:falling_dust", {"minecraft:falling_dust", kVarColorRgb}},
         {"minecraft:item", {"", kVarItem, {}, static_cast<int>(ParticleType::IconCrack)}},
         {"minecraft:heart", {"minecraft:heart_particle"}},
-        {"minecraft:dust", {"", kVarDustColor, {}, static_cast<int>(ParticleType::RedDust), Rgba{1.f, 0.f, 0.f, 1.f}}},
+        {"minecraft:dust", {"gf:dust", kVarColorRgb | kVarDirection | kVarDustDirection | kVarDustLook, {}, 0, Rgba{1.f, 0.f, 0.f, 1.f}}},
         {"minecraft:end_rod", {"minecraft:endrod"}},
         {"minecraft:snowflake", {"minecraft:snowflake_particle"}},
     };
@@ -383,6 +390,13 @@ Resolved resolveParticle(std::string const& particleId) {
     return r;
 }
 
+bool packHasEffect(std::string const& effectId) {
+    auto&           k = known();
+    std::lock_guard lock(k.mutex);
+    if (!k.loaded) loadKnown(k);
+    return k.particles.contains(effectId);
+}
+
 std::string resolveSound(std::string const& event) {
     auto&           k = known();
     std::lock_guard lock(k.mutex);
@@ -484,16 +498,10 @@ std::optional<int> legacyData(Resolved const& r, std::string const& particleId, 
 }
 
 /// The colour of a coloured effect: params "color", else FallingDustParticle's colour of params
-/// "block" (a falling block's dust colour, else its BlockColor without a level, else its map
-/// colour; FxBlockColor.cpp), else the type's own colour, else white.
-Rgba particleColor(Resolved const& r, nlohmann::json const& params) {
+/// "block" (blockDustColor at the particle's position), else the type's own colour, else white.
+Rgba particleColor(Resolved const& r, nlohmann::json const& params, Dimension& dimension, Vec3 const& pos) {
     if (params.is_object() && !params.contains("color")) {
-        if (auto const* block = paramBlock(params)) {
-            auto tint = fallingDustColor(game::blockId(*block), [block](std::string_view state) { return game::intState(*block, state); });
-            if (tint) return dustRgb(*tint);
-            mce::Color const& c = block->getBlockType().mMapColor;
-            return Rgba{c.r, c.g, c.b, 1.f};
-        }
+        if (auto const* block = paramBlock(params)) return blockDustColor(*block, &dimension.getBlockSourceFromMainChunkSource(), pos);
     }
     return colorOf(params, r.color);
 }
@@ -502,24 +510,30 @@ Rgba particleColor(Resolved const& r, nlohmann::json const& params) {
 
 Counters counters() { return {gParticlePackets, gSoundPackets, gMovingPackets, gVarPackets, gLegacyPackets}; }
 
-Resolved dustFor(Resolved r, nlohmann::json const& params) {
-    auto c = colorOf(params, r.color);
-    r.vars &= ~static_cast<std::uint32_t>(kVarDustColor);
-    if (c.r >= 0.995f && c.g <= 0.005f && c.b <= 0.005f) {
-        r.effect.clear();
-        r.legacy = static_cast<int>(ParticleType::RedDust);
-    } else {
-        r.effect = "minecraft:falling_dust";
-        r.legacy = 0;
-        r.vars |= kVarColorRgb;
-        r.color  = c;
+Rgba blockDustColor(Block const& block, BlockSource* region, Vec3 const& pos) {
+    auto const id   = game::blockId(block);
+    auto       tint = fallingDustColor(
+        id, [&block](std::string_view state) { return game::intState(block, state); },
+        [&block, states = std::optional<std::map<std::string, std::string>>{}](std::string_view state) mutable -> std::optional<std::string> {
+            if (!states) states = game::statesOf(block);
+            auto it = states->find(std::string(state));
+            if (it == states->end()) return std::nullopt;
+            return it->second;
+        });
+    if (tint) return dustRgb(*tint);
+    // BlockColors#getColor without a BlockColor: state.getMapColor(level, pos), the state's own map
+    // colour (a log's by its axis, ...). The bed's reads its block actor at the position, which the
+    // particle's position does not hold: the type's map colour.
+    mce::Color c = block.getBlockType().mMapColor;
+    if (region && id != "minecraft:bed") {
+        BlockPos const at{static_cast<int>(std::floor(pos.x)), static_cast<int>(std::floor(pos.y)), static_cast<int>(std::floor(pos.z))};
+        c = block.getBlockType().getMapColor(*region, at, block);
     }
-    return r;
+    return Rgba{c.r, c.g, c.b, 1.f};
 }
 
 void particle(Dimension& dimension, std::string const& particleId, Vec3 const& pos, Vec3 const& velocity, int count, nlohmann::json const& params) {
     auto r = resolveParticle(particleId);
-    if (r.vars & kVarDustColor) r = dustFor(std::move(r), params);
     if (!r.shown() && !r.native) return;
     nlohmann::json msg;
     if (r.native) msg = {{"id", particleId}, {"pos", vecJson(pos)}, {"vel", vecJson(velocity)}, {"count", count}, {"params", params}, {"effect", r.effect}};
@@ -541,18 +555,21 @@ void particle(Dimension& dimension, std::string const& particleId, Vec3 const& p
         if (!legacy && !r.native) return;
     }
     bool const moving = velocity.x != 0.f || velocity.y != 0.f || velocity.z != 0.f;
-    bool const needsVars = moving || (r.vars & (kVarVelocity | kVarDirection | kVarColorRgb | kVarColorRgba | kVarNoteColor)) != 0;
-    // the maps, one per particle (a still splash gets its own random motion), made for the first
-    // vanilla client
+    bool const needsVars = moving || (r.vars & (kVarVelocity | kVarDirection | kVarColorRgb | kVarColorRgba | kVarNoteColor | kVarDustLook)) != 0;
+    // the maps, one per particle (a still splash or dust gets its own random motion), made for the
+    // first vanilla client
     std::vector<std::unique_ptr<MolangMap>> vars;
     auto makeVars = [&] {
-        Rgba const color = particleColor(r, params);
+        Rgba const  color = particleColor(r, params, dimension, pos);
+        float const scale = dustScale(params);
         for (int i = 0; i < n; ++i) {
             Vec3 direction = velocity;
             if (r.vars & kVarSplashDirection) direction = splashDirection(rng, velocity);
             else if (r.vars & kVarCritDirection) direction = critDirection(rng, velocity);
-            auto& map = vars.emplace_back(std::make_unique<MolangMap>());
-            fillEffectVariables(*map, r.vars, velocity, direction, color);
+            else if (r.vars & kVarDustDirection) direction = dustDirection(rng, velocity);
+            DustLook const dust = (r.vars & kVarDustLook) ? dustLook(rng, scale) : DustLook{};
+            auto&          map  = vars.emplace_back(std::make_unique<MolangMap>());
+            fillEffectVariables(*map, r.vars, velocity, direction, color, dust);
         }
     };
     forPlayersNear(dimension, pos, 32.f, [&](Player& p) {

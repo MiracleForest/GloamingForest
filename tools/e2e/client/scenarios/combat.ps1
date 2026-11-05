@@ -25,13 +25,14 @@
 #                          vanilla client the game's particle packets
 #   fx-portal.png          TF's portal particles (TFPortalBlock#animateTick, minecraft:portal) over a
 #                          3-block row ahead: specks rising above it and falling back onto it
-#                          (Java's PortalParticle path; Bedrock's portal_directional with
-#                          variable.direction, one block higher). Known deviation: Bedrock tints
-#                          them pink-magenta (f, 0.3f, 0.9f), Java blue-violet (0.9f, 0.3f, f)
+#                          (Java's PortalParticle: F10's own effect gf:portal with variable.direction,
+#                          Java's blue-violet (0.9f, 0.3f, 1) * f, f = 0.4..1, not Bedrock's pink
+#                          portal_directional)
 #   fx-vanilla.png         every Java particle type gf::fx maps, 3 blocks ahead; the content log must
 #                          hold no particle error (variables the effects read are all set)
-#   fx-legacy.png          left to right: red dust (legacy RedDust), purple dust (TrollsteinnBlock's
-#                          DustParticleOptions colour: falling_dust tinted), twilight oak log item particles (a block item's IconCrack),
+#   fx-legacy.png          left to right: red dust (DustParticleOptions.REDSTONE) and purple dust
+#                          (TrollsteinnBlock's colour), both F10's gf:dust (Java's DustParticle: hovering,
+#                          drifting up, 0.4..2 s), twilight oak log item particles (a block item's IconCrack),
 #                          still crits scattering, poofs rising (explosion_particle's -velocity * 10)
 #   missing-advancement-toast.png  TF's MissingAdvancementToast for progress_lich: the client mod's
 #                          toast through F12 (UPPER_TEXT and the title in white, the lich tower
