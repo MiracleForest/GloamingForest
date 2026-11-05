@@ -19,7 +19,7 @@ fallback. Spec: [docs/spec/atmosphere.md](../spec/atmosphere.md).
 ## For other units
 
 - **Fog definitions** (U1's client biomes reference them): `twilightforest:<biome>` for each of the 22 TF biomes
-  (the biome's TF fog colour, vanilla distances 0.9..1.0 of the render distance), `twilightforest:spooky_forest`
+  (the biome's TF fog colour darkened to TF's colour at the fixed time 13000 on a vanilla client: raw x (0.416, 0.416, 0.435) / 0.68, the darkening Bedrock applies itself measured on the remote-vanilla e2e; vanilla distances 0.9..1.0 of the render distance), `twilightforest:spooky_forest`
   is the near fog (0.1875..0.25), plus `twilightforest:dark_forest_near` and `twilightforest:dark_forest_center_near`
   (0.05..0.5) that the server pushes to vanilla clients below y 20.
 - **`atmosphere.ur_ghast`** (server -> client mod, U26): `{"active": true}` while the Ur-Ghast near the player is in its
