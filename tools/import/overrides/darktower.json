@@ -1,0 +1,76 @@
+{
+  "patch": {
+    "data/twilightforest/loot_table/entities/carminite_ghastguard.json": [
+      {
+        "op": "replace",
+        "path": "/pools",
+        "value": [
+          {
+            "bonus_rolls": 0.0,
+            "entries": [
+              {
+                "type": "minecraft:item",
+                "name": "minecraft:ghast_tear",
+                "functions": [
+                  { "function": "minecraft:set_count", "count": { "type": "minecraft:uniform", "min": 0.0, "max": 1.0 }, "add": false },
+                  { "function": "minecraft:enchanted_count_increase", "count": { "type": "minecraft:uniform", "min": 0.0, "max": 1.0 }, "enchantment": "minecraft:looting" }
+                ]
+              }
+            ],
+            "rolls": 1.0
+          },
+          {
+            "bonus_rolls": 0.0,
+            "entries": [
+              {
+                "type": "minecraft:item",
+                "name": "minecraft:gunpowder",
+                "functions": [
+                  { "function": "minecraft:set_count", "count": { "type": "minecraft:uniform", "min": 0.0, "max": 2.0 }, "add": false },
+                  { "function": "minecraft:enchanted_count_increase", "count": { "type": "minecraft:uniform", "min": 0.0, "max": 1.0 }, "enchantment": "minecraft:looting" }
+                ]
+              }
+            ],
+            "rolls": 1.0
+          }
+        ]
+      }
+    ],
+    "data/twilightforest/loot_table/entities/carminite_ghastling.json": [
+      {
+        "op": "replace",
+        "path": "/pools",
+        "value": [
+          {
+            "bonus_rolls": 0.0,
+            "entries": [
+              {
+                "type": "minecraft:item",
+                "name": "minecraft:ghast_tear",
+                "functions": [
+                  { "function": "minecraft:set_count", "count": { "type": "minecraft:uniform", "min": 0.0, "max": 1.0 }, "add": false },
+                  { "function": "minecraft:enchanted_count_increase", "count": { "type": "minecraft:uniform", "min": 0.0, "max": 1.0 }, "enchantment": "minecraft:looting" }
+                ]
+              }
+            ],
+            "rolls": 1.0
+          },
+          {
+            "bonus_rolls": 0.0,
+            "entries": [
+              {
+                "type": "minecraft:item",
+                "name": "minecraft:gunpowder",
+                "functions": [
+                  { "function": "minecraft:set_count", "count": { "type": "minecraft:uniform", "min": 0.0, "max": 2.0 }, "add": false },
+                  { "function": "minecraft:enchanted_count_increase", "count": { "type": "minecraft:uniform", "min": 0.0, "max": 1.0 }, "enchantment": "minecraft:looting" }
+                ]
+              }
+            ],
+            "rolls": 1.0
+          }
+        ]
+      }
+    ]
+  }
+}

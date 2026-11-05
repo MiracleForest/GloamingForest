@@ -9,4 +9,4 @@ Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
 
 $r = Invoke-SelfTest 'darktower.*' -TimeoutSeconds 900
 if ($r.Fail -gt 0) { throw "$($r.Fail) darktower selftest(s) failed" }
-if ($r.Pass -lt 17) { throw "expected 17 darktower selftests to pass, got $($r.Pass)" }
+if ($r.Pass -lt 19) { throw "expected 19 darktower selftests to pass, got $($r.Pass)" }

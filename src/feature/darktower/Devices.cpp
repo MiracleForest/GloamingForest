@@ -701,8 +701,14 @@ void trapDevice(BlockSource& region, BlockPos const& pos, Block const& block) {
     soundAt(region, snd, te.counter < 30 ? "block.twilightforest.ghast_trap.warmup" : te.counter < 80 ? "block.twilightforest.ghast_trap.on" : "block.twilightforest.ghast_trap.spindown", 1.0f, 4.0f);
     // trap nearby ghasts: AABB(above(16).center, above(16).offset(1,1,1).center).inflate(6, 16, 6)
     AABB box{Vec3{pos.x + 0.5f - 6.0f, pos.y + 16.5f - 16.0f, pos.z + 0.5f - 6.0f}, Vec3{pos.x + 1.5f + 6.0f, pos.y + 17.5f + 16.0f, pos.z + 1.5f + 6.0f}};
-    for (auto* a : region.getEntities(box, 0.0f)) {
+    // getEntitiesOfClass intersects the boxes; Bedrock finds an actor by the chunk of its position:
+    // search the chunks a 14 x 18 Ur-Ghast overlapping the box can stand in, then test the boxes
+    AABB reach{Vec3{box.min.x - 8.0f, box.min.y - 18.0f, box.min.z - 8.0f}, Vec3{box.max.x + 8.0f, box.max.y, box.max.z + 8.0f}};
+    for (auto* a : region.getEntities(reach, 0.0f)) {
         if (!a || !a->isAlive() || !ghasts::isTrappable(*a)) continue;
+        auto ab = a->getAABB();
+        if (!(ab.min.x < box.max.x && ab.max.x > box.min.x && ab.min.y < box.max.y && ab.max.y > box.min.y && ab.min.z < box.max.z && ab.max.z > box.min.z))
+            continue;
         auto* mob = asMob(*a);
         if (!mob) continue;
         auto p = a->getFeetPos();

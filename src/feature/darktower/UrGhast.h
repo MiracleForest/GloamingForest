@@ -40,6 +40,8 @@ void makeBossMinion(Mob& ghastling);
 
 /// An Ur-Ghast fireball from owner at t along dir (selftests; UrGhastAttackGoal#spitFireball's shot).
 Actor* shootUrGhastFireball(Mob& owner, Vec3 const& at, Vec3 const& dir);
+/// A carminite ghastguard's vanilla LargeFireball (GhastguardAttackGoal), tracked for its reflected hit.
+Actor* shootLargeFireball(Mob& owner, Vec3 const& at, Vec3 const& dir);
 
 /// Registers the ghasts' behaviours (module install).
 void install();
