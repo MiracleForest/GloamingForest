@@ -55,7 +55,7 @@
                 "default": "textures/twilightforest/entity/nagasegment"
               },
               "geometry": {
-                "default": "geometry.twilightforest.naga_segment"
+                "default": "geometry.twilightforest.naga_body"
               },
               "scripts": {
                 "scale": "2.0",
