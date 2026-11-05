@@ -99,9 +99,13 @@ struct MapRecord {
     std::map<std::string, TfDecoration>  decorations; ///< by MagicMapItem#makeName
     std::unordered_map<std::int64_t, int> steps;      ///< HoldingPlayer#step per holder
     bool                                 dirty = false; ///< to save
-    bool                                 decorationsChanged = true;
-    std::unordered_map<std::int64_t, std::uint64_t> sent; ///< last full packet tick per holder
-    bool                                 pixelsChanged = false;
+    /// Changes are counted; each holder remembers what it was sent (a map can have several holders:
+    /// clones, item frames none of ours).
+    std::uint64_t                        pixelVersion = 1;
+    std::uint64_t                        decorationVersion = 1;
+    std::unordered_map<std::int64_t, std::uint64_t> sentTick;        ///< last full packet tick per holder
+    std::unordered_map<std::int64_t, std::uint64_t> sentPixels;      ///< pixel version sent per holder
+    std::unordered_map<std::int64_t, std::uint64_t> sentDecorations; ///< decoration version sent per companion
     std::unordered_map<std::int64_t, bool> mazeSent; ///< MazeMapPacket sent to a companion holder
 };
 
@@ -222,15 +226,21 @@ void putVanillaDecoration(MapItemSavedData& data, MapDecoration::Type type, int 
 }
 
 /// Sends the map's full data to a holder when its pixels changed (at most every 5 ticks).
-void sendIfChanged(Player& player, std::int64_t id, MapRecord& r, MapItemSavedData& data, std::uint64_t tick) {
-    if (!r.pixelsChanged) return;
+void sendIfChanged(Player& player, MapRecord& r, MapItemSavedData& data, std::uint64_t tick) {
     auto  uid  = player.getOrCreateUniqueID().rawID;
-    auto& last = r.sent[uid];
-    if (tick - last < 5 && last != 0) return;
+    auto& seen = r.sentPixels[uid];
+    if (seen == r.pixelVersion) return;
+    auto& last = r.sentTick[uid];
+    if (last != 0 && tick - last < 5) return;
     last = tick;
+    seen = r.pixelVersion;
     if (auto packet = data.getFullDataPacket()) packet->sendTo(player);
-    r.pixelsChanged = false;
-    (void)id;
+}
+
+/// The server tick (the 5-tick throttle of the full packets).
+std::uint64_t& serverTick() {
+    static std::uint64_t t = 0;
+    return t;
 }
 
 /// MagicMapPacket for a companion: the TF decorations with their conquered state.
@@ -316,11 +326,11 @@ void updateMagic(Player& player, std::int64_t id, MapRecord& r, MapItemSavedData
     });
     if (changed) {
         data.mDirtyForSave = true;
-        r.pixelsChanged    = true;
+        ++r.pixelVersion;
     }
     if (decoChanged) {
         r.dirty              = true;
-        r.decorationsChanged = true;
+        ++r.decorationVersion;
     }
     (void)id;
 }
@@ -394,7 +404,7 @@ void updateMaze(Player& player, MapRecord& r, MapItemSavedData& data) {
     );
     if (changed) {
         data.mDirtyForSave = true;
-        r.pixelsChanged    = true;
+        ++r.pixelVersion;
     }
     // MazeMapItem#inventoryTick: a holder more than 3 blocks above / below yCenter shows as a dot
     int yProximity = static_cast<int>(std::floor(pos.y - static_cast<float>(r.yCenter)));
@@ -422,8 +432,8 @@ MapItemSavedData* createData(Player& player, int centerX, int centerZ, int scale
 ItemStack stackFor(Player& player, MapItemSavedData& data, MapKind kind) {
     auto stack = items::make(kFilledMap);
     if (!stack) return {};
+    items::setData(*stack, kMapData, {{"kind", kindName(kind)}}); // (the user data exists before the map writes into it)
     MapItem::setItemInstanceInfo(*stack, data);
-    items::setData(*stack, kMapData, {{"kind", kindName(kind)}});
     char const* key      = kind == MapKind::Magic ? "item.twilightforest.filled_magic_map" : kind == MapKind::Maze ? "item.twilightforest.filled_maze_map" : "item.twilightforest.filled_ore_map";
     char const* fallback = kind == MapKind::Magic ? "Magic Map" : kind == MapKind::Maze ? "Maze Map" : "Maze/Ore Map";
     stack->setCustomName(Bedrock::Safety::RedactableString("§r" + trFor(player, key, fallback)));
@@ -573,18 +583,19 @@ void updateHeldMap(Player& player, ItemStack const& stack) {
     auto* r    = recordOf(id);
     if (!data || !r) return;
     if (static_cast<int>(data->mDimension.get()) != static_cast<int>(player.getDimensionId())) return; // level.dimension() == data.dimension
-    static std::uint64_t tick = 0;
-    ++tick;
     if (r->kind == MapKind::Magic) updateMagic(player, id, *r, *data);
     else updateMaze(player, *r, *data);
-    sendIfChanged(player, id, *r, *data, tick);
+    sendIfChanged(player, *r, *data, serverTick());
     if (r->kind != MapKind::Magic && net::isCompanion(player) && !r->mazeSent[player.getOrCreateUniqueID().rawID]) {
         r->mazeSent[player.getOrCreateUniqueID().rawID] = true;
         net::send(player, kMazeChannel, {{"map", id}, {"y", r->yCenter}, {"ore", r->kind == MapKind::Ore}});
     }
-    if (r->kind == MapKind::Magic && r->decorationsChanged) {
-        sendDecorations(player, id, *r);
-        r->decorationsChanged = false;
+    if (r->kind == MapKind::Magic && net::isCompanion(player)) {
+        auto& seen = r->sentDecorations[player.getOrCreateUniqueID().rawID];
+        if (seen != r->decorationVersion) {
+            seen = r->decorationVersion;
+            sendDecorations(player, id, *r);
+        }
     }
 }
 
@@ -619,6 +630,7 @@ ItemStack locatorMap(int dimension, int x, int z) {
     if (auto at = cu::decorationPos(x, z, cx, cz, 4, 180.0)) putVanillaDecoration(data, MapDecoration::Type::XWhite, x, z, 2, *at);
     auto stack = items::make(kFilledMap);
     if (!stack) return {};
+    if (!stack->mUserData) stack->mUserData = std::make_unique<CompoundTag>();
     MapItem::setItemInstanceInfo(*stack, data);
     return *stack;
 }
@@ -637,6 +649,7 @@ public:
             auto level = ll::service::getLevel();
             if (!level) return;
             ++mTicks;
+            ++serverTick();
             std::vector<ActorUniqueID> holders;
             level->forEachPlayer([&](Player& p) {
                 if (mapKindOf(p.getSelectedItem()) || mapKindOf(p.getOffhandSlot())) holders.push_back(p.getOrCreateUniqueID());
@@ -662,6 +675,15 @@ public:
 private:
     static void registerOnce() {
         game::db::onWorldSave([] { saveRecords(); });
+        // a (re)joining companion gets every map it holds afresh
+        net::onCompanionJoined([](Player& p) {
+            auto uid = p.getOrCreateUniqueID().rawID;
+            for (auto& [id, r] : records()) {
+                r.sentPixels.erase(uid);
+                r.sentDecorations.erase(uid);
+                r.mazeSent.erase(uid);
+            }
+        });
         game::db::onWorldClosed([] {
             saveRecords();
             records().clear();
@@ -702,8 +724,6 @@ private:
             base             = base.substr(0, base.size() - std::string("_recipe").size());
             for (int n = 2; n <= 9; ++n) recipes::ext::addSpecialLayout(c.id, base + "_" + std::to_string(n));
         }
-        // the companion's MazeMapPacket data (yCenter, ore) when it starts holding one
-        net::onCompanionJoined([](Player&) {});
     }
 
     ll::event::ListenerPtr mTick;

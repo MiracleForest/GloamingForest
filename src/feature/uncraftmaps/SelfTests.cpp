@@ -333,11 +333,16 @@ GF_REGISTER_SELFTEST("uncraftmaps.sync_config", [](Context& ctx) {
 
 // The table's powered state follows the redstone signal (UncraftingTableBlock#neighborChanged).
 GF_REGISTER_SELFTEST("uncraftmaps.powered", [](Context& ctx) -> ll::coro::CoroTask<> {
-    auto at = ctx.testPos(1315, 1);
+    auto box = co_await ctx.flatArea(1315, 4, 4); // restored afterwards (the amethyst replaces a ground block)
+    auto at  = core::GlobalPos{ctx.dimension(), box.minX + 1, box.minY, box.minZ + 1};
     co_await ctx.ensureLoaded(at);
     auto below = core::GlobalPos{at.dim, at.x, at.y - 1, at.z};
     auto side  = core::GlobalPos{at.dim, at.x + 1, at.y, at.z};
-    ctx.require(ctx.setBlock(below, "minecraft:amethyst_block"), "amethyst below");
+    {
+        auto* r0 = ctx.region();
+        auto const* amethyst = game::blockWithStates("minecraft:amethyst_block", Json::object());
+        ctx.require(r0 && amethyst && game::setBlock(*r0, game::blockPos(below), *amethyst), "amethyst below (the flat area puts the ground back)");
+    }
     ctx.require(ctx.setBlock(at, kTable), "the table");
     co_await ctx.ticks(2);
     auto* region = ctx.region();
@@ -353,7 +358,6 @@ GF_REGISTER_SELFTEST("uncraftmaps.powered", [](Context& ctx) -> ll::coro::CoroTa
     region = ctx.region();
     refreshPowered(*region, game::blockPos(at));
     ctx.check(game::intState(region->getBlock(game::blockPos(at)), "twilightforest:powered").value_or(1) == 0, "unpowered again");
-    // the block below is put back by setBlock's cleanup (air) as the test row expects
 });
 
 // Magic maps: made only in the Twilight Forest, centred on the 2048-block grid, painted with the
@@ -503,7 +507,7 @@ GF_REGISTER_SELFTEST("uncraftmaps.commands", [](Context& ctx) -> ll::coro::CoroT
     int   maps = 0;
     for (int i = 0; i < 36; ++i)
         if (items::idOf(p.getInventory().getItem(i)) == "minecraft:filled_map") ++maps;
-    auto r = selftest::runServerCommand("twilightforest map_locator twilightforest:lich_tower \"" + name + "\"", ctx.dimension());
+    auto r = selftest::runServerCommand("twilightforest map_locator twilightforest:lich_tower @a[name=\"" + name + "\"]", ctx.dimension());
     ctx.info("map_locator: " + r.messages);
     auto& p2    = ctx.player();
     int   after = 0;
@@ -511,7 +515,7 @@ GF_REGISTER_SELFTEST("uncraftmaps.commands", [](Context& ctx) -> ll::coro::CoroT
         if (items::idOf(p2.getInventory().getItem(i)) == "minecraft:filled_map") ++after;
     if (r.ok) ctx.check(after == maps + 1, "the player got the map");
     else ctx.check(r.messages.find("commands.locate.structure.not_found") != std::string::npos || r.messages.find("Could not find") != std::string::npos, "not found is reported");
-    auto bad = selftest::runServerCommand("twilightforest map_locator twilightforest:no_such_structure \"" + name + "\"", ctx.dimension());
+    auto bad = selftest::runServerCommand("twilightforest map_locator twilightforest:no_such_structure @a[name=\"" + name + "\"]", ctx.dimension());
     ctx.check(!bad.ok, "an unknown structure is refused");
 #ifndef GF_CLIENT
     auto png = selftest::runServerCommand("twilightforest biomepng 0", ctx.dimension());

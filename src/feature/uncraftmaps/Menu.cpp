@@ -641,7 +641,8 @@ ItemStack Menu::quickMoveStack(int slot) {
 void Menu::clicked(int slot, int button, Click type) {
     // taking from an empty assembly slot while the grid is empty takes the ghost ingredient
     if (slot >= kSlotAssembly && slot < kSlotInventory && isEmpty(mS.carried) && isEmpty(get(slot))) {
-        bool hotbarEmpty = type != Click::Swap || (button >= 0 && button < 9 && isEmpty(mPlayer.getInventory().getItem(button)));
+        bool hotbarEmpty = type != Click::Swap || (button >= 0 && button < 9 && isEmpty(mPlayer.getInventory().getItem(button)))
+                           || (button == 40 && isEmpty(mPlayer.getOffhandSlot()));
         if (assemblyEmpty() && hotbarEmpty) slot -= 9;
     }
     // the result needs the recrafting levels

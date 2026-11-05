@@ -175,7 +175,9 @@ void mapLocator(CommandOrigin const& origin, CommandOutput& output, std::string 
     std::vector<std::string> holders;
     if (tag) holders = tags::members(tags::Registry::Structure, id);
     else if (id.starts_with("twilightforest:") || !bedrockFeature(id).empty() || id.starts_with("minecraft:")) holders.push_back(id);
-    bool known = !holders.empty() && (tag || id.starts_with("minecraft:") || gf::landmark::descriptor(id) != nullptr || tags::has(tags::Registry::Structure, "twilightforest:landmark", id) || id.starts_with("twilightforest:"));
+    static std::vector<std::string> const kSpread{"twilightforest:camp", "twilightforest:fallen_trunk", "twilightforest:hollow_tree", "twilightforest:swamp_hollow_tree"};
+    bool known = !holders.empty()
+              && (tag || id.starts_with("minecraft:") || gf::landmark::descriptor(id) != nullptr || std::find(kSpread.begin(), kSpread.end(), id) != kSpread.end());
     if (!known) return output.error(say(origin, "commands.locate.structure.invalid", "There is no structure with type \"%s\"", printable));
     if (players.empty()) {
         // the default target: the executing player (the console must name one)
