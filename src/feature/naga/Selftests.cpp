@@ -22,6 +22,9 @@
 #include "mc/world/actor/Mob.h"
 #include "mc/world/actor/player/Inventory.h"
 #include "mc/world/actor/player/Player.h"
+#include "mc/world/actor/state/PropertyComponent.h"
+#include "mc/deps/core/string/HashedString.h"
+#include "mc/deps/ecs/gamerefs_entity/EntityContext.h"
 #include "mc/world/level/block/Block.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
@@ -815,24 +818,40 @@ GF_REGISTER_SELFTEST("naga.display", [](Context& ctx) -> ll::coro::CoroTask<> {
     ctx.info("area at " + std::to_string(at.x) + " " + std::to_string(at.y) + " " + std::to_string(at.z));
     char const* const phases[] = {"shown", "charging", "dazed"};
     int const         lengths[] = {200, 160, 160};
-    for (int ph = 0; ph < 3; ph++) {
-        if (auto* m = mobById(n.uid))
-            if (auto* s = stateOf(*m)) {
+    // the Naga's movement pattern keeps running (it turns charging / dazed off when its state
+    // moves on), so the shown flags are put back every tick
+    auto show = [&](Mob& m, int ph) {
+        if (auto* s = stateOf(m)) {
+            if (s->charging != (ph == 1) || s->dazed != (ph == 2)) {
                 s->charging = ph == 1;
                 s->dazed    = ph == 2;
-                ge::setProperty(*m, "twilightforest:charging", s->charging);
-                ge::setProperty(*m, "twilightforest:dazed", s->dazed);
+                ge::setProperty(m, "twilightforest:charging", s->charging);
+                ge::setProperty(m, "twilightforest:dazed", s->dazed);
             }
+        }
+    };
+    for (int ph = 0; ph < 3; ph++) {
+        if (auto* m = mobById(n.uid)) show(*m, ph);
         for (int t = 0; t < lengths[ph]; t++) {
             co_await ctx.ticks(1);
             auto* m = mobById(n.uid);
             ctx.require(m != nullptr, "the Naga is still there");
+            show(*m, ph);
             m->setTarget(nullptr);
             auto p = m->getFeetPos();
             if (std::abs(p.x - (at.x + 0.5f)) > 0.3f || std::abs(p.z - (at.z + 0.5f)) > 0.3f)
                 m->teleportTo(Vec3{at.x + 0.5f, float(at.y), at.z + 0.5f}, true, 0, 0, false);
             faceCamera(*m);
-            if (t == 20) ctx.info(std::string("naga ") + phases[ph]);
+            if (t == 20) {
+                auto prop = [&](char const* name) {
+                    auto  props = m->getEntityContext().tryGetComponent<PropertyComponent>();
+                    auto  v     = props ? props->tryGetBool(HashedString::computeHash(name)) : std::nullopt;
+                    return v ? (*v ? "1" : "0") : "?";
+                };
+                ctx.info(std::string("naga ") + phases[ph] + " (properties charging=" + prop("twilightforest:charging") + " dazed=" + prop("twilightforest:dazed") + ")");
+                ctx.check(std::string(prop("twilightforest:charging")) == (ph == 1 ? "1" : "0") && std::string(prop("twilightforest:dazed")) == (ph == 2 ? "1" : "0"),
+                          std::string("the ") + phases[ph] + " Naga carries its synced properties");
+            }
         }
     }
     // the death: NagaRenderer#getFlipDegrees is 0 (the body does not tip over), the head shows
