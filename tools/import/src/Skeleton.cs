@@ -510,22 +510,41 @@ namespace GfImport
                     uv = VanillaParticleUv(texs.Select(t => t.Contains(":") ? t.Substring(t.IndexOf(':') + 1) : t).ToList());
                     if (uv == null)
                     {
-                        // no Bedrock cell (e.g. Java's separate glint sprite): no visual until F12's native particle
+                        // no Bedrock cell (a sprite newer than Java's pre-1.14 atlas): no visual until F12's native particle
                         Warn("particle " + full + ": vanilla sprite " + (texs.FirstOrDefault() ?? "?") + " has no cell in Bedrock's particle atlas: emits nothing");
                         visible = false;
                         uv = J.Obj().Set("texture_width", 128).Set("texture_height", 128).Set("uv", J.Arr(new[] { J.Num(0), J.Num(0) })).Set("uv_size", J.Arr(new[] { J.Num(8), J.Num(8) }));
                     }
                 }
                 var desc = J.Obj().Set("identifier", full).Set("basic_render_parameters", J.Obj().Set("material", "particles_alpha").Set("texture", path ?? "textures/particle/particles"));
-                var comps = J.Obj()
-                    .Set("minecraft:emitter_rate_instant", J.Obj().Set("num_particles", visible ? 1 : 0))
-                    .Set("minecraft:emitter_lifetime_once", J.Obj().Set("active_time", 0))
-                    .Set("minecraft:emitter_shape_point", J.Obj())
-                    .Set("minecraft:particle_lifetime_expression", J.Obj().Set("max_lifetime", 1))
-                    .Set("minecraft:particle_initial_speed", 0)
-                    .Set("minecraft:particle_motion_dynamic", J.Obj())
-                    .Set("minecraft:particle_appearance_billboard", J.Obj()
-                        .Set("size", J.Arr(new[] { J.Num(0.1), J.Num(0.1) }))
+                bool suspendedTown = SuspendedTownParticles.Contains(id);
+                var comps = J.Obj().Set("minecraft:emitter_rate_instant", J.Obj().Set("num_particles", visible ? 1 : 0));
+                // one particle per emitter (fx::particle): the emitter's creation expression rolls that particle's Java
+                // constructor randoms once, and the particle reads them
+                if (suspendedTown) comps.Set("minecraft:emitter_initialization", J.Obj().Set("creation_expression", SuspendedTownCreation));
+                comps.Set("minecraft:emitter_lifetime_once", J.Obj().Set("active_time", 0))
+                     .Set("minecraft:emitter_shape_point", J.Obj());
+                if (suspendedTown)
+                {
+                    // lifetime = (int) (20 / (Math.random() * 0.8 + 0.2)) ticks, removed on the tick after it runs out (one more tick
+                    // drawn); no collision (SuspendedTownParticle.move only moves the bounding box); the position follows Java's tick: move by
+                    // the velocity, then velocity *= 0.99, so after t seconds it is v * (1 - 0.99^(20 t)) / 0.01 blocks
+                    const string drift = " * 100 * (1 - math.pow(0.99, variable.particle_age * 20))";
+                    comps.Set("minecraft:particle_lifetime_expression", J.Obj().Set("max_lifetime", "(math.floor(20 / (math.random(0, 1) * 0.8 + 0.2)) + 1) / 20"))
+                         .Set("minecraft:particle_motion_parametric", J.Obj().Set("relative_position",
+                             J.Arr(new[] { J.Str("variable.gf_vx" + drift), J.Str("variable.gf_vy" + drift), J.Str("variable.gf_vz" + drift) })));
+                }
+                else
+                {
+                    comps.Set("minecraft:particle_lifetime_expression", J.Obj().Set("max_lifetime", 1))
+                         .Set("minecraft:particle_initial_speed", 0)
+                         .Set("minecraft:particle_motion_dynamic", J.Obj());
+                }
+                J size = suspendedTown ? J.Arr(new[] { J.Str("variable.gf_size"), J.Str("variable.gf_size") }) : J.Arr(new[] { J.Num(0.1), J.Num(0.1) });
+                // no lighting component: drawn at full brightness (TF's ProtectionParticle: getLightColor 0xF000F0) and
+                // untinted (its factory's setColor(1, 1, 1) replaces SuspendedTownParticle's grey)
+                comps.Set("minecraft:particle_appearance_billboard", J.Obj()
+                        .Set("size", size)
                         .Set("facing_camera_mode", "rotate_xyz")
                         .Set("uv", uv));
                 EmitJson("particles", owner, "rp/particles/" + id + ".json",
@@ -536,6 +555,24 @@ namespace GfImport
                 Fragment("particles", owner, "data/gf/particles/" + NameOf(owner) + ".json", full, J.Obj().Set("textures", J.Strs(frames)));
             }
         }
+
+        /// <summary>TF particles whose class extends vanilla's SuspendedTownParticle (the happy villager): protection
+        /// (client/particle/ProtectionParticle.java). Their skeleton translates that class's lifetime, size and drift.</summary>
+        static readonly HashSet<string> SuspendedTownParticles = new HashSet<string>(StringComparer.Ordinal) { "protection" };
+
+        /// <summary>SuspendedTownParticle's constructor randoms, as Molang (velocities in blocks per tick). Particle's
+        /// constructor: d = speed + (random * 2 - 1) * 0.4 per axis, rescaled to length (random + random + 1) * 0.15 * 0.4,
+        /// plus 0.1 on y; SuspendedTownParticle then multiplies it by 0.02. The caller's speed (AreaProtectionPacket:
+        /// gaussian * 0.02 per axis) is left out: the effect gets no velocity from fx::particle. quadSize: SingleQuadParticle's
+        /// 0.1 * (random * 0.5 + 0.5) * 2, times SuspendedTownParticle's random * 0.6 + 0.5 (Bedrock's billboard size is the
+        /// half extent, like quadSize).</summary>
+        const string SuspendedTownCreation =
+            "variable.gf_dx = math.random(-0.4, 0.4); variable.gf_dy = math.random(-0.4, 0.4); variable.gf_dz = math.random(-0.4, 0.4);"
+            + " variable.gf_ds = (math.random(0, 1) + math.random(0, 1) + 1) * 0.15 * 0.4"
+            + " / math.max(math.sqrt(variable.gf_dx * variable.gf_dx + variable.gf_dy * variable.gf_dy + variable.gf_dz * variable.gf_dz), 0.0001);"
+            + " variable.gf_vx = variable.gf_dx * variable.gf_ds * 0.02; variable.gf_vy = (variable.gf_dy * variable.gf_ds + 0.1) * 0.02;"
+            + " variable.gf_vz = variable.gf_dz * variable.gf_ds * 0.02;"
+            + " variable.gf_size = 0.1 * (math.random(0, 1) * 0.5 + 0.5) * 2 * (math.random(0, 1) * 0.6 + 0.5);";
 
         /// <summary>The atlas cell (u, v) of a Java vanilla particle sprite in Bedrock's legacy particle atlas
         /// (textures/particle/particles.png: Java's pre-1.14 particles.png layout, 16 x 16 cells of 8 x 8), or null.</summary>
@@ -555,7 +592,8 @@ namespace GfImport
                 case "lava": return new[] { 8, 24 };       // 49
                 case "heart": return new[] { 0, 40 };      // 80
                 case "angry": return new[] { 8, 40 };      // 81
-                case "glow": return new[] { 16, 40 };      // 82 (happy villager)
+                case "glint": return new[] { 16, 40 };     // 82 (happy villager: Java 1.14 split it out as glint.png; glow.png
+                                                           // is the 1.17 glow squid sprite, with no cell here)
                 case "note": return new[] { 0, 32 };       // 64
                 case "critical_hit": return new[] { 8, 32 };   // 65
                 case "enchanted_hit": return new[] { 16, 32 }; // 66
