@@ -4,6 +4,7 @@
 // goldens (tests/golden/mobs.json: max health, the collision box, movement speed, follow range and
 // attack damage of the six dark tower mobs), the Ur-Ghast fireball's impact (16 damage, an explosion
 // that never breaks blocks, even with mob griefing on) and the Ur-Ghast spawner's height gate.
+#include <algorithm>
 #include <cmath>
 #include <string>
 #include <utility>
@@ -170,7 +171,7 @@ GF_REGISTER_SELFTEST("darktower.reflected_fireball", [](Context& ctx) -> ll::cor
     {
         // the amount the game's hurt gets (after every incoming handler), and the lethal hit survived
         combat::onIncoming(combat::priority::Lowest - 100, [](combat::DamageInfo& d) {
-            if (sReflectWatch != 0 && uidOf(d.victim) == sReflectWatch) sReflectLethal = d.amount;
+            if (sReflectWatch != 0 && uidOf(d.victim) == sReflectWatch) sReflectLethal = std::max(sReflectLethal, d.amount);
             return combat::Verdict::Pass;
         });
         death::onLethal(100000, [](Actor& victim, combat::DamageInfo const&) { return sReflectWatch != 0 && uidOf(victim) == sReflectWatch; });
@@ -221,7 +222,7 @@ GF_REGISTER_SELFTEST("darktower.reflected_ghastguard_fireball", [](Context& ctx)
     if (!std::exchange(sHooked, true))
     {
         combat::onIncoming(combat::priority::Lowest - 100, [](combat::DamageInfo& d) {
-            if (sGuardWatch != 0 && uidOf(d.victim) == sGuardWatch) sGuardLethal = d.amount;
+            if (sGuardWatch != 0 && uidOf(d.victim) == sGuardWatch) sGuardLethal = std::max(sGuardLethal, d.amount);
             return combat::Verdict::Pass;
         });
         death::onLethal(100000, [](Actor& victim, combat::DamageInfo const&) { return sGuardWatch != 0 && uidOf(victim) == sGuardWatch; });

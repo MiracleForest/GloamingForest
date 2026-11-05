@@ -283,7 +283,8 @@ struct UrFireball {
     bool vanilla = false;
     int  age     = 0; ///< ticks in flight (ProjectileUtil#computeMargin)
     int  dim     = 0; ///< the dimension (an unloaded fireball's chunk is looked up there)
-    int  absent  = 0; ///< ticks its chunk has been unloaded
+    int  absent  = 0; ///< ticks its actor has been missing
+    int  missing = 0; ///< of those, ticks in a row with its chunk loaded
 };
 
 constexpr char kFireballsKey[] = "gf:darktower:fireballs";
@@ -470,7 +471,11 @@ void tickFireballs() {
             // gone with its chunk (it comes back when the chunk loads): kept; gone from a loaded chunk: removed
             auto* region = game::regionOf(it->second.dim);
             auto  at     = it->second.last;
-            if ((region && loaded(*region, BlockPos{int(std::floor(at.x)), int(std::floor(at.y)), int(std::floor(at.z))})) || ++it->second.absent > kMaxAbsentTicks)
+            // (a chunk that just loaded may add its actors a few ticks later: 20 ticks of grace)
+            ++it->second.absent;
+            bool chunkLoaded = region && loaded(*region, BlockPos{int(std::floor(at.x)), int(std::floor(at.y)), int(std::floor(at.z))});
+            it->second.missing = chunkLoaded ? it->second.missing + 1 : 0;
+            if (it->second.missing > 20 || it->second.absent > kMaxAbsentTicks)
                 all.erase(it);
             continue;
         }
@@ -478,7 +483,8 @@ void tickFireballs() {
             all.erase(it);
             continue;
         }
-        it->second.absent = 0;
+        it->second.absent  = 0;
+        it->second.missing = 0;
         urFireballTick(*fb, it->second);
         if (!fb->isAlive()) all.erase(id);
     }
