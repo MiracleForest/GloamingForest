@@ -53,6 +53,7 @@
 #include "feature/item/Item.h"
 #include "game/Blocks.h"
 #include "game/Items.h"
+#include "game/WorldDb.h"
 #include "mod/Log.h"
 
 namespace gf::feature::building {
@@ -261,6 +262,8 @@ bool dispenseOnHead(BlockSource& region, BlockPos const& dispenser, int facing, 
 } // namespace
 
 void installTrophies() {
+    // the redstone contract drops its watches with the world: forget them too
+    game::db::onWorldClosed([] { watches().clear(); });
     for (auto const& boss : trophyBosses()) {
         std::string floor = std::string(kNs) + boss + "_trophy";
         std::string wall  = std::string(kNs) + boss + "_wall_trophy";

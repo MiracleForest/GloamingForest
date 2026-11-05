@@ -246,7 +246,7 @@ def base_components(boss):
     }
 
 
-def floor_block(boss, geo_id, bone_names):
+def floor_block(boss, geo_id):
     perms = []
     for r in range(16):
         quarter, step = r // 4, r % 4
@@ -364,7 +364,7 @@ def outputs():
                     if "parent" in b:
                         b["parent"] = b["parent"].replace("_r0", "")
             files[os.path.join(OUT_GEO, base + ".geo.json")] = dump(geometry_doc(geo_id, bones, w, h))
-            block = wall_block(boss, geo_id) if wall else floor_block(boss, geo_id, names)
+            block = wall_block(boss, geo_id) if wall else floor_block(boss, geo_id)
             files[os.path.join(OUT_BLOCKS, base + ".json")] = dump(block)
             for path, _ in textures_of(base).values():
                 terrain[tex_key(path)] = {"textures": path}

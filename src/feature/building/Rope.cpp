@@ -30,6 +30,8 @@
 #include "feature/common/Interactions.h"
 #include "feature/families/BlockEvents.h"
 #include "feature/fx/Fx.h"
+#include "feature/tags/Tags.h"
+#include "game/WorldDb.h"
 #include "game/Blocks.h"
 #include "game/Items.h"
 #include "mod/I18n.h"
@@ -68,7 +70,8 @@ bool ropeCanConnectTo(BlockSource& region, BlockPos const& pos, int dir) {
     auto const* b = blockAt(region, pos);
     if (!b || b->isAir()) return false;
     auto id = idOf(*b);
-    if (id.find("leaves") != std::string::npos) return true;
+    // LeavesBlock: the leaves tag (TF's leaves), vanilla's leaves by id
+    if (tags::has(tags::Registry::Block, "minecraft:leaves", id) || (id.starts_with("minecraft:") && id.ends_with("leaves"))) return true;
     if (id == kRope) return ropeHasAxis(*b, axisOf(dir));
     return sturdyCenter(region, pos, opposite(dir));
 }
@@ -259,6 +262,8 @@ void installRope() {
     handlers().push_back(ia::onUseOn({.block = kRope, .item = kRope}, extendRope, ia::priority::High));
     handlers().push_back(ia::onPlace({.block = kRope}, placeRope));
     blockevents::onPlaced(kRope, [](BlockSource& region, BlockPos const& pos, Block const&, Actor*) { scheduleTick(region, pos); });
+    // a tick callback dropped with its world must not leave its position pending
+    game::db::onWorldClosed([] { pending().clear(); });
     blockevents::onNeighborChanged(kRope, [](BlockSource& region, BlockPos const& pos, BlockPos const&) { scheduleTick(region, pos); });
 }
 
