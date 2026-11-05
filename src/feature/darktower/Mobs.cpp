@@ -166,7 +166,10 @@ void install() {
         }
         return combat::Verdict::Pass;
     });
-    game::db::onWorldClosed([] { golemTimers().clear(); });
+    game::db::onWorldClosed([] {
+        golemTimers().clear();
+        borers().clear();
+    });
 }
 
 } // namespace gf::feature::darktower::mobs

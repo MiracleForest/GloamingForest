@@ -286,7 +286,26 @@ struct TypeFacts {
     bool unbreakable = false;
     bool ignored = false;
 };
+TypeFacts const& typeFactsById(Block const& b);
+/// The facts of a block state, cached by the state itself (the antibuilder reads 729 positions a tick).
 TypeFacts const& typeFacts(Block const& b) {
+    static std::unordered_map<Block const*, TypeFacts const*> byState;
+    auto it = byState.find(&b);
+    if (it != byState.end()) return *it->second;
+    auto const& f = typeFactsById(b);
+    byState.emplace(&b, &f);
+    return f;
+}
+/// Whether a state stops movement (cached by state: its collision box does not depend on the spot).
+bool blocksMotionCached(BlockSource& region, BlockPos const& p, Block const& b) {
+    static std::unordered_map<Block const*, bool> byState;
+    auto it = byState.find(&b);
+    if (it != byState.end()) return it->second;
+    bool m = blocksMotion(region, p);
+    byState.emplace(&b, m);
+    return m;
+}
+TypeFacts const& typeFactsById(Block const& b) {
     static std::unordered_map<std::string, TypeFacts> facts;
     auto id = game::blockId(b);
     auto it = facts.find(id);
@@ -355,7 +374,7 @@ void antibuilderDevice(BlockSource& region, BlockPos const& pos, Block const&) {
         dt::AntiBlock a;
         a.id           = f.id;
         a.air          = b.isAir();
-        a.blocksMotion = !a.air && blocksMotion(region, p);
+        a.blocksMotion = !a.air && blocksMotionCached(region, p, b);
         a.unbreakable  = f.unbreakable;
         a.ignored      = f.ignored;
         return a;
