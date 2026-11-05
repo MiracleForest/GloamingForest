@@ -3,24 +3,67 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.tf.skeleton.snow_guardian",
+        "identifier": "geometry.twilightforest.snow_guardian",
         "texture_width": 64,
-        "texture_height": 32,
-        "visible_bounds_width": 2,
-        "visible_bounds_height": 3,
-        "visible_bounds_offset": [0, 0.9, 0]
+        "texture_height": 64,
+        "visible_bounds_width": 1.5,
+        "visible_bounds_height": 2.5,
+        "visible_bounds_offset": [0, 1, 0]
       },
       "bones": [
         {
+          "name": "root",
+          "pivot": [0, 0, 0]
+        },
+        {
+          "name": "waist",
+          "parent": "root",
+          "pivot": [0, 12, 0]
+        },
+        {
           "name": "body",
-          "pivot": [0, 0, 0],
-          "cubes": [
-            {
-              "origin": [-5, 0, -5],
-              "size": [10, 29, 10],
-              "uv": [0, 0]
-            }
-          ]
+          "parent": "waist",
+          "pivot": [0, 24, 0]
+        },
+        {
+          "name": "head",
+          "parent": "body",
+          "pivot": [0, 24, 0]
+        },
+        {
+          "name": "hat",
+          "parent": "head",
+          "pivot": [0, 24, 0]
+        },
+        {
+          "name": "rightArm",
+          "parent": "body",
+          "pivot": [-5, 22, 0]
+        },
+        {
+          "name": "rightItem",
+          "parent": "rightArm",
+          "pivot": [-6, 15, 1]
+        },
+        {
+          "name": "leftArm",
+          "parent": "body",
+          "pivot": [5, 22, 0]
+        },
+        {
+          "name": "leftItem",
+          "parent": "leftArm",
+          "pivot": [6, 15, 1]
+        },
+        {
+          "name": "rightLeg",
+          "parent": "root",
+          "pivot": [-1.9, 12, 0]
+        },
+        {
+          "name": "leftLeg",
+          "parent": "root",
+          "pivot": [1.9, 12, 0]
         }
       ]
     }
