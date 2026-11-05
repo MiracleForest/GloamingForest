@@ -390,7 +390,7 @@ GF_REGISTER_SELFTEST("aurora.snow_queen_beam", [](Context& ctx) -> ll::coro::Cor
     int breath = 0;
     for (int i = 0; i < 40 && breath == 0; i++) {
         if (auto* q = mobById(uid)) q->setTarget(&ctx.player());
-        if (auto* pl = &ctx.player()) pl->setHealth(20); // stay alive through the test
+        ctx.player().heal(20); // stay alive through the test
         co_await ctx.ticks(10);
         for (auto const& [type, amount] : dealt().hits)
             if (type == "twilightforest:chilling_breath") {
@@ -454,7 +454,7 @@ GF_REGISTER_SELFTEST("aurora.snow_queen_shields", [](Context& ctx) -> ll::coro::
             if (!dealt().hits.empty()) hurt = true;
             if (ctx.player().getPosDelta().y > y0 + 0.2f) lifted = true;
         } else co_await ctx.ticks(1);
-        ctx.player().setHealth(20);
+        ctx.player().heal(20);
     }
     ctx.check(hurt, "a shield hurts the player who touches it");
     ctx.check(lifted, "and lifts them (motion y + 0.4)");
@@ -479,9 +479,9 @@ GF_REGISTER_SELFTEST("aurora.snow_queen_death", [](Context& ctx) -> ll::coro::Co
     bool chest = false;
     for (int i = 0; i < 30 && !chest; i++) {
         co_await ctx.ticks(10);
-        for (int dx = -12; dx <= 12 && !chest; dx++)
-            for (int dy = -2; dy <= 12 && !chest; dy++)
-                for (int dz = -12; dz <= 12 && !chest; dz++)
+        for (int dx = -6; dx <= 6 && !chest; dx++)
+            for (int dy = -2; dy <= 6 && !chest; dy++)
+                for (int dz = -6; dz <= 6 && !chest; dz++)
                     if (ctx.blockAt(at(pos, dx, dy, dz)) == "twilightforest:twilight_oak_chest") chest = true;
     }
     ctx.check(chest, "a twilight oak death chest");

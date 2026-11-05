@@ -13,6 +13,7 @@
 // With progress_glacier a player mines it in 10 ticks (getDestroyProgress 0.1 per tick).
 #include "feature/aurora/Structures.h"
 
+#include <algorithm>
 #include <array>
 #include <map>
 
@@ -60,9 +61,9 @@ std::array<Block const*, 16> const& variants() {
 
 /// Whether `block` is an aurora block that still has the default variant.
 bool isPlainAuroraBlock(Block const& block) {
-    auto const& v = variants();
-    if (&block == v[0]) return true;
-    return gf::game::blockId(block) == kAuroraBlock && gf::game::intState(block, kVariant).value_or(0) == 0;
+    // pointers only: the scan of a piece's box asks this of every block
+    static Block const* const java = &structure::blocks::java(kAuroraBlock);
+    return &block == variants()[0] || &block == java;
 }
 
 // ---- AuroraBrickBlock#getDestroyProgress ------------------------------------------------------------
@@ -94,10 +95,12 @@ void tickMining() {
         }
         // the player stopped (stopDestroyBlock resets the progress) or turned to another block:
         // Java only speeds up continuous mining
-        BlockPos const& at       = gameMode->mDestroyBlockPos;
+        // (only once the server showed it tracks this mining: a client-authoritative break leaves
+        // the game mode's destroy position and progress untouched, and then the timer decides)
+        BlockPos const  at       = gameMode->mDestroyBlockPos;
         float const     progress = gameMode->mDestroyProgress;
-        if (progress > 0.0F) m.progressed = true;
-        bool stopped = !(at == m.pos) || (m.progressed && progress <= 0.0F);
+        if (progress > 0.0F && at == m.pos) m.progressed = true;
+        bool stopped = m.progressed && (!(at == m.pos) || progress <= 0.0F);
         if (stopped && m.ticks > 0) {
             it = mining().erase(it);
             continue;
@@ -145,8 +148,14 @@ void installAuroraBlocks() {
     // a placed aurora block takes its position's variant (setPlacedBy; the model has no state in TF)
     gf::blockevents::onPlaced(kAuroraBlock, [](BlockSource& region, BlockPos const& pos, Block const& block, Actor*) {
         if (!isPlainAuroraBlock(block)) return;
-        auto const* b = auroraBlockAt(pos.x, pos.y, pos.z);
-        if (b && b != &block && b != variants()[0]) gf::game::setBlock(region, pos, *b);
+        // the next tick: a world edit inside the placement could be rolled back with it (R16)
+        int const dim = gf::game::globalPos(region, pos).dim;
+        gf::interactions::nextTick([dim, pos] {
+            auto* r = gf::game::regionOf(dim);
+            if (!r || !isPlainAuroraBlock(r->getBlock(pos))) return;
+            auto const* b = auroraBlockAt(pos.x, pos.y, pos.z);
+            if (b && b != variants()[0]) gf::game::setBlock(*r, pos, *b);
+        });
     });
     gf::interactions::onStartDestroy({.block = kAuroraBlock}, [](gf::interactions::DestroyContext const& ctx) {
         // survival only (creative breaks at once; adventure cannot break it)

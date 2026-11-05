@@ -157,7 +157,7 @@ float specialMultiplier(Actor&) {
     bool  hard = diff == SharedTypes::Legacy::Difficulty::Hard;
     // DifficultyInstance#calculateDifficulty(difficulty, dayTime, inhabitedTime = 0, moonBrightness)
     float f  = 0.75F;
-    float f1 = std::clamp((static_cast<float>(level->getTime()) + -72000.0F) / 1440000.0F, 0.0F, 1.0F) * 0.25F;
+    float f1 = std::clamp((static_cast<float>(level->getCurrentTick().tickID) + -72000.0F) / 1440000.0F, 0.0F, 1.0F) * 0.25F; // the game time
     f += f1;
     float f2      = 0.0F;
     // DimensionType.MOON_BRIGHTNESS_PER_PHASE[moonPhase(dayTime)]

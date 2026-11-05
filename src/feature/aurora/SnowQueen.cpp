@@ -227,8 +227,9 @@ public:
         if (now - mLastCanUseCheck < 20) return false;
         mLastCanUseCheck = now;
         auto* t          = mobs::target(*m);
-        if (!t || !t->isAlive()) return false;
-        return mobs::moveTo(*m, feet(*t), 0.0) || withinReach(*m, *t);
+        // (Java also asks for a path; the hovering queen's navigation always has one: no probe that
+        // would start moving her while the hover goals run)
+        return t && t->isAlive();
     }
     bool canContinueToUse() override {
         auto* m = mobOf(mUid);
