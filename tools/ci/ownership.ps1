@@ -6,9 +6,10 @@
   Compares the working tree (committed, staged, modified and untracked files) with the merge base
   of HEAD and -Base and resolves the owner
   of every changed path with the `path` rows of docs/spec/owners.tsv: the most specific glob wins
-  (most literal characters); at the same specificity the rule whose last literal component lies
-  deepest in the path wins (a unit folder nested in another unit's folder belongs to the inner
-  one); two different owners still tied are an error.
+  (most literal characters); two different owners at the same specificity are an error. Unit-folder
+  rules (`<prefix>/**/<folder>/**`) that match a path count as one group with the score of the best
+  of them, and inside the group the folder nearest the file wins: assets/pack/rp/entity/hydra/x.json
+  belongs to hydra, not to the unit named entity (tools/xmake/assemble.lua resolves the same way).
 
   A path is allowed for unit <u> when
     - its owner is <u>, or
@@ -98,37 +99,40 @@ foreach ($line in Get-Content $Owners) {
         # one rule per brace alternative, so a rule's specificity is that of the alternative matching
         foreach ($alt in Expand-Braces $c[1]) {
             $score = ($alt -replace '[\*\?]', '').Length + $(if ($alt -notmatch '[\*\?]') { 1000 } else { 0 })
-            # the last component without wildcards ranks rules tied in specificity (Get-PathOwner)
-            $lit = @($alt -split '/' | Where-Object { $_ -and $_ -notmatch '[\*\?]' }) | Select-Object -Last 1
-            $pathRules.Add([pscustomobject]@{ glob = $c[1]; owner = $c[2]; mode = $(if ($c.Count -gt 3) { $c[3] } else { 'manual' }); re = Get-GlobRegexes $alt; score = $score; lit = $lit })
+            # a unit-folder rule "<prefix>/**/<folder>/**" ranks by how deep its folder matches
+            $folder = if ($alt -match '^.+/\*\*/([^/*?]+)/\*\*$') { $Matches[1] } else { $null }
+            $pathRules.Add([pscustomobject]@{ glob = $c[1]; owner = $c[2]; mode = $(if ($c.Count -gt 3) { $c[3] } else { 'manual' }); re = Get-GlobRegexes $alt; score = $score; folder = $folder })
         }
         # the tool unit of a generated layer: the owner of "assets/gen/<layer>/**"
         if ($c[1] -match '^assets/gen/([^/{}*?]+)/\*\*$') { $genTools[$Matches[1]] = $c[2] }
     } elseif ($c[0] -eq 'stub') { $stubs[$c[1]] = $c[2] }
 }
 
-# The most specific rule wins (most literal characters); rules tied in specificity are ranked by where
-# their last literal component sits in the path, deepest first (a unit folder nested in another unit's
-# folder belongs to the inner one); rules still tied with different owners are ambiguous. Same rule as
-# owner_of in tools/xmake/assemble.lua.
-function Get-ComponentDepth([string[]]$comps, [string]$lit) {
-    if (-not $lit) { return 0 }
-    for ($i = $comps.Count - 1; $i -ge 0; $i--) { if ($comps[$i] -ceq $lit) { return $i + 1 } }
-    return 0
+function Get-FolderDepth([string]$path, [string]$folder) {
+    # index of the deepest directory of $path named $folder (the file name itself does not count)
+    $segs = $path.Split('/')
+    for ($i = $segs.Count - 2; $i -ge 0; $i--) { if ($segs[$i] -eq $folder) { return $i } }
+    return -1
 }
 
 function Get-PathOwner([string]$path) {
-    $best = $null; $bestDepth = 0; $tie = $null
-    $comps = @($path -split '/' | Where-Object { $_ })
-    foreach ($r in $pathRules) {
-        if (-not $r.re.IsMatch($path)) { continue }
-        $depth = Get-ComponentDepth $comps $r.lit
-        if (-not $best -or $r.score -gt $best.score -or ($r.score -eq $best.score -and $depth -gt $bestDepth)) { $best = $r; $bestDepth = $depth; $tie = $null }
-        elseif ($r.score -eq $best.score -and $depth -eq $bestDepth -and $r.owner -ne $best.owner) { $tie = $r }
+    $matching = @($pathRules | Where-Object { $_.re.IsMatch($path) })
+    if (-not $matching.Count) { return @{ owner = $null; why = 'no owner in docs/spec/owners.tsv' } }
+    # unit-folder rules compete as one group scored by their best member; the deepest folder wins it
+    $folders = @($matching | Where-Object { $_.folder })
+    $cands = [Collections.Generic.List[object]]::new()
+    foreach ($r in $matching) { if (-not $r.folder) { $cands.Add([pscustomobject]@{ rule = $r; score = $r.score; depth = 0 }) } }
+    if ($folders.Count) {
+        $groupScore = ($folders | Measure-Object -Property score -Maximum).Maximum
+        foreach ($r in $folders) { $cands.Add([pscustomobject]@{ rule = $r; score = $groupScore; depth = (Get-FolderDepth $path $r.folder) * 10000 + $r.score }) }
     }
-    if ($tie) { return @{ owner = $null; why = "ambiguous: $($best.glob) ($($best.owner)) vs $($tie.glob) ($($tie.owner))" } }
-    if (-not $best) { return @{ owner = $null; why = 'no owner in docs/spec/owners.tsv' } }
-    return @{ owner = $best.owner; why = $best.glob; mode = $best.mode }
+    $best = $null; $tie = $null
+    foreach ($c in $cands) {
+        if (-not $best -or $c.score -gt $best.score -or ($c.score -eq $best.score -and $c.depth -gt $best.depth)) { $best = $c; $tie = $null }
+        elseif ($c.score -eq $best.score -and $c.depth -eq $best.depth -and $c.rule.owner -ne $best.rule.owner) { $tie = $c }
+    }
+    if ($tie) { return @{ owner = $null; why = "ambiguous: $($best.rule.glob) ($($best.rule.owner)) vs $($tie.rule.glob) ($($tie.rule.owner))" } }
+    return @{ owner = $best.rule.owner; why = $best.rule.glob; mode = $best.rule.mode }
 }
 
 # -PackProbes: the probes of checks.packPathProbes (tools/xmake/merges.json) must resolve here to the

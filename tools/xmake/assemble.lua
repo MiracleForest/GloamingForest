@@ -583,26 +583,7 @@ local function check_blocks(bpdirs, cfg)
     return total
 end
 
--- the last path component of a glob (no braces) without wildcards ("assets/pack/rp/**/combat/**" ->
--- "combat"), nil when it has none
-local function last_literal_component(glob)
-    local lit
-    for _, c in ipairs(glob:split("/", {plain = true})) do
-        if c ~= "" and not c:find("[%*%?]") then lit = c end
-    end
-    return lit
-end
-
--- 1-based index of the last component of comps equal to lit (0 when lit is nil or absent)
-local function component_depth(comps, lit)
-    if not lit then return 0 end
-    for i = #comps, 1, -1 do
-        if comps[i] == lit then return i end
-    end
-    return 0
-end
-
--- owners.tsv: {kinds = {kind -> {id -> owner}}, paths = {{pats, owner, glob, score, lit}}}
+-- owners.tsv: {kinds = {kind -> {id -> owner}}, paths = {{pats, owner, glob, score}}}
 local function load_owners(projectdir, cfg)
     local file = path.join(projectdir, cfg.checks.owners)
     local owners = {kinds = {}, paths = {}}
@@ -619,8 +600,9 @@ local function load_owners(projectdir, cfg)
                 -- an exact path beats every glob
                 for _, alt in ipairs(expand_braces(id)) do
                     local score = glob_score(alt) + (alt:find("[%*%?]") and 0 or 1000)
-                    table.insert(owners.paths, {pats = compile_glob(alt), owner = owner, glob = id, score = score,
-                        lit = last_literal_component(alt)})
+                    -- a unit-folder rule "<prefix>/**/<folder>/**" ranks by how deep its folder matches
+                    local folder = alt:match("^.+/%*%*/([^/%*%?]+)/%*%*$")
+                    table.insert(owners.paths, {pats = compile_glob(alt), owner = owner, glob = id, score = score, folder = folder})
                 end
             elseif kind and kind ~= "kind" then
                 owners.kinds[kind] = owners.kinds[kind] or {}
@@ -631,23 +613,34 @@ local function load_owners(projectdir, cfg)
     return owners
 end
 
--- The most specific path rule wins (most literal characters). Rules tied in specificity are ranked
--- by where their last literal component sits in the path, deepest first: a unit folder nested in
--- another unit's folder (assets/pack/rp/textures/biomes/combat/x.png) belongs to the inner one.
--- Rules still tied with different owners are ambiguous. tools/ci/ownership.ps1 (Get-PathOwner)
--- applies the same rule.
+-- index of the deepest directory of relpath named folder (the file name itself does not count)
+local function folder_depth(relpath, folder)
+    local segs = relpath:split("/", {plain = true})
+    for i = #segs - 1, 1, -1 do
+        if segs[i] == folder then return i end
+    end
+    return -1
+end
+
+-- The most specific rule wins (most literal characters). Unit-folder rules compete as one group scored
+-- by their best member, and inside the group the folder nearest the file wins: rp/entity/hydra/x.json
+-- belongs to hydra, not to the unit named entity (tools/ci/ownership.ps1 resolves the same way).
 local function owner_of(owners, relpath)
-    local best, bestkey, tie = nil, nil, nil
-    local comps
+    local cands, groupscore = {}, -1
     for _, p in ipairs(owners.paths) do
         if glob_match(p.pats, relpath) then
-            comps = comps or relpath:split("/", {plain = true})
-            local depth = component_depth(comps, p.lit)
-            if not best or p.score > bestkey[1] or (p.score == bestkey[1] and depth > bestkey[2]) then
-                best, bestkey, tie = p, {p.score, depth}, nil
-            elseif p.score == bestkey[1] and depth == bestkey[2] and p.owner ~= best.owner then
-                tie = p
-            end
+            table.insert(cands, p)
+            if p.folder and p.score > groupscore then groupscore = p.score end
+        end
+    end
+    local best, bestscore, bestdepth, tie = nil, -1, -1, nil
+    for _, p in ipairs(cands) do
+        local score, depth = p.score, 0
+        if p.folder then score, depth = groupscore, folder_depth(relpath, p.folder) * 10000 + p.score end
+        if score > bestscore or (score == bestscore and depth > bestdepth) then
+            best, bestscore, bestdepth, tie = p, score, depth, nil
+        elseif score == bestscore and depth == bestdepth and p.owner ~= best.owner then
+            tie = p
         end
     end
     if tie then return nil, string.format("ambiguous: %s (%s) and %s (%s)", best.glob, best.owner, tie.glob, tie.owner) end
@@ -1117,6 +1110,22 @@ end
 -- -PackProbes holds its own resolver to the same expectations). It proves
 -- a granted directory is neither dropped by the assembly (fragment directories, "*.d", are merged,
 -- never copied) nor unowned, before the unit's first file lands there. Returns the probe count.
+-- A valid file of the probe's type, so a later check of the pack's PNG or JSON files does not fail a
+-- probe for an unrelated reason: a 1x1 transparent PNG, a JSON object naming the probe, or plain text.
+local function probe_payload(file)
+    local ext = path.extension(file):lower()
+    if ext == ".png" then
+        return string.char(0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D, 0x49, 0x48,
+            0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15,
+            0xC4, 0x89, 0x00, 0x00, 0x00, 0x0D, 0x49, 0x44, 0x41, 0x54, 0x78, 0xDA, 0x63, 0x60, 0x60, 0x60, 0x60,
+            0x00, 0x00, 0x00, 0x05, 0x00, 0x01, 0x7A, 0xA8, 0x57, 0x50, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4E,
+            0x44, 0xAE, 0x42, 0x60, 0x82)
+    elseif ext == ".json" then
+        return string.format('{"gf_pack_probe": "%s"}\n', (file:gsub('[\\"]', "\\%0")))
+    end
+    return "gf_pack_probe " .. file .. "\n"
+end
+
 local function probe_one(projectdir, cfg, owners, i, probe, scratch)
     local pack
     if type(probe) ~= "table" or type(probe.file) ~= "string" or type(probe.owner) ~= "string"
@@ -1143,16 +1152,16 @@ local function probe_one(projectdir, cfg, owners, i, probe, scratch)
         local manifest = path.join(projectdir, pack.manual, "manifest.json")
         os.mkdir(path.join(proj, pack.manual))
         os.cp(manifest, path.join(proj, pack.manual, "manifest.json"))
-        local text = string.format('{"gf_pack_probe": "%s"}\n', probe.file)
+        local text = probe_payload(probe.file)
         os.mkdir(path.directory(path.join(proj, probe.file)))
-        io.writefile(path.join(proj, probe.file), text)
+        io.writefile(path.join(proj, probe.file), text, {encoding = "binary"})
         -- test = true: no licence files (they are copied from the real project, not the scratch one)
         local scratch_pack = {name = pack.name, dir = pack.dir, root = pack.root, manual = pack.manual, test = true}
         local dst = build_pack(proj, cfg, scratch_pack, path.join(proj, "out"), {0, 0, 0}, false)
         local got = path.join(dst, out)
         if not os.isfile(got) then
             fail("packPathProbes: %s did not reach %s/%s in the assembled pack", probe.file, pack.name, out)
-        elseif io.readfile(got) ~= text then
+        elseif io.readfile(got, {encoding = "binary"}) ~= text then
             fail("packPathProbes: %s reached %s/%s with other content", probe.file, pack.name, out)
         end
         local owner, why = owner_of(owners, probe.file)

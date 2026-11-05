@@ -128,15 +128,17 @@ Plain (non-fragment) pack files live in a per-unit folder below their Bedrock pa
 `assets/pack/{bp,rp}/<pack dir>/<n>/**` is copied to `<pack dir>/<n>/**` of the assembled pack (for example
 `assets/pack/rp/particles/landmark/protection.json` -> `particles/landmark/protection.json`). Every W1 unit owns
 `assets/pack/{bp,rp}/**/<n>/**`; of the W0 units F4 (`dimension`), F6 (`landmark`), F8 (`entity`, `boss`), F10
-(`combat`) and F12 (`ui`). F10 also owns `assets/pack/rp/particles/fx/**` (only there: a bare `fx` folder name would
-tie with F12's `ui` in specificity) for its own particle effects (the `fx` contract: Java's portal colour and coloured
+(`combat`) and F12 (`ui`). F10 also owns `assets/pack/rp/particles/fx/**` (only there: a bare `fx` unit folder would
+take `fx` folders inside other units' folders, such as F12's `textures/ui/fx`) for its own particle effects (the `fx`
+contract: Java's portal colour and coloured
 `DustParticleOptions` motion, which no vanilla Bedrock effect reproduces): `assets/pack/rp/particles/fx/<name>.json`
 -> `particles/fx/<name>.json`. Folders ending in `.d` are fragment directories: they are merged by a
 `tools/xmake/merges.json` entry and never copied, so a `.d` folder without a merge entry ships nothing. A unit
-folder nested in another unit's folder belongs to the inner (deepest) one: the per-unit rules tie in specificity
-when the names have the same length (`biomes`, `combat`), and the tie goes to the rule whose last literal component
-lies deepest in the path (`assets/pack/rp/textures/biomes/combat/x.png` is F10's); rules still tied with different
-owners fail as ambiguous. A particle effect's `particle_effect.description.identifier`, like a block's, item's or
+folder nested in another unit's folder belongs to the inner one: the unit-folder rules (`<prefix>/**/<folder>/**`)
+that match a path compete as one group with the score of their best member, and inside the group the folder nearest
+the file wins (`assets/pack/rp/textures/biomes/combat/x.png` is F10's, `assets/pack/rp/entity/hydra/x.json` is
+U24's). A more specific rule that is not a unit-folder rule, such as `assets/pack/rp/particles/fx/**`, still beats
+the group; other rules tied in specificity with different owners fail as ambiguous. A particle effect's `particle_effect.description.identifier`, like a block's, item's or
 entity's identifier, may appear once per layer; a manual file with a generated file's identifier replaces it. The
 assemble check `checks.packPathProbes` (merges.json) builds a probe file in each granted folder (F10's
 `particles/fx` and `particles/combat`, one folder of F6, F8 and a W1 unit, and two nested unit folders) into a
