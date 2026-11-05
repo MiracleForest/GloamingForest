@@ -239,20 +239,21 @@ void lookAtPitch(Mob& m, Actor& t, float maxStep) {
 }
 
 /// UrGhastFireball: a vanilla large fireball (Bedrock's minecraft:fireball) with power 1.
-void fireball(Mob& m, Vec3 const& at, Vec3 const& dir) {
+Actor* fireball(Mob& m, Vec3 const& at, Vec3 const& dir) {
     auto* l = level();
-    if (!l) return;
+    if (!l) return nullptr;
     double len = std::sqrt(dir.x * dir.x + dir.y * dir.y + dir.z * dir.z);
-    if (len < 1e-9) return;
+    if (len < 1e-9) return nullptr;
     // UrGhastFireball#shoot: normalise, gaussian 0.0075 * dist... applied by the projectile's own
     // uncertainty below
     auto owned = l->getActorFactory().createSpawnedActor(ActorDefinitionIdentifier("minecraft:fireball"), &m, at, Vec2{0.0f, 0.0f});
-    if (!owned) return;
+    if (!owned) return nullptr;
     auto* fb = l->addEntity(m.getDimensionBlockSource(), std::move(owned));
-    if (!fb) return;
+    if (!fb) return nullptr;
     if (auto pc = fb->getEntityContext().tryGetComponent<ProjectileComponent>())
         pc->shoot(*fb, Vec3{float(dir.x / len), float(dir.y / len), float(dir.z / len)}, 1.0f, 0.0f, Vec3{0, 0, 0}, nullptr);
     ge::data(*fb, "darktower:urghast_fireball") = uidOf(m);
+    return fb;
 }
 
 /// A vanilla large fireball (CarminiteGhastguard / GhastguardAttackGoal: LargeFireball, power 1).
@@ -706,6 +707,8 @@ void ghastTick(Actor& self) {
 } // namespace
 
 bool isUrGhast(Actor const& a) { return typeOf(a) == id::UrGhast; }
+
+Actor* shootUrGhastFireball(Mob& owner, Vec3 const& at, Vec3 const& dir) { return fireball(owner, at, dir); }
 
 bool isTrappable(Actor const& a) {
     auto t = typeOf(a);

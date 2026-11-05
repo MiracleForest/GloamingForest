@@ -9,6 +9,7 @@
 
 class Actor;
 class Mob;
+class Vec3;
 
 namespace gf::feature::darktower::ghasts {
 
@@ -31,6 +32,9 @@ void spawnGhastsAtTraps(Mob& ghast);
 
 /// CarminiteGhastling#makeBossMinion (wander 0.005, max health 6).
 void makeBossMinion(Mob& ghastling);
+
+/// An Ur-Ghast fireball from owner at t along dir (selftests; UrGhastAttackGoal#spitFireball's shot).
+Actor* shootUrGhastFireball(Mob& owner, Vec3 const& at, Vec3 const& dir);
 
 /// Registers the ghasts' behaviours (module install).
 void install();
