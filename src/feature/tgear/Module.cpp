@@ -207,14 +207,14 @@ void applySnowFlags(Actor& wearer) {
     }
     int now = had;
     if (snow && !ec.hasComponent<CanStandOnPowderSnowComponent>()) {
-        ec.getOrAddComponent<CanStandOnPowderSnowComponent>();
+        ec.getRegistry().emplace_or_replace<CanStandOnPowderSnowComponent>(ec.mEntity);
         now |= 1;
     } else if (!snow && (had & 1)) {
         ec.removeComponent<CanStandOnPowderSnowComponent>();
         now &= ~1;
     }
     if (freeze && !ec.hasComponent<FreezingImmuneComponent>()) {
-        ec.getOrAddComponent<FreezingImmuneComponent>();
+        ec.getRegistry().emplace_or_replace<FreezingImmuneComponent>(ec.mEntity);
         now |= 2;
     } else if (!freeze && (had & 2)) {
         ec.removeComponent<FreezingImmuneComponent>();
@@ -800,6 +800,12 @@ public:
             net::onCompanionJoined([](Player& p) { sendVision(p); });
             blockevents::onNeighborChanged(ids::kRedThread, [](BlockSource& region, BlockPos const& pos, BlockPos const&) { updateRedThread(region, pos); });
             registerInteractions();
+            // BDS enables mods after the world is ready (onWorldReady has fired already): register for
+            // this world now; the client's worlds come later through onWorldReady
+            if (game::db::available()) {
+                registerRecipes();
+                loadVision();
+            }
         }
         mTick  = ll::event::EventBus::getInstance().emplaceListener<ll::event::ServerLevelTickEvent>([](auto&) { onLevelTick(); });
         mLeave = ll::event::EventBus::getInstance().emplaceListener<ll::event::PlayerDisconnectEvent>([](ll::event::PlayerDisconnectEvent& ev) {

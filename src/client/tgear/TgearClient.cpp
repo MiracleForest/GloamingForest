@@ -59,7 +59,7 @@
 #include "mc/world/actor/player/SerializedSkinRef.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
-#include "mc/world/level/BlockRenderLayer.h"
+#include "mc/world/level/block/BlockRenderLayer.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/block/Block.h"

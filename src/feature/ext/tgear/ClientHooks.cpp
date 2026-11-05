@@ -35,7 +35,7 @@ bool askClick(ContainerScreenController& c, std::string const& collection, int i
     try {
         auto const& cursorSlot = ContainerScreenController::mCursorSlotData();
         auto const& slot       = c._getItemStack(collection, index);
-        auto const& cursor     = c._getItemStack(cursorSlot.mCollectionName.get(), cursorSlot.mCollectionIndex.get());
+        auto const& cursor     = c._getItemStack(cursorSlot.mCollectionName.get(), static_cast<int>(cursorSlot.mCollectionIndex));
         return fn(collection, index, slot, cursor);
     } catch (...) {
         return false;

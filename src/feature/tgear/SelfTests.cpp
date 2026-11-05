@@ -462,7 +462,7 @@ GF_REGISTER_SELFTEST("tgear.red_thread", [](Context& ctx) -> ll::coro::CoroTask<
         // placed by a player looking down: MultifaceBlock#getStateForPlacement takes the first looking
         // direction it can attach to (down: the floor), not the clicked face
         auto& p = ctx.player();
-        p.setRotationWrapped(Vec2{89.f, 0.f});
+        const_cast<Vec2&>(p.getRotation()) = Vec2{89.f, 0.f};
         auto const&                    block = region->getBlock(bp);
         gf::interactions::PlaceContext pc{p, item, block, id, pos, gf::core::GlobalPos{pos.dim, pos.x, pos.y, pos.z - 1}, 3, {0.5, 0.5, 1.0}, false};
         gf::interactions::dispatchPlace(pc);
@@ -476,7 +476,7 @@ GF_REGISTER_SELFTEST("tgear.red_thread", [](Context& ctx) -> ll::coro::CoroTask<
     {
         // more thread used on it, looking north: the wall face is added, one thread used
         auto& p = ctx.player();
-        p.setRotationWrapped(Vec2{0.f, 180.f});
+        const_cast<Vec2&>(p.getRotation()) = Vec2{0.f, 180.f};
         p.setSelectedItem(make(tg::ids::kRedThread, 5));
         auto const&                    block = region->getBlock(bp);
         ItemStack const&               held  = p.getSelectedItem();
