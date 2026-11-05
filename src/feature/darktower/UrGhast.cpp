@@ -355,8 +355,12 @@ void urFireballTick(Actor& fb, UrFireball& state) {
         Vec3   q{float(p.x + v.x * t), float(p.y + v.y * t), float(p.z + v.z * t)};
         AABB   box{Vec3{q.x - hw, q.y, q.z - hw}, Vec3{q.x + hw, q.y + hw * 2.0f, q.z + hw}};
         Actor* hit = nullptr;
-        for (auto* a : region.getEntities(box, 0.0f)) {
-            if (!a || a == &fb || !a->isAlive() || a->isSpectator() || gf::projectile::ext::isProjectile(*a)) continue;
+        // the chunks of the entities near (getEntities finds an entity by the chunk of its position:
+        // the 14-wide Ur-Ghast reaches 7 blocks past its chunk), then the boxes themselves
+        AABB near{Vec3{box.min.x - 8, box.min.y - 18, box.min.z - 8}, Vec3{box.max.x + 8, box.max.y, box.max.z + 8}};
+        for (auto* a : region.getEntities(near, 0.0f)) {
+            if (!a || !boxesIntersect(box, a->getAABB())) continue;
+            if (a == &fb || !a->isAlive() || a->isSpectator() || gf::projectile::ext::isProjectile(*a)) continue;
             // Projectile#canHitEntity: the owner only after the fireball left it
             if (a == owner && !state.leftOwner) continue;
             // AbstractHurtingProjectile#canHitEntity: never an entity with noPhysics (the Ur-Ghast
@@ -496,6 +500,14 @@ void doTantrumDamageEffects(Mob& m) {
             push(*a, Vec3{0.0f, 1.0f, 0.0f});
         }
     }
+}
+
+/// Ghast#isReflectedFireball: the direct entity a large fireball, the causing entity a player. (F10
+/// reports the two of an ActorDamageByChildActorSource the other way round today: direct = the player,
+/// attacker = the fireball; both orders are accepted.)
+bool reflectedFireball(combat::DamageInfo const& d) {
+    auto is = [](Actor* a, bool player) { return a && (player ? a->isPlayer() : typeOf(*a) == "minecraft:fireball"); };
+    return (is(d.direct, false) && is(d.attacker, true)) || (is(d.attacker, false) && is(d.direct, true));
 }
 
 void syncTantrum(Actor& self, UrState& s) {
@@ -958,7 +970,7 @@ void install() {
     // isInvulnerableTo: in-wall and fire damage, unless a player-reflected large fireball
     combat::onIncoming(combat::priority::High, [](combat::DamageInfo& d) {
         if (!isUrGhast(d.victim)) return combat::Verdict::Pass;
-        bool reflected = d.direct && typeOf(*d.direct) == "minecraft:fireball" && d.attacker && d.attacker->isPlayer();
+        bool reflected = reflectedFireball(d);
         if (reflected) return combat::Verdict::Pass;
         static const std::vector<std::string> kFire = {"minecraft:in_fire", "minecraft:on_fire", "minecraft:lava", "minecraft:hot_floor", "minecraft:fireball",
                                                         "minecraft:unattributed_fireball", "minecraft:campfire"};
@@ -990,11 +1002,13 @@ void install() {
     combat::onIncoming(combat::priority::High, [](combat::DamageInfo& d) {
         auto t = typeOf(d.victim);
         if (t != id::Ghastguard && t != id::Ghastling) return combat::Verdict::Pass;
-        if (!(d.direct && typeOf(*d.direct) == "minecraft:fireball" && d.attacker && d.attacker->isPlayer())) return combat::Verdict::Pass;
+        if (!reflectedFireball(d)) return combat::Verdict::Pass;
         // Bedrock's minecraft:fire_immune refuses a fire cause outright: the reflected hit goes in again
         // as a projectile hit (Java: Ghast#isInvulnerableTo lets a reflected fireball through)
         if (d.type == "minecraft:fireball" || d.type == "minecraft:unattributed_fireball") {
-            combat::hurt(d.victim, 1000.0f, "minecraft:mob_projectile", d.attacker, d.direct);
+            Actor* player   = d.attacker && d.attacker->isPlayer() ? d.attacker : d.direct;
+            Actor* fireball = player == d.attacker ? d.direct : d.attacker;
+            combat::hurt(d.victim, 1000.0f, "minecraft:mob_projectile", player, fireball);
             return combat::Verdict::Cancel;
         }
         d.amount = 1000.0f;
