@@ -45,9 +45,9 @@
       },
       "minecraft:particle_appearance_tinting": {
         "color": [
-          "variable.velocity.x ?? 1",
-          "variable.velocity.y ?? 1",
-          "variable.velocity.z ?? 1",
+          "variable.velocity.x",
+          "variable.velocity.y",
+          "variable.velocity.z",
           "math.min(variable.particle_age / variable.particle_lifetime * 1.35, 1)"
         ]
       }

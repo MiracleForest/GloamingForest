@@ -20,16 +20,22 @@
 // generate through a trunk, a leaves and a decoration (root) setter; the dark canopy tree and the
 // snow tree are TreeFeature copies that delegate the tree itself to the minecraft:tree interpreter
 // after their own checks. Leaf distances are not written: the families kit computes them on the
-// first random tick (distance 0 = not computed yet), so TreeFeature.updateLeaves is not needed.
+// first random tick (distance 0 = not computed yet); TF's own tree features run TreeFeature.updateLeaves.
 #include "feature/trees/Trees.h"
 
 #include <algorithm>
 #include <cmath>
+#include <optional>
+#include <string>
+#include <vector>
 
 #include "mc/world/level/block/Block.h"
 
+#include "core/jrand/JavaOrder.h"
+#include "core/trees/JavaHashSet.h"
 #include "feature/ext/worldgen/FeatureKit.h"
 #include "feature/trees/TreeUtil.h"
+#include "game/Blocks.h"
 #include "mod/Log.h"
 
 #pragma clang fp contract(off)
@@ -88,6 +94,91 @@ struct Gen {
 };
 using GenerateFn = bool (*)(Gen& g);
 
+/// The Java order of a position set handed to decorators: java.util.HashSet iteration (by
+/// Vec3i#hashCode), then by y (stable), as F5's vanilla tree feature orders it.
+void javaOrder(std::vector<BlockPos>& v) {
+    std::vector<int> hashes;
+    hashes.reserve(v.size());
+    for (auto const& p : v) hashes.push_back(core::jrand::blockPosHash(p.x, p.y, p.z));
+    std::vector<BlockPos> out;
+    out.reserve(v.size());
+    for (auto i : core::jrand::hashSetOrder(hashes)) out.push_back(v[i]);
+    std::stable_sort(out.begin(), out.end(), [](BlockPos const& a, BlockPos const& b) { return a.y < b.y; });
+    v = std::move(out);
+}
+
+/// LeavesBlock.getOptionalDistanceAt: 0 for #minecraft:logs, the distance of a block with one.
+std::optional<int> optionalDistanceAt(Block const& b) {
+    if (kit::hasTag(b, "minecraft:logs")) return 0;
+    if (auto d = game::intState(b, "twilightforest:distance")) return *d == 0 ? 7 : *d; // 0: not computed yet (F11), Java's 7
+    if (kit::isLeaves(b)) return 7; // Bedrock's own leaves keep no distance: none known
+    return std::nullopt;
+}
+
+/// TreeFeature.updateLeaves (Minecraft 1.21.1) as TFTreeFeature#place calls it: `sources` start at
+/// distance 0 (TF hands its leaf set here), the trunk is marked done first (and the decorators'
+/// set, empty in TF's data); leaves reached from them get distance k (setBlockKnownShape) while
+/// k < 7. The seven work sets are HashSets: their iteration order (core::trees::JavaHashSet)
+/// decides the order of the writes. StructureTemplate.updateShapeAtEdge, which follows in Java,
+/// recomputes the shapes of the blocks around the box's filled cells: Bedrock connects block shapes
+/// itself, and F11 recomputes leaf distances on neighbour changes.
+void updateLeaves(Region& region, std::vector<BlockPos> const& sources, std::vector<BlockPos> const& trunk, std::vector<BlockPos> const& roots) {
+    using core::trees::JavaHashSet;
+    // BoundingBox.encapsulatingPositions(set, set1, set2, set3)
+    bool any  = false;
+    int  minX = 0, minY = 0, minZ = 0, maxX = 0, maxY = 0, maxZ = 0;
+    for (auto const* list : {&trunk, &sources, &roots})
+        for (auto const& p : *list) {
+            if (!any) {
+                minX = maxX = p.x;
+                minY = maxY = p.y;
+                minZ = maxZ = p.z;
+                any  = true;
+            }
+            minX = std::min(minX, p.x), minY = std::min(minY, p.y), minZ = std::min(minZ, p.z);
+            maxX = std::max(maxX, p.x), maxY = std::max(maxY, p.y), maxZ = std::max(maxZ, p.z);
+        }
+    if (!any) return;
+    int const sy = maxY - minY + 1, sz = maxZ - minZ + 1;
+    auto      inside = [&](BlockPos const& p) { return p.x >= minX && p.x <= maxX && p.y >= minY && p.y <= maxY && p.z >= minZ && p.z <= maxZ; };
+    auto      cell   = [&](BlockPos const& p) { return (static_cast<std::size_t>(p.x - minX) * sy + static_cast<std::size_t>(p.y - minY)) * sz + static_cast<std::size_t>(p.z - minZ); };
+    std::vector<bool> full(static_cast<std::size_t>(maxX - minX + 1) * sy * sz, false);
+    for (auto const& p : trunk)
+        if (inside(p)) full[cell(p)] = true;
+    std::vector<JavaHashSet> lists(7);
+    // list.get(0).addAll(rootPositions): in the source HashSet's order
+    JavaHashSet sourceSet;
+    for (auto const& p : sources) sourceSet.add({p.x, p.y, p.z});
+    for (auto const& p : sourceSet.elements()) lists[0].add(p);
+    int k1 = 0;
+    while (true) {
+        while (k1 >= 7 || !lists[static_cast<std::size_t>(k1)].empty()) {
+            if (k1 >= 7) return;
+            auto     taken = *lists[static_cast<std::size_t>(k1)].pollFirst();
+            BlockPos p{taken.x, taken.y, taken.z};
+            if (!inside(p)) continue;
+            if (k1 != 0) {
+                Block const& state = region.getBlock(p);
+                Block const& with  = kit::withProperty(state, "distance", std::to_string(k1));
+                if (&with != &state) region.setBlock(p, with, 19);
+            }
+            full[cell(p)] = true;
+            for (Dir d : kAll) {
+                BlockPos n = rel(p, d);
+                if (!inside(n) || full[cell(n)]) continue;
+                auto dist = optionalDistanceAt(region.getBlock(n));
+                if (!dist) continue;
+                int j1 = std::min(*dist, k1 + 1);
+                if (j1 < 7) {
+                    lists[static_cast<std::size_t>(j1)].add({n.x, n.y, n.z});
+                    k1 = std::min(k1, j1);
+                }
+            }
+        }
+        ++k1;
+    }
+}
+
 /// TFTreeFeature#place: the setters, generate, then the config's decorators.
 bool tfTree(FeatureContext const& c, GenerateFn generate) {
     PosSet trunkSet, leafSet, rootSet;
@@ -115,14 +206,17 @@ bool tfTree(FeatureContext const& c, GenerateFn generate) {
     if (leafSet.list.empty() && rootSet.list.empty()) return false;
     if (g.config.decorators.is_array() && !g.config.decorators.empty()) {
         // TreeDecorator.Context(level, decorationSetter, random, set1, set2, set): TF hands the
-        // leaves as "logs", the roots as "leaves" and the trunk as "roots" (sorted by y)
+        // leaves as "logs", the roots as "leaves" and the trunk as "roots", each a HashSet sorted
+        // by y (the HashSet's iteration order first, then a stable sort)
         gf::features::TreeContext tree{region, c.random, c.config, leafSet.list, rootSet.list, trunkSet.list};
-        auto byY = [](BlockPos const& a, BlockPos const& b) { return a.y < b.y; };
-        std::stable_sort(tree.logs.begin(), tree.logs.end(), byY);
-        std::stable_sort(tree.leaves.begin(), tree.leaves.end(), byY);
-        std::stable_sort(tree.roots.begin(), tree.roots.end(), byY);
+        javaOrder(tree.logs);
+        javaOrder(tree.leaves);
+        javaOrder(tree.roots);
         for (auto const& d : g.config.decorators) runDecorator(tree, d);
     }
+    // TreeFeature.updateLeaves(level, box, set1, set3, set): TF passes its leaves as the distance
+    // sources and the trunk (and the decorators' blocks, none in TF's data) as filled
+    updateLeaves(region, leafSet.list, trunkSet.list, rootSet.list);
     return true;
 }
 
@@ -516,6 +610,33 @@ bool placeVanillaTree(FeatureContext const& c, BlockPos const& origin) {
     return gf::features::placeJson(feature, c.region, origin, c.random);
 }
 
+/// A random source that first answers nextInt(bound) with draws already taken from `inner`, then
+/// forwards everything to it (the tree interpreter re-draws the trunk height the dark canopy tree
+/// drew for its own free height check).
+class ReplayRandom final : public RandomSource {
+public:
+    ReplayRandom(RandomSource& inner, std::vector<int> ints) : mInner(inner), mInts(std::move(ints)) {}
+    void         setSeed(std::int64_t seed) override { mInner.setSeed(seed); }
+    int          nextInt() override { return mInner.nextInt(); }
+    int          nextInt(int bound) override {
+        if (mNext < mInts.size()) return mInts[mNext++];
+        return mInner.nextInt(bound);
+    }
+    std::int64_t nextLong() override { return mInner.nextLong(); }
+    bool         nextBoolean() override { return mInner.nextBoolean(); }
+    float        nextFloat() override { return mInner.nextFloat(); }
+    double       nextDouble() override { return mInner.nextDouble(); }
+    double       nextGaussian() override { return mInner.nextGaussian(); }
+    void         consumeCount(int count) override { mInner.consumeCount(count); }
+    std::unique_ptr<RandomSource>                         fork() override { return mInner.fork(); }
+    std::unique_ptr<core::jrand::PositionalRandomFactory> forkPositional() override { return mInner.forkPositional(); }
+
+private:
+    RandomSource&    mInner;
+    std::vector<int> mInts;
+    std::size_t      mNext = 0;
+};
+
 bool darkCanopy(FeatureContext const& c) {
     BlockPos pos   = c.origin;
     bool     found = false;
@@ -535,7 +656,32 @@ bool darkCanopy(FeatureContext const& c) {
     // not next to another tree
     for (Dir d : kHorizontal)
         if (kit::hasTag(c.region.getBlock(rel(pos, d)), "minecraft:logs")) return false;
-    return placeVanillaTree(c, pos);
+    // DarkCanopyTreeFeature#doPlace is TreeFeature#doPlace except for getMaxFreeTreeHeight, which
+    // tests DarkCanopyTreeFeature.validTreePos (air or #replaceable_by_trees: a log is not free)
+    // and returns i - 2 at the first position when ignore_vines is false. The trunk height is
+    // drawn first (TrunkPlacer#getTreeHeight: two nextInt calls; the dark trees' foliage height and
+    // radius are constants and they have no root placer), so the free height is checked here and
+    // the tree interpreter replays the two draws.
+    Json const& config = c.config;
+    Json const  tp     = config.value("trunk_placer", Json::object());
+    int const   a      = c.random.nextInt(tp.value("height_rand_a", 0) + 1);
+    int const   b      = c.random.nextInt(tp.value("height_rand_b", 0) + 1);
+    int const   i      = tp.value("base_height", 0) + a + b;
+    if (pos.y < c.region.minY() + 1 || pos.y + i + 1 > c.region.maxY()) return false;
+    bool const  ignoreVines = config.value("ignore_vines", false);
+    Json const  size        = config.value("minimum_size", Json::object());
+    int         k1          = i;
+    for (int y = 0; y <= i + 1 && k1 == i; ++y) {
+        int j = (y < size.value("limit", 1)) ? size.value("lower_size", 0) : size.value("upper_size", 1);
+        for (int dx = -j; dx <= j && k1 == i; ++dx)
+            for (int dz = -j; dz <= j && k1 == i; ++dz)
+                if (!kit::validTreePos(c.region, at(pos, dx, y, dz)) || !ignoreVines) k1 = y - 2;
+    }
+    bool const hasClip = size.contains("min_clipped_height");
+    if (!(k1 >= i || (hasClip && k1 >= size["min_clipped_height"].get<int>()))) return false;
+    ReplayRandom replay(c.random, {a, b});
+    Json         feature{{"type", "minecraft:tree"}, {"config", config}};
+    return gf::features::placeJson(feature, c.region, pos, replay);
 }
 
 // ---- SnowUnderTreeFeature ---------------------------------------------------------------------------------

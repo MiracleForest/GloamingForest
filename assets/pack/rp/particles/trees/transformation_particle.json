@@ -21,9 +21,9 @@
       },
       "minecraft:particle_motion_parametric": {
         "relative_position": [
-          "(variable.velocity.x ?? 0) * (1 - variable.particle_age / variable.particle_lifetime)",
-          "(variable.velocity.y ?? 0) * (1 - variable.particle_age / variable.particle_lifetime) - math.pow(variable.particle_age / variable.particle_lifetime, 4) * 1.2",
-          "(variable.velocity.z ?? 0) * (1 - variable.particle_age / variable.particle_lifetime)"
+          "variable.velocity.x * (1 - variable.particle_age / variable.particle_lifetime)",
+          "variable.velocity.y * (1 - variable.particle_age / variable.particle_lifetime) - math.pow(variable.particle_age / variable.particle_lifetime, 4) * 1.2",
+          "variable.velocity.z * (1 - variable.particle_age / variable.particle_lifetime)"
         ]
       },
       "minecraft:particle_appearance_billboard": {

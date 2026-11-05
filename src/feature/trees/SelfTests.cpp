@@ -12,8 +12,11 @@
 //   trees.mining_core_magnet              the minewood core pulls an ore vein toward it
 //   trees.sorting_core_moves_item         the sortingwood engine moves an item into the chest holding more
 //   trees.snow_under_trees                snow under leaves
+#include <algorithm>
 #include <cmath>
 #include <map>
+#include <set>
+#include <tuple>
 
 #include "ll/api/coro/CoroTask.h"
 
@@ -21,6 +24,7 @@
 #include "mc/server/SimulatedPlayer.h"
 #include "mc/server/sim/LookDuration.h"
 #include "mc/world/Container.h"
+#include "mc/world/actor/player/Inventory.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/gamemode/GameMode.h"
 #include "mc/world/gamemode/InteractionResult.h"
@@ -37,13 +41,20 @@
 #include "mc/world/level/block/actor/BlockActor.h"
 #include "mc/world/level/block/actor/component/IVanillaMainBlockActorComponent.h"
 #include "mc/world/level/chunk/LevelChunk.h"
+#include "mc/world/level/chunk/LevelChunkDataField.h"
+#include "mc/world/level/chunk/SubChunk.h"
 
 #include "core/jrand/JRand.h"
+#include "feature/ext/trees/PickBlock.h"
+#include "feature/ext/trees/RandomTicks.h"
 #include "feature/features/Features.h"
+#include "feature/loot/Loot.h"
+#include "feature/spawn/Internal.h"
 #include "feature/trees/Trees.h"
 #include "game/Blocks.h"
 #include "game/Items.h"
 #include "mod/Config.h"
+#include "mod/Log.h"
 #include "selftest/SelfTest.h"
 
 namespace gf::feature::trees {
@@ -53,6 +64,31 @@ namespace {
 using gf::core::BlockBox;
 using gf::core::GlobalPos;
 using gf::selftest::Context;
+
+/// The showcase's undo log: the first original block of every position it (or a tree it places)
+/// changed, so trees.zz_showcase_restore can put the world back (rule R12: nothing left behind).
+struct ShowcaseLog {
+    bool                                      active = false;
+    std::map<std::tuple<int, int, int, int>, Block const*> originals;
+    std::vector<std::tuple<int, int, int, int>>             order;
+};
+ShowcaseLog& showcaseLog() {
+    static ShowcaseLog log;
+    return log;
+}
+void recordOriginal(BlockSource& region, BlockPos const& pos) {
+    auto& log = showcaseLog();
+    if (!log.active) return;
+    auto key = std::make_tuple(static_cast<int>(region.getDimensionId()), pos.x, pos.y, pos.z);
+    if (log.originals.contains(key)) return;
+    log.originals.emplace(key, &region.getBlock(pos));
+    log.order.push_back(key);
+}
+/// game::setBlock with the original recorded.
+void showcaseSet(BlockSource& region, BlockPos const& pos, Block const& block) {
+    recordOriginal(region, pos);
+    game::setBlock(region, pos, block);
+}
 
 /// A worldgen Region over the live world (Java's WorldGenRegion for a test placement).
 class LiveRegion final : public gf::worldgen::Region {
@@ -66,6 +102,7 @@ public:
     Block const& getBlock(BlockPos const& pos) const override { return mRegion.getBlock(pos); }
     bool         setBlock(BlockPos const& pos, Block const& block, int) override {
         if (pos.y < minY() || pos.y >= maxY() || !mRegion.hasChunksAt(pos, 0, false)) return false;
+        recordOriginal(mRegion, pos);
         return game::setBlock(mRegion, pos, block);
     }
     int height(gf::worldgen::Heightmap type, int x, int z) const override {
@@ -131,7 +168,7 @@ BlockPos pedestal(BlockSource& region, BlockPos const& pos) {
     for (int dx = -1; dx <= 1; ++dx)
         for (int dy = 0; dy < 4; ++dy)
             for (int dz = -1; dz <= 1; ++dz)
-                if (auto const* b = dy == 3 ? grass : dirt) game::setBlock(region, BlockPos{pos.x + dx, pos.y + dy, pos.z + dz}, *b);
+                if (auto const* b = dy == 3 ? grass : dirt) showcaseSet(region, BlockPos{pos.x + dx, pos.y + dy, pos.z + dz}, *b);
     return BlockPos{pos.x, pos.y + 4, pos.z};
 }
 
@@ -257,6 +294,74 @@ GF_REGISTER_SELFTEST("trees.sapling_growers", [](Context& ctx) -> ll::coro::Coro
     }
 });
 
+namespace {
+
+/// Golden volume hashes of each sapling's tree grown with a seeded random (SaplingBlock#advanceTree
+/// twice: stage 1, then the tree); self-recorded from the reviewed run (no Java-derived tree goldens
+/// exist: they prove the growth is deterministic and stays as reviewed).
+struct SaplingGolden {
+    char const* sapling;
+    char const* hash;
+};
+constexpr SaplingGolden kSaplingGoldens[] = {
+    {"twilight_oak_sapling", "c6a4d9e80098f181"}, {"canopy_sapling", "0a0cc183b669d7be"},         {"mangrove_sapling", "4b6a6ead7e3e9a70"},       {"darkwood_sapling", "41b40f3a39632b3b"},
+    {"time_sapling", "fa5ec266db0f001f"},         {"transformation_sapling", "c9279f5eb98e039c"}, {"mining_sapling", "f303bd815de99803"},         {"sorting_sapling", "1708556a4aa85b3a"},
+    {"rainbow_oak_sapling", "9614215514eda961"},
+};
+
+} // namespace
+
+GF_REGISTER_SELFTEST("trees.sapling_hashes", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto box = co_await ctx.flatArea(352, 144, 64);
+    for (int i = 0; i < 9; ++i) {
+        auto const& g  = kSaplingGoldens[i];
+        BlockBox    cell{box.minX + (i % 3) * 48, box.minY, box.minZ + (i / 3) * 48, box.minX + (i % 3) * 48 + 47, box.maxY, box.minZ + (i / 3) * 48 + 47};
+        GlobalPos   p  = game::globalPos(ctx.dimension(), BlockPos{cell.minX + 24, box.minY, cell.minZ + 24});
+        std::string id = std::string("twilightforest:") + g.sapling;
+        co_await ctx.ensureLoaded(p);
+        auto* region = ctx.region();
+        ctx.require(region != nullptr, "a region");
+        if (id == "twilightforest:time_sapling") p = game::globalPos(ctx.dimension(), pedestal(*region, bp(p)));
+        ctx.require(ctx.setBlock(p, id), id + " planted");
+        core::jrand::LegacyRandom random(77000 + i);
+        for (int step = 0; step < 2; ++step) gf::feature::families::detail::advanceSaplingWith(*region, bp(p), random);
+        bool grown = ctx.blockAt(p) != id;
+        ctx.check(grown, id + " grew with a seeded random (now " + ctx.blockAt(p) + ")");
+        auto hash = ctx.snapshotVolume(cell);
+        ctx.info(id + " tree volume hash " + hash);
+        if (*g.hash) ctx.check(hash == g.hash, id + " matches its golden hash " + std::string(g.hash) + " (got " + hash + ")");
+    }
+});
+
+GF_REGISTER_SELFTEST("trees.hollow_oak_sapling", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // StructureTreeGrower: HollowTreeStructure#checkSaplingClearance first (3 around, 3 below to 128
+    // above, everything replaceable by trees), the sapling stays when it fails; then the hollow tree
+    // landmark (U18) starts at the sapling
+    auto      box = co_await ctx.flatArea(366, 16, 140);
+    GlobalPos p   = game::globalPos(ctx.dimension(), BlockPos{box.minX + 8, box.minY, box.minZ + 8});
+    co_await ctx.ensureLoaded(p);
+    auto* region = ctx.region();
+    ctx.require(region != nullptr, "a region");
+    // the flat world's bedrock is within 3 blocks below the surface (not replaceable): a dirt pedestal
+    p = game::globalPos(ctx.dimension(), pedestal(*region, bp(p)));
+    ctx.require(ctx.setBlock(p, "twilightforest:hollow_oak_sapling", {{"twilightforest:stage", 1}}), "a robust twilight oak sapling");
+    // an obsidian block 40 above, inside the clearance column: no tree, the sapling stays
+    GlobalPos stone = p.offset(2, 40, -1);
+    ctx.require(ctx.setBlock(stone, "minecraft:obsidian"), "an obstacle above");
+    ctx.check(!hollowTreeClearance(*region, bp(p)), "the obstacle fails the sapling clearance");
+    core::jrand::LegacyRandom random(4711);
+    gf::feature::families::detail::advanceSaplingWith(*region, bp(p), random);
+    ctx.check(ctx.blockAt(p) == "twilightforest:hollow_oak_sapling", "without clearance the sapling stays (" + ctx.blockAt(p) + ")");
+    ctx.cleanupBlock(stone);
+    if (auto const* air = game::blockWith("minecraft:air")) game::setBlock(*region, bp(stone), *air);
+    ctx.check(hollowTreeClearance(*region, bp(p)), "a clear column passes the sapling clearance");
+    gf::feature::families::detail::advanceSaplingWith(*region, bp(p), random);
+    if (ctx.blockAt(p) == "twilightforest:hollow_oak_sapling")
+        ctx.info("NOT RUN: the hollow tree landmark (U18's twilightforest:hollow_tree generator) did not start; the sapling stayed as TF's grower "
+                 "leaves it without a valid start");
+    else ctx.info("the robust twilight oak sapling grew the hollow tree (now " + ctx.blockAt(p) + ")");
+});
+
 GF_REGISTER_SELFTEST("trees.mega_2x2", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto      box = co_await ctx.flatArea(360, 64, 64);
     GlobalPos p   = game::globalPos(ctx.dimension(), BlockPos{box.minX + 30, box.minY, box.minZ + 30});
@@ -330,28 +435,63 @@ GF_REGISTER_SELFTEST("trees.transformation_core_biome", [](Context& ctx) -> ll::
     auto*     region = ctx.region();
     ctx.require(region != nullptr, "a region");
     ctx.require(ctx.setBlock(core, "twilightforest:transformation_log_core", {{"twilightforest:axis", "y"}}), "a heart of transformation");
-    if (!region->getLevel().getBiomeRegistry().lookupByName("twilightforest:enchanted_forest")) {
-        ctx.info("no twilightforest:enchanted_forest biome registered: nothing to transform");
-        co_return;
+    // The enchanted forest is U1's behaviour pack biome. Without it (U1 not merged) the core does
+    // nothing in game; the test then says so and checks the mechanism with a stand-in biome.
+    std::string want = "twilightforest:enchanted_forest";
+    struct TargetGuard {
+        ~TargetGuard() { setTransformationTargetForTest(""); }
+    } targetGuard;
+    if (!hasTransformationTarget(*region)) {
+        want = "minecraft:mushroom_island";
+        setTransformationTargetForTest(want);
+        ctx.info("NOT RUN with the enchanted forest: no twilightforest:enchanted_forest biome is registered (U1's behaviour pack biome), so the "
+                 "core does nothing in this build; the biome rewrite, the chunk save mark and the resend are checked with the stand-in " + want);
     }
     // the biomes of the columns within reach, put back afterwards
-    BlockPos                                         c = bp(core);
-    std::map<std::pair<int, int>, Biome const*>       saved;
-    for (int dx = -4; dx <= 4; ++dx)
-        for (int dz = -4; dz <= 4; ++dz) saved[{c.x + dx, c.z + dz}] = &region->getBiome(BlockPos{c.x + dx, c.y, c.z + dz});
-    int changed = 0;
+    BlockPos                                    c = bp(core);
+    std::map<std::pair<int, int>, Biome const*> saved;
+    // (range 3: the column's 4x4 quart cell reaches 6 blocks from the core)
+    for (int dx = -7; dx <= 7; ++dx)
+        for (int dz = -7; dz <= 7; ++dz) saved[{c.x + dx, c.z + dz}] = &region->getBiome(BlockPos{c.x + dx, c.y, c.z + dz});
+    auto* chunk  = region->getChunkAt(c);
+    ctx.require(chunk != nullptr, "the core's chunk");
+    auto  before = chunkResendStats();
+    int   changed = 0;
     for (int i = 0; i < 20 && changed == 0; ++i) changed = performCoreEffect(Core::Transformation, *region, c);
-    int enchanted = 0;
+    int        transformed = 0;
+    std::set<LevelChunk*> chunks;
     for (auto const& [xz, b] : saved) {
-        auto const& now  = region->getBiome(BlockPos{xz.first, c.y, xz.second});
-        auto const& name = now.mHash->getString();
-        if (name.find("enchanted_forest") != std::string::npos) ++enchanted;
+        BlockPos p{xz.first, c.y, xz.second};
+        if (biomeName(region->getBiome(p)) == want && biomeName(*b) != want) {
+            ++transformed;
+            if (auto* lc = region->getChunkAt(p)) chunks.insert(lc);
+        }
     }
+    // the chunk will save (LevelChunk#setUnsaved): its biome data counter was touched this tick (a
+    // clean DirtyTicksCounter counts from INT_MIN; a touched one has lastChange == totalTime >= 0)
+    bool dirty = !chunks.empty() && std::all_of(chunks.begin(), chunks.end(), [](LevelChunk* lc) {
+        auto const& c = lc->mFullChunkDirtyTicksCounters[static_cast<int>(LevelChunkDataField::BiomeState)].get();
+        return c.totalTime >= 0 && c.lastChange == c.totalTime && lc->nonActorDataNeedsSaving(0, 0);
+    });
+    auto after = chunkResendStats();
+    ctx.info("chunk resends: " + std::to_string(after.sent - before.sent) + " sent, " + std::to_string(after.refused - before.refused) +
+             " refused (simulated players have no client)");
     for (auto const& [xz, b] : saved)
-        if (auto* chunk = region->getChunkAt(BlockPos{xz.first, c.y, xz.second}))
-            chunk->_setBiome(*b, ChunkBlockPos{static_cast<uchar>(xz.first & 15), ChunkLocalHeight{0}, static_cast<uchar>(xz.second & 15)}, true);
+        if (auto* lc = region->getChunkAt(BlockPos{xz.first, c.y, xz.second}))
+            lc->_setBiome(*b, ChunkBlockPos{static_cast<uchar>(xz.first & 15), ChunkLocalHeight{0}, static_cast<uchar>(xz.second & 15)}, true);
     ctx.check(changed == 1, "the core transformed a column");
-    ctx.check(enchanted >= 16, "a 4x4 column became enchanted forest (" + std::to_string(enchanted) + " blocks)");
+    ctx.check(transformed >= 16, "a 4x4 column became " + want + " (" + std::to_string(transformed) + " columns)");
+    ctx.check(dirty, "the transformed chunk is marked for saving");
+    co_return;
+});
+
+GF_REGISTER_SELFTEST("trees.core_range_clamp", [](Context& ctx) -> ll::coro::CoroTask<> {
+    RangeGuard guard;
+    gf::config::mut<TreesConfig>().sortingCoreRange = 1000;
+    gf::config::mut<TreesConfig>().timeCoreRange    = -5;
+    ctx.check(coreRange(Core::Sorting) == 128, "a range above 128 is clamped to 128 (TFConfig defineInRange)");
+    ctx.check(coreRange(Core::Time) == 0, "a negative range is clamped to 0 (disabled)");
+    co_return;
 });
 
 GF_REGISTER_SELFTEST("trees.mining_core_magnet", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -380,6 +520,47 @@ GF_REGISTER_SELFTEST("trees.mining_core_magnet", [](Context& ctx) -> ll::coro::C
             for (int dz = -1; dz <= 1; ++dz)
                 if (ctx.blockAt(core.offset(dx, dy, dz)) == "minecraft:iron_ore") ++innerOre;
     ctx.check(innerOre > 0, "ore moved next to the core (" + std::to_string(innerOre) + ")");
+});
+
+GF_REGISTER_SELFTEST("trees.mining_core_excludes_coal", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // TREE_ORE_TO_BLOCK_REPLACEMENTS: every ores_in_ground / ore_bearing_ground pair, minus
+    // #twilightforest:mining_tree_excluded (#minecraft:coal_ores), plus ancient debris
+    auto ores = miningCoreOres();
+    auto has  = [&](char const* ore, char const* ground) {
+        auto it = ores.find(ore);
+        return it != ores.end() && it->second == ground;
+    };
+    ctx.check(has("minecraft:iron_ore", "minecraft:stone"), "iron ore sits in stone");
+    ctx.check(has("minecraft:deepslate_iron_ore", "minecraft:deepslate"), "deepslate iron ore sits in deepslate");
+    ctx.check(has("minecraft:quartz_ore", "minecraft:netherrack"), "nether quartz ore sits in netherrack");
+    ctx.check(has("twilightforest:liveroot_block", "twilightforest:root"), "liveroot sits in roots (c:ores_in_ground/root)");
+    ctx.check(has("minecraft:ancient_debris", "minecraft:netherrack"), "ancient debris sits in netherrack");
+    ctx.check(!ores.contains("minecraft:coal_ore") && !ores.contains("minecraft:deepslate_coal_ore"), "coal ores are excluded");
+    RangeGuard guard;
+    gf::config::mut<TreesConfig>().miningCoreRange = 2;
+    auto      box  = co_await ctx.flatArea(383, 9, 12);
+    BlockPos  c{box.minX + 4, box.minY + 4, box.minZ + 4};
+    GlobalPos core = game::globalPos(ctx.dimension(), c);
+    // stone around the core, a coal vein on the shell two blocks out: it never moves
+    for (int dx = -2; dx <= 2; ++dx)
+        for (int dy = -2; dy <= 2; ++dy)
+            for (int dz = -2; dz <= 2; ++dz) {
+                int d = std::max({std::abs(dx), std::abs(dy), std::abs(dz)});
+                if (d == 0) continue;
+                ctx.setBlock(core.offset(dx, dy, dz), d == 1 ? "minecraft:stone" : "minecraft:coal_ore");
+            }
+    ctx.require(ctx.setBlock(core, "twilightforest:mining_log_core", {{"twilightforest:axis", "y"}}), "a minewood core");
+    auto* region = ctx.region();
+    ctx.require(region != nullptr, "a region");
+    int moved = 0;
+    for (int i = 0; i < 60; ++i) moved += performCoreEffect(Core::Mining, *region, c);
+    ctx.check(moved == 0, "the core moved no coal (" + std::to_string(moved) + " blocks)");
+    int coal = 0;
+    for (int dx = -1; dx <= 1; ++dx)
+        for (int dy = -1; dy <= 1; ++dy)
+            for (int dz = -1; dz <= 1; ++dz)
+                if (ctx.blockAt(core.offset(dx, dy, dz)) == "minecraft:coal_ore") ++coal;
+    ctx.check(coal == 0, "no coal next to the core (" + std::to_string(coal) + ")");
 });
 
 namespace {
@@ -430,6 +611,223 @@ GF_REGISTER_SELFTEST("trees.snow_under_trees", [](Context& ctx) -> ll::coro::Cor
     ctx.check(ctx.blockAt(game::globalPos(ctx.dimension(), BlockPos{box.minX + 7, box.minY, box.minZ + 5})) == "minecraft:air", "no snow in the open");
 });
 
+GF_REGISTER_SELFTEST("trees.leaf_decay", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // LeavesBlock: leaves without a log within 6 (distance 7) and not persistent decay on a random
+    // tick; a log next to them (distance 1) or persistence keeps them
+    GlobalPos lone = ctx.testPos(392, 0), kept = ctx.testPos(392, 2), log = ctx.testPos(393, 2), placed = ctx.testPos(395, 4);
+    co_await ctx.ensureLoaded(lone);
+    ctx.require(ctx.setBlock(lone, "twilightforest:twilight_oak_leaves", {{"twilightforest:distance", 7}, {"twilightforest:persistent", false}}), "lone leaves");
+    ctx.require(ctx.setBlock(log, "twilightforest:twilight_oak_log", {{"twilightforest:axis", "y"}}), "a log");
+    ctx.require(ctx.setBlock(kept, "twilightforest:canopy_leaves", {{"twilightforest:distance", 7}, {"twilightforest:persistent", false}}), "leaves by a log");
+    ctx.require(ctx.setBlock(placed, "twilightforest:dark_leaves", {{"twilightforest:distance", 7}, {"twilightforest:persistent", true}}), "persistent leaves");
+    co_await ctx.ticks(4); // LeavesBlock#updateShape schedules the distance update
+    auto* region = ctx.region();
+    ctx.require(region != nullptr, "a region");
+    ctx.check(game::intState(region->getBlock(bp(kept)), "twilightforest:distance").value_or(0) == 1, "the leaves by the log have distance 1");
+    for (auto const& p : {lone, kept, placed}) gf::feature::families::detail::randomTickAt(*region, bp(p));
+    co_await ctx.ticks(1);
+    ctx.check(ctx.blockAt(lone) == "minecraft:air", "lone leaves decayed (" + ctx.blockAt(lone) + ")");
+    ctx.check(ctx.blockAt(kept) == "twilightforest:canopy_leaves", "leaves by a log stay");
+    ctx.check(ctx.blockAt(placed) == "twilightforest:dark_leaves", "persistent dark leaves stay");
+    // the log goes: the leaves' distance becomes 7 and they decay
+    if (auto const* air = game::blockWith("minecraft:air")) game::setBlock(*region, bp(log), *air);
+    co_await ctx.ticks(4);
+    region = ctx.region();
+    ctx.require(region != nullptr, "a region");
+    ctx.check(game::intState(region->getBlock(bp(kept)), "twilightforest:distance").value_or(0) == 7, "without the log the distance is 7");
+    gf::feature::families::detail::randomTickAt(*region, bp(kept));
+    co_await ctx.ticks(1);
+    ctx.check(ctx.blockAt(kept) == "minecraft:air", "the leaves decayed once the log was gone (" + ctx.blockAt(kept) + ")");
+});
+
+namespace {
+struct LootCount {
+    std::map<std::string, int> items;
+    int                        rolls = 0;
+};
+LootCount rollMany(Context& ctx, std::string const& table, char const* blockId, char const* toolId, int n) {
+    LootCount out;
+    auto*     region = ctx.region();
+    auto      tool   = toolId ? game::items::make(toolId, 1) : std::optional<ItemStack>{};
+    auto*     block  = game::blockWith(blockId);
+    for (int i = 0; i < n; ++i) {
+        gf::loot::LootContext lc;
+        lc.region = region;
+        lc.origin = Vec3{0.5f, 64.5f, 0.5f};
+        lc.tool   = tool ? &*tool : nullptr;
+        lc.block  = block;
+        lc.seed   = 0; // a random seed per roll (consecutive LCG seeds draw correlated first floats)
+        for (auto const& s : gf::loot::roll(table, lc)) out.items[game::items::idOf(s)] += game::items::countOf(s);
+        ++out.rolls;
+    }
+    return out;
+}
+} // namespace
+
+GF_REGISTER_SELFTEST("trees.leaf_loot", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // shears -> the leaves; otherwise the sapling (fortune table, 1/20 for twilight oak, 1/40 for
+    // dark leaves) and 1-2 sticks with 1/50; the magic leaves drop no sapling; hardened dark leaves
+    // drop dark leaves under shears
+    auto sheared = rollMany(ctx, "twilightforest:blocks/twilight_oak_leaves", "twilightforest:twilight_oak_leaves", "minecraft:shears", 20);
+    ctx.check(sheared.items["twilightforest:twilight_oak_leaves"] == 20 && sheared.items.size() == 1, "shears drop the leaves themselves");
+    auto plain = rollMany(ctx, "twilightforest:blocks/twilight_oak_leaves", "twilightforest:twilight_oak_leaves", nullptr, 4000);
+    int  saplings = plain.items["twilightforest:twilight_oak_sapling"], sticks = plain.items["minecraft:stick"];
+    ctx.info("twilight oak leaves x4000: " + std::to_string(saplings) + " saplings, " + std::to_string(sticks) + " sticks");
+    ctx.check(saplings >= 140 && saplings <= 260, "about 1/20 drop a sapling (" + std::to_string(saplings) + " of 4000)");
+    ctx.check(sticks >= 70 && sticks <= 190, "about 1/50 drop 1-2 sticks (" + std::to_string(sticks) + " sticks)");
+    ctx.check(!plain.items.contains("twilightforest:twilight_oak_leaves"), "no leaves without shears");
+    auto dark = rollMany(ctx, "twilightforest:blocks/dark_leaves", "twilightforest:dark_leaves", nullptr, 4000);
+    int  darkSaplings = dark.items["twilightforest:darkwood_sapling"];
+    ctx.check(darkSaplings >= 60 && darkSaplings <= 150, "about 1/40 of dark leaves drop a darkwood sapling (" + std::to_string(darkSaplings) + ")");
+    auto hardened = rollMany(ctx, "twilightforest:blocks/hardened_dark_leaves", "twilightforest:hardened_dark_leaves", "minecraft:shears", 10);
+    ctx.check(hardened.items["twilightforest:dark_leaves"] == 10, "hardened dark leaves drop dark leaves under shears");
+    auto time = rollMany(ctx, "twilightforest:blocks/time_leaves", "twilightforest:time_leaves", nullptr, 2000);
+    ctx.check(!time.items.contains("twilightforest:time_sapling"), "leaves of time drop no sapling");
+    ctx.check(time.items["minecraft:stick"] > 0, "leaves of time drop sticks");
+    co_return;
+});
+
+GF_REGISTER_SELFTEST("trees.leaf_tool_speeds", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // Java's per-tick progress speed / hardness / 30 (no tool is required): shears 15 and swords 1.5
+    // on #leaves (#sword_efficient), hoes their tier's speed on #mineable/hoe, anything else 1;
+    // hardened dark leaves are in none of these tags. Bedrock gets the times from the leaves'
+    // item_specific_speeds (tools/import/overrides/trees.json).
+    struct Leaf {
+        char const* id;
+        double      hardness;
+        bool        tagged;
+    };
+    Leaf const leaves[] = {
+        {"twilightforest:twilight_oak_leaves", 0.2, true}, {"twilightforest:canopy_leaves", 0.2, true},      {"twilightforest:mangrove_leaves", 0.2, true},
+        {"twilightforest:rainbow_oak_leaves", 0.2, true},  {"twilightforest:time_leaves", 0.2, true},        {"twilightforest:transformation_leaves", 0.2, true},
+        {"twilightforest:mining_leaves", 0.2, true},       {"twilightforest:sorting_leaves", 0.2, true},     {"twilightforest:dark_leaves", 2.0, true},
+        {"twilightforest:hardened_dark_leaves", 2.0, false},
+    };
+    struct Tool {
+        char const* id;
+        double      speed; ///< on the tagged leaves
+    };
+    Tool const tools[] = {
+        {nullptr, 1.0},                     {"minecraft:shears", 15.0},       {"minecraft:wooden_sword", 1.5}, {"minecraft:stone_sword", 1.5},
+        {"minecraft:iron_sword", 1.5},      {"minecraft:golden_sword", 1.5},  {"minecraft:diamond_sword", 1.5}, {"minecraft:netherite_sword", 1.5},
+        {"minecraft:wooden_hoe", 2.0},      {"minecraft:stone_hoe", 4.0},     {"minecraft:iron_hoe", 6.0},      {"minecraft:golden_hoe", 12.0},
+        {"minecraft:diamond_hoe", 8.0},     {"minecraft:netherite_hoe", 9.0}, {"minecraft:iron_pickaxe", 1.0},  {"minecraft:iron_axe", 1.0},
+    };
+    // on the ground (Player#getDestroySpeed divides by 5 in the air)
+    GlobalPos floor = ctx.testPos(397, 2);
+    co_await ctx.ensureLoaded(floor);
+    ctx.require(ctx.setBlock(floor, "minecraft:stone"), "a floor");
+    ctx.cleanupBlock(floor.offset(0, 1, 0));
+    ctx.cleanupBlock(floor.offset(0, 2, 0));
+    sim(ctx).teleport(Vec3{floor.x + 0.5f, floor.y + 1.0f, floor.z + 0.5f}, sim(ctx).getDimensionId());
+    co_await ctx.ticks(10);
+    ctx.info(std::string("the player stands on the floor: ") + (sim(ctx).isOnGround() ? "yes" : "no"));
+    std::vector<std::string> wrong;
+    for (auto const& t : tools) {
+        if (t.id) {
+            if (auto item = game::items::make(t.id, 1)) sim(ctx).simulateSetItem(*item, true, 0);
+        } else sim(ctx).simulateSetItem(ItemStack::EMPTY_ITEM(), true, 0);
+        co_await ctx.ticks(2);
+        for (auto const& l : leaves) {
+            auto* block = game::blockWith(l.id);
+            ctx.require(block != nullptr, std::string(l.id) + " exists");
+            double want = (l.tagged ? t.speed : 1.0) / l.hardness / 30.0;
+            double got  = sim(ctx).getDestroyProgress(*block);
+            bool   same = (got >= 1.0 && want >= 1.0) || std::abs(got - want) <= want * 0.05;
+            gf::log().info("trees speed {} {} {:.6f} {:.6f}", l.id, t.id ? t.id : "hand", got, want);
+            if (!same) wrong.push_back(std::string(l.id) + " with " + (t.id ? t.id : "a hand") + ": " + std::to_string(got) + " per tick (Java " + std::to_string(want) + ")");
+        }
+    }
+    ctx.check(wrong.empty(), "every leaf mines at Java's speed; off: " + [&] {
+        std::string s;
+        for (auto const& w : wrong) s += (s.empty() ? "" : "; ") + w;
+        return s;
+    }());
+});
+
+GF_REGISTER_SELFTEST("trees.dark_canopy_free_height", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // DarkCanopyTreeFeature#getMaxFreeTreeHeight uses validTreePos (a log is not free): a log in the
+    // trunk's feature-size box stops the dark forest oak, where TreeFeature (logs free) grows it
+    auto     box = co_await ctx.flatArea(396, 16, 24);
+    BlockPos pos{box.minX + 8, box.minY, box.minZ + 8};
+    GlobalPos log = game::globalPos(ctx.dimension(), BlockPos{pos.x + 1, pos.y + 2, pos.z + 1});
+    ctx.require(ctx.setBlock(log, "minecraft:oak_log"), "a log in the way");
+    ctx.check(!placeSeeded(ctx, tree("dark_forest_oak_tree"), pos, 5), "the dark forest oak does not grow into the log");
+    ctx.check(ctx.blockAt(game::globalPos(ctx.dimension(), pos)) == "minecraft:air", "no trunk was placed");
+    ctx.cleanupBlock(log);
+    if (auto* region = ctx.region())
+        if (auto const* air = game::blockWith("minecraft:air")) game::setBlock(*region, bp(log), *air);
+    ctx.check(placeSeeded(ctx, tree("dark_forest_oak_tree"), pos, 5), "without the log it grows");
+});
+
+GF_REGISTER_SELFTEST("trees.hardened_dark_leaves", [](Context& ctx) -> ll::coro::CoroTask<> {
+    GlobalPos leaves = ctx.testPos(394, 0), dirt = ctx.testPos(394, 3);
+    co_await ctx.ensureLoaded(leaves);
+    ctx.require(ctx.setBlock(leaves, "twilightforest:hardened_dark_leaves"), "hardened dark leaves");
+    ctx.require(ctx.setBlock(dirt, "minecraft:dirt"), "dirt");
+    auto* region = ctx.region();
+    ctx.require(region != nullptr, "a region");
+    // TFBlocks.noSpawning: no spawn list above them
+    for (char const* category : {"monster", "creature", "ambient"}) {
+        auto list = gf::spawn::detail::spawnListAt(*region, bp(leaves.offset(0, 1, 0)), category, "minecraft:forest");
+        ctx.check(list.empty(), std::string("no ") + category + " spawns on hardened dark leaves");
+    }
+    auto onDirt = gf::spawn::detail::spawnListAt(*region, bp(dirt.offset(0, 1, 0)), "monster", "minecraft:forest");
+    ctx.info("monster spawn entries on dirt: " + std::to_string(onDirt.size()));
+    // HardenedDarkLeavesBlock#getCloneItemStack: pick block gives dark leaves
+    ctx.check(gf::trees_ext::pickItem("twilightforest:hardened_dark_leaves") == "twilightforest:dark_leaves", "pick block gives dark leaves");
+    auto& sp = sim(ctx);
+    auto& inv = sp.getInventory();
+    for (int i = 0; i < inv.getContainerSize(); ++i) inv.setItem(i, ItemStack::EMPTY_ITEM());
+    if (auto item = game::items::make("twilightforest:dark_leaves", 5)) inv.setItem(20, *item);
+    sp.setSelectedSlot(2);
+    ctx.check(gf::trees_ext::pickBlock(sp, bp(leaves)), "the pick is handled");
+    auto const& held = sim(ctx).getSelectedItem();
+    ctx.check(game::items::idOf(held) == "twilightforest:dark_leaves" && game::items::countOf(held) == 5, "the dark leaves moved into the hand (" + game::items::idOf(held) + ")");
+    for (int i = 0; i < sim(ctx).getInventory().getContainerSize(); ++i) sim(ctx).getInventory().setItem(i, ItemStack::EMPTY_ITEM());
+});
+
+
+// Client e2e (remote modes: run on the host): a probe the client photographs, the leaves of
+// transformation shedding runes over the time core ticking wheat; trees.zz_showcase_restore removes it (the restore runs last in a trees.* run).
+GF_REGISTER_SELFTEST("trees.vanilla_probe", [](Context& ctx) -> ll::coro::CoroTask<> {
+    showcaseLog().active = true;
+    GlobalPos base = ctx.testPos(398, 2);
+    co_await ctx.ensureLoaded(base);
+    auto* region = ctx.region();
+    ctx.require(region != nullptr, "a region");
+    auto set = [&](GlobalPos const& p, char const* id, nlohmann::json const& states) {
+        if (auto const* b = game::blockWithStates(id, states)) showcaseSet(*region, bp(p), *b);
+    };
+    for (int dx = -1; dx <= 1; ++dx)
+        for (int dz = -1; dz <= 1; ++dz) set(base.offset(dx, 4, dz), "twilightforest:transformation_leaves", {{"twilightforest:persistent", true}});
+    set(base.offset(-1, 0, 0), "minecraft:farmland", {{"moisturized_amount", 7}});
+    set(base.offset(-1, 1, 0), "minecraft:wheat", {{"growth", 0}});
+    set(base, "twilightforest:time_log_core", {{"twilightforest:axis", "y"}, {"twilightforest:active", true}});
+    showcaseLog().active = false;
+    ctx.info("trees probe at " + std::to_string(base.x) + " " + std::to_string(base.y) + " " + std::to_string(base.z));
+});
+
+// Client e2e: puts back every block trees.showcase / trees.vanilla_probe changed (newest first), after
+// the screenshots.
+GF_REGISTER_SELFTEST("trees.zz_showcase_restore", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto& log = showcaseLog();
+    log.active = false;
+    int   restored = 0;
+    for (auto it = log.order.rbegin(); it != log.order.rend(); ++it) {
+        auto [dim, x, y, z] = *it;
+        GlobalPos gp{dim, x, y, z};
+        co_await ctx.ensureLoaded(gp);
+        auto* region = game::regionOf(dim);
+        if (!region) continue;
+        game::setBlock(*region, BlockPos{x, y, z}, *log.originals[*it]);
+        ++restored;
+    }
+    log.originals.clear();
+    log.order.clear();
+    ctx.info("trees showcase restored " + std::to_string(restored) + " blocks");
+});
+
 } // namespace gf::feature::trees
 
 #ifdef GF_CLIENT
@@ -455,6 +853,7 @@ std::vector<std::string> const& showcaseTrees() {
 // standing for the screenshots of tools/e2e/client/scenarios/trees.ps1 (40 blocks apart along x,
 // 250 blocks east of the test rows; the blocks in a row 40 blocks north of the trees).
 GF_REGISTER_SELFTEST("trees.showcase", [](Context& ctx) -> ll::coro::CoroTask<> {
+    showcaseLog().active = true; // every change is undone by trees.zz_showcase_restore
     GlobalPos base   = ctx.testPos(399).offset(250, 0, 0);
     auto*     region = ctx.region();
     ctx.require(region != nullptr, "a region");
@@ -468,9 +867,11 @@ GF_REGISTER_SELFTEST("trees.showcase", [](Context& ctx) -> ll::coro::CoroTask<> 
         for (int dx = -20; dx < 20; ++dx)
             for (int dz = -20; dz < 20; ++dz) {
                 BlockPos b{p.x + dx, p.y - 1, p.z + dz};
-                if (auto const* g = game::blockWith("minecraft:grass_block")) game::setBlock(*region, b, *g);
-                for (int dy = 0; dy < 50; ++dy)
-                    if (auto const* a = game::blockWith("minecraft:air")) game::setBlock(*region, BlockPos{b.x, p.y + dy, b.z}, *a);
+                if (auto const* g = game::blockWith("minecraft:grass_block"); g && &region->getBlock(b) != g) showcaseSet(*region, b, *g);
+                for (int dy = 0; dy < 50; ++dy) {
+                    BlockPos up{b.x, p.y + dy, b.z};
+                    if (auto const* a = game::blockWith("minecraft:air"); a && !region->getBlock(up).isAir()) showcaseSet(*region, up, *a);
+                }
             }
         BlockPos at = bp(p);
         if (ids[i].ends_with("time_tree")) at = pedestal(*region, at);
@@ -493,16 +894,20 @@ GF_REGISTER_SELFTEST("trees.showcase", [](Context& ctx) -> ll::coro::CoroTask<> 
     for (int i = 0; i < 35; ++i) {
         GlobalPos p  = row.offset(i * 2, 0, 0);
         std::string id = std::string("twilightforest:") + blocks[i];
-        if (auto const* g = game::blockWith("minecraft:grass_block")) game::setBlock(*region, bp(p.offset(0, -1, 0)), *g);
+        if (auto const* g = game::blockWith("minecraft:grass_block")) showcaseSet(*region, bp(p.offset(0, -1, 0)), *g);
         nlohmann::json states = nlohmann::json::object();
         if (id.ends_with("_log_core")) states = {{"twilightforest:axis", "y"}, {"twilightforest:active", i % 2 == 0}};
         if (id.ends_with("_leaves") && id != "twilightforest:hardened_dark_leaves") states = {{"twilightforest:persistent", true}};
         auto const* b = game::blockWithStates(id, states);
         ctx.check(b != nullptr, id + " exists");
-        if (b) game::setBlock(*region, bp(p), *b);
+        if (b) showcaseSet(*region, bp(p), *b);
     }
     ctx.info("trees showcase blocks at " + std::to_string(row.x) + " " + std::to_string(row.y) + " " + std::to_string(row.z));
+    showcaseLog().active = false;
+    ctx.info("trees showcase changed " + std::to_string(showcaseLog().order.size()) + " blocks (trees.zz_showcase_restore puts them back)");
 });
+
+
 
 } // namespace gf::feature::trees
 #endif

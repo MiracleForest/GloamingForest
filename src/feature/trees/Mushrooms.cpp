@@ -11,15 +11,16 @@
 // U3 trees: TF's canopy mushrooms (AbstractHugeMushroomFeature subclasses with a branching stem and
 // four red cap shapes). Java's huge mushroom blocks have six face booleans; Bedrock's have
 // huge_mushroom_bits (0 pores .. 9 cap corners, 10 stem, 14 all cap, 15 all stem): the faces map to
-// the closest value. Minecraft's own huge brown / red mushrooms (AbstractHugeMushroomFeature,
-// HugeBrownMushroomFeature, HugeRedMushroomFeature) are registered here too: the features contract
-// does not have them and TF's vanilla_mushrooms selector (this unit's) places them.
+// the closest value (feature/ext/trees/HugeMushrooms.h, which also registers Minecraft's own huge
+// brown / red mushroom feature types: the features contract does not have them and TF's
+// vanilla_mushrooms selector, this unit's, places them).
 #include "feature/trees/Trees.h"
 
 #include <cmath>
 
 #include "mc/world/level/block/Block.h"
 
+#include "feature/ext/trees/HugeMushrooms.h"
 #include "feature/ext/worldgen/FeatureKit.h"
 #include "feature/trees/TreeUtil.h"
 #include "game/Blocks.h"
@@ -33,67 +34,12 @@ using gf::features::FeatureContext;
 
 namespace {
 
-struct Faces {
-    bool up = false, down = false, north = false, east = false, south = false, west = false;
-};
+using gf::trees_ext::Faces;
+using gf::trees_ext::MushroomState;
 
-/// The Java faces of a provider's state ({"state": {"Name", "Properties"}}).
-struct MushroomState {
-    std::string id;
-    Faces       faces;
-    bool        hasFaces = false;
-};
+using gf::trees_ext::mushroomBlock;
 
-MushroomState stateOf(Json const& provider) {
-    MushroomState s;
-    Json const*   state = provider.is_object() && provider.contains("state") ? &provider["state"] : &provider;
-    s.id                = state->value("Name", std::string());
-    if (state->contains("Properties") && (*state)["Properties"].is_object()) {
-        auto const& p = (*state)["Properties"];
-        auto        b = [&](char const* k) { return p.contains(k) && p[k].is_string() && p[k].get<std::string>() == "true"; };
-        s.hasFaces    = p.contains("north") && p.contains("up");
-        s.faces       = {b("up"), b("down"), b("north"), b("east"), b("south"), b("west")};
-    }
-    return s;
-}
-
-/// Bedrock's huge_mushroom_bits for Java's faces of a cap or a stem.
-int bitsFor(Faces const& f, bool stem) {
-    if (stem) return (f.up || f.down) ? 15 : 10;
-    if (f.up && f.down && f.north && f.east && f.south && f.west) return 14;
-    struct Entry {
-        int   bits;
-        Faces f;
-    };
-    static Entry const table[] = {
-        {0, {false, false, false, false, false, false}}, {1, {true, false, true, false, false, true}}, {2, {true, false, true, false, false, false}},
-        {3, {true, false, true, true, false, false}},    {4, {true, false, false, false, false, true}}, {5, {true, false, false, false, false, false}},
-        {6, {true, false, false, true, false, false}},   {7, {true, false, false, false, true, true}},  {8, {true, false, false, false, true, false}},
-        {9, {true, false, false, true, true, false}},    {14, {true, true, true, true, true, true}},
-    };
-    int best = 0, bestScore = 1 << 30;
-    for (auto const& e : table) {
-        // distance, then prefer covering every face Java shows
-        int miss  = (f.up && !e.f.up) + (f.north && !e.f.north) + (f.east && !e.f.east) + (f.south && !e.f.south) + (f.west && !e.f.west) + (f.down && !e.f.down);
-        int extra = (!f.up && e.f.up) + (!f.north && e.f.north) + (!f.east && e.f.east) + (!f.south && e.f.south) + (!f.west && e.f.west) + (!f.down && e.f.down);
-        int score = (miss + extra) * 4 + miss;
-        if (score < bestScore) {
-            bestScore = score;
-            best      = e.bits;
-        }
-    }
-    return best;
-}
-
-/// The Bedrock block of a Java huge mushroom block with these faces.
-Block const* mushroomBlock(MushroomState const& s, Faces const& faces) {
-    Block const* base = kit::javaBlock(s.id);
-    if (!base) return nullptr;
-    if (!s.hasFaces) return base;
-    bool stem = s.id == "minecraft:mushroom_stem";
-    if (auto const* b = game::blockWithStates(base->getTypeName(), Json{{"huge_mushroom_bits", bitsFor(faces, stem)}})) return b;
-    return base;
-}
+MushroomState stateOf(Json const& provider) { return gf::trees_ext::mushroomStateOf(provider); }
 
 struct Mushroom {
     FeatureContext const& c;
@@ -324,56 +270,6 @@ struct Canopy : Mushroom {
     }
 };
 
-// ---- Minecraft's HugeBrownMushroomFeature / HugeRedMushroomFeature ----------------------------------------
-
-bool vanillaMushroom(FeatureContext const& c, bool red) {
-    Mushroom m(c);
-    int      height = c.random.nextInt(3) + 4; // AbstractHugeMushroomFeature#getTreeHeight
-    if (c.random.nextInt(12) == 0) height *= 2;
-    RadiusFn radius = red ? RadiusFn([](int, int) { return 0; }) : RadiusFn([](int fr, int y) { return y <= 3 ? 0 : fr; });
-    if (!validPosition(m, c.origin, height, radius)) return false;
-    BlockPos const& pos = c.origin;
-    int             r   = m.foliageRadius;
-    if (red) {
-        for (int i = height - 3; i <= height; ++i) {
-            int j = i < height ? r : r - 1;
-            int k = r - 2;
-            for (int l = -j; l <= j; ++l)
-                for (int i1 = -j; i1 <= j; ++i1) {
-                    bool f4 = l == -j || l == j, f5 = i1 == -j || i1 == j;
-                    if (!(i >= height || f4 != f5)) continue;
-                    BlockPos p = at(pos, l, i, i1);
-                    if (isSolidRender(c.region.getBlock(p))) continue;
-                    Faces f = m.cap.faces;
-                    if (m.cap.hasFaces) f = {i >= height - 1, m.cap.faces.down, i1 < -k, l > k, i1 > k, l < -k};
-                    m.set(p, m.cap, f);
-                }
-        }
-    } else {
-        for (int j = -r; j <= r; ++j)
-            for (int k = -r; k <= r; ++k) {
-                bool f = j == -r, f1 = j == r, f2 = k == -r, f3 = k == r;
-                bool f4 = f || f1, f5 = f2 || f3;
-                if (f4 && f5) continue;
-                BlockPos p = at(pos, j, height, k);
-                if (isSolidRender(c.region.getBlock(p))) continue;
-                Faces faces = m.cap.faces;
-                if (m.cap.hasFaces) {
-                    faces.west  = f || (f5 && j == 1 - r);
-                    faces.east  = f1 || (f5 && j == r - 1);
-                    faces.north = f2 || (f4 && k == 1 - r);
-                    faces.south = f3 || (f4 && k == r - 1);
-                }
-                m.set(p, m.cap, faces);
-            }
-    }
-    for (int i = 0; i < height; ++i) {
-        BlockPos p = above(pos, i);
-        if (!isSolidRender(c.region.getBlock(p))) m.set(p, m.stem, m.stem.faces);
-    }
-    return true;
-}
-
 } // namespace
 
 void registerMushrooms() {
@@ -383,8 +279,7 @@ void registerMushrooms() {
     registerType("twilightforest:canopy_red_smooth_mushroom", [](FeatureContext const& c) { return Canopy(c, Head::Smooth).place(); });
     registerType("twilightforest:canopy_red_spheroid_mushroom", [](FeatureContext const& c) { return Canopy(c, Head::Spheroid).place(); });
     registerType("twilightforest:canopy_red_flat_mushroom", [](FeatureContext const& c) { return Canopy(c, Head::Flat).place(); });
-    registerType("minecraft:huge_brown_mushroom", [](FeatureContext const& c) { return vanillaMushroom(c, false); });
-    registerType("minecraft:huge_red_mushroom", [](FeatureContext const& c) { return vanillaMushroom(c, true); });
+    gf::trees_ext::registerVanillaHugeMushrooms();
 }
 
 } // namespace gf::feature::trees

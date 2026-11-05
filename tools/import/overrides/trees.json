@@ -1,9 +1,345 @@
 {
   "patch": {
     "data/twilightforest/worldgen/configured_feature/tree/mangrove_tree.json": [
-      {"op": "add", "path": "/config/trunk_placer/base_height", "value": 7},
-      {"op": "add", "path": "/config/trunk_placer/height_rand_a", "value": 4},
-      {"op": "add", "path": "/config/trunk_placer/height_rand_b", "value": 0}
+      {
+        "op": "add",
+        "path": "/config/trunk_placer/base_height",
+        "value": 7
+      },
+      {
+        "op": "add",
+        "path": "/config/trunk_placer/height_rand_a",
+        "value": 4
+      },
+      {
+        "op": "add",
+        "path": "/config/trunk_placer/height_rand_b",
+        "value": 0
+      }
+    ],
+    "bp/blocks/twilight_oak_leaves.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:destructible_by_mining/item_specific_speeds",
+        "value": [
+          {
+            "item": "minecraft:shears",
+            "destroy_speed": 0.066667
+          },
+          {
+            "item": "minecraft:wooden_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:stone_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:iron_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:golden_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:diamond_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:netherite_sword",
+            "destroy_speed": 0.133333
+          }
+        ]
+      }
+    ],
+    "bp/blocks/canopy_leaves.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:destructible_by_mining/item_specific_speeds",
+        "value": [
+          {
+            "item": "minecraft:shears",
+            "destroy_speed": 0.066667
+          },
+          {
+            "item": "minecraft:wooden_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:stone_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:iron_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:golden_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:diamond_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:netherite_sword",
+            "destroy_speed": 0.133333
+          }
+        ]
+      }
+    ],
+    "bp/blocks/mangrove_leaves.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:destructible_by_mining/item_specific_speeds",
+        "value": [
+          {
+            "item": "minecraft:shears",
+            "destroy_speed": 0.066667
+          },
+          {
+            "item": "minecraft:wooden_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:stone_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:iron_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:golden_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:diamond_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:netherite_sword",
+            "destroy_speed": 0.133333
+          }
+        ]
+      }
+    ],
+    "bp/blocks/rainbow_oak_leaves.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:destructible_by_mining/item_specific_speeds",
+        "value": [
+          {
+            "item": "minecraft:shears",
+            "destroy_speed": 0.066667
+          },
+          {
+            "item": "minecraft:wooden_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:stone_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:iron_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:golden_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:diamond_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:netherite_sword",
+            "destroy_speed": 0.133333
+          }
+        ]
+      }
+    ],
+    "bp/blocks/time_leaves.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:destructible_by_mining/item_specific_speeds",
+        "value": [
+          {
+            "item": "minecraft:shears",
+            "destroy_speed": 0.066667
+          },
+          {
+            "item": "minecraft:wooden_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:stone_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:iron_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:golden_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:diamond_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:netherite_sword",
+            "destroy_speed": 0.133333
+          }
+        ]
+      }
+    ],
+    "bp/blocks/transformation_leaves.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:destructible_by_mining/item_specific_speeds",
+        "value": [
+          {
+            "item": "minecraft:shears",
+            "destroy_speed": 0.066667
+          },
+          {
+            "item": "minecraft:wooden_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:stone_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:iron_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:golden_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:diamond_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:netherite_sword",
+            "destroy_speed": 0.133333
+          }
+        ]
+      }
+    ],
+    "bp/blocks/mining_leaves.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:destructible_by_mining/item_specific_speeds",
+        "value": [
+          {
+            "item": "minecraft:shears",
+            "destroy_speed": 0.066667
+          },
+          {
+            "item": "minecraft:wooden_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:stone_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:iron_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:golden_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:diamond_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:netherite_sword",
+            "destroy_speed": 0.133333
+          }
+        ]
+      }
+    ],
+    "bp/blocks/sorting_leaves.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:destructible_by_mining/item_specific_speeds",
+        "value": [
+          {
+            "item": "minecraft:shears",
+            "destroy_speed": 0.066667
+          },
+          {
+            "item": "minecraft:wooden_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:stone_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:iron_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:golden_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:diamond_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:netherite_sword",
+            "destroy_speed": 0.133333
+          }
+        ]
+      }
+    ],
+    "bp/blocks/dark_leaves.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:destructible_by_mining/item_specific_speeds",
+        "value": [
+          {
+            "item": "minecraft:shears",
+            "destroy_speed": 0.666667
+          },
+          {
+            "item": "minecraft:wooden_sword",
+            "destroy_speed": 1.333333
+          },
+          {
+            "item": "minecraft:stone_sword",
+            "destroy_speed": 1.333333
+          },
+          {
+            "item": "minecraft:iron_sword",
+            "destroy_speed": 1.333333
+          },
+          {
+            "item": "minecraft:golden_sword",
+            "destroy_speed": 1.333333
+          },
+          {
+            "item": "minecraft:diamond_sword",
+            "destroy_speed": 1.333333
+          },
+          {
+            "item": "minecraft:netherite_sword",
+            "destroy_speed": 1.333333
+          }
+        ]
+      }
     ]
   }
 }

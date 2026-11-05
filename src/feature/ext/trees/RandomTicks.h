@@ -10,6 +10,15 @@
 //
 //     if (gf::feature::families::detail::randomTicked(block.getBlockType()))
 //         gf::feature::families::detail::randomTickAt(region, pos);
+//
+// U3's selftests also grow saplings with a seeded random (F11's SaplingBlock#advanceTree,
+// src/feature/families/Plants.cpp, used by F11's selftests): each sapling's tree then has a golden
+// volume hash.
+
+#include <functional>
+#include <string>
+
+#include "core/jrand/JRand.h"
 
 class BlockPos;
 class BlockSource;
@@ -21,5 +30,7 @@ namespace gf::feature::families::detail {
 void randomTickAt(BlockSource& region, BlockPos const& pos);
 /// Whether blocks of `type` have random tick handlers (the dispatch would tick them).
 [[nodiscard]] bool randomTicked(BlockType const& type);
+/// SaplingBlock#advanceTree of the sapling at `pos` with `random` (stage 0 -> 1, then the tree).
+void advanceSaplingWith(BlockSource& region, BlockPos const& pos, core::jrand::RandomSource& random);
 
 } // namespace gf::feature::families::detail

@@ -11,12 +11,15 @@
 //   Leaves.cpp        transformation leaves' runes, mangrove sapling water, hollow oak sapling
 //   Module.cpp        the module and the config section "trees"
 
+#include <cstdint>
+#include <map>
 #include <string>
 
 #include "nlohmann/json.hpp"
 
 #include "feature/features/Features.h"
 
+class Biome;
 class Block;
 class BlockPos;
 class BlockSource;
@@ -65,5 +68,25 @@ int performCoreEffect(Core core, BlockSource& region, BlockPos const& pos);
 [[nodiscard]] std::string coreDisabledMessage(Player const& player, Core core);
 /// The cores known to tick (selftests).
 [[nodiscard]] std::size_t activeCoreCount();
+/// Selftests: the transformation core turns columns into `biomeId` instead of the enchanted forest
+/// ("" restores it).
+void setTransformationTargetForTest(std::string biomeId);
+/// Whether the world has the enchanted forest biome (U1's behaviour pack biome).
+[[nodiscard]] bool hasTransformationTarget(BlockSource& region);
+/// The chunk resends of the transformation core so far (sent: LevelChunkPackets queued to players;
+/// refused: the publisher did not send).
+struct ChunkResendStats {
+    std::uint64_t sent    = 0;
+    std::uint64_t refused = 0;
+};
+[[nodiscard]] ChunkResendStats chunkResendStats();
+/// The minewood core's ore -> ground map (Bedrock ids).
+[[nodiscard]] std::map<std::string, std::string> miningCoreOres();
+/// HollowTreeStructure#checkSaplingClearance at the robust twilight oak sapling `pos`.
+[[nodiscard]] bool hollowTreeClearance(BlockSource& region, BlockPos const& pos);
+/// The leaf runes the server sent to players without the client mod so far.
+[[nodiscard]] std::uint64_t vanillaLeafRunesSent();
+/// "minecraft:plains" / "twilightforest:enchanted_forest" of a biome.
+[[nodiscard]] std::string biomeName(Biome const& biome);
 
 } // namespace gf::feature::trees
