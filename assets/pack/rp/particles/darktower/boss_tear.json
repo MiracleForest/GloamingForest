@@ -10,10 +10,27 @@
     },
     "events": {
       "shatter": {
-        "particle_effect": {
-          "effect": "gloamingforest:darktower_tear_shatter",
-          "type": "emitter"
-        }
+        "sequence": [
+          {
+            "particle_effect": {
+              "effect": "gloamingforest:darktower_tear_shatter",
+              "type": "emitter"
+            }
+          },
+          {
+            "randomize": [
+              {
+                "weight": 1,
+                "sound_effect": {
+                  "event_name": "entity.twilightforest.tear.break"
+                }
+              },
+              {
+                "weight": 1
+              }
+            ]
+          }
+        ]
       }
     },
     "components": {

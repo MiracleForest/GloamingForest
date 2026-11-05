@@ -3,7 +3,10 @@
     "entities": {
       "twilightforest:ur_ghast": {
         "volume": 16.0,
-        "pitch": [0.3, 0.7],
+        "pitch": [
+          0.3,
+          0.7
+        ],
         "events": {
           "ambient": "entity.twilightforest.ur_ghast.ambient",
           "hurt": "entity.twilightforest.ur_ghast.hurt",
@@ -12,7 +15,10 @@
       },
       "twilightforest:carminite_ghastguard": {
         "volume": 0.5,
-        "pitch": [0.8, 1.2],
+        "pitch": [
+          0.8,
+          1.2
+        ],
         "events": {
           "ambient": "entity.twilightforest.carminite_ghastguard.ambient",
           "hurt": "entity.twilightforest.carminite_ghastguard.hurt",
@@ -21,7 +27,10 @@
       },
       "twilightforest:carminite_ghastling": {
         "volume": 0.5,
-        "pitch": [0.8, 1.2],
+        "pitch": [
+          0.8,
+          1.2
+        ],
         "events": {
           "ambient": "entity.twilightforest.carminite_ghastling.ambient",
           "hurt": "entity.twilightforest.carminite_ghastling.hurt",
@@ -30,32 +39,62 @@
       },
       "twilightforest:carminite_golem": {
         "volume": 1.0,
-        "pitch": [0.8, 1.2],
+        "pitch": [
+          0.8,
+          1.2
+        ],
         "events": {
           "hurt": "entity.twilightforest.carminite_golem.hurt",
           "death": "entity.twilightforest.carminite_golem.death",
-          "step": { "sound": "entity.twilightforest.carminite_golem.step", "volume": 1.0, "pitch": 1.0 }
+          "step": {
+            "sound": "entity.twilightforest.carminite_golem.step",
+            "volume": 1.0,
+            "pitch": 1.0
+          }
         }
       },
       "twilightforest:carminite_broodling": {
         "volume": 1.0,
-        "pitch": [0.8, 1.2],
+        "pitch": [
+          0.8,
+          1.2
+        ],
         "events": {
           "ambient": "entity.twilightforest.carminite_broodling.ambient",
           "hurt": "entity.twilightforest.carminite_broodling.hurt",
           "death": "entity.twilightforest.carminite_broodling.death",
-          "step": { "sound": "entity.twilightforest.carminite_broodling.step", "volume": 0.15, "pitch": 1.0 }
+          "step": {
+            "sound": "entity.twilightforest.carminite_broodling.step",
+            "volume": 0.15,
+            "pitch": 1.0
+          }
         }
       },
       "twilightforest:towerwood_borer": {
         "volume": 1.0,
-        "pitch": [0.8, 1.2],
+        "pitch": [
+          0.8,
+          1.2
+        ],
         "events": {
           "ambient": "entity.twilightforest.towerwood_borer.ambient",
           "hurt": "entity.twilightforest.towerwood_borer.hurt",
           "death": "entity.twilightforest.towerwood_borer.death",
-          "step": { "sound": "entity.twilightforest.towerwood_borer.step", "volume": 0.15, "pitch": 1.0 }
+          "step": {
+            "sound": "entity.twilightforest.towerwood_borer.step",
+            "volume": 0.15,
+            "pitch": 1.0
+          }
         }
+      }
+    }
+  },
+  "individual_event_sounds": {
+    "events": {
+      "entity.twilightforest.tear.break": {
+        "sound": "entity.twilightforest.tear.break",
+        "volume": 0.5,
+        "pitch": 1.65
       }
     }
   }
