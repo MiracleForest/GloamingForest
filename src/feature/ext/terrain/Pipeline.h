@@ -26,6 +26,10 @@ namespace gf::terrain::ext {
 
 /// The ids of the steps registered for `stage`, in the order F5 runs them.
 [[nodiscard]] std::vector<std::string> stageStepIds(worldgen::Stage stage);
+/// Whether any step is registered for `stage` (cheap: no copies).
+[[nodiscard]] bool hasStageSteps(worldgen::Stage stage);
+/// Whether a chunk blanket F5 runs before the one registered as `id` exists.
+[[nodiscard]] bool hasBlanketBefore(std::string const& id);
 /// The ids of the registered chunk blankets, in the order F5 runs them.
 [[nodiscard]] std::vector<std::string> blanketIds();
 

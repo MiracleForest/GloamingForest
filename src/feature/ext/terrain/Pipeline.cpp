@@ -26,6 +26,18 @@ std::vector<std::string> stageStepIds(worldgen::Stage stage) {
     return out;
 }
 
+bool hasStageSteps(worldgen::Stage stage) {
+    auto p = worldgen::detail::providers();
+    if (!p) return false;
+    auto it = p->stages.find(stage);
+    return it != p->stages.end() && !it->second.empty();
+}
+
+bool hasBlanketBefore(std::string const& id) {
+    auto p = worldgen::detail::providers();
+    return p && !p->blankets.empty() && p->blankets.begin()->first < id;
+}
+
 std::vector<std::string> blanketIds() {
     std::vector<std::string> out;
     auto                     p = worldgen::detail::providers();
@@ -74,7 +86,8 @@ bool indexOrderVerified(LevelChunk& lc, int chunkMinY, int chunkMaxY) {
         if (!first) first = &b;
         else if (first != &b) varied = true;
     }
-    if (!varied || checked == 0) return wrong == 0 && checked > 0;    int expected = -1;
+    if (!varied || checked == 0) return wrong == 0 && checked > 0;
+    int expected = -1;
     verdict.compare_exchange_strong(expected, wrong == 0 ? 1 : 0);
     if (wrong) gf::log().warn("terrain: the subchunk block order is not x-z-y ({} of {} probes differ): waterlogged blocks stay unseen by the carvers", wrong, checked);
     return wrong == 0;
@@ -89,7 +102,14 @@ Block const* liquidLayerBlock(worldgen::Chunk const& chunk, int lx, int y, int l
     auto const* adapter = dynamic_cast<worldgen::detail::LevelChunkAdapter const*>(&chunk);
     if (!adapter) return nullptr;
     auto& lc = const_cast<worldgen::detail::LevelChunkAdapter*>(adapter)->levelChunk();
-    if (!indexOrderVerified(lc, chunk.minY(), chunk.maxY())) return nullptr;
+    // the order check runs once per chunk and thread until a varied chunk settles it for good
+    thread_local LevelChunk const* checkedChunk = nullptr;
+    thread_local bool              checkedOk    = false;
+    if (checkedChunk != &lc) {
+        checkedChunk = &lc;
+        checkedOk    = indexOrderVerified(lc, chunk.minY(), chunk.maxY());
+    }
+    if (!checkedOk) return nullptr;
     int         ly = 0;
     auto const* st = layerOf(lc, chunk.minY(), y, 1, &ly);
     if (!st) return nullptr;

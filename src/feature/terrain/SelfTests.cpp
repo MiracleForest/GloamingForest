@@ -754,23 +754,27 @@ constexpr std::array<char const*, 9> kLiveBiomes{"twilightforest:dark_forest", "
                                                  "twilightforest:snowy_forest", "twilightforest:enchanted_forest", "twilightforest:swamp",
                                                  "twilightforest:fire_swamp",   "twilightforest:thornlands",       "twilightforest:forest"};
 
-/// A spot well inside `biome` (its main biome on a 48-block square around it), searched on a
-/// 32-block grid around (x0, z0).
-std::optional<std::pair<int, int>> findBiome(std::string const& biome, int x0, int z0, int radius) {
-    for (int r = 0; r <= radius; r += 32)
-        for (int dx = -r; dx <= r; dx += 32)
-            for (int dz = -r; dz <= r; dz += 32) {
-                if (std::max(std::abs(dx), std::abs(dz)) != r) continue;
-                int x = x0 + dx, z = z0 + dz;
-                if (worldgen::mainBiomeAt(x, z) != biome) continue;
-                bool inside = true;
-                for (int k = 0; k < 4 && inside; ++k)
-                    inside = worldgen::mainBiomeAt(x + ((k & 1) ? 24 : -24), z + ((k & 2) ? 24 : -24)) == biome;
-                if (inside) return std::pair{x, z};
-            }
-    return std::nullopt;
+/// A spot well inside each biome of kLiveBiomes (its main biome on a 48-block square around it),
+/// searched in one pass over 32-block rings around (x0, z0), nearest first.
+std::map<std::string, std::pair<int, int>> findBiomes(int x0, int z0, int radius) {
+    std::map<std::string, std::pair<int, int>> found;
+    auto visit = [&](int x, int z) {
+        auto biome = worldgen::mainBiomeAt(x, z);
+        if (found.contains(biome) || std::find(kLiveBiomes.begin(), kLiveBiomes.end(), biome) == kLiveBiomes.end()) return;
+        for (int k = 0; k < 4; ++k)
+            if (worldgen::mainBiomeAt(x + ((k & 1) ? 24 : -24), z + ((k & 2) ? 24 : -24)) != biome) return;
+        found.emplace(biome, std::pair{x, z});
+    };
+    visit(x0, z0);
+    for (int r = 32; r <= radius && found.size() < kLiveBiomes.size(); r += 32)
+        for (int d = -r; d < r; d += 32) { // the ring's four edges, each corner once
+            visit(x0 + d, z0 - r);
+            visit(x0 + r, z0 + d);
+            visit(x0 - d, z0 + r);
+            visit(x0 - r, z0 - d);
+        }
+    return found;
 }
-
 // The client e2e's look at real Twilight Forest terrain: finds, around chunks no one generated
 // before, a spot in each landscape of kLiveBiomes the biome source (U1) gives (without one: the
 // forest column everywhere, one spot), logs each one ("terrain live view target ...") and sends the
@@ -787,8 +791,12 @@ GF_REGISTER_SELFTEST("terrain.live_view", [](Context& ctx) {
         ctx.info("no player tagged gf_terrain_live");
         return;
     }
-    if (!game::db::get(kLiveViewKey)) {
-        auto back = shown->getFeetPos();
+    // a return point kept by an aborted run is replaced unless the player still stands in the
+    // live view's area (x >= 60000 in the Twilight Forest), where that point is the one to go back to
+    auto here   = shown->getFeetPos();
+    bool inView = static_cast<int>(shown->getDimensionId()) == static_cast<int>(*twilight) && here.x >= 60000.0F;
+    if (!inView || !game::db::get(kLiveViewKey)) {
+        auto back = here;
         game::db::put(kLiveViewKey, Json{{"dim", static_cast<int>(shown->getDimensionId())}, {"x", back.x}, {"y", back.y}, {"z", back.z}});
     }
     auto stamp = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
@@ -800,10 +808,12 @@ GF_REGISTER_SELFTEST("terrain.live_view", [](Context& ctx) {
         int         x, z, h;
     };
     std::vector<Target> targets;
+    auto found = findBiomes(x0, z0, 1536);
     for (char const* b : kLiveBiomes)
-        if (auto at = findBiome(b, x0, z0, 1536)) {
-            auto h = gf::landmark::ext::firstOccupiedHeight(dim, at->first, at->second, worldgen::Heightmap::WorldSurfaceWg);
-            targets.push_back({b, at->first, at->second, h ? *h : 32});
+        if (auto it = found.find(b); it != found.end()) {
+            auto [x, z] = it->second;
+            auto h      = gf::landmark::ext::firstOccupiedHeight(dim, x, z, worldgen::Heightmap::WorldSurfaceWg);
+            targets.push_back({b, x, z, h ? *h : 32});
         }
     if (targets.empty()) {
         // no biome source: every column is the forest's (main biome '')

@@ -566,13 +566,8 @@ std::uint16_t classOf(std::uint16_t c, State const& s) {
 /// the chunk_blanketing blanket): F5's Stage::Noise steps run between the first two, its
 /// Stage::Surface steps and the blankets whose id sorts before ours between the last two.
 bool foreignWritersBetween(int stage) {
-    if (stage == 0) return !gf::terrain::ext::stageStepIds(worldgen::Stage::Noise).empty();
-    if (!gf::terrain::ext::stageStepIds(worldgen::Stage::Surface).empty()) return true;
-    for (auto const& id : gf::terrain::ext::blanketIds()) {
-        if (id == kBlanketId) break;
-        return true;
-    }
-    return false;
+    if (stage == 0) return gf::terrain::ext::hasStageSteps(worldgen::Stage::Noise);
+    return gf::terrain::ext::hasStageSteps(worldgen::Stage::Surface) || gf::terrain::ext::hasBlanketBefore(kBlanketId);
 }
 
 } // namespace
