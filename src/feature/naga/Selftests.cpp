@@ -817,7 +817,10 @@ GF_REGISTER_SELFTEST("naga.display", [](Context& ctx) -> ll::coro::CoroTask<> {
     ge::setHome(*naga, at, kHomeRadius);
     ctx.info("area at " + std::to_string(at.x) + " " + std::to_string(at.y) + " " + std::to_string(at.z));
     char const* const phases[] = {"shown", "charging", "dazed"};
-    int const         lengths[] = {200, 160, 160};
+    // the first phase holds 15 s before it is announced: the client scenario places its camera after
+    // the area line, so the shown screenshot must not fall into the charging phase
+    int const         lengths[] = {500, 160, 160};
+    int const         announce[] = {300, 20, 20};
     // the Naga's movement pattern keeps running and sets charging / dazed from its state every
     // tick, so the pattern is held in the phase's state (CIRCLE, CHARGE, DAZE) and the flags are
     // put back every tick
@@ -845,7 +848,7 @@ GF_REGISTER_SELFTEST("naga.display", [](Context& ctx) -> ll::coro::CoroTask<> {
             if (std::abs(p.x - (at.x + 0.5f)) > 0.3f || std::abs(p.z - (at.z + 0.5f)) > 0.3f)
                 m->teleportTo(Vec3{at.x + 0.5f, float(at.y), at.z + 0.5f}, true, 0, 0, false);
             faceCamera(*m);
-            if (t == 20) {
+            if (t == announce[ph]) {
                 auto prop = [&](char const* name) {
                     auto  props = m->getEntityContext().tryGetComponent<PropertyComponent>();
                     auto  v     = props ? props->tryGetBool(HashedString::computeHash(name)) : std::nullopt;
@@ -861,6 +864,7 @@ GF_REGISTER_SELFTEST("naga.display", [](Context& ctx) -> ll::coro::CoroTask<> {
     // nagahead_charging (NagaRenderer: deathTime > 0); the segments pop one by one
     if (auto* m = mobById(n.uid)) {
         faceCamera(*m);
+        show(*m, 0); // not dazed: NagaRenderer shows the dazed head over the dying one
         gf::combat::hurt(*m, 1000.0f, "minecraft:generic");
     }
     for (int t = 0; t < 400; t++) {
@@ -1032,7 +1036,7 @@ GF_REGISTER_SELFTEST("naga.courtyard_layout", [](Context& ctx) -> ll::coro::Coro
         }
     ctx.check(hedges > 20, "the maze has hedges (" + std::to_string(hedges) + " samples)");
     ctx.check(bricks > 5, "the wall has stone bricks (" + std::to_string(bricks) + " samples)");
-    static char const* const kGolden = "69dee0ca2240c26d"; // R19 screenshot review pending (client harness)
+    static char const* const kGolden = "69dee0ca2240c26d"; // R19: reviewed once with the client screenshots courtyard and courtyard-center
     ctx.check(hash == kGolden, "the golden volume hash " + std::string(kGolden) + " (got " + hash + ")");
 });
 
