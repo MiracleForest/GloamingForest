@@ -33,6 +33,7 @@
 #include "feature/combat/Combat.h"
 #include "feature/entity/Entity.h"
 #include "feature/ext/entity/EntityExt.h"
+#include "feature/ext/landmark/LandmarkExt.h"
 #include "feature/ext/landmark/LandmarkTest.h"
 #include "feature/inventory/Inventory.h"
 #include "feature/landmark/Landmark.h"
@@ -49,6 +50,7 @@ namespace gf::feature::naga::tests {
 using gf::selftest::Context;
 namespace ge     = gf::entity;
 using Difficulty = SharedTypes::Legacy::Difficulty;
+using core::BlockBox;
 
 namespace {
 

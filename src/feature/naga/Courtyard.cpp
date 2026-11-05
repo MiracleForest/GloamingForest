@@ -51,6 +51,7 @@ namespace st = gf::structure;
 namespace sb = gf::structure::bases;
 namespace cn = gf::core::naga;
 using Json   = nlohmann::json;
+using core::BlockBox;
 
 namespace {
 

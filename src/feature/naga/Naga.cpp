@@ -26,6 +26,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <numbers>
 #include <random>
 #include <unordered_map>
@@ -41,6 +42,7 @@
 #include "mc/platform/UUID.h"
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/ActorCategory.h"
+#include "mc/world/actor/ActorHurtResult.h"
 #include "mc/world/actor/ActorSwingSource.h"
 #include "mc/world/actor/Mob.h"
 #include "mc/world/actor/ai/navigation/PathNavigation.h"
@@ -1242,6 +1244,8 @@ void onSpawn(Actor& self) {
     addSegments(*naga, s);
     addGoals(*naga, s);
     ge::setMoveControl(*naga, [](Mob& m) { moveControl(m); });
+    // Naga#getBossBarOverlay NOTCHED_10, #getBossBarColor 0x5E9916
+    gf::boss::ext::setBarStyle(*naga, 0x5E9916, gf::boss::ext::Overlay::Notched10, false);
     ge::setProperty(self, "twilightforest:dazed", s.dazed);
     ge::setProperty(self, "twilightforest:charging", s.charging);
     ge::setProperty(self, "twilightforest:stunless", s.stunless);
