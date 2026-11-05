@@ -17,7 +17,7 @@ its vanilla fallbacks and its deviations from TF 4.8 (for A8's deviation list).
 | `src/feature/ext/tgear/ClientHooks.{h,cpp}` | Contract extension (client): the world FOV (`LevelRendererPlayer::getFov`), the local turn (`LocalPlayer::localPlayerTurn`) and secondary clicks in container screens (`ContainerScreenController::_handlePlaceOne / _handleTakeHalf`) (R18) |
 | `src/client/tgear/TgearClient.cpp` | Keys, zoom FOV and turn, item display HUD, red thread (RedThreadRenderer: connections, corners, glow), worn model state, item icon overlays, TF's tooltip with Shift descriptions |
 | `assets/pack/bp/items/tgear`, `assets/pack/bp/recipes/tgear`, `assets/pack/bp/blocks/tgear` | Wearable gear items, 35 BP recipes (one per potion variant), the red thread multiface block (thin per-face selection boxes, waterloggable) |
-| `assets/pack/rp/{models/blocks,particles,attachables,render_controllers}/tgear`, `assets/pack/rp/terrain_texture.d/tgear.json` | Red thread block geometry (RedThreadModel's centre piece), the perfect dodge particle (PortalParticle path), the vest / wings / goggles attachables and their render controllers |
+| `assets/pack/rp/{models/blocks,particles}/tgear`, `assets/pack/rp/terrain_texture.d/tgear.json` | Red thread block geometry (RedThreadModel's centre piece), the perfect dodge particle (PortalParticle path) |
 
 ## Vanilla fallbacks (players without the client mod)
 
@@ -32,8 +32,7 @@ its vanilla fallbacks and its deviations from TF 4.8 (for A8's deviation list).
 - **Tooltips**: lore carries the modifier list ("Ability:", "- <name>", "- Empty", "Hold Shift for info")
   and the stored items of the belt / goggles (players with the client mod get TF's tooltip from the
   client instead, with the Shift descriptions).
-- **Worn models**: the attachables draw the gloves, the belt on the wings and the goggles' "down" texture
-  from molang variables the client mod sets; a vanilla client draws the vest, wings and goggles alone.
+- **Worn models**: not drawn (see Deviations); the attachables of F2 show the vest, wings and goggles.
 
 ## Deviations (each with why Bedrock / LeviLamina cannot do it TF's way)
 
@@ -83,10 +82,22 @@ its vanilla fallbacks and its deviations from TF 4.8 (for A8's deviation list).
   renderer (F12's `registerItemRenderer`, Gui) draws TravellersGearItemModel's layers over the icon: the
   `*_broken` texture, then one overlay per modifier and the gloves overlay (from `broken/` while
   broken). Without the mod the base icon shows.
-- Zoom: the world FOV is multiplied in `LevelRendererPlayer::getFov` (ext hook): F12's
-  `camera::addFovModifier` hooks `LocalPlayer::getFieldOfViewModifier`, which the game does not use for
-  the world camera (round 1: identical screenshots). The turn is scaled by TF's slowZoomSensitivity at
-  Java's default sensitivity (Bedrock's sensitivity setting has another scale).
+- Zoom FOV: NOT ACHIEVED. Three hooks were tried and none narrows the drawn view: F12's
+  `camera::addFovModifier` (`LocalPlayer::getFieldOfViewModifier`), `LevelRendererPlayer::getFov` (called
+  ~250 times a second, base 70, its result multiplied by 0.3) and `CameraAPI::tryGetFOV` (ext/tgear
+  ClientHooks); zoom.png and zoom-off.png still differ only in the HUD (4 % of the pixels). The world
+  projection of 1.26.51 must come from another path (the vanilla camera ECS); routed to F12 / A8. The
+  zoom state, its sound, its channel and the turn slowdown (`LocalPlayer::localPlayerTurn`, TF's
+  slowZoomSensitivity at Java's default sensitivity) work.
+- Worn models (gloves on the vest, slim gloves, the belt on swap-hotbar wings, the goggles' "down"
+  texture while zooming): NOT ACHIEVED. Bedrock attachables cannot read per-stack item data, and attachable
+  molang cannot read the wearer's variables: `c.owning_entity->v.x` fails ("unknown variable
+  context.owning_entity") and `v.x` fails ("unknown variable", even with the wearer's parent_setup
+  defining it) - content log of the round 2 client runs. The client mod still sets
+  `variable.tgear_gloves / tgear_belt / tgear_zoom / tgear_glove_overlay` on every player for a future
+  render hook (an F12 entity renderer posed on the arm bones); the first-person glove overlay depends on it.
+- Item icon overlays: drawn through F12's Gui item renderer, but no overlay was visible in round 2's
+  inventory.png (F12's Gui renderer path is unverified for blits); routed to F12.
 - Red thread: the block model draws TF's 2 x 2 centre piece per face for everyone; the client mod draws the
   connections (same block, next thread, round the corner unless a full face is in the way) with the
   cutout material at the block's light, and while red thread is held or the vision is on, everything full
@@ -96,6 +107,8 @@ its vanilla fallbacks and its deviations from TF 4.8 (for A8's deviation list).
   one box per state (63 permutations; the union of the 1 px face slabs: Bedrock has a single selection
   box per block).
 - Wing visuals: the per-state wing animation is U12's (`tgmove`, TravellersWingsModel's animation).
+- Item display HUD map: the client e2e has no real map to show (a `minecraft:filled_map` without map data
+  has no view), so the map widget is not screenshotted.
 - Keys are keyboard bindings of the client mod (`tgear.zoom` Z, `tgear.swap_hotbar` V,
   `tgear.item_display_map_cycle` C, `tgear.red_thread_vision` unbound), TF's defaults. Bedrock's own keyboard
   binding of Z also opens a screen over the view: remap one of the two in the controls to zoom without it.
