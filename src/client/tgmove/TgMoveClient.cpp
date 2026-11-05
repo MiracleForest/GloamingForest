@@ -44,6 +44,7 @@
 #include "mc/world/actor/player/AbilitiesIndex.h"
 #include "mc/world/actor/player/LayeredAbilities.h"
 #include "mc/world/attribute/AttributeInstance.h"
+#include "mc/world/attribute/AttributeInstanceConstRef.h"
 #include "mc/world/attribute/AttributeInstanceRef.h"
 #include "mc/world/attribute/SharedAttributes.h"
 #include "mc/world/effect/MobEffectInstance.h"
@@ -183,7 +184,7 @@ void tick(movement::MoveState& s) {
     if (waterWalk) {
         if (auto surface = waterSurface(*p, feet, s.velocity.y)) {
             s.velocity.y = static_cast<float>(*surface - feet.y);
-            ctx.getOrAddComponent<OnGroundFlagComponent>();
+            if (!ctx.hasComponent<OnGroundFlagComponent>()) ctx.getRegistry().emplace<OnGroundFlagComponent>(ctx.mEntity);
             s.onGround     = true;
             l.waterWalking = true;
             auto& ds       = ctx.getOrAddComponent<WaterWalkSpeedEnchantComponent>();
@@ -316,7 +317,7 @@ void tick(movement::MoveState& s) {
     if (l.stepStart) {
         ++l.stepTicks;
         double hs = std::sqrt(s.velocity.x * s.velocity.x + s.velocity.z * s.velocity.z);
-        if (l.stepTicks > 2 && hs < 0.01 || l.stepTicks > 60) {
+        if ((l.stepTicks > 2 && hs < 0.01) || l.stepTicks > 60) {
             double dx = feet.x - l.stepStart->x, dz = feet.z - l.stepStart->z;
             log().info("tgmove: sidestep moved {:.2f} blocks", std::sqrt(dx * dx + dz * dz));
             l.stepStart.reset();

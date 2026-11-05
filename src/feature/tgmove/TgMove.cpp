@@ -227,7 +227,7 @@ int modSlot(Mod m) {
 
 bool brokenGear(ItemStack const& stack) {
     if (game::items::isEmpty(stack) || !game::items::idOf(stack).starts_with("twilightforest:travellers_")) return false;
-    auto const* item = stack.getItem();
+    Item const* item = stack.mItem.get();
     if (!item || !stack.isDamageableItem()) return false;
     return item->getMaxDamage() - 1 <= stack.getDamageValue();
 }

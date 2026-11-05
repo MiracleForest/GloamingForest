@@ -15,9 +15,11 @@
 #include "mc/entity/components_json_legacy/BreathableComponent.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/attribute/AttributeInstance.h"
+#include "mc/world/attribute/AttributeInstanceConstRef.h"
 #include "mc/world/attribute/AttributeInstanceRef.h"
 #include "mc/world/attribute/SharedAttributes.h"
 #include "mc/world/effect/MobEffectInstance.h"
+#include "mc/world/item/Item.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/Level.h"
 
@@ -81,7 +83,7 @@ GF_REGISTER_SELFTEST("tgmove.modifiers", [](Context& ctx) -> ll::coro::CoroTask<
     ctx.check(tm::modSlot(Mod::AquaticAgility) == 0 && tm::modSlot(Mod::SwiftSwim) == 1 && tm::modSlot(Mod::DoubleJump) == 2 && tm::modSlot(Mod::WaterWalk) == 3, "the equipment slot groups");
     // broken gear (max damage - 1) turns its modifiers off
     auto wings = p.getArmor(Slot::Legs);
-    if (auto const* item = wings.getItem()) {
+    if (Item const* item = wings.mItem.get()) {
         wings.setDamageValue(static_cast<short>(item->getMaxDamage() - 1));
         p.setArmor(Slot::Legs, wings);
         ctx.check(tm::brokenGear(p.getArmor(Slot::Legs)), "the wings are broken");
@@ -174,7 +176,7 @@ GF_REGISTER_SELFTEST("tgmove.sidestep", [](Context& ctx) -> ll::coro::CoroTask<>
     equip(p, 2, "twilightforest:travellers_wings", {"twilightforest:side_step"});
     co_await ctx.ticks(2);
     auto& p1 = ctx.player();
-    p1.setRotationWrapped(Vec2{0, 0});
+    const_cast<Vec2&>(p1.getRotation()) = Vec2{0, 0};
     Vec3 before = p1.getPosDelta();
     ctx.require(tm::tryPerformSidestep(p1, true, true), "a sidestep on the ground");
     Vec3 push = p1.getPosDelta() - before;
@@ -301,7 +303,7 @@ GF_REGISTER_SELFTEST("tgmove.straight_ahead", [](Context& ctx) -> ll::coro::Coro
     };
     float base = speed();
     equip(p, 3, "twilightforest:travellers_boots", {"twilightforest:straight_ahead"});
-    p.setRotationWrapped(Vec2{0, 0});
+    const_cast<Vec2&>(p.getRotation()) = Vec2{0, 0};
     p.lerpMotion(Vec3{0, 0, 0.2f}); // moving forward (yaw 0 faces +z)
     tm::tickPlayer(p);
     ctx.check(std::abs(speed() - base * 1.4f) < 1e-3f, "x1.4 moving forward: " + num(speed()) + " of " + num(base));
