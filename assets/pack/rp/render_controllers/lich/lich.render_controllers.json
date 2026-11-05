@@ -37,7 +37,7 @@
       "textures": ["Texture.default"],
       "part_visibility": [
         { "*": true },
-        { "loose_page_*": "!query.property('twilightforest:on_lectern')" }
+        { "loose_page_*": "!query.property('gf:on_lectern')" }
       ]
     }
   }

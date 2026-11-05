@@ -350,7 +350,7 @@ Mob* spawnMinion(Mob& lich, Vec3 const& pos, Actor* target) {
         if (s->babies < s->minionCount / 4) baby = randomOf(lich).nextInt(100) <= 20;
         if (baby) s->babies++;
     }
-    std::string id    = baby ? std::string(kMinion) + "<twilightforest:as_baby>" : std::string(kMinion);
+    std::string id    = baby ? std::string(kMinion) + "<gf:as_baby>" : std::string(kMinion);
     Mob*        minion = spawnMob(lich.getDimensionBlockSource(), id, pos, lich.getRotation().y);
     if (!minion) return nullptr;
     setMinionMaster(*minion, &lich);
@@ -376,7 +376,7 @@ bool tomeOnLectern(Actor const& tome) {
 void setTomeOnLectern(Actor& tome, bool on) {
     lecterns()[uidOf(tome)]     = on;
     ge::data(tome, "on_lectern") = on;
-    ge::setProperty(tome, "twilightforest:on_lectern", on);
+    ge::setProperty(tome, "gf:on_lectern", on);
 }
 
 int risingTicks(Actor const& zombie) {

@@ -7,11 +7,11 @@
       "is_summonable": true,
       "is_experimental": false,
       "properties": {
-        "twilightforest:on_lectern": { "type": "bool", "default": false, "client_sync": true }
+        "gf:on_lectern": { "type": "bool", "default": false, "client_sync": true }
       }
     },
     "component_groups": {
-      "twilightforest:active": {
+      "gf:active": {
         "minecraft:behavior.random_fly": { "priority": 5, "xz_dist": 10, "y_dist": 7, "y_offset": 0, "speed_multiplier": 1.0, "can_land_on_trees": false, "avoid_damage_blocks": true },
         "minecraft:behavior.look_at_player": { "priority": 6, "look_distance": 8 },
         "minecraft:behavior.random_look_around": { "priority": 6 },
@@ -23,7 +23,7 @@
           "entity_types": [ { "filters": { "test": "is_family", "subject": "other", "value": "player" }, "max_dist": 16 } ]
         }
       },
-      "twilightforest:lectern": {
+      "gf:lectern": {
         "minecraft:persistent": {}
       }
     },
@@ -47,20 +47,20 @@
       "minecraft:behavior.float": { "priority": 0 },
       "minecraft:environment_sensor": {
         "triggers": [
-          { "filters": { "test": "bool_property", "subject": "self", "domain": "twilightforest:on_lectern", "value": true }, "event": "twilightforest:to_lectern" },
-          { "filters": { "test": "bool_property", "subject": "self", "domain": "twilightforest:on_lectern", "value": false }, "event": "twilightforest:from_lectern" }
+          { "filters": { "test": "bool_property", "subject": "self", "domain": "gf:on_lectern", "value": true }, "event": "gf:to_lectern" },
+          { "filters": { "test": "bool_property", "subject": "self", "domain": "gf:on_lectern", "value": false }, "event": "gf:from_lectern" }
         ]
       }
     },
     "events": {
-      "minecraft:entity_spawned": { "add": { "component_groups": ["twilightforest:active"] } },
-      "twilightforest:to_lectern": {
-        "remove": { "component_groups": ["twilightforest:active"] },
-        "add": { "component_groups": ["twilightforest:lectern"] }
+      "minecraft:entity_spawned": { "add": { "component_groups": ["gf:active"] } },
+      "gf:to_lectern": {
+        "remove": { "component_groups": ["gf:active"] },
+        "add": { "component_groups": ["gf:lectern"] }
       },
-      "twilightforest:from_lectern": {
-        "remove": { "component_groups": ["twilightforest:lectern"] },
-        "add": { "component_groups": ["twilightforest:active"] }
+      "gf:from_lectern": {
+        "remove": { "component_groups": ["gf:lectern"] },
+        "add": { "component_groups": ["gf:active"] }
       }
     }
   }

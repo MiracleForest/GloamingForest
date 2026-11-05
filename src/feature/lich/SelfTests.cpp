@@ -2,6 +2,7 @@
 // U21 (lich): selftests (lich.*, testPos dx 2100-2199, rule R12).
 
 #include <cmath>
+#include <map>
 #include <string>
 
 #include "ll/api/coro/CoroTask.h"
@@ -28,7 +29,11 @@
 #include "feature/loot/Loot.h"
 #include "feature/projectile/Projectile.h"
 #include "feature/ext/entity/EntityExt.h"
+#include "feature/ext/landmark/LandmarkExt.h"
+#include "feature/ext/landmark/LandmarkTest.h"
+#include "feature/landmark/Landmark.h"
 #include "game/Items.h"
+#include "mod/Log.h"
 #include "selftest/SelfTest.h"
 
 namespace gf::feature::lich {
@@ -69,7 +74,7 @@ int countAround(Context& ctx, core::GlobalPos const& p, char const* id, float r)
     return n;
 }
 
-float attr(Actor& a, AttributeHandle const& h) {
+float attr(Actor& a, Attribute const& h) {
     auto i = a.getAttribute(h);
     return i.mPtr ? i.mPtr->mCurrentValue : -1.0f;
 }
@@ -357,6 +362,96 @@ GF_REGISTER_SELFTEST("lich.spawner_range", [](Context& ctx) -> ll::coro::CoroTas
     ctx.check(spawned, "a player 3 below wakes it");
     removeAround(ctx, spawner, kLich, 16.0f);
     ctx.cleanupBlock(spawner);
+});
+
+// The lich tower assembles: foyer, base, 12-15 slices, the boss room, its boundary and roof, with
+// wings (U22's rooms or the placeholder rooms). The piece boxes relative to the start give the
+// layout hash (logged; the e2e scenario compares it between runs of the same seed).
+GF_REGISTER_SELFTEST("lich.tower_layout", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto center = ctx.testPos(2150, 2).offset(0, 0, 400);
+    gf::landmark::ext::ScopedStart forced(kTowerKey, center);
+    ctx.require(forced && forced->generated, "forced a lich tower start");
+    auto pieces = gf::landmark::ext::startPieces(*forced);
+    std::map<std::string, int> counts;
+    std::uint64_t              hash = 1469598103934665603ull;
+    auto mix = [&](std::int64_t v) {
+        hash ^= static_cast<std::uint64_t>(v);
+        hash *= 1099511628211ull;
+    };
+    for (auto const& p : pieces) {
+        counts[p.type]++;
+        for (int v : {p.box.minX - center.x, p.box.minY - center.y, p.box.minZ - center.z, p.box.maxX - center.x, p.box.maxY - center.y, p.box.maxZ - center.z}) mix(v);
+    }
+    ctx.check(counts["twilightforest:TFLTTFoy"] == 1, "one foyer");
+    ctx.check(counts["twilightforest:TFLTCTBase"] == 1, "one tower base");
+    ctx.check(counts["twilightforest:TFLTCTTrim"] == 1, "the base trim");
+    int slices = counts["twilightforest:TFLTCTSeg"] - 1; // the boss boundary is a segment too
+    ctx.check(slices >= 12 && slices <= 15, "12-15 tower slices (" + std::to_string(slices) + ")");
+    ctx.check(counts["twilightforest:TFLTTBoss"] == 1 && counts["twilightforest:TFLTTBossRoof"] == 1, "the boss room and its roof");
+    ctx.check(counts["twilightforest:TFLTBridge"] >= 1, "wing bridges or covers");
+    ctx.check(counts["twilightforest:TFLTTRoom"] >= 1, "wing rooms (placeholders while U22's rooms are missing)");
+    std::string summary;
+    for (auto const& [type, n] : counts) summary += " " + type.substr(15) + "=" + std::to_string(n);
+    ctx.info("lich tower: " + std::to_string(pieces.size()) + " pieces," + summary + "; layout hash " + std::to_string(hash));
+    co_return;
+});
+
+// For the client e2e's screenshots: the Lich, a shadow clone, a minion, a Death Tome on a lectern,
+// a half-risen zombie and the projectiles in front of the real player for `hold` seconds, then a
+// lich tower generated 48 blocks ahead of it.
+GF_REGISTER_SELFTEST("lich.client_showcase", [](Context& ctx) -> ll::coro::CoroTask<> {
+    Player* real = nullptr;
+    if (auto level = ll::service::getLevel())
+        level->forEachPlayer(std::function<bool(Player&)>([&](Player& p) {
+            if (!p.isSimulatedPlayer()) real = &p;
+            return real == nullptr;
+        }));
+    if (!real) {
+        ctx.info("no real player: nothing to show");
+        co_return;
+    }
+    auto   f   = real->getFeetPos();
+    auto   v   = viewVector(*real);
+    double len = std::sqrt(double(v.x) * v.x + double(v.z) * v.z);
+    double fx = len > 1e-6 ? v.x / len : 0.0, fz = len > 1e-6 ? v.z / len : 1.0;
+    int    dim = dimOf(*real);
+    auto   ahead = [&](double d, double side, float dy = 0.0f) {
+        return Vec3{float(f.x + fx * d - fz * side), f.y + dy, float(f.z + fz * d + fx * side)};
+    };
+    auto* region = &real->getDimensionBlockSource();
+    std::vector<std::int64_t> shown;
+    Mob* lich = spawnMob(*region, kLich, ahead(6, 0));
+    if (lich) {
+        lichState(*lich)->attackCooldown = 100000;
+        shown.push_back(uidOf(*lich));
+        if (Mob* clone = spawnClone(*lich, ahead(6, -3))) {
+            lichState(*clone)->attackCooldown = 100000;
+            shown.push_back(uidOf(*clone));
+        }
+    }
+    if (Mob* minion = spawnMob(*region, kMinion, ahead(5, 3))) shown.push_back(uidOf(*minion));
+    if (Mob* tome = spawnMob(*region, kTome, ahead(4, -1.5, 1.0f))) shown.push_back(uidOf(*tome));
+    if (Mob* z = spawnMob(*region, kRising, ahead(4, 1.5))) {
+        setRisingTicks(*z, 100);
+        shown.push_back(uidOf(*z));
+    }
+    log().info("lich.client_showcase: mobs ready ({} shown)", shown.size());
+    for (int i = 0; i < 20 * 15; ++i) {
+        co_await ctx.ticks(1);
+        // keep them still for the screenshots
+        for (auto id : shown)
+            if (auto* m = mobById(id)) {
+                stopNavigation(*m);
+                if (isType(*m, kRising) && risingTicks(*m) > 110) setRisingTicks(*m, 100);
+            }
+    }
+    for (auto id : shown) removeById(id);
+    // the tower, generated now 48 blocks ahead
+    auto towerAt = ahead(48, 0);
+    bool placed  = gf::landmark::generateAt(kTowerKey, *region, BlockPos{int(towerAt.x), int(f.y), int(towerAt.z)});
+    log().info("lich.client_showcase: tower {} at {} {} {}", placed ? "placed" : "not placed", int(towerAt.x), int(f.y), int(towerAt.z));
+    (void)dim;
+    co_await ctx.ticks(20 * 20);
 });
 
 } // namespace gf::feature::lich

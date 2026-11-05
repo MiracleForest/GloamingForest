@@ -8,7 +8,7 @@
       "is_experimental": false
     },
     "component_groups": {
-      "twilightforest:baby": {
+      "gf:baby": {
         "minecraft:is_baby": {},
         "minecraft:scale": { "value": 0.5 },
         "minecraft:movement": { "value": 0.35 }
@@ -49,7 +49,7 @@
       "minecraft:ambient_sound_interval": { "value": 8.0, "range": 16.0, "event_name": "ambient" }
     },
     "events": {
-      "twilightforest:as_baby": { "add": { "component_groups": ["twilightforest:baby"] } }
+      "gf:as_baby": { "add": { "component_groups": ["gf:baby"] } }
     }
   }
 }

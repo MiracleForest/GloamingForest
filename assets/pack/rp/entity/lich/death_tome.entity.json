@@ -8,8 +8,8 @@
       "geometry": { "default": "geometry.twilightforest.death_tome" },
       "scripts": {
         "animate": [
-          { "base": "!query.property('twilightforest:on_lectern')" },
-          { "lectern": "query.property('twilightforest:on_lectern')" }
+          { "base": "!query.property('gf:on_lectern')" },
+          { "lectern": "query.property('gf:on_lectern')" }
         ]
       },
       "animations": {

@@ -1,0 +1,18 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "twilightforest:lich_tower/no_bridge",
+  "size": [1, 3, 1],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"minecraft:stone_bricks"},
+    {"Name":"minecraft:air"}
+  ],
+  "blocks": [
+    [1, 1], [2, 2]
+  ],
+  "jigsaw": [
+    {"pos":[0,1,0],"front":"north","top":"up","pool":"minecraft:empty","name":"gf:lich_tower/bridge","target":""},
+    {"pos":[0,1,0],"front":"south","top":"up","pool":"minecraft:empty","name":"gf:lich_tower/bridge_end","target":"gf:lich_tower/room"}
+  ]
+}
