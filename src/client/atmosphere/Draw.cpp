@@ -52,7 +52,7 @@ LevelRenderer* levelRenderer() {
 mce::MaterialPtr const* starsMaterial() {
     auto* lr = levelRenderer();
     if (!lr) return nullptr;
-    auto& player = lr->mLevelRendererPlayer.get();
+    auto const& player = lr->mLevelRendererPlayer;
     if (!player) return nullptr;
     auto const& m = player->starsMaterial.get();
     return m.mRenderMaterialInfoPtr.get() ? &m : nullptr;

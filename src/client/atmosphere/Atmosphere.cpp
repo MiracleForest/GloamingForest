@@ -55,6 +55,7 @@
 #include "mc/client/renderer/game/LevelRenderer.h"
 #include "mc/client/renderer/game/LevelRendererPlayer.h"
 #include "mc/client/sound/SoundEngine.h"
+#include "mc/deps/audio/ServerSoundHandle.h"
 #include "mc/comprehensive/ParticleType.h"
 #include "mc/deps/core/string/HashedString.h"
 #include "mc/deps/minecraft_renderer/renderer/Mesh.h"
@@ -339,7 +340,7 @@ void clientTick() {
     static int rainSoundTime = 0;
     float      urRain        = 0;
     float      levelRain     = 0;
-    if (auto& w = p->getDimension().mWeather.get()) levelRain = w->mRainLevel;
+    if (auto* w = p->getDimension().mWeather.get()) levelRain = w->mRainLevel;
     {
         std::lock_guard lock(s.mutex);
         s.inTwilight  = true;
@@ -454,9 +455,9 @@ void hideVanillaSky(ScreenContext& screen) {
     if (!lr) return;
     if (m.owner != lr) m = SkyMeshes{.owner = lr}; // a new level renderer (another world)
     if (!m.hidden) m.hidden = buildMesh(screen, {}, "gf_atmosphere_hidden");
-    auto& sun   = lr->mSunMesh.get();
-    auto& stars = lr->mStarsMesh.get();
-    auto& moons = lr->mMoonMesh.get();
+    auto& sun   = lr->mSunMesh;
+    auto& stars = lr->mStarsMesh;
+    auto& moons = lr->mMoonMesh;
     if (!m.swapped) {
         m.sun   = sun;
         m.stars = stars;
@@ -476,9 +477,9 @@ void restoreVanillaSky() {
     if (!m.swapped) return;
     auto* lr = levelRenderer();
     if (lr && lr == m.owner) {
-        lr->mSunMesh.get()   = m.sun;
-        lr->mStarsMesh.get() = m.stars;
-        for (int i = 0; i < 8; ++i) lr->mMoonMesh.get()[i] = m.moon[static_cast<std::size_t>(i)];
+        lr->mSunMesh   = m.sun;
+        lr->mStarsMesh = m.stars;
+        for (int i = 0; i < 8; ++i) lr->mMoonMesh[i] = m.moon[static_cast<std::size_t>(i)];
         log().info("atmosphere: sun, moon and stars restored");
     }
     m.swapped = false;
