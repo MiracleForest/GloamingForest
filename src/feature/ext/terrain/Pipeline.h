@@ -90,8 +90,6 @@ public:
     /// Empties the layer at a local position (Java replacing a waterlogged state replaces its fluid
     /// too; Bedrock's setBlock keeps the liquid layer).
     void clear(int lx, int y, int lz, Block const& air) const;
-    /// Puts `block` into the layer at a local position (selftests: a waterlogged block).
-    void set(int lx, int y, int lz, Block const& block) const;
 
 private:
     LevelChunk* mChunk = nullptr;

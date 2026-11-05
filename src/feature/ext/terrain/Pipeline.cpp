@@ -217,11 +217,6 @@ void LiquidLayer::clear(int lx, int y, int lz, Block const& air) const {
     mChunk->setExtraBlockSimple(chunkPos(lx, y, lz, mMinY), air);
 }
 
-void LiquidLayer::set(int lx, int y, int lz, Block const& block) const {
-    if (!mChunk || lx < 0 || lz < 0 || lx > 15 || lz > 15 || y < mMinY || y >= mMaxY) return;
-    mChunk->setExtraBlockSimple(chunkPos(lx, y, lz, mMinY), block);
-}
-
 std::unique_ptr<worldgen::Chunk> loadedGameChunk(BlockSource& source, int chunkX, int chunkZ) {
     auto level = ll::service::getLevel();
     if (!level) return nullptr;

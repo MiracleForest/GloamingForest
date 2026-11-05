@@ -917,9 +917,10 @@ GF_REGISTER_SELFTEST("terrain.handoff_pass", [](Context& ctx) {
 
 // ---- Bedrock's liquid layer -----------------------------------------------------------------------------------
 
-// TFCavesCarver asks BlockState#getFluidState: a waterlogged block (Bedrock: water in the liquid
-// layer of a real game chunk) is no replaceable block, and a water neighbour stops a carve. Runs
-// the carver's carveBlock on a loaded Twilight Forest chunk with water put into the liquid layer.
+// TFCavesCarver asks BlockState#getFluidState: a waterlogged neighbour (Bedrock: water in the liquid
+// layer of a real game chunk) stops a carve, and a waterlogged block is no replaceable block. Runs
+// the carver's carveBlock on a loaded Twilight Forest chunk; the water goes in with the game's own
+// BlockSource::setExtraBlock and the layer read (LiquidLayer::at) must agree with getExtraBlock.
 GF_REGISTER_SELFTEST("terrain.liquid_layer", [](Context& ctx) -> ll::coro::CoroTask<> {
     if (!gf::world::twilight()) {
         ctx.info("the Twilight Forest dimension is not registered (F4)");
@@ -929,7 +930,7 @@ GF_REGISTER_SELFTEST("terrain.liquid_layer", [](Context& ctx) -> ll::coro::CoroT
     auto s = anyState();
     ctx.require(s != nullptr, "generator");
     auto base = ctx.testPos(270, 2);
-    // P with both x neighbours inside its chunk, in the air over the test row (the stones around it go
+    // P with both x neighbours inside its chunk, in the air over the test row (the blocks around it go
     // back to air afterwards)
     int             px = ((base.x & 15) == 0) ? base.x + 1 : (((base.x & 15) == 15) ? base.x - 1 : base.x);
     core::GlobalPos P{base.dim, px, base.y + 3, base.z};
@@ -939,6 +940,8 @@ GF_REGISTER_SELFTEST("terrain.liquid_layer", [](Context& ctx) -> ll::coro::CoroT
     for (int dx = -1; dx <= 1; ++dx)
         for (int dy = -1; dy <= 3; ++dy)
             for (int dz = -1; dz <= 1; ++dz) ctx.setBlock({P.dim, P.x + dx, P.y + dy, P.z + dz}, "minecraft:stone");
+    // the neighbour: a block Bedrock lets hold water (a waterlogged slab)
+    ctx.setBlock({P.dim, P.x + 1, P.y, P.z}, "minecraft:stone_brick_slab");
     auto chunk = gf::terrain::ext::loadedGameChunk(*region, P.x >> 4, P.z >> 4);
     ctx.require(chunk != nullptr, "the game chunk");
     auto layer = gf::terrain::ext::LiquidLayer::of(*chunk);
@@ -946,31 +949,50 @@ GF_REGISTER_SELFTEST("terrain.liquid_layer", [](Context& ctx) -> ll::coro::CoroT
     auto const* water = kit::javaBlock("minecraft:water");
     auto const* air   = kit::javaBlock("minecraft:air");
     ctx.require(water && air, "water and air");
-    int                        lx = P.x & 15, lz = P.z & 15;
+    int  lx = P.x & 15, lz = P.z & 15;
+    auto name = [](Block const* b) { return b ? std::string(b->getTypeName()) : std::string("none"); };
+    // the layer read agrees with the game's at a position (an empty layer reads as air in the game)
+    auto agrees = [&](int x) {
+        Block const& game = region->getExtraBlock(BlockPos{x, P.y, P.z});
+        Block const* mine = layer.at(x & 15, P.y, lz);
+        return mine ? mine == &game : kit::isAir(game);
+    };
     auto                       stoneAt = [&](int x) { return ctx.blockAt({P.dim, x, P.y, P.z}) == "minecraft:stone"; };
     worldgen::ext::CarvingMask mask(chunk->minY(), chunk->maxY());
     worldgen::ext::CarverContext cc{P.x >> 4, P.z >> 4, 0, "twilightforest:tf_caves", nullptr, &mask};
-    // 1. a waterlogged block holds water: the carver keeps it
-    layer.set(lx, P.y, lz, *water);
-    ctx.check(layer.at(lx, P.y, lz) == water, "the liquid layer holds the water");
-    ctx.check(chunk->getBlock(lx, P.y, lz).getTypeName() == "minecraft:stone", "the standard layer keeps the stone");
-    ctx.check(!carveBlockAt(*s, false, *chunk, cc, P.x, P.y, P.z), "a waterlogged block is not carved");
-    ctx.check(stoneAt(P.x) && layer.at(lx, P.y, lz) == water, "the waterlogged block survives with its water");
-    // 2. emptying the layer
-    layer.clear(lx, P.y, lz, *air);
-    ctx.check(layer.at(lx, P.y, lz) == nullptr, "clear empties the liquid layer");
-    // 3. a waterlogged neighbour stops the carve
-    layer.set(lx + 1, P.y, lz, *water);
+    ctx.check(agrees(P.x) && agrees(P.x + 1), "an empty layer reads empty");
+    // 1. a waterlogged neighbour stops the carve
+    region->setExtraBlock(BlockPos{P.x + 1, P.y, P.z}, *water, 3);
+    ctx.check(
+        layer.at(lx + 1, P.y, lz) != nullptr && agrees(P.x + 1),
+        "the layer read sees the game's water (" + name(layer.at(lx + 1, P.y, lz)) + " / "
+            + name(&region->getExtraBlock(BlockPos{P.x + 1, P.y, P.z})) + ")"
+    );
     ctx.check(!carveBlockAt(*s, false, *chunk, cc, P.x, P.y, P.z), "a waterlogged neighbour stops the carve");
     ctx.check(stoneAt(P.x), "the block next to the water stays");
+    // 2. emptying the layer (Java's setBlockState replaces the fluid too)
     layer.clear(lx + 1, P.y, lz, *air);
-    ctx.check(layer.at(lx + 1, P.y, lz) == nullptr, "the neighbour's water is gone");
+    ctx.check(
+        layer.at(lx + 1, P.y, lz) == nullptr && agrees(P.x + 1),
+        "clear empties the liquid layer for the game too"
+    );
+    // 3. a waterlogged replaceable block: Bedrock may refuse water in stone; when it holds some, the
+    // carver keeps the block
+    region->setExtraBlock(BlockPos{P.x, P.y, P.z}, *water, 3);
+    ctx.check(agrees(P.x), "the layer read agrees with the game at the stone (" + name(layer.at(lx, P.y, lz)) + ")");
+    if (layer.at(lx, P.y, lz)) {
+        ctx.check(!carveBlockAt(*s, false, *chunk, cc, P.x, P.y, P.z), "a waterlogged block is not carved");
+        ctx.check(stoneAt(P.x), "the waterlogged block survives");
+        layer.clear(lx, P.y, lz, *air);
+    } else {
+        ctx.info("Bedrock keeps no water in stone: a waterlogged replaceable block cannot occur");
+    }
     // 4. without water the same block carves
     ctx.check(carveBlockAt(*s, false, *chunk, cc, P.x, P.y, P.z), "a dry block carves");
     ctx.check(!stoneAt(P.x), "the carved block is air (" + ctx.blockAt({P.dim, P.x, P.y, P.z}) + ")");
-    // leave no water behind (the stones and the carved block go back to air with the test's cleanup)
-    layer.clear(lx, P.y, lz, *air);
-    layer.clear(lx + 1, P.y, lz, *air);
+    // leave no water behind (the blocks go back to air with the test's cleanup)
+    region->setExtraBlock(BlockPos{P.x, P.y, P.z}, *air, 3);
+    region->setExtraBlock(BlockPos{P.x + 1, P.y, P.z}, *air, 3);
 });
 
 // ---- the world preset's saved-chunk check ------------------------------------------------------------------
