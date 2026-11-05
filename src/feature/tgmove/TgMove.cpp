@@ -321,6 +321,18 @@ double blockFriction(Block const& block) {
     return f > 0 && f < 1.5f ? static_cast<double>(f) : tg::kUnrestrainedFriction;
 }
 
+Vec2 agileRangerInput(Vec2 const& move) {
+    // Java: the use slowdown 0.2, then x 5 = the input as it was; Bedrock's slowdown is in the input
+    // (measured: 0.122 of a key's 1), so TF's input is the input without it, at most length 1
+    Vec2  tf{static_cast<float>(move.x / kBedrockItemUseSlowdown), static_cast<float>(move.y / kBedrockItemUseSlowdown)};
+    float l2 = tf.x * tf.x + tf.y * tf.y;
+    if (l2 > 1.0f) {
+        float l = std::sqrt(l2);
+        tf.x /= l, tf.y /= l;
+    }
+    return tf;
+}
+
 Vec3 inputDelta(Actor& a, Vec2 const& engineMove, Vec2 const& tfMove, bool onGround, bool sprinting) {
     double scale = sprinting ? 0.026 : 0.02; // LivingEntity#getFlyingSpeed of players
     if (onGround) {
@@ -361,8 +373,10 @@ Vec3 applyUnrestrained(Actor& a, PlayerState& st, bool on, Vec3 v, bool onGround
     if (on && st.unrHoney && !onGround && v.y > 0 && st.unrVyPre <= 0) {
         double power       = tg::jumpPower(effectAmplifier(a, kJumpBoostId));
         double enginePower = v.y / 0.98 + tg::kGravity;
-        // only the engine's honey jump (measured: 0.6 of the power), not a bounce or a push
-        auto j = std::abs(enginePower - power * kHoneyJumpFactor) < 0.03 ? tg::unrestrainedJump(v.y, power) : std::nullopt;
+        // only the engine's honey jump (measured: 0.6 of the power on the server copy, 0.74 as the client
+        // reads its velocity), not a bounce or a push
+        double ratio       = power > 0 ? enginePower / power : 0;
+        auto   j           = ratio > kHoneyJumpFactor - 0.1 && ratio < 0.85 ? tg::unrestrainedJump(v.y, power) : std::nullopt;
         if (j) {
             v.y            = static_cast<float>(j->vy);
             st.unrJumpLost = j->lost;
@@ -919,7 +933,7 @@ void tickPlayer(Player& player) {
         }
         if (has(mask, Mod::AgileRanger) && player.getItemUseDuration() > 0 && player.getVehicle() == nullptr && agileRangerItem(player.getCarriedItem()))
         {
-            tf = Vec2{tf.x * static_cast<float>(tg::kAgileRangerModifier), tf.y * static_cast<float>(tg::kAgileRangerModifier)}; // handleAgileRanger
+            tf = agileRangerInput(tf); // handleAgileRanger
             if (!st.loggedAgile && (move.x != 0 || move.y != 0)) {
                 st.loggedAgile = true;
                 log().info("tgmove: {} agile ranger, server input length while drawing {:.3f}", player.getRealName(), std::sqrt(move.x * move.x + move.y * move.y));

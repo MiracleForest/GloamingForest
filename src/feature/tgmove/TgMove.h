@@ -199,6 +199,11 @@ bool applyAgileRanger(Player& player, std::optional<float>& base, float& set, bo
 /// `engineMove` (x strafe, y forward) instead: on the ground speed x the block's friction factor,
 /// in the air the flying speed (0.02, 0.026 sprinting).
 [[nodiscard]] Vec3 inputDelta(Actor& a, Vec2 const& engineMove, Vec2 const& tfMove, bool onGround, bool sprinting);
+/// Bedrock's item use slowdown of the input (measured: a held key's input is 0.122 long while a bow
+/// is drawn; Java's is 0.2, which agile ranger's x5 cancels).
+inline constexpr double kBedrockItemUseSlowdown = 0.122;
+/// handleAgileRanger's input: Bedrock's input without its item use slowdown (at most length 1).
+[[nodiscard]] Vec2 agileRangerInput(Vec2 const& move);
 /// The friction the engine gives the block at `pos` (Block friction; 0.6 for most blocks).
 [[nodiscard]] double blockFriction(Block const& block);
 /// The engine's own slowdowns of a ground step on `blockId`, which unrestrained undoes (1 = none):

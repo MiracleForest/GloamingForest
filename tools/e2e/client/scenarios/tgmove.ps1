@@ -274,7 +274,7 @@ try {
     $without.swim    = Measure-Walk 'water' '/tp @s 317.5 -62.5 301.5 0 0' 1500
     $without.honey   = Measure-HoneyJump
     $results['agile ranger'] = "bow draw walk $($with.bow) with, $($without.bow) without (walk $($with.forward))"
-    if ($with.bow -lt 3 * $without.bow -or $with.bow -lt 0.6 * $with.forward) { Add-Failure "agile ranger: walking while drawing a bow $($with.bow) with, $($without.bow) without, walking $($with.forward)" }
+    if ($with.bow -lt 3 * $without.bow -or $with.bow -lt 0.85 * $with.forward) { Add-Failure "agile ranger: walking while drawing a bow $($with.bow) with, $($without.bow) without, walking $($with.forward)" }
     $results['unrestrained'] = "soul sand $($with.soul) / $($without.soul), cobweb $($with.web) / $($without.web), honey jump $($with.honey) / $($without.honey)"
     # TF: walking speed on soul sand (Bedrock's own slowdown there is milder than Java's 0.4)
     if ($with.soul -lt 0.9 * $with.forward -or $with.soul -lt 1.1 * $without.soul) { Add-Failure "unrestrained on soul sand: $($with.soul) with, $($without.soul) without, walk $($with.forward)" }
@@ -288,8 +288,12 @@ try {
     $sa = Get-LeviLog | Select-String -Pattern "${client}tgmove: straight ahead strafe ([-0-9.]+) -> ([-0-9.]+)" | Select-Object -Last 1
     if (-not $sa -or $sa.Line -notmatch 'strafe ([-0-9.]+) -> ([-0-9.]+)') { Add-Failure 'no straight ahead strafe line' }
     else {
-        $results['straight ahead strafe'] = "$($Matches[1]) -> $($Matches[2]) (TF / 1.4)"
-        if ([Math]::Abs([double]$Matches[2] * 1.4 - [double]$Matches[1]) -gt 0.01) { Add-Failure "straight ahead strafe $($Matches[1]) -> $($Matches[2])" }
+        # TF divides the raw strafe impulse by 1.4 and normalizes after: W + A (Bedrock 0.707, 0.707) -> 0.581
+        $raw = [double]$Matches[1]; $got = [double]$Matches[2]
+        $k = if ([Math]::Abs($raw) -gt 0.7 -and [Math]::Abs($raw) -lt 0.71) { 1.0 } else { $raw }
+        $want = if ($k -eq 1.0) { [Math]::Sign($raw) * (1 / 1.4) / [Math]::Sqrt(1 / 1.96 + 1) } else { $raw / 1.4 }
+        $results['straight ahead strafe'] = "$raw -> $got (TF $([Math]::Round($want, 3)))"
+        if ([Math]::Abs($got - $want) -gt 0.01) { Add-Failure "straight ahead strafe $raw -> $got, TF $want" }
     }
     $fov = Get-LeviLog | Select-String -Pattern "${client}tgmove: straight ahead fov x([0-9.]+)" | Select-Object -Last 1
     if (-not $fov) { Add-Failure 'the FOV was not compensated for straight ahead' } else { $results['straight ahead fov'] = $fov.Line -replace '.*tgmove: ', '' }

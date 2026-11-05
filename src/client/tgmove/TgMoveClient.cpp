@@ -356,7 +356,7 @@ void tick(movement::MoveState& s) {
         // handleAgileRanger: drawing a projectile weapon, the input x 5 (cancelling Java's 0.2 use
         // slowdown); where Bedrock's input carries its slowdown the velocity makes up the rest
         if (act(Mod::AgileRanger) && p->getItemUseDuration() > 0 && p->getVehicle() == nullptr && feature::tgmove::agileRangerItem(p->getCarriedItem())) {
-            tf = Vec2{tf.x * static_cast<float>(tg::kAgileRangerModifier), tf.y * static_cast<float>(tg::kAgileRangerModifier)};
+            tf = feature::tgmove::agileRangerInput(tf);
             if (!l.loggedAgileInput && (move.x != 0 || move.y != 0)) {
                 l.loggedAgileInput = true;
                 log().info("tgmove: agile ranger, input length while drawing {:.3f}", std::sqrt(move.x * move.x + move.y * move.y));
