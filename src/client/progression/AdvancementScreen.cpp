@@ -48,8 +48,9 @@ using screen::Rect;
 constexpr float kWinW = 252, kWinH = 140;
 constexpr float kInX = 9, kInY = 18, kInW = 234, kInH = 113;
 
-/// The left button went up since the drag began (the framework only routes presses).
-std::atomic<bool> gLeftReleased{false};
+/// The left button's state from the input thread (the framework only routes presses, and a press
+/// reaches the screen on the client thread after its release may already have happened).
+std::atomic<bool> gLeftDown{false};
 
 struct Node {
     std::string id, parent, title, desc, frame;
@@ -214,7 +215,6 @@ public:
     }
 
     void startDrag(float mx, float my) {
-        gLeftReleased = false;
         mDragging     = true;
         mDragX        = mx;
         mDragY        = my;
@@ -272,7 +272,7 @@ private:
             pan(dx, dy);
             mDragMoved += std::abs(dx) + std::abs(dy);
         }
-        if (gLeftReleased.exchange(false)) {
+        if (!gLeftDown.load()) {
             mDragging = false;
             if (mDragMoved > 0)
                 log().info("client screen: progression.advancements dragged to ({}, {})", static_cast<int>(std::floor(mScrollX)), static_cast<int>(std::floor(mScrollY)));
@@ -536,7 +536,7 @@ void registerAdvancementScreen() {
 void watchMouseRelease() {
     // the screen framework routes presses only; a drag ends when the left button goes up
     static auto listener = ll::event::EventBus::getInstance().emplaceListener<ll::event::MouseInputEvent>([](ll::event::MouseInputEvent& ev) {
-        if (ev.actionButtonId() == 1 && ev.buttonData() == 0) gLeftReleased = true;
+        if (ev.actionButtonId() == 1) gLeftDown = ev.buttonData() != 0;
     });
     (void)listener;
 }

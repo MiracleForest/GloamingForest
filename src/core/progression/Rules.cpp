@@ -11,6 +11,9 @@
 
 #include "core/progression/Rules.h"
 
+// the tree layout must round exactly as Java's float arithmetic: no fused multiply-adds
+#pragma STDC FP_CONTRACT OFF
+
 #include <algorithm>
 #include <deque>
 #include <functional>
@@ -103,7 +106,6 @@ bool LockedToastCountdown::step(bool lockedWithIcon) {
 // The same arithmetic as net.minecraft.advancements.TreeNodePosition (single-precision floats in
 // the same order of operations; tests/progression/TreeLayoutGolden.inc holds Java's own output).
 
-#pragma STDC FP_CONTRACT OFF
 
 namespace {
 

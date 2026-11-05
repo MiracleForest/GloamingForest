@@ -352,7 +352,8 @@ public:
         // captured in F10's lethal pipeline (last, so only deaths nobody prevents) and read back
         // when F10 fires onKilled after die()
         death::onLethal(-1000000, [](Actor& victim, combat::DamageInfo const& d) {
-            if (victim.isClientSide()) return false;
+            // only kills a player can be credited with (the attacker is the responsible entity)
+            if (victim.isClientSide() || !d.attacker || !d.attacker->isPlayer()) return false;
             KillSnapshot snap;
             if (auto* veh = victim.getVehicle()) snap.vehicle = std::make_shared<cp::EntityView>(entityView(*veh, false));
             if (d.direct && d.direct != d.attacker) snap.direct = entityView(*d.direct, false);

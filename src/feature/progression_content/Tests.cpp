@@ -594,10 +594,8 @@ GF_REGISTER_SELFTEST("progression.chicken_jockey", [](Context& ctx) -> ll::coro:
     playerById(id)->setSelectedItem(*jerky);
     // a blow whose direct entity is another entity (a projectile's place): not the jerky's holder
     {
-        auto* z = jockey("gf_jockey_a");
-        ctx.require(z != nullptr, "a jockey spawns");
+        ctx.require(jockey("gf_jockey_a") != nullptr, "a jockey spawns");
         co_await ctx.ticks(2);
-        z = nullptr;
         Actor* rider = nullptr;
         auto   level = ll::service::getLevel();
         for (auto* a : level->getRuntimeActorList())
@@ -609,8 +607,7 @@ GF_REGISTER_SELFTEST("progression.chicken_jockey", [](Context& ctx) -> ll::coro:
         ctx.check(!pr::has(*playerById(id), "twilightforest:chicken_jerky"), "a kill whose direct entity is not the player does not count");
     }
     {
-        auto* z = jockey("gf_jockey_b");
-        ctx.require(z != nullptr, "a second jockey spawns");
+        ctx.require(jockey("gf_jockey_b") != nullptr, "a second jockey spawns");
         co_await ctx.ticks(2);
         Actor* rider = nullptr;
         for (auto* a : ll::service::getLevel()->getRuntimeActorList())
