@@ -599,7 +599,9 @@ local function load_owners(projectdir, cfg)
                 -- an exact path beats every glob
                 for _, alt in ipairs(expand_braces(id)) do
                     local score = glob_score(alt) + (alt:find("[%*%?]") and 0 or 1000)
-                    table.insert(owners.paths, {pats = compile_glob(alt), owner = owner, glob = id, score = score})
+                    -- a unit-folder rule "<prefix>/**/<folder>/**" ranks by how deep its folder matches
+                    local folder = alt:match("^.+/%*%*/([^/%*%?]+)/%*%*$")
+                    table.insert(owners.paths, {pats = compile_glob(alt), owner = owner, glob = id, score = score, folder = folder})
                 end
             elseif kind and kind ~= "kind" then
                 owners.kinds[kind] = owners.kinds[kind] or {}
@@ -610,15 +612,34 @@ local function load_owners(projectdir, cfg)
     return owners
 end
 
+-- index of the deepest directory of relpath named folder (the file name itself does not count)
+local function folder_depth(relpath, folder)
+    local segs = relpath:split("/", {plain = true})
+    for i = #segs - 1, 1, -1 do
+        if segs[i] == folder then return i end
+    end
+    return -1
+end
+
+-- The most specific rule wins (most literal characters). Unit-folder rules compete as one group scored
+-- by their best member, and inside the group the folder nearest the file wins: rp/entity/hydra/x.json
+-- belongs to hydra, not to the unit named entity (tools/ci/ownership.ps1 resolves the same way).
 local function owner_of(owners, relpath)
-    local best, bestscore, tie = nil, -1, nil
+    local cands, groupscore = {}, -1
     for _, p in ipairs(owners.paths) do
         if glob_match(p.pats, relpath) then
-            if p.score > bestscore then
-                best, bestscore, tie = p, p.score, nil
-            elseif p.score == bestscore and p.owner ~= best.owner then
-                tie = p
-            end
+            table.insert(cands, p)
+            if p.folder and p.score > groupscore then groupscore = p.score end
+        end
+    end
+    local best, bestscore, bestdepth, tie = nil, -1, -1, nil
+    for _, p in ipairs(cands) do
+        local score, depth = p.score, 0
+        if p.folder then score, depth = groupscore, folder_depth(relpath, p.folder) * 10000 + p.score end
+        if score > bestscore or (score == bestscore and depth > bestdepth) then
+            best, bestscore, bestdepth, tie = p, score, depth, nil
+        elseif score == bestscore and depth == bestdepth and p.owner ~= best.owner then
+            tie = p
         end
     end
     if tie then return nil, string.format("ambiguous: %s (%s) and %s (%s)", best.glob, best.owner, tie.glob, tie.owner) end
