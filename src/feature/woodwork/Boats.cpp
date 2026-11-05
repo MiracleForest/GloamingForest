@@ -111,7 +111,7 @@ bool isPickable(Actor& e) {
 }
 
 /// Boat#canCollideWith (Boat.canVehicleCollide): other.canBeCollidedWith() (boats, shulkers) or
-/// other.isPushable() (living entities that are alive, not spectators and not on a ladder; boats;
+/// other.isPushable() (living entities that are alive and not spectators; boats;
 /// minecarts; never armor stands).
 bool collidesWithBoat(Actor& e) {
     if (!e.isAlive() || e.isSpectator()) return false;
@@ -119,7 +119,7 @@ bool collidesWithBoat(Actor& e) {
     if (!e.hasCategory(ActorCategory::Mob)) return false;
     auto const& type = e.getTypeName();
     if (type == "minecraft:armor_stand") return false;
-    return type == "minecraft:shulker" || !e.canBeginOrContinueClimbingLadder();
+    return true; // Java also skips a mob on a ladder (onClimbable); Bedrock has no such query here
 }
 
 /// BoatItem#use: the player's view hits a block or a fluid within reach; no entity contains the

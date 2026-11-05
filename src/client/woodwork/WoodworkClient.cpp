@@ -305,18 +305,29 @@ std::atomic<bool> gCrawled{false};
 /// under the 14 px ceiling), and leaves it outside.
 std::atomic<bool> gCrawlPose{false};
 
-void onCrawl(Json const&) { gCrawlPose = true; }
+/// Ticks left to get into the log after the click (the server's push takes a tick or two).
+std::atomic<int> gCrawlWait{0};
+bool             gCrawlInside = false; ///< client thread
+
+void onCrawl(Json const&) {
+    gCrawlWait = 20;
+    gCrawlPose = true;
+}
 
 void keepCrawlPose(Player& player, std::string const& id) {
     if (!gCrawlPose.load(std::memory_order_relaxed)) return;
     auto const* set    = ww::hollowLogOf(id);
     bool        inside = set && set->horizontal == id;
     if (inside) {
+        gCrawlInside = true;
         if (!player.isSwimming() && !player.isCrawling()) player.startSwimming();
-    } else {
-        gCrawlPose = false;
-        if (player.isSwimming() && !player.isInWater()) player.stopSwimming();
+        return;
     }
+    // not (yet) inside: wait for the push, then leave the pose once out of the log
+    if (!gCrawlInside && gCrawlWait.fetch_sub(1) > 0) return;
+    gCrawlPose   = false;
+    gCrawlInside = false;
+    if (player.isSwimming() && !player.isInWater()) player.stopSwimming();
 }
 
 void watchClimb(movement::MoveState& s) {

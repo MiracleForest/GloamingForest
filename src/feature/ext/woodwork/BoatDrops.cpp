@@ -90,8 +90,7 @@ void destroyWith(Actor& boat, bool chest, Origin&& origin) {
     std::optional<std::string> tf;
     if (fn && !boat.getDimensionBlockSource().getLevel().isClientSide()) tf = fn(boat);
     std::string expected = tf ? expectedDrop(boat, chest) : std::string();
-    if (!tf || expected.empty()) {
-        if (tf) log().warn("woodwork: unknown boat wood {} of {}; its drop is kept", static_cast<int>(static_cast<Boat&>(boat).getWoodID()), boat.getTypeName());
+    if (!tf) {
         origin();
         return;
     }
@@ -108,10 +107,30 @@ void destroyWith(Actor& boat, bool chest, Origin&& origin) {
     // the new item actors of the expected item; a chest boat also drops its chest's contents, so
     // the own drop is the plain stack (contents with data or several items are never taken). If the
     // chest held the same plain boat item, the stacks are identical: either one is the drop.
+    // the exact item first; if the game's item is named otherwise (a wood the table spells
+    // differently), the one new plain item of the boat kind (a chest boat's: a chest boat item)
+    ItemActor* own = nullptr;
     for (auto* a : itemsAround(boat)) {
-        if (before.contains(idOf(*a))) continue; // there before this destroy: not its drop
-        auto& stack = a->item();
-        if (!isOwnDrop(stack, expected)) continue;
+        if (!before.contains(idOf(*a)) && isOwnDrop(a->item(), expected)) {
+            own = a;
+            break;
+        }
+    }
+    if (!own) {
+        for (auto* a : itemsAround(boat)) {
+            if (before.contains(idOf(*a))) continue;
+            auto const& st = a->item();
+            auto        id = game::items::idOf(st);
+            bool kind = id.starts_with("minecraft:") && (chest ? (id.ends_with("_chest_boat") || id.ends_with("_chest_raft")) : (id.ends_with("_boat") || id.ends_with("_raft")) && id.find("_chest_") == std::string::npos);
+            if (kind && st.mCount == 1) {
+                own = a;
+                log().warn("woodwork: the game dropped {} for a {} (expected {})", id, boat.getTypeName(), expected);
+                break;
+            }
+        }
+    }
+    if (own) {
+        auto* a = own;
         Vec3 at     = a->getPosition();
         Vec3 motion = a->getPosDelta();
         int  delay  = a->pickupDelay();

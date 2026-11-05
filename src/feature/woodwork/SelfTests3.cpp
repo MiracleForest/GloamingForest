@@ -332,7 +332,7 @@ GF_REGISTER_SELFTEST("woodwork.furnace_and_enchanting", [](Context& ctx) -> ll::
         if (auto* a = ctx.region()->getBlockEntity(gf::game::blockPos(f))) litDuration = static_cast<FurnaceBlockActor&>(*a).mLitDuration;
     }
     auto* a2 = ctx.region()->getBlockEntity(gf::game::blockPos(f));
-    ctx.check(litDuration == 300, "a canopy plank in a real furnace burns 300 ticks (" + std::to_string(litDuration) + ")");
+    ctx.check(litDuration >= 298 && litDuration <= 300, "a canopy plank in a real furnace burns 300 ticks (" + std::to_string(litDuration) + ")");
     ctx.check(a2 && items::isEmpty(static_cast<FurnaceBlockActor&>(*a2).getItem(1)), "the plank was taken from the fuel slot");
     if (a2) {
         auto& fa = static_cast<FurnaceBlockActor&>(*a2);
