@@ -9,6 +9,7 @@
 #include "core/atmosphere/Atmosphere.h"
 
 using namespace gf::core::atmosphere;
+using gf::core::BlockBox;
 
 TEST(Atmosphere, FixedTimeAndDaylight) {
     // DimensionType#timeOfDay(13000): d0 = 13000 / 24000 - 0.25, (2 d0 + 0.5 - cos(d0 pi) / 2) / 3
