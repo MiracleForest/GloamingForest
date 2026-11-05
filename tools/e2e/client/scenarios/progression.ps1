@@ -53,20 +53,27 @@ try {
     Save-Screenshot 'advancement-tree' | Out-Null
 
     if (Test-ClientTrace) {
-        # hover hill1: its description names the Redcap (the "with" argument of the component)
+        # hover a node whose description takes arguments (the "with" list of its component): the
+        # first of these in view; its hover names the argument and shows no %s
         Update-LeviLog
-        $cell = Get-LeviLog -Since $mark | Select-String -Pattern 'client screen: progression\.advancements cell twilightforest:hill1 at ([\d.]+) ([\d.]+)' | Select-Object -Last 1
-        if (-not $cell) { $failures.Add('hill1 is not in view in the tree') }
+        $cells = @(Get-LeviLog -Since $mark | Select-String -Pattern 'client screen: progression\.advancements cell (\S+) at ([\d.]+) ([\d.]+)')
+        $target = $null
+        foreach ($want in @(@('twilightforest:hill1', 'Redcap'), @('twilightforest:progress_merge', 'Hydra'), @('twilightforest:progress_lich', 'Lich'), @('twilightforest:naga_armors', 'Naga'))) {
+            $hit = $cells | Where-Object { $_.Matches[0].Groups[1].Value -eq $want[0] } | Select-Object -Last 1
+            if ($hit) { $target = @($want[0], $want[1], $hit); break }
+        }
+        if (-not $target) { $failures.Add('no node with a described argument is in view in the tree') }
         else {
-            $hx = [double]::Parse($cell.Matches[0].Groups[1].Value, [Globalization.CultureInfo]::InvariantCulture)
-            $hy = [double]::Parse($cell.Matches[0].Groups[2].Value, [Globalization.CultureInfo]::InvariantCulture)
+            $hx = [double]::Parse($target[2].Matches[0].Groups[2].Value, [Globalization.CultureInfo]::InvariantCulture)
+            $hy = [double]::Parse($target[2].Matches[0].Groups[3].Value, [Globalization.CultureInfo]::InvariantCulture)
             $hmark = Get-LogMark
             Move-Mouse $hx $hy -Relative
             try {
-                $line = Wait-LogLine 'client screen: progression\.advancements hover twilightforest:hill1 ' 10 -Since $hmark
+                $line = Wait-LogLine "client screen: progression\.advancements hover $([regex]::Escape($target[0])) " 10 -Since $hmark
                 $text = "$line"
-                if ($text -notmatch 'Redcap' -or $text -match '%s') { $failures.Add("hill1's hover description lacks its argument: $text") }
-            } catch { $failures.Add('hovering hill1 showed no hover') }
+                Write-Host "[progression] $text"
+                if ($text -notmatch $target[1] -or $text -match '%s') { $failures.Add("$($target[0])'s hover description lacks its argument: $text") }
+            } catch { $failures.Add("hovering $($target[0]) showed no hover") }
             Start-Sleep -Milliseconds 1200 # the fade reaches 0.3
             Save-Screenshot 'advancement-hover' | Out-Null
             # drag the tree with the left button: down on an empty spot of the tree, move, up
