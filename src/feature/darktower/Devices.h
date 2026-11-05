@@ -35,8 +35,15 @@ void activateBuiltBlocks(BlockSource& region, BlockPos const& pos);
 [[nodiscard]] int trapCounter(GlobalPos const& pos);
 
 /// The ghast traps known in dimension `dim` within `radius` of `center` (the POI scan of
-/// UrGhast#scanForTraps without the sky test).
+/// UrGhast#scanForTraps without the sky test): the persisted index (gf:darktower:traps:<dim>), so
+/// traps in chunks not loaded or not ticked yet are found too (a loaded position that holds no
+/// ghast trap any more is dropped from the index).
 [[nodiscard]] std::vector<BlockPos> ghastTraps(int dim, BlockPos const& center, int radius);
+/// Adds / removes a ghast trap position of the index (POI registration on place, removal and
+/// structure generation; thread safe: the generation runs on worldgen threads).
+void indexGhastTrap(int dim, BlockPos const& pos, bool present);
+/// Whether the index holds `pos` (selftests).
+[[nodiscard]] bool ghastTrapIndexed(int dim, BlockPos const& pos);
 
 /// Registers the devices' handlers (module install).
 void install();

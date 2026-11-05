@@ -58,6 +58,9 @@ void queueGenerated(int dim, BlockPos const& pos, nlohmann::json job);
 /// The jobs still waiting (selftests).
 [[nodiscard]] std::size_t pendingGenerated();
 
+/// Runs `fn` once every server tick, after the scheduled ticks and the device tickers.
+void onEveryTick(std::function<void()> fn);
+
 /// Installs the runtime (the module's install / uninstall).
 void install();
 void uninstall();

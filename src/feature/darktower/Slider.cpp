@@ -41,6 +41,8 @@ constexpr char   kAxis[]      = "twilightforest:axis";
 constexpr char   kDelay[]     = "twilightforest:delay";
 constexpr char   kData[]      = "darktower:slide";
 
+bool isWater(Block const& b);
+
 bool anyPlayerInRange(BlockSource& region, BlockPos const& pos) { return nearestPlayer(dimOf(region), center(pos), kPlayerRange) != nullptr; }
 
 bool sameState(BlockSource& region, BlockPos const& a, BlockPos const& b) { return &region.getBlock(a) == &region.getBlock(b); }
@@ -89,6 +91,10 @@ void sliderTick(BlockSource& region, BlockPos const& pos, Block const& block) {
             d["time"] = 0;
             d["axis"] = textState(block, kAxis);
             d["delay"] = game::intState(block, kDelay).value_or(0);
+            // SlideBlock#myState: the whole state (Bedrock keeps waterlogging as the water of the
+            // liquid layer, so that is part of it too)
+            d["states"] = blockStates(block);
+            d["water"]  = isWater(region.getLiquidBlock(pos));
             d["pos"]  = {pos.x + 0.5, double(pos.y), pos.z + 0.5};
             d["vel"]  = {0.0, 0.0, 0.0};
             d["home"] = {pos.x, pos.y, pos.z};
@@ -111,6 +117,29 @@ void sliderTick(BlockSource& region, BlockPos const& pos, Block const& block) {
         }
     }
     scheduleUpdate(region, pos);
+}
+
+bool isWater(Block const& b) {
+    auto id = game::blockId(b);
+    return id == "minecraft:water" || id == "minecraft:flowing_water";
+}
+
+/// Level#isUnobstructed(state, pos, CollisionContext.empty()): no other entity that blocks building
+/// intersects the slider's shape at `pos` (the 6 x 6 px column along its axis).
+bool unobstructed(BlockSource& region, BlockPos const& pos, Actor& self, std::string const& axis) {
+    float lo = 0.3125f, hi = 0.6875f;
+    Vec3  mn{pos.x + lo, pos.y + lo, pos.z + lo}, mx{pos.x + hi, pos.y + hi, pos.z + hi};
+    if (axis == "x") mn.x = float(pos.x), mx.x = pos.x + 1.0f;
+    else if (axis == "z") mn.z = float(pos.z), mx.z = pos.z + 1.0f;
+    else mn.y = float(pos.y), mx.y = pos.y + 1.0f;
+    for (auto* a : actorsIn(region, AABB{mn, mx})) {
+        if (a == &self || !a->isAlive() || a->isSpectator()) continue;
+        auto t = typeOf(*a);
+        // Entity#blocksBuilding: living entities, boats, minecarts...; not items, xp or projectiles
+        if (t == "minecraft:item" || t == "minecraft:xp_orb" || t == "minecraft:arrow" || t == id::SlideEntity) continue;
+        if (asMob(*a) || t == "minecraft:boat" || t == "minecraft:chest_boat" || t.find("minecart") != std::string::npos) return false;
+    }
+    return true;
 }
 
 void dropSelf(Actor& self) {
@@ -172,9 +201,11 @@ void slideTick(Actor& self) {
     self.teleportTo(p, false, 0, 0, false);
     if (time % 5 == 0) soundAt(region, p, "block.twilightforest.slider.move", 1.0f, 0.9f + random().nextFloat() * 0.4f);
     BlockPos pos{int(std::floor(p.x)), int(std::floor(p.y)), int(std::floor(p.z))};
-    auto const* state = game::blockWithStates(id::Slider, {{kAxis, d["axis"].get<std::string>()}, {kDelay, d.value("delay", 0)}});
+    Json const  states = d.contains("states") ? d["states"] : Json{{kAxis, d["axis"].get<std::string>()}, {kDelay, d.value("delay", 0)}};
+    bool const  water  = d.value("water", false);
+    auto const* state  = game::blockWithStates(id::Slider, states);
     if (time == 1) {
-        if (!state || &region.getBlock(pos) != state) {
+        if (!state || &region.getBlock(pos) != state || isWater(region.getLiquidBlock(pos)) != water) {
             self.remove();
             return;
         }
@@ -186,8 +217,16 @@ void slideTick(Actor& self) {
     }
     if (hit) {
         self.remove();
-        if (state && isAir(region, pos)) set(region, pos, id::Slider, {{kAxis, d["axis"].get<std::string>()}, {kDelay, d.value("delay", 0)}});
-        else dropSelf(self);
+        // level.isUnobstructed(myState, pos, CollisionContext.empty()): no entity in the way of the
+        // slider's shape there (the block that is there is replaced, as setBlockAndUpdate does)
+        if (state && unobstructed(region, pos, self, d["axis"].get<std::string>())) {
+            set(region, pos, id::Slider, states);
+            if (water) {
+                if (auto const* w = game::blockWithStates("minecraft:water", Json::object())) region.setExtraBlock(pos, *w, 3);
+            }
+        } else {
+            dropSelf(self);
+        }
         return;
     }
     if ((time > 100 && (pos.y < region.getMinHeight() + 1 || pos.y > region.getMaxHeight())) || time > 600) {

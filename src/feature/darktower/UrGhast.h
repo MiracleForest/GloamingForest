@@ -19,6 +19,11 @@ namespace gf::feature::darktower::ghasts {
 
 /// The ghast trap's effect on an Ur-Ghast: setInTantrum(false), setInTrap() (20 ticks), noPhysics.
 void trapUrGhast(Mob& ghast);
+/// Whether the Ur-Ghast collides with blocks (Java's !noPhysics): false until its first flight point
+/// and while a trap pulls it.
+[[nodiscard]] bool solid(Actor& ghast);
+/// Sets Java's noPhysics of the Ur-Ghast (selftests; the flight goal and the trap set it in play).
+void setSolid(Mob& ghast, bool solid);
 /// UrGhast#resetDamageUntilNextPhase.
 void resetPhaseDamage(Mob& ghast);
 

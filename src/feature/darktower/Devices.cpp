@@ -24,6 +24,7 @@
 #include <cmath>
 #include <deque>
 #include <map>
+#include <mutex>
 #include <set>
 #include <unordered_map>
 
@@ -51,6 +52,7 @@
 #include "feature/tags/Tags.h"
 #include "game/Blocks.h"
 #include "game/Items.h"
+#include "game/WorldDb.h"
 #include "mod/Log.h"
 
 namespace gf::feature::darktower::devices {
@@ -73,18 +75,36 @@ bool hasVanished(std::string const& id) { return id == id::ReappearingBlock; }
 
 BlockPos rel(BlockPos const& p, int f) { return offset(p, static_cast<Facing>(f)); }
 
-Json statesOf(Block const& block) {
-    Json j = Json::object();
-    for (auto const& [k, v] : game::statesOf(block)) {
-        if (v == "true" || v == "false") j[k] = v == "true";
-        else {
-            char* end = nullptr;
-            long  n   = std::strtol(v.c_str(), &end, 10);
-            if (end && *end == '\0' && !v.empty()) j[k] = static_cast<int>(n);
-            else j[k] = v;
+Json statesOf(Block const& block) { return blockStates(block); }
+
+// ---- animateTick sparkles -----------------------------------------------------------------------------
+
+/// The vanishing-family blocks that went active: while one stays active, VanishingBlock#animateTick
+/// sparkles it whenever the client's random display tick picks it (animateTickChance per tick).
+std::set<GlobalPos>& sparkling() {
+    static std::set<GlobalPos> s;
+    return s;
+}
+
+void tickSparkles() {
+    auto& all = sparkling();
+    for (auto it = all.begin(); it != all.end();) {
+        auto* region = game::regionOf(it->dim);
+        auto  bp     = game::blockPos(*it);
+        if (!region || !loaded(*region, bp)) {
+            it = all.erase(it);
+            continue;
         }
+        Block const& b  = region->getBlock(bp);
+        auto         id = game::blockId(b);
+        bool family = id == id::VanishingBlock || id == id::ReappearingBlock || id == id::UnbreakableVanish || id == id::LockedVanish;
+        if (!family || !boolState(b, "twilightforest:active")) {
+            it = all.erase(it);
+            continue;
+        }
+        if (random().nextDouble() < animateTickChance(*region, bp)) sparkle(*region, bp);
+        ++it;
     }
-    return j;
 }
 
 /// setBlockAndUpdate(pos, state.setValue(...)) for the block now at `pos`.
@@ -110,12 +130,12 @@ void vanishingTick(BlockSource& region, BlockPos const& pos, Block const& block)
         } else {
             sound(region, pos, "block.twilightforest.reappearing_block.vanish", 0.3f, 0.5f);
             setStates(region, pos, {{kActive, true}});
+            sparkling().insert(game::globalPos(region, pos));
             runtime::schedule(region, pos, 15);
         }
         return;
     }
     if (!active) return;
-    sparkle(region, pos); // VanishingBlock#animateTick while active
     if (hasVanished(id)) {
         setStates(region, pos, {{kActive, false}, {kVanished, true}});
         runtime::schedule(region, pos, 80);
@@ -229,7 +249,7 @@ void builderDevice(BlockSource& region, BlockPos const& pos, Block const& block)
     }
     Block const& now = region.getBlock(pos);
     if (textState(now, kState) != "builder_active") return; // the ticker exists only while active
-    if (random().nextInt(4) == 0) sparkle(region, pos);    // BuilderBlock#animateTick
+    if (random().nextDouble() < animateTickChance(region, pos)) sparkle(region, pos); // BuilderBlock#animateTick
     auto& s   = builders()[gp];
     int   dim = dimOf(region);
     auto  r   = dt::tickBuilder(
@@ -549,6 +569,53 @@ std::map<GlobalPos, Trap>& traps() {
     return m;
 }
 
+/// The ghast trap POIs (TFPOITypes.GHAST_TRAP) per dimension, persisted as gf:darktower:traps:<dim>
+/// (gf:darktower:trap_dims lists the dimensions). Loaded on the server thread when the world is
+/// ready (merged with what the generation added before); saved with the world.
+struct TrapIndex {
+    std::mutex                                     mutex;
+    std::map<int, std::set<std::array<int, 3>>>    byDim;
+    bool                                           loaded = false;
+    bool                                           dirty  = false;
+    void load() {
+        std::lock_guard lock(mutex);
+        if (loaded || !game::db::available()) return;
+        loaded = true;
+        auto dims = game::db::get("gf:darktower:trap_dims");
+        if (!dims || !dims->is_array()) return;
+        for (auto const& d : *dims) {
+            if (!d.is_number_integer()) continue;
+            int  dim = d.get<int>();
+            auto arr = game::db::get("gf:darktower:traps:" + std::to_string(dim));
+            if (!arr || !arr->is_array()) continue;
+            for (auto const& e : *arr)
+                if (e.is_array() && e.size() == 3) byDim[dim].insert({e[0].get<int>(), e[1].get<int>(), e[2].get<int>()});
+        }
+    }
+    void save() {
+        std::lock_guard lock(mutex);
+        if (!dirty || !game::db::available()) return;
+        Json dims = Json::array();
+        for (auto const& [dim, set] : byDim) {
+            dims.push_back(dim);
+            Json arr = Json::array();
+            for (auto const& p : set) arr.push_back({p[0], p[1], p[2]});
+            game::db::put("gf:darktower:traps:" + std::to_string(dim), arr);
+        }
+        game::db::put("gf:darktower:trap_dims", dims);
+        dirty = false;
+    }
+    void clear() {
+        std::lock_guard lock(mutex);
+        byDim.clear();
+        loaded = dirty = false;
+    }
+};
+TrapIndex& trapIndex() {
+    static TrapIndex ix;
+    return ix;
+}
+
 void makeParticlesTo(BlockSource& region, BlockPos const& pos, Vec3 const& to) {
     Vec3 top{pos.x + 0.5f, float(pos.y + 1), pos.z + 0.5f};
     Vec3 diff{top.x - to.x, top.y - to.y, top.z - to.z};
@@ -572,7 +639,9 @@ void trapNeighbor(BlockSource& region, BlockPos const& pos) {
 
 void trapDevice(BlockSource& region, BlockPos const& pos, Block const& block) {
     auto  gp = game::globalPos(region, pos);
+    bool  fresh = !traps().contains(gp);
     auto& te = traps()[gp];
+    if (fresh) indexGhastTrap(gp.dim, pos, true); // a trap the index missed (e.g. placed by a command)
     bool  pw = powered(region, pos);
     if (!te.seen || te.lastPower != pw) {
         bool first   = !te.seen;
@@ -658,18 +727,44 @@ void trapDevice(BlockSource& region, BlockPos const& pos, Block const& block) {
 
 // ---- infested towerwood -----------------------------------------------------------------------------
 
-void infestedBroken(ia::DestroyContext const& c, bool destroyed) {
-    if (!destroyed) return;
-    if (c.player.getPlayerGameType() == GameType::Creative) return; // no drops in creative
-    if (!doTileDrops()) return;                                       // InfestedBlock#spawnAfterBreak
-    // the tool lacks an enchantment of #minecraft:prevents_infested_spawns (silk touch)
-    if (!c.itemId.empty() && EnchantUtils::getEnchantLevel(Enchant::Type::SilkTouch, c.item) > 0) return;
-    auto* region = game::regionOf(c.pos.dim);
-    if (!region) return;
-    auto bp = game::blockPos(c.pos);
-    if (auto* borer = spawnMob(*region, id::Borer, Vec3{bp.x + 0.5f, float(bp.y), bp.z + 0.5f})) {
+// InfestedBlock#spawnAfterBreak runs from Block#dropResources: a player's break (not in creative),
+// Level#destroyBlock(pos, true) (the borers' SummonBorersGoal, the antibuilder) and an explosion
+// (Block#onExplosionHit, tool ItemStack.EMPTY). Bedrock tells the unit only that the block was
+// removed (blockevents::onRemoved, any cause), so the cause is told apart here:
+//  - a player's break: onDestroy notes the player's tool first (creative: no drops; silk touch /
+//    #minecraft:prevents_infested_spawns: no borer);
+//  - Level#removeBlock / setBlock (no drops: Java spawns nothing): the unit's own edits go through
+//    Util's remove() / set(), which mark the position (quietEdits);
+//  - otherwise (an explosion, a destroyBlock with drops): a borer pops out.
+
+/// The infested blocks a player is breaking now: whether the break spawns a borer.
+std::map<GlobalPos, std::pair<std::uint64_t, bool>>& playerBreaks() {
+    static std::map<GlobalPos, std::pair<std::uint64_t, bool>> m;
+    return m;
+}
+
+ia::Result infestedBreaking(ia::DestroyContext const& c) {
+    bool creative = c.player.getPlayerGameType() == GameType::Creative;
+    bool silk     = !c.itemId.empty() && EnchantUtils::getEnchantLevel(Enchant::Type::SilkTouch, c.item) > 0;
+    playerBreaks()[c.pos] = {now(), !creative && !silk};
+    return ia::Result::Pass;
+}
+
+void infestedRemoved(BlockSource& region, BlockPos const& pos, Block const&) {
+    auto gp = game::globalPos(region, pos);
+    bool spawn = true;
+    if (auto it = playerBreaks().find(gp); it != playerBreaks().end()) {
+        if (now() - it->second.first <= 1) spawn = it->second.second;
+        playerBreaks().erase(it);
+    }
+    for (auto it = playerBreaks().begin(); it != playerBreaks().end();) it = now() - it->second.first > 20 ? playerBreaks().erase(it) : std::next(it);
+    if (quietEdit(region, pos)) return;                // removeBlock / setBlock: no drops
+    if (!region.getBlock(pos).isAir()) return;          // replaced by another block (setBlock), not broken
+    if (!spawn || !doTileDrops()) return;
+    if (auto* borer = spawnMob(region, id::Borer, Vec3{pos.x + 0.5f, float(pos.y), pos.z + 0.5f})) {
         (void)borer;
-        particle(*region, "minecraft:poof", center(bp)); // spawnAnim
+        particle(region, "minecraft:poof", center(pos)); // spawnAnim
+        gf::log().info("darktower: a towerwood borer popped out of infested towerwood at {}", gp.key());
     }
 }
 
@@ -681,6 +776,7 @@ void onDevicePlaced(BlockSource& region, BlockPos const& pos, Block const& block
     else if (id == id::Antibuilder || id == id::GhastTrap || id == id::Reactor || id == id::ReactorDebris) {
         runtime::track(region, pos);
         if (id == id::Reactor) reactorNeighbor(region, pos);
+        if (id == id::GhastTrap) indexGhastTrap(dimOf(region), pos, true);
     }
 }
 
@@ -711,6 +807,7 @@ void activateVanishing(BlockSource& region, BlockPos const& pos) {
     auto         id = game::blockId(b);
     if (!isVanishingFamily(id) || vanishedState(b) || boolState(b, kActive)) return;
     setStates(region, pos, {{kActive, true}});
+    sparkling().insert(game::globalPos(region, pos));
     runtime::schedule(region, pos, 2 + random().nextInt(5));
 }
 
@@ -751,15 +848,42 @@ std::vector<BlockPos> ghastTraps(int dim, BlockPos const& c, int radius) {
     std::vector<BlockPos> out;
     auto*                 region = game::regionOf(dim);
     if (!region) return out;
-    // the traps the runtime ticks (placed, generated or seen)
-    for (auto const& [gp, te] : traps()) {
-        if (gp.dim != dim) continue;
-        double dx = gp.x - c.x, dy = gp.y - c.y, dz = gp.z - c.z;
-        if (dx * dx + dy * dy + dz * dz > double(radius) * radius) continue;
-        BlockPos bp{gp.x, gp.y, gp.z};
-        if (loaded(*region, bp) && idAt(*region, bp) == id::GhastTrap) out.push_back(bp);
+    std::vector<std::array<int, 3>> stale;
+    {
+        auto&           ix = trapIndex();
+        std::lock_guard lock(ix.mutex);
+        auto it = ix.byDim.find(dim);
+        if (it == ix.byDim.end()) return out;
+        for (auto const& p : it->second) {
+            double dx = p[0] - c.x, dy = p[1] - c.y, dz = p[2] - c.z;
+            if (dx * dx + dy * dy + dz * dz > double(radius) * radius) continue;
+            BlockPos bp{p[0], p[1], p[2]};
+            // PoiManager keeps the POI of a chunk that is not loaded; a loaded position without a
+            // ghast trap lost its POI (the block was replaced without our removal hook seeing it)
+            if (loaded(*region, bp) && idAt(*region, bp) != id::GhastTrap) {
+                stale.push_back(p);
+                continue;
+            }
+            out.push_back(bp);
+        }
     }
+    for (auto const& p : stale) indexGhastTrap(dim, BlockPos{p[0], p[1], p[2]}, false);
     return out;
+}
+
+void indexGhastTrap(int dim, BlockPos const& pos, bool present) {
+    auto&           ix = trapIndex();
+    std::lock_guard lock(ix.mutex);
+    auto& set = ix.byDim[dim];
+    bool  changed = present ? set.insert({pos.x, pos.y, pos.z}).second : set.erase({pos.x, pos.y, pos.z}) > 0;
+    if (changed) ix.dirty = true;
+}
+
+bool ghastTrapIndexed(int dim, BlockPos const& pos) {
+    auto&           ix = trapIndex();
+    std::lock_guard lock(ix.mutex);
+    auto it = ix.byDim.find(dim);
+    return it != ix.byDim.end() && it->second.contains({pos.x, pos.y, pos.z});
 }
 
 void install() {
@@ -809,7 +933,23 @@ void install() {
     for (auto const* id : {id::Builder, id::Antibuilder, id::GhastTrap, id::Reactor, id::ReactorDebris})
         blockevents::onPlaced(id, onDevicePlaced);
     // infested towerwood
-    ia::onDestroyed({.block = id::InfestedTowerwood}, infestedBroken);
+    ia::onDestroy({.block = id::InfestedTowerwood}, infestedBreaking, ia::priority::Lowest);
+    blockevents::onRemoved(id::InfestedTowerwood, infestedRemoved);
+    // ghast trap POIs
+    blockevents::onRemoved(id::GhastTrap, [](BlockSource& r, BlockPos const& p, Block const&) { indexGhastTrap(dimOf(r), p, false); });
+    static bool hooked = false;
+    if (!hooked) {
+        hooked = true;
+        game::db::onWorldReady([] { trapIndex().load(); });
+        game::db::onWorldSave([] { trapIndex().save(); });
+        game::db::onWorldClosed([] {
+            trapIndex().clear();
+            sparkling().clear();
+            playerBreaks().clear();
+        });
+    }
+    if (game::db::available()) trapIndex().load();
+    runtime::onEveryTick(tickSparkles);
     // the reactor's explosion damage
     combat::onIncoming(combat::priority::High, [](combat::DamageInfo& d) {
         if (!reactorBlast() || d.type == "twilightforest:reactor") return combat::Verdict::Pass;

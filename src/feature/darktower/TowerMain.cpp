@@ -14,6 +14,7 @@
 #include "mc/world/level/block/Block.h"
 
 #include "core/jrand/JRand.h"
+#include "feature/darktower/Devices.h"
 #include "feature/darktower/Runtime.h"
 #include "feature/darktower/Tower.h"
 #include "feature/darktower/TowerUtil.h"
@@ -63,12 +64,37 @@ BlockBox componentBox(int x, int y, int z, int minX, int minY, int minZ, int spa
     }
 }
 
+/// Vanilla 1.21.1 TreeFeatures.OAK (birch: TreeFeatures.BIRCH) as configured feature JSON.
+Json const& vanillaTree(bool birch) {
+    auto make = [](char const* log, char const* leaves, int baseHeight) {
+        return Json{
+            {"type", "minecraft:tree"},
+            {"config",
+             {{"decorators", Json::array()},
+              {"dirt_provider", {{"type", "minecraft:simple_state_provider"}, {"state", {{"Name", "minecraft:dirt"}}}}},
+              {"foliage_placer", {{"type", "minecraft:blob_foliage_placer"}, {"height", 3}, {"offset", 0}, {"radius", 2}}},
+              {"foliage_provider",
+               {{"type", "minecraft:simple_state_provider"},
+                {"state", {{"Name", leaves}, {"Properties", {{"distance", "7"}, {"persistent", "false"}, {"waterlogged", "false"}}}}}}},
+              {"force_dirt", false},
+              {"ignore_vines", true},
+              {"minimum_size", {{"type", "minecraft:two_layers_feature_size"}, {"limit", 1}, {"lower_size", 0}, {"upper_size", 1}}},
+              {"trunk_placer", {{"type", "minecraft:straight_trunk_placer"}, {"base_height", baseHeight}, {"height_rand_a", 2}, {"height_rand_b", 0}}},
+              {"trunk_provider", {{"type", "minecraft:simple_state_provider"}, {"state", {{"Name", log}, {"Properties", {{"axis", "y"}}}}}}}}}};
+    };
+    static Json const oakTree   = make("minecraft:oak_log", "minecraft:oak_leaves", 4);
+    static Json const birchTree = make("minecraft:birch_log", "minecraft:birch_leaves", 5);
+    return birch ? birchTree : oakTree;
+}
+
 void noteGenerated(Region& region, Block const& block, BlockPos const& pos, BlockBox const& chunkBox) {
     if (region.dimension() < 0 || !chunkBox.contains(pos.x, pos.y, pos.z)) return; // scratch regions keep nothing
     auto const& id = ::gf::structure::blocks::id(block);
     if (id == "twilightforest:antibuilder" || id == "twilightforest:carminite_builder" || id == "twilightforest:carminite_reactor" ||
         id == "twilightforest:ghast_trap")
         runtime::queueGenerated(region.dimension(), pos, Json{{"k", "track"}});
+    // the ghast trap POI exists from the structure's generation on (PoiManager, before the chunk ticks)
+    if (id == "twilightforest:ghast_trap") devices::indexGhastTrap(region.dimension(), pos, true);
 }
 
 } // namespace util
@@ -835,9 +861,17 @@ void Main::placeTreePlanter(Region& region, int treeNum, int x, int y, int z, Ro
     case 4: treeGen = "twilightforest:tree/rainbow_oak"; break;
     default: break;
     }
-    // grow a tree with world.getRandom() (the region's random)
-    for (int i = 0; i < 100; i++)
-        if (::gf::features::place(treeGen, region, pos, ::gf::structure::regionRandom(region))) break;
+    // grow a tree with world.getRandom() (the region's random). Vanilla's configured features
+    // minecraft:oak / minecraft:birch (TreeFeatures.OAK / BIRCH: createStraightBlobTree(log, leaves,
+    // 4 or 5, 2, 0, 2).ignoreVines()) go inline, the same data as the vanilla registry entries, so
+    // they grow whether or not the vanilla configured features are registered (F5 lists only TF's)
+    Json const* inlineTree = nullptr;
+    if (treeNum == 2 || treeNum == 0 || treeNum > 4) inlineTree = &vanillaTree(treeNum == 2);
+    for (int i = 0; i < 100; i++) {
+        bool grown = inlineTree ? ::gf::features::placeJson(*inlineTree, region, pos, ::gf::structure::regionRandom(region))
+                                : ::gf::features::place(treeGen, region, pos, ::gf::structure::regionRandom(region));
+        if (grown) break;
+    }
 }
 
 void Main::placeRandomPlant(Region& region, RandomSource& decoRNG, int x, int y, int z, Rotation rotation, BlockBox const& sbb) {

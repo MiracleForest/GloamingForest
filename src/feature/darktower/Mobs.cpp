@@ -90,9 +90,9 @@ void summonTick(Actor& self, Borer& b) {
                 BlockPos p{base.x + j, base.y + i, base.z + k};
                 if (idAt(region, p) != id::InfestedTowerwood) continue;
                 if (mobGriefing()) {
+                    // destroyBlock(pos, true): InfestedTowerwoodBlock#spawnAfterBreak pops a borer out
+                    // (the devices' removal handler of infested towerwood spawns it)
                     destroy(region, p, true);
-                    // InfestedTowerwoodBlock#spawnAfterBreak: a borer pops out
-                    spawnMob(region, id::Borer, Vec3{p.x + 0.5f, float(p.y), p.z + 0.5f});
                 } else {
                     set(region, p, id::Towerwood);
                 }

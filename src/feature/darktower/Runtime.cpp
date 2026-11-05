@@ -58,6 +58,7 @@ struct State {
     std::mutex                                        genMutex;
     std::vector<GenJob>                               generated; ///< guarded by genMutex
     std::uint64_t                                     ticks = 0;
+    std::vector<std::function<void()>>                everyTick;
     ll::event::ListenerPtr                            listener;
 };
 
@@ -226,6 +227,7 @@ void tick() {
         f->second(*region, bp, block);
     }
     for (auto const& p : gone) forget(p);
+    for (auto const& fn : s.everyTick) fn();
 }
 
 } // namespace
@@ -261,6 +263,8 @@ void queueGenerated(int dim, BlockPos const& pos, Json job) {
     std::lock_guard lock(s.genMutex);
     s.generated.push_back(GenJob{GlobalPos{dim, pos.x, pos.y, pos.z}, std::move(job)});
 }
+
+void onEveryTick(std::function<void()> fn) { st().everyTick.push_back(std::move(fn)); }
 
 std::size_t pendingGenerated() {
     auto&           s = st();

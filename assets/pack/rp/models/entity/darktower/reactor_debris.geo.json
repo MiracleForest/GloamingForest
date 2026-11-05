@@ -1,0 +1,605 @@
+{
+  "format_version": "1.12.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.darktower.debris_west",
+        "texture_width": 16,
+        "texture_height": 16,
+        "visible_bounds_width": 2,
+        "visible_bounds_height": 2,
+        "visible_bounds_offset": [
+          0,
+          0.5,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "face",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                16,
+                16
+              ],
+              "uv": {
+                "west": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    16,
+                    16
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.darktower.debris_east",
+        "texture_width": 16,
+        "texture_height": 16,
+        "visible_bounds_width": 2,
+        "visible_bounds_height": 2,
+        "visible_bounds_offset": [
+          0,
+          0.5,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "face",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                16,
+                16
+              ],
+              "uv": {
+                "east": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    16,
+                    16
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.darktower.debris_down",
+        "texture_width": 16,
+        "texture_height": 16,
+        "visible_bounds_width": 2,
+        "visible_bounds_height": 2,
+        "visible_bounds_offset": [
+          0,
+          0.5,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "face",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                16,
+                16
+              ],
+              "uv": {
+                "down": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    16,
+                    16
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.darktower.debris_up",
+        "texture_width": 16,
+        "texture_height": 16,
+        "visible_bounds_width": 2,
+        "visible_bounds_height": 2,
+        "visible_bounds_offset": [
+          0,
+          0.5,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "face",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                16,
+                16
+              ],
+              "uv": {
+                "up": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    16,
+                    16
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.darktower.debris_north",
+        "texture_width": 16,
+        "texture_height": 16,
+        "visible_bounds_width": 2,
+        "visible_bounds_height": 2,
+        "visible_bounds_offset": [
+          0,
+          0.5,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "face",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                16,
+                16
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    16,
+                    16
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.darktower.debris_south",
+        "texture_width": 16,
+        "texture_height": 16,
+        "visible_bounds_width": 2,
+        "visible_bounds_height": 2,
+        "visible_bounds_offset": [
+          0,
+          0.5,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "face",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                16,
+                16
+              ],
+              "uv": {
+                "south": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    16,
+                    16
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.darktower.debris_west_strip",
+        "texture_width": 16,
+        "texture_height": 512,
+        "visible_bounds_width": 2,
+        "visible_bounds_height": 2,
+        "visible_bounds_offset": [
+          0,
+          0.5,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "face",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                16,
+                16
+              ],
+              "uv": {
+                "west": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    16,
+                    16
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.darktower.debris_east_strip",
+        "texture_width": 16,
+        "texture_height": 512,
+        "visible_bounds_width": 2,
+        "visible_bounds_height": 2,
+        "visible_bounds_offset": [
+          0,
+          0.5,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "face",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                16,
+                16
+              ],
+              "uv": {
+                "east": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    16,
+                    16
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.darktower.debris_down_strip",
+        "texture_width": 16,
+        "texture_height": 512,
+        "visible_bounds_width": 2,
+        "visible_bounds_height": 2,
+        "visible_bounds_offset": [
+          0,
+          0.5,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "face",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                16,
+                16
+              ],
+              "uv": {
+                "down": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    16,
+                    16
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.darktower.debris_up_strip",
+        "texture_width": 16,
+        "texture_height": 512,
+        "visible_bounds_width": 2,
+        "visible_bounds_height": 2,
+        "visible_bounds_offset": [
+          0,
+          0.5,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "face",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                16,
+                16
+              ],
+              "uv": {
+                "up": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    16,
+                    16
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.darktower.debris_north_strip",
+        "texture_width": 16,
+        "texture_height": 512,
+        "visible_bounds_width": 2,
+        "visible_bounds_height": 2,
+        "visible_bounds_offset": [
+          0,
+          0.5,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "face",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                16,
+                16
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    16,
+                    16
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.darktower.debris_south_strip",
+        "texture_width": 16,
+        "texture_height": 512,
+        "visible_bounds_width": 2,
+        "visible_bounds_height": 2,
+        "visible_bounds_offset": [
+          0,
+          0.5,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "face",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                16,
+                16
+              ],
+              "uv": {
+                "south": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    16,
+                    16
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

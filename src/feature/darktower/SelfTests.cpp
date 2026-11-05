@@ -330,8 +330,18 @@ GF_REGISTER_SELFTEST("darktower.ghast_trap_fight", [](Context& ctx) -> ll::coro:
     GriefScope noGrief;
     auto box = co_await ctx.flatArea(2600, 30, 48);
     (void)box;
-    auto trap = ctx.testPos(2615, 2).offset(0, 1, 0);
+    // inside the flat area (z 0..29): the trap tower's walls reach 5 blocks to each side
+    auto trap = ctx.testPos(2615, 2).offset(0, 1, 8);
     ctx.require(ctx.setBlock(trap, id::GhastTrap), "ghast trap placed");
+    ctx.check(devices::ghastTrapIndexed(trap.dim, bp(trap)), "the ghast trap is in the POI index");
+    // DarkTowerBossTrapComponent's open-topped tower: 11 wide (the trap at (5, 1, 5)), 9 high
+    for (int y = 0; y < 9; ++y)
+        for (int d = -5; d <= 5; ++d) {
+            (void)ctx.setBlock(trap.offset(d, y, -5), "minecraft:stone");
+            (void)ctx.setBlock(trap.offset(d, y, 5), "minecraft:stone");
+            (void)ctx.setBlock(trap.offset(-5, y, d), "minecraft:stone");
+            (void)ctx.setBlock(trap.offset(5, y, d), "minecraft:stone");
+        }
     placePlayer(ctx, trap, 3.5f, 0.5f);
     static_cast<Player&>(ctx.player()).setPlayerGameType(GameType::Creative); // no fireballs at the test player
     static int  fired      = 0;
@@ -371,12 +381,19 @@ GF_REGISTER_SELFTEST("darktower.ghast_trap_fight", [](Context& ctx) -> ll::coro:
     ctx.require(again != nullptr, "the Ur-Ghast is still there");
     ctx.check(!ghasts::inTantrum(*again), "the trap ended the tantrum");
     ctx.check(ghasts::trappedTicks(*again) > 0, "the Ur-Ghast is held in the trap");
-    ctx.check(again->getFeetPos().y < trap.y + 18, "the trap pulls the Ur-Ghast down");
+    ctx.check(!ghasts::solid(*again), "the trap turned the Ur-Ghast's block collision off (noPhysics)");
+    auto fp = again->getFeetPos();
+    // pulled to trap + (0.5, 2.5, 0.5) through the tower's rim: its feet are inside the tower's box
+    ctx.check(fp.y < trap.y + 9 && std::abs(fp.x - (trap.x + 0.5f)) < 4.5f && std::abs(fp.z - (trap.z + 0.5f)) < 4.5f,
+              "the trap pulled the 14-wide Ur-Ghast down into the trap tower (feet " + std::to_string(fp.x - trap.x) + ", " + std::to_string(fp.y - trap.y) + ", " +
+                  std::to_string(fp.z - trap.z) + " from the trap)");
     ctx.check(static_cast<float>(again->getHealth()) < before, "the trap damaged the Ur-Ghast (7 per hit)");
     co_await ctx.ticks(70);
     ctx.check(!boolAt(ctx, trap, "twilightforest:active"), "the trap spun down after 120 ticks");
     if (auto* a = actorById(urId)) a->remove();
     removeAround(ctx, trap, id::Ghastling, 30.0f);
+    ctx.require(ctx.setBlock(trap, "minecraft:air"), "trap removed");
+    ctx.check(!devices::ghastTrapIndexed(trap.dim, bp(trap)), "the removed trap left the POI index");
 });
 
 // Ur-Ghast phases: 10 damage starts a tantrum, which divides damage by 10; 18 more ends it

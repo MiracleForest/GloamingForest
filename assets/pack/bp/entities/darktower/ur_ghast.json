@@ -124,13 +124,36 @@
           "has_gravity": false,
           "has_collision": true
         }
+      },
+      "noclip": {
+        "minecraft:physics": {
+          "has_gravity": false,
+          "has_collision": false
+        }
       }
     },
     "events": {
       "solid": {
+        "remove": {
+          "component_groups": [
+            "noclip"
+          ]
+        },
         "add": {
           "component_groups": [
             "solid"
+          ]
+        }
+      },
+      "noclip": {
+        "remove": {
+          "component_groups": [
+            "solid"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "noclip"
           ]
         }
       }

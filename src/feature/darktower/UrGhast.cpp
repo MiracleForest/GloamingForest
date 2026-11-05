@@ -57,6 +57,8 @@
 #include "feature/darktower/Util.h"
 #include "feature/entity/Entity.h"
 #include "feature/ext/entity/EntityExt.h"
+#include "feature/darktower/Runtime.h"
+#include "feature/net/Net.h"
 #include "game/Blocks.h"
 #include "game/Items.h"
 #include "game/WorldDb.h"
@@ -88,8 +90,23 @@ struct UrState {
     bool attackRunning = false;
     bool charging      = false;
     bool solid         = false; ///< Java's noPhysics cleared
+    bool syncedTantrum = false; ///< the tantrum flag the companions were told last
     std::int64_t lastHurtTick = -100;
 };
+
+/// DATA_TANTRUM for the companions' client effects (UrGhast#aiStep's dust and boss tears,
+/// TFWeatherRenderer.urGhastAlive): "darktower.urghast" {uid, on}, a heartbeat every 10 ticks for each
+/// Ur-Ghast to the companions within 160 blocks (one that comes near later learns it; the client
+/// forgets an Ur-Ghast not repeated for 40 ticks), and at once when the flag changes.
+constexpr char kTantrumChannel[] = "darktower.urghast";
+constexpr double kTantrumSyncRange = 160.0;
+
+void sendTantrum(Actor& self, bool on) {
+    auto& region = self.getDimensionBlockSource();
+    Json  msg{{"uid", uidOf(self)}, {"on", on}};
+    for (auto* p : playersNear(dimOf(region), self.getFeetPos(), kTantrumSyncRange, true))
+        if (net::isCompanion(*p)) net::send(*p, kTantrumChannel, msg);
+}
 
 std::unordered_map<std::int64_t, UrState>& states() {
     static std::unordered_map<std::int64_t, UrState> m;
@@ -136,7 +153,8 @@ std::vector<BlockPos> scanForTraps(Mob& m) {
     auto& region = m.getDimensionBlockSource();
     auto  c      = scanPoint(m);
     auto  found  = devices::ghastTraps(dimOf(region), c, kHomeRadius);
-    std::erase_if(found, [&](BlockPos const& p) { return !region.canSeeSky(BlockPos{p.x, p.y + 1, p.z}); });
+    // (a trap in a chunk that is not loaded stays a candidate: Java loads the chunk to ask)
+    std::erase_if(found, [&](BlockPos const& p) { return loaded(region, p) && !region.canSeeSky(BlockPos{p.x, p.y + 1, p.z}); });
     std::sort(found.begin(), found.end(), [&](BlockPos const& a, BlockPos const& b) {
         auto d = [&](BlockPos const& p) {
             double dx = p.x - c.x, dy = p.y - c.y, dz = p.z - c.z;
@@ -176,9 +194,19 @@ bool checkGhastsAtTraps(Mob& m, UrState& s) {
     return false;
 }
 
+/// Java's noPhysics: false = the BP's "noclip" group (no block collision), true = "solid".
+void setSolid(Mob& m, UrState& s, bool solid) {
+    if (s.solid == solid) return;
+    s.solid = solid;
+    VariantParameterList params{};
+    params.mSelf = &m;
+    m.executeEvent(solid ? "solid" : "noclip", params);
+    ge::data(m, "darktower:solid") = solid;
+}
+
 void flightGoal(Mob& m, UrState& s) {
-    if (s.inTrapCounter > 0) return; // the trap's pull owns the motion
-    // canUse (Ghast.RandomFloatAroundGoal copy): the path is rebuilt every time it is asked
+    // canUse (Ghast.RandomFloatAroundGoal copy): the path is rebuilt every time it is asked; no
+    // trap check, as UrGhastFlightGoal (the trap's pull and the move control add up)
     s.points = createPath(m, s);
     if (s.points.empty()) return;
     auto wanted = ge::ext::wantedPosition(m);
@@ -196,14 +224,8 @@ void flightGoal(Mob& m, UrState& s) {
     double      y  = pt.y + (ge::home(m) ? kHoverAltitude : 0);
     ge::ext::setWantedPosition(m, Vec3{float(pt.x), float(y), float(pt.z)}, 1.0);
     s.currentPoint++;
-    // we have reached cruising altitude, time to turn noClip off
-    if (!s.solid) {
-        s.solid = true;
-        VariantParameterList params{};
-        params.mSelf = &m;
-        m.executeEvent("solid", params);
-        ge::data(m, "darktower:solid") = true;
-    }
+    // we have reached cruising altitude, time to turn noClip off (every start, as Java)
+    setSolid(m, s, true);
 }
 
 void lookGoal(Mob& m) {
@@ -238,6 +260,33 @@ void lookAtPitch(Mob& m, Actor& t, float maxStep) {
     const_cast<Vec2&>(m.getRotation()) = Vec2{rot.x + diff, rot.y};
 }
 
+/// The Ur-Ghast fireballs in flight (by unique id): the shooter, and Projectile#leftOwner.
+struct UrFireball {
+    std::int64_t shooter = 0;
+    bool         leftOwner = false;
+};
+std::unordered_map<std::int64_t, UrFireball>& fireballs() {
+    static std::unordered_map<std::int64_t, UrFireball> m;
+    return m;
+}
+
+bool boxesIntersect(AABB const& a, AABB const& b) {
+    return a.min.x < b.max.x && a.max.x > b.min.x && a.min.y < b.max.y && a.max.y > b.min.y && a.min.z < b.max.z && a.max.z > b.min.z;
+}
+
+/// Projectile#getOwner of a fireball now: a player's hit re-aims it and makes the player its owner
+/// (Bedrock's ProjectileComponent reflection sets the owner, or at least records the reflecting
+/// actor); before that, the shooter.
+Actor* currentOwner(Actor& fb, std::int64_t shooter) {
+    std::int64_t ownerId = fb.getOwnerId().rawID;
+    if (auto pc = fb.getEntityContext().tryGetComponent<ProjectileComponent>()) {
+        std::int64_t reflector = pc->mLastReflectActor->rawID;
+        if ((ownerId == shooter || ownerId == -1 || ownerId == 0) && reflector != -1 && reflector != 0 && reflector != shooter) ownerId = reflector;
+    }
+    if (ownerId == -1 || ownerId == 0) ownerId = shooter;
+    return actorById(ownerId);
+}
+
 /// UrGhastFireball: a vanilla large fireball (Bedrock's minecraft:fireball) with power 1.
 Actor* fireball(Mob& m, Vec3 const& at, Vec3 const& dir) {
     auto* l = level();
@@ -252,7 +301,7 @@ Actor* fireball(Mob& m, Vec3 const& at, Vec3 const& dir) {
     if (!fb) return nullptr;
     if (auto pc = fb->getEntityContext().tryGetComponent<ProjectileComponent>())
         pc->shoot(*fb, Vec3{float(dir.x / len), float(dir.y / len), float(dir.z / len)}, 1.0f, 0.0f, Vec3{0, 0, 0}, nullptr);
-    ge::data(*fb, "darktower:urghast_fireball") = uidOf(m);
+    fireballs()[uidOf(*fb)] = UrFireball{uidOf(m), false};
     return fb;
 }
 
@@ -274,15 +323,20 @@ void largeFireball(Mob& m, Vec3 const& at, Vec3 const& dir) {
 /// an entity in the way takes 16 fireball damage (another fireball is passed through, as
 /// onHitEntity ignores AbstractHurtingProjectile), then the fireball explodes with power 1, fire
 /// when mob griefing allows it, no block damage (Level.ExplosionInteraction.NONE) and no source.
-void urFireballTick(Actor& fb) {
-    auto const& tag = ge::data(fb, "darktower:urghast_fireball");
-    if (!tag.is_number_integer() || !fb.isAlive()) return;
+void urFireballTick(Actor& fb, UrFireball& state) {
+    if (!fb.isAlive()) return;
     auto&  region = fb.getDimensionBlockSource();
     Vec3   p      = fb.getFeetPos();
     Vec3   v      = fb.getPosDelta();
     auto   b      = fb.getAABB();
     float  hw     = std::max(0.5f, (b.max.x - b.min.x) * 0.5f);
-    Actor* owner  = actorById(tag.get<std::int64_t>());
+    Actor* owner  = currentOwner(fb, state.shooter);
+    // Projectile#checkLeftOwner: once the fireball's box (inflated 1) no longer touches its owner,
+    // the owner can be hit too
+    if (!state.leftOwner) {
+        AABB grown{Vec3{b.min.x - 1, b.min.y - 1, b.min.z - 1}, Vec3{b.max.x + 1, b.max.y + 1, b.max.z + 1}};
+        state.leftOwner = !owner || !boxesIntersect(grown, owner->getAABB());
+    }
     double len    = std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
     int    steps  = std::max(1, static_cast<int>(std::ceil(len * 1.5 / 0.25)));
     for (int i = 0; i <= steps; i++) {
@@ -291,7 +345,12 @@ void urFireballTick(Actor& fb) {
         AABB   box{Vec3{q.x - hw, q.y, q.z - hw}, Vec3{q.x + hw, q.y + hw * 2.0f, q.z + hw}};
         Actor* hit = nullptr;
         for (auto* a : region.getEntities(box, 0.0f)) {
-            if (!a || a == &fb || a == owner || !a->isAlive() || a->isSpectator() || gf::projectile::ext::isProjectile(*a)) continue;
+            if (!a || a == &fb || !a->isAlive() || a->isSpectator() || gf::projectile::ext::isProjectile(*a)) continue;
+            // Projectile#canHitEntity: the owner only after the fireball left it
+            if (a == owner && !state.leftOwner) continue;
+            // AbstractHurtingProjectile#canHitEntity: never an entity with noPhysics (the Ur-Ghast
+            // before its first flight point or in a trap)
+            if (isUrGhast(*a) && !stateOf(*a).solid) continue;
             if (typeOf(*a) == "minecraft:fireball" || typeOf(*a) == "minecraft:small_fireball" || typeOf(*a) == "minecraft:item" || typeOf(*a) == "minecraft:xp_orb") continue;
             hit = a;
             break;
@@ -305,6 +364,27 @@ void urFireballTick(Actor& fb) {
             fb.remove();
         }
         return;
+    }
+}
+
+/// Runs every Ur-Ghast fireball one step ahead of the engine (runtime's per-tick hook: the vanilla
+/// minecraft:fireball id keeps its own behaviour slot free for others).
+void tickFireballs() {
+    auto& all = fireballs();
+    if (all.empty()) return;
+    std::vector<std::int64_t> ids;
+    ids.reserve(all.size());
+    for (auto const& [id, f] : all) ids.push_back(id);
+    for (auto id : ids) {
+        auto* fb = actorById(id);
+        auto  it = all.find(id);
+        if (it == all.end()) continue;
+        if (!fb || !fb->isAlive()) {
+            all.erase(it);
+            continue;
+        }
+        urFireballTick(*fb, it->second);
+        if (!fb->isAlive()) all.erase(id);
     }
 }
 
@@ -348,7 +428,7 @@ void attackGoal(Mob& m, UrState& s) {
     if (distSqr(*t, m) < 4096.0 && lineOfSight(m, *t)) {
         s.prevAttackTimer = s.attackTimer;
         ++s.attackTimer;
-        lookAtPitch(m, *t, 40.0f); // Mob#getMaxHeadXRot
+        lookAtPitch(m, *t, 500.0f); // setLookAt(target, 10, getMaxHeadXRot()): UrGhast returns 500
         if (s.attackTimer == 10) soundAt(region, m.getFeetPos(), "entity.twilightforest.ur_ghast.warn", 10.0f, voicePitch());
         if (s.attackTimer == 20) {
             if (!s.phase.tantrum) {
@@ -365,6 +445,19 @@ void attackGoal(Mob& m, UrState& s) {
     s.charging = s.attackTimer > 10;
 }
 
+/// NearestAttackableTargetGoal<Player>#findTarget: for a Player target type Java asks
+/// Level#getNearestPlayer(targetConditions, mob, x, eyeY, z): the nearest player passing the
+/// conditions (range = the follow range around (x, eyeY, z), mustSee) from every player of the level;
+/// the inflated box (followRange, 4, followRange) is used only for non-player target types.
+Player* nearestTargetablePlayer(Mob& m, double range) {
+    auto& region = m.getDimensionBlockSource();
+    auto  feet   = m.getFeetPos();
+    Vec3  c{feet.x, m.getEyePos().y, feet.z};
+    for (auto* p : playersNear(dimOf(region), c, range)) // nearest first
+        if (targetable(*p) && lineOfSight(m, *p)) return p;
+    return nullptr;
+}
+
 /// NearestAttackableTargetGoal<Player>(mustSee): every tick 1 in 10 (reducedTickDelay(10)).
 void targetGoal(Mob& m, UrState& s) {
     if (auto* t = targetOf(m)) {
@@ -373,13 +466,7 @@ void targetGoal(Mob& m, UrState& s) {
     }
     if (s.phase.tantrum || s.inTrapCounter > 0) return;
     if (random().nextInt(10) != 0) return;
-    auto& region = m.getDimensionBlockSource();
-    auto  c      = m.getFeetPos();
-    for (auto* p : playersNear(dimOf(region), c, 128.0)) {
-        if (!targetable(*p) || !lineOfSight(m, *p)) continue;
-        m.setTarget(p);
-        return;
-    }
+    if (auto* p = nearestTargetablePlayer(m, 128.0)) m.setTarget(p);
 }
 
 void doTantrumDamageEffects(Mob& m) {
@@ -395,6 +482,13 @@ void doTantrumDamageEffects(Mob& m) {
             push(*a, Vec3{0.0f, 1.0f, 0.0f});
         }
     }
+}
+
+void syncTantrum(Actor& self, UrState& s) {
+    bool on = s.phase.tantrum && !dying(self);
+    if (on == s.syncedTantrum && s.tickCount % 10 != 1) return;
+    s.syncedTantrum = on;
+    sendTantrum(self, on);
 }
 
 void urTick(Actor& self) {
@@ -424,7 +518,7 @@ void urTick(Actor& self) {
         self.heal(2);
     }
     if (s.tickCount % 60 == 0 && !s.traps.empty())
-        std::erase_if(s.traps, [&](BlockPos const& p) { return idAt(region, p) != id::GhastTrap || !region.canSeeSky(BlockPos{p.x, p.y + 1, p.z}); });
+        std::erase_if(s.traps, [&](BlockPos const& p) { return loaded(region, p) && (idAt(region, p) != id::GhastTrap || !region.canSeeSky(BlockPos{p.x, p.y + 1, p.z})); });
     if (first || s.tickCount % 100 == 0) {
         for (auto const& p : scanForTraps(*m))
             if (std::find(s.traps.begin(), s.traps.end(), p) == s.traps.end()) s.traps.push_back(p);
@@ -436,18 +530,23 @@ void urTick(Actor& self) {
             s.nextTantrumCry = 20 + random().nextInt(30);
         }
         if (s.tickCount % 10 == 0) doTantrumDamageEffects(*m);
-        // the client's boss tears (companions draw them through fx, vanilla clients too)
-        Vec3 p = self.getFeetPos();
-        float w = b.max.x - b.min.x, h = b.max.y - b.min.y;
-        auto& r = random();
-        particle(region, "twilightforest:boss_tear", Vec3{float(p.x + (r.nextDouble() - 0.5) * w * 0.75), float(p.y + r.nextDouble() * h * 0.5), float(p.z + (r.nextDouble() - 0.5) * w * 0.75)});
     }
+    // UrGhast#aiStep's client side: the companions draw the redstone dust, the boss tears (and their
+    // shatter sound) and the tantrum rain themselves from the synced tantrum flag
+    // (src/client/darktower); only the vanilla clients get them from here
     if (random().nextBoolean()) {
         Vec3  p = self.getFeetPos();
         float w = b.max.x - b.min.x, h = b.max.y - b.min.y;
         auto& r = random();
-        redstoneDust(region, Vec3{float(p.x + (r.nextDouble() - 0.5) * w), float(p.y + r.nextDouble() * h - 0.25), float(p.z + (r.nextDouble() - 0.5) * w)});
+        vanillaRedDust(region, Vec3{float(p.x + (r.nextDouble() - 0.5) * w), float(p.y + r.nextDouble() * h - 0.25), float(p.z + (r.nextDouble() - 0.5) * w)});
     }
+    if (s.phase.tantrum && !dying(self)) {
+        Vec3  p = self.getFeetPos();
+        float w = b.max.x - b.min.x, h = b.max.y - b.min.y;
+        auto& r = random();
+        vanillaParticle(region, "twilightforest:boss_tear", Vec3{float(p.x + (r.nextDouble() - 0.5) * w * 0.75), float(p.y + r.nextDouble() * h * 0.5), float(p.z + (r.nextDouble() - 0.5) * w * 0.75)});
+    }
+    syncTantrum(self, s);
     syncVisuals(*m, s);
     ge::data(self, kData) = {{"inTantrum", s.phase.tantrum}};
 }
@@ -481,15 +580,12 @@ void spawnMinionGhastsAt(Mob& boss, int x, int y, int z) {
         double sx = x + (r.nextDouble() - r.nextDouble()) * 4;
         double sy = y + r.nextDouble() * 8;
         double sz = z + (r.nextDouble() - r.nextDouble()) * 4;
-        // checkSpawnRules(MOB_SUMMONED): not peaceful, a free spot and checkMobSpawnRules
-        // (Mob#checkMobSpawnRules: the block below must be valid to spawn on, isValidSpawn)
-        BlockPos at{int(std::floor(sx)), int(std::floor(sy)), int(std::floor(sz))};
-        BlockPos below{at.x, at.y - 1, at.z};
-        if (isAir(region, at) && blocksMotion(region, below)) {
-            if (auto* g = spawnMob(region, id::Ghastling, Vec3{float(sx), float(sy), float(sz)}, r.nextFloat() * 360.0f)) {
-                makeBossMinion(*g);
-                particle(region, "minecraft:poof", g->getFeetPos(), {}, 20);
-            }
+        // minion.checkSpawnRules(level, MOB_SUMMONED): CarminiteGhastling is a FlyingMob, so this is
+        // Mob#checkSpawnRules, which is always true (only PathfinderMob overrides it; canSpawnHere
+        // is the spawn placement predicate, not asked here): every try spawns, wherever it lands
+        if (auto* g = spawnMob(region, id::Ghastling, Vec3{float(sx), float(sy), float(sz)}, r.nextFloat() * 360.0f)) {
+            makeBossMinion(*g);
+            particle(region, "minecraft:poof", g->getFeetPos(), {}, 20); // spawnAnim
         }
         if (++spawns >= 6) break;
     }
@@ -602,18 +698,7 @@ void ghastTargetGoal(Mob& m) {
         return;
     }
     if (random().nextInt(10) != 0) return;
-    auto&   region = m.getDimensionBlockSource();
-    Player* best   = nullptr;
-    double  bestD  = 0;
-    for (auto* p : playersNear(dimOf(region), m.getFeetPos(), followRange(m))) {
-        if (!targetable(*p) || !lineOfSight(m, *p)) continue;
-        double d = distSqr(*p, m);
-        if (!best || d < bestD) {
-            best  = p;
-            bestD = d;
-        }
-    }
-    if (best) m.setTarget(best);
+    if (auto* p = nearestTargetablePlayer(m, followRange(m))) m.setTarget(p);
 }
 
 /// GhastguardAttackGoal#spitFireball.
@@ -685,6 +770,9 @@ void ghastTick(Actor& self) {
     ghastAttackGoal(*m, g);
     // CarminiteGhastguard#customServerAiStep: the attack timer for the renderer's squash
     ge::setProperty(self, "twilightforest:attack_timer", std::clamp(g.attackTimer, -40, 20));
+    // ATTACK_STATUS: 1 while it has a target it would attack (the renderer's open eyes)
+    auto* t = targetOf(*m);
+    ge::setProperty(self, "twilightforest:attack_status", t && shouldAttack(*m, *t) ? 1 : 0);
     // aiStep: redstone dust half the time
     auto& region = self.getDimensionBlockSource();
     if (random().nextBoolean()) {
@@ -719,7 +807,12 @@ void trapUrGhast(Mob& g) {
     if (s.phase.tantrum) gf::log().info("darktower: the ghast trap ends the Ur-Ghast's tantrum");
     s.phase.setTantrum(false);
     s.inTrapCounter = 20;
+    setSolid(g, s, false); // ghast.noPhysics = true: "turn this on so we can pull it in close"
 }
+
+bool solid(Actor& g) { return stateOf(g).solid; }
+
+void setSolid(Mob& g, bool solid) { setSolid(g, stateOf(g), solid); }
 
 void resetPhaseDamage(Mob& g) { stateOf(g).phase.reset(); }
 
@@ -821,7 +914,7 @@ void install() {
         .onSpawn =
             [](Actor& self) {
                 if (auto* m = asMob(self)) ge::setMoveControl(*m, ge::MoveKind::NoClip);
-                if (ge::data(self, "darktower:solid").is_boolean()) {
+                if (auto const& solidTag = ge::data(self, "darktower:solid"); solidTag.is_boolean() && solidTag.get<bool>()) {
                     stateOf(self).solid = true;
                     VariantParameterList params{};
                     params.mSelf = &self;
@@ -843,6 +936,7 @@ void install() {
                 auto p = self.getFeetPos();
                 auto b = self.getAABB();
                 visualLightning(self, Vec3{p.x, p.y + (b.max.y - b.min.y) * 0.5f, p.z});
+                sendTantrum(self, false); // !isDeadOrDying()
                 states().erase(uidOf(self));
                 gf::log().info("darktower: the Ur-Ghast died");
             },
@@ -874,8 +968,17 @@ void install() {
         }
     });
 
+    runtime::onEveryTick(tickFireballs);
+
     // ---- carminite ghastguard / ghastling -------------------------------------------------------
-    ge::registerType("minecraft:fireball", {.tick = urFireballTick});
+    // Ghast#hurt (kept by CarminiteGhastguard): a large fireball a player sent back deals 1000
+    // (isReflectedFireball: direct entity a LargeFireball, causing entity a player)
+    combat::onIncoming(combat::priority::High, [](combat::DamageInfo& d) {
+        auto t = typeOf(d.victim);
+        if (t != id::Ghastguard && t != id::Ghastling) return combat::Verdict::Pass;
+        if (d.direct && typeOf(*d.direct) == "minecraft:fireball" && d.attacker && d.attacker->isPlayer()) d.amount = 1000.0f;
+        return combat::Verdict::Pass;
+    });
     ge::registerType(id::Ghastguard, {.onSpawn = ghastSpawn, .tick = ghastTick, .die = ghastDie});
     ge::registerType(id::Ghastling, {.onSpawn = ghastSpawn, .tick = ghastTick, .die = ghastDie});
     static bool hooked = false;
@@ -884,6 +987,7 @@ void install() {
         game::db::onWorldClosed([] {
             states().clear();
             ghastStates().clear();
+            fireballs().clear();
         });
     }
 }

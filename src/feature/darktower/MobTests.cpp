@@ -17,10 +17,16 @@
 #include "mc/world/attribute/AttributeInstanceRef.h"
 #include "mc/world/attribute/MutableAttributeWithContext.h"
 #include "mc/world/attribute/SharedAttributes.h"
+#include "mc/deps/shared_types/legacy/Difficulty.h"
+#include "mc/legacy/ActorUniqueID.h"
+#include "mc/world/actor/player/Player.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
+#include "mc/world/level/GameType.h"
+#include "mc/world/level/Level.h"
 #include "mc/world/phys/AABB.h"
 
+#include "feature/combat/Combat.h"
 #include "feature/darktower/UrGhast.h"
 #include "feature/darktower/Util.h"
 #include "game/Blocks.h"
@@ -56,6 +62,27 @@ float attribute(Mob& m, Attribute const& a) {
 
 bool near(float a, float b) { return std::abs(a - b) < 0.011f; }
 
+/// mobGriefing on for a test, the previous value restored afterwards.
+struct GriefingOn {
+    bool previous = mobGriefing();
+    GriefingOn() { (void)selftest::runServerCommand("gamerule mobgriefing true"); }
+    ~GriefingOn() { (void)selftest::runServerCommand(std::string("gamerule mobgriefing ") + (previous ? "true" : "false")); }
+};
+
+/// The mob tests need a non-peaceful world (peaceful removes hostile mobs).
+struct EasyDifficulty {
+    SharedTypes::Legacy::Difficulty previous = SharedTypes::Legacy::Difficulty::Peaceful;
+    EasyDifficulty() {
+        if (auto* l = level()) {
+            previous = l->getDifficulty();
+            l->setDifficulty(SharedTypes::Legacy::Difficulty::Easy);
+        }
+    }
+    ~EasyDifficulty() {
+        if (auto* l = level()) l->setDifficulty(previous);
+    }
+};
+
 } // namespace
 
 GF_REGISTER_SELFTEST("darktower.mob_goldens", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -89,7 +116,7 @@ GF_REGISTER_SELFTEST("darktower.urghast_fireball", [](Context& ctx) -> ll::coro:
     (void)box;
     auto* region = ctx.region();
     ctx.require(region != nullptr, "region");
-    (void)selftest::runServerCommand("gamerule mobgriefing true");
+    GriefingOn griefing; // restored when the test ends
     auto base = ctx.testPos(2640, 2).offset(0, 1, 0);
     // a stone wall 8 blocks east of the shot
     for (int y = 0; y < 4; y++)
@@ -109,6 +136,90 @@ GF_REGISTER_SELFTEST("darktower.urghast_fireball", [](Context& ctx) -> ll::coro:
     ctx.check(intact == 12, "no block of the wall broke (" + std::to_string(intact) + " of 12)");
     if (auto* o = actorById(ownerId)) o->remove();
     co_return; // the flat area is restored afterwards (the wall and any fire)
+});
+
+// A fireball a player sent back (its owner is now the player) hits the Ur-Ghast: 16 fireball damage
+// (UrGhastFireball#onHitEntity), let through isInvulnerableTo as a player-reflected large fireball
+GF_REGISTER_SELFTEST("darktower.reflected_fireball", [](Context& ctx) -> ll::coro::CoroTask<> {
+    EasyDifficulty easy;
+    auto box = co_await ctx.flatArea(2640, 48, 40);
+    (void)box;
+    auto* region = ctx.region();
+    ctx.require(region != nullptr, "region");
+    auto at = ctx.testPos(2655, 2).offset(0, 4, 0);
+    auto& player = static_cast<Player&>(ctx.player());
+    player.setPlayerGameType(GameType::Creative);
+    player.teleportTo(Vec3{at.x + 30.5f, float(at.y), at.z + 0.5f}, true, 0, 0, false);
+    auto* ur = spawnMob(*region, id::UrGhast, Vec3{at.x + 0.5f, float(at.y), at.z + 0.5f});
+    ctx.require(ur != nullptr, "the Ur-Ghast spawned");
+    auto urId = uidOf(*ur);
+    ghasts::setSolid(*ur, true); // past its first flight point (a noPhysics entity is never hit)
+    float before = ur->getHealth();
+    // the Ur-Ghast's own fireball, re-owned by the player (what a player's hit does), flying back at it
+    auto* fb = ghasts::shootUrGhastFireball(*ur, Vec3{at.x + 16.5f, at.y + 9.0f, at.z + 0.5f}, Vec3{-1.0f, 0.0f, 0.0f});
+    ctx.require(fb != nullptr, "the fireball spawned");
+    fb->setOwner(player.getOrCreateUniqueID());
+    auto fbId = uidOf(*fb);
+    for (int i = 0; i < 40 && actorById(fbId); i++) co_await ctx.ticks(1);
+    ctx.check(actorById(fbId) == nullptr, "the fireball hit");
+    auto* again = actorById(urId);
+    ctx.require(again != nullptr, "the Ur-Ghast is still there");
+    float lost = before - again->getHealth();
+    ctx.check(lost >= 15.9f, "the reflected fireball dealt its 16 damage (lost " + std::to_string(lost) + ")");
+    again->remove();
+    co_await ctx.ticks(1);
+});
+
+// Ghast#hurt, kept by the carminite ghasts: a player-reflected large fireball deals 1000
+GF_REGISTER_SELFTEST("darktower.ghastguard_reflected", [](Context& ctx) -> ll::coro::CoroTask<> {
+    EasyDifficulty easy;
+    auto box = co_await ctx.flatArea(2660, 24, 24);
+    (void)box;
+    auto* region = ctx.region();
+    ctx.require(region != nullptr, "region");
+    auto at = ctx.testPos(2665, 2).offset(0, 3, 0);
+    auto& player = static_cast<Player&>(ctx.player());
+    player.setPlayerGameType(GameType::Creative);
+    for (auto const* type : {id::Ghastguard, id::Ghastling}) {
+        auto* g = spawnMob(*region, type, Vec3{at.x + 0.5f, float(at.y), at.z + 0.5f});
+        ctx.require(g != nullptr, std::string("spawned ") + type);
+        auto  gid = uidOf(*g);
+        auto* fb  = ghasts::shootUrGhastFireball(*g, Vec3{at.x + 6.5f, at.y + 20.0f, at.z + 0.5f}, Vec3{0.0f, 1.0f, 0.0f});
+        ctx.require(fb != nullptr, "a fireball");
+        fb->setOwner(player.getOrCreateUniqueID());
+        combat::hurt(*g, 6.0f, "minecraft:fireball", &player, fb);
+        auto* again = actorById(gid);
+        ctx.check(!again || !again->isAlive() || again->getHealth() <= 0, std::string(type) + " died of the reflected fireball");
+        fb->remove();
+        if (again) again->remove();
+        co_await ctx.ticks(2);
+    }
+});
+
+// InfestedBlock#spawnAfterBreak runs for an explosion too (Block#onExplosionHit): a borer pops out
+GF_REGISTER_SELFTEST("darktower.infested_explosion", [](Context& ctx) -> ll::coro::CoroTask<> {
+    EasyDifficulty easy;
+    auto box = co_await ctx.flatArea(2680, 12);
+    (void)box;
+    auto* region = ctx.region();
+    ctx.require(region != nullptr, "region");
+    auto p = ctx.testPos(2685, 2).offset(0, 1, 0);
+    ctx.require(ctx.setBlock(p, id::InfestedTowerwood), "infested towerwood placed");
+    auto bp = game::blockPos(p);
+    region->getLevel().explode(*region, nullptr, Vec3{bp.x + 0.5f, bp.y + 0.5f, bp.z + 0.5f}, 2.0f, false, true, 3.40282347e38f, false);
+    co_await ctx.ticks(2);
+    region = ctx.region();
+    ctx.check(idAt(*region, bp) != id::InfestedTowerwood, "the explosion broke the infested towerwood");
+    int borers = 0;
+    AABB around{Vec3{bp.x - 4.0f, bp.y - 4.0f, bp.z - 4.0f}, Vec3{bp.x + 5.0f, bp.y + 5.0f, bp.z + 5.0f}};
+    for (auto* a : region->getEntities(around, 0.0f))
+        if (a && typeOf(*a) == id::Borer) {
+            ++borers;
+            a->remove();
+        }
+    ctx.check(borers == 1, "one towerwood borer popped out (" + std::to_string(borers) + ")");
+    for (auto* a : region->getEntities(around, 0.0f))
+        if (a && typeOf(*a) == "minecraft:item") a->remove();
 });
 
 } // namespace gf::feature::darktower::tests

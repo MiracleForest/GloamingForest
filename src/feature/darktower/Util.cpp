@@ -13,7 +13,10 @@
 #include "mc/legacy/ActorUniqueID.h"
 #include "mc/network/MinecraftPacketIds.h"
 #include "mc/network/MinecraftPackets.h"
+#include "mc/comprehensive/ParticleType.h"
 #include "mc/network/packet/AddActorPacket.h"
+#include "mc/network/packet/LevelEventPacket.h"
+#include "mc/network/packet/SpawnParticleEffectPacket.h"
 #include "mc/network/packet/AddActorPacketPayload.h"
 #include "mc/network/packet/RemoveActorPacket.h"
 #include "mc/network/packet/SyncedAttribute.h"
@@ -41,6 +44,7 @@
 #include "feature/common/Redstone.h"
 #include "feature/entity/Entity.h"
 #include "feature/fx/Fx.h"
+#include "feature/net/Net.h"
 #include "game/Blocks.h"
 
 namespace gf::feature::darktower {
@@ -80,12 +84,27 @@ std::string textState(Block const& block, char const* state) {
     return it == all.end() ? std::string{} : it->second;
 }
 
+namespace {
+/// Depth of the unit's own setBlock / removeBlock calls (no drops: see quietEdit).
+thread_local int gQuietDepth = 0;
+struct QuietScope {
+    QuietScope() { ++gQuietDepth; }
+    ~QuietScope() { --gQuietDepth; }
+};
+} // namespace
+
 bool set(BlockSource& region, BlockPos const& pos, std::string const& blockId, Json const& states) {
     auto const* b = game::blockWithStates(blockId, states);
+    QuietScope  quiet;
     return b && game::setBlock(region, pos, *b);
 }
 
-void remove(BlockSource& region, BlockPos const& pos) { region.removeBlock(pos, BlockChangeContext{}); }
+void remove(BlockSource& region, BlockPos const& pos) {
+    QuietScope quiet;
+    region.removeBlock(pos, BlockChangeContext{});
+}
+
+bool quietEdit(BlockSource&, BlockPos const&) { return gQuietDepth > 0; }
 
 void destroy(BlockSource& region, BlockPos const& pos, bool drops) {
     region.getLevel().destroyBlock(region, pos, drops, BlockChangeContext{});
@@ -174,6 +193,64 @@ void sparkle(BlockSource& region, BlockPos const& pos) {
         double d3 = o[2] != 0 ? 0.5 + 0.5625 * o[2] : r.nextFloat();
         redstoneDust(region, Vec3{float(pos.x + d1), float(pos.y + d2), float(pos.z + d3)});
     }
+}
+
+double animateTickChance(BlockSource& region, BlockPos const& pos) {
+    // ClientLevel#animateTick: 667 x doAnimateTick(16) + 667 x doAnimateTick(32), each a uniform
+    // position in [-r, r) on every axis around the player (2r = 32 / 64 positions per axis)
+    auto* p = nearestPlayer(dimOf(region), center(pos), 64.0);
+    if (!p) return 0.0;
+    auto   q    = p->getFeetPos();
+    auto   in   = [&](int r) {
+        int px = int(std::floor(q.x)), py = int(std::floor(q.y)), pz = int(std::floor(q.z));
+        return pos.x >= px - r && pos.x < px + r && pos.y >= py - r && pos.y < py + r && pos.z >= pz - r && pos.z < pz + r;
+    };
+    double chance = 0.0;
+    if (in(16)) chance += 667.0 / (32.0 * 32.0 * 32.0);
+    if (in(32)) chance += 667.0 / (64.0 * 64.0 * 64.0);
+    return chance;
+}
+
+namespace {
+template <class Fn>
+void forVanillaNear(BlockSource& region, Vec3 const& pos, Fn&& fn) {
+    for (auto* p : playersNear(dimOf(region), pos, 32.0, true))
+        if (!net::isCompanion(*p)) fn(*p);
+}
+} // namespace
+
+void vanillaParticle(BlockSource& region, char const* effect, Vec3 const& pos) {
+    auto dimId = static_cast<uchar>(dimOf(region));
+    forVanillaNear(region, pos, [&](Player& p) {
+        SpawnParticleEffectPacket pkt(SpawnParticleEffectPacketPayload(pos, effect, dimId, std::nullopt));
+        pkt.sendTo(p);
+    });
+}
+
+void vanillaRedDust(BlockSource& region, Vec3 const& pos) {
+    forVanillaNear(region, pos, [&](Player& p) {
+        auto packet = MinecraftPackets::createPacket(MinecraftPacketIds::LevelEvent);
+        if (!packet) return;
+        auto& pkt    = static_cast<LevelEventPacket&>(*packet);
+        pkt.mEventId = static_cast<int>(SharedTypes::Legacy::LevelEvent::ParticleLegacyEvent) | static_cast<int>(ParticleType::RedDust);
+        pkt.mPos     = pos;
+        pkt.mData    = 0;
+        pkt.sendTo(p);
+    });
+}
+
+Json blockStates(Block const& block) {
+    Json j = Json::object();
+    for (auto const& [k, v] : game::statesOf(block)) {
+        if (v == "true" || v == "false") j[k] = v == "true";
+        else {
+            char* end = nullptr;
+            long  n   = std::strtol(v.c_str(), &end, 10);
+            if (end && *end == '\0' && !v.empty()) j[k] = static_cast<int>(n);
+            else j[k] = v;
+        }
+    }
+    return j;
 }
 
 std::int64_t uidOf(Actor const& actor) { return actor.getOrCreateUniqueID().rawID; }

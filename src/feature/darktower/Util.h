@@ -77,6 +77,9 @@ inline constexpr char SlideEntity[]       = "twilightforest:slider";
 bool set(BlockSource& region, BlockPos const& pos, std::string const& blockId, Json const& states = Json::object());
 /// Level#removeBlock (no drops, no break effects).
 void remove(BlockSource& region, BlockPos const& pos);
+/// Whether the block change being dispatched now (blockevents::onRemoved) comes from set() /
+/// remove() above: Java's setBlock / removeBlock, which drop nothing (no spawnAfterBreak).
+[[nodiscard]] bool quietEdit(BlockSource& region, BlockPos const& pos);
 /// Level#destroyBlock(pos, drops): break effects, drops when asked.
 void destroy(BlockSource& region, BlockPos const& pos, bool drops);
 /// Level event 2001 (break particles and sound) of `block` at `pos`.
@@ -101,6 +104,17 @@ void particle(BlockSource& region, char const* id, Vec3 const& pos, Vec3 const& 
 void redstoneDust(BlockSource& region, Vec3 const& pos);
 /// RedstoneOreBlock#spawnParticles (TF's sparkle) around an active device.
 void sparkle(BlockSource& region, BlockPos const& pos);
+/// The chance that ClientLevel#animateTick picks the block at `pos` in one tick for the nearest
+/// player (667 random positions within 16 blocks, 667 within 32: about 2.1 % within 16, 0.24 %
+/// within 32, 0 beyond). Block animateTick effects (sparkles) are rolled with it.
+[[nodiscard]] double animateTickChance(BlockSource& region, BlockPos const& pos);
+/// Effects only the vanilla clients get (the companions draw them themselves, src/client/darktower):
+/// a resource pack particle effect / redstone dust (Bedrock's legacy RedDust) for the non-companion
+/// players within 32 blocks.
+void vanillaParticle(BlockSource& region, char const* effect, Vec3 const& pos);
+void vanillaRedDust(BlockSource& region, Vec3 const& pos);
+/// The block states of `block` as JSON (booleans, integers and strings).
+[[nodiscard]] Json blockStates(Block const& block);
 
 // ---- actors ----------------------------------------------------------------------------------------
 [[nodiscard]] std::int64_t uidOf(Actor const& actor);
