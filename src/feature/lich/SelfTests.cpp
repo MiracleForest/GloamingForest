@@ -458,6 +458,8 @@ GF_REGISTER_SELFTEST("lich.client_showcase", [](Context& ctx) -> ll::coro::CoroT
         return Vec3{float(f.x + fx * d - fz * side), f.y + dy, float(f.z + fz * d + fx * side)};
     };
     auto* region = &real->getDimensionBlockSource();
+    // the minion and the tome are hostile: the player watches in creative mode
+    (void)gf::selftest::runServerCommand("gamemode creative \"" + real->getRealName() + "\"", dimOf(*real));
     std::vector<std::int64_t> shown;
     Mob* lich = spawnMob(*region, kLich, ahead(6, 0));
     if (lich) {

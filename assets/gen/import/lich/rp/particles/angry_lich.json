@@ -17,9 +17,9 @@
       },
       "minecraft:emitter_shape_point": {
         "direction": [
-          "(variable.velocity.x ?? 0) * 0.01 * 20",
-          "((variable.velocity.y ?? 0) * 0.01 + 0.05) * 20",
-          "(variable.velocity.z ?? 0) * 0.01 * 20"
+          "variable.velocity.x * 0.01 * 20",
+          "(variable.velocity.y * 0.01 + 0.05) * 20",
+          "variable.velocity.z * 0.01 * 20"
         ]
       },
       "minecraft:particle_initial_speed": 1.0,

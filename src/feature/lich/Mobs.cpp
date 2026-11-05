@@ -202,6 +202,7 @@ void tomeAiStep(Actor& a) {
             }
             return;
         }
+        log().info("lich: a death tome is off its lectern ({} below it)", game::blockIdAt(region, at));
         setTomeOnLectern(a, false);
     }
     auto v = m->getPosDelta();
@@ -221,6 +222,7 @@ void tomeLoad(Actor& a, Json const& in) { setTomeOnLectern(a, in.value("on_lecte
 void tomeDealt(Mob& tome, gf::combat::DamageInfo const& d) {
     if (d.amount <= 0) return;
     if (tomeOnLectern(tome)) {
+        log().info("lich: a death tome was hurt off its lectern ({} {})", d.type, d.amount);
         setMotion(tome, Vec3{0.0f, 0.25f, 0.0f});
         setTomeOnLectern(tome, false);
     }
