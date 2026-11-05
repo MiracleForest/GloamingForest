@@ -818,10 +818,13 @@ GF_REGISTER_SELFTEST("naga.display", [](Context& ctx) -> ll::coro::CoroTask<> {
     ctx.info("area at " + std::to_string(at.x) + " " + std::to_string(at.y) + " " + std::to_string(at.z));
     char const* const phases[] = {"shown", "charging", "dazed"};
     int const         lengths[] = {200, 160, 160};
-    // the Naga's movement pattern keeps running (it turns charging / dazed off when its state
-    // moves on), so the shown flags are put back every tick
+    // the Naga's movement pattern keeps running and sets charging / dazed from its state every
+    // tick, so the pattern is held in the phase's state (CIRCLE, CHARGE, DAZE) and the flags are
+    // put back every tick
     auto show = [&](Mob& m, int ph) {
         if (auto* s = stateOf(m)) {
+            s->state        = ph == 0 ? MovementState::Circle : ph == 1 ? MovementState::Charge : MovementState::Daze;
+            s->stateCounter = 1000;
             if (s->charging != (ph == 1) || s->dazed != (ph == 2)) {
                 s->charging = ph == 1;
                 s->dazed    = ph == 2;
