@@ -116,6 +116,7 @@ void onPlaceVertical(ia::PlaceContext const& c) {
 ia::Result onUseHorizontal(ia::UseOnContext const& c) {
     auto axis = stateOf(c.block, kAxis);
     if (!insideHorizontal(c.hit, axis)) return ia::Result::Pass;
+    if (c.sneaking && !c.itemId.empty()) return ia::Result::Pass; // Java: sneaking with an item skips useItemOn
     auto& region  = c.player.getDimensionBlockSource();
     auto  pos     = game::blockPos(c.pos);
     auto  variant = stateOf(c.block, kVariant);
@@ -178,7 +179,7 @@ ia::Result onUseHorizontal(ia::UseOnContext const& c) {
 // ---- VerticalHollowLogBlock ----------------------------------------------------------------------------
 
 ia::Result onUseVertical(ia::UseOnContext const& c) {
-    if (!insideVertical(c.hit)) return ia::Result::Pass;
+    if (!insideVertical(c.hit) || c.sneaking) return ia::Result::Pass;
     auto const* set = hollowLogOf(c.blockId);
     if (!set) return ia::Result::Pass;
     bool vine   = c.itemId == "minecraft:vine";
@@ -204,7 +205,7 @@ ia::Result onUseVertical(ia::UseOnContext const& c) {
 // ---- ClimbableHollowLogBlock ---------------------------------------------------------------------------
 
 ia::Result onUseClimbable(ia::UseOnContext const& c) {
-    if (!insideVertical(c.hit) || !isShears(c.itemId)) return ia::Result::Pass;
+    if (!insideVertical(c.hit) || !isShears(c.itemId) || c.sneaking) return ia::Result::Pass;
     auto const* set = hollowLogOf(c.blockId);
     if (!set) return ia::Result::Pass;
     if (repeatedUse(c.player, c.pos, c.firstEvent)) return ia::Result::Consume;

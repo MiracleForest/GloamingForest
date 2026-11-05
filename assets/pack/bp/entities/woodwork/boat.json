@@ -344,42 +344,42 @@
           "movement_type": "waves"
         }
       },
-      "twilightforest:wood_0": {
+      "gloamingforest:wood_0": {
         "minecraft:mark_variant": {
           "value": 0
         }
       },
-      "twilightforest:wood_1": {
+      "gloamingforest:wood_1": {
         "minecraft:mark_variant": {
           "value": 1
         }
       },
-      "twilightforest:wood_2": {
+      "gloamingforest:wood_2": {
         "minecraft:mark_variant": {
           "value": 2
         }
       },
-      "twilightforest:wood_3": {
+      "gloamingforest:wood_3": {
         "minecraft:mark_variant": {
           "value": 3
         }
       },
-      "twilightforest:wood_4": {
+      "gloamingforest:wood_4": {
         "minecraft:mark_variant": {
           "value": 4
         }
       },
-      "twilightforest:wood_5": {
+      "gloamingforest:wood_5": {
         "minecraft:mark_variant": {
           "value": 5
         }
       },
-      "twilightforest:wood_6": {
+      "gloamingforest:wood_6": {
         "minecraft:mark_variant": {
           "value": 6
         }
       },
-      "twilightforest:wood_7": {
+      "gloamingforest:wood_7": {
         "minecraft:mark_variant": {
           "value": 7
         }
@@ -472,7 +472,7 @@
         },
         "add": {
           "component_groups": [
-            "twilightforest:wood_0"
+            "gloamingforest:wood_0"
           ]
         }
       },
@@ -482,7 +482,7 @@
         },
         "add": {
           "component_groups": [
-            "twilightforest:wood_1"
+            "gloamingforest:wood_1"
           ]
         }
       },
@@ -492,7 +492,7 @@
         },
         "add": {
           "component_groups": [
-            "twilightforest:wood_2"
+            "gloamingforest:wood_2"
           ]
         }
       },
@@ -502,7 +502,7 @@
         },
         "add": {
           "component_groups": [
-            "twilightforest:wood_3"
+            "gloamingforest:wood_3"
           ]
         }
       },
@@ -512,7 +512,7 @@
         },
         "add": {
           "component_groups": [
-            "twilightforest:wood_4"
+            "gloamingforest:wood_4"
           ]
         }
       },
@@ -522,7 +522,7 @@
         },
         "add": {
           "component_groups": [
-            "twilightforest:wood_5"
+            "gloamingforest:wood_5"
           ]
         }
       },
@@ -532,7 +532,7 @@
         },
         "add": {
           "component_groups": [
-            "twilightforest:wood_6"
+            "gloamingforest:wood_6"
           ]
         }
       },
@@ -542,7 +542,7 @@
         },
         "add": {
           "component_groups": [
-            "twilightforest:wood_7"
+            "gloamingforest:wood_7"
           ]
         }
       }

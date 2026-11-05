@@ -76,6 +76,7 @@ void onPlace(ia::PlaceContext const& c) {
 /// BanisterBlock.useItemOn: an axe cycles the shape (and on a full cycle the extension).
 ia::Result onUseOn(ia::UseOnContext const& c) {
     if (!isAxe(c.itemId)) return ia::Result::Pass;
+    if (c.sneaking) return ia::Result::Pass; // Java: sneaking with an item skips the block's use
     if (repeatedUse(c.player, c.pos, c.firstEvent)) return ia::Result::Consume;
     auto&    region = c.player.getDimensionBlockSource();
     BlockPos pos    = game::blockPos(c.pos);

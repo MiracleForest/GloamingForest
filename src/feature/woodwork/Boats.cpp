@@ -148,6 +148,7 @@ void replaceDrop(Actor& boat) {
         auto& stack = static_cast<ItemActor*>(a)->item();
         auto  id    = game::items::idOf(stack);
         if (!id.starts_with("minecraft:") || !(id.ends_with("_boat") || id.ends_with("_raft"))) continue;
+        if (static_cast<ItemActor*>(a)->mAge > 1) continue; // only the item the game just dropped
         Vec3 at     = a->getPosition();
         Vec3 motion = a->getPosDelta();
         int  delay  = static_cast<ItemActor*>(a)->pickupDelay();
