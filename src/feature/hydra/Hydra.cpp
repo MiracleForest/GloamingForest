@@ -23,6 +23,7 @@
 // particles, dying parts, death animation) are sent through gf::fx.
 
 #include "feature/hydra/Hydra.h"
+#include "feature/hydra/World.h"
 
 #include <algorithm>
 #include <cmath>
@@ -35,9 +36,11 @@
 
 #include "mc/deps/core/math/Vec2.h"
 #include "mc/deps/core/string/HashedString.h"
-#include "mc/deps/shared_types/legacy/Difficulty.h"
+#include "mc/deps/ecs/gamerefs_entity/EntityContext.h"
 #include "mc/world/actor/Actor.h"
+#include "mc/world/actor/ActorFlags.h"
 #include "mc/world/actor/Mob.h"
+#include "mc/world/actor/provider/SynchedActorDataAccess.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
@@ -47,8 +50,8 @@
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/BlockChangeContext.h"
 #include "mc/world/level/block/BlockType.h"
-#include "mc/world/level/storage/GameRuleId.h"
-#include "mc/world/level/storage/GameRules.h"
+#include "mc/world/level/block/actor/BlockActor.h"
+#include "mc/world/level/block/actor/BlockActorType.h"
 #include "mc/world/phys/AABB.h"
 #include "mc/world/phys/HitResult.h"
 #include "mc/world/phys/HitResultType.h"
@@ -58,9 +61,9 @@
 #include "feature/combat/Combat.h"
 #include "feature/common/Interactions.h"
 #include "feature/entity/Entity.h"
-#include "feature/entity/EntityInternal.h"
 #include "feature/ext/entity/EntityExt.h"
 #include "feature/fx/Fx.h"
+#include "feature/inventory/Inventory.h"
 #include "feature/tags/Tags.h"
 #include "game/Items.h"
 #include "mod/Log.h"
@@ -68,7 +71,7 @@
 namespace gf::feature::hydra {
 
 namespace ch = gf::core::hydra;
-namespace fe = gf::feature::entity;
+namespace fe = gf::feature::hydra::world;
 namespace ge = gf::entity;
 namespace ia = gf::interactions;
 using ch::State;
@@ -94,6 +97,7 @@ struct PartRt {
     // last values sent as entity properties / name
     int         sentActive = -1;
     int         sentRed    = -1;
+    int         sentDeath  = -1;
     float       sentMouth  = -1.0F;
     std::string sentName;
     bool        nameSent = false;
@@ -123,11 +127,17 @@ struct Runtime {
     std::uint64_t lastTick  = 0;
     bool          brain = true;
     float         damageTaken = 0;
+    int           ambientSoundTime = 0; ///< Mob#ambientSoundTime
+    int           sentRed = -1;         ///< the body's red overlay property last sent
+    bool          gravity = true;       ///< the actor's gravity flag (resting on the Java box)
+    std::unique_ptr<fe::JavaRandom> random; ///< the hydra's own random (Entity#random)
 };
 
 struct State_ {
-    std::unordered_map<std::int64_t, Runtime>     runtimes;
-    std::unordered_map<std::int64_t, ge::Json>    pendingLoad;
+    std::unordered_map<std::int64_t, Runtime>      runtimes;
+    std::unordered_map<std::int64_t, ge::Json>     pendingLoad;
+    std::unordered_map<std::int64_t, std::int64_t> pendingSeed; ///< seedForTest before the first tick
+    int                                            levelTick = 0;
     std::vector<ia::HandlerId>                    handlers;
     std::unique_ptr<fe::JavaRandom>               levelRandom;
 };
@@ -180,18 +190,8 @@ constexpr ge::PartSize kInactiveSize{0.01F, 0.01F};
 
 V3 hydraPos(Actor const& a) { return toV3(a.getFeetPos()); }
 
-bool hard() {
-    auto lv = ll::service::getLevel();
-    return lv && lv->getDifficulty() == SharedTypes::Legacy::Difficulty::Hard;
-}
-
-bool mobGriefing() {
-    auto lv = ll::service::getLevel();
-    if (!lv) return false;
-    GameRuleId id;
-    id.mValue = static_cast<int>(GameRules::GameRulesIndex::MobGriefing);
-    return lv->getGameRules().getBool(id, true);
-}
+using world::hard;
+using world::mobGriefing;
 
 /// Whether `actor` is a part of the hydra `uid`.
 bool partOf(Actor const& actor, std::int64_t uid) { return fe::parentOfPart(actor) == uid; }
@@ -267,15 +267,16 @@ void tickPart(Actor& hydra, Runtime& rt, int idx) {
     if (p.markedDead) p.deathTime++;
     if (p.markedDead && p.active) {
         auto  size = fullSize(idx);
-        V3    c{p.pos.x + size.width * 0.5, p.pos.y + size.height * 0.5, p.pos.z + size.width * 0.5};
-        auto& r = levelRandom();
-        // 10 particles: an explosion one time in five, else poof (gaussian 0.02 velocities)
-        int explosions = 0;
-        for (int k = 0; k < 10; ++k)
-            if (r.nextInt(5) == 0) ++explosions;
-        nlohmann::json spread{{"spread", {size.width * 0.5, size.height * 0.5, size.width * 0.5}}};
-        if (explosions) particle(hydra, "minecraft:explosion", c, {}, explosions, spread);
-        particle(hydra, "minecraft:poof", c, {r.nextGaussian() * 0.02, r.nextGaussian() * 0.02 + 0.001, r.nextGaussian() * 0.02}, 10 - explosions, spread);
+        auto& r    = levelRandom();
+        // 10 particles a tick: an explosion one time in five, else poof, each in the box from the
+        // part's position to position + (width, height, width) (TF's offset box), with gaussian
+        // 0.02 velocities
+        for (int k = 0; k < 10; ++k) {
+            char const* id = r.nextInt(5) == 0 ? "minecraft:explosion" : "minecraft:poof";
+            V3          at{p.pos.x + r.nextFloat() * size.width, p.pos.y + r.nextFloat() * size.height, p.pos.z + r.nextFloat() * size.width};
+            V3          v{r.nextGaussian() * 0.02, r.nextGaussian() * 0.02, r.nextGaussian() * 0.02};
+            particle(hydra, id, at, v);
+        }
     }
     if (p.deathTime == 20) setPartActive(rt, idx, false);
 }
@@ -283,6 +284,11 @@ void tickPart(Actor& hydra, Runtime& rt, int idx) {
 /// Keeps the part actors' properties, names and rotations up to date.
 void syncParts(Mob& hydra, Runtime& rt) {
     bool parentRed = rt.hurtTime > 0 || rt.deathTime > 0;
+    // the body's own overlay (LivingEntityRenderer: hurtTime > 0 || deathTime > 0)
+    if (int red = parentRed ? 1 : 0; red != rt.sentRed) {
+        ge::setProperty(hydra, "twilightforest:red", parentRed);
+        rt.sentRed = red;
+    }
     for (int idx = 0; idx < ch::kPartCount; ++idx) {
         auto const& h = rt.handles[idx];
         if (!h.valid()) continue;
@@ -301,6 +307,12 @@ void syncParts(Mob& hydra, Runtime& rt) {
             p.sentRed = red;
         }
         if (isHeadPart(idx)) {
+            // TFPartRenderer#setupRotations: a dying head flips onto its side (the necks' flip is 0)
+            int death = std::min(p.deathTime, 20);
+            if (death != p.sentDeath) {
+                ge::setProperty(*a, "twilightforest:death", death);
+                p.sentDeath = death;
+            }
             int   head  = headOf(idx);
             float mouth = rt.heads[head].mouth;
             if (std::fabs(mouth - p.sentMouth) > 1e-4F) {
@@ -309,7 +321,10 @@ void syncParts(Mob& hydra, Runtime& rt) {
             }
             auto const& name = rt.names[head];
             if (!p.nameSent || name != p.sentName) {
+                // HydraHeadRenderer#shouldShowName: a named head always shows its name (the part's
+                // nameable always_show; a name set by code leaves CanShowName off)
                 a->setNameTag(name);
+                SynchedActorDataAccess::setActorFlag(a->getEntityContext(), ActorFlags::CanShowName, !name.empty());
                 p.sentName = name;
                 p.nameSent = true;
             }
@@ -726,7 +741,7 @@ Player* nearestPlayer(Actor& hydra, double range) {
     double  bestD = std::numeric_limits<double>::max();
     for (auto* p : fe::playersNear(static_cast<int>(hydra.getDimensionId()), hydra.getFeetPos(), range)) {
         if (!p || p->isSpectator()) continue;
-        double d = fe::mobs::distanceSqr(hydra, *p);
+        double d = fe::distanceSqr(hydra, *p);
         if (d < bestD) {
             bestD = d;
             best  = p;
@@ -784,9 +799,9 @@ Actor* findSecondaryTarget(Mob& hydra, Runtime& rt, double range) {
         if (!e || e == &hydra || !living(*e) || e->getTypeName() == kHydra) continue;
         auto uid = fe::uidOf(*e);
         if (uid == rt.target || anyHeadTargeting(rt, uid)) continue;
-        if (!fe::mobs::hasLineOfSight(hydra, *e)) continue;
+        if (!fe::hasLineOfSight(hydra, *e)) continue;
         if (e->isPlayer() && (e->isCreative() || e->isSpectator())) continue; // NO_CREATIVE_OR_SPECTATOR
-        double d = fe::mobs::distanceSqr(hydra, *e);
+        double d = fe::distanceSqr(hydra, *e);
         if (d < bestD) {
             bestD = d;
             best  = e;
@@ -803,7 +818,7 @@ double distanceSqXZ(V3 a, Vec3 const& b) {
 void secondaryAttacks(Mob& hydra, Runtime& rt, fe::JavaRandom& rnd) {
     Actor* sec = findSecondaryTarget(hydra, rt, 20.0);
     if (!sec) return;
-    float distance = std::sqrt(static_cast<float>(fe::mobs::distanceSqr(*sec, hydra)));
+    float distance = std::sqrt(static_cast<float>(fe::distanceSqr(*sec, hydra)));
     for (int i = 1; i < ch::kMaxHeads; ++i) {
         auto& hr = rt.heads[i];
         if (hr.head.isDead() || !hr.head.isIdle()) continue;
@@ -818,6 +833,31 @@ void secondaryAttacks(Mob& hydra, Runtime& rt, fe::JavaRandom& rnd) {
             hr.head.isSecondaryAttacking = true;
             hr.head.setNextState(State::MortarBeginning);
         }
+    }
+}
+
+/// `be instanceof Container` of Java's block entities (BaseContainerBlockEntity, the
+/// ContainerSingleItem jukebox / decorated pot, the chiseled bookshelf). Bedrock's item frames are
+/// block actors where Java's are entities that destroyBlock never touches: they are spared too.
+bool isContainer(BlockActor const& be) {
+    switch (be.getType()) {
+    case BlockActorType::Furnace:
+    case BlockActorType::BlastFurnace:
+    case BlockActorType::Smoker:
+    case BlockActorType::Chest:
+    case BlockActorType::Dispenser:
+    case BlockActorType::Dropper:
+    case BlockActorType::Hopper:
+    case BlockActorType::ShulkerBox:
+    case BlockActorType::BarrelBlock:
+    case BlockActorType::BrewingStand:
+    case BlockActorType::Crafter:
+    case BlockActorType::Jukebox:
+    case BlockActorType::ChiseledBookshelf:
+    case BlockActorType::DecoratedPot:
+    case BlockActorType::ItemFrame:
+    case BlockActorType::GlowItemFrame: return true;
+    default: return false;
     }
 }
 
@@ -838,7 +878,10 @@ void destroyBlocksInAABB(Mob& hydra, Runtime& rt, AABB const& b) {
                 Block const& block    = region.getBlock(pos);
                 float        hardness = block.getBlockType().getDestroySpeed();
                 if (block.isAir() || hardness < 0.0F || hardness >= 50.0F) continue;
-                if (region.getBlockEntity(pos)) continue; // containers (and every other block entity)
+                // EntityUtil#canDestroyBlock spares only containers (signs, banners, beds, skulls and
+                // spawners are destroyed); custom containers have no block entity: gf::inventory knows them
+                if (auto* be = region.getBlockEntity(pos); be && isContainer(*be)) continue;
+                if (block.getBlockType().mNameInfo->mNamespaceName.get() != "minecraft" && gf::inventory::find(region, pos)) continue;
                 BlockChangeContext ctx{};
                 level->destroyBlock(region, pos, false, ctx);
             }
@@ -855,9 +898,45 @@ bool unsteadySurfaceBeneath(Mob& hydra) {
     for (int x = minX; x <= maxX; ++x)
         for (int z = minZ; z <= maxZ; ++z) {
             total++;
-            if (fe::mobs::legacySolid(region, BlockPos{x, dy, z})) solid++;
+            if (fe::legacySolid(region, BlockPos{x, dy, z})) solid++;
         }
     return static_cast<float>(solid) / static_cast<float>(total) < 0.6F;
+}
+
+/// The Java hydra's 16 x 12 box rests on any block under its footprint; the Bedrock actor's box is
+/// 2 x 3 (a bigger one would take the players' hits meant for the parts: Bedrock has no
+/// non-pickable mob). While a block under the Java footprint holds the box the actor has no
+/// gravity, so it never drops into a gap or a hole the Java hydra would stand over.
+void restOnJavaBox(Mob& hydra, Runtime& rt) {
+    auto&  region = hydra.getDimensionBlockSource();
+    auto   p      = hydra.getFeetPos();
+    int    y      = static_cast<int>(std::floor(p.y - 0.01));
+    float  top    = -1.0E9F; // the highest collision top in the layer under the footprint
+    if (y >= region.getMinHeight() && y < region.getMaxHeight()) {
+        int minX = static_cast<int>(std::floor(p.x - kHalfWidth)), maxX = static_cast<int>(std::floor(p.x + kHalfWidth - 1.0E-4));
+        int minZ = static_cast<int>(std::floor(p.z - kHalfWidth)), maxZ = static_cast<int>(std::floor(p.z + kHalfWidth - 1.0E-4));
+        for (int x = minX; x <= maxX; ++x)
+            for (int z = minZ; z <= maxZ; ++z) {
+                BlockPos     at{x, y, z};
+                Block const& b = region.getBlock(at);
+                if (b.isAir()) continue;
+                AABB s = b.getBlockType().getCollisionShape(b, region, at, nullptr);
+                if (s.max.x - s.min.x <= 1e-6F || s.max.y - s.min.y <= 1e-6F || s.max.z - s.min.z <= 1e-6F) continue;
+                top = std::max(top, s.max.y);
+            }
+    }
+    bool held = top >= p.y - 0.02F;
+    // a fall that went past the top in one tick lands on it (Java's collision stops the box there)
+    if (held && top > p.y + 1.0E-3F && top - p.y < 1.0F) hydra.teleport(Vec3{p.x, top, p.z}, hydra.getDimensionId());
+    bool gravity = !held;
+    if (gravity != rt.gravity) {
+        SynchedActorDataAccess::setActorFlag(hydra.getEntityContext(), ActorFlags::HasGravity, gravity);
+        rt.gravity = gravity;
+    }
+    if (held && hydra.getPosDelta().y < 0.0F) {
+        auto d = hydra.getPosDelta();
+        fe::setMotion(hydra, Vec3{d.x, 0.0F, d.z});
+    }
 }
 
 /// Hydra#collideWithEntities (EnderDragon#knockBack).
@@ -888,7 +967,7 @@ int randomDeadHead(Runtime const& rt, fe::JavaRandom& rnd) {
 
 /// Hydra#customServerAiStep.
 void brain(Mob& hydra, Runtime& rt) {
-    auto& rnd = fe::randomOf(hydra);
+    auto& rnd = *rt.random;
     if (rt.ticksSinceDamaged > ch::kTicksBeforeHeal && rt.ticksSinceDamaged % 5 == 0) hydra.heal(1);
     // kill heads that have taken too much damage
     for (int i = 0; i < ch::kMaxHeads; ++i) {
@@ -933,10 +1012,10 @@ void brain(Mob& hydra, Runtime& rt) {
             if (!hr.head.isAttacking() && !hr.head.isSecondaryAttacking) hr.target = rt.target;
         // let's pick an attack
         if (target->isAlive()) {
-            float distance = std::sqrt(static_cast<float>(fe::mobs::distanceSqr(*target, hydra)));
-            if (fe::mobs::hasLineOfSight(hydra, *target)) attackEntity(hydra, rt, *target, distance, rnd);
+            float distance = std::sqrt(static_cast<float>(fe::distanceSqr(*target, hydra)));
+            if (fe::hasLineOfSight(hydra, *target)) attackEntity(hydra, rt, *target, distance, rnd);
         }
-        if (rt.chase-- <= 0 || !target->isAlive() || fe::mobs::distanceSqr(*target, hydra) > 48.0 * 48.0) rt.target = 0;
+        if (rt.chase-- <= 0 || !target->isAlive() || fe::distanceSqr(*target, hydra) > 48.0 * 48.0) rt.target = 0;
     } else {
         if (rnd.nextFloat() < 0.05F) rt.randomYawVelocity = (rnd.nextFloat() - 0.5F) * 20.0F;
         rt.yRot += rt.randomYawVelocity;
@@ -956,6 +1035,12 @@ Runtime& createRuntime(Mob& hydra) {
     auto& rt  = S().runtimes[uid];
     rt        = Runtime{};
     for (int i = 0; i < ch::kMaxHeads; ++i) rt.heads[i].head = ch::Head(i, i < 3);
+    std::int64_t seed = fe::freshSeed();
+    if (auto it = S().pendingSeed.find(uid); it != S().pendingSeed.end()) {
+        seed = it->second;
+        S().pendingSeed.erase(it);
+    }
+    rt.random  = std::make_unique<fe::JavaRandom>(seed);
     rt.yRot    = hydra.getRotation().y;
     rt.bodyYaw = rt.yRot;
     if (auto it = S().pendingLoad.find(uid); it != S().pendingLoad.end()) {
@@ -1012,6 +1097,12 @@ void applyRotation(Mob& hydra, Runtime const& rt) {
 
 void tickHydra(Mob& hydra, Runtime& rt) {
     bool alive = hydra.isAlive() && hydra.getHealth() > 0;
+    // Mob#baseTick: the ambient growl (getAmbientSoundInterval 80, volume 2, the voice pitch)
+    if (alive && rt.random->nextInt(1000) < rt.ambientSoundTime++) {
+        rt.ambientSoundTime = -80;
+        float pitch         = (rt.random->nextFloat() - rt.random->nextFloat()) * 0.2F + 1.0F;
+        sound(hydra, hydraPos(hydra), "entity.twilightforest.hydra.growl", 2.0F, pitch);
+    }
     rt.tickCount++;
     // update all heads
     for (int i = 0; i < ch::kMaxHeads; ++i) tickHead(hydra, rt, i);
@@ -1019,6 +1110,7 @@ void tickHydra(Mob& hydra, Runtime& rt) {
         for (int i = 0; i < ch::kMaxHeads; ++i) setHeadHurtTime(rt, i, rt.hurtTime);
     rt.ticksSinceDamaged++;
     if (alive) brain(hydra, rt);
+    restOnJavaBox(hydra, rt);
     // set body part positions: the body goes behind the actual position of the hydra
     V3 h = hydraPos(hydra);
     rt.parts[0].pos  = ch::bodyPosition(h, rt.bodyYaw);
@@ -1037,9 +1129,10 @@ void tickHydra(Mob& hydra, Runtime& rt) {
     if (rt.deathTime > 0) {
         auto& r = levelRandom();
         for (int k = 0; k < 10; ++k) {
-            V3 at{h.x + r.nextFloat() * 6.0F * 2.0F - 6.0F, h.y + r.nextFloat() * 6.0F, h.z + r.nextFloat() * 6.0F * 2.0F - 6.0F};
-            particle(hydra, r.nextInt(2) == 0 ? "minecraft:explosion" : "minecraft:poof", at,
-                     V3{r.nextGaussian() * 0.02, r.nextGaussian() * 0.02 + 0.001, r.nextGaussian() * 0.02});
+            V3          v{r.nextGaussian() * 0.02, r.nextGaussian() * 0.02, r.nextGaussian() * 0.02};
+            char const* id = r.nextInt(2) == 0 ? "minecraft:explosion" : "minecraft:poof";
+            V3          at{h.x + r.nextFloat() * 6.0F * 2.0F - 6.0F, h.y + r.nextFloat() * 6.0F, h.z + r.nextFloat() * 6.0F * 2.0F - 6.0F};
+            particle(hydra, id, at, v);
         }
     }
     syncParts(hydra, rt);
@@ -1070,17 +1163,21 @@ bool hurt(Actor& self, float& amount, std::string const& type, Actor* attacker) 
     }
     auto* rt = find(fe::uidOf(self));
     if (!rt) return true;
-    // a fire-immune boss ignores fire, except its own mortars
+    // a fire-immune boss ignores fire, except its own mortars (Hydra#isInvulnerableTo)
     if (type != "twilightforest:hydra_mortar" && gf::tags::has(gf::tags::Registry::DamageType, "minecraft:is_fire", type)) return false;
-    // TF's parts are no level entities: explosions (the mortars' too) never reach them
-    if (type.find("explosion") != std::string::npos) return false;
+    // explosions reach the parts (NeoForge's Level#getEntities returns PartEntity instances): a
+    // player's TNT, a creeper, a reflected mortar; the hydra's own mortars are refused just below
+    // (their causing entity is the hydra)
     auto uid = fe::uidOf(self);
     if (attacker && (attacker == &self || partOf(*attacker, uid))) return false;
+    // the explosion of one of its own mortars (Explosion#getIndirectSourceEntity: the mortar's owner)
+    if (attacker && attacker->getTypeName() == kMortar)
+        if (auto mv = mortarView(*attacker); mv && mv->owner == uid) return false;
     int idx     = partIndex(part);
     int headCon = -1;
     if (idx >= 0 && isHeadPart(idx)) headCon = headOf(idx);
     else if (idx >= 0 && headOf(idx) >= 0 && rt->heads[headOf(idx)].head.isDead()) return false; // a dead head's neck
-    double range = attacker ? fe::mobs::distanceSqr(self, *attacker) : -1.0;
+    double range = attacker ? fe::distanceSqr(self, *attacker) : -1.0;
     // give some leeway for reflected mortars
     if (range > 400.0 + (type == "twilightforest:hydra_mortar" ? 200.0 : 0.0)) return false;
     // ignore hits on dying heads, it's weird
@@ -1092,9 +1189,11 @@ bool hurt(Actor& self, float& amount, std::string const& type, Actor* attacker) 
         amount      = static_cast<float>(armored);
         if (headCon >= 0) rt->heads[headCon].head.addDamage(static_cast<float>(armored));
     }
-    if (amount <= 0.0F) return false;
+    // LivingEntity#hurt accepts a hit of 0 too (tookDamage): the hurt flash and the heal timer reset;
+    // the engine is not asked to apply nothing
     rt->ticksSinceDamaged = 0;
     rt->hurtTime          = kHurtTime;
+    if (amount <= 0.0F) return false;
     rt->damageTaken += amount;
     return true;
 }
@@ -1185,6 +1284,26 @@ void setBrainEnabled(Actor& hydra, bool enabled) {
     if (auto* rt = find(fe::uidOf(hydra))) rt->brain = enabled;
 }
 
+void aimHeadForTest(Actor& hydra, int head, Vec3 const& point) {
+    auto* rt = find(fe::uidOf(hydra));
+    if (!rt || head < 0 || head >= ch::kMaxHeads) return;
+    auto& hr  = rt->heads[head];
+    hr.target = 0;
+    hr.tx     = point.x;
+    hr.ty     = point.y;
+    hr.tz     = point.z;
+}
+
+void seedForTest(Actor& hydra, std::int64_t seed) {
+    if (auto* rt = find(fe::uidOf(hydra))) rt->random = std::make_unique<fe::JavaRandom>(seed);
+    else S().pendingSeed[fe::uidOf(hydra)] = seed;
+}
+
+bool hasGravityForTest(Actor& hydra) {
+    auto* rt = find(fe::uidOf(hydra));
+    return !rt || rt->gravity;
+}
+
 float damageTakenForTest(Actor& hydra) {
     auto* rt = find(fe::uidOf(hydra));
     return rt ? rt->damageTaken : 0.0F;
@@ -1266,18 +1385,20 @@ void installHydra() {
         .particle = "minecraft:flame",
     });
     S().handlers.push_back(ia::onInteract({.block = kHydraPart}, nameTag, ia::priority::High + 10));
-    // forget the runtimes of hydras that are gone (every 100 ticks; F8's level tick list has no removal)
-    static bool once = false;
-    if (std::exchange(once, true)) return;
-    fe::onLevelTick([] {
-        if (fe::currentTick() % 100 != 0) return;
-        std::erase_if(S().runtimes, [](auto const& kv) { return fe::actorById(kv.first) == nullptr; });
-    });
+    // forget the runtimes of hydras that are gone (every 100 ticks)
+    if (!S().levelTick)
+        S().levelTick = fe::onLevelTick([] {
+            if (fe::currentTick() % 100 != 0) return;
+            std::erase_if(S().runtimes, [](auto const& kv) { return fe::actorById(kv.first) == nullptr; });
+        });
 }
 
 void uninstallHydra() {
     for (auto id : S().handlers) ia::remove(id);
     S().handlers.clear();
+    if (S().levelTick) fe::removeLevelTick(S().levelTick);
+    S().levelTick = 0;
+    S().pendingSeed.clear();
     S().runtimes.clear();
     S().pendingLoad.clear();
 }

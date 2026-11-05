@@ -1,0 +1,61 @@
+{
+  "format_version": "1.26.50",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:smoker",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 1.5
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 30
+      },
+      "minecraft:tags": [
+        "minecraft:is_shovel_item_destructible"
+      ],
+      "minecraft:map_color": "#7fb238",
+      "minecraft:geometry": "minecraft:geometry.full_block",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_firejet_side",
+          "render_method": "opaque",
+          "tint_method": "grass"
+        },
+        "up": {
+          "texture": "tf_block_firejet_top",
+          "render_method": "opaque",
+          "tint_method": "grass"
+        },
+        "down": {
+          "texture": "tf_vanilla_block_black_concrete_powder",
+          "render_method": "opaque",
+          "tint_method": "grass"
+        },
+        "north": {
+          "texture": "tf_block_firejet_side",
+          "render_method": "opaque",
+          "tint_method": "grass"
+        },
+        "south": {
+          "texture": "tf_block_firejet_side",
+          "render_method": "opaque",
+          "tint_method": "grass"
+        },
+        "east": {
+          "texture": "tf_block_firejet_side",
+          "render_method": "opaque",
+          "tint_method": "grass"
+        },
+        "west": {
+          "texture": "tf_block_firejet_side",
+          "render_method": "opaque",
+          "tint_method": "grass"
+        }
+      }
+    }
+  }
+}

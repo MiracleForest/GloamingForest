@@ -20,12 +20,12 @@
 // effects (particles, the jet's active / start sounds) go out through gf::fx.
 
 #include "feature/hydra/Hydra.h"
+#include "feature/hydra/World.h"
 
 #include <map>
+#include <memory>
 #include <unordered_set>
 
-#include "ll/api/event/EventBus.h"
-#include "ll/api/event/world/ServerLevelTickEvent.h"
 #include "ll/api/service/Bedrock.h"
 
 #include "mc/world/actor/Actor.h"
@@ -42,7 +42,7 @@
 #include "feature/combat/Combat.h"
 #include "feature/common/Interactions.h"
 #include "feature/common/Redstone.h"
-#include "feature/entity/EntityInternal.h"
+#include "feature/dimension/World.h"
 #include "feature/families/BlockEvents.h"
 #include "feature/fx/Fx.h"
 #include "feature/tags/Tags.h"
@@ -52,14 +52,14 @@
 
 namespace gf::feature::hydra {
 
-namespace fe = gf::feature::entity;
+namespace fe = gf::feature::hydra::world;
 using core::GlobalPos;
 
 namespace {
 
 constexpr int kScanRadius = 32; ///< horizontal blocks around a player the palette scan covers
 constexpr int kScanHeight = 24; ///< blocks above and below
-constexpr int kScanSlices = 8;  ///< the vertical range is scanned in this many ticks
+constexpr int kScanInterval = 20; ///< ticks between two scans
 
 struct Jet {
     int counter = 0;
@@ -72,7 +72,7 @@ struct JetState {
     std::map<GlobalPos, Jet>                          jets;    ///< popping / flaming jets
     std::map<GlobalPos, Smoker>                       smokers; ///< smokers near players
     std::map<GlobalPos, gf::redstone::WatchId>        watches; ///< encased blocks
-    ll::event::ListenerPtr                            tickListener;
+    int                                               tickId = 0; ///< world::onLevelTick
     fe::JavaRandom                                    random{fe::freshSeed()};
     int                                               smokeParticles = 0;
     std::uint64_t                                     tick           = 0;
@@ -169,7 +169,15 @@ void encasedUpdate(BlockSource& region, BlockPos const& pos) {
 void watch(BlockSource& region, BlockPos const& pos) {
     auto gp = game::globalPos(region, pos);
     if (J().watches.contains(gp)) return;
-    J().watches[gp] = gf::redstone::watch(gp, [](GlobalPos const& at, int) {
+    // the first poll reports the power the block already had: no neighbour changed then (a block
+    // placed next to a powered one waits for the next change, as Java's onPlace does nothing)
+    auto first = std::make_shared<int>(gf::redstone::power(region, pos));
+    J().watches[gp] = gf::redstone::watch(gp, [first](GlobalPos const& at, int power) {
+        if (*first >= 0) {
+            bool same = power == *first;
+            *first    = -1;
+            if (same) return;
+        }
         auto* r = game::regionOf(at.dim);
         if (!r) return;
         BlockPos p = game::blockPos(at);
@@ -189,13 +197,18 @@ void watch(BlockSource& region, BlockPos const& pos) {
 }
 
 void jetHurtEntities(BlockSource& region, BlockPos const& pos) {
-    // AABB between the centres of pos + (-2, 0, -2) and pos + (2, 4, 2)
+    // AABB between the centres of pos + (-2, 0, -2) and pos + (2, 4, 2): every entity that is not
+    // fire immune (items burn, boats and minecarts take the damage)
     AABB box{Vec3{pos.x - 1.5F, pos.y + 0.5F, pos.z - 1.5F}, Vec3{pos.x + 2.5F, pos.y + 4.5F, pos.z + 2.5F}};
-    for (auto* e : fe::actorsIn(region, static_cast<int>(region.getDimensionId()), box)) {
-        if (!e || !e->isAlive() || fe::parentOfPart(*e) != 0 || !fe::asMob(*e)) continue;
-        if (e->isFireImmune()) continue;
+    std::vector<std::int64_t> ids;
+    for (auto* e : fe::actorsIn(region, static_cast<int>(region.getDimensionId()), box))
+        if (e && e->isAlive() && !e->isFireImmune()) ids.push_back(fe::uidOf(*e));
+    // by id: a hit may remove an actor (a burnt item, a broken boat) while the others wait
+    for (auto id : ids) {
+        Actor* e = fe::actorById(id);
+        if (!e || !e->isAlive()) continue;
         gf::combat::hurt(*e, 2.0F, "twilightforest:fire_jet");
-        e->setOnFire(15, true); // setRemainingFireTicks(300)
+        if ((e = fe::actorById(id)) && e->isAlive()) e->setOnFire(15, true); // setRemainingFireTicks(300)
     }
 }
 
@@ -280,7 +293,10 @@ bool tickSmoker(GlobalPos const& gp, Smoker& s) {
     return true;
 }
 
-/// Finds the jets and smokers around the players: one horizontal slice of the box a tick.
+/// Finds the jets and smokers the world generation placed (and the ones a reload left popping or
+/// flaming) around the players in the Twilight Forest, once a second. Blocks placed in any
+/// dimension are known from their placement (onPlaced), jets that start from a random tick or
+/// redstone register themselves.
 void scan() {
     static std::unordered_set<BlockType const*> types;
     if (types.empty())
@@ -289,18 +305,15 @@ void scan() {
     if (types.empty()) return;
     auto lv = ll::service::getLevel();
     if (!lv) return;
-    int const slice = static_cast<int>(J().tick % kScanSlices);
     std::vector<GlobalPos> found;
     lv->forEachPlayer(std::function<bool(Player&)>([&](Player& p) {
+        if (!gf::world::isTwilight(p.getDimension())) return true;
         int   dim    = static_cast<int>(p.getDimensionId());
         auto* region = game::regionOf(dim);
         if (!region) return true;
         BlockPos c  = p.getFeetBlockPos();
-        int      y0 = std::max<int>(c.y - kScanHeight, region->getMinHeight());
-        int      y1 = std::min<int>(c.y + kScanHeight, region->getMaxHeight() - 1);
-        int      h  = (y1 - y0 + kScanSlices) / kScanSlices;
-        int      ys = y0 + slice * h;
-        int      ye = std::min(y1, ys + h - 1);
+        int      ys = std::max<int>(c.y - kScanHeight, region->getMinHeight());
+        int      ye = std::min<int>(c.y + kScanHeight, region->getMaxHeight() - 1);
         if (ys > ye) return true;
         int r = kScanRadius;
         for (int cx = (c.x - r) >> 4; cx <= (c.x + r) >> 4; ++cx)
@@ -331,18 +344,10 @@ void scan() {
 void onLevelTick() {
     auto& s = J();
     ++s.tick;
-    scan();
+    if (s.tick % kScanInterval == 0) scan();
     for (auto it = s.jets.begin(); it != s.jets.end();) it = tickJet(it->first, it->second) ? std::next(it) : s.jets.erase(it);
-    for (auto it = s.smokers.begin(); it != s.smokers.end();) {
-        bool keep = tickSmoker(it->first, it->second);
-        // a smoker no player is near any more is forgotten (the scan finds it again)
-        if (keep && s.tick % 100 == 0) {
-            keep         = false;
-            auto const&  gp = it->first;
-            for (auto* p : fe::playersNear(gp.dim, Vec3{static_cast<float>(gp.x), static_cast<float>(gp.y), static_cast<float>(gp.z)}, kScanRadius + 16)) keep |= p != nullptr;
-        }
-        it = keep ? std::next(it) : s.smokers.erase(it);
-    }
+    // a smoker ticks while its chunk is loaded (it is forgotten with the chunk; the scan finds it again)
+    for (auto it = s.smokers.begin(); it != s.smokers.end();) it = tickSmoker(it->first, it->second) ? std::next(it) : s.smokers.erase(it);
 }
 
 } // namespace
@@ -364,6 +369,8 @@ int jetCounter(GlobalPos const& pos) {
 
 int smokeParticlesForTest() { return J().smokeParticles; }
 
+bool encasedWatched(GlobalPos const& pos) { return J().watches.contains(pos); }
+
 void installJets() {
     auto& s = J();
     if (!s.hooked) {
@@ -375,11 +382,16 @@ void installJets() {
                 watch(region, pos);
                 encasedUpdate(region, pos);
             });
-            gf::blockevents::onPlaced(id, [](BlockSource& region, BlockPos const& pos, Block const&, Actor*) {
-                watch(region, pos);
-                encasedUpdate(region, pos);
-            });
+            // Block#onPlace does nothing for the encased blocks: only the watch, the next change of the
+            // power around them (neighborChanged) switches them
+            gf::blockevents::onPlaced(id, [](BlockSource& region, BlockPos const& pos, Block const&, Actor*) { watch(region, pos); });
         }
+        // a jet placed already popping or flaming has a ticking block entity at once (any dimension)
+        for (auto const* id : {kFireJet, kEncasedJet})
+            gf::blockevents::onPlaced(id, [](BlockSource& region, BlockPos const& pos, Block const& block, Actor*) {
+                auto v = stateValue(block, "twilightforest:state");
+                if (v == "popping" || v == "flame") track(game::globalPos(region, pos));
+            });
         for (auto const* id : {kSmoker, kEncasedSmoker})
             gf::blockevents::onPlaced(id, [](BlockSource& region, BlockPos const& pos, Block const&, Actor*) { J().smokers.try_emplace(game::globalPos(region, pos)); });
         gf::game::db::onWorldClosed([] {
@@ -388,13 +400,13 @@ void installJets() {
             J().watches.clear(); // dropped with the world (Redstone.h)
         });
     }
-    if (!s.tickListener) s.tickListener = ll::event::EventBus::getInstance().emplaceListener<ll::event::ServerLevelTickEvent>([](auto&) { onLevelTick(); });
+    if (!s.tickId) s.tickId = fe::onLevelTick(onLevelTick);
 }
 
 void uninstallJets() {
     auto& s = J();
-    if (s.tickListener) ll::event::EventBus::getInstance().removeListener(s.tickListener);
-    s.tickListener = nullptr;
+    if (s.tickId) fe::removeLevelTick(s.tickId);
+    s.tickId = 0;
 }
 
 } // namespace gf::feature::hydra

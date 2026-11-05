@@ -4,7 +4,7 @@
     "description": {
       "identifier": "twilightforest:hydra_mortar",
       "materials": {
-        "default": "entity_alphatest"
+        "default": "entity_alphablend"
       },
       "textures": {
         "default": "textures/twilightforest/entity/hydramortar"
@@ -12,7 +12,9 @@
       "geometry": {
         "default": "geometry.twilightforest.hydra_mortar"
       },
-      "render_controllers": ["controller.render.twilightforest.hydra_mortar"]
+      "render_controllers": [
+        "controller.render.twilightforest.hydra_mortar"
+      ]
     }
   }
 }

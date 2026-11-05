@@ -5,10 +5,18 @@
       "loop": true,
       "bones": {
         "head": {
-          "rotation": ["query.target_x_rotation - q.property('twilightforest:mouth') * 15.0", "query.target_y_rotation", 0]
+          "rotation": [
+            "query.target_x_rotation - q.property('twilightforest:mouth') * 15.0",
+            "query.target_y_rotation",
+            "math.min(math.sqrt(math.max(q.property('twilightforest:death') - 1.0, 0.0) / 20.0 * 1.6), 1.0) * 90.0"
+          ]
         },
         "jaw": {
-          "rotation": ["q.property('twilightforest:mouth') * 60.0", 0, 0]
+          "rotation": [
+            "q.property('twilightforest:mouth') * 60.0",
+            0,
+            0
+          ]
         }
       }
     }

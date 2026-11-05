@@ -103,7 +103,7 @@ void replaceBlocksDome(st::Region& region, BlockPos const& center, float radius,
 
 // ---- HydraLairComponent ------------------------------------------------------------------------------
 
-HydraLair::HydraLair(int depth, int x, int y, int z) : HollowHill(kPieceType, depth, 2, x, y + 2, z, kSpeleothem) {}
+HydraLair::HydraLair(int depth, int x, int y, int z) : HollowHill(kPieceType, depth, 2, x, y + 2, z, kSpeleothem), mBaseOffset(bbox.minY - y) {}
 
 void HydraLair::addChildren(Piece&, std::vector<std::unique_ptr<Piece>>&, RandomSource&) {
     // NO-OP
@@ -125,10 +125,11 @@ void HydraLair::postProcess(Region& region, RandomSource& rand, BlockBox const& 
 
 void HydraLair::generateSpeleothems(Region& region, RandomSource& rand, BlockBox const& writeableBounds) {
     float    radiusSq = 0.9F * static_cast<float>(radius) * static_cast<float>(radius);
+    int      speleothemBase = bbox.minY - mBaseOffset; // the start's y: 0 in the Twilight Forest
     BlockPos locator  = getLocatorPosition();
     BlockPos exclusionCenter{locator.x - 16, locator.y, locator.z - 16};
     float    exclusionRadiusSq = 23 * 23;
-    for (auto const& d : ch::lairLattice(writeableBounds, 0)) {
+    for (auto const& d : ch::lairLattice(writeableBounds, speleothemBase)) {
         // xz -9 -9 from spawner, center of exclude circle with radius 24
         int dX = d.x - exclusionCenter.x;
         int dZ = d.z - exclusionCenter.z;
@@ -137,11 +138,11 @@ void HydraLair::generateSpeleothems(Region& region, RandomSource& rand, BlockBox
         float    distSq = getDistSqFromCenter(locator, dest);
         if (distSq > rand.nextFloat() * 0.9F * radiusSq) continue;
         // an absolute height (TF sets the lattice position's y, not a piece-relative one)
-        dest.y = core::mth::floorf(core::jrand::mthCos(std::sqrt(distSq) / static_cast<float>(hdiam) * 3.1415927F) * (static_cast<float>(hdiam) / 4.0F));
+        dest.y = speleothemBase + core::mth::floorf(core::jrand::mthCos(std::sqrt(distSq) / static_cast<float>(hdiam) * 3.1415927F) * (static_cast<float>(hdiam) / 4.0F));
         if (rand.nextFloat() < ch::kStalactiteChance) generateSpeleothem(region, dest, writeableBounds, true);
         if (rand.nextFloat() < ch::kStalagmiteChance) {
             if ((rand.nextFloat() * 0.667F + 0.333F) * distSq / radiusSq < 0.333F) continue;
-            dest.y = 1;
+            dest.y = speleothemBase + 1;
             generateSpeleothem(region, dest, writeableBounds, false);
         }
     }

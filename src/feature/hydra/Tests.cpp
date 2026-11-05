@@ -8,11 +8,13 @@
 #include <algorithm>
 #include <cmath>
 #include <functional>
+#include <optional>
 
 #include "ll/api/coro/CoroTask.h"
 #include "ll/api/service/Bedrock.h"
 
 #include "mc/deps/core/math/Vec2.h"
+#include "mc/deps/core/string/HashedString.h"
 #include "mc/deps/shared_types/legacy/Difficulty.h"
 #include "mc/safety/RedactableString.h"
 #include "mc/server/SimulatedPlayer.h"
@@ -32,11 +34,13 @@
 #include "feature/combat/Combat.h"
 #include "feature/common/Interactions.h"
 #include "feature/entity/Entity.h"
-#include "feature/entity/EntityInternal.h"
 #include "feature/ext/entity/EntityExt.h"
+#include "feature/ext/landmark/LandmarkTest.h"
 #include "feature/hydra/Hydra.h"
+#include "feature/hydra/World.h"
 #include "feature/hydra/Lair.h"
 #include "feature/inventory/Inventory.h"
+#include "feature/landmark/Landmark.h"
 #include "feature/projectile/Projectile.h"
 #include "game/Blocks.h"
 #include "game/Items.h"
@@ -46,7 +50,7 @@ namespace gf::feature::hydra::tests {
 
 using gf::selftest::Context;
 namespace ch = gf::core::hydra;
-namespace fe = gf::feature::entity;
+namespace fe = gf::feature::hydra::world;
 namespace ge = gf::entity;
 using ch::State;
 using Difficulty = SharedTypes::Legacy::Difficulty;
@@ -83,9 +87,31 @@ std::int64_t spawnHydra(Context& ctx, core::GlobalPos const& at, std::int64_t se
     auto* h = spawnMob(at, kHydra);
     if (!h) return 0;
     ge::seedForTest(*h, seed);
+    seedForTest(*h, seed);
     auto uid = fe::uidOf(*h);
     (void)ctx;
     return uid;
+}
+
+/// Keeps a simulated player alive through the hydra's hits (resistance 255 for `seconds`).
+void resistant(Player& p, int seconds) {
+    (void)gf::selftest::runServerCommand("effect \"" + p.getRealName() + "\" resistance " + std::to_string(seconds) + " 255 true", static_cast<int>(p.getDimensionId()));
+}
+
+bool attacking(State s) {
+    switch (s) {
+    case State::BiteBeginning:
+    case State::BiteReady:
+    case State::Biting:
+    case State::BiteEnding:
+    case State::FlameBeginning:
+    case State::Flaming:
+    case State::FlameEnding:
+    case State::MortarBeginning:
+    case State::MortarShooting:
+    case State::MortarEnding: return true;
+    default: return false;
+    }
 }
 
 /// Waits until the hydra's runtime exists (its first tick) and turns its brain off.
@@ -606,6 +632,8 @@ GF_REGISTER_SELFTEST("hydra.client_showcase", [](Context& ctx) -> ll::coro::Coro
         return core::GlobalPos{dim, static_cast<int>(std::floor(f.x + fx * ahead - fz * side)), static_cast<int>(std::floor(f.y)), static_cast<int>(std::floor(f.z + fz * ahead + fx * side))};
     };
     ctx.info("showing the hydra to " + real->getRealName());
+    // the client e2e world is peaceful: the boss kit would turn the hydra back into its spawner
+    DifficultyScope normal(Difficulty::Normal);
     // the hydra 22 blocks ahead, facing the player
     auto at = spot(22.0, 0.0);
     auto uid = spawnHydra(ctx, at, 2499);
@@ -618,33 +646,329 @@ GF_REGISTER_SELFTEST("hydra.client_showcase", [](Context& ctx) -> ll::coro::Coro
     co_await ctx.ticks(40);
     ctx.info("hydra ready");
     co_await ctx.ticks(100);
-    // a fire breath from head 0
-    if (auto* h = byId(uid)) forceHeadState(*h, 0, State::FlameBeginning);
+    // a fire breath from head 0, aimed at the ground 9 blocks in front of the player and 3 to its
+    // left (in frame, and nobody burns)
+    if (auto* h = byId(uid)) {
+        auto aim = spot(9.0, -3.0);
+        aimHeadForTest(*h, 0, Vec3{aim.x + 0.5F, float(aim.y), aim.z + 0.5F});
+        forceHeadState(*h, 0, State::FlameBeginning);
+    }
     co_await ctx.ticks(50);
     ctx.info("flame ready");
     co_await ctx.ticks(60);
-    // jets and smokers 5 blocks ahead, 2 apart
+    // a head looking up and down (pitch), its mouth half open, then a bite pose
+    if (auto* h = byId(uid)) {
+        auto high = spot(4.0, 2.0);
+        aimHeadForTest(*h, 1, Vec3{high.x + 0.5F, float(high.y) + 14.0F, high.z + 0.5F});
+        forceHeadState(*h, 1, State::FlameBeginning);
+        aimHeadForTest(*h, 2, Vec3{high.x + 0.5F, float(high.y), high.z + 0.5F});
+        forceHeadState(*h, 2, State::BiteBeginning);
+    }
+    co_await ctx.ticks(30);
+    ctx.info("pitch ready");
+    co_await ctx.ticks(60);
+    // a head dying: it flips onto its side and its parts burst
+    if (auto* h = byId(uid)) addHeadDamage(*h, 1, 121);
+    co_await ctx.ticks(12);
+    ctx.info("dying head ready");
+    co_await ctx.ticks(60);
+    // jets and smokers 6 blocks ahead, 2 apart; the encased ones get their redstone one block
+    // further away once their watch runs (a powered neighbour placed before is no change)
     auto jet  = spot(6.0, -4.0);
     auto ejet = spot(6.0, -2.0);
     auto smk  = spot(6.0, 2.0);
     auto esmk = spot(6.0, 4.0);
     ctx.setBlock(jet, kFireJet, {{"twilightforest:state", "flame"}});
     ctx.setBlock(ejet, kEncasedJet);
-    ctx.setBlock(ejet.offset(0, 1, 0), "minecraft:redstone_block");
     ctx.setBlock(smk, kSmoker);
     ctx.setBlock(esmk, kEncasedSmoker);
-    ctx.setBlock(esmk.offset(0, 1, 0), "minecraft:redstone_block");
+    for (int t = 0; t < 40 && !(encasedWatched(ejet) && encasedWatched(esmk)); ++t) co_await ctx.ticks(1);
+    co_await ctx.ticks(4);
+    ctx.setBlock(spot(7.0, -2.0), "minecraft:redstone_block");
+    ctx.setBlock(spot(7.0, 4.0), "minecraft:redstone_block");
     co_await ctx.ticks(85);
     ctx.info("jets ready");
     co_await ctx.ticks(60);
-    // a mortar from head 1
+    // a mortar from head 0
     if (auto* h = byId(uid))
-        if (auto hv = headView(*h, 1)) launchMortar(*fe::asMob(*h), 1, hv->pos, hv->xRot, hv->yRot, false);
+        if (auto hv = headView(*h, 0)) launchMortar(*fe::asMob(*h), 0, hv->pos, hv->xRot, hv->yRot, false);
     co_await ctx.ticks(10);
     ctx.info("mortar ready");
     co_await ctx.ticks(100);
     discard(uid);
     co_await ctx.ticks(2);
+});
+
+// Shield shatter (HydraHeadContainer#bite): a player blocking with a shield loses 112 durability
+// with the shatter sound, the shield cools down 200 ticks and the player is pushed back.
+GF_REGISTER_SELFTEST("hydra.shield_shatter", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope normal(Difficulty::Normal);
+    auto            box  = co_await ctx.flatArea(2420, 48, 32);
+    auto            home = ctx.testPos(2444, 2);
+    auto            uid  = spawnHydra(ctx, home, 2427);
+    ctx.require(uid != 0, "the hydra spawns");
+    ctx.require(co_await ready(uid), "the hydra ticks");
+    auto& sp   = ctx.spawnPlayer("gf_hydra_shield");
+    auto  spId = sp.getOrCreateUniqueID().rawID;
+    auto  v    = headView(*byId(uid), 0);
+    ctx.require(v.has_value(), "head 0");
+    sp.teleport(Vec3{v->pos.x, float(home.y), v->pos.z}, DimensionType(home.dim));
+    auto shield = game::items::make("minecraft:shield", 1);
+    ctx.require(shield.has_value(), "a shield");
+    sp.setOffhandSlot(*shield);
+    resistant(sp, 30);
+    sp.simulateSneaking();
+    bool blocking = false;
+    for (int t = 0; t < 20 && !blocking; ++t) {
+        co_await ctx.ticks(1);
+        auto* pl = fe::playerById(spId);
+        blocking = pl && pl->isBlocking();
+    }
+    ctx.require(blocking, "the player blocks with the shield (sneaking)");
+    // bite: keep the player in head 0's box while it bites
+    forceHeadState(*byId(uid), 0, State::Biting);
+    bool hit = false;
+    for (int t = 0; t < 6; ++t) {
+        auto* h  = byId(uid);
+        auto* pl = fe::playerById(spId);
+        if (!h || !pl) break;
+        if (auto hv = headView(*h, 0); hv && hv->state == State::Biting) pl->teleport(Vec3{hv->pos.x, hv->pos.y, hv->pos.z}, DimensionType(home.dim));
+        co_await ctx.ticks(1);
+        if ((pl = fe::playerById(spId)) && pl->getItemCooldownLeft(HashedString("shield")) > 0) hit = true;
+    }
+    auto* pl = fe::playerById(spId);
+    ctx.require(pl != nullptr, "the player is there");
+    ctx.check(hit, "the bite put the shield on cooldown");
+    int left = pl->getItemCooldownLeft(HashedString("shield"));
+    ctx.check(left > 180 && left <= 200, "the shield cools down for 200 ticks (" + std::to_string(left) + " left)");
+    int damage = pl->getOffhandSlot().getDamageValue();
+    ctx.check(damage == 112, "the shield took 112 durability (" + std::to_string(damage) + ")");
+    discard(uid);
+    co_await ctx.ticks(2);
+    (void)box;
+});
+
+// The mortar's fuse (HydraMortar#tick): on the ground it counts 80 down and detonates on the 81st
+// ground tick (fuse-- <= 0).
+GF_REGISTER_SELFTEST("hydra.mortar_fuse", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope normal(Difficulty::Normal);
+    auto            box  = co_await ctx.flatArea(2420, 48, 32);
+    auto            home = ctx.testPos(2444, 2);
+    auto            uid  = spawnHydra(ctx, home, 2428);
+    ctx.require(uid != 0, "the hydra spawns");
+    ctx.require(co_await ready(uid), "the hydra ticks");
+    auto* h = byId(uid);
+    auto  v = headView(*h, 0);
+    ctx.require(v.has_value(), "head 0");
+    int   det0 = detonationsForTest();
+    // straight down onto the flat floor from 2 blocks up beside the hydra (no wall to slide into)
+    auto* m = launchMortar(*fe::asMob(*h), 0, v->pos, v->xRot, v->yRot, false);
+    ctx.require(m != nullptr, "a mortar was launched");
+    auto mid = fe::uidOf(*m);
+    m->moveTo(Vec3{home.x + 0.5F, float(home.y) + 2.0F, home.z - 12.5F}, Vec2{0, 0});
+    gf::projectile::ext::setVelocity(*m, Vec3{0.0F, -0.2F, 0.0F});
+    int landed = -1, detonated = -1;
+    for (int t = 0; t < 140 && detonated < 0; ++t) {
+        co_await ctx.ticks(1);
+        if (auto* mm = byId(mid); mm && landed < 0)
+            if (auto mv = mortarView(*mm); mv && mv->onGround) landed = t;
+        if (detonationsForTest() > det0) detonated = t;
+    }
+    ctx.require(landed >= 0 && detonated >= 0, "the mortar landed and detonated");
+    int fuse = detonated - landed;
+    ctx.check(fuse >= 80 && fuse <= 81, "it detonated 80 ticks after landing (" + std::to_string(fuse) + ")");
+    discard(uid);
+    co_await ctx.ticks(2);
+    (void)box;
+});
+
+// Head names across a save and a load (Hydra#addAdditionalSaveData / readAdditionalSaveData): the
+// hydra goes into a structure (NBT, F8's save hook) and comes back as a new actor with the names.
+GF_REGISTER_SELFTEST("hydra.names_reload", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope normal(Difficulty::Normal);
+    auto            box  = co_await ctx.flatArea(2420, 48, 32);
+    auto            home = ctx.testPos(2444, 2);
+    auto            uid  = spawnHydra(ctx, home, 2429);
+    ctx.require(uid != 0, "the hydra spawns");
+    ctx.require(co_await ready(uid), "the hydra ticks");
+    auto& sp   = ctx.spawnPlayer();
+    auto  spId = sp.getOrCreateUniqueID().rawID;
+    sp.teleport(Vec3{home.x + 0.5f, float(home.y), home.z + 6.5f}, DimensionType(home.dim));
+    co_await ctx.ticks(2);
+    auto* pl = fe::playerById(spId);
+    auto* h  = byId(uid);
+    ctx.require(pl && h, "player and hydra");
+    auto tag = game::items::make("minecraft:name_tag", 1);
+    ctx.require(tag.has_value(), "a name tag");
+    tag->setCustomName(Bedrock::Safety::RedactableString(std::string("Kerberos")));
+    pl->setCarriedItem(*tag);
+    auto* head1 = ge::partActor(ge::ext::parts(*fe::asMob(*h))[ch::headPartIndex(1)]);
+    ctx.require(head1 != nullptr, "head 1's part");
+    std::string itemId = "minecraft:name_tag", type = head1->getTypeName();
+    gf::interactions::EntityContext c{*pl, pl->getCarriedItem(), itemId, *head1, type, {0.0, 0.0, 0.0}, false};
+    ctx.require(gf::interactions::dispatchInteract(c) == gf::interactions::Result::Consume, "head 1 named");
+    co_await ctx.ticks(2);
+    // save: the hydra in a structure (memory), then gone
+    auto f = byId(uid)->getFeetPos();
+    int  x = int(std::floor(f.x)), y = int(std::floor(f.y)), z = int(std::floor(f.z));
+    auto at = [](int a, int b, int cc) { return std::to_string(a) + " " + std::to_string(b) + " " + std::to_string(cc); };
+    auto saved = gf::selftest::runServerCommand("structure save gf_hydra_names " + at(x - 1, y, z - 1) + " " + at(x + 1, y + 3, z + 1) + " true memory false", home.dim);
+    ctx.require(saved.ok, "the hydra was saved (" + saved.messages + ")");
+    discard(uid);
+    co_await ctx.ticks(3);
+    ctx.require(byId(uid) == nullptr, "the first hydra is gone");
+    auto loaded = gf::selftest::runServerCommand("structure load gf_hydra_names " + at(x - 1, y, z - 1) + " 0_degrees none true false", home.dim);
+    ctx.require(loaded.ok, "the hydra was loaded (" + loaded.messages + ")");
+    std::int64_t again = 0;
+    for (int t = 0; t < 20 && !again; ++t) {
+        co_await ctx.ticks(1);
+        if (auto* region = game::regionOf(home.dim))
+            for (auto* a : region->getEntities(AABB{Vec3{x - 3.0F, y - 2.0F, z - 3.0F}, Vec3{x + 4.0F, y + 5.0F, z + 4.0F}}, 0.0f))
+                if (a && a->getTypeName() == kHydra && fe::uidOf(*a) != uid) again = fe::uidOf(*a);
+    }
+    ctx.require(again != 0, "a hydra came back from the save");
+    co_await ctx.ticks(3);
+    auto* back = byId(again);
+    ctx.require(back != nullptr && headView(*back, 1).has_value(), "the loaded hydra ticks");
+    ctx.check(headView(*back, 1)->name == "Kerberos", "head 1 is still named Kerberos (" + headView(*back, 1)->name + ")");
+    ctx.check(headView(*back, 0)->name.empty(), "head 0 has no name");
+    auto* named = ge::partActor(ge::ext::parts(*fe::asMob(*back))[ch::headPartIndex(1)]);
+    ctx.check(named && named->getNameTag() == "Kerberos", "the loaded head part shows the name");
+    (void)gf::selftest::runServerCommand("structure delete gf_hydra_names", home.dim);
+    discard(again);
+    co_await ctx.ticks(2);
+    (void)box;
+});
+
+// Conquest (BaseTFBoss#postmortem): the lair forced around the home point, the hydra its spawner
+// made killed: after the death animation the lair start is conquered and the death chest stands.
+GF_REGISTER_SELFTEST("hydra.conquest", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope normal(Difficulty::Normal);
+    auto            box    = co_await ctx.flatArea(2400, 144, 40);
+    auto            center = ctx.testPos(2420, 2).offset(0, 6, 18);
+    (void)gf::landmark::ext::forgetStartForTest(center, kLair);
+    std::optional<gf::landmark::ext::ScopedStart> forced;
+    forced.emplace(kLair, center);
+    ctx.require(*forced && (*forced)->generated, "forceStart made the hydra lair");
+    // the spawner at local (27, 3, 27) of the piece
+    core::GlobalPos spawnerAt{};
+    bool            found = false;
+    if (auto* region = game::regionOf(center.dim))
+        for (int dx = -10; dx <= 70 && !found; ++dx)
+            for (int dz = -10; dz <= 70 && !found; ++dz)
+                for (int dy = 0; dy <= 8 && !found; ++dy)
+                    if (game::blockIdAt(*region, BlockPos{center.x + dx, center.y + dy, center.z + dz}) == kSpawner) {
+                        spawnerAt = center.offset(dx, dy, dz);
+                        found     = true;
+                    }
+    ctx.require(found, "the lair has its hydra boss spawner");
+    auto start = gf::landmark::startAt(spawnerAt.dim, game::blockPos(spawnerAt));
+    ctx.require(start.has_value() && start->key == kLair, "the spawner is inside the hydra lair start");
+    ctx.check(!gf::landmark::isConquered(*start), "the lair is not conquered before the fight");
+    auto& sp = ctx.spawnPlayer("gf_hydra_conquest");
+    sp.teleport(Vec3{spawnerAt.x + 0.5f, float(spawnerAt.y) + 1.0f, spawnerAt.z - 18.5f}, DimensionType(spawnerAt.dim));
+    resistant(sp, 60);
+    std::int64_t uid = 0;
+    for (int t = 0; t < 80 && !uid; ++t) {
+        co_await ctx.ticks(1);
+        if (auto* region = game::regionOf(spawnerAt.dim))
+            for (auto* a : region->getEntities(AABB{Vec3{spawnerAt.x - 8.0f, spawnerAt.y - 4.0f, spawnerAt.z - 8.0f}, Vec3{spawnerAt.x + 9.0f, spawnerAt.y + 14.0f, spawnerAt.z + 9.0f}}, 0.0f))
+                if (a && a->getTypeName() == kHydra) uid = fe::uidOf(*a);
+    }
+    ctx.require(uid != 0, "the spawner made the hydra");
+    ctx.require(co_await ready(uid), "the hydra ticks");
+    auto home = ge::home(*fe::asMob(*byId(uid)));
+    ctx.require(home.has_value(), "the spawner gave it a home");
+    byId(uid)->kill();
+    for (int t = 0; t < 260 && byId(uid); ++t) co_await ctx.ticks(1);
+    ctx.check(byId(uid) == nullptr, "the body is gone after its death animation");
+    co_await ctx.ticks(5);
+    auto after = gf::landmark::startAt(spawnerAt.dim, game::blockPos(spawnerAt));
+    ctx.check(after.has_value() && gf::landmark::isConquered(*after), "the hydra lair is conquered");
+    // the death chest near the home point (EntityUtil#bossChestLocation), emptied so the area's
+    // restore drops nothing
+    int chests = 0;
+    if (auto* region = game::regionOf(home->pos.dim))
+        for (int dx = -3; dx <= 3; ++dx)
+            for (int dy = -3; dy <= 3; ++dy)
+                for (int dz = -3; dz <= 3; ++dz) {
+                    auto p = home->pos.offset(dx, dy, dz);
+                    if (ctx.blockAt(p) != "twilightforest:mangrove_chest") continue;
+                    ++chests;
+                    if (auto inv = gf::inventory::find(*region, game::blockPos(p)); inv && inv->set)
+                        for (int i = 0; i < inv->slots; ++i) inv->set(p, i, game::items::empty());
+                }
+    ctx.check(chests > 0, "the mangrove death chest stands at the home point");
+    forced.reset();
+    (void)box;
+});
+
+// A seeded fight with the brain on (Hydra#customServerAiStep): the hydra takes the player in reach
+// as its target, turns to it and its heads pick attacks (bite / flame / mortar odds).
+GF_REGISTER_SELFTEST("hydra.brain_fight", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope normal(Difficulty::Normal);
+    auto            box  = co_await ctx.flatArea(2420, 48, 32);
+    auto            home = ctx.testPos(2444, 2);
+    auto            uid  = spawnHydra(ctx, home, 2430);
+    ctx.require(uid != 0, "the hydra spawns");
+    ctx.require(co_await ready(uid), "the hydra ticks");
+    if (auto* h = byId(uid)) setBrainEnabled(*h, true);
+    auto& sp   = ctx.spawnPlayer("gf_hydra_brain");
+    auto  spId = sp.getOrCreateUniqueID().rawID;
+    sp.teleport(Vec3{home.x + 0.5f, float(home.y), home.z + 14.5f}, DimensionType(home.dim));
+    resistant(sp, 30);
+    int  firstAttack = -1, head = -1;
+    for (int t = 0; t < 300 && firstAttack < 0; ++t) {
+        co_await ctx.ticks(1);
+        auto* h = byId(uid);
+        if (!h) break;
+        for (int i = 0; i < ch::kMaxHeads && firstAttack < 0; ++i)
+            if (auto v = headView(*h, i); v && attacking(v->state)) {
+                firstAttack = t;
+                head        = i;
+            }
+    }
+    ctx.check(firstAttack >= 0, "a head picked an attack (head " + std::to_string(head) + " after " + std::to_string(firstAttack) + " ticks)");
+    co_await ctx.ticks(40);
+    auto* h  = byId(uid);
+    auto* pl = fe::playerById(spId);
+    ctx.require(h && pl, "hydra and player");
+    // the body turned to the player (10 degrees a tick at most)
+    auto   f   = h->getFeetPos(), p = pl->getFeetPos();
+    float  want = static_cast<float>(std::atan2(p.z - f.z, p.x - f.x) * 180.0 / 3.141592653589793) - 90.0F;
+    float  diff = std::fmod(std::fabs(h->getRotation().y - want) + 540.0F, 360.0F) - 180.0F;
+    ctx.check(std::fabs(diff) < 30.0F, "the hydra faces the player (" + std::to_string(diff) + " degrees off)");
+    discard(uid);
+    co_await ctx.ticks(2);
+    (void)box;
+});
+
+// The Java box (16 x 12) rests over a gap the 2 x 3 Bedrock box would fall into: no gravity while
+// a block under the Java footprint holds it.
+GF_REGISTER_SELFTEST("hydra.rests_on_java_box", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope normal(Difficulty::Normal);
+    auto            box  = co_await ctx.flatArea(2420, 48, 32);
+    auto            home = ctx.testPos(2444, 2);
+    // a stone deck 3 above the ground (inside the flat area) with a 4 x 4 hole under the spawn point
+    auto* region = ctx.region();
+    ctx.require(region != nullptr, "region");
+    auto const* stone = game::blockWith("minecraft:stone");
+    ctx.require(stone != nullptr, "stone");
+    for (int dx = -9; dx <= 9; ++dx)
+        for (int dz = -9; dz <= 9; ++dz)
+            if (dx < -2 || dx > 1 || dz < -2 || dz > 1) game::setBlock(*region, BlockPos{home.x + dx, home.y + 3, home.z + dz}, *stone);
+    auto deck = home.offset(0, 4, 0);
+    auto uid  = spawnHydra(ctx, deck, 2431);
+    ctx.require(uid != 0, "the hydra spawns");
+    ctx.require(co_await ready(uid), "the hydra ticks");
+    co_await ctx.ticks(40);
+    auto* h = byId(uid);
+    ctx.require(h != nullptr, "the hydra is there");
+    ctx.check(std::fabs(h->getFeetPos().y - float(deck.y)) < 0.1F, "it stands on the deck over the hole (y " + std::to_string(h->getFeetPos().y) + ")");
+    ctx.check(!hasGravityForTest(*h), "resting on the Java box: no gravity");
+    discard(uid);
+    co_await ctx.ticks(2);
+    (void)box;
 });
 
 } // namespace gf::feature::hydra::tests

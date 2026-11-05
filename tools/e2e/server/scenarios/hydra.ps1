@@ -5,12 +5,14 @@
 # lands, its fuse runs out, a reflected one hurts the hydra), the bite, the part damage rules, the
 # name tags, the death (heads die one by one, the mangrove death chest) and the boss spawner; the
 # jets fire on redstone (hydra.encased_jet), a natural jet takes lava (hydra.fire_jet_lava), the
-# smokers (hydra.smokers); the lair piece's golden volume hash (hydra.lair_golden).
+# smokers (hydra.smokers); the lair piece's golden volume hash (hydra.lair_golden); the shield
+# shatter, the mortar's 80-tick fuse, the head names across a save and a load, the conquest of a
+# forced lair, a brain-on seeded fight and the rest on the Java box.
 Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
 
 $r = Invoke-SelfTest 'hydra.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) hydra selftest(s) failed" }
-if ($r.Pass -lt 12) { throw "expected at least 12 hydra selftests to pass, got $($r.Pass)" }
+if ($r.Pass -lt 18) { throw "expected at least 18 hydra selftests to pass, got $($r.Pass)" }
 foreach ($line in 'hydra: installed', 'hydra: spawned at', 'hydra: head 1 slain', 'hydra: head 1 is born again',
                   'hydra: mortar detonated', 'hydra: mortar reflected by', 'hydra: head 2 named Ladon', 'hydra: dying',
                   'boss: twilightforest:hydra_boss_spawner spawned twilightforest:hydra',

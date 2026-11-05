@@ -65,11 +65,19 @@ struct HeadView {
 void forceHeadState(Actor& hydra, int head, core::hydra::State state);
 /// Adds to a head's damage counter (the hit path is tested separately).
 void addHeadDamage(Actor& hydra, int head, int damage);
+/// Points head `head` at `point` (no target entity): the flame states face it (selftests and the
+/// client showcase).
+void aimHeadForTest(Actor& hydra, int head, Vec3 const& point);
 /// Sets the hydra's (and its heads') target (selftests).
 void setTarget(Actor& hydra, Actor* target);
 /// Turns the brain off (no target picking, no attacks chosen, no turning): the head state machine
 /// and the forced states still run.
 void setBrainEnabled(Actor& hydra, bool enabled);
+/// Seeds the hydra's random (its brain: attack odds, targets, the head chosen to respawn, the
+/// ambient growl); before its first tick the seed waits for it.
+void seedForTest(Actor& hydra, std::int64_t seed);
+/// Whether the hydra's actor has gravity now (false while the Java box rests on a block).
+[[nodiscard]] bool hasGravityForTest(Actor& hydra);
 /// Damage the hydra took through parts so far.
 [[nodiscard]] float damageTakenForTest(Actor& hydra);
 /// The part id of a part actor of a hydra ("" when not one).
@@ -107,6 +115,8 @@ void randomTickJet(BlockSource& region, BlockPos const& pos);
 void neighborChanged(BlockSource& region, BlockPos const& pos);
 /// The block entity counter of a ticking jet (-1 when not ticking).
 [[nodiscard]] int jetCounter(core::GlobalPos const& pos);
+/// Whether the redstone of the encased block at `pos` is watched (selftests).
+[[nodiscard]] bool encasedWatched(core::GlobalPos const& pos);
 /// Smoker particles emitted so far (selftests).
 [[nodiscard]] int smokeParticlesForTest();
 

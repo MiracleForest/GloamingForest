@@ -3,27 +3,60 @@
   "render_controllers": {
     "controller.render.twilightforest.hydra": {
       "geometry": "Geometry.default",
-      "materials": [{ "*": "Material.default" }],
-      "textures": ["Texture.default"],
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ],
       "part_visibility": [
-        { "*": true },
-        { "head_*": false },
-        { "jaw_*": false },
-        { "frill_*": false },
-        { "neck_*": false }
-      ]
+        {
+          "*": true
+        },
+        {
+          "head_*": false
+        },
+        {
+          "jaw_*": false
+        },
+        {
+          "frill_*": false
+        },
+        {
+          "neck_*": false
+        }
+      ],
+      "overlay_color": {
+        "r": 1.0,
+        "g": 0.0,
+        "b": 0.0,
+        "a": "q.property('twilightforest:red') ? 0.5 : 0.0"
+      }
     },
     "controller.render.twilightforest.hydra_part": {
       "arrays": {
         "geometries": {
-          "Array.geos": ["Geometry.head", "Geometry.neck"]
+          "Array.geos": [
+            "Geometry.head",
+            "Geometry.neck"
+          ]
         }
       },
       "geometry": "Array.geos[(q.property('twilightforest:part') >= 2 && math.mod(q.property('twilightforest:part') - 2, 6) == 0) ? 0 : 1]",
-      "materials": [{ "*": "Material.default" }],
-      "textures": ["Texture.default"],
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ],
       "part_visibility": [
-        { "*": "q.property('twilightforest:active') && q.property('twilightforest:part') >= 2" }
+        {
+          "*": "q.property('twilightforest:active') && q.property('twilightforest:part') >= 2"
+        }
       ],
       "overlay_color": {
         "r": 1.0,
@@ -34,13 +67,25 @@
     },
     "controller.render.twilightforest.hydra_mortar": {
       "geometry": "Geometry.default",
-      "materials": [{ "*": "Material.default" }],
-      "textures": ["Texture.default"],
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ],
+      "color": {
+        "r": 1.0,
+        "g": 1.0,
+        "b": 1.0,
+        "a": "(1.0 - 81.0 / 100.0) * 0.8"
+      },
       "overlay_color": {
         "r": 1.0,
         "g": 1.0,
         "b": 1.0,
-        "a": 0.152
+        "a": 0.75
       }
     }
   }

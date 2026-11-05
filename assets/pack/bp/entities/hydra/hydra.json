@@ -5,11 +5,23 @@
       "identifier": "twilightforest:hydra",
       "is_spawnable": true,
       "is_summonable": true,
-      "is_experimental": false
+      "is_experimental": false,
+      "properties": {
+        "twilightforest:red": {
+          "type": "bool",
+          "default": false,
+          "client_sync": true
+        }
+      }
     },
     "components": {
       "minecraft:type_family": {
-        "family": ["twilightforest", "hydra", "monster", "mob"]
+        "family": [
+          "twilightforest",
+          "hydra",
+          "monster",
+          "mob"
+        ]
       },
       "minecraft:collision_box": {
         "width": 2,

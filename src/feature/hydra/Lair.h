@@ -35,10 +35,17 @@ public:
 
 private:
     void generateSpeleothems(Region& region, RandomSource& random, core::BlockBox const& writeableBounds);
+
+    /// bbox.minY - the start's y (the same for every lair): TF's absolute speleothem heights count
+    /// from the start's y, the Twilight Forest's sea level 0 where HydraLairStructure always starts
+    /// (adjustForTerrain without elevation adjustment); a lair built at another y (selftests) keeps
+    /// its speleothems with it.
+    int mBaseOffset = 0;
 };
 
 /// Builds the lair piece of a start at (x, y, z) and post-processes it into `region`, writing only
-/// inside `clip` (selftests: the golden volume hash). Returns the piece's box.
+/// inside `clip` (selftests: the golden volume hash), as TF builds it at sea level, translated to
+/// `y`. Returns the piece's box.
 core::BlockBox placeLairForTest(BlockSource& region, core::BlockBox const& clip, int x, int y, int z, std::int64_t seed);
 
 } // namespace gf::feature::hydra
