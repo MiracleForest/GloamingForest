@@ -23,10 +23,11 @@
 // - Dispensers equip trophies on the head of a living entity in front (ArmorItem.dispenseArmor);
 //   otherwise they fail (OptionalDispenseItemBehavior) and keep the item.
 // The variant table (sound, volume, pitch, particle, pedestal comparator value) is F8's
-// boss::trophyVariant (R20), so U25's / U30's trophy pedestal reads it without including U5.
+// gf::boss::trophyVariant (R20), so U25's / U30's trophy pedestal reads it without including U5.
 
 #include "feature/building/Building.h"
 
+#include <algorithm>
 #include <cmath>
 #include <map>
 #include <random>
@@ -103,11 +104,11 @@ int trophyRotation(float yaw) {
 }
 
 std::optional<TrophySound> trophySound(std::string const& blockId, float roll) {
-    auto variant = boss::trophyVariant(blockId);
+    auto variant = gf::boss::trophyVariant(blockId);
     if (!variant || variant->sound.empty()) return std::nullopt;
     TrophySound s{variant->sound, variant->volume, variant->pitch};
     // ALPHA_YETI: level.getRandom().nextInt(50) == 0 ? ALPHA_YETI_ROAR : ALPHA_YETI_GROWL
-    if (auto rare = boss::ext::trophyRareSound(blockId); rare && rare->oneIn > 0 && roll < 1.0f / static_cast<float>(rare->oneIn)) s.event = rare->sound;
+    if (auto rare = gf::boss::ext::trophyRareSound(blockId); rare && rare->oneIn > 0 && roll < 1.0f / static_cast<float>(rare->oneIn)) s.event = rare->sound;
     return s;
 }
 
@@ -121,7 +122,7 @@ void playTrophySound(BlockSource& region, BlockPos const& pos, std::string const
 
 void createTrophyParticles(BlockSource& region, BlockPos const& pos, std::string const& blockId) {
     auto boss = trophyBoss(blockId);
-    auto p    = boss::ext::trophyParticle(blockId, &region, &pos);
+    auto p    = gf::boss::ext::trophyParticle(blockId, &region, &pos);
     if (!boss || !p || p->particle.empty()) return;
     auto&  dim = region.getDimension();
     double x = pos.x, y = pos.y, z = pos.z;

@@ -15,6 +15,7 @@
 
 #include "feature/building/Building.h"
 
+#include <algorithm>
 #include <set>
 
 #include "mc/network/packet/TextPacket.h"
