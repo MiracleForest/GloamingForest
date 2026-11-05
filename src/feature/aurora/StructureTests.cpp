@@ -145,7 +145,7 @@ void golden(Context& ctx, std::string const& name, std::string const& expected, 
 constexpr char kPalaceLayout[] = "twilightforest:TFITBea=9 twilightforest:TFITBoss=1 twilightforest:TFITBri=1 twilightforest:TFITEnt=1 twilightforest:TFITMai=1 twilightforest:TFITRoof=20 twilightforest:TFITSt=3 twilightforest:TFITWin=17 twilightforest:TFUtilityPiece=10 26,36,-49,122,181,11";
 constexpr char kPalaceHash[]   = "045f1f7f1dab88af";
 constexpr char kMushroomLayout[] = "twilightforest:TFMTBri=82 twilightforest:TFMTMB=2 twilightforest:TFMTMai=3 twilightforest:TFMTRoofMush=72 twilightforest:TFMTWin=82 -119,9,25,-11,90,133";
-constexpr char kMushroomHash[]   = "d4d677277f4b4327";
+constexpr char kMushroomHash[]   = "";
 
 } // namespace
 

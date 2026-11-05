@@ -20,6 +20,7 @@
 #include "core/jrand/Mth.h"
 #include "feature/aurora/StructureUtil.h"
 #include "feature/structure/Internal.h"
+#include "game/Blocks.h"
 #include "mod/Log.h"
 
 namespace gf::feature::aurora {
@@ -50,6 +51,13 @@ struct MushroomTowerDecoratorImpl final : Decorator {
 
 Block const& junglePlanks() { return blocks::java("minecraft:jungle_planks"); }
 
+/// A huge mushroom block by Bedrock's huge_mushroom_bits (F7's Java mapping does not carry the
+/// up / down / side faces: 10 = stem sides with pores up and down, 14 = cap on every side).
+Block const& mushroom(char const* id, int bits, Json const& javaProps) {
+    if (auto const* b = gf::game::blockWithStates(id, Json{{"huge_mushroom_bits", bits}})) return *b;
+    return blocks::java(id, javaProps);
+}
+
 } // namespace
 
 std::unique_ptr<Decorator> mushroomTowerDecorator() {
@@ -60,11 +68,11 @@ std::unique_ptr<Decorator> mushroomTowerDecorator() {
     d->roofState     = def->roofState;
     d->randomBlocks  = def->randomBlocks;
     Json const stem  = {{"up", false}, {"down", false}};
-    d->blockState    = &blocks::java("minecraft:mushroom_stem", stem);
-    d->accentState   = &blocks::java("minecraft:red_mushroom_block");
+    d->blockState    = &mushroom("minecraft:mushroom_stem", 10, stem);
+    d->accentState   = &mushroom("minecraft:red_mushroom_block", 14, Json::object());
     d->fenceState    = &blocks::java("minecraft:oak_fence");
     d->stairState    = &blocks::java("minecraft:spruce_stairs");
-    d->pillarState   = &blocks::java("minecraft:mushroom_stem", stem);
+    d->pillarState   = &mushroom("minecraft:mushroom_stem", 10, stem);
     d->floorState    = &blocks::java("minecraft:oak_planks");
     return d;
 }

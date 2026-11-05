@@ -20,9 +20,9 @@
         "max_lifetime": "2.5"
       },
       "minecraft:particle_initial_speed": [
-        "(variable.velocity.x ?? 0) * 8 + math.random(-0.024, 0.024)",
-        "(variable.velocity.y ?? 0) * 8 + 0.2 + math.random(-0.024, 0.024)",
-        "(variable.velocity.z ?? 0) * 8 + math.random(-0.024, 0.024)"
+        "variable.velocity.x * 8 + math.random(-0.024, 0.024)",
+        "variable.velocity.y * 8 + 0.2 + math.random(-0.024, 0.024)",
+        "variable.velocity.z * 8 + math.random(-0.024, 0.024)"
       ],
       "minecraft:particle_motion_dynamic": {
         "linear_acceleration": [
