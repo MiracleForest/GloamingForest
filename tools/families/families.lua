@@ -1780,6 +1780,13 @@ local DEFAULT_SOUND = {
     hanging_sign = "hanging_sign", wall_hanging_sign = "hanging_sign", chest = "wood", trapped_chest = "wood",
 }
 
+-- Families whose Java class sets the sound type in its constructor, over the properties' one (and
+-- over the import's sound for the id): CeilingHangingSignBlock and WallHangingSignBlock call
+-- properties.sound(woodType.hangingSignSoundType()), and TF's wood types (TFWoodTypes: new
+-- WoodType(name, set)) take WoodType's default SoundType.HANGING_SIGN, although TFBlocks copies the
+-- planks' properties (SoundType.WOOD) into them. A params.sound still wins.
+local FORCED_SOUND = {hanging_sign = "hanging_sign", wall_hanging_sign = "hanging_sign"}
+
 -- ---- data ----------------------------------------------------------------------------------------
 
 -- Normalises one data file's entries: [{id, family, params}] (or {"entries": [...]}).
@@ -2153,7 +2160,7 @@ local function generate_set(entries, bpdir, rpdir, opts, errors)
             functions = arr({{["function"] = "set_count", count = 2}})}})}})})
         return rel
     end
-    local result = {blocks = 0, skipped = 0, files = {}, sounds = {}, waterloggable = {}, chests = {}, tags = {}}
+    local result = {blocks = 0, skipped = 0, files = {}, sounds = {}, forced_sounds = {}, waterloggable = {}, chests = {}, tags = {}}
     for _, id in ipairs(order) do
         local g = by_id[id]
         if manual[id] then
@@ -2207,8 +2214,10 @@ local function generate_set(entries, bpdir, rpdir, opts, errors)
             table.insert(result.files, file)
             if g.modifiers.waterloggable then result.waterloggable[id] = file end
             result.blocks = result.blocks + 1
-            local sound = g.params.sound or (shape and DEFAULT_SOUND[shape])
+            local forced = g.params.sound == nil and shape and FORCED_SOUND[shape] or nil
+            local sound = g.params.sound or forced or (shape and DEFAULT_SOUND[shape])
             if sound then result.sounds[id] = sound end
+            if forced then result.forced_sounds[id] = true end
         end
     end
     result.ct_corners = ctx.ct_corners
@@ -2245,13 +2254,14 @@ local function generate_set(entries, bpdir, rpdir, opts, errors)
     -- block sounds (RP blocks.json): the kit's default per family where the block has no sound yet.
     -- An id that has one keeps it: TF's sound types (the jars' twilightforest.jar, TFSoundTypes) are
     -- F1's import, its rp/blocks.d and rp/sounds.json.d fragments (block_sounds and the step, fall,
-    -- jump and land interactive_sounds)
+    -- jump and land interactive_sounds), except where the family's Java class sets the sound type
+    -- itself (FORCED_SOUND: the hanging signs), which replaces the one their properties give
     if not table.empty(result.sounds) then
         merge_json_file(path.join(rpdir, "blocks.json"), function (doc)
             doc = doc or {format_version = "1.21.40"}
             for id, sound in pairs(result.sounds) do
                 if doc[id] == nil then doc[id] = {sound = sound}
-                elseif type(doc[id]) == "table" and doc[id].sound == nil then doc[id].sound = sound end
+                elseif type(doc[id]) == "table" and (doc[id].sound == nil or result.forced_sounds[id]) then doc[id].sound = sound end
             end
             return doc
         end)

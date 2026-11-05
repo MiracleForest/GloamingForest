@@ -13,6 +13,13 @@
 // volume, pitch and timing, and that the game adds no sound event of its own for the chest (the
 // client's "No sound found for block type 'wood' and event type 'chest.open'" comes from vanilla
 // chests: block_sounds "wood" has no chest events, so the game falls back to its own definition).
+//
+// Rule R8: no contract records the sounds players are sent with their name, position, volume and
+// pitch (gf::fx only counts its packets, FxInternal.h counters(); the selftest framework records
+// boss bar packets only), and the game's own LevelSoundEvent packets are not fx's. So these tests
+// hook the packet sender themselves, TEST-ONLY: SoundCapture installs the hooks when the first
+// capture starts and removes them when the last one ends, so no game event is hooked outside a
+// running families sound test (LeviLamina chains them with the other hooks of these functions).
 
 #include <algorithm>
 #include <atomic>
@@ -361,10 +368,17 @@ GF_REGISTER_SELFTEST("families.sound_events", [](Context& ctx) {
         auto it = events.find(t);
         return it != events.end() && it->second.contains(e) ? &it->second[e] : nullptr;
     };
-    int checked = 0, chests = 0;
+    int checked = 0, chests = 0, hanging = 0;
     std::set<std::string> missing;
     for (auto const* e : fam::entries()) {
         auto it = soundOf.find(e->id);
+        if ((e->family == fam::Family::HangingSign || e->family == fam::Family::WallHangingSign) && !e->params.contains("sound")) {
+            // CeilingHangingSignBlock / WallHangingSignBlock: properties.sound(woodType.hangingSignSoundType()),
+            // SoundType.HANGING_SIGN for TF's wood types
+            ++hanging;
+            if (it == soundOf.end() || it->second != "hanging_sign")
+                missing.insert("hanging_sign sound type (" + e->id + ": " + (it == soundOf.end() ? std::string("none") : it->second) + ")");
+        }
         if (it == soundOf.end()) continue;
         if (e->has(fam::Waterloggable)) {
             ++checked;
@@ -381,7 +395,7 @@ GF_REGISTER_SELFTEST("families.sound_events", [](Context& ctx) {
     }
     std::string list;
     for (auto const& m : missing) list += (list.empty() ? "" : ", ") + m;
-    ctx.check(checked > 0 && chests > 0, std::to_string(checked) + " waterloggable family blocks and " + std::to_string(chests) + " chests with a sound type");
+    ctx.check(checked > 0 && chests > 0, std::to_string(checked) + " waterloggable family blocks and " + std::to_string(chests) + " chests with a sound type (" + std::to_string(hanging) + " hanging signs)");
     ctx.check(missing.empty(), "every one's sound type defines the event the game plays (missing: " + (list.empty() ? std::string("none") : list) + ")");
 });
 
