@@ -182,9 +182,17 @@ void tomeAiStep(Actor& a) {
     if (tomeOnLectern(a)) {
         auto& region = m->getDimensionBlockSource();
         auto  at     = game::blockPosOf(m->getFeetPos());
-        // the tome stands in the lectern's block, or on its top (0.875 high) when the engine lifted it
-        if (!isLecternAt(region, at)) at.y -= 1;
+        // the tome stands in the lectern's block, or on its top (0.875 high) when the engine lifted it;
+        // the lectern it was put on is remembered (the engine's collision may push the tome aside)
+        auto& seat = ge::data(a, "lectern_pos");
+        if (seat.is_array() && seat.size() == 3) at = BlockPos{seat[0].get<int>(), seat[1].get<int>(), seat[2].get<int>()};
+        else if (!isLecternAt(region, at)) at.y -= 1;
         if (isLecternAt(region, at)) {
+            if (!seat.is_array()) seat = Json::array({at.x, at.y, at.z});
+            // it rests there, still (Java: the tome only turns to the lectern's facing)
+            Vec3 rest{at.x + 0.5f, float(at.y), at.z + 0.5f};
+            setMotion(a, Vec3{0.0f, 0.0f, 0.0f});
+            if (distSqr(m->getFeetPos(), rest) > 0.04) teleportTo(a, rest);
             ge::data(a, "lectern_missed") = 0;
             // face the lectern's FACING (Bedrock: direction 0 south .. 3 east -> yaw)
             int   dir = game::intState(region.getBlock(at), "direction").value_or(0);
@@ -395,6 +403,7 @@ bool tomeOnLectern(Actor const& tome) {
 }
 
 void setTomeOnLectern(Actor& tome, bool on) {
+    if (!on) ge::data(tome, "lectern_pos") = nullptr;
     lecterns()[uidOf(tome)]     = on;
     ge::data(tome, "on_lectern") = on;
     ge::setProperty(tome, "gf:on_lectern", on);
