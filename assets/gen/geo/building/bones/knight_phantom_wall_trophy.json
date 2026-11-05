@@ -22,7 +22,7 @@
         "bedrock": "textures/twilightforest/models/armor/phantom_layer_1",
         "tf": "src/main/resources/assets/twilightforest/textures/models/armor/phantom_layer_1.png"
       },
-      "material": "entity_alphablend"
+      "material": "entity_alphatest"
     }
   ],
   "bones": [
@@ -80,5 +80,6 @@
       "rotation": [0, 15, -45],
       "cubes": 1
     }
-  ]
+  ],
+  "notes": ["Helmet drawn opaque with entity_alphatest like the floor trophy; see the notes of the floor knight_phantom_trophy entry (the 0.0625 vertex alpha has no effect under entityCutoutNoCull)."]
 }

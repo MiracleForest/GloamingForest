@@ -441,18 +441,26 @@ extracts), 45 attachables. The Curios charm of life necklace (`CuriosCompat`) is
   (CI does not run e2e; wiring `test.ps1` into `.github/` is F0's).
 - Selftests `models.*` (`src/feature/ext/models/ModelsSelfTest.cpp`, rule R18: F2 owns no source directory):
   the deployed index, and every geometry, base animation and attachable it lists is in the deployed pack and
-  well-formed (missing, unparsable or inconsistent files fail a check; every JSON access is checked).
+  well-formed (missing, unparsable or inconsistent files fail a check; every JSON access is checked). The
+  client build adds `models.client_hud` (`src/feature/ext/models/ModelsClientHud.cpp`), an info-only probe
+  for the client scenario: the game's hide-GUI options as the client holds them (`hud hidden|shown, hand
+  hidden|shown`, read on the client thread).
 - e2e (`tools/e2e/{server,client}/scenarios/models*.ps1`):
   - server `models`: `tools/models/test.ps1`, then the selftests. BDS loads behavior packs only, so it cannot
     see resource-pack errors.
   - client `models` (BeDD, local world): the prelaunch step builds a test-only preview pack
-    (`tools/models/e2e/preview.ps1`): one actor per geometry with its TF texture and base animation, the x-sign
-    actor, armor stands (facing the camera) with every attachable on test items in every slot it is drawn in
-    (head, main hand, off hand), and two broken canary files; it also turns on the game's content log file
-    (`options.txt content_log_file:1`, restored afterwards by `models.restore.ps1`). The scenario runs the
-    selftests, turns off command feedback, takes 31 screenshots of four models each, then reads the client's
-    content log (`<game data>/logs/ContentLog*.txt`): the canary geometry must be reported (the log is
-    captured), and any other error or warning fails the run (`out/models/content-log.txt`). Commands naming the
-    preview items run after each shot's function (functions are parsed before data-driven items exist).
+    (`tools/models/e2e/preview.ps1`): one actor per geometry with its TF texture and base animation (trophy
+    extracts, frame `world`, are turned 180 degrees to show their faces), the x-sign actor, armor stands
+    (facing the camera) with every attachable on test items in every slot it is drawn in (head, main hand,
+    off hand), and two broken canary files. The game options of the run (content log file on, HUD and hand
+    shown) and putting the instance's own values back however the run ends are the harness's (F0:
+    `Reset-GameOptions`, `Enable-ContentLog`, `Restore-RunOptions`). The scenario runs the selftests, turns
+    off command feedback, hides the HUD with F1, takes 31 screenshots of four models each, shows the HUD
+    again with F1 (`hud_back.png`, in creative mode: the hotbar), then reads the client's content log
+    (`<game data>/logs/ContentLog*.txt`): the canary geometry must be reported (the log is captured), and
+    any other error or warning fails the run (`out/models/content-log.txt`). Every F1 press is checked with
+    `models.client_hud` and repeated until both the HUD and the hand are in the wanted state (at most 4
+    presses each way; then the run fails). Commands naming the preview items run after each shot's function
+    (functions are parsed before data-driven items exist).
   - server `models.preview`: the preview behavior pack on BDS (actors, items, functions) loads without a
     content-log error and every function and command runs.

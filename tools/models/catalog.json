@@ -258,10 +258,10 @@
       "groups": [{ "parts": ["head"], "ops": [["scale", 0.25, 0.25, 0.25], ["translate", 0, -1, 0]], "texture": "entity/hydra4.png" }] },
     { "name": "knight_phantom_trophy", "unit": "building", "layer": "knight_phantom_trophy", "block": "twilightforest:knight_phantom_trophy", "kind": "trophy", "source": "TrophyRenderer.render + KnightPhantomModel.renderTrophy (floor)",
       "prefix": ["trophy_floor"], "pose": [{ "part": "head", "xRot": "0", "yRot": "0" }, { "part": "helmet", "xRot": "0", "yRot": "0" }],
-      "notes": ["The helmet is drawn with phantom_layer_1 at alpha 0.0625 (FastColor.ARGB32.colorFromFloat(0.0625F, 1, 1, 1)) under entityCutoutNoCull."],
+      "notes": ["KnightPhantomModel.renderTrophy draws the helmet with phantom_layer_1 and the vertex colour FastColor.ARGB32.colorFromFloat(0.0625F, 1, 1, 1) under RenderType.entityCutoutNoCull. That alpha has no visible effect: the 1.21.1 shader rendertype_entity_cutout_no_cull.fsh discards on the texture alpha alone (< 0.1) before it multiplies the vertex colour, and the render type draws without blending, so the horned helmet shows opaque over the phantomskeleton head (block, wall and item forms, GUI included). phantom_layer_1 has only alpha 0 and 255, so entity_alphatest matches it exactly."],
       "groups": [
         { "parts": ["head"], "ops": [["translate", 0, 0.25, 0]], "texture": "entity/phantomskeleton.png" },
-        { "geometry": "knight_phantom_trophy_armor", "parts": ["helmet"], "ops": [["translate", 0, 0.25, 0], ["scale", 1.1, 1.1, 1.1], ["translate", 0, 0.05, 0]], "texture": "models/armor/phantom_layer_1.png", "material": "entity_alphablend" }
+        { "geometry": "knight_phantom_trophy_armor", "parts": ["helmet"], "ops": [["translate", 0, 0.25, 0], ["scale", 1.1, 1.1, 1.1], ["translate", 0, 0.05, 0]], "texture": "models/armor/phantom_layer_1.png", "material": "entity_alphatest" }
       ] },
     { "name": "ur_ghast_trophy", "unit": "building", "layer": "ur_ghast_trophy", "block": "twilightforest:ur_ghast_trophy", "kind": "trophy", "source": "TrophyRenderer.render + UrGhastModel.renderTrophy + waveTentacles (floor; the geometry is the pose at tick 0, the base animation waves the tentacles)",
       "prefix": ["trophy_floor"],
@@ -302,10 +302,11 @@
       "prefix": ["trophy_wall"], "pose": [{ "part": "head", "xRot": "0", "yRot": "0" }, { "part": "head/jaw", "xRot": "0.5F * (Mth.PI / 3.0F)" }],
       "groups": [{ "parts": ["head"], "ops": [["scale", 0.25, 0.25, 0.25], ["translate", 0, -1, 0]], "texture": "entity/hydra4.png" }] },
     { "name": "knight_phantom_wall_trophy", "unit": "building", "layer": "knight_phantom_trophy", "block": "twilightforest:knight_phantom_wall_trophy", "kind": "trophy", "source": "TrophyRenderer.render + KnightPhantomModel.renderTrophy (wall, facing north)",
+        "notes": ["Helmet drawn opaque with entity_alphatest like the floor trophy; see the notes of the floor knight_phantom_trophy entry (the 0.0625 vertex alpha has no effect under entityCutoutNoCull)."],
       "prefix": ["trophy_wall"], "pose": [{ "part": "head", "xRot": "0", "yRot": "0" }, { "part": "helmet", "xRot": "0", "yRot": "0" }],
       "groups": [
         { "parts": ["head"], "ops": [["translate", 0, 0.25, 0]], "texture": "entity/phantomskeleton.png" },
-        { "geometry": "knight_phantom_wall_trophy_armor", "parts": ["helmet"], "ops": [["translate", 0, 0.25, 0], ["scale", 1.1, 1.1, 1.1], ["translate", 0, 0.05, 0]], "texture": "models/armor/phantom_layer_1.png", "material": "entity_alphablend" }
+        { "geometry": "knight_phantom_wall_trophy_armor", "parts": ["helmet"], "ops": [["translate", 0, 0.25, 0], ["scale", 1.1, 1.1, 1.1], ["translate", 0, 0.05, 0]], "texture": "models/armor/phantom_layer_1.png", "material": "entity_alphatest" }
       ] },
     { "name": "ur_ghast_wall_trophy", "unit": "building", "layer": "ur_ghast_trophy", "block": "twilightforest:ur_ghast_wall_trophy", "kind": "trophy", "source": "TrophyRenderer.render + UrGhastModel.renderTrophy (wall: the Ur-Ghast trophy ignores the wall offset)",
       "prefix": ["trophy_floor"],
@@ -345,10 +346,11 @@
       "pose": [{ "part": "head", "xRot": "0", "yRot": "180.0F * Mth.DEG_TO_RAD" }, { "part": "head/jaw", "xRot": "0.0F * (Mth.PI / 3.0F)" }],
       "groups": [{ "parts": ["head"], "ops": [["scale", 0.25, 0.25, 0.25], ["scale", 0.9, 0.9, 0.9], ["translate", 0, -1, -1]], "texture": "entity/hydra4.png" }] },
     { "name": "knight_phantom_trophy", "unit": "building", "layer": "knight_phantom_trophy", "item": "twilightforest:knight_phantom_trophy", "forms": "trophy", "source": "KnightPhantomModel.renderTrophy (item form, not GUI)",
+        "notes": ["Helmet drawn opaque with entity_alphatest like the floor trophy; see the notes of the floor knight_phantom_trophy entry (the 0.0625 vertex alpha has no effect under entityCutoutNoCull)."],
       "pose": [{ "part": "head", "xRot": "0", "yRot": "180.0F * Mth.DEG_TO_RAD" }, { "part": "helmet", "xRot": "0", "yRot": "180.0F * Mth.DEG_TO_RAD" }],
       "groups": [
         { "parts": ["head"], "ops": [["translate", 0, 0.25, 0]], "texture": "entity/phantomskeleton.png" },
-        { "suffix": "armor", "parts": ["helmet"], "ops": [["translate", 0, 0.25, 0], ["scale", 1.1, 1.1, 1.1], ["translate", 0, 0.05, 0]], "texture": "models/armor/phantom_layer_1.png", "material": "entity_alphablend" }
+        { "suffix": "armor", "parts": ["helmet"], "ops": [["translate", 0, 0.25, 0], ["scale", 1.1, 1.1, 1.1], ["translate", 0, 0.05, 0]], "texture": "models/armor/phantom_layer_1.png", "material": "entity_alphatest" }
       ] },
     { "name": "ur_ghast_trophy", "unit": "building", "layer": "ur_ghast_trophy", "item": "twilightforest:ur_ghast_trophy", "forms": "trophy", "source": "UrGhastModel.renderTrophy (item form: no y offset) + waveTentacles",
       "pose": [
