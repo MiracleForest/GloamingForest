@@ -23,6 +23,7 @@
 #include "mc/world/actor/player/Inventory.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/gamemode/GameMode.h"
+#include "mc/world/gamemode/InteractionResult.h"
 #include "mc/world/item/HandSlot.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/item/crafting/Recipe.h"
@@ -269,7 +270,7 @@ GF_REGISTER_SELFTEST("woodwork.recipes_all", [](Context& ctx) {
         }
         for (auto const* g : list) {
             auto const& req = g->mUnlockingRequirement.get();
-            if (req.mContext.get() == RecipeUnlockingRequirement::UnlockingContext::None && req.mIngredients.get().empty()) {
+            if (req.mContext == RecipeUnlockingRequirement::UnlockingContext::None && req.mIngredients.get().empty()) {
                 ++unlock;
                 if (firstBad.empty()) firstBad = std::string(r.id) + " has no unlock";
             }
@@ -287,8 +288,8 @@ GF_REGISTER_SELFTEST("woodwork.recipe_unlock", [](Context& ctx) -> ll::coro::Cor
     // has_log criterion of recipes/building_blocks/wood/canopy_planks)
     auto& player = ctx.player();
     player.getInventory().removeAllItems();
-    auto* unlocked = player.getEntityContext().tryGetComponent<UnlockedRecipesServerComponent>();
-    ctx.require(unlocked != nullptr, "the player has the game's unlocked recipes");
+    auto unlocked = player.getEntityContext().tryGetComponent<UnlockedRecipesServerComponent>();
+    ctx.require(static_cast<bool>(unlocked), "the player has the game's unlocked recipes");
     auto ids = gameRecipes("twilightforest:wood/canopy_planks");
     ctx.require(!ids.empty(), "the canopy planks recipes");
     bool before = false;
@@ -298,7 +299,7 @@ GF_REGISTER_SELFTEST("woodwork.recipe_unlock", [](Context& ctx) -> ll::coro::Cor
     bool after = false;
     for (int i = 0; i < 40 && !after; ++i) {
         co_await ctx.ticks(1);
-        auto* u = ctx.player().getEntityContext().tryGetComponent<UnlockedRecipesServerComponent>();
+        auto u = ctx.player().getEntityContext().tryGetComponent<UnlockedRecipesServerComponent>();
         for (auto const* r : ids) after |= u && u->mUnlockedRecipes.get().contains(r->mRecipeId.get());
     }
     ctx.check(after, "a canopy log unlocks the canopy planks recipe");
