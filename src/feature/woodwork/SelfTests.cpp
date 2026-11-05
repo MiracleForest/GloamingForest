@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cstdio>
 #include <optional>
+#include <variant>
 
 #include "ll/api/coro/CoroTask.h"
 #include "ll/api/service/Bedrock.h"
@@ -16,6 +17,10 @@
 #include "mc/server/sim/LookDuration.h"
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/item/ItemActor.h"
+#include "mc/deps/core/string/HashedString.h"
+#include "mc/deps/ecs/gamerefs_entity/EntityContext.h"
+#include "mc/world/actor/state/PropertyComponent.h"
+#include "mc/world/actor/state/PropertyContainer.h"
 #include "mc/world/actor/player/Inventory.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/gamemode/GameMode.h"
@@ -524,6 +529,15 @@ GF_REGISTER_SELFTEST("woodwork.recipes", [](Context& ctx) {
 // ---- boats --------------------------------------------------------------------------------------------
 
 namespace {
+int woodProperty(Actor& a) {
+    auto props = a.getEntityContext().tryGetComponent<PropertyComponent>();
+    if (!props) return -1;
+    auto v = props->mPropertyContainer->getValueVariant(HashedString::computeHash("twilightforest:wood"));
+    if (!v) return -2;
+    auto const* i = std::get_if<int>(&*v);
+    return i ? *i : -3;
+}
+
 std::vector<Actor*> boatsNear(Context& ctx, GlobalPos const& p, char const* type) {
     std::vector<Actor*> out;
     auto*               region = ctx.region();
@@ -569,6 +583,7 @@ GF_REGISTER_SELFTEST("woodwork.boats", [](Context& ctx) -> ll::coro::CoroTask<> 
         ctx.require(boats.size() == 1, std::string(k.item) + " placed one " + k.entity + " (" + std::to_string(boats.size()) + ")");
         ctx.check(carried(ctx, k.item) == 0, "the boat item was used up");
         Actor* boat = boats[0];
+        ctx.check(woodProperty(*boat) == k.wood, std::string(k.entity) + " has wood " + std::to_string(k.wood) + " (" + std::to_string(woodProperty(*boat)) + ")");
         auto   pos  = boat->getPosition();
         ctx.check(std::abs(pos.x - (c.x + 0.5f)) < 1.6f && std::abs(pos.z - (c.z + 0.5f)) < 1.6f, "the boat floats in the pond");
         // the player gets in
@@ -606,6 +621,13 @@ GF_REGISTER_SELFTEST("woodwork.boats", [](Context& ctx) -> ll::coro::CoroTask<> 
         clearItemsNear(ctx, c);
         clearItemsNear(ctx, at(c, 0, 0, 2));
     }
+    // a boat summoned with its wood's spawn event (commands, the client scenario)
+    auto r = gf::selftest::runServerCommand("summon twilightforest:boat " + std::to_string(c.x) + " " + std::to_string(c.y) + " " + std::to_string(c.z) + " 0 0 twilightforest:mining", ctx.dimension());
+    ctx.check(r.ok, "summon with the wood's event: " + r.messages);
+    co_await ctx.ticks(2);
+    auto summoned = boatsNear(ctx, c, "twilightforest:boat");
+    ctx.check(summoned.size() == 1 && woodProperty(*summoned[0]) == 6, "the summoned boat is a mining boat (" + (summoned.empty() ? std::string("none") : std::to_string(woodProperty(*summoned[0]))) + ")");
+    for (auto* b : summoned) b->remove();
 });
 
 // ---- a showcase for the client scenario's pictures -----------------------------------------------------

@@ -6,6 +6,8 @@
       "materials": {"default": "entity_alphatest"},
       "textures": {"default": "textures/blocks/stone"},
       "geometry": {"default": "geometry.gloamingforest.drying_rack_item"},
+      "animations": {"pose": "animation.gloamingforest.drying_rack_item.pose"},
+      "scripts": {"animate": ["pose"]},
       "render_controllers": ["controller.render.default"],
       "enable_attachables": true
     }

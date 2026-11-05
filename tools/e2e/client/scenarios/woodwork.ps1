@@ -176,7 +176,7 @@ Start-Sleep -Seconds 4
 Invoke-Teleport "/tp @s $($bx + 4) $($y + 2) $($z - 3) 0 30"
 Start-Sleep -Seconds 3
 Save-Screenshot 'woodwork-boat-pond' | Out-Null
-Invoke-Chat "/ride @s start_riding @e[type=twilightforest:boat,c=1] teleport_ride"
+Invoke-Chat "/ride @s start_riding @e[type=twilightforest:boat,c=1] teleport_rider"
 Start-Sleep -Seconds 3
 Save-Screenshot 'woodwork-boat-ride' | Out-Null
 # third person (F5): the rider in the boat
