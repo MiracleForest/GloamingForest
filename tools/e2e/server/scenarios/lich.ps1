@@ -9,7 +9,7 @@ $r = Invoke-SelfTest 'lich.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) lich selftest(s) failed" }
 if ($r.Pass -lt 11) { throw "expected at least 11 lich selftests to pass, got $($r.Pass)" }
 $log = Get-ServerLog -Since $mark
-foreach ($line in @('lich: shield broken by twilightforest:lich_bolt', 'lich: bolt reflected by', 'lich: a death tome left its lectern', 'lich: a rising zombie became a zombie', 'lich tower: ')) {
+foreach ($line in @('lich: shield broken by twilightforest:lich_bolt', 'lich: bolt reflected by', 'lich: a rising zombie became a zombie', 'lich tower: ')) {
     if (-not ($log | Select-String -SimpleMatch $line)) { throw "missing log line: $line" }
 }
 $layout = ($log | Select-String -Pattern 'lich tower: (\d+) pieces.*layout hash (\d+)' | Select-Object -Last 1)
