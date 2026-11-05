@@ -35,7 +35,7 @@
         },
         "lines": {
           "texture": "tf_building_questram_lines",
-          "render_method": "blend"
+          "render_method": "alpha_test"
         }
       }
     },

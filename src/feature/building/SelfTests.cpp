@@ -438,23 +438,24 @@ GF_REGISTER_SELFTEST("building.storage_blocks", [](Context& ctx) -> ll::coro::Co
     ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
     auto& sp = sim(ctx);
     sp.setArmor(SharedTypes::Legacy::ArmorSlot::Feet, ItemStack::EMPTY_ITEM());
-    // knightmetal: standing in its spiky shape hurts (4 knightmetal damage)
-    auto km = at(p, 0, 1, 0);
-    ctx.require(ctx.setBlock(km, "twilightforest:knightmetal_block"), "a knightmetal block");
-    sp.teleport(Vec3{km.x + 0.5f, km.y + 15.0f / 16.0f, km.z + 0.5f}, sp.getDimensionId());
-    float before = sp.getHealth();
-    co_await ctx.ticks(10);
-    float after = sim(ctx).getHealth();
-    ctx.check(after <= before - 4.0f + 0.01f, "knightmetal hurts the player standing on it (" + std::to_string(before) + " -> " + std::to_string(after) + ")");
     // fiery block: stepping on it hurts, fiery boots protect
     auto fb = at(p, 3, 1, 0);
     ctx.require(ctx.setBlock(fb, "twilightforest:fiery_block"), "a fiery block");
     sim(ctx).teleport(Vec3{fb.x + 0.5f, fb.y + 1.0f, fb.z + 0.5f}, sim(ctx).getDimensionId());
     co_await ctx.ticks(2);
-    before = sim(ctx).getHealth();
-    co_await ctx.ticks(12);
-    after = sim(ctx).getHealth();
+    float before = sim(ctx).getHealth();
+    co_await ctx.ticks(20);
+    ctx.info("on the fiery block: on ground " + std::to_string(sim(ctx).isOnGround()) + ", y " + std::to_string(sim(ctx).getPosition().y));
+    float after = sim(ctx).getHealth();
     ctx.check(after < before, "the fiery block hurts the player stepping on it (" + std::to_string(before) + " -> " + std::to_string(after) + ")");
+    // knightmetal: standing in its spiky shape hurts (4 knightmetal damage)
+    auto km = at(p, 0, 1, 0);
+    ctx.require(ctx.setBlock(km, "twilightforest:knightmetal_block"), "a knightmetal block");
+    sim(ctx).teleport(Vec3{km.x + 0.5f, km.y + 15.0f / 16.0f, km.z + 0.5f}, sim(ctx).getDimensionId());
+    before = sim(ctx).getHealth();
+    co_await ctx.ticks(10);
+    after = sim(ctx).getHealth();
+    ctx.check(after <= before - 4.0f + 0.01f, "knightmetal hurts the player standing on it (" + std::to_string(before) + " -> " + std::to_string(after) + ")");
     ctx.check(fieryHurts(sim(ctx)), "fieryHurts without boots");
     if (auto boots = gf::game::items::make("twilightforest:fiery_boots")) {
         sim(ctx).setArmor(SharedTypes::Legacy::ArmorSlot::Feet, *boots);

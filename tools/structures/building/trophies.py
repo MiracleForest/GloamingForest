@@ -196,7 +196,7 @@ def textures_of(base):
         for suffix, m in EXTRA.items():
             if ident.endswith(suffix):
                 material = m
-        out[material or "*"] = (g["texture"]["bedrock"], "blend" if g["material"] == "entity_emissive_alpha" else "alpha_test")
+        out[material or "*"] = (g["texture"]["bedrock"], "alpha_test")  # Bedrock: one render method per block
     return out
 
 
@@ -250,12 +250,10 @@ def floor_block(boss, geo_id, bone_names):
     perms = []
     for r in range(16):
         quarter, step = r // 4, r % 4
-        vis = {n: n.endswith("_r%d" % step) for n in bone_names}
         shape = floor_shape(boss, r)
         perms.append({
             "condition": "%s == %d" % (state("rotation"), r),
             "components": {
-                "minecraft:geometry": {"identifier": geo_id, "bone_visibility": vis},
                 "minecraft:transformation": {"rotation": [0, -90 * quarter, 0]},
                 # the selection box is turned with the block: give it in the block's own frame
                 "minecraft:selection_box": unturn(shape, quarter),
@@ -263,7 +261,10 @@ def floor_block(boss, geo_id, bone_names):
             },
         })
     comps = base_components(boss)
-    comps["minecraft:geometry"] = {"identifier": geo_id, "bone_visibility": {n: n.endswith("_r0") for n in bone_names}}
+    # the step's root bone (the parts hang below it), by Molang on the rotation state: the
+    # permutations only turn the block by quarters
+    comps["minecraft:geometry"] = {"identifier": geo_id, "bone_visibility": {
+        "trophy_r%d" % k: " || ".join("q.block_state('%srotation') == %d" % (NS, k + 4 * q) for q in range(4)) for k in range(4)}}
     comps["minecraft:material_instances"] = materials(boss + "_trophy")
     return {
         "format_version": FORMAT_BLOCK,

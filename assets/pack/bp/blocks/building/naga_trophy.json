@@ -42,18 +42,10 @@
       "minecraft:geometry": {
         "identifier": "geometry.twilightforest.building.naga_trophy",
         "bone_visibility": {
-          "trophy_r0": true,
-          "naga_trophy_0_r0": true,
-          "head_0_r0": true,
-          "trophy_r1": false,
-          "naga_trophy_0_r1": false,
-          "head_0_r1": false,
-          "trophy_r2": false,
-          "naga_trophy_0_r2": false,
-          "head_0_r2": false,
-          "trophy_r3": false,
-          "naga_trophy_0_r3": false,
-          "head_0_r3": false
+          "trophy_r0": "q.block_state('twilightforest:rotation') == 0 || q.block_state('twilightforest:rotation') == 4 || q.block_state('twilightforest:rotation') == 8 || q.block_state('twilightforest:rotation') == 12",
+          "trophy_r1": "q.block_state('twilightforest:rotation') == 1 || q.block_state('twilightforest:rotation') == 5 || q.block_state('twilightforest:rotation') == 9 || q.block_state('twilightforest:rotation') == 13",
+          "trophy_r2": "q.block_state('twilightforest:rotation') == 2 || q.block_state('twilightforest:rotation') == 6 || q.block_state('twilightforest:rotation') == 10 || q.block_state('twilightforest:rotation') == 14",
+          "trophy_r3": "q.block_state('twilightforest:rotation') == 3 || q.block_state('twilightforest:rotation') == 7 || q.block_state('twilightforest:rotation') == 11 || q.block_state('twilightforest:rotation') == 15"
         }
       },
       "minecraft:material_instances": {
@@ -67,23 +59,6 @@
       {
         "condition": "q.block_state('twilightforest:rotation') == 0",
         "components": {
-          "minecraft:geometry": {
-            "identifier": "geometry.twilightforest.building.naga_trophy",
-            "bone_visibility": {
-              "trophy_r0": true,
-              "naga_trophy_0_r0": true,
-              "head_0_r0": true,
-              "trophy_r1": false,
-              "naga_trophy_0_r1": false,
-              "head_0_r1": false,
-              "trophy_r2": false,
-              "naga_trophy_0_r2": false,
-              "head_0_r2": false,
-              "trophy_r3": false,
-              "naga_trophy_0_r3": false,
-              "head_0_r3": false
-            }
-          },
           "minecraft:transformation": {
             "rotation": [
               0,
@@ -120,23 +95,6 @@
       {
         "condition": "q.block_state('twilightforest:rotation') == 1",
         "components": {
-          "minecraft:geometry": {
-            "identifier": "geometry.twilightforest.building.naga_trophy",
-            "bone_visibility": {
-              "trophy_r0": false,
-              "naga_trophy_0_r0": false,
-              "head_0_r0": false,
-              "trophy_r1": true,
-              "naga_trophy_0_r1": true,
-              "head_0_r1": true,
-              "trophy_r2": false,
-              "naga_trophy_0_r2": false,
-              "head_0_r2": false,
-              "trophy_r3": false,
-              "naga_trophy_0_r3": false,
-              "head_0_r3": false
-            }
-          },
           "minecraft:transformation": {
             "rotation": [
               0,
@@ -173,23 +131,6 @@
       {
         "condition": "q.block_state('twilightforest:rotation') == 2",
         "components": {
-          "minecraft:geometry": {
-            "identifier": "geometry.twilightforest.building.naga_trophy",
-            "bone_visibility": {
-              "trophy_r0": false,
-              "naga_trophy_0_r0": false,
-              "head_0_r0": false,
-              "trophy_r1": false,
-              "naga_trophy_0_r1": false,
-              "head_0_r1": false,
-              "trophy_r2": true,
-              "naga_trophy_0_r2": true,
-              "head_0_r2": true,
-              "trophy_r3": false,
-              "naga_trophy_0_r3": false,
-              "head_0_r3": false
-            }
-          },
           "minecraft:transformation": {
             "rotation": [
               0,
@@ -226,23 +167,6 @@
       {
         "condition": "q.block_state('twilightforest:rotation') == 3",
         "components": {
-          "minecraft:geometry": {
-            "identifier": "geometry.twilightforest.building.naga_trophy",
-            "bone_visibility": {
-              "trophy_r0": false,
-              "naga_trophy_0_r0": false,
-              "head_0_r0": false,
-              "trophy_r1": false,
-              "naga_trophy_0_r1": false,
-              "head_0_r1": false,
-              "trophy_r2": false,
-              "naga_trophy_0_r2": false,
-              "head_0_r2": false,
-              "trophy_r3": true,
-              "naga_trophy_0_r3": true,
-              "head_0_r3": true
-            }
-          },
           "minecraft:transformation": {
             "rotation": [
               0,
@@ -279,23 +203,6 @@
       {
         "condition": "q.block_state('twilightforest:rotation') == 4",
         "components": {
-          "minecraft:geometry": {
-            "identifier": "geometry.twilightforest.building.naga_trophy",
-            "bone_visibility": {
-              "trophy_r0": true,
-              "naga_trophy_0_r0": true,
-              "head_0_r0": true,
-              "trophy_r1": false,
-              "naga_trophy_0_r1": false,
-              "head_0_r1": false,
-              "trophy_r2": false,
-              "naga_trophy_0_r2": false,
-              "head_0_r2": false,
-              "trophy_r3": false,
-              "naga_trophy_0_r3": false,
-              "head_0_r3": false
-            }
-          },
           "minecraft:transformation": {
             "rotation": [
               0,
@@ -332,23 +239,6 @@
       {
         "condition": "q.block_state('twilightforest:rotation') == 5",
         "components": {
-          "minecraft:geometry": {
-            "identifier": "geometry.twilightforest.building.naga_trophy",
-            "bone_visibility": {
-              "trophy_r0": false,
-              "naga_trophy_0_r0": false,
-              "head_0_r0": false,
-              "trophy_r1": true,
-              "naga_trophy_0_r1": true,
-              "head_0_r1": true,
-              "trophy_r2": false,
-              "naga_trophy_0_r2": false,
-              "head_0_r2": false,
-              "trophy_r3": false,
-              "naga_trophy_0_r3": false,
-              "head_0_r3": false
-            }
-          },
           "minecraft:transformation": {
             "rotation": [
               0,
@@ -385,23 +275,6 @@
       {
         "condition": "q.block_state('twilightforest:rotation') == 6",
         "components": {
-          "minecraft:geometry": {
-            "identifier": "geometry.twilightforest.building.naga_trophy",
-            "bone_visibility": {
-              "trophy_r0": false,
-              "naga_trophy_0_r0": false,
-              "head_0_r0": false,
-              "trophy_r1": false,
-              "naga_trophy_0_r1": false,
-              "head_0_r1": false,
-              "trophy_r2": true,
-              "naga_trophy_0_r2": true,
-              "head_0_r2": true,
-              "trophy_r3": false,
-              "naga_trophy_0_r3": false,
-              "head_0_r3": false
-            }
-          },
           "minecraft:transformation": {
             "rotation": [
               0,
@@ -438,23 +311,6 @@
       {
         "condition": "q.block_state('twilightforest:rotation') == 7",
         "components": {
-          "minecraft:geometry": {
-            "identifier": "geometry.twilightforest.building.naga_trophy",
-            "bone_visibility": {
-              "trophy_r0": false,
-              "naga_trophy_0_r0": false,
-              "head_0_r0": false,
-              "trophy_r1": false,
-              "naga_trophy_0_r1": false,
-              "head_0_r1": false,
-              "trophy_r2": false,
-              "naga_trophy_0_r2": false,
-              "head_0_r2": false,
-              "trophy_r3": true,
-              "naga_trophy_0_r3": true,
-              "head_0_r3": true
-            }
-          },
           "minecraft:transformation": {
             "rotation": [
               0,
@@ -491,23 +347,6 @@
       {
         "condition": "q.block_state('twilightforest:rotation') == 8",
         "components": {
-          "minecraft:geometry": {
-            "identifier": "geometry.twilightforest.building.naga_trophy",
-            "bone_visibility": {
-              "trophy_r0": true,
-              "naga_trophy_0_r0": true,
-              "head_0_r0": true,
-              "trophy_r1": false,
-              "naga_trophy_0_r1": false,
-              "head_0_r1": false,
-              "trophy_r2": false,
-              "naga_trophy_0_r2": false,
-              "head_0_r2": false,
-              "trophy_r3": false,
-              "naga_trophy_0_r3": false,
-              "head_0_r3": false
-            }
-          },
           "minecraft:transformation": {
             "rotation": [
               0,
@@ -544,23 +383,6 @@
       {
         "condition": "q.block_state('twilightforest:rotation') == 9",
         "components": {
-          "minecraft:geometry": {
-            "identifier": "geometry.twilightforest.building.naga_trophy",
-            "bone_visibility": {
-              "trophy_r0": false,
-              "naga_trophy_0_r0": false,
-              "head_0_r0": false,
-              "trophy_r1": true,
-              "naga_trophy_0_r1": true,
-              "head_0_r1": true,
-              "trophy_r2": false,
-              "naga_trophy_0_r2": false,
-              "head_0_r2": false,
-              "trophy_r3": false,
-              "naga_trophy_0_r3": false,
-              "head_0_r3": false
-            }
-          },
           "minecraft:transformation": {
             "rotation": [
               0,
@@ -597,23 +419,6 @@
       {
         "condition": "q.block_state('twilightforest:rotation') == 10",
         "components": {
-          "minecraft:geometry": {
-            "identifier": "geometry.twilightforest.building.naga_trophy",
-            "bone_visibility": {
-              "trophy_r0": false,
-              "naga_trophy_0_r0": false,
-              "head_0_r0": false,
-              "trophy_r1": false,
-              "naga_trophy_0_r1": false,
-              "head_0_r1": false,
-              "trophy_r2": true,
-              "naga_trophy_0_r2": true,
-              "head_0_r2": true,
-              "trophy_r3": false,
-              "naga_trophy_0_r3": false,
-              "head_0_r3": false
-            }
-          },
           "minecraft:transformation": {
             "rotation": [
               0,
@@ -650,23 +455,6 @@
       {
         "condition": "q.block_state('twilightforest:rotation') == 11",
         "components": {
-          "minecraft:geometry": {
-            "identifier": "geometry.twilightforest.building.naga_trophy",
-            "bone_visibility": {
-              "trophy_r0": false,
-              "naga_trophy_0_r0": false,
-              "head_0_r0": false,
-              "trophy_r1": false,
-              "naga_trophy_0_r1": false,
-              "head_0_r1": false,
-              "trophy_r2": false,
-              "naga_trophy_0_r2": false,
-              "head_0_r2": false,
-              "trophy_r3": true,
-              "naga_trophy_0_r3": true,
-              "head_0_r3": true
-            }
-          },
           "minecraft:transformation": {
             "rotation": [
               0,
@@ -703,23 +491,6 @@
       {
         "condition": "q.block_state('twilightforest:rotation') == 12",
         "components": {
-          "minecraft:geometry": {
-            "identifier": "geometry.twilightforest.building.naga_trophy",
-            "bone_visibility": {
-              "trophy_r0": true,
-              "naga_trophy_0_r0": true,
-              "head_0_r0": true,
-              "trophy_r1": false,
-              "naga_trophy_0_r1": false,
-              "head_0_r1": false,
-              "trophy_r2": false,
-              "naga_trophy_0_r2": false,
-              "head_0_r2": false,
-              "trophy_r3": false,
-              "naga_trophy_0_r3": false,
-              "head_0_r3": false
-            }
-          },
           "minecraft:transformation": {
             "rotation": [
               0,
@@ -756,23 +527,6 @@
       {
         "condition": "q.block_state('twilightforest:rotation') == 13",
         "components": {
-          "minecraft:geometry": {
-            "identifier": "geometry.twilightforest.building.naga_trophy",
-            "bone_visibility": {
-              "trophy_r0": false,
-              "naga_trophy_0_r0": false,
-              "head_0_r0": false,
-              "trophy_r1": true,
-              "naga_trophy_0_r1": true,
-              "head_0_r1": true,
-              "trophy_r2": false,
-              "naga_trophy_0_r2": false,
-              "head_0_r2": false,
-              "trophy_r3": false,
-              "naga_trophy_0_r3": false,
-              "head_0_r3": false
-            }
-          },
           "minecraft:transformation": {
             "rotation": [
               0,
@@ -809,23 +563,6 @@
       {
         "condition": "q.block_state('twilightforest:rotation') == 14",
         "components": {
-          "minecraft:geometry": {
-            "identifier": "geometry.twilightforest.building.naga_trophy",
-            "bone_visibility": {
-              "trophy_r0": false,
-              "naga_trophy_0_r0": false,
-              "head_0_r0": false,
-              "trophy_r1": false,
-              "naga_trophy_0_r1": false,
-              "head_0_r1": false,
-              "trophy_r2": true,
-              "naga_trophy_0_r2": true,
-              "head_0_r2": true,
-              "trophy_r3": false,
-              "naga_trophy_0_r3": false,
-              "head_0_r3": false
-            }
-          },
           "minecraft:transformation": {
             "rotation": [
               0,
@@ -862,23 +599,6 @@
       {
         "condition": "q.block_state('twilightforest:rotation') == 15",
         "components": {
-          "minecraft:geometry": {
-            "identifier": "geometry.twilightforest.building.naga_trophy",
-            "bone_visibility": {
-              "trophy_r0": false,
-              "naga_trophy_0_r0": false,
-              "head_0_r0": false,
-              "trophy_r1": false,
-              "naga_trophy_0_r1": false,
-              "head_0_r1": false,
-              "trophy_r2": false,
-              "naga_trophy_0_r2": false,
-              "head_0_r2": false,
-              "trophy_r3": true,
-              "naga_trophy_0_r3": true,
-              "head_0_r3": true
-            }
-          },
           "minecraft:transformation": {
             "rotation": [
               0,
