@@ -213,13 +213,10 @@ void explodeBomb(Actor& bomb) {
         if (a && a->getTypeName() == "minecraft:item")
             kept.push_back(Kept{uidOf(*a), static_cast<ItemActor*>(a)->item(), a->getPosition(), a->getPosDelta()});
     level->explode(region, &bomb, pos, 2.0F, false, false, FLT_MAX, false);
+    // Bedrock's explosion destroys item actors on its own path (the damage pipeline never sees it)
+    // and pushes them: each one is put back as it was, a fresh actor with the same stack and motion
     for (auto const& k : kept) {
-        auto* a = actorById(k.uid);
-        if (a && a->isAlive()) {
-            teleportTo(*a, k.at); // no knockback either: Java's explosion leaves them out entirely
-            setMotion(*a, k.motion);
-            continue;
-        }
+        if (auto* a = actorById(k.uid)) a->remove();
         if (auto* again = level->getSpawner().spawnItem(region, k.stack, nullptr, k.at, 0)) setMotion(*again, k.motion);
     }
     exploding.erase(uid);
