@@ -6,14 +6,17 @@
 # the nagastone variants for every 0 / 1 / 2 connection layout (and heads facing in), the spiral
 # bricks' placement, the rope (support, the one-tick decay dropping one rope per strand, the rope
 # item extending a chain), the iron ladder (placement, left / right, breaking without support), the
-# knightmetal / fiery / arctic fur blocks, and the banner pattern and stonecutting recipes.
+# knightmetal / fiery / arctic fur blocks, the banner pattern recipes, every stonecutting recipe of
+# the unit, every block's hardness / explosion resistance / tool / tier (Appendix A), and TF's banner
+# patterns (registered, unlocked by their items, the loom's result banner, placed banners).
 Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
 Wait-LogLine 'building: installed' 60 | Out-Null
 
 $mark = Get-LogMark
 $r = Invoke-SelfTest 'building.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) building selftest(s) failed" }
-if ($r.Pass -lt 11) { throw "expected at least 11 building selftests to pass, got $($r.Pass)" }
+if ($r.Pass -lt 14) { throw "expected at least 14 building selftests to pass, got $($r.Pass)" }
+if (-not (Get-ServerLog -Since 0 | Select-String -Pattern 'building: 9 banner patterns registered' -Quiet)) { throw 'TF banner patterns were not registered at load' }
 if (-not (Get-ServerLog -Since $mark | Select-String -Pattern 'building: trophy twilightforest:hydra_trophy sounds entity\.twilightforest\.hydra\.growl' -Quiet)) {
     throw 'the powered / clicked hydra trophy played no sound'
 }

@@ -95,14 +95,33 @@ def ladder():
 def rune_brick(color):
     """castle_rune_brick_0: the castle brick with the rune layer (castleblock_magic_0) over it, tinted
     with the block's constant colour (ColorHandler; the atlas entry tf_building_rune_<color> of
-    trophies.py). TF picks one of eight rune layers per position (blockstate variants); Bedrock has no
-    random model per position, so every block shows the first."""
+    trophies.py). TF picks one of eight rune layers per position (blockstate variants): the atlas
+    entry's eight variations, picked per position by Bedrock."""
     doc = skeleton(color + "_castle_rune_brick")
     comps = doc["minecraft:block"]["components"]
     brick = {"texture": "tf_block_castle_brick", "render_method": "alpha_test"}
     runes = {"texture": "tf_building_rune_" + color, "render_method": "alpha_test"}
     comps["minecraft:material_instances"] = {"*": brick, "t_twilightforest_block_castle_brick": brick,
                                               **{f: runes for f in ("north", "south", "east", "west", "up", "down")}}
+    # Properties.ofFullCopy(CASTLE_BRICK): a full opaque block (the skeleton's 0 let light through)
+    comps.pop("minecraft:light_dampening", None)
+    return doc
+
+
+# MiniatureStructureBlock models whose faces carry tintindex 1 (grass top and side overlay):
+# ColorHandler tints them with BiomeColors.getAverageFoliageColor (the client's own biome blend:
+# Bedrock's tint method "default_foliage", vanilla clients and the client mod alike)
+TINTED_MINIATURES = {"twilight_portal": ("grass", "grass_side"), "naga_courtyard": ("grass", "grass_side")}
+
+
+def miniature(name):
+    doc = skeleton(name + "_miniature_structure")
+    block = doc["minecraft:block"]
+    for comps in [block["components"]] + [p["components"] for p in block.get("permutations", [])]:
+        for key in TINTED_MINIATURES[name]:
+            inst = comps.get("minecraft:material_instances", {}).get(key)
+            if inst is not None:
+                inst["tint_method"] = "default_foliage"
     return doc
 
 
@@ -126,6 +145,7 @@ def outputs():
         os.path.join(OUT, "iron_ladder.json"): ladder(),
         os.path.join(ROOT, "assets", "data", "families", "building.json"): families(),
         **{os.path.join(OUT, c + "_castle_rune_brick.json"): rune_brick(c) for c in ("blue", "pink", "yellow", "violet")},
+        **{os.path.join(OUT, m + "_miniature_structure.json"): miniature(m) for m in TINTED_MINIATURES},
     }
 
 

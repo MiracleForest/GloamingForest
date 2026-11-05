@@ -21,11 +21,13 @@
 
 #include "glm/gtc/matrix_transform.hpp"
 
+#include "mc/client/game/ClientInstance.h"
 #include "mc/client/gui/screens/ScreenContext.h"
 #include "mc/deps/renderer/Camera.h"
 #include "mc/deps/renderer/MatrixStack.h"
 #include "mc/world/item/ItemStack.h"
 
+#include "client/Client.h"
 #include "client/render/Render.h"
 #include "feature/building/Building.h"
 #include "feature/ext/ui/Client.h"
@@ -67,7 +69,9 @@ Head headOf(std::string const& boss) {
         h.geo2     = h.geo + (boss == "knight_phantom" ? "_armor" : "_lines");
         h.texture2 = boss == "knight_phantom" ? "textures/twilightforest/models/armor/phantom_layer_1" : "textures/twilightforest/entity/questram_lines";
     }
-    if (boss == "ur_ghast") h.lift = 0.5f;
+    // ISTER lifts the ur-ghast 0.5; F2's floor geometry already holds UrGhastModel#renderTrophy's
+    // block-only translate (0, -1, 0) under scale(-1, -1, 1) (the body 1 block higher than in GUI form)
+    if (boss == "ur_ghast") h.lift = 0.5f - 1.0f;
     if (boss == "alpha_yeti") h.lift = -0.15f;
     return h;
 }
@@ -82,7 +86,10 @@ float clientTicks() {
 void drawGui(r::RenderContext& ctx, std::string const& boss) {
     auto head = headOf(boss);
     if (head.geo.empty()) return;
-    float spin = gf::config::get<fb::BuildingConfig>().rotateTrophyHeadsGui ? std::fmod(clientTicks(), 360.0f) : -45.0f;
+    // TFConfig.rotateTrophyHeadsGui && !minecraft.isPaused() ? ClientGameEvents.time % 360 : -45
+    auto* client = gf::client::currentClient();
+    bool  paused = client && client->isShowingPauseScreen();
+    float spin   = gf::config::get<fb::BuildingConfig>().rotateTrophyHeadsGui && !paused ? std::fmod(clientTicks(), 360.0f) : -45.0f;
     float size = ctx.guiSize;
     // ISTER (GUI): translate(0.5, 0.5, 0.5), rotate x 30, rotate -y spin, translate(-0.5, -0.5, -0.5),
     // translate(0, 0.25 + lift, 0), then TrophyRenderer's floor pose (F2's floor geometry): the

@@ -73,6 +73,12 @@ std::map<core::GlobalPos, rs::WatchId>& watches() {
     return w;
 }
 
+/// The watched trophies are kept in the world (gf:building:trophy_watches), so a trophy follows a
+/// signal after a reload too, before anything next to it changes (the redstone contract forgets
+/// its watches with the world).
+constexpr char kWatchKey[] = "gf:building:trophy_watches";
+bool gWatchesDirty = false;
+
 std::mt19937& rng() {
     static std::mt19937 r{std::random_device{}()};
     return r;
@@ -113,9 +119,19 @@ std::optional<TrophySound> trophySound(std::string const& blockId, float roll) {
     return s;
 }
 
+namespace {
+unsigned long long& trophySoundCounter() {
+    static unsigned long long n = 0;
+    return n;
+}
+} // namespace
+
+unsigned long long trophySoundsPlayed() { return trophySoundCounter(); }
+
 void playTrophySound(BlockSource& region, BlockPos const& pos, std::string const& blockId) {
     auto s = trophySound(blockId, nextFloat());
     if (!s) return;
+    ++trophySoundCounter();
     // level.playSound(null, pos, sound, BLOCKS, volume, nextFloat() * 0.1 + pitch): at the block centre
     fx::sound(region.getDimension(), s->event, v(pos.x + 0.5, pos.y + 0.5, pos.z + 0.5), s->volume, nextFloat() * 0.1f + s->pitch);
     log().info("building: trophy {} sounds {} at {} {} {}", blockId, s->event, pos.x, pos.y, pos.z);
@@ -169,9 +185,9 @@ void updatePowered(BlockSource& region, BlockPos const& pos, bool power) {
     setStates(region, pos, {{std::string(kNs) + "powered", power}});
 }
 
-void watch(BlockSource& region, BlockPos const& pos) {
-    auto gp = game::globalPos(region, pos);
+void watchAt(core::GlobalPos const& gp) {
     if (watches().contains(gp)) return;
+    gWatchesDirty = true;
     watches()[gp] = rs::watch(gp, [](core::GlobalPos const& at, int power) {
         auto* r = game::regionOf(at.dim);
         if (!r) return;
@@ -182,6 +198,7 @@ void watch(BlockSource& region, BlockPos const& pos) {
             if (it != watches().end()) {
                 rs::unwatch(it->second);
                 watches().erase(it);
+                gWatchesDirty = true;
             }
             return;
         }
@@ -189,11 +206,32 @@ void watch(BlockSource& region, BlockPos const& pos) {
     });
 }
 
+void watch(BlockSource& region, BlockPos const& pos) { watchAt(game::globalPos(region, pos)); }
+
 void unwatch(BlockSource& region, BlockPos const& pos) {
     auto it = watches().find(game::globalPos(region, pos));
     if (it == watches().end()) return;
     rs::unwatch(it->second);
     watches().erase(it);
+    gWatchesDirty = true;
+}
+
+void saveWatches() {
+    if (!gWatchesDirty) return;
+    Json list = Json::array();
+    for (auto const& [p, id] : watches()) list.push_back({p.dim, p.x, p.y, p.z});
+    game::db::put(kWatchKey, list);
+    gWatchesDirty = false;
+}
+
+void loadWatches() {
+    auto list = game::db::get(kWatchKey);
+    if (!list || !list->is_array()) return;
+    for (auto const& e : *list) {
+        if (!e.is_array() || e.size() != 4) continue;
+        watchAt(core::GlobalPos{e[0].get<int>(), e[1].get<int>(), e[2].get<int>(), e[3].get<int>()});
+    }
+    gWatchesDirty = false;
 }
 
 /// StandingAndWallBlockItem#getPlacementState with TrophyBlock / TrophyWallBlock#getStateForPlacement.
@@ -249,6 +287,10 @@ bool dispenseOnHead(BlockSource& region, BlockPos const& dispenser, int facing, 
         if (!a->hasCategory(ActorCategory::Mob) && !a->isPlayer()) continue; // LivingEntity
         if (!a->getArmor(SharedTypes::Legacy::ArmorSlot::Head).isNull()) continue;
         auto one = game::items::withCount(stack, 1);
+        // MobCanWearArmorEntitySelector: a Mob only when it can pick up loot (Mob#canPickUpLoot);
+        // players and armour stands always
+        bool wearer = a->isPlayer() || a->getTypeName() == "minecraft:armor_stand" || *a->mCanPickupItems || a->canPickupItem(one);
+        if (!wearer) continue;
         a->setArmor(SharedTypes::Legacy::ArmorSlot::Head, one);
         stack.remove(1);
         if (stack.mCount <= 0) stack = ItemStack::EMPTY_ITEM();
@@ -262,8 +304,15 @@ bool dispenseOnHead(BlockSource& region, BlockPos const& dispenser, int facing, 
 } // namespace
 
 void installTrophies() {
-    // the redstone contract drops its watches with the world: forget them too
-    game::db::onWorldClosed([] { watches().clear(); });
+    // the redstone contract drops its watches with the world: forget them too, and take them up
+    // again from the world's list when it is loaded
+    game::db::onWorldSave([] { saveWatches(); });
+    game::db::onWorldClosed([] {
+        watches().clear();
+        gWatchesDirty = false;
+    });
+    game::db::onWorldReady([] { loadWatches(); });
+    if (game::db::available()) loadWatches(); // BDS: the world was ready before the mod was enabled
     for (auto const& boss : trophyBosses()) {
         std::string floor = std::string(kNs) + boss + "_trophy";
         std::string wall  = std::string(kNs) + boss + "_wall_trophy";

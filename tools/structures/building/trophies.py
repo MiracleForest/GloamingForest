@@ -20,9 +20,10 @@
 #   assets/pack/rp/terrain_texture.d/building.json, assets/pack/rp/item_texture.d/building.json
 #
 # TrophyBlock's ROTATION_16 is a 22.5 degree step: Bedrock turns a block in quarter turns only, so the
-# block geometry holds the head four times (bones <part>_r0.._r3, turned 0 / 22.5 / 45 / 67.5 degrees
-# about the block centre) and each rotation shows one step turned by its quarter (as F11's standing
-# signs). The knight phantom's helmet (phantom_layer_1) and the questing ram's lines are second
+# floor trophy has four geometries (<id>_r0.._r3, the head turned 0 / 22.5 / 45 / 67.5 degrees about
+# the block centre) and each rotation's permutation picks its step's geometry and turns the block by
+# its quarter. (One geometry with the four steps under Molang bone_visibility does not work:
+# bone_visibility hides a bone's own cubes, not its children's, so every step showed at once.) The knight phantom's helmet (phantom_layer_1) and the questing ram's lines are second
 # textures: their faces name the material instances "helmet" / "lines". Box UVs become per-face UVs,
 # `inflate` grows the cube (its UVs keep the cube's size) and `mirror` flips the faces as Bedrock does.
 
@@ -131,41 +132,47 @@ def parts(base):
     return out
 
 
-def step_bones(base, steps):
-    """Bones of the trophy at `steps` 22.5 degree steps: one root per step, the parts below it."""
+def trophy_bones(base, yaw):
+    """The trophy's bones turned by `yaw` degrees (clockwise seen from above) about the block centre.
+
+    F2's extract (frame 'world') holds the parts in Bedrock's geometry frame (x mirrored) below a root
+    bone turned 180 degrees: the entity convention, where the actor renderer turns the model again.
+    Block geometry is drawn as it is (geometry -z is north), so that root showed the back of the head
+    on the wrong side of the block: the root gets the step's own yaw instead. The parts of a second
+    texture hang below their own root (bone suffix _<n>)."""
     bones = []
     width = height = None
-    names = []
-    for k in range(steps):
-        root = "trophy_r%d" % k
-        bones.append({"name": root, "pivot": [0, 0, 0], "rotation": [0, r6(k * 22.5), 0]})
-        names.append(root)
-        for gi, (geo, material) in enumerate(parts(base)):
-            desc = geo["description"]
-            if gi == 0:
-                width, height = desc["texture_width"], desc["texture_height"]
-            for b in geo["bones"]:
-                nb = {"name": "%s_%d_r%d" % (b["name"], gi, k), "pivot": b.get("pivot", [0, 0, 0])}
-                nb["parent"] = root if "parent" not in b else "%s_%d_r%d" % (b["parent"], gi, k)
+    for gi, (geo, material) in enumerate(parts(base)):
+        desc = geo["description"]
+        if gi == 0:
+            width, height = desc["texture_width"], desc["texture_height"]
+        for b in geo["bones"]:
+            nb = {"name": "%s_%d" % (b["name"], gi), "pivot": b.get("pivot", [0, 0, 0])}
+            if "parent" in b:
+                nb["parent"] = "%s_%d" % (b["parent"], gi)
                 if b.get("rotation"):
                     nb["rotation"] = b["rotation"]
-                cubes = [block_cube(c, material) for c in b.get("cubes", [])]
-                # per-face UVs are in the geometry's texture size: scale a second texture's
-                if (desc["texture_width"], desc["texture_height"]) != (width, height):
-                    sx = width / desc["texture_width"]
-                    sy = height / desc["texture_height"]
-                    for c in cubes:
-                        for f in c["uv"].values():
-                            f["uv"] = [r6(f["uv"][0] * sx), r6(f["uv"][1] * sy)]
-                            f["uv_size"] = [r6(f["uv_size"][0] * sx), r6(f["uv_size"][1] * sy)]
-                if cubes:
-                    nb["cubes"] = cubes
-                bones.append(nb)
-                names.append(nb["name"])
-    return bones, names, width, height
+            else:
+                # Bedrock's geometry frame (x mirrored) turns a positive y rotation clockwise seen
+                # from above, the way TrophyBlock's rotation counts
+                nb["rotation"] = [0, r6(yaw), 0]
+            cubes = [block_cube(c, material) for c in b.get("cubes", [])]
+            # per-face UVs are in the geometry's texture size: scale a second texture's
+            if (desc["texture_width"], desc["texture_height"]) != (width, height):
+                sx = width / desc["texture_width"]
+                sy = height / desc["texture_height"]
+                for c in cubes:
+                    for f in c["uv"].values():
+                        f["uv"] = [r6(f["uv"][0] * sx), r6(f["uv"][1] * sy)]
+                        f["uv_size"] = [r6(f["uv_size"][0] * sx), r6(f["uv_size"][1] * sy)]
+            if cubes:
+                nb["cubes"] = cubes
+            bones.append(nb)
+    return bones, width, height
 
 
-def geometry_doc(identifier, bones, width, height):
+def geometry_doc(geometries):
+    """One geometry file holding (identifier, bones, width, height) entries."""
     return {
         "format_version": FORMAT_GEO,
         "minecraft:geometry": [{
@@ -178,7 +185,7 @@ def geometry_doc(identifier, bones, width, height):
                 "visible_bounds_offset": [0, 0.75, 0],
             },
             "bones": bones,
-        }],
+        } for identifier, bones, width, height in geometries],
     }
 
 
@@ -254,6 +261,8 @@ def floor_block(boss, geo_id):
         perms.append({
             "condition": "%s == %d" % (state("rotation"), r),
             "components": {
+                # the step's own geometry (turned 22.5 * step), the block turned by the quarter
+                "minecraft:geometry": "%s_r%d" % (geo_id, step),
                 "minecraft:transformation": {"rotation": [0, -90 * quarter, 0]},
                 # the selection box is turned with the block: give it in the block's own frame
                 "minecraft:selection_box": unturn(shape, quarter),
@@ -261,10 +270,7 @@ def floor_block(boss, geo_id):
             },
         })
     comps = base_components(boss)
-    # the step's root bone (the parts hang below it), by Molang on the rotation state: the
-    # permutations only turn the block by quarters
-    comps["minecraft:geometry"] = {"identifier": geo_id, "bone_visibility": {
-        "trophy_r%d" % k: " || ".join("q.block_state('%srotation') == %d" % (NS, k + 4 * q) for q in range(4)) for k in range(4)}}
+    comps["minecraft:geometry"] = geo_id + "_r0"
     comps["minecraft:material_instances"] = materials(boss + "_trophy")
     return {
         "format_version": FORMAT_BLOCK,
@@ -356,23 +362,24 @@ def outputs():
         for wall in (False, True):
             base = boss + ("_wall_trophy" if wall else "_trophy")
             geo_id = "geometry.twilightforest.building." + base
-            steps = 1 if wall else 4
-            bones, names, w, h = step_bones(base, steps)
             if wall:
-                for b in bones:
-                    b["name"] = b["name"].replace("_r0", "")
-                    if "parent" in b:
-                        b["parent"] = b["parent"].replace("_r0", "")
-            files[os.path.join(OUT_GEO, base + ".geo.json")] = dump(geometry_doc(geo_id, bones, w, h))
+                geos = [(geo_id,) + trophy_bones(base, 0)]
+            else:
+                # one geometry per 22.5 degree step (TrophyBlock's ROTATION_16 within a quarter turn)
+                geos = [(geo_id + "_r%d" % k,) + trophy_bones(base, k * 22.5) for k in range(4)]
+            files[os.path.join(OUT_GEO, base + ".geo.json")] = dump(geometry_doc(geos))
             block = wall_block(boss, geo_id) if wall else floor_block(boss, geo_id)
             files[os.path.join(OUT_BLOCKS, base + ".json")] = dump(block)
             for path, _ in textures_of(base).values():
                 terrain[tex_key(path)] = {"textures": path}
         files[os.path.join(OUT_ITEMS, boss + "_trophy.json")] = dump(item(boss))
-    # the castle rune bricks' rune layer (ColorHandler: a constant colour per block), pre-tinted in
-    # the atlas (blocks.py writes the blocks)
+    # the castle rune bricks' rune layer (ColorHandler: a constant colour per block), tinted in the
+    # atlas (blocks.py writes the blocks); the blockstate's eight equally weighted models
+    # castle_rune_brick_0..7 (castleblock_magic_0..7, one picked per position) are the atlas entry's
+    # variations, which Bedrock also picks per position
     for color, rgb in RUNE_COLORS.items():
-        terrain["tf_building_rune_" + color] = {"textures": [{"path": "textures/twilightforest/block/castleblock_magic_0", "tint_color": rgb}]}
+        terrain["tf_building_rune_" + color] = {"textures": {"variations": [
+            {"path": "textures/twilightforest/block/castleblock_magic_%d" % i, "tint_color": rgb, "weight": 1} for i in range(8)]}}
     files[OUT_TERRAIN] = dump(dict(sorted(terrain.items())))
     items = {"tf_building_item_" + t: {"textures": "textures/twilightforest/item/" + t} for t in sorted(set(BOSSES.values()))}
     files[OUT_ITEM_TEX] = dump(items)

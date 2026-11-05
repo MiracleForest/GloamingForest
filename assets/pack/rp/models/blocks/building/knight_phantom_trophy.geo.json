@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.twilightforest.building.knight_phantom_trophy",
+        "identifier": "geometry.twilightforest.building.knight_phantom_trophy_r0",
         "texture_width": 64,
         "texture_height": 32,
         "visible_bounds_width": 3,
@@ -16,7 +16,7 @@
       },
       "bones": [
         {
-          "name": "trophy_r0",
+          "name": "knight_phantom_trophy_0",
           "pivot": [
             0,
             0,
@@ -29,27 +29,13 @@
           ]
         },
         {
-          "name": "knight_phantom_trophy_0_r0",
+          "name": "head_0",
           "pivot": [
             0,
             0,
             0
           ],
-          "parent": "trophy_r0",
-          "rotation": [
-            0,
-            180,
-            0
-          ]
-        },
-        {
-          "name": "head_0_r0",
-          "pivot": [
-            0,
-            0,
-            0
-          ],
-          "parent": "knight_phantom_trophy_0_r0",
+          "parent": "knight_phantom_trophy_0",
           "cubes": [
             {
               "origin": [
@@ -128,27 +114,26 @@
           ]
         },
         {
-          "name": "knight_phantom_trophy_armor_1_r0",
+          "name": "knight_phantom_trophy_armor_1",
           "pivot": [
             0,
             0,
             0
           ],
-          "parent": "trophy_r0",
           "rotation": [
             0,
-            180,
+            0.0,
             0
           ]
         },
         {
-          "name": "helmet_1_r0",
+          "name": "helmet_1",
           "pivot": [
             0,
             -0.48,
             0
           ],
-          "parent": "knight_phantom_trophy_armor_1_r0",
+          "parent": "knight_phantom_trophy_armor_1",
           "cubes": [
             {
               "origin": [
@@ -233,13 +218,13 @@
           ]
         },
         {
-          "name": "right_horn_1_1_r0",
+          "name": "right_horn_1_1",
           "pivot": [
             -4.4,
             6.67,
             0
           ],
-          "parent": "helmet_1_r0",
+          "parent": "helmet_1",
           "rotation": [
             0,
             -25,
@@ -329,13 +314,13 @@
           ]
         },
         {
-          "name": "right_horn_2_1_r0",
+          "name": "right_horn_2_1",
           "pivot": [
             -9.35,
             6.67,
             0
           ],
-          "parent": "right_horn_1_1_r0",
+          "parent": "right_horn_1_1",
           "rotation": [
             0,
             -15,
@@ -425,13 +410,13 @@
           ]
         },
         {
-          "name": "left_horn_1_1_r0",
+          "name": "left_horn_1_1",
           "pivot": [
             4.4,
             6.67,
             0
           ],
-          "parent": "helmet_1_r0",
+          "parent": "helmet_1",
           "rotation": [
             0,
             25,
@@ -521,13 +506,13 @@
           ]
         },
         {
-          "name": "left_horn_2_1_r0",
+          "name": "left_horn_2_1",
           "pivot": [
             9.35,
             6.67,
             0
           ],
-          "parent": "left_horn_1_1_r0",
+          "parent": "left_horn_1_1",
           "rotation": [
             0,
             15,
@@ -615,9 +600,25 @@
               }
             }
           ]
-        },
+        }
+      ]
+    },
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.building.knight_phantom_trophy_r1",
+        "texture_width": 64,
+        "texture_height": 32,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3,
+        "visible_bounds_offset": [
+          0,
+          0.75,
+          0
+        ]
+      },
+      "bones": [
         {
-          "name": "trophy_r1",
+          "name": "knight_phantom_trophy_0",
           "pivot": [
             0,
             0,
@@ -630,27 +631,13 @@
           ]
         },
         {
-          "name": "knight_phantom_trophy_0_r1",
+          "name": "head_0",
           "pivot": [
             0,
             0,
             0
           ],
-          "parent": "trophy_r1",
-          "rotation": [
-            0,
-            180,
-            0
-          ]
-        },
-        {
-          "name": "head_0_r1",
-          "pivot": [
-            0,
-            0,
-            0
-          ],
-          "parent": "knight_phantom_trophy_0_r1",
+          "parent": "knight_phantom_trophy_0",
           "cubes": [
             {
               "origin": [
@@ -729,27 +716,26 @@
           ]
         },
         {
-          "name": "knight_phantom_trophy_armor_1_r1",
+          "name": "knight_phantom_trophy_armor_1",
           "pivot": [
             0,
             0,
             0
           ],
-          "parent": "trophy_r1",
           "rotation": [
             0,
-            180,
+            22.5,
             0
           ]
         },
         {
-          "name": "helmet_1_r1",
+          "name": "helmet_1",
           "pivot": [
             0,
             -0.48,
             0
           ],
-          "parent": "knight_phantom_trophy_armor_1_r1",
+          "parent": "knight_phantom_trophy_armor_1",
           "cubes": [
             {
               "origin": [
@@ -834,13 +820,13 @@
           ]
         },
         {
-          "name": "right_horn_1_1_r1",
+          "name": "right_horn_1_1",
           "pivot": [
             -4.4,
             6.67,
             0
           ],
-          "parent": "helmet_1_r1",
+          "parent": "helmet_1",
           "rotation": [
             0,
             -25,
@@ -930,13 +916,13 @@
           ]
         },
         {
-          "name": "right_horn_2_1_r1",
+          "name": "right_horn_2_1",
           "pivot": [
             -9.35,
             6.67,
             0
           ],
-          "parent": "right_horn_1_1_r1",
+          "parent": "right_horn_1_1",
           "rotation": [
             0,
             -15,
@@ -1026,13 +1012,13 @@
           ]
         },
         {
-          "name": "left_horn_1_1_r1",
+          "name": "left_horn_1_1",
           "pivot": [
             4.4,
             6.67,
             0
           ],
-          "parent": "helmet_1_r1",
+          "parent": "helmet_1",
           "rotation": [
             0,
             25,
@@ -1122,13 +1108,13 @@
           ]
         },
         {
-          "name": "left_horn_2_1_r1",
+          "name": "left_horn_2_1",
           "pivot": [
             9.35,
             6.67,
             0
           ],
-          "parent": "left_horn_1_1_r1",
+          "parent": "left_horn_1_1",
           "rotation": [
             0,
             15,
@@ -1216,9 +1202,25 @@
               }
             }
           ]
-        },
+        }
+      ]
+    },
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.building.knight_phantom_trophy_r2",
+        "texture_width": 64,
+        "texture_height": 32,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3,
+        "visible_bounds_offset": [
+          0,
+          0.75,
+          0
+        ]
+      },
+      "bones": [
         {
-          "name": "trophy_r2",
+          "name": "knight_phantom_trophy_0",
           "pivot": [
             0,
             0,
@@ -1231,27 +1233,13 @@
           ]
         },
         {
-          "name": "knight_phantom_trophy_0_r2",
+          "name": "head_0",
           "pivot": [
             0,
             0,
             0
           ],
-          "parent": "trophy_r2",
-          "rotation": [
-            0,
-            180,
-            0
-          ]
-        },
-        {
-          "name": "head_0_r2",
-          "pivot": [
-            0,
-            0,
-            0
-          ],
-          "parent": "knight_phantom_trophy_0_r2",
+          "parent": "knight_phantom_trophy_0",
           "cubes": [
             {
               "origin": [
@@ -1330,27 +1318,26 @@
           ]
         },
         {
-          "name": "knight_phantom_trophy_armor_1_r2",
+          "name": "knight_phantom_trophy_armor_1",
           "pivot": [
             0,
             0,
             0
           ],
-          "parent": "trophy_r2",
           "rotation": [
             0,
-            180,
+            45.0,
             0
           ]
         },
         {
-          "name": "helmet_1_r2",
+          "name": "helmet_1",
           "pivot": [
             0,
             -0.48,
             0
           ],
-          "parent": "knight_phantom_trophy_armor_1_r2",
+          "parent": "knight_phantom_trophy_armor_1",
           "cubes": [
             {
               "origin": [
@@ -1435,13 +1422,13 @@
           ]
         },
         {
-          "name": "right_horn_1_1_r2",
+          "name": "right_horn_1_1",
           "pivot": [
             -4.4,
             6.67,
             0
           ],
-          "parent": "helmet_1_r2",
+          "parent": "helmet_1",
           "rotation": [
             0,
             -25,
@@ -1531,13 +1518,13 @@
           ]
         },
         {
-          "name": "right_horn_2_1_r2",
+          "name": "right_horn_2_1",
           "pivot": [
             -9.35,
             6.67,
             0
           ],
-          "parent": "right_horn_1_1_r2",
+          "parent": "right_horn_1_1",
           "rotation": [
             0,
             -15,
@@ -1627,13 +1614,13 @@
           ]
         },
         {
-          "name": "left_horn_1_1_r2",
+          "name": "left_horn_1_1",
           "pivot": [
             4.4,
             6.67,
             0
           ],
-          "parent": "helmet_1_r2",
+          "parent": "helmet_1",
           "rotation": [
             0,
             25,
@@ -1723,13 +1710,13 @@
           ]
         },
         {
-          "name": "left_horn_2_1_r2",
+          "name": "left_horn_2_1",
           "pivot": [
             9.35,
             6.67,
             0
           ],
-          "parent": "left_horn_1_1_r2",
+          "parent": "left_horn_1_1",
           "rotation": [
             0,
             15,
@@ -1817,9 +1804,25 @@
               }
             }
           ]
-        },
+        }
+      ]
+    },
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.building.knight_phantom_trophy_r3",
+        "texture_width": 64,
+        "texture_height": 32,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3,
+        "visible_bounds_offset": [
+          0,
+          0.75,
+          0
+        ]
+      },
+      "bones": [
         {
-          "name": "trophy_r3",
+          "name": "knight_phantom_trophy_0",
           "pivot": [
             0,
             0,
@@ -1832,27 +1835,13 @@
           ]
         },
         {
-          "name": "knight_phantom_trophy_0_r3",
+          "name": "head_0",
           "pivot": [
             0,
             0,
             0
           ],
-          "parent": "trophy_r3",
-          "rotation": [
-            0,
-            180,
-            0
-          ]
-        },
-        {
-          "name": "head_0_r3",
-          "pivot": [
-            0,
-            0,
-            0
-          ],
-          "parent": "knight_phantom_trophy_0_r3",
+          "parent": "knight_phantom_trophy_0",
           "cubes": [
             {
               "origin": [
@@ -1931,27 +1920,26 @@
           ]
         },
         {
-          "name": "knight_phantom_trophy_armor_1_r3",
+          "name": "knight_phantom_trophy_armor_1",
           "pivot": [
             0,
             0,
             0
           ],
-          "parent": "trophy_r3",
           "rotation": [
             0,
-            180,
+            67.5,
             0
           ]
         },
         {
-          "name": "helmet_1_r3",
+          "name": "helmet_1",
           "pivot": [
             0,
             -0.48,
             0
           ],
-          "parent": "knight_phantom_trophy_armor_1_r3",
+          "parent": "knight_phantom_trophy_armor_1",
           "cubes": [
             {
               "origin": [
@@ -2036,13 +2024,13 @@
           ]
         },
         {
-          "name": "right_horn_1_1_r3",
+          "name": "right_horn_1_1",
           "pivot": [
             -4.4,
             6.67,
             0
           ],
-          "parent": "helmet_1_r3",
+          "parent": "helmet_1",
           "rotation": [
             0,
             -25,
@@ -2132,13 +2120,13 @@
           ]
         },
         {
-          "name": "right_horn_2_1_r3",
+          "name": "right_horn_2_1",
           "pivot": [
             -9.35,
             6.67,
             0
           ],
-          "parent": "right_horn_1_1_r3",
+          "parent": "right_horn_1_1",
           "rotation": [
             0,
             -15,
@@ -2228,13 +2216,13 @@
           ]
         },
         {
-          "name": "left_horn_1_1_r3",
+          "name": "left_horn_1_1",
           "pivot": [
             4.4,
             6.67,
             0
           ],
-          "parent": "helmet_1_r3",
+          "parent": "helmet_1",
           "rotation": [
             0,
             25,
@@ -2324,13 +2312,13 @@
           ]
         },
         {
-          "name": "left_horn_2_1_r3",
+          "name": "left_horn_2_1",
           "pivot": [
             9.35,
             6.67,
             0
           ],
-          "parent": "left_horn_1_1_r3",
+          "parent": "left_horn_1_1",
           "rotation": [
             0,
             15,

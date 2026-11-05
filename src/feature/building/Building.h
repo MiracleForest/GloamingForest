@@ -5,6 +5,7 @@
 
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "feature/building/Util.h"
@@ -39,6 +40,8 @@ struct TrophySound {
 /// once in 50: roll < 1 / 50).
 [[nodiscard]] std::optional<TrophySound> trophySound(std::string const& blockId, float roll);
 void playTrophySound(BlockSource& region, BlockPos const& pos, std::string const& blockId);
+/// How many trophy sounds played since the mod loaded (selftests).
+[[nodiscard]] unsigned long long trophySoundsPlayed();
 void createTrophyParticles(BlockSource& region, BlockPos const& pos, std::string const& blockId);
 void installTrophies();
 void uninstallTrophies();
@@ -62,6 +65,25 @@ inline constexpr int kRopeExtendRange = 7; ///< RopeItem.EXTEND_RANGE
 int  ropeTick(BlockSource& region, BlockPos const& pos);
 void installRope();
 void uninstallRope();
+
+// ---- banner patterns (Banners.cpp) ----
+struct BannerSpec {
+    std::string boss;   ///< the item is twilightforest:<boss>_banner_pattern, the texture TF's <boss>.png
+    std::string tfId;   ///< TF's banner_pattern registry id
+    std::string nameId; ///< Bedrock's pattern id (name and nameID; banners store it)
+};
+[[nodiscard]] std::vector<BannerSpec> const&   bannerPatterns();
+[[nodiscard]] std::optional<BannerSpec>         bannerOfPatternId(std::string_view nameId);
+[[nodiscard]] std::optional<BannerSpec>         bannerOfItem(std::string_view itemId);
+/// Appends TF's patterns that are missing to Bedrock's registry; returns how many.
+int                                             registerBannerPatterns();
+[[nodiscard]] bool                              bannerPatternsRegistered();
+[[nodiscard]] class BannerPattern const*        findBannerPattern(std::string_view nameId);
+/// The loom's result (LoomMenu): `banner` with one more layer {patternId, dyeColor}; nullopt for an
+/// unknown pattern, no banner or a banner with 6 layers already.
+[[nodiscard]] std::optional<class ItemStack>    loomResult(class ItemStack const& banner, std::string const& patternId, int dyeColor);
+void                                            installBannerHooks();
+void                                            uninstallBannerHooks();
 
 // ---- storage blocks (Storage.cpp) ----
 inline constexpr float kKnightmetalDamage       = 4.0f; ///< KnightmetalBlock.BLOCK_DAMAGE

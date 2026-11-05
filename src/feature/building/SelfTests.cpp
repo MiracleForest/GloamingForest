@@ -1,10 +1,12 @@
 // U5 (building): selftests building.* (dx 500..599, rule R12).
 
+#include <algorithm>
 #include <cmath>
 #include <map>
 
 #include "ll/api/service/Bedrock.h"
 
+#include "mc/deps/core/string/HashedString.h"
 #include "mc/deps/core/math/Vec3.h"
 #include "mc/deps/shared_types/legacy/actor/ArmorSlot.h"
 #include "mc/scripting/modules/minecraft/ScriptFacing.h"
@@ -31,6 +33,7 @@
 #include "feature/boss/Boss.h"
 #include "feature/building/Building.h"
 #include "feature/common/Interactions.h"
+#include "feature/ext/item/Item.h"
 #include "feature/recipes/Recipes.h"
 #include "game/Blocks.h"
 #include "game/Items.h"
@@ -157,23 +160,66 @@ GF_REGISTER_SELFTEST("building.blocks", [](Context& ctx) {
         // strength(-1.0, 3600000.8): unbreakable
         if (sp) ctx.check(sp->getBlockType().getDestroySpeed() < 0, std::string("the boss spawner of ") + boss + " is unbreakable");
     }
-    auto hardness = [&](char const* id, float want) {
-        auto const* blk = gf::game::blockWith(std::string("twilightforest:") + id);
-        float       got = blk ? blk->getBlockType().getDestroySpeed() : -99;
-        ctx.check(std::abs(got - want) < 0.01f, std::string(id) + " hardness " + std::to_string(want) + " (got " + std::to_string(got) + ")");
-    };
-    hardness("castle_brick", 100.0f);
-    hardness("mazestone", 100.0f);
-    hardness("deadrock", 100.0f);
-    hardness("towerwood", 40.0f);
-    hardness("underbrick", 1.5f);
-    hardness("nagastone", 1.5f);
-    hardness("knightmetal_block", 5.0f);
-    hardness("arctic_fur_block", 0.8f);
-    hardness("rope", 0.3f);
-    hardness("iron_ladder", 5.0f);
-    hardness("naga_trophy", 0.0f);
     ctx.info("building blocks registered: " + std::to_string(std::size(ids) - missing) + " of " + std::to_string(std::size(ids)));
+});
+
+GF_REGISTER_SELFTEST("building.block_properties", [](Context& ctx) {
+    // every block of Appendix A: TF's hardness, explosion resistance, mining tool and tier
+    struct Row {
+        char const* id;
+        float       hardness, resistance;
+        char const* tool;
+        char const* tier;
+    };
+    static Row const rows[]{
+#include "feature/building/BlockTable.inc"
+    };
+    // Bedrock keeps the explosion resistance in its own units: scale by vanilla stone (Java 6.0)
+    auto const* stone = gf::game::blockWith("minecraft:stone");
+    ctx.require(stone != nullptr, "minecraft:stone");
+    float unit = stone->getBlockType().getExplosionResistance() / 6.0f;
+    int   good = 0, bad = 0;
+    for (auto const& r : rows) {
+        std::string id  = std::string("twilightforest:") + r.id;
+        auto const* blk = gf::game::blockWith(id);
+        if (!blk) {
+            ctx.check(false, id + " registered");
+            ++bad;
+            continue;
+        }
+        auto const& type = blk->getBlockType();
+        bool        ok   = true;
+        float       h    = type.getDestroySpeed();
+        // strength(-1, ...): unbreakable (Bedrock: a negative destroy time)
+        if (r.hardness < 0 ? h >= 0 : std::abs(h - r.hardness) > 0.01f) {
+            ctx.check(false, id + " hardness " + std::to_string(r.hardness) + " (got " + std::to_string(h) + ")");
+            ok = false;
+        }
+        float res  = type.getExplosionResistance() / unit;
+        bool  huge = r.resistance >= 1000.0f; // Bedrock caps the unbreakable ones; only "blast proof" matters
+        if (huge ? res < 1000.0f : std::abs(res - r.resistance) > std::max(0.01f, r.resistance * 0.001f)) {
+            ctx.check(false, id + " explosion resistance " + std::to_string(r.resistance) + " (got " + std::to_string(res) + ")");
+            ok = false;
+        }
+        for (std::string tool : {"pickaxe", "axe", "shovel", "hoe"}) {
+            bool want = tool == r.tool;
+            bool got  = type.hasTag(HashedString("minecraft:is_" + tool + "_item_destructible"));
+            if (want != got) {
+                ctx.check(false, id + (want ? " is mined with the " : " is not mined with the ") + tool);
+                ok = false;
+            }
+        }
+        for (std::string tier : {"stone", "iron", "diamond"}) {
+            bool want = tier == r.tier;
+            bool got  = type.hasTag(HashedString("minecraft:" + tier + "_tier_destructible"));
+            if (want != got) {
+                ctx.check(false, id + (want ? " needs " : " does not need ") + tier + " tier");
+                ok = false;
+            }
+        }
+        ok ? ++good : ++bad;
+    }
+    ctx.check(bad == 0, "block properties as TF: " + std::to_string(good) + " of " + std::to_string(std::size(rows)));
 });
 
 GF_REGISTER_SELFTEST("building.trophy_variants", [](Context& ctx) {
@@ -206,6 +252,13 @@ GF_REGISTER_SELFTEST("building.trophy_variants", [](Context& ctx) {
                   floor + " sound " + r.sound + " (got " + (s ? s->event + " " + std::to_string(s->volume) + " " + std::to_string(s->pitch) : "none") + ")");
         ctx.check(b::trophyBoss(floor) == std::string(r.boss) && b::trophyBoss(wall) == std::string(r.boss) && b::isWallTrophy(wall) && !b::isWallTrophy(floor), floor + " ids");
     }
+    // rarities: TWILIGHT trophies and banner patterns (dark green names), the UNCOMMON fiery block
+    namespace ex = gf::item::ext;
+    for (auto const& boss : b::trophyBosses()) {
+        ctx.check(ex::rarityOf("twilightforest:" + boss + "_trophy") == ex::Rarity::Twilight, boss + " trophy is TWILIGHT");
+        ctx.check(ex::rarityOf("twilightforest:" + boss + "_banner_pattern") == ex::Rarity::Twilight, boss + " banner pattern is TWILIGHT");
+    }
+    ctx.check(ex::rarityOf("twilightforest:fiery_block") == ex::Rarity::Uncommon, "the fiery block is UNCOMMON");
     auto rare = b::trophySound("twilightforest:alpha_yeti_trophy", 0.001f);
     ctx.check(rare && rare->event == "entity.twilightforest.alpha_yeti.roar", "the alpha yeti roars once in 50");
     // TrophyBlock#getStateForPlacement: floor(yaw * 16 / 360 + 0.5) & 15
@@ -297,22 +350,28 @@ GF_REGISTER_SELFTEST("building.trophy_powered", [](Context& ctx) -> ll::coro::Co
     ctx.require(ctx.setBlock(t, "twilightforest:hydra_trophy", {{"twilightforest:rotation", 4}}), "a hydra trophy");
     co_await ctx.ticks(3);
     ctx.check(st(ctx, t, "powered") == "false", "unpowered at first");
-    // the sound plays on the rising edge: count the trophy sounds through the click handler's log line
+    // the sound plays on the rising edge only (AbstractTrophyBlock#neighborChanged)
+    auto sounds = b::trophySoundsPlayed();
     ctx.require(ctx.setBlock(source, "minecraft:redstone_block"), "a redstone block beside it");
     co_await ctx.ticks(6);
     ctx.check(st(ctx, t, "powered") == "true", "a neighbour signal powers the trophy (" + st(ctx, t, "powered") + ")");
+    ctx.check(b::trophySoundsPlayed() == sounds + 1, "the rising edge plays the hydra's sound once (" + std::to_string(b::trophySoundsPlayed() - sounds) + ")");
+    sounds = b::trophySoundsPlayed();
     ctx.require(ctx.setBlock(source, "minecraft:air"), "signal gone");
     co_await ctx.ticks(6);
     ctx.check(st(ctx, t, "powered") == "false", "and it follows the signal off (" + st(ctx, t, "powered") + ")");
+    ctx.check(b::trophySoundsPlayed() == sounds, "the falling edge is silent");
     // a click plays the sound and the particles (any hand)
     stand(ctx, t, static_cast<int>(Facing::South), "");
     co_await ctx.ticks(kClickGap);
     bool consumed = false;
     auto id       = ia::onUseOn({.block = "twilightforest:hydra_trophy"}, [&](ia::UseOnContext const&) { consumed = true; return ia::Result::Pass; }, ia::priority::Highest + 1000);
+    sounds        = b::trophySoundsPlayed();
     useOn(ctx, t, Facing::South, Vec3{0.5f, 0.25f, 0.75f});
     ia::remove(id);
     co_await ctx.ticks(1);
     ctx.check(consumed && ctx.blockAt(t) == "twilightforest:hydra_trophy", "the click reaches the trophy and it stays");
+    ctx.check(b::trophySoundsPlayed() == sounds + 1, "the click plays the sound");
 });
 
 GF_REGISTER_SELFTEST("building.trophy_dispense", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -448,6 +507,21 @@ GF_REGISTER_SELFTEST("building.storage_blocks", [](Context& ctx) -> ll::coro::Co
     ctx.info("on the fiery block: on ground " + std::to_string(sim(ctx).isOnGround()) + ", y " + std::to_string(sim(ctx).getPosition().y));
     float after = sim(ctx).getHealth();
     ctx.check(after < before, "the fiery block hurts the player stepping on it (" + std::to_string(before) + " -> " + std::to_string(after) + ")");
+    // a fire source: fire on top that goes out by itself is lit again
+    {
+        auto source = at(p, 6, 1, 0), flame = at(p, 6, 2, 0);
+        ctx.require(ctx.setBlock(source, "twilightforest:fiery_block"), "a second fiery block");
+        ctx.require(ctx.setBlock(flame, "minecraft:fire"), "fire on it");
+        co_await ctx.ticks(2);
+        ctx.setBlock(flame, "minecraft:air"); // as FireBlock#tick removes it
+        co_await ctx.ticks(3);
+        ctx.check(ctx.blockAt(flame) == "minecraft:fire", "fire on a fiery block burns forever (" + ctx.blockAt(flame) + ")");
+        ctx.setBlock(source, "minecraft:air");
+        co_await ctx.ticks(1);
+        ctx.setBlock(flame, "minecraft:air");
+        co_await ctx.ticks(2);
+        ctx.check(ctx.blockAt(flame) == "minecraft:air", "without the fiery block it stays out");
+    }
     // knightmetal: standing in its spiky shape hurts (4 knightmetal damage)
     auto km = at(p, 0, 1, 0);
     ctx.require(ctx.setBlock(km, "twilightforest:knightmetal_block"), "a knightmetal block");
@@ -474,19 +548,35 @@ GF_REGISTER_SELFTEST("building.recipes", [](Context& ctx) {
         ctx.check(!list.empty(), std::string("a recipe makes the ") + boss + " banner pattern");
     }
     ctx.check(gf::recipes::producing("twilightforest:quest_ram_banner_pattern").empty(), "the questing ram pattern has no recipe (TF 4.8)");
-    auto has = [&](char const* output, char const* input) {
-        for (auto const* r : gf::recipes::producing(std::string("twilightforest:") + output)) {
+});
+
+GF_REGISTER_SELFTEST("building.stonecutting", [](Context& ctx) {
+    // every stonecutting recipe of the unit (Appendix A): input -> output x count
+    struct Cut {
+        char const* input;
+        char const* output;
+        int         count;
+    };
+    static Cut const cuts[]{
+#include "feature/building/StonecutTable.inc"
+    };
+    auto has = [&](Cut const& c) {
+        for (auto const* r : gf::recipes::producing(c.output)) {
             if (r->type.find("stonecutting") == std::string::npos && r->type.find("stonecutter") == std::string::npos) continue;
+            if (r->resultCount != c.count) continue;
             for (auto const& ing : r->ingredients)
                 for (auto const& it : ing.items)
-                    if (it == std::string("twilightforest:") + input) return true;
+                    if (it == c.input) return true;
         }
         return false;
     };
-    ctx.check(has("castle_brick_stairs", "castle_brick"), "castle brick -> castle brick stairs (stonecutter)");
-    ctx.check(has("mazestone_brick", "mazestone"), "mazestone -> mazestone brick (stonecutter)");
-    ctx.check(has("nagastone_stairs_left", "etched_nagastone"), "etched nagastone -> nagastone stairs (stonecutter)");
-    ctx.check(has("thick_castle_brick", "castle_brick"), "castle brick -> thick castle brick (stonecutter)");
+    int found = 0;
+    for (auto const& c : cuts) {
+        bool ok = has(c);
+        ok ? ++found : 0;
+        if (!ok) ctx.check(false, std::string("stonecutter: ") + c.input + " -> " + c.output + " x" + std::to_string(c.count));
+    }
+    ctx.check(found == static_cast<int>(std::size(cuts)), "stonecutting recipes: " + std::to_string(found) + " of " + std::to_string(std::size(cuts)));
 });
 
 } // namespace

@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.twilightforest.building.hydra_trophy",
+        "identifier": "geometry.twilightforest.building.hydra_trophy_r0",
         "texture_width": 512,
         "texture_height": 256,
         "visible_bounds_width": 3,
@@ -16,7 +16,7 @@
       },
       "bones": [
         {
-          "name": "trophy_r0",
+          "name": "hydra_trophy_0",
           "pivot": [
             0,
             0,
@@ -29,27 +29,13 @@
           ]
         },
         {
-          "name": "hydra_trophy_0_r0",
-          "pivot": [
-            0,
-            0,
-            0
-          ],
-          "parent": "trophy_r0",
-          "rotation": [
-            0,
-            180,
-            0
-          ]
-        },
-        {
-          "name": "head_0_r0",
+          "name": "head_0",
           "pivot": [
             0,
             4,
             0
           ],
-          "parent": "hydra_trophy_0_r0",
+          "parent": "hydra_trophy_0",
           "cubes": [
             {
               "origin": [
@@ -720,13 +706,13 @@
           ]
         },
         {
-          "name": "jaw_0_r0",
+          "name": "jaw_0",
           "pivot": [
             0,
             1.5,
             -2.5
           ],
-          "parent": "head_0_r0",
+          "parent": "head_0",
           "cubes": [
             {
               "origin": [
@@ -1175,13 +1161,13 @@
           ]
         },
         {
-          "name": "frill_0_r0",
+          "name": "frill_0",
           "pivot": [
             0,
             4,
             -3.5
           ],
-          "parent": "head_0_r0",
+          "parent": "head_0",
           "rotation": [
             -30,
             0,
@@ -1263,9 +1249,25 @@
               }
             }
           ]
-        },
+        }
+      ]
+    },
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.building.hydra_trophy_r1",
+        "texture_width": 512,
+        "texture_height": 256,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3,
+        "visible_bounds_offset": [
+          0,
+          0.75,
+          0
+        ]
+      },
+      "bones": [
         {
-          "name": "trophy_r1",
+          "name": "hydra_trophy_0",
           "pivot": [
             0,
             0,
@@ -1278,27 +1280,13 @@
           ]
         },
         {
-          "name": "hydra_trophy_0_r1",
-          "pivot": [
-            0,
-            0,
-            0
-          ],
-          "parent": "trophy_r1",
-          "rotation": [
-            0,
-            180,
-            0
-          ]
-        },
-        {
-          "name": "head_0_r1",
+          "name": "head_0",
           "pivot": [
             0,
             4,
             0
           ],
-          "parent": "hydra_trophy_0_r1",
+          "parent": "hydra_trophy_0",
           "cubes": [
             {
               "origin": [
@@ -1969,13 +1957,13 @@
           ]
         },
         {
-          "name": "jaw_0_r1",
+          "name": "jaw_0",
           "pivot": [
             0,
             1.5,
             -2.5
           ],
-          "parent": "head_0_r1",
+          "parent": "head_0",
           "cubes": [
             {
               "origin": [
@@ -2424,13 +2412,13 @@
           ]
         },
         {
-          "name": "frill_0_r1",
+          "name": "frill_0",
           "pivot": [
             0,
             4,
             -3.5
           ],
-          "parent": "head_0_r1",
+          "parent": "head_0",
           "rotation": [
             -30,
             0,
@@ -2512,9 +2500,25 @@
               }
             }
           ]
-        },
+        }
+      ]
+    },
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.building.hydra_trophy_r2",
+        "texture_width": 512,
+        "texture_height": 256,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3,
+        "visible_bounds_offset": [
+          0,
+          0.75,
+          0
+        ]
+      },
+      "bones": [
         {
-          "name": "trophy_r2",
+          "name": "hydra_trophy_0",
           "pivot": [
             0,
             0,
@@ -2527,27 +2531,13 @@
           ]
         },
         {
-          "name": "hydra_trophy_0_r2",
-          "pivot": [
-            0,
-            0,
-            0
-          ],
-          "parent": "trophy_r2",
-          "rotation": [
-            0,
-            180,
-            0
-          ]
-        },
-        {
-          "name": "head_0_r2",
+          "name": "head_0",
           "pivot": [
             0,
             4,
             0
           ],
-          "parent": "hydra_trophy_0_r2",
+          "parent": "hydra_trophy_0",
           "cubes": [
             {
               "origin": [
@@ -3218,13 +3208,13 @@
           ]
         },
         {
-          "name": "jaw_0_r2",
+          "name": "jaw_0",
           "pivot": [
             0,
             1.5,
             -2.5
           ],
-          "parent": "head_0_r2",
+          "parent": "head_0",
           "cubes": [
             {
               "origin": [
@@ -3673,13 +3663,13 @@
           ]
         },
         {
-          "name": "frill_0_r2",
+          "name": "frill_0",
           "pivot": [
             0,
             4,
             -3.5
           ],
-          "parent": "head_0_r2",
+          "parent": "head_0",
           "rotation": [
             -30,
             0,
@@ -3761,9 +3751,25 @@
               }
             }
           ]
-        },
+        }
+      ]
+    },
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.building.hydra_trophy_r3",
+        "texture_width": 512,
+        "texture_height": 256,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3,
+        "visible_bounds_offset": [
+          0,
+          0.75,
+          0
+        ]
+      },
+      "bones": [
         {
-          "name": "trophy_r3",
+          "name": "hydra_trophy_0",
           "pivot": [
             0,
             0,
@@ -3776,27 +3782,13 @@
           ]
         },
         {
-          "name": "hydra_trophy_0_r3",
-          "pivot": [
-            0,
-            0,
-            0
-          ],
-          "parent": "trophy_r3",
-          "rotation": [
-            0,
-            180,
-            0
-          ]
-        },
-        {
-          "name": "head_0_r3",
+          "name": "head_0",
           "pivot": [
             0,
             4,
             0
           ],
-          "parent": "hydra_trophy_0_r3",
+          "parent": "hydra_trophy_0",
           "cubes": [
             {
               "origin": [
@@ -4467,13 +4459,13 @@
           ]
         },
         {
-          "name": "jaw_0_r3",
+          "name": "jaw_0",
           "pivot": [
             0,
             1.5,
             -2.5
           ],
-          "parent": "head_0_r3",
+          "parent": "head_0",
           "cubes": [
             {
               "origin": [
@@ -4922,13 +4914,13 @@
           ]
         },
         {
-          "name": "frill_0_r3",
+          "name": "frill_0",
           "pivot": [
             0,
             4,
             -3.5
           ],
-          "parent": "head_0_r3",
+          "parent": "head_0",
           "rotation": [
             -30,
             0,

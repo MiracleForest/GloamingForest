@@ -18,6 +18,7 @@
 #include "feature/building/Building.h"
 
 #include <cmath>
+#include <set>
 
 #include "mc/deps/shared_types/legacy/actor/ArmorSlot.h"
 #include "mc/world/actor/Actor.h"
@@ -28,6 +29,8 @@
 #include "mc/world/level/block/Block.h"
 
 #include "feature/combat/Combat.h"
+#include "feature/common/Interactions.h"
+#include "feature/ext/item/Item.h"
 #include "feature/families/BlockEvents.h"
 #include "feature/item/Item.h"
 #include "game/Blocks.h"
@@ -44,13 +47,25 @@ constexpr char const* kArcticFur   = "twilightforest:arctic_fur_block";
 
 bool gInstalled = false;
 
+/// Fire seen above a fiery block, and fire a player put out this tick.
+std::set<core::GlobalPos>& burning() {
+    static std::set<core::GlobalPos> s;
+    return s;
+}
+std::set<core::GlobalPos>& putOut() {
+    static std::set<core::GlobalPos> s;
+    return s;
+}
+
 std::string gray(std::string text) { return std::string("\xC2\xA7") + "7" + text; }
 
 } // namespace
 
 float arcticFurFallDamage(float amount) {
-    // LivingEntity#causeFallDamage(fallDistance, 0.1): Mth.ceil((fallDistance - 3) * 0.1); Bedrock's
-    // fall damage is the (fallDistance - 3) part already
+    // LivingEntity#causeFallDamage(fallDistance, 0.1): Mth.ceil((fallDistance - 3 - jump boost) * 0.1).
+    // combat::onIncoming runs before armour, enchantments (Feather Falling) and resistance apply
+    // (Combat.h), where Bedrock's amount is ceil(fallDistance - 3 - jump boost); and
+    // ceil(ceil(x) / 10) == ceil(x / 10), so this is Java's value, reduced later as Java reduces it
     if (amount <= 0) return 0;
     return std::ceil(amount * kArcticFurFallMultiplier - 1e-4f);
 }
@@ -64,6 +79,9 @@ bool fieryHurts(Actor& entity) {
 void installStorage() {
     if (gInstalled) return;
     gInstalled = true;
+    // TFBlocks: the fiery block's item is rarity UNCOMMON (and fireResistant: its BP item's
+    // minecraft:fire_resistant); the client mod colours its name
+    item::ext::setRarity(kFiery, item::ext::Rarity::Uncommon);
     blockevents::onEntityInside(kKnightmetal, [](BlockSource&, BlockPos const&, Actor& entity) {
         // entity.hurt(KNIGHTMETAL, BLOCK_DAMAGE)
         combat::hurt(entity, kKnightmetalDamage, "twilightforest:knightmetal");
@@ -71,6 +89,40 @@ void installStorage() {
     blockevents::onSteppedOn(kFiery, [](BlockSource&, BlockPos const&, Actor& entity) {
         if (fieryHurts(entity)) combat::hurt(entity, kFieryDamage, "twilightforest:fiery");
     });
+    // FieryBlock#isFireSource (Direction.UP): fire on top burns forever, FireBlock#tick never puts it
+    // out (age, rain). Bedrock's fire knows only its own infiniburn blocks: fire that goes out on
+    // its own above a fiery block is lit again the next tick; a player putting it out (a hit on
+    // the fire or on the face under it) is not undone.
+    blockevents::onNeighborChanged(kFiery, [](BlockSource& region, BlockPos const& pos, BlockPos const& neighbor) {
+        BlockPos above{pos.x, pos.y + 1, pos.z};
+        if (!(neighbor == above)) return;
+        auto gp = game::globalPos(region, above);
+        auto id = idAt(region, above);
+        if (id == "minecraft:fire") {
+            burning().insert(gp);
+            return;
+        }
+        if (!burning().erase(gp) || id != "minecraft:air" || putOut().erase(gp)) return;
+        interactions::nextTick([gp] {
+            auto* r = game::regionOf(gp.dim);
+            if (!r) return;
+            BlockPos at{gp.x, gp.y, gp.z};
+            if (idAt(*r, at) != "minecraft:air" || idAt(*r, BlockPos{gp.x, gp.y - 1, gp.z}) != kFiery) return;
+            setBlock(*r, at, "minecraft:fire");
+        });
+    });
+    for (char const* target : {"minecraft:fire", kFiery}) {
+        interactions::onStartDestroy({.block = target}, [](interactions::DestroyContext const& c) {
+            auto p = c.pos;
+            if (c.blockId == kFiery) {
+                if (c.face != Up) return interactions::Result::Pass;
+                p.y += 1;
+            }
+            putOut().insert(p);
+            interactions::nextTick([p] { putOut().erase(p); });
+            return interactions::Result::Pass;
+        });
+    }
     combat::onIncoming(combat::priority::Normal, [](combat::DamageInfo& d) {
         if (d.type != "minecraft:fall") return combat::Verdict::Pass;
         auto& region = d.victim.getDimensionBlockSource();

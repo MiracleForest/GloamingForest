@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.twilightforest.building.lich_trophy",
+        "identifier": "geometry.twilightforest.building.lich_trophy_r0",
         "texture_width": 64,
         "texture_height": 64,
         "visible_bounds_width": 3,
@@ -16,7 +16,7 @@
       },
       "bones": [
         {
-          "name": "trophy_r0",
+          "name": "lich_trophy_0",
           "pivot": [
             0,
             0,
@@ -29,27 +29,13 @@
           ]
         },
         {
-          "name": "lich_trophy_0_r0",
+          "name": "head_0",
           "pivot": [
             0,
             0,
             0
           ],
-          "parent": "trophy_r0",
-          "rotation": [
-            0,
-            180,
-            0
-          ]
-        },
-        {
-          "name": "head_0_r0",
-          "pivot": [
-            0,
-            0,
-            0
-          ],
-          "parent": "lich_trophy_0_r0",
+          "parent": "lich_trophy_0",
           "cubes": [
             {
               "origin": [
@@ -128,13 +114,13 @@
           ]
         },
         {
-          "name": "hat_0_r0",
+          "name": "hat_0",
           "pivot": [
             0,
             0,
             0
           ],
-          "parent": "head_0_r0",
+          "parent": "head_0",
           "cubes": [
             {
               "origin": [
@@ -211,9 +197,25 @@
               }
             }
           ]
-        },
+        }
+      ]
+    },
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.building.lich_trophy_r1",
+        "texture_width": 64,
+        "texture_height": 64,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3,
+        "visible_bounds_offset": [
+          0,
+          0.75,
+          0
+        ]
+      },
+      "bones": [
         {
-          "name": "trophy_r1",
+          "name": "lich_trophy_0",
           "pivot": [
             0,
             0,
@@ -226,27 +228,13 @@
           ]
         },
         {
-          "name": "lich_trophy_0_r1",
+          "name": "head_0",
           "pivot": [
             0,
             0,
             0
           ],
-          "parent": "trophy_r1",
-          "rotation": [
-            0,
-            180,
-            0
-          ]
-        },
-        {
-          "name": "head_0_r1",
-          "pivot": [
-            0,
-            0,
-            0
-          ],
-          "parent": "lich_trophy_0_r1",
+          "parent": "lich_trophy_0",
           "cubes": [
             {
               "origin": [
@@ -325,13 +313,13 @@
           ]
         },
         {
-          "name": "hat_0_r1",
+          "name": "hat_0",
           "pivot": [
             0,
             0,
             0
           ],
-          "parent": "head_0_r1",
+          "parent": "head_0",
           "cubes": [
             {
               "origin": [
@@ -408,9 +396,25 @@
               }
             }
           ]
-        },
+        }
+      ]
+    },
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.building.lich_trophy_r2",
+        "texture_width": 64,
+        "texture_height": 64,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3,
+        "visible_bounds_offset": [
+          0,
+          0.75,
+          0
+        ]
+      },
+      "bones": [
         {
-          "name": "trophy_r2",
+          "name": "lich_trophy_0",
           "pivot": [
             0,
             0,
@@ -423,27 +427,13 @@
           ]
         },
         {
-          "name": "lich_trophy_0_r2",
+          "name": "head_0",
           "pivot": [
             0,
             0,
             0
           ],
-          "parent": "trophy_r2",
-          "rotation": [
-            0,
-            180,
-            0
-          ]
-        },
-        {
-          "name": "head_0_r2",
-          "pivot": [
-            0,
-            0,
-            0
-          ],
-          "parent": "lich_trophy_0_r2",
+          "parent": "lich_trophy_0",
           "cubes": [
             {
               "origin": [
@@ -522,13 +512,13 @@
           ]
         },
         {
-          "name": "hat_0_r2",
+          "name": "hat_0",
           "pivot": [
             0,
             0,
             0
           ],
-          "parent": "head_0_r2",
+          "parent": "head_0",
           "cubes": [
             {
               "origin": [
@@ -605,9 +595,25 @@
               }
             }
           ]
-        },
+        }
+      ]
+    },
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.building.lich_trophy_r3",
+        "texture_width": 64,
+        "texture_height": 64,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3,
+        "visible_bounds_offset": [
+          0,
+          0.75,
+          0
+        ]
+      },
+      "bones": [
         {
-          "name": "trophy_r3",
+          "name": "lich_trophy_0",
           "pivot": [
             0,
             0,
@@ -620,27 +626,13 @@
           ]
         },
         {
-          "name": "lich_trophy_0_r3",
+          "name": "head_0",
           "pivot": [
             0,
             0,
             0
           ],
-          "parent": "trophy_r3",
-          "rotation": [
-            0,
-            180,
-            0
-          ]
-        },
-        {
-          "name": "head_0_r3",
-          "pivot": [
-            0,
-            0,
-            0
-          ],
-          "parent": "lich_trophy_0_r3",
+          "parent": "lich_trophy_0",
           "cubes": [
             {
               "origin": [
@@ -719,13 +711,13 @@
           ]
         },
         {
-          "name": "hat_0_r3",
+          "name": "hat_0",
           "pivot": [
             0,
             0,
             0
           ],
-          "parent": "head_0_r3",
+          "parent": "head_0",
           "cubes": [
             {
               "origin": [

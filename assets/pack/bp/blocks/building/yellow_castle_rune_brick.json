@@ -53,8 +53,7 @@
           "texture": "tf_building_rune_yellow",
           "render_method": "alpha_test"
         }
-      },
-      "minecraft:light_dampening": 0
+      }
     }
   }
 }

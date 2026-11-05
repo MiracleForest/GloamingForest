@@ -223,7 +223,8 @@ ia::Result extendRope(ia::UseOnContext const& c) {
             continue;
         }
         if (!putRope(*region, m, dir)) return ia::Result::Deny;
-        fx::sound(region->getDimension(), "block.wool.place", Vec3{m.x + .5f, m.y + .5f, m.z + .5f}, 1.0f, 0.8f);
+        // SoundEvents.WOOL_PLACE (volume 1, pitch 0.8): Bedrock's wool place sound is "use.cloth"
+        fx::sound(region->getDimension(), "use.cloth", Vec3{m.x + .5f, m.y + .5f, m.z + .5f}, 1.0f, 0.8f);
         if (!c.player.isCreative()) {
             auto& held = ia::mutableItem(c.item);
             held.remove(1);

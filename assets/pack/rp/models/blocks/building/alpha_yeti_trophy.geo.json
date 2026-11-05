@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.twilightforest.building.alpha_yeti_trophy",
+        "identifier": "geometry.twilightforest.building.alpha_yeti_trophy_r0",
         "texture_width": 256,
         "texture_height": 128,
         "visible_bounds_width": 3,
@@ -16,7 +16,7 @@
       },
       "bones": [
         {
-          "name": "trophy_r0",
+          "name": "alpha_yeti_trophy_0",
           "pivot": [
             0,
             0,
@@ -29,27 +29,13 @@
           ]
         },
         {
-          "name": "alpha_yeti_trophy_0_r0",
-          "pivot": [
-            0,
-            0,
-            0
-          ],
-          "parent": "trophy_r0",
-          "rotation": [
-            0,
-            180,
-            0
-          ]
-        },
-        {
-          "name": "head_0_r0",
+          "name": "head_0",
           "pivot": [
             0,
             6,
             0
           ],
-          "parent": "alpha_yeti_trophy_0_r0",
+          "parent": "alpha_yeti_trophy_0",
           "cubes": [
             {
               "origin": [
@@ -350,13 +336,13 @@
           ]
         },
         {
-          "name": "left_horn_1_0_r0",
+          "name": "left_horn_1_0",
           "pivot": [
             -4.8,
             9.2,
             -1.6
           ],
-          "parent": "head_0_r0",
+          "parent": "head_0",
           "rotation": [
             0,
             -30,
@@ -440,13 +426,13 @@
           ]
         },
         {
-          "name": "left_horn_1_top_0_r0",
+          "name": "left_horn_1_top_0",
           "pivot": [
             -6.4,
             9.2,
             -1.6
           ],
-          "parent": "left_horn_1_0_r0",
+          "parent": "left_horn_1_0",
           "rotation": [
             0,
             -20,
@@ -530,13 +516,13 @@
           ]
         },
         {
-          "name": "right_horn_1_0_r0",
+          "name": "right_horn_1_0",
           "pivot": [
             4.8,
             9.2,
             0
           ],
-          "parent": "head_0_r0",
+          "parent": "head_0",
           "rotation": [
             0,
             30,
@@ -620,13 +606,13 @@
           ]
         },
         {
-          "name": "right_horn_1_top_0_r0",
+          "name": "right_horn_1_top_0",
           "pivot": [
             6.4,
             9.2,
             0
           ],
-          "parent": "right_horn_1_0_r0",
+          "parent": "right_horn_1_0",
           "rotation": [
             0,
             20,
@@ -710,13 +696,13 @@
           ]
         },
         {
-          "name": "left_horn_2_0_r0",
+          "name": "left_horn_2_0",
           "pivot": [
             -4.8,
             6.8,
             -1.6
           ],
-          "parent": "head_0_r0",
+          "parent": "head_0",
           "rotation": [
             0,
             -30,
@@ -800,13 +786,13 @@
           ]
         },
         {
-          "name": "left_horn_2_top_0_r0",
+          "name": "left_horn_2_top_0",
           "pivot": [
             -6.4,
             6.8,
             -1.6
           ],
-          "parent": "left_horn_2_0_r0",
+          "parent": "left_horn_2_0",
           "rotation": [
             0,
             -20,
@@ -890,13 +876,13 @@
           ]
         },
         {
-          "name": "right_horn_2_0_r0",
+          "name": "right_horn_2_0",
           "pivot": [
             4.8,
             6.8,
             0
           ],
-          "parent": "head_0_r0",
+          "parent": "head_0",
           "rotation": [
             0,
             30,
@@ -980,13 +966,13 @@
           ]
         },
         {
-          "name": "right_horn_2_top_0_r0",
+          "name": "right_horn_2_top_0",
           "pivot": [
             6.4,
             6.8,
             0
           ],
-          "parent": "right_horn_2_0_r0",
+          "parent": "right_horn_2_0",
           "rotation": [
             0,
             20,
@@ -1070,13 +1056,13 @@
           ]
         },
         {
-          "name": "left_horn_3_0_r0",
+          "name": "left_horn_3_0",
           "pivot": [
             -4.8,
             4.8,
             -1.6
           ],
-          "parent": "head_0_r0",
+          "parent": "head_0",
           "rotation": [
             0,
             -30,
@@ -1160,13 +1146,13 @@
           ]
         },
         {
-          "name": "left_horn_3_top_0_r0",
+          "name": "left_horn_3_top_0",
           "pivot": [
             -6.4,
             4.8,
             -1.6
           ],
-          "parent": "left_horn_3_0_r0",
+          "parent": "left_horn_3_0",
           "rotation": [
             0,
             -20,
@@ -1250,13 +1236,13 @@
           ]
         },
         {
-          "name": "right_horn_3_0_r0",
+          "name": "right_horn_3_0",
           "pivot": [
             4.8,
             4.8,
             0
           ],
-          "parent": "head_0_r0",
+          "parent": "head_0",
           "rotation": [
             0,
             30,
@@ -1340,13 +1326,13 @@
           ]
         },
         {
-          "name": "right_horn_3_top_0_r0",
+          "name": "right_horn_3_top_0",
           "pivot": [
             6.4,
             4.8,
             0
           ],
-          "parent": "right_horn_3_0_r0",
+          "parent": "right_horn_3_0",
           "rotation": [
             0,
             20,
@@ -1428,9 +1414,25 @@
               }
             }
           ]
-        },
+        }
+      ]
+    },
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.building.alpha_yeti_trophy_r1",
+        "texture_width": 256,
+        "texture_height": 128,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3,
+        "visible_bounds_offset": [
+          0,
+          0.75,
+          0
+        ]
+      },
+      "bones": [
         {
-          "name": "trophy_r1",
+          "name": "alpha_yeti_trophy_0",
           "pivot": [
             0,
             0,
@@ -1443,27 +1445,13 @@
           ]
         },
         {
-          "name": "alpha_yeti_trophy_0_r1",
-          "pivot": [
-            0,
-            0,
-            0
-          ],
-          "parent": "trophy_r1",
-          "rotation": [
-            0,
-            180,
-            0
-          ]
-        },
-        {
-          "name": "head_0_r1",
+          "name": "head_0",
           "pivot": [
             0,
             6,
             0
           ],
-          "parent": "alpha_yeti_trophy_0_r1",
+          "parent": "alpha_yeti_trophy_0",
           "cubes": [
             {
               "origin": [
@@ -1764,13 +1752,13 @@
           ]
         },
         {
-          "name": "left_horn_1_0_r1",
+          "name": "left_horn_1_0",
           "pivot": [
             -4.8,
             9.2,
             -1.6
           ],
-          "parent": "head_0_r1",
+          "parent": "head_0",
           "rotation": [
             0,
             -30,
@@ -1854,13 +1842,13 @@
           ]
         },
         {
-          "name": "left_horn_1_top_0_r1",
+          "name": "left_horn_1_top_0",
           "pivot": [
             -6.4,
             9.2,
             -1.6
           ],
-          "parent": "left_horn_1_0_r1",
+          "parent": "left_horn_1_0",
           "rotation": [
             0,
             -20,
@@ -1944,13 +1932,13 @@
           ]
         },
         {
-          "name": "right_horn_1_0_r1",
+          "name": "right_horn_1_0",
           "pivot": [
             4.8,
             9.2,
             0
           ],
-          "parent": "head_0_r1",
+          "parent": "head_0",
           "rotation": [
             0,
             30,
@@ -2034,13 +2022,13 @@
           ]
         },
         {
-          "name": "right_horn_1_top_0_r1",
+          "name": "right_horn_1_top_0",
           "pivot": [
             6.4,
             9.2,
             0
           ],
-          "parent": "right_horn_1_0_r1",
+          "parent": "right_horn_1_0",
           "rotation": [
             0,
             20,
@@ -2124,13 +2112,13 @@
           ]
         },
         {
-          "name": "left_horn_2_0_r1",
+          "name": "left_horn_2_0",
           "pivot": [
             -4.8,
             6.8,
             -1.6
           ],
-          "parent": "head_0_r1",
+          "parent": "head_0",
           "rotation": [
             0,
             -30,
@@ -2214,13 +2202,13 @@
           ]
         },
         {
-          "name": "left_horn_2_top_0_r1",
+          "name": "left_horn_2_top_0",
           "pivot": [
             -6.4,
             6.8,
             -1.6
           ],
-          "parent": "left_horn_2_0_r1",
+          "parent": "left_horn_2_0",
           "rotation": [
             0,
             -20,
@@ -2304,13 +2292,13 @@
           ]
         },
         {
-          "name": "right_horn_2_0_r1",
+          "name": "right_horn_2_0",
           "pivot": [
             4.8,
             6.8,
             0
           ],
-          "parent": "head_0_r1",
+          "parent": "head_0",
           "rotation": [
             0,
             30,
@@ -2394,13 +2382,13 @@
           ]
         },
         {
-          "name": "right_horn_2_top_0_r1",
+          "name": "right_horn_2_top_0",
           "pivot": [
             6.4,
             6.8,
             0
           ],
-          "parent": "right_horn_2_0_r1",
+          "parent": "right_horn_2_0",
           "rotation": [
             0,
             20,
@@ -2484,13 +2472,13 @@
           ]
         },
         {
-          "name": "left_horn_3_0_r1",
+          "name": "left_horn_3_0",
           "pivot": [
             -4.8,
             4.8,
             -1.6
           ],
-          "parent": "head_0_r1",
+          "parent": "head_0",
           "rotation": [
             0,
             -30,
@@ -2574,13 +2562,13 @@
           ]
         },
         {
-          "name": "left_horn_3_top_0_r1",
+          "name": "left_horn_3_top_0",
           "pivot": [
             -6.4,
             4.8,
             -1.6
           ],
-          "parent": "left_horn_3_0_r1",
+          "parent": "left_horn_3_0",
           "rotation": [
             0,
             -20,
@@ -2664,13 +2652,13 @@
           ]
         },
         {
-          "name": "right_horn_3_0_r1",
+          "name": "right_horn_3_0",
           "pivot": [
             4.8,
             4.8,
             0
           ],
-          "parent": "head_0_r1",
+          "parent": "head_0",
           "rotation": [
             0,
             30,
@@ -2754,13 +2742,13 @@
           ]
         },
         {
-          "name": "right_horn_3_top_0_r1",
+          "name": "right_horn_3_top_0",
           "pivot": [
             6.4,
             4.8,
             0
           ],
-          "parent": "right_horn_3_0_r1",
+          "parent": "right_horn_3_0",
           "rotation": [
             0,
             20,
@@ -2842,9 +2830,25 @@
               }
             }
           ]
-        },
+        }
+      ]
+    },
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.building.alpha_yeti_trophy_r2",
+        "texture_width": 256,
+        "texture_height": 128,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3,
+        "visible_bounds_offset": [
+          0,
+          0.75,
+          0
+        ]
+      },
+      "bones": [
         {
-          "name": "trophy_r2",
+          "name": "alpha_yeti_trophy_0",
           "pivot": [
             0,
             0,
@@ -2857,27 +2861,13 @@
           ]
         },
         {
-          "name": "alpha_yeti_trophy_0_r2",
-          "pivot": [
-            0,
-            0,
-            0
-          ],
-          "parent": "trophy_r2",
-          "rotation": [
-            0,
-            180,
-            0
-          ]
-        },
-        {
-          "name": "head_0_r2",
+          "name": "head_0",
           "pivot": [
             0,
             6,
             0
           ],
-          "parent": "alpha_yeti_trophy_0_r2",
+          "parent": "alpha_yeti_trophy_0",
           "cubes": [
             {
               "origin": [
@@ -3178,13 +3168,13 @@
           ]
         },
         {
-          "name": "left_horn_1_0_r2",
+          "name": "left_horn_1_0",
           "pivot": [
             -4.8,
             9.2,
             -1.6
           ],
-          "parent": "head_0_r2",
+          "parent": "head_0",
           "rotation": [
             0,
             -30,
@@ -3268,13 +3258,13 @@
           ]
         },
         {
-          "name": "left_horn_1_top_0_r2",
+          "name": "left_horn_1_top_0",
           "pivot": [
             -6.4,
             9.2,
             -1.6
           ],
-          "parent": "left_horn_1_0_r2",
+          "parent": "left_horn_1_0",
           "rotation": [
             0,
             -20,
@@ -3358,13 +3348,13 @@
           ]
         },
         {
-          "name": "right_horn_1_0_r2",
+          "name": "right_horn_1_0",
           "pivot": [
             4.8,
             9.2,
             0
           ],
-          "parent": "head_0_r2",
+          "parent": "head_0",
           "rotation": [
             0,
             30,
@@ -3448,13 +3438,13 @@
           ]
         },
         {
-          "name": "right_horn_1_top_0_r2",
+          "name": "right_horn_1_top_0",
           "pivot": [
             6.4,
             9.2,
             0
           ],
-          "parent": "right_horn_1_0_r2",
+          "parent": "right_horn_1_0",
           "rotation": [
             0,
             20,
@@ -3538,13 +3528,13 @@
           ]
         },
         {
-          "name": "left_horn_2_0_r2",
+          "name": "left_horn_2_0",
           "pivot": [
             -4.8,
             6.8,
             -1.6
           ],
-          "parent": "head_0_r2",
+          "parent": "head_0",
           "rotation": [
             0,
             -30,
@@ -3628,13 +3618,13 @@
           ]
         },
         {
-          "name": "left_horn_2_top_0_r2",
+          "name": "left_horn_2_top_0",
           "pivot": [
             -6.4,
             6.8,
             -1.6
           ],
-          "parent": "left_horn_2_0_r2",
+          "parent": "left_horn_2_0",
           "rotation": [
             0,
             -20,
@@ -3718,13 +3708,13 @@
           ]
         },
         {
-          "name": "right_horn_2_0_r2",
+          "name": "right_horn_2_0",
           "pivot": [
             4.8,
             6.8,
             0
           ],
-          "parent": "head_0_r2",
+          "parent": "head_0",
           "rotation": [
             0,
             30,
@@ -3808,13 +3798,13 @@
           ]
         },
         {
-          "name": "right_horn_2_top_0_r2",
+          "name": "right_horn_2_top_0",
           "pivot": [
             6.4,
             6.8,
             0
           ],
-          "parent": "right_horn_2_0_r2",
+          "parent": "right_horn_2_0",
           "rotation": [
             0,
             20,
@@ -3898,13 +3888,13 @@
           ]
         },
         {
-          "name": "left_horn_3_0_r2",
+          "name": "left_horn_3_0",
           "pivot": [
             -4.8,
             4.8,
             -1.6
           ],
-          "parent": "head_0_r2",
+          "parent": "head_0",
           "rotation": [
             0,
             -30,
@@ -3988,13 +3978,13 @@
           ]
         },
         {
-          "name": "left_horn_3_top_0_r2",
+          "name": "left_horn_3_top_0",
           "pivot": [
             -6.4,
             4.8,
             -1.6
           ],
-          "parent": "left_horn_3_0_r2",
+          "parent": "left_horn_3_0",
           "rotation": [
             0,
             -20,
@@ -4078,13 +4068,13 @@
           ]
         },
         {
-          "name": "right_horn_3_0_r2",
+          "name": "right_horn_3_0",
           "pivot": [
             4.8,
             4.8,
             0
           ],
-          "parent": "head_0_r2",
+          "parent": "head_0",
           "rotation": [
             0,
             30,
@@ -4168,13 +4158,13 @@
           ]
         },
         {
-          "name": "right_horn_3_top_0_r2",
+          "name": "right_horn_3_top_0",
           "pivot": [
             6.4,
             4.8,
             0
           ],
-          "parent": "right_horn_3_0_r2",
+          "parent": "right_horn_3_0",
           "rotation": [
             0,
             20,
@@ -4256,9 +4246,25 @@
               }
             }
           ]
-        },
+        }
+      ]
+    },
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.building.alpha_yeti_trophy_r3",
+        "texture_width": 256,
+        "texture_height": 128,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3,
+        "visible_bounds_offset": [
+          0,
+          0.75,
+          0
+        ]
+      },
+      "bones": [
         {
-          "name": "trophy_r3",
+          "name": "alpha_yeti_trophy_0",
           "pivot": [
             0,
             0,
@@ -4271,27 +4277,13 @@
           ]
         },
         {
-          "name": "alpha_yeti_trophy_0_r3",
-          "pivot": [
-            0,
-            0,
-            0
-          ],
-          "parent": "trophy_r3",
-          "rotation": [
-            0,
-            180,
-            0
-          ]
-        },
-        {
-          "name": "head_0_r3",
+          "name": "head_0",
           "pivot": [
             0,
             6,
             0
           ],
-          "parent": "alpha_yeti_trophy_0_r3",
+          "parent": "alpha_yeti_trophy_0",
           "cubes": [
             {
               "origin": [
@@ -4592,13 +4584,13 @@
           ]
         },
         {
-          "name": "left_horn_1_0_r3",
+          "name": "left_horn_1_0",
           "pivot": [
             -4.8,
             9.2,
             -1.6
           ],
-          "parent": "head_0_r3",
+          "parent": "head_0",
           "rotation": [
             0,
             -30,
@@ -4682,13 +4674,13 @@
           ]
         },
         {
-          "name": "left_horn_1_top_0_r3",
+          "name": "left_horn_1_top_0",
           "pivot": [
             -6.4,
             9.2,
             -1.6
           ],
-          "parent": "left_horn_1_0_r3",
+          "parent": "left_horn_1_0",
           "rotation": [
             0,
             -20,
@@ -4772,13 +4764,13 @@
           ]
         },
         {
-          "name": "right_horn_1_0_r3",
+          "name": "right_horn_1_0",
           "pivot": [
             4.8,
             9.2,
             0
           ],
-          "parent": "head_0_r3",
+          "parent": "head_0",
           "rotation": [
             0,
             30,
@@ -4862,13 +4854,13 @@
           ]
         },
         {
-          "name": "right_horn_1_top_0_r3",
+          "name": "right_horn_1_top_0",
           "pivot": [
             6.4,
             9.2,
             0
           ],
-          "parent": "right_horn_1_0_r3",
+          "parent": "right_horn_1_0",
           "rotation": [
             0,
             20,
@@ -4952,13 +4944,13 @@
           ]
         },
         {
-          "name": "left_horn_2_0_r3",
+          "name": "left_horn_2_0",
           "pivot": [
             -4.8,
             6.8,
             -1.6
           ],
-          "parent": "head_0_r3",
+          "parent": "head_0",
           "rotation": [
             0,
             -30,
@@ -5042,13 +5034,13 @@
           ]
         },
         {
-          "name": "left_horn_2_top_0_r3",
+          "name": "left_horn_2_top_0",
           "pivot": [
             -6.4,
             6.8,
             -1.6
           ],
-          "parent": "left_horn_2_0_r3",
+          "parent": "left_horn_2_0",
           "rotation": [
             0,
             -20,
@@ -5132,13 +5124,13 @@
           ]
         },
         {
-          "name": "right_horn_2_0_r3",
+          "name": "right_horn_2_0",
           "pivot": [
             4.8,
             6.8,
             0
           ],
-          "parent": "head_0_r3",
+          "parent": "head_0",
           "rotation": [
             0,
             30,
@@ -5222,13 +5214,13 @@
           ]
         },
         {
-          "name": "right_horn_2_top_0_r3",
+          "name": "right_horn_2_top_0",
           "pivot": [
             6.4,
             6.8,
             0
           ],
-          "parent": "right_horn_2_0_r3",
+          "parent": "right_horn_2_0",
           "rotation": [
             0,
             20,
@@ -5312,13 +5304,13 @@
           ]
         },
         {
-          "name": "left_horn_3_0_r3",
+          "name": "left_horn_3_0",
           "pivot": [
             -4.8,
             4.8,
             -1.6
           ],
-          "parent": "head_0_r3",
+          "parent": "head_0",
           "rotation": [
             0,
             -30,
@@ -5402,13 +5394,13 @@
           ]
         },
         {
-          "name": "left_horn_3_top_0_r3",
+          "name": "left_horn_3_top_0",
           "pivot": [
             -6.4,
             4.8,
             -1.6
           ],
-          "parent": "left_horn_3_0_r3",
+          "parent": "left_horn_3_0",
           "rotation": [
             0,
             -20,
@@ -5492,13 +5484,13 @@
           ]
         },
         {
-          "name": "right_horn_3_0_r3",
+          "name": "right_horn_3_0",
           "pivot": [
             4.8,
             4.8,
             0
           ],
-          "parent": "head_0_r3",
+          "parent": "head_0",
           "rotation": [
             0,
             30,
@@ -5582,13 +5574,13 @@
           ]
         },
         {
-          "name": "right_horn_3_top_0_r3",
+          "name": "right_horn_3_top_0",
           "pivot": [
             6.4,
             4.8,
             0
           ],
-          "parent": "right_horn_3_0_r3",
+          "parent": "right_horn_3_0",
           "rotation": [
             0,
             20,

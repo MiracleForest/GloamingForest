@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.twilightforest.building.minoshroom_trophy",
+        "identifier": "geometry.twilightforest.building.minoshroom_trophy_r0",
         "texture_width": 128,
         "texture_height": 32,
         "visible_bounds_width": 3,
@@ -16,7 +16,7 @@
       },
       "bones": [
         {
-          "name": "trophy_r0",
+          "name": "minoshroom_trophy_0",
           "pivot": [
             0,
             0,
@@ -29,27 +29,13 @@
           ]
         },
         {
-          "name": "minoshroom_trophy_0_r0",
-          "pivot": [
-            0,
-            0,
-            0
-          ],
-          "parent": "trophy_r0",
-          "rotation": [
-            0,
-            180,
-            0
-          ]
-        },
-        {
-          "name": "head_0_r0",
+          "name": "head_0",
           "pivot": [
             0,
             0,
             -0.04
           ],
-          "parent": "minoshroom_trophy_0_r0",
+          "parent": "minoshroom_trophy_0",
           "cubes": [
             {
               "origin": [
@@ -128,13 +114,13 @@
           ]
         },
         {
-          "name": "snout_0_r0",
+          "name": "snout_0",
           "pivot": [
             0,
             2,
             -4.04
           ],
-          "parent": "head_0_r0",
+          "parent": "head_0",
           "cubes": [
             {
               "origin": [
@@ -213,13 +199,13 @@
           ]
         },
         {
-          "name": "right_horn_1_0_r0",
+          "name": "right_horn_1_0",
           "pivot": [
             -2.5,
             6.5,
             -0.04
           ],
-          "parent": "head_0_r0",
+          "parent": "head_0",
           "rotation": [
             0,
             -25,
@@ -303,13 +289,13 @@
           ]
         },
         {
-          "name": "right_horn_2_0_r0",
+          "name": "right_horn_2_0",
           "pivot": [
             -7,
             6.5,
             -0.04
           ],
-          "parent": "right_horn_1_0_r0",
+          "parent": "right_horn_1_0",
           "rotation": [
             0,
             -15,
@@ -393,13 +379,13 @@
           ]
         },
         {
-          "name": "left_horn_1_0_r0",
+          "name": "left_horn_1_0",
           "pivot": [
             2.5,
             6.5,
             -0.04
           ],
-          "parent": "head_0_r0",
+          "parent": "head_0",
           "rotation": [
             0,
             25,
@@ -483,13 +469,13 @@
           ]
         },
         {
-          "name": "left_horn_2_0_r0",
+          "name": "left_horn_2_0",
           "pivot": [
             7,
             6.5,
             -0.04
           ],
-          "parent": "left_horn_1_0_r0",
+          "parent": "left_horn_1_0",
           "rotation": [
             0,
             15,
@@ -571,9 +557,25 @@
               }
             }
           ]
-        },
+        }
+      ]
+    },
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.building.minoshroom_trophy_r1",
+        "texture_width": 128,
+        "texture_height": 32,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3,
+        "visible_bounds_offset": [
+          0,
+          0.75,
+          0
+        ]
+      },
+      "bones": [
         {
-          "name": "trophy_r1",
+          "name": "minoshroom_trophy_0",
           "pivot": [
             0,
             0,
@@ -586,27 +588,13 @@
           ]
         },
         {
-          "name": "minoshroom_trophy_0_r1",
-          "pivot": [
-            0,
-            0,
-            0
-          ],
-          "parent": "trophy_r1",
-          "rotation": [
-            0,
-            180,
-            0
-          ]
-        },
-        {
-          "name": "head_0_r1",
+          "name": "head_0",
           "pivot": [
             0,
             0,
             -0.04
           ],
-          "parent": "minoshroom_trophy_0_r1",
+          "parent": "minoshroom_trophy_0",
           "cubes": [
             {
               "origin": [
@@ -685,13 +673,13 @@
           ]
         },
         {
-          "name": "snout_0_r1",
+          "name": "snout_0",
           "pivot": [
             0,
             2,
             -4.04
           ],
-          "parent": "head_0_r1",
+          "parent": "head_0",
           "cubes": [
             {
               "origin": [
@@ -770,13 +758,13 @@
           ]
         },
         {
-          "name": "right_horn_1_0_r1",
+          "name": "right_horn_1_0",
           "pivot": [
             -2.5,
             6.5,
             -0.04
           ],
-          "parent": "head_0_r1",
+          "parent": "head_0",
           "rotation": [
             0,
             -25,
@@ -860,13 +848,13 @@
           ]
         },
         {
-          "name": "right_horn_2_0_r1",
+          "name": "right_horn_2_0",
           "pivot": [
             -7,
             6.5,
             -0.04
           ],
-          "parent": "right_horn_1_0_r1",
+          "parent": "right_horn_1_0",
           "rotation": [
             0,
             -15,
@@ -950,13 +938,13 @@
           ]
         },
         {
-          "name": "left_horn_1_0_r1",
+          "name": "left_horn_1_0",
           "pivot": [
             2.5,
             6.5,
             -0.04
           ],
-          "parent": "head_0_r1",
+          "parent": "head_0",
           "rotation": [
             0,
             25,
@@ -1040,13 +1028,13 @@
           ]
         },
         {
-          "name": "left_horn_2_0_r1",
+          "name": "left_horn_2_0",
           "pivot": [
             7,
             6.5,
             -0.04
           ],
-          "parent": "left_horn_1_0_r1",
+          "parent": "left_horn_1_0",
           "rotation": [
             0,
             15,
@@ -1128,9 +1116,25 @@
               }
             }
           ]
-        },
+        }
+      ]
+    },
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.building.minoshroom_trophy_r2",
+        "texture_width": 128,
+        "texture_height": 32,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3,
+        "visible_bounds_offset": [
+          0,
+          0.75,
+          0
+        ]
+      },
+      "bones": [
         {
-          "name": "trophy_r2",
+          "name": "minoshroom_trophy_0",
           "pivot": [
             0,
             0,
@@ -1143,27 +1147,13 @@
           ]
         },
         {
-          "name": "minoshroom_trophy_0_r2",
-          "pivot": [
-            0,
-            0,
-            0
-          ],
-          "parent": "trophy_r2",
-          "rotation": [
-            0,
-            180,
-            0
-          ]
-        },
-        {
-          "name": "head_0_r2",
+          "name": "head_0",
           "pivot": [
             0,
             0,
             -0.04
           ],
-          "parent": "minoshroom_trophy_0_r2",
+          "parent": "minoshroom_trophy_0",
           "cubes": [
             {
               "origin": [
@@ -1242,13 +1232,13 @@
           ]
         },
         {
-          "name": "snout_0_r2",
+          "name": "snout_0",
           "pivot": [
             0,
             2,
             -4.04
           ],
-          "parent": "head_0_r2",
+          "parent": "head_0",
           "cubes": [
             {
               "origin": [
@@ -1327,13 +1317,13 @@
           ]
         },
         {
-          "name": "right_horn_1_0_r2",
+          "name": "right_horn_1_0",
           "pivot": [
             -2.5,
             6.5,
             -0.04
           ],
-          "parent": "head_0_r2",
+          "parent": "head_0",
           "rotation": [
             0,
             -25,
@@ -1417,13 +1407,13 @@
           ]
         },
         {
-          "name": "right_horn_2_0_r2",
+          "name": "right_horn_2_0",
           "pivot": [
             -7,
             6.5,
             -0.04
           ],
-          "parent": "right_horn_1_0_r2",
+          "parent": "right_horn_1_0",
           "rotation": [
             0,
             -15,
@@ -1507,13 +1497,13 @@
           ]
         },
         {
-          "name": "left_horn_1_0_r2",
+          "name": "left_horn_1_0",
           "pivot": [
             2.5,
             6.5,
             -0.04
           ],
-          "parent": "head_0_r2",
+          "parent": "head_0",
           "rotation": [
             0,
             25,
@@ -1597,13 +1587,13 @@
           ]
         },
         {
-          "name": "left_horn_2_0_r2",
+          "name": "left_horn_2_0",
           "pivot": [
             7,
             6.5,
             -0.04
           ],
-          "parent": "left_horn_1_0_r2",
+          "parent": "left_horn_1_0",
           "rotation": [
             0,
             15,
@@ -1685,9 +1675,25 @@
               }
             }
           ]
-        },
+        }
+      ]
+    },
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.building.minoshroom_trophy_r3",
+        "texture_width": 128,
+        "texture_height": 32,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3,
+        "visible_bounds_offset": [
+          0,
+          0.75,
+          0
+        ]
+      },
+      "bones": [
         {
-          "name": "trophy_r3",
+          "name": "minoshroom_trophy_0",
           "pivot": [
             0,
             0,
@@ -1700,27 +1706,13 @@
           ]
         },
         {
-          "name": "minoshroom_trophy_0_r3",
-          "pivot": [
-            0,
-            0,
-            0
-          ],
-          "parent": "trophy_r3",
-          "rotation": [
-            0,
-            180,
-            0
-          ]
-        },
-        {
-          "name": "head_0_r3",
+          "name": "head_0",
           "pivot": [
             0,
             0,
             -0.04
           ],
-          "parent": "minoshroom_trophy_0_r3",
+          "parent": "minoshroom_trophy_0",
           "cubes": [
             {
               "origin": [
@@ -1799,13 +1791,13 @@
           ]
         },
         {
-          "name": "snout_0_r3",
+          "name": "snout_0",
           "pivot": [
             0,
             2,
             -4.04
           ],
-          "parent": "head_0_r3",
+          "parent": "head_0",
           "cubes": [
             {
               "origin": [
@@ -1884,13 +1876,13 @@
           ]
         },
         {
-          "name": "right_horn_1_0_r3",
+          "name": "right_horn_1_0",
           "pivot": [
             -2.5,
             6.5,
             -0.04
           ],
-          "parent": "head_0_r3",
+          "parent": "head_0",
           "rotation": [
             0,
             -25,
@@ -1974,13 +1966,13 @@
           ]
         },
         {
-          "name": "right_horn_2_0_r3",
+          "name": "right_horn_2_0",
           "pivot": [
             -7,
             6.5,
             -0.04
           ],
-          "parent": "right_horn_1_0_r3",
+          "parent": "right_horn_1_0",
           "rotation": [
             0,
             -15,
@@ -2064,13 +2056,13 @@
           ]
         },
         {
-          "name": "left_horn_1_0_r3",
+          "name": "left_horn_1_0",
           "pivot": [
             2.5,
             6.5,
             -0.04
           ],
-          "parent": "head_0_r3",
+          "parent": "head_0",
           "rotation": [
             0,
             25,
@@ -2154,13 +2146,13 @@
           ]
         },
         {
-          "name": "left_horn_2_0_r3",
+          "name": "left_horn_2_0",
           "pivot": [
             7,
             6.5,
             -0.04
           ],
-          "parent": "left_horn_1_0_r3",
+          "parent": "left_horn_1_0",
           "rotation": [
             0,
             15,

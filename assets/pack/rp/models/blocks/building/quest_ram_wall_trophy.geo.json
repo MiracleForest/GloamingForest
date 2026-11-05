@@ -16,29 +16,15 @@
       },
       "bones": [
         {
-          "name": "trophy",
-          "pivot": [
-            0,
-            0,
-            0
-          ],
-          "rotation": [
-            0,
-            0.0,
-            0
-          ]
-        },
-        {
           "name": "quest_ram_wall_trophy_0",
           "pivot": [
             0,
             0,
             0
           ],
-          "parent": "trophy",
           "rotation": [
             0,
-            180,
+            0,
             0
           ]
         },
@@ -1282,10 +1268,9 @@
             0,
             0
           ],
-          "parent": "trophy",
           "rotation": [
             0,
-            180,
+            0,
             0
           ]
         },

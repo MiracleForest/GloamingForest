@@ -21,36 +21,188 @@
     "textures": "textures/twilightforest/entity/questram_lines"
   },
   "tf_building_rune_blue": {
-    "textures": [
-      {
-        "path": "textures/twilightforest/block/castleblock_magic_0",
-        "tint_color": "#00ffff"
-      }
-    ]
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/castleblock_magic_0",
+          "tint_color": "#00ffff",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castleblock_magic_1",
+          "tint_color": "#00ffff",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castleblock_magic_2",
+          "tint_color": "#00ffff",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castleblock_magic_3",
+          "tint_color": "#00ffff",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castleblock_magic_4",
+          "tint_color": "#00ffff",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castleblock_magic_5",
+          "tint_color": "#00ffff",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castleblock_magic_6",
+          "tint_color": "#00ffff",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castleblock_magic_7",
+          "tint_color": "#00ffff",
+          "weight": 1
+        }
+      ]
+    }
   },
   "tf_building_rune_pink": {
-    "textures": [
-      {
-        "path": "textures/twilightforest/block/castleblock_magic_0",
-        "tint_color": "#ff00ff"
-      }
-    ]
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/castleblock_magic_0",
+          "tint_color": "#ff00ff",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castleblock_magic_1",
+          "tint_color": "#ff00ff",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castleblock_magic_2",
+          "tint_color": "#ff00ff",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castleblock_magic_3",
+          "tint_color": "#ff00ff",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castleblock_magic_4",
+          "tint_color": "#ff00ff",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castleblock_magic_5",
+          "tint_color": "#ff00ff",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castleblock_magic_6",
+          "tint_color": "#ff00ff",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castleblock_magic_7",
+          "tint_color": "#ff00ff",
+          "weight": 1
+        }
+      ]
+    }
   },
   "tf_building_rune_violet": {
-    "textures": [
-      {
-        "path": "textures/twilightforest/block/castleblock_magic_0",
-        "tint_color": "#4b0082"
-      }
-    ]
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/castleblock_magic_0",
+          "tint_color": "#4b0082",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castleblock_magic_1",
+          "tint_color": "#4b0082",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castleblock_magic_2",
+          "tint_color": "#4b0082",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castleblock_magic_3",
+          "tint_color": "#4b0082",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castleblock_magic_4",
+          "tint_color": "#4b0082",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castleblock_magic_5",
+          "tint_color": "#4b0082",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castleblock_magic_6",
+          "tint_color": "#4b0082",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castleblock_magic_7",
+          "tint_color": "#4b0082",
+          "weight": 1
+        }
+      ]
+    }
   },
   "tf_building_rune_yellow": {
-    "textures": [
-      {
-        "path": "textures/twilightforest/block/castleblock_magic_0",
-        "tint_color": "#ffff00"
-      }
-    ]
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/twilightforest/block/castleblock_magic_0",
+          "tint_color": "#ffff00",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castleblock_magic_1",
+          "tint_color": "#ffff00",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castleblock_magic_2",
+          "tint_color": "#ffff00",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castleblock_magic_3",
+          "tint_color": "#ffff00",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castleblock_magic_4",
+          "tint_color": "#ffff00",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castleblock_magic_5",
+          "tint_color": "#ffff00",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castleblock_magic_6",
+          "tint_color": "#ffff00",
+          "weight": 1
+        },
+        {
+          "path": "textures/twilightforest/block/castleblock_magic_7",
+          "tint_color": "#ffff00",
+          "weight": 1
+        }
+      ]
+    }
   },
   "tf_building_snowqueen": {
     "textures": "textures/twilightforest/entity/snowqueen"
