@@ -526,10 +526,11 @@ namespace GfImport
                      .Set("minecraft:emitter_shape_point", J.Obj());
                 if (suspendedTown)
                 {
-                    // lifetime = (int) (20 / (Math.random() * 0.8 + 0.2)) ticks; the position follows Java's tick: move by
+                    // lifetime = (int) (20 / (Math.random() * 0.8 + 0.2)) ticks, removed on the tick after it runs out (one more tick
+                    // drawn); no collision (SuspendedTownParticle.move only moves the bounding box); the position follows Java's tick: move by
                     // the velocity, then velocity *= 0.99, so after t seconds it is v * (1 - 0.99^(20 t)) / 0.01 blocks
                     const string drift = " * 100 * (1 - math.pow(0.99, variable.particle_age * 20))";
-                    comps.Set("minecraft:particle_lifetime_expression", J.Obj().Set("max_lifetime", "math.floor(20 / (math.random(0, 1) * 0.8 + 0.2)) / 20"))
+                    comps.Set("minecraft:particle_lifetime_expression", J.Obj().Set("max_lifetime", "(math.floor(20 / (math.random(0, 1) * 0.8 + 0.2)) + 1) / 20"))
                          .Set("minecraft:particle_motion_parametric", J.Obj().Set("relative_position",
                              J.Arr(new[] { J.Str("variable.gf_vx" + drift), J.Str("variable.gf_vy" + drift), J.Str("variable.gf_vz" + drift) })));
                 }

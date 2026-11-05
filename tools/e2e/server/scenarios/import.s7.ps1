@@ -55,6 +55,7 @@ $s7Expected = @{}
 foreach ($p in $s7Probes) {
     $name = $p.id.Substring($p.id.IndexOf(':') + 1)
     $table = if (Test-S7ModernFormat $p.format) { $s7Modern } else { $s7Legacy }
+    if ($s7Expected.ContainsKey($name)) { throw "S7: two probes share the file name blocks/$name.json (probes.json)" }
     if (-not $table.ContainsKey($p.form)) { throw "S7: probe $($p.id) has form '$($p.form)', which this scenario has no expectation for" }
     $s7Expected[$name] = [System.Collections.Generic.List[string]]::new([string[]]@($table[$p.form]))
 }
