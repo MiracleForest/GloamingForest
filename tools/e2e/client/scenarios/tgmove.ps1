@@ -47,12 +47,16 @@ function Add-Failure([string]$m) { $script:tgFailures += $m; Write-Step "FAIL: $
 Invoke-Teleport '/tp @s 300.5 -60 302.5 0 0'
 Start-Sleep -Seconds 2
 Focus-Game
+Hold-Key 0x74 60 # F5: third person, the wings and their particles in view
+Start-Sleep -Milliseconds 500
+Focus-Game
 $mark = Get-LogMark
 Hold-Key $VK_SPACE 80
 Start-Sleep -Milliseconds 250
 Hold-Key $VK_SPACE 80
 Start-Sleep -Milliseconds 150
 Save-Screenshot 'double-jump' | Out-Null
+Hold-Key 0x74 60; Start-Sleep -Milliseconds 200; Hold-Key 0x74 60 # back to first person
 if ($script:Mode -eq 'remote-vanilla') {
     Wait-LogLine '\[host\].*tgmove: .* double jumped \(vy [0-9.]+, vanilla fallback\)' 20 -Since $mark | Out-Null
     Start-Sleep -Seconds 3
@@ -126,7 +130,7 @@ if ($sink -lt 0.25 -or $sink -gt 0.40) { Add-Failure "glide sink $sink blocks pe
 # ---- water walk ----
 try {
 $mark = Get-LogMark
-Invoke-Teleport '/tp @s 312.5 -59 301.5 0 0'
+Invoke-Teleport '/tp @s 312.5 -59 300.5 0 40'
 $ww = Wait-LogLine "${client}tgmove: walking on water at y (-?[0-9.]+)" 10 -Since $mark
 if ($ww -notmatch 'at y (-?[0-9.]+)') { throw "no water walk line in '$ww'" }
 $y = [double]$Matches[1]
