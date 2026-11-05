@@ -24,8 +24,9 @@
 --            references in BP / data (per kind: a `block` key must name a block; the values of
 --            tag-valued keys name tags; the reviewed ids of tools/import/known-ids.json are known
 --            by kind, its tfDangling references are warnings), every asset file has an owner
---            (docs/spec/owners.tsv), and the ARR hash guard (no TF .ogg / .nbt content,
---            tools/ci/arr-blobs.txt).
+--            (docs/spec/owners.tsv), the pack path probes (checks.packPathProbes: a file in a
+--            directory granted to a unit reaches the assembled pack and belongs to that unit), and
+--            the ARR hash guard (no TF .ogg / .nbt content, tools/ci/arr-blobs.txt).
 --
 -- "${version}" in pack manifests is replaced by the mod version as a JSON array [major, minor, patch]
 -- (untagged builds: [0, 0, <stamp of the pack sources>], so games never reuse a stale cached pack).
@@ -280,12 +281,12 @@ local function is_fragment_path(r)
     return false
 end
 
--- The BP identifier of a block / item / entity JSON (nil for other files).
+-- The identifier of a block / item / entity / client entity / attachable / particle effect JSON (nil for other files).
 local function bp_identifier(file)
     if not file:match("%.json$") then return nil end
     local doc = try_json(file)
     if type(doc) ~= "table" then return nil end
-    for _, key in ipairs({"minecraft:block", "minecraft:item", "minecraft:entity", "minecraft:client_entity", "minecraft:attachable"}) do
+    for _, key in ipairs({"minecraft:block", "minecraft:item", "minecraft:entity", "minecraft:client_entity", "minecraft:attachable", "particle_effect"}) do
         local def = doc[key]
         local id = def and def.description and def.description.identifier
         if type(id) == "string" then return key .. "|" .. id end
@@ -599,7 +600,9 @@ local function load_owners(projectdir, cfg)
                 -- an exact path beats every glob
                 for _, alt in ipairs(expand_braces(id)) do
                     local score = glob_score(alt) + (alt:find("[%*%?]") and 0 or 1000)
-                    table.insert(owners.paths, {pats = compile_glob(alt), owner = owner, glob = id, score = score})
+                    -- a unit-folder rule "<prefix>/**/<folder>/**" ranks by how deep its folder matches
+                    local folder = alt:match("^.+/%*%*/([^/%*%?]+)/%*%*$")
+                    table.insert(owners.paths, {pats = compile_glob(alt), owner = owner, glob = id, score = score, folder = folder})
                 end
             elseif kind and kind ~= "kind" then
                 owners.kinds[kind] = owners.kinds[kind] or {}
@@ -610,15 +613,34 @@ local function load_owners(projectdir, cfg)
     return owners
 end
 
+-- index of the deepest directory of relpath named folder (the file name itself does not count)
+local function folder_depth(relpath, folder)
+    local segs = relpath:split("/", {plain = true})
+    for i = #segs - 1, 1, -1 do
+        if segs[i] == folder then return i end
+    end
+    return -1
+end
+
+-- The most specific rule wins (most literal characters). Unit-folder rules compete as one group scored
+-- by their best member, and inside the group the folder nearest the file wins: rp/entity/hydra/x.json
+-- belongs to hydra, not to the unit named entity (tools/ci/ownership.ps1 resolves the same way).
 local function owner_of(owners, relpath)
-    local best, bestscore, tie = nil, -1, nil
+    local cands, groupscore = {}, -1
     for _, p in ipairs(owners.paths) do
         if glob_match(p.pats, relpath) then
-            if p.score > bestscore then
-                best, bestscore, tie = p, p.score, nil
-            elseif p.score == bestscore and p.owner ~= best.owner then
-                tie = p
-            end
+            table.insert(cands, p)
+            if p.folder and p.score > groupscore then groupscore = p.score end
+        end
+    end
+    local best, bestscore, bestdepth, tie = nil, -1, -1, nil
+    for _, p in ipairs(cands) do
+        local score, depth = p.score, 0
+        if p.folder then score, depth = groupscore, folder_depth(relpath, p.folder) * 10000 + p.score end
+        if score > bestscore or (score == bestscore and depth > bestdepth) then
+            best, bestscore, bestdepth, tie = p, score, depth, nil
+        elseif score == bestscore and depth == bestdepth and p.owner ~= best.owner then
+            tie = p
         end
     end
     if tie then return nil, string.format("ambiguous: %s (%s) and %s (%s)", best.glob, best.owner, tie.glob, tie.owner) end
@@ -1080,6 +1102,100 @@ local function build_pack(projectdir, cfg, pack, outdir, version, with_gen)
     return dst, jsons
 end
 
+-- The pack paths units are granted (checks.packPathProbes of merges.json): each probe writes a
+-- file at `file` (a manual-layer path, assets/pack/<root>/...) into a scratch project, builds that
+-- pack with build_pack and fails unless the file arrives at the same path below the pack's manual
+-- directory (`out`, derived from `file`; an `out` given in the entry must equal it) with the same
+-- bytes and docs/spec/owners.tsv gives the path to `owner` (owner_of; tools/ci/ownership.ps1
+-- -PackProbes holds its own resolver to the same expectations). It proves
+-- a granted directory is neither dropped by the assembly (fragment directories, "*.d", are merged,
+-- never copied) nor unowned, before the unit's first file lands there. Returns the probe count.
+-- A valid file of the probe's type, so a later check of the pack's PNG or JSON files does not fail a
+-- probe for an unrelated reason: a 1x1 transparent PNG, a JSON object naming the probe, or plain text.
+local function probe_payload(file)
+    local ext = path.extension(file):lower()
+    if ext == ".png" then
+        return string.char(0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D, 0x49, 0x48,
+            0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15,
+            0xC4, 0x89, 0x00, 0x00, 0x00, 0x0D, 0x49, 0x44, 0x41, 0x54, 0x78, 0xDA, 0x63, 0x60, 0x60, 0x60, 0x60,
+            0x00, 0x00, 0x00, 0x05, 0x00, 0x01, 0x7A, 0xA8, 0x57, 0x50, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4E,
+            0x44, 0xAE, 0x42, 0x60, 0x82)
+    elseif ext == ".json" then
+        return string.format('{"gf_pack_probe": "%s"}\n', (file:gsub('[\\"]', "\\%0")))
+    end
+    return "gf_pack_probe " .. file .. "\n"
+end
+
+local function probe_one(projectdir, cfg, owners, i, probe, scratch)
+    local pack
+    if type(probe) ~= "table" or type(probe.file) ~= "string" or type(probe.owner) ~= "string"
+        or (probe.out ~= nil and type(probe.out) ~= "string") then
+        fail("packPathProbes: entry %d needs a string file and owner (and out, when given)", i)
+    else
+        for _, p in ipairs(cfg.packs) do
+            if not p.test and probe.file:sub(1, #p.manual + 1) == p.manual .. "/" then
+                pack = p
+                break
+            end
+        end
+        if not pack then
+            fail("packPathProbes: %s is not under the manual directory of a shipped pack", probe.file)
+        end
+    end
+    local out = pack and probe.file:sub(#pack.manual + 2)
+    if pack and probe.out and probe.out ~= out then
+        fail("packPathProbes: %s has out %s, but it lands at %s", probe.file, probe.out, out)
+        pack = nil
+    end
+    if pack then
+        local proj = path.join(scratch, tostring(i))
+        local manifest = path.join(projectdir, pack.manual, "manifest.json")
+        os.mkdir(path.join(proj, pack.manual))
+        os.cp(manifest, path.join(proj, pack.manual, "manifest.json"))
+        local text = probe_payload(probe.file)
+        os.mkdir(path.directory(path.join(proj, probe.file)))
+        io.writefile(path.join(proj, probe.file), text, {encoding = "binary"})
+        -- test = true: no licence files (they are copied from the real project, not the scratch one)
+        local scratch_pack = {name = pack.name, dir = pack.dir, root = pack.root, manual = pack.manual, test = true}
+        local dst = build_pack(proj, cfg, scratch_pack, path.join(proj, "out"), {0, 0, 0}, false)
+        local got = path.join(dst, out)
+        if not os.isfile(got) then
+            fail("packPathProbes: %s did not reach %s/%s in the assembled pack", probe.file, pack.name, out)
+        elseif io.readfile(got, {encoding = "binary"}) ~= text then
+            fail("packPathProbes: %s reached %s/%s with other content", probe.file, pack.name, out)
+        end
+        local owner, why = owner_of(owners, probe.file)
+        if owner ~= probe.owner then
+            fail("packPathProbes: %s is owned by %s in %s, expected %s", probe.file, owner or why or "nobody",
+                cfg.checks.owners, probe.owner)
+        end
+    end
+end
+
+local function probe_each(projectdir, cfg, owners, probes, scratch)
+    for i, probe in ipairs(probes) do
+        -- a raise fails the check (the sandbox's try swallows it without a catch) and the next probes still run
+        try {
+            function () probe_one(projectdir, cfg, owners, i, probe, scratch) end,
+            catch { function (e) fail("packPathProbes: probe %d raised: %s", i, tostring(e)) end }
+        }
+    end
+end
+
+local function probe_pack_paths(projectdir, cfg, owners)
+    local probes = cfg.checks.packPathProbes or {}
+    if #probes == 0 then return 0 end
+    local scratch = os.tmpfile() .. ".packprobe"
+    os.tryrm(scratch)
+    -- the scratch project goes either way
+    try {
+        function () probe_each(projectdir, cfg, owners, probes, scratch) end,
+        catch { function (e) fail("packPathProbes: %s", tostring(e)) end },
+        finally { function () os.tryrm(scratch) end }
+    }
+    return #probes
+end
+
 local function merge_lang(projectdir, cfg, outdir)
     local dst = path.join(outdir, "lang")
     os.tryrm(dst)
@@ -1356,13 +1472,14 @@ local function assemble_content(projectdir, outdir, version)
     local permutations = check_blocks(bpdirs, cfg)
     local owners = load_owners(projectdir, cfg)
     local owned = check_owners(projectdir, cfg, owners)
+    local probed = probe_pack_paths(projectdir, cfg, owners)
     local langkeys = check_lang_owners(projectdir, owners)
     local reviewed = load_reviewed(projectdir, cfg)
     local refs = check_dangling(alljsons, known_ids(bpdirs, outdir, owners, reviewed), cfg, path.join(outdir, "data"), reviewed)
     local scanned = check_arr(projectdir, cfg)
     report(outdir)
-    return string.format("%d block permutations, %s, %d owned files, %d owned lang keys, %d references (%d warning(s)), %d files hash-checked",
-        permutations, families_summary, owned, langkeys, refs, #warnings, scanned)
+    return string.format("%d block permutations, %s, %d owned files, %d pack path probes, %d owned lang keys, %d references (%d warning(s)), %d files hash-checked",
+        permutations, families_summary, owned, probed, langkeys, refs, #warnings, scanned)
 end
 
 function main(target, target_type)
