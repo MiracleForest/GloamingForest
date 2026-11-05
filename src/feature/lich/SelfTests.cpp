@@ -281,7 +281,11 @@ GF_REGISTER_SELFTEST("lich.death_tome_lectern", [](Context& ctx) -> ll::coro::Co
     setTomeOnLectern(*tome, true);
     co_await ctx.ticks(2);
     tome = mobById(uid);
-    ctx.require(tome && tomeOnLectern(*tome), "the tome rests on the lectern");
+    if (!tome || !tomeOnLectern(*tome)) {
+        std::string why = !tome ? std::string("gone") : "at " + std::to_string(tome->getFeetPos().x) + " " + std::to_string(tome->getFeetPos().y) + " " + std::to_string(tome->getFeetPos().z)
+                                                          + ", block " + ctx.blockAt(lect) + ", lectern at " + std::to_string(lect.y);
+        ctx.fail("the tome rests on the lectern (" + why + ")");
+    }
     auto& sim = ctx.spawnPlayer("lich_tome");
     auto  pid = uidOf(sim);
     sim.teleport(at(lect.offset(-2, 0, 0)), static_cast<DimensionType>(lect.dim));

@@ -191,8 +191,9 @@ void tomeAiStep(Actor& a) {
             m->setYBodyRotation(yaw);
             m->setYHeadRot(yaw);
             const_cast<Vec2&>(m->getRotation()) = Vec2{0.0f, yaw};
-            if (!targetOf(*m))
-                if (Player* p = lecternTarget(*m)) setTarget(*m, p);
+            // only the lectern's own target selector picks a target here (the BP's flying behaviours
+            // may have picked one before the lectern group took over)
+            setTarget(*m, lecternTarget(*m));
             if (Actor* t = targetOf(*m)) {
                 setTomeOnLectern(a, false);
                 setMotion(a, Vec3{0.0f, 0.25f, 0.0f});
