@@ -116,12 +116,24 @@ SoundLog& soundLog() {
     return l;
 }
 
+/// The nesting of the hooked packet sender calls on this thread: when one overload forwards to
+/// another (say sendToClients to sendToClient per receiver), only the outermost call records, so a
+/// logical send is one record.
+thread_local int tSendDepth = 0;
+struct SendScope {
+    bool outermost;
+    SendScope() : outermost(tSendDepth++ == 0) {}
+    ~SendScope() { --tSendDepth; }
+    SendScope(SendScope const&)            = delete;
+    SendScope& operator=(SendScope const&) = delete;
+};
+
 /// Records one send of `packet` when it is a sound; `reaches` tells whether the send reaches the
-/// watched receiver.
+/// watched receiver. Only the outermost hooked call of a send records (`scope`).
 template <class Reaches>
-void inspect(Packet const& packet, Reaches&& reaches) {
+void inspect(SendScope const& scope, Packet const& packet, Reaches&& reaches) {
     auto& log = soundLog();
-    if (log.captures.load() == 0) return;
+    if (!scope.outermost || log.captures.load() == 0) return;
     HeardSound h;
     switch (packet.getId()) {
     case MinecraftPacketIds::PlaySound: {
@@ -161,7 +173,8 @@ LL_TYPE_INSTANCE_HOOK(
     UserEntityIdentifierComponent const* user,
     Packet const&                        packet
 ) {
-    inspect(packet, [user](Receiver const& w) { return user && w.is(user->mNetworkId.get(), user->mClientSubId); });
+    SendScope scope;
+    inspect(scope, packet, [user](Receiver const& w) { return user && w.is(user->mNetworkId.get(), user->mClientSubId); });
     origin(user, packet);
 }
 
@@ -176,7 +189,8 @@ LL_TYPE_INSTANCE_HOOK(
     Packet const&            packet,
     SubClientId              sub
 ) {
-    inspect(packet, [&id, sub](Receiver const& w) { return w.is(id, sub); });
+    SendScope scope;
+    inspect(scope, packet, [&id, sub](Receiver const& w) { return w.is(id, sub); });
     origin(id, packet, sub);
 }
 
@@ -189,7 +203,8 @@ LL_TYPE_INSTANCE_HOOK(
     std::vector<NetworkIdentifierWithSubId> const& ids,
     Packet const&                                  packet
 ) {
-    inspect(packet, [&ids](Receiver const& w) {
+    SendScope scope;
+    inspect(scope, packet, [&ids](Receiver const& w) {
         return std::any_of(ids.begin(), ids.end(), [&w](NetworkIdentifierWithSubId const& r) { return w.is(r.id, r.subClientId); });
     });
     origin(ids, packet);
@@ -203,7 +218,8 @@ LL_TYPE_INSTANCE_HOOK(
     void,
     Packet const& packet
 ) {
-    inspect(packet, [](Receiver const& w) { return w.set; });
+    SendScope scope;
+    inspect(scope, packet, [](Receiver const& w) { return w.set; });
     origin(packet);
 }
 
@@ -218,7 +234,8 @@ LL_TYPE_INSTANCE_HOOK(
     SubClientId              exceptSub,
     Packet const&            packet
 ) {
-    inspect(packet, [&exceptId, exceptSub](Receiver const& w) { return w.set && !w.is(exceptId, exceptSub); });
+    SendScope scope;
+    inspect(scope, packet, [&exceptId, exceptSub](Receiver const& w) { return w.set && !w.is(exceptId, exceptSub); });
     origin(exceptId, exceptSub, packet);
 }
 
@@ -545,7 +562,13 @@ GF_REGISTER_SELFTEST("families.place_in_water_sound", [](Context& ctx) -> ll::co
     // SimpleWaterloggedBlock takes the water it is placed into. Bedrock plays the place sound of a
     // block placed into water as LevelSoundEvent PlaceInWater (the type's place_in_water, which
     // tools/families defines as its place event): a player placing a TF waterloggable slab or stairs
-    // into a water source makes exactly one place sound (PlaceInWater, Place or ItemUseOn), not two
+    // into a water source makes exactly one place sound, and it is PlaceInWater (Place and ItemUseOn
+    // are counted too, so a second sound of another kind fails the test).
+    // These are the server's sends (the broadcast to the other players, here a listener). Whether
+    // the placing player's own client predicts a second sound locally is not visible on the server:
+    // the client e2e (tools/e2e/client/scenarios/families.ps1) covers it through the content log,
+    // which must show no "No sound found ... place_in_water" verbose line.
+    std::string const kPlaceInWater = "event:" + std::to_string(static_cast<int>(SharedTypes::Legacy::LevelSoundEvent::PlaceInWater));
     constexpr char const* kCandidates[] = {"twilightforest:twilight_oak_slab", "twilightforest:castle_brick_stairs"};
     std::vector<std::string> ids;
     for (auto const* id : kCandidates) {
@@ -559,7 +582,7 @@ GF_REGISTER_SELFTEST("families.place_in_water_sound", [](Context& ctx) -> ll::co
         ctx.info("no TF waterloggable slabs or stairs in this build: skipped");
         co_return;
     }
-    auto box = co_await ctx.flatArea(6143, 5);
+    auto box = co_await ctx.flatArea(6143, 8); // (both basins, x - 1..x + 1 of p.x + 1 and p.x + 5, and their floor)
     auto p   = ctx.testPos(6143, 2);
     ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
     auto wet = [&ctx](GlobalPos const& q) { // (the block source looked up again: R16)
@@ -612,6 +635,8 @@ GF_REGISTER_SELFTEST("families.place_in_water_sound", [](Context& ctx) -> ll::co
         auto place = sent;
         std::erase_if(place, [&](HeardSound const& h) { return !placeSound(h); });
         ctx.check(place.size() == 1, id + ": one place sound for the block placed into water (sent: " + describe(sent) + ")");
+        // the block kept the water: the sound is the type's place_in_water (tools/families' definition)
+        ctx.check(place.size() == 1 && place[0].name == kPlaceInWater, id + ": the place sound is LevelSoundEvent PlaceInWater (sent: " + describe(sent) + ")");
         ctx.setBlock(w, "minecraft:air");
     }
     (void)box;

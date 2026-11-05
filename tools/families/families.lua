@@ -2054,6 +2054,13 @@ end
 -- Packs merge sounds.json per event (the game's own vanilla_1.26.10 pack redefines only wood's place
 -- event), so the events are added to the type as it is: its other events stay the game's (or the
 -- import's, for TF's own types).
+-- Side effect on vanilla content, intended: the types are the game's own (wood, stone, metal, glass,
+-- grass, sand, cloth, ...), which vanilla blocks share, so a vanilla waterloggable block of such a
+-- type placed into water plays its type's place event through this place_in_water too, and vanilla
+-- chests (type wood) play chest.open / chest.closed through these definitions. Both carry vanilla's
+-- own values (VANILLA_PLACE is the game's place event of each type, CHEST_EVENTS the game's chest
+-- events), so vanilla blocks sound as Java's do and as the game's fallback would; only the content
+-- log's "No sound found" verbose lines go away for them as well.
 
 -- The place events of the game's block sound types (Minecraft Bedrock 1.26.51, the vanilla resource
 -- packs' sounds.json block_sounds, the last pack's definition of each).
