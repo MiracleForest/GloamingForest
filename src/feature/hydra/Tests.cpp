@@ -144,7 +144,7 @@ double dist(Vec3 const& a, Vec3 const& b) { return std::sqrt((a.x - b.x) * (a.x 
 // The lair piece (HydraLairComponent#postProcess, rule R19): stone dome, grass patch, speleothems,
 // the boss spawner at local (27, 3, 27); a golden volume hash of the clipped test volume.
 GF_REGISTER_SELFTEST("hydra.lair_golden", [](Context& ctx) -> ll::coro::CoroTask<> {
-    auto box    = co_await ctx.flatArea(2400, 80, 32);
+    auto box    = co_await ctx.flatArea(2400, 80, 48);
     auto region = ctx.region();
     ctx.require(region != nullptr, "test region");
     // a known floor: four layers of dirt at the bottom of the volume, grass on top
@@ -157,7 +157,9 @@ GF_REGISTER_SELFTEST("hydra.lair_golden", [](Context& ctx) -> ll::coro::CoroTask
     // the start at the volume's middle; the piece's box starts 4 above the volume's floor (its
     // domes start 4 and 1 below the piece)
     int  cx = box.minX + 40, cz = box.minZ + 40, cy = box.minY + 4;
-    auto pieceBox = placeLairForTest(*region, box, cx, cy, cz, 2400);
+    // with the terraformer's hill (TF's terrain pass at sea level, translated to cy): the speleothems
+    // hang from its ceiling and stand on its floor inside the volume
+    auto pieceBox = placeLairForTest(*region, box, cx, cy, cz, 2400, true);
     ctx.check(pieceBox.maxX - pieceBox.minX + 1 == 69 && pieceBox.maxY - pieceBox.minY == 17, "the piece box is 69 x 18 x 69 (radius 34, hill size 2)");
     // the spawner at piece-local (27, 3, 27)
     int spawners = 0;

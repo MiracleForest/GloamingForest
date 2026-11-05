@@ -263,9 +263,29 @@ private:
 
 } // namespace
 
-BlockBox placeLairForTest(BlockSource& source, BlockBox const& clip, int x, int y, int z, std::int64_t seed) {
+BlockBox placeLairForTest(BlockSource& source, BlockBox const& clip, int x, int y, int z, std::int64_t seed, bool terraform) {
     ClippedRegion          region(source, clip, seed);
     HydraLair              lair(0, x - 7, y, z - 7);
+    if (terraform) {
+        // the hill the terrain pass makes before the piece (HydraLairStructure's terraformer added to
+        // a flat ground at the start's y, the Twilight Forest's sea level, translated to y): dirt
+        // where the density is positive, grass on top
+        auto const* dirt  = javaBlock("minecraft:dirt");
+        auto const* grass = javaBlock("minecraft:grass_block");
+        auto const* air   = javaBlock("minecraft:air");
+        BlockBox    shifted{lair.bbox.minX, lair.bbox.minY - y, lair.bbox.minZ, lair.bbox.maxX, lair.bbox.maxY - y, lair.bbox.maxZ};
+        auto        solid = [&](int bx, int by, int bz) {
+            int yr = by - y;
+            return -(static_cast<double>(yr) + 0.5) + ch::lairTerraformer(shifted, bx, yr, bz) > 0.0;
+        };
+        if (dirt && grass && air)
+            for (int bx = clip.minX; bx <= clip.maxX; ++bx)
+                for (int bz = clip.minZ; bz <= clip.maxZ; ++bz)
+                    for (int by = clip.minY; by <= clip.maxY; ++by) {
+                        Block const* b = !solid(bx, by, bz) ? air : (by < clip.maxY && solid(bx, by + 1, bz) ? dirt : grass);
+                        region.setBlock(BlockPos{bx, by, bz}, *b, 2);
+                    }
+    }
     core::jrand::LegacyRandom random(seed);
     lair.postProcess(region, random, clip, BlockPos{x, y, z});
     return lair.bbox;
