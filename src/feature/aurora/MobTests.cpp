@@ -32,7 +32,6 @@
 #include "mc/scripting/modules/minecraft/ScriptFacing.h"
 #include "mc/world/actor/item/ItemActor.h"
 #include "mc/deps/core/math/Color.h"
-#include "mc/deps/vanilla_components/OffsetsComponent.h"
 #include "mc/world/attribute/Attribute.h"
 #include "mc/world/attribute/AttributeInstance.h"
 #include "mc/world/attribute/AttributeInstanceConstRef.h"
@@ -140,19 +139,20 @@ GF_REGISTER_SELFTEST("aurora.mob_attributes", [](Context& ctx) -> ll::coro::Coro
         auto const& b = m->getAABB();
         ctx.check(near(b.max.x - b.min.x, r.width) && near(b.max.y - b.min.y, r.height),
                   id + " box " + std::to_string(b.max.x - b.min.x) + " x " + std::to_string(b.max.y - b.min.y));
-        // the eye height: Bedrock has no eye-height component; the engine puts a mob's eyes at 0.9 x
-        // its collision height (1.62 for 1.8, 2.25 for 2.5), where Java has 1.53 / 1.35 / 2.125 for
-        // these mobs. Reported, not checked (docs/units/aurora.md, deviations).
-        float eye = m->getEyePos().y - m->getFeetPos().y;
-        std::string offsets;
-        if (auto oc = m->getEntityContext().tryGetComponent<OffsetsComponent>())
-            offsets = " (offsets: height " + std::to_string(oc->mHeightOffset) + ", eye y " + std::to_string(oc->mEyeOffset->y) + ", head y " +
-                      std::to_string(oc->mHeadOffset->y) + ")";
-        ctx.check(std::abs(eye - r.height * 0.9f) < 0.05f || std::abs(eye - r.eye) < 0.05f, id + " eye height " + std::to_string(eye));
-        ctx.info(id + " eye height " + std::to_string(eye) + ", Java " + std::to_string(r.eye) + (std::abs(eye - r.eye) < 0.05f ? " (matches)" : " (Bedrock 0.9 x height)") + offsets);
         spawned.push_back(uidOf(*m));
     }
     co_await ctx.ticks(5);
+    // the eye height (Entity#getEyeHeight): Bedrock's 0.9 x height replaced by Java's through the
+    // offsets component (applyJavaEyeHeight, every tick)
+    {
+        float const javaEye[] = {1.53f, 1.35f, 1.35f, 1.53f, 2.125f};
+        for (std::size_t k = 0; k < spawned.size() && k < 5; k++) {
+            auto* m = mobById(spawned[k]);
+            if (!m) continue;
+            float eye = m->getEyePos().y - m->getFeetPos().y;
+            ctx.check(std::abs(eye - javaEye[k]) < 0.01f, m->getTypeName() + " eye height " + std::to_string(eye) + " (Java " + std::to_string(javaEye[k]) + ")");
+        }
+    }
     if (auto* g = mobById(spawned[0])) {
         auto id = game::items::idOf(g->getCarriedItem());
         ctx.check(id == "twilightforest:ironwood_sword" || id == "twilightforest:steeleaf_sword" || id == "twilightforest:knightmetal_sword",

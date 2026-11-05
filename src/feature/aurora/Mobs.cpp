@@ -35,6 +35,7 @@
 #include "mc/deps/core/string/HashedString.h"
 #include "mc/deps/shared_types/legacy/Difficulty.h"
 #include "mc/deps/shared_types/legacy/EquipmentSlot.h"
+#include "mc/deps/vanilla_components/OffsetsComponent.h"
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/ActorCategory.h"
 #include "mc/world/actor/Mob.h"
@@ -515,11 +516,22 @@ std::set<std::int64_t>& goalsAdded() {
 
 } // namespace
 
+void applyJavaEyeHeight(Actor& actor) {
+    auto const& id = actor.getTypeName();
+    if (id != kSnowQueen && id != kStableIceCore && id != kUnstableIceCore && id != kSnowGuardian && id != kIceCrystal) return;
+    float const eye = eyeHeightOf(id);
+    if (auto oc = actor.getEntityContext().tryGetComponent<OffsetsComponent>()) {
+        Vec3 e = oc->mEyeOffset;
+        if (e.y != eye) oc->mEyeOffset = Vec3{e.x, eye, e.z};
+    }
+}
+
 void installMobs() {
     for (char const* id : {kSnowGuardian, kStableIceCore, kUnstableIceCore, kIceCrystal}) {
         std::string type = id;
         gf::entity::Behaviour b;
         b.tick = [type](Actor& self) {
+            applyJavaEyeHeight(self);
             // the native goals, once per actor in this process (spawned or loaded)
             if (type == kStableIceCore && goalsAdded().insert(self.getOrCreateUniqueID().rawID).second)
                 if (auto* mob = fe::asMob(self)) gf::entity::addGoal(*mob, 1, std::make_shared<RangedAttackGoal>(*mob, 1.25, 20, 10.0F));

@@ -42,6 +42,11 @@ void setCrystalAgeForTest(Actor& crystal, int age);
 /// Test hook: the crystal's maxCrystalAge (0: not summoned, it stays).
 int crystalMaxAgeForTest(Actor& crystal);
 
+/// Entity#getEyeHeight of TF's dimensions (1.53 / 1.35 / 2.125): Bedrock puts a mob's eyes at 0.9 x its
+/// height; the offsets component's eye offset is set to Java's value (every tick: the engine may
+/// recompute it with the box).
+void applyJavaEyeHeight(Actor& actor);
+
 void installMobs();
 void installSnowQueen();
 

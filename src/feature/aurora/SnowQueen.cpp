@@ -759,6 +759,7 @@ void queenTick(Actor& actor) {
     auto v = self->getPosDelta();
     fe::setMotion(*self, Vec3{v.x, v.y - 0.05f, v.z});
 
+    applyJavaEyeHeight(*self);
     ensureShields(*self);
     applyShieldCollisions(*self);
     recordArrows(*self);
@@ -886,41 +887,55 @@ void installSnowQueen() {
             AABB         near{Vec3{b.min.x - 3.0f, b.min.y - 3.0f, b.min.z - 3.0f}, Vec3{b.max.x + 3.0f, b.max.y + 3.0f, b.max.z + 3.0f}};
             AABB         hitBox{Vec3{b.min.x - 0.3f, b.min.y - 0.3f, b.min.z - 0.3f}, Vec3{b.max.x + 0.3f, b.max.y + 0.3f, b.max.z + 0.3f}};
             Vec3         centre{(b.min.x + b.max.x) / 2, (b.min.y + b.max.y) / 2, (b.min.z + b.max.z) / 2};
-            std::int64_t shooter = d.attacker ? uidOf(*d.attacker) : 0;
-            double       best    = 1e9;
-            Actor*       hitting = nullptr;
-            for (auto* e : fe::actorsIn(d.victim.getDimensionBlockSource(), static_cast<int>(d.victim.getDimensionId()), near)) {
-                if (!e || !e->isAlive() || !e->getEntityContext().tryGetComponent<ProjectileComponent>()) continue;
-                std::int64_t owner = e->getOwnerId().rawID;
-                if (shooter != 0 && owner != 0 && owner != -1 && owner != shooter) continue; // another shooter's arrow
-                auto   p = feet(*e);
-                double score;
-                if (hitBox.contains(p)) score = 0.0;
-                else {
-                    score        = 1e9;
-                    auto segment = [&](Vec3 from, Vec3 to) {
-                        if (auto hit = clip(hitBox, from, to)) {
-                            double hx = hit->x - from.x, hy = hit->y - from.y, hz = hit->z - from.z;
-                            score     = std::min(score, std::sqrt(hx * hx + hy * hy + hz * hz));
-                        }
-                    };
-                    auto v = currentVelocity(*e);
-                    segment(Vec3{p.x - v.x, p.y - v.y, p.z - v.z}, Vec3{p.x + v.x, p.y + v.y, p.z + v.z});
-                    if (auto it = arrowSnaps().find(uidOf(*e)); it != arrowSnaps().end()) {
-                        auto const& r = it->second;
-                        segment(r.pos, Vec3{r.pos.x + r.vel.x * 2.0f, r.pos.y + r.vel.y * 2.0f, r.pos.z + r.vel.z * 2.0f});
+            std::int64_t const attackerId = d.attacker ? uidOf(*d.attacker) : 0;
+            std::int64_t const directId   = d.direct ? uidOf(*d.direct) : 0;
+            auto               pick       = [&](bool byOwner) {
+                double best    = 1e9;
+                Actor* hitting = nullptr;
+                for (auto* e : fe::actorsIn(d.victim.getDimensionBlockSource(), static_cast<int>(d.victim.getDimensionId()), near)) {
+                    if (!e || !e->isAlive() || !e->getEntityContext().tryGetComponent<ProjectileComponent>()) continue;
+                    if (byOwner) { // the shooter's arrows only (the damage names the shooter as attacker or direct)
+                        std::int64_t owner = e->getOwnerId().rawID;
+                        if (owner == 0 || owner == -1 || (owner != attackerId && owner != directId)) continue;
                     }
-                    // none crosses: the nearest arrow, after any that does
-                    if (score >= 1e9) score = 100.0 + std::sqrt((p.x - centre.x) * (p.x - centre.x) + (p.y - centre.y) * (p.y - centre.y) + (p.z - centre.z) * (p.z - centre.z));
+                    auto   p = feet(*e);
+                    double score;
+                    if (hitBox.contains(p)) score = 0.0;
+                    else {
+                        score        = 1e9;
+                        auto segment = [&](Vec3 from, Vec3 to) {
+                            if (auto hit = clip(hitBox, from, to)) {
+                                double hx = hit->x - from.x, hy = hit->y - from.y, hz = hit->z - from.z;
+                                score     = std::min(score, std::sqrt(hx * hx + hy * hy + hz * hz));
+                            }
+                        };
+                        auto v = currentVelocity(*e);
+                        segment(Vec3{p.x - v.x, p.y - v.y, p.z - v.z}, Vec3{p.x + v.x, p.y + v.y, p.z + v.z});
+                        if (auto it = arrowSnaps().find(uidOf(*e)); it != arrowSnaps().end()) {
+                            auto const& r = it->second;
+                            segment(r.pos, Vec3{r.pos.x + r.vel.x * 2.0f, r.pos.y + r.vel.y * 2.0f, r.pos.z + r.vel.z * 2.0f});
+                        }
+                        // none crosses: the nearest arrow, after any that does
+                        if (score >= 1e9) score = 100.0 + std::sqrt((p.x - centre.x) * (p.x - centre.x) + (p.y - centre.y) * (p.y - centre.y) + (p.z - centre.z) * (p.z - centre.z));
+                    }
+                    if (score < best) {
+                        best    = score;
+                        hitting = e;
+                    }
                 }
-                if (score < best) {
-                    best    = score;
-                    hitting = e;
-                }
-            }
+                return hitting;
+            };
+            // the shooter's arrows; when none is known as theirs (an owner the engine left unset), any arrow
+            Actor* hitting = pick(true);
+            if (!hitting) hitting = pick(false);
+            gf::log().debug("aurora: shield hit by {} (attacker {}, direct {}): arrow {} pierce {}", d.type, attackerId, directId,
+                            hitting ? uidOf(*hitting) : 0, hitting ? pierceLevel(*hitting) : 0);
             if (hitting && pierceLevel(*hitting) > 0) projectile = hitting;
         }
-        if (!projectile) return gf::combat::Verdict::Pass;
+        if (!projectile) {
+            gf::log().debug("aurora: shield hit by {} blocked (direct {})", d.type, d.direct ? d.direct->getTypeName() : std::string("none"));
+            return gf::combat::Verdict::Pass;
+        }
         auto arrow = projectile->getOrCreateUniqueID().rawID;
         auto v     = currentVelocity(*projectile);
         auto at    = feet(*projectile);
