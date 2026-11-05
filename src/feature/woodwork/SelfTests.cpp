@@ -19,6 +19,7 @@
 #include "mc/world/actor/player/Inventory.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/gamemode/GameMode.h"
+#include "mc/world/gamemode/InteractionResult.h"
 #include "mc/world/item/enchanting/EnchantUtils.h"
 #include "mc/world/item/HandSlot.h"
 #include "mc/world/item/ItemStack.h"

@@ -407,6 +407,9 @@ std::vector<GlobalPos> activeRacks() { return {state().active.begin(), state().a
 
 namespace gf::feature::woodwork {
 
+namespace ia = interactions;
+namespace bd = blockdata;
+
 void installDryingRacks() {
     namespace r = rack;
     auto&       s    = r::state();

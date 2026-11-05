@@ -1,0 +1,3 @@
+## U4 (woodwork): the names of the TF boat entities (Java zh_cn: entity.minecraft.boat, entity.minecraft.chest_boat).
+entity.twilightforest:boat.name=船
+entity.twilightforest:chest_boat.name=运输船
