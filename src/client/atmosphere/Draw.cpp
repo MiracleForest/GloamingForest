@@ -152,6 +152,10 @@ void drawSmoothQuads(ScreenContext& screen, mce::MaterialPtr const& material, mc
     WhiteShaderColour white(screen);
     // batches of at most 16 000 quads: an immediate mesh stays within 16-bit indices
     constexpr std::size_t kBatch = 16000 * 4;
+    // Vibrant Visuals lights the material by its MERS (metalness, emissive, roughness, subsurface):
+    // the sky's stars and aurora glow by themselves (emissive and rough, the bytes 1 and 2 whatever
+    // the channel order), as TF draws them without light
+    bool const emissive = vibrantVisuals();
     for (std::size_t from = 0; from + 3 < quads.size(); from += kBatch) {
         std::size_t to = std::min(quads.size() - quads.size() % 4, from + kBatch);
         tess.begin(Tessellator::DebugContextCallback{}, mce::PrimitiveMode::QuadList, static_cast<int>(to - from), false);
@@ -159,6 +163,7 @@ void drawSmoothQuads(ScreenContext& screen, mce::MaterialPtr const& material, mc
             auto const& v = quads[i];
             tess.color(v.r, v.g, v.b, v.a);
             if (tex) tess.mNextUV[0] = glm::vec2{0.5f, 0.5f};
+            if (emissive) tess.mNextMERS = 0x00FFFF00u;
             tess.vertex(v.x, v.y, v.z);
         }
         if (tex) {
@@ -189,7 +194,8 @@ void drawColumns(ScreenContext& screen, mce::MaterialPtr const& material, mce::T
     Tessellator&      tess = screen.tessellator;
     WhiteShaderColour white(screen);
     tess.begin(Tessellator::DebugContextCallback{}, mce::PrimitiveMode::QuadList, 0, false);
-    int quads = 0;
+    int        quads = 0;
+    bool const vv    = vibrantVisuals();
     for (auto const& c : columns) {
         float br = c.fullBright ? 1.0f : brightness;
         tess.color(std::clamp(c.color.r * br, 0.f, 1.f), std::clamp(c.color.g * br, 0.f, 1.f), std::clamp(c.color.b * br, 0.f, 1.f), std::clamp(c.alpha, 0.f, 1.f));
@@ -219,6 +225,7 @@ void drawColumns(ScreenContext& screen, mce::MaterialPtr const& material, mce::T
                 auto const& s  = useg[i];
                 float       x0 = c.x0 + (c.x1 - c.x0) * s.s0, z0 = c.z0 + (c.z1 - c.z0) * s.s0;
                 float       x1 = c.x0 + (c.x1 - c.x0) * s.s1, z1 = c.z0 + (c.z1 - c.z0) * s.s1;
+                if (vv && c.fullBright) tess.mNextMERS = 0x00FFFF00u; // Vibrant Visuals: TF's full-bright columns glow
                 tess.simpleQuad(Vec3{x0, ya, z0}, Vec2{s.tu0, ta}, Vec3{x1, ya, z1}, Vec2{s.tu1, ta}, Vec3{x1, yb, z1}, Vec2{s.tu1, tb}, Vec3{x0, yb, z0}, Vec2{s.tu0, tb});
                 ++quads;
             }

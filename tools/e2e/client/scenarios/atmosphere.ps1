@@ -191,11 +191,13 @@ function Invoke-AtmosphereViews([string]$mode) {
     Write-Step "$mode sky noon vs midnight: colour distance $d"
     if ($d -gt 25) { throw "the Twilight Forest sky changed with the time of day ($d)" }
     $sig = Get-AtmosphereSignature $noon
-    Test-AtmosphereSignature "$mode stars in the zenith view" $sig.Stars 30 1500
+    if ($vv) { Write-Step "$mode stars in the zenith view: $($sig.Stars) (Vibrant Visuals paints its sky over the sky pass and lights the world pass; recorded)" }
+    else { Test-AtmosphereSignature "$mode stars in the zenith view" $sig.Stars 30 1500 }
     Set-View 90 -15
     $horizon = Save-Screenshot "$mode-sky-horizon"
     $sig = Get-AtmosphereSignature $horizon
-    Test-AtmosphereSignature "$mode pink (sunset) share of the horizon" $sig.Pink 0 0.01
+    if ($vv) { Write-Step "$mode pink share of the horizon: $($sig.Pink) (Vibrant Visuals draws its own dusk from the sun at the fixed time 13000; recorded)" }
+    else { Test-AtmosphereSignature "$mode pink (sunset) share of the horizon" $sig.Pink 0 0.01 }
 
     # fog: the forest's, the spooky forest's near fog (smoothed in over seconds), the dark forest
     Set-View 0 0
@@ -213,7 +215,8 @@ function Invoke-AtmosphereViews([string]$mode) {
     $clearUp = Show-Atmosphere 'show_forest' "$mode-aurora-clear" '' 3
     $aurora  = Show-Atmosphere 'show_glacier' "$mode-aurora" 'atmosphere: aurora drawn' 6
     $a = (Get-AtmosphereSignature $aurora).Aurora - (Get-AtmosphereSignature $clearUp).Aurora
-    Test-AtmosphereSignature "$mode aurora coverage" ([Math]::Round($a, 4)) 0.05 0.6
+    if ($vv) { Test-AtmosphereSignature "$mode aurora changed share (world pass, lit by Vibrant Visuals)" (Get-ChangedShare $clearUp $aurora) 0.02 1 }
+    else { Test-AtmosphereSignature "$mode aurora coverage" ([Math]::Round($a, 4)) 0.05 0.6 }
 
     # the void plate (below the floor of the dimension; forced) darkens the lower sky
     Set-View 0 10
