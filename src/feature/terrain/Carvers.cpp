@@ -393,17 +393,49 @@ void carveWith(State const& st, bool highlands, worldgen::Chunk& chunk, worldgen
     if (!highlands && !(random.nextFloat() <= probability)) return;
     auto start = std::chrono::steady_clock::now();
     auto shape = s->gen->shape();
-    Carver c{highlands, *s, chunk, *ctx, {}, cfg, chunk.minY(), chunk.maxY(), std::max(chunk.minY(), shape.minY), std::min(chunk.maxY() - chunk.minY(), shape.height), s->caveAir,
-             gf::terrain::ext::LiquidLayer::of(chunk)};
+    Carver c{
+        highlands,
+        *s,
+        chunk,
+        *ctx,
+        {},
+        cfg,
+        chunk.minY(),
+        chunk.maxY(),
+        std::max(chunk.minY(), shape.minY),
+        std::min(chunk.maxY() - chunk.minY(), shape.height),
+        s->caveAir,
+        gf::terrain::ext::LiquidLayer::of(chunk)
+    };
     c.carve(random);
     addChunkMs(std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count());
 }
 
-bool carveBlockAt(State const& s, bool highlands, worldgen::Chunk& chunk, worldgen::ext::CarverContext& ctx, int x, int y, int z) {
+bool carveBlockAt(
+    State const&                  s,
+    bool                          highlands,
+    worldgen::Chunk&              chunk,
+    worldgen::ext::CarverContext& ctx,
+    int                           x,
+    int                           y,
+    int                           z
+) {
     static Json const empty = Json::object();
     auto              shape = s.gen->shape();
-    Carver c{highlands, s, chunk, ctx, {}, ctx.config ? *ctx.config : empty, chunk.minY(), chunk.maxY(), std::max(chunk.minY(), shape.minY), std::min(chunk.maxY() - chunk.minY(), shape.height), s.caveAir,
-             gf::terrain::ext::LiquidLayer::of(chunk)};
+    Carver            c{
+        highlands,
+        s,
+        chunk,
+        ctx,
+        {},
+        ctx.config ? *ctx.config : empty,
+        chunk.minY(),
+        chunk.maxY(),
+        std::max(chunk.minY(), shape.minY),
+        std::min(chunk.maxY() - chunk.minY(), shape.height),
+        s.caveAir,
+        gf::terrain::ext::LiquidLayer::of(chunk)
+    };
     bool isSurface = false;
     return c.carveBlock(x, y, z, isSurface);
 }

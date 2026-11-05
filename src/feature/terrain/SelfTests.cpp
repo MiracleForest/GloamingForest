@@ -17,27 +17,30 @@
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
-#include "mc/world/level/dimension/DimensionType.h"
 #include "mc/world/level/block/Block.h"
+#include "mc/world/level/dimension/DimensionType.h"
+#include "mc/world/level/storage/LevelStorage.h"
+#include "mc/world/level/storage/db_helpers/Category.h"
 
 #include "core/jrand/BiomeManager.h"
 #include "core/jrand/JRand.h"
+#include "core/landmark/Landmark.h"
+#include "core/terrain/WorldPreset.h"
 #include "feature/dimension/World.h"
 #include "feature/ext/landmark/LandmarkExt.h"
 #include "feature/ext/landmark/LandmarkTest.h"
 #include "feature/ext/terrain/PieceBeard.h"
 #include "feature/ext/terrain/Pipeline.h"
-#include "feature/landmark/Landmark.h"
 #include "feature/ext/worldgen/Carving.h"
 #include "feature/ext/worldgen/FeatureKit.h"
 #include "feature/ext/worldgen/Generation.h"
 #include "feature/features/Features.h"
+#include "feature/landmark/Landmark.h"
 #include "feature/terrain/Terrain.h"
-#include "core/landmark/Landmark.h"
 #include "game/Blocks.h"
 #include "game/WorldDb.h"
-#include "mod/Log.h"
 #include "mod/Config.h"
+#include "mod/Log.h"
 #include "selftest/SelfTest.h"
 
 namespace gf::feature::terrain {
@@ -857,12 +860,20 @@ GF_REGISTER_SELFTEST("terrain.handoff_pass", [](Context& ctx) {
     auto s = anyState();
     ctx.require(s != nullptr, "generator");
     auto noiseSteps   = gf::terrain::ext::stageStepIds(worldgen::Stage::Noise);
-    bool otherWriters = std::any_of(noiseSteps.begin(), noiseSteps.end(), [](std::string const& id) { return id != "terrain.pass_probe"; });
-    ctx.check(std::find(noiseSteps.begin(), noiseSteps.end(), "terrain.pass_probe") != noiseSteps.end(), "the pass probe is the global providers' Stage::Noise step");
+    bool otherWriters = std::any_of(noiseSteps.begin(), noiseSteps.end(), [](std::string const& id) {
+        return id != "terrain.pass_probe";
+    });
+    ctx.check(
+        std::find(noiseSteps.begin(), noiseSteps.end(), "terrain.pass_probe") != noiseSteps.end(),
+        "the pass probe is the global providers' Stage::Noise step"
+    );
     auto before = handoffCounts();
     (void)worldgen::ext::runInMemory(s->seed, 40, -40, 2, 2);
     auto after = handoffCounts();
-    ctx.info("global providers: " + std::to_string(after.first - before.first) + " grids taken, " + std::to_string(after.second - before.second) + " read back");
+    ctx.info(
+        "global providers: " + std::to_string(after.first - before.first) + " grids taken, "
+        + std::to_string(after.second - before.second) + " read back"
+    );
     if (!otherWriters) ctx.check(after.first > before.first, "a pass on F5's global providers hands its grids on");
     // a copy with a foreign Stage::Noise writer: air pockets under every column's top stone
     auto const* air   = kit::javaBlock("minecraft:air");
@@ -871,14 +882,19 @@ GF_REGISTER_SELFTEST("terrain.handoff_pass", [](Context& ctx) {
     std::vector<std::array<int, 3>> pockets;
     before = handoffCounts();
     gf::terrain::ext::generateOnCopyWithNoiseStep(
-        s->seed, 41, -40, -32, 256,
+        s->seed,
+        41,
+        -40,
+        -32,
+        256,
         [&](worldgen::Chunk& c, worldgen::Region&) {
             if (c.chunkX() != 41 || c.chunkZ() != -40) return;
             for (int z = 0; z < 16; ++z)
                 for (int x = 0; x < 16; ++x) {
                     int y = c.maxY() - 1;
                     while (y > c.minY() && kit::isAir(c.getBlock(x, y, z))) --y;
-                    if (&c.getBlock(x, y, z) != stone || y - 2 <= c.minY()) continue; // water or bedrock on top: no pocket
+                    if (&c.getBlock(x, y, z) != stone || y - 2 <= c.minY())
+                        continue; // water or bedrock on top: no pocket
                     c.setBlock(x, y - 1, z, *air);
                     c.setBlock(x, y - 2, z, *air);
                     pockets.push_back({x, y - 1, z});
@@ -888,10 +904,13 @@ GF_REGISTER_SELFTEST("terrain.handoff_pass", [](Context& ctx) {
             int filled = 0;
             for (auto const& [x, y, z] : pockets)
                 if (!kit::isAir(c.getBlock(x, y, z))) ++filled;
-            ctx.info(std::to_string(pockets.size()) + " pockets, " + std::to_string(filled) + " filled after the surface");
+            ctx.info(
+                std::to_string(pockets.size()) + " pockets, " + std::to_string(filled) + " filled after the surface"
+            );
             ctx.check(!pockets.empty(), "the foreign writer made pockets");
             ctx.check(filled == 0, "the surface step saw the foreign writer's blocks (no stale grid)");
-        });
+        }
+    );
     after = handoffCounts();
     ctx.check(after.second > before.second, "the pass on a copy of the providers reads the chunk back");
 });
@@ -912,7 +931,7 @@ GF_REGISTER_SELFTEST("terrain.liquid_layer", [](Context& ctx) -> ll::coro::CoroT
     auto base = ctx.testPos(270, 2);
     // P with both x neighbours inside its chunk, in the air over the test row (the stones around it go
     // back to air afterwards)
-    int  px   = ((base.x & 15) == 0) ? base.x + 1 : (((base.x & 15) == 15) ? base.x - 1 : base.x);
+    int             px = ((base.x & 15) == 0) ? base.x + 1 : (((base.x & 15) == 15) ? base.x - 1 : base.x);
     core::GlobalPos P{base.dim, px, base.y + 3, base.z};
     ctx.require(co_await ctx.ensureLoaded(P), "the test chunk is loaded");
     auto* region = ctx.region();
@@ -927,9 +946,9 @@ GF_REGISTER_SELFTEST("terrain.liquid_layer", [](Context& ctx) -> ll::coro::CoroT
     auto const* water = kit::javaBlock("minecraft:water");
     auto const* air   = kit::javaBlock("minecraft:air");
     ctx.require(water && air, "water and air");
-    int  lx = P.x & 15, lz = P.z & 15;
-    auto stoneAt = [&](int x) { return ctx.blockAt({P.dim, x, P.y, P.z}) == "minecraft:stone"; };
-    worldgen::ext::CarvingMask   mask(chunk->minY(), chunk->maxY());
+    int                        lx = P.x & 15, lz = P.z & 15;
+    auto                       stoneAt = [&](int x) { return ctx.blockAt({P.dim, x, P.y, P.z}) == "minecraft:stone"; };
+    worldgen::ext::CarvingMask mask(chunk->minY(), chunk->maxY());
     worldgen::ext::CarverContext cc{P.x >> 4, P.z >> 4, 0, "twilightforest:tf_caves", nullptr, &mask};
     // 1. a waterlogged block holds water: the carver keeps it
     layer.set(lx, P.y, lz, *water);
@@ -956,18 +975,38 @@ GF_REGISTER_SELFTEST("terrain.liquid_layer", [](Context& ctx) -> ll::coro::CoroT
 
 // ---- the world preset's saved-chunk check ------------------------------------------------------------------
 
-// onWorldReady counts the Twilight Forest's saved chunks (their version records in the world DB)
-// when a world has no kept preset: the scan reads the records the game saved (a new world may have
-// saved none yet, so the counts are reported, not checked).
-GF_REGISTER_SELFTEST("terrain.saved_chunks", [](Context& ctx) {
-    auto start     = std::chrono::steady_clock::now();
-    auto overworld = savedChunkCount(0);
-    ctx.require(overworld.has_value(), "the world DB is readable");
-    int  dim      = gf::world::twilight() ? static_cast<int>(*gf::world::twilight()) : -1;
-    auto twilight = dim >= 0 ? savedChunkCount(dim) : std::optional<std::size_t>{};
-    double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
-    ctx.info("saved chunks: overworld " + std::to_string(*overworld) + ", Twilight Forest " + (twilight ? std::to_string(*twilight) : std::string("-")) + " (" +
-             std::to_string(static_cast<int>(ms)) + " ms)");
+// onWorldReady looks for the Twilight Forest's saved chunks (their version records in the world DB)
+// when a world has no kept preset and the answer matters. The probe looks up keys near the
+// dimension's entrances and never iterates the chunk table here: a version record written for an
+// unused dimension id at a probed position is found, an empty dimension is not, and both stay
+// within the probe's bound.
+GF_REGISTER_SELFTEST("terrain.saved_chunks", [](Context& ctx) -> ll::coro::CoroTask<> {
+    constexpr int kDim   = 4321; // no dimension of the game: its chunk records are only this test's
+    constexpr int kBound = 3 * (2 * kSavedChunkProbeRadius + 1) * (2 * kSavedChunkProbeRadius + 1);
+    auto          level  = ll::service::getLevel();
+    ctx.require(level != nullptr, "a level");
+    auto empty = findSavedChunks(kDim, false);
+    ctx.require(empty.has_value(), "the world DB is readable");
+    ctx.check(!empty->found, "a dimension without chunks has no saved chunk");
+    ctx.check(
+        !empty->scanned && empty->probed > 0 && empty->probed <= static_cast<std::size_t>(kBound),
+        "the probe stays bounded (" + std::to_string(empty->probed) + " positions)"
+    );
+    auto key = core::terrain::chunkVersionKeys(5, -3, kDim)[0];
+    (void)level->getLevelStorage().saveData(key, std::string(1, '\x28'), DBHelpers::Category::Chunk);
+    std::optional<SavedChunkProbe> hit;
+    for (int i = 0; i < 100 && !(hit && hit->found); ++i) {
+        co_await ctx.ticks(2);
+        hit = findSavedChunks(kDim, false);
+    }
+    level = ll::service::getLevel();
+    if (level) (void)level->getLevelStorage().deleteData(key, DBHelpers::Category::Chunk);
+    ctx.check(hit && hit->found, "a saved chunk five chunks from the origin is found");
+    ctx.check(hit && !hit->scanned && hit->probed <= static_cast<std::size_t>(kBound), "found by key, without a scan");
+    if (int dim = gf::world::twilight() ? static_cast<int>(*gf::world::twilight()) : -1; dim >= 0) {
+        auto tf = findSavedChunks(dim, false);
+        ctx.info(std::string("Twilight Forest chunks saved near its entrances: ") + (tf && tf->found ? "yes" : "no"));
+    }
     auto stored = game::db::get("gf:terrain:skylight");
     ctx.check(stored && stored->is_boolean(), "the world keeps its preset");
 });

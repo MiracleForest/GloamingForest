@@ -157,12 +157,30 @@ void clearBeardCache();
 /// instead because something else could have written it (second), since the module loaded.
 [[nodiscard]] std::pair<std::uint64_t, std::uint64_t> handoffCounts();
 
-/// The saved chunks of dimension `dim` in the loaded world's DB (nullopt without a level): a world
-/// without a kept preset whose Twilight Forest has some stays twilight_noise_gen.
-[[nodiscard]] std::optional<std::size_t> savedChunkCount(int dim);
+/// How far (in chunks) findSavedChunks looks around the Twilight Forest's entrances before it scans.
+inline constexpr int kSavedChunkProbeRadius = 16;
+struct SavedChunkProbe {
+    bool        found   = false; ///< a saved chunk of the dimension exists
+    std::size_t probed  = 0;     ///< chunk positions looked up by key
+    bool        scanned = false; ///< the whole chunk table was iterated
+};
+/// Whether dimension `dim` of the loaded world's DB holds a saved chunk (nullopt without a level): a
+/// world without a kept preset whose Twilight Forest has one stays twilight_noise_gen. Looks up the
+/// version records of the chunks within kSavedChunkProbeRadius of the dimension's origin and of the
+/// world spawn's portal destination; only when none is there and `fullScan` iterates every chunk
+/// record (onWorldReady does that once per world, and only when the answer can change the preset).
+[[nodiscard]] std::optional<SavedChunkProbe> findSavedChunks(int dim, bool fullScan);
 
 /// TFCavesCarver#carveBlock (and its postCarveBlock) at one world position of `chunk`, as a tunnel
 /// reaching it would run it (selftests: the fluid tests on Bedrock's liquid layer). True: carved.
-bool carveBlockAt(State const& s, bool highlands, worldgen::Chunk& chunk, worldgen::ext::CarverContext& ctx, int x, int y, int z);
+bool carveBlockAt(
+    State const&                  s,
+    bool                          highlands,
+    worldgen::Chunk&              chunk,
+    worldgen::ext::CarverContext& ctx,
+    int                           x,
+    int                           y,
+    int                           z
+);
 
 } // namespace gf::feature::terrain

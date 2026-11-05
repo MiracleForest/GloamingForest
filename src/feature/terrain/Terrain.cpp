@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <cmath>
 #include <condition_variable>
 #include <deque>
 #include <filesystem>
@@ -40,9 +41,9 @@
 #include "ll/api/service/Bedrock.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/Level.h"
+#include "mc/world/level/block/Block.h"
 #include "mc/world/level/storage/LevelStorage.h"
 #include "mc/world/level/storage/db_helpers/Category.h"
-#include "mc/world/level/block/Block.h"
 
 #include "core/jrand/BiomeManager.h"
 #include "core/jrand/Mth.h"
@@ -714,16 +715,42 @@ void blanketProvider(worldgen::Chunk& chunk, worldgen::Region&) {
     writeGrid(*s, chunk, before, after);
 }
 
-/// The saved chunks of dimension `dim` in the world's DB (their version records), counted once when
-/// the world has no kept preset; nullopt without a level.
-std::optional<std::size_t> savedChunkCount(int dim) {
+std::optional<SavedChunkProbe> findSavedChunks(int dim, bool fullScan) {
     auto level = ll::service::getLevel();
     if (!level) return std::nullopt;
-    std::size_t n = 0;
-    level->getLevelStorage().forEachKeyWithPrefix("", DBHelpers::Category::Chunk, [&](std::string_view key, std::string_view) {
-        if (auto d = core::terrain::chunkVersionKeyDimension(key); d && *d == dim) ++n;
+    auto const&     db = level->getLevelStorage();
+    SavedChunkProbe r;
+    auto            saved = [&](int x, int z) {
+        ++r.probed;
+        for (auto const& k : core::terrain::chunkVersionKeys(x, z, dim))
+            if (db.hasKey(k, DBHelpers::Category::Chunk)) return true;
+        return false;
+    };
+    // the chunks a Twilight Forest is entered by first: around its origin, and around where a portal
+    // at the world spawn leads (F4: Twilight Forest = overworld / coordinateScale), nearest first
+    BlockPos const& spawn         = level->getDefaultSpawn();
+    double          toTf          = 1.0 / gf::world::coordinateScale();
+    int const       centres[3][2] = {
+        {0,                                                 0                                                },
+        {static_cast<int>(std::floor(spawn.x * toTf)) >> 4, static_cast<int>(std::floor(spawn.z * toTf)) >> 4},
+        {spawn.x >> 4,                                      spawn.z >> 4                                     },
+    };
+    for (int ring = 0; ring <= kSavedChunkProbeRadius && !r.found; ++ring)
+        for (auto const& c : centres) {
+            for (int dx = -ring; dx <= ring && !r.found; ++dx)
+                for (int dz = -ring; dz <= ring && !r.found; ++dz)
+                    if ((std::abs(dx) == ring || std::abs(dz) == ring) && saved(c[0] + dx, c[1] + dz)) r.found = true;
+            if (r.found) break;
+        }
+    if (r.found || !fullScan) return r;
+    // nothing near the entrances: a world whose players wandered far. Every chunk record has to be
+    // looked at (the callback cannot stop the iteration; it only stops counting)
+    r.scanned = true;
+    db.forEachKeyWithPrefix("", DBHelpers::Category::Chunk, [&](std::string_view key, std::string_view) {
+        if (r.found) return;
+        if (auto d = core::terrain::chunkVersionKeyDimension(key); d && *d == dim) r.found = true;
     });
-    return n;
+    return r;
 }
 
 namespace {
@@ -857,20 +884,24 @@ void onWorldReady() {
     // takes the one chunks already generated with this session (before the world was ready), else
     // the config's
     int  provisional = provisionalFlag().load();
-    bool configured  = config::get<TerrainConfig>().skylight;
+    bool                configured  = config::get<TerrainConfig>().skylight;
     auto name        = [](bool s) { return s ? "skylight" : "twilight"; };
     std::optional<bool> stored;
     if (auto v = game::db::get(kSkylightKey); v && v->is_boolean()) stored = v->get<bool>();
     bool saved = false;
-    if (!stored) {
-        int dim = twilightDim();
-        if (dim >= 0) {
-            auto start = std::chrono::steady_clock::now();
-            auto n     = savedChunkCount(dim);
-            saved      = n && *n > 0;
-            gf::log().info("terrain: the world holds {} saved Twilight Forest chunks (read in {:.0f} ms)", n ? *n : 0,
-                           std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count());
-        }
+    // the DB is read only when saved chunks would turn a skylight answer into twilight (the default
+    // twilight config never reads it), and then only once per world: the answer is stored below
+    if (int dim = twilightDim(); dim >= 0 && core::terrain::savedChunksMatter(stored, provisional, configured)) {
+        auto start = std::chrono::steady_clock::now();
+        auto probe = findSavedChunks(dim, true);
+        saved      = probe && probe->found;
+        gf::log().info(
+            "terrain: saved Twilight Forest chunks: {} ({} positions looked up{}, {:.0f} ms)",
+            saved ? "yes" : "no",
+            probe ? probe->probed : 0,
+            probe && probe->scanned ? ", chunk table scanned" : "",
+            std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count()
+        );
     }
     auto choice = core::terrain::choosePreset(stored, saved, provisional, configured);
     bool sky    = choice.skylight;
@@ -880,13 +911,26 @@ void onWorldReady() {
             gf::log().warn("terrain: chunks generated before the world was ready used {} but the world is {}", name(provisional == 1), name(sky));
         break;
     case core::terrain::PresetSource::SavedChunks:
-        if (configured) gf::log().warn("terrain: this world's Twilight Forest was generated before a preset was kept: it stays twilight (config skylight ignored)");
-        if (provisional == 1) gf::log().warn("terrain: chunks generated before the world was ready used skylight, but the world stays twilight");
+        if (configured)
+            gf::log().warn(
+                "terrain: this world's Twilight Forest was generated before a preset was kept: it stays twilight "
+                "(config skylight ignored)"
+            );
+        if (provisional == 1)
+            gf::log().warn(
+                "terrain: chunks generated before the world was ready used skylight, but the world stays twilight"
+            );
         break;
     case core::terrain::PresetSource::Provisional:
-        if (sky != configured) gf::log().warn("terrain: chunks generated before the world was ready used {}: the new world keeps it (config {})", name(sky), name(configured));
+        if (sky != configured)
+            gf::log().warn(
+                "terrain: chunks generated before the world was ready used {}: the new world keeps it (config {})",
+                name(sky),
+                name(configured)
+            );
         break;
-    case core::terrain::PresetSource::Config: break;
+    case core::terrain::PresetSource::Config:
+        break;
     }
     if (!stored) game::db::put(kSkylightKey, sky);
     {
@@ -895,7 +939,9 @@ void onWorldReady() {
     }
     flagKnown().notify_all();
     gf::log().info("terrain: world preset {}", name(sky));
-}struct TerrainModule {
+}
+
+struct TerrainModule {
     void install() {
         noteLifecycleThread();
         installed() = true;
@@ -911,10 +957,15 @@ void onWorldReady() {
             carve(true, c, r, rnd);
         });
         // the chunk's total (noise .. carvers) once its Carvers stage ends
-        worldgen::addStage(worldgen::Stage::Carvers, "terrain.timing", 1000000, [](worldgen::Chunk&, worldgen::Region&) {
-            recordChunkMs(tChunkMs);
-            tChunkMs = 0;
-        });
+        worldgen::addStage(
+            worldgen::Stage::Carvers,
+            "terrain.timing",
+            1000000,
+            [](worldgen::Chunk&, worldgen::Region&) {
+                recordChunkMs(tChunkMs);
+                tChunkMs = 0;
+            }
+        );
         features::registerPlacement("twilightforest:chunk_blanketing", chunkBlanketing);
         landmark::ext::setHeightProvider(heightProvider);
         game::db::onWorldReady(onWorldReady);

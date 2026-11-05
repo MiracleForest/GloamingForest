@@ -62,8 +62,15 @@ struct PassWriters {
 /// Selftest support: generates chunk (chunkX, chunkZ) of an in-memory world (y minY .. maxY) on a
 /// copy of F5's current global providers with `extra` added as a Stage::Noise step (another unit's
 /// writer the global providers do not hold), then calls `inspect` with the chunk.
-void generateOnCopyWithNoiseStep(std::int64_t seed, int chunkX, int chunkZ, int minY, int maxY, worldgen::ChunkFn extra,
-                                 std::function<void(worldgen::Chunk&)> const& inspect);
+void generateOnCopyWithNoiseStep(
+    std::int64_t                                 seed,
+    int                                          chunkX,
+    int                                          chunkZ,
+    int                                          minY,
+    int                                          maxY,
+    worldgen::ChunkFn                            extra,
+    std::function<void(worldgen::Chunk&)> const& inspect
+);
 
 // ---- Bedrock's liquid layer ------------------------------------------------------------------------------
 
@@ -77,7 +84,7 @@ public:
     LiquidLayer() = default;
     /// The layer of `chunk` (checks the order as above).
     [[nodiscard]] static LiquidLayer of(worldgen::Chunk& chunk);
-    explicit operator bool() const { return mChunk != nullptr; }
+    explicit                         operator bool() const { return mChunk != nullptr; }
     /// The block of the layer at a local position (nullptr: none, air, or outside the chunk).
     [[nodiscard]] Block const* at(int lx, int y, int lz) const;
     /// Empties the layer at a local position (Java replacing a waterlogged state replaces its fluid

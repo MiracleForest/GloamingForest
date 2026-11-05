@@ -6,7 +6,9 @@
 // DB that tell whether a dimension already holds generated chunks (a world whose Twilight Forest
 // was generated before the preset was kept stays twilight_noise_gen). Pure: no game headers.
 
+#include <array>
 #include <optional>
+#include <string>
 #include <string_view>
 
 namespace gf::core::terrain {
@@ -16,6 +18,10 @@ namespace gf::core::terrain {
 /// overworld; nullopt for every other key (subchunks, block entities, string keys, ...). Every
 /// saved chunk has exactly one version record.
 [[nodiscard]] std::optional<int> chunkVersionKeyDimension(std::string_view key);
+
+/// The two version-record keys a saved chunk of dimension `dim` (0: the overworld) at chunk (x, z)
+/// can have (tag 44 "Version", then the legacy 118): the keys chunkVersionKeyDimension accepts.
+[[nodiscard]] std::array<std::string, 2> chunkVersionKeys(int x, int z, int dim);
 
 enum class PresetSource {
     Stored,      ///< gf:terrain:skylight
@@ -32,6 +38,12 @@ struct PresetChoice {
 /// The preset of a world: the stored one wins; else a world whose Twilight Forest has saved chunks
 /// stays twilight; else what chunks generated before the world was ready used (`provisional`: -1
 /// none, 0 twilight, 1 skylight); else the config's.
-[[nodiscard]] PresetChoice choosePreset(std::optional<bool> stored, bool savedTwilightChunks, int provisional, bool configured);
+[[nodiscard]] PresetChoice
+choosePreset(std::optional<bool> stored, bool savedTwilightChunks, int provisional, bool configured);
+
+/// Whether the saved chunks can change choosePreset's answer: only without a stored choice and when
+/// the alternative is skylight (the config or the provisional chunks); a twilight answer is the
+/// same with or without saved chunks, so the world DB is not read for it.
+[[nodiscard]] bool savedChunksMatter(std::optional<bool> stored, int provisional, bool configured);
 
 } // namespace gf::core::terrain

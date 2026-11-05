@@ -76,9 +76,9 @@ struct PassProbe {
             else if (step.fn.target<PassProbe>() == this) mine = true;
         }
         if (!mine) return; // a pass on another Providers object: its steps are unknown
-        tPass.writers.known = true;
-        tPass.writers.noise = others;
-        auto surface        = snap->stages.find(worldgen::Stage::Surface);
+        tPass.writers.known   = true;
+        tPass.writers.noise   = others;
+        auto surface          = snap->stages.find(worldgen::Stage::Surface);
         tPass.writers.surface = (surface != snap->stages.end() && !surface->second.empty())
                              || (!snap->blankets.empty() && snap->blankets.begin()->first < readerBlanket());
     }
@@ -98,14 +98,24 @@ PassWriters passWriters(int chunkX, int chunkZ) {
     return tPass.writers;
 }
 
-void generateOnCopyWithNoiseStep(std::int64_t seed, int chunkX, int chunkZ, int minY, int maxY, worldgen::ChunkFn extra,
-                                 std::function<void(worldgen::Chunk&)> const& inspect) {
+void generateOnCopyWithNoiseStep(
+    std::int64_t                                 seed,
+    int                                          chunkX,
+    int                                          chunkZ,
+    int                                          minY,
+    int                                          maxY,
+    worldgen::ChunkFn                            extra,
+    std::function<void(worldgen::Chunk&)> const& inspect
+) {
     auto snap = worldgen::detail::providers();
     if (!snap) return;
     worldgen::detail::Providers p = *snap;
-    p.stages[worldgen::Stage::Noise].insert(p.stages[worldgen::Stage::Noise].begin(), worldgen::detail::Step{"gf_test.terrain_noise_writer", 0, 0, std::move(extra)});
-    worldgen::detail::MemoryWorld world(minY, maxY, seed);
-    auto&                         c = worldgen::detail::asChunk(world.chunk(chunkX, chunkZ));
+    p.stages[worldgen::Stage::Noise].insert(
+        p.stages[worldgen::Stage::Noise].begin(),
+        worldgen::detail::Step{"gf_test.terrain_noise_writer", 0, 0, std::move(extra)}
+    );
+    worldgen::detail::MemoryWorld     world(minY, maxY, seed);
+    auto&                             c = worldgen::detail::asChunk(world.chunk(chunkX, chunkZ));
     worldgen::detail::ChunkOnlyRegion region(c, seed, -1, p.biomeSource);
     worldgen::detail::generateChunk(p, c, region, seed);
     if (inspect) inspect(c);
@@ -119,7 +129,11 @@ namespace {
 std::uint16_t subChunkIndex(int lx, int ly, int lz) { return static_cast<std::uint16_t>((lx << 8) | (lz << 4) | ly); }
 
 ChunkBlockPos chunkPos(int lx, int y, int lz, int minY) {
-    return ChunkBlockPos{static_cast<uchar>(lx), ChunkLocalHeight{static_cast<short>(y - minY)}, static_cast<uchar>(lz)};
+    return ChunkBlockPos{
+        static_cast<uchar>(lx),
+        ChunkLocalHeight{static_cast<short>(y - minY)},
+        static_cast<uchar>(lz)
+    };
 }
 
 SubChunkStorage<Block> const* layerOf(LevelChunk& lc, int chunkMinY, int y, int layer, int* ly) {
@@ -161,10 +175,16 @@ bool indexOrderVerified(LevelChunk& lc, int chunkMinY, int chunkMaxY) {
         if (!first) first = &b;
         else if (first != &b) varied = true;
     }
-    if (!varied || checked == 0) return false; // unproven: the layer stays unread in this chunk (one block everywhere carves nothing)
+    if (!varied || checked == 0)
+        return false; // unproven: the layer stays unread in this chunk (one block everywhere carves nothing)
     int expected = -1;
     if (orderVerdict().compare_exchange_strong(expected, wrong == 0 ? 1 : 0) && wrong)
-        gf::log().warn("terrain: the subchunk block order is not x-z-y ({} of {} probes differ): waterlogged blocks stay unseen by the carvers", wrong, checked);
+        gf::log().warn(
+            "terrain: the subchunk block order is not x-z-y ({} of {} probes differ): waterlogged blocks stay unseen "
+            "by the carvers",
+            wrong,
+            checked
+        );
     return orderVerdict().load() == 1;
 }
 
@@ -172,7 +192,8 @@ bool indexOrderVerified(LevelChunk& lc, int chunkMinY, int chunkMaxY) {
 
 LiquidLayer LiquidLayer::of(worldgen::Chunk& chunk) {
     LiquidLayer out;
-    auto*       adapter = dynamic_cast<worldgen::detail::LevelChunkAdapter*>(&chunk); // a GloamingForest type, not a game type
+    auto*       adapter =
+        dynamic_cast<worldgen::detail::LevelChunkAdapter*>(&chunk); // a GloamingForest type, not a game type
     if (!adapter) return out;
     auto& lc = adapter->levelChunk();
     if (!indexOrderVerified(lc, chunk.minY(), chunk.maxY())) return out;
@@ -206,7 +227,12 @@ std::unique_ptr<worldgen::Chunk> loadedGameChunk(BlockSource& source, int chunkX
     if (!level) return nullptr;
     LevelChunk* lc = source.getChunk(chunkX, chunkZ);
     if (!lc) return nullptr;
-    return std::make_unique<worldgen::detail::LevelChunkAdapter>(*lc, level->getBiomeRegistry(), source.getMinHeight(), source.getMaxHeight());
+    return std::make_unique<worldgen::detail::LevelChunkAdapter>(
+        *lc,
+        level->getBiomeRegistry(),
+        source.getMinHeight(),
+        source.getMaxHeight()
+    );
 }
 
 } // namespace gf::terrain::ext

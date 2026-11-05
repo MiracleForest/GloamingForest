@@ -3,6 +3,7 @@
 #include <gtest/gtest.h>
 
 #include <cstdint>
+#include <optional>
 #include <string>
 
 #include "core/terrain/WorldPreset.h"
@@ -16,7 +17,13 @@ void putInt(std::string& s, std::int32_t v) {
     for (int i = 0; i < 4; ++i) s.push_back(static_cast<char>((static_cast<std::uint32_t>(v) >> (8 * i)) & 0xFF));
 }
 
-std::string chunkKey(std::int32_t x, std::int32_t z, std::optional<std::int32_t> dim, unsigned char tag, std::optional<unsigned char> sub = std::nullopt) {
+std::string chunkKey(
+    std::int32_t                 x,
+    std::int32_t                 z,
+    std::optional<std::int32_t>  dim,
+    unsigned char                tag,
+    std::optional<unsigned char> sub = std::nullopt
+) {
     std::string k;
     putInt(k, x);
     putInt(k, z);
@@ -42,12 +49,36 @@ TEST(TerrainWorldPreset, OtherRecordsAreNoChunks) {
     EXPECT_FALSE(wp::chunkVersionKeyDimension(chunkKey(1, 1, 3, 49)));
     EXPECT_FALSE(wp::chunkVersionKeyDimension(chunkKey(1, 1, std::nullopt, 54)));
     // the world's string keys of the same lengths
-    for (char const* s : {"Overworld", "mobevents", "BiomeData", "~local_player", "scoreboard", "gf:terrain:skylight", "portals", ""})
+    for (char const* s :
+         {"Overworld", "mobevents", "BiomeData", "~local_player", "scoreboard", "gf:terrain:skylight", "portals", ""})
         EXPECT_FALSE(wp::chunkVersionKeyDimension(s)) << s;
     // a 13-byte key whose dimension field is not a dimension id
     EXPECT_FALSE(wp::chunkVersionKeyDimension(chunkKey(0, 0, 0, 44)));
     EXPECT_FALSE(wp::chunkVersionKeyDimension(chunkKey(0, 0, -4, 44)));
     EXPECT_FALSE(wp::chunkVersionKeyDimension(chunkKey(0, 0, 0x01000000, 44)));
+}
+
+TEST(TerrainWorldPreset, VersionKeysAreTheRecordsTheScanAccepts) {
+    for (int dim : {0, 1, 2, 3, 7}) {
+        auto keys   = wp::chunkVersionKeys(-37, 125000, dim);
+        auto dimArg = dim == 0 ? std::optional<std::int32_t>{} : std::optional<std::int32_t>{dim};
+        EXPECT_EQ(keys[0], chunkKey(-37, 125000, dimArg, 44));
+        EXPECT_EQ(keys[1], chunkKey(-37, 125000, dimArg, 118));
+        for (auto const& k : keys) EXPECT_EQ(wp::chunkVersionKeyDimension(k), dim);
+    }
+}
+
+TEST(TerrainWorldPreset, SavedChunksAreReadOnlyWhenTheyChangeTheAnswer) {
+    for (int provisional : {-1, 0, 1})
+        for (bool configured : {false, true}) {
+            bool matters = wp::savedChunksMatter(std::nullopt, provisional, configured);
+            // they matter exactly when the answer with and without saved chunks differs
+            bool differs = wp::choosePreset(std::nullopt, true, provisional, configured).skylight
+                        != wp::choosePreset(std::nullopt, false, provisional, configured).skylight;
+            EXPECT_EQ(matters, differs) << provisional << " " << configured;
+            EXPECT_FALSE(wp::savedChunksMatter(true, provisional, configured));
+            EXPECT_FALSE(wp::savedChunksMatter(false, provisional, configured));
+        }
 }
 
 TEST(TerrainWorldPreset, StoredChoiceWins) {
