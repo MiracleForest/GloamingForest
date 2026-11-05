@@ -85,7 +85,8 @@ Rgb brightnessDependentFogColor(Rgb fog, float d) {
 }
 
 Rgb fogColor(Rgb biomeFog, Rgb biomeSky, float d, int renderDistanceChunks) {
-    float f = 0.25f + 0.75f * static_cast<float>(renderDistanceChunks) / 32.0f;
+    // Java's render distance option ends at 32 chunks (Bedrock's goes further)
+    float f = 0.25f + 0.75f * static_cast<float>(std::clamp(renderDistanceChunks, 2, 32)) / 32.0f;
     f       = 1.0f - static_cast<float>(std::pow(static_cast<double>(f), 0.25));
     Rgb sky{biomeSky.r * d, biomeSky.g * d, biomeSky.b * d}; // ClientLevel#getSkyColor (clear weather)
     Rgb fog = brightnessDependentFogColor(biomeFog, d);
