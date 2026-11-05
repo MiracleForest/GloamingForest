@@ -1,18 +1,27 @@
-# Travellers' Gear movement (U12), client: a real player wearing Travellers' wings (double jump,
-# side step, gradual glide, built-in high jump) and boots (water walk, built-in step up), equipped by
-# the selftest tgmove.e2e.equip, uses them with real key presses and the client mod measures each
-# move (one "tgmove: ..." line per move, src/client/tgmove/TgMoveClient.cpp), compared with TF:
+# Travellers' Gear movement (U12), client: a real player (tagged gf_e2e.tgmove, the only players the
+# e2e selftests touch) wearing Travellers' wings (double jump, side step, gradual glide, agile
+# ranger, built-in high jump), vest (built-in swift swim) and boots (water walk, unrestrained,
+# built-in step up), equipped by the selftest tgmove.e2e.equip, uses them with real key presses and
+# the client mod measures each move (one "tgmove: ..." line per move, src/client/tgmove), compared
+# with TF:
 #   double jump  SPACE, then SPACE in the air: the second jump rises 0.62 (Jump Boost II) ->
-#                about 2.5 blocks above where it started (TF: jumpFromGround with the wings' boost)
-#   sidestep     A, A within 4 ticks on the ground: a 1.6 push left, about 3.5 blocks (ground friction
-#                0.546: 1.6 / 0.454), TF's "5 blocks" comment counts the walking too
+#                about 2.5 blocks above where it started; the wings take the DOUBLE_JUMP pose and
+#                the double_jump particles fall from them (screenshots right after the jump)
+#   sidestep     A, A within 4 ticks on the ground: a 1.6 push left, about 3.5 blocks
 #   glide        SHIFT held while falling: y velocity x 5/6 each tick -> about 0.36 blocks per tick
 #   water walk   the player stands on a water source at its half-block stable shape (y + 0.5)
 #   step up      walking into a full block steps up 1.0 (step height + 0.5)
+#   then each walk twice, with the gear and with tgmove.e2e.plain (no agile ranger, unrestrained or
+#   vest; straight ahead instead), and compares the speeds:
+#   agile ranger drawing a bow while walking: about full walking speed, not the bow's slowdown
+#   unrestrained soul sand and cobweb at walking speed; the honey block's jump at full height
+#   swift swim   swimming with Depth Strider III is faster than without
+#   straight ahead walking forward x1.4, the strafe impulse / 1.4, the FOV compensated
 # remote-mod runs the same against BDS (the companion packets go over the network, the host logs
 # the double jump and the sidestep); remote-vanilla checks the fallback: SPACE in the air makes the
 # server push the double jump (SetActorMotionPacket) and the client stays connected.
-# Screenshots: out/tgmove*/{start,double-jump,sidestep,glide,water-walk,step-up}.png
+# Screenshots: out/tgmove*/{start,wings-idle,double-jump-1,double-jump-2,double-jump-3,sidestep,
+# glide,water-walk,step-up,bow}.png
 $remote     = $script:Mode -ne 'local'
 $hostPrefix = if ($remote) { '\[host\].*' } else { '' }
 $client     = '^(?!\[host\]).*'
@@ -21,42 +30,90 @@ function Hold-Key([int]$vk, [int]$ms) {
     Assert-GameForeground
     [BsE2E.Native]::Key([uint16]$vk, $false); Start-Sleep -Milliseconds $ms; [BsE2E.Native]::Key([uint16]$vk, $true)
 }
-$VK_SPACE = 0x20; $VK_SHIFT = 0x10; $VK_A = 0x41; $VK_W = 0x57
+$VK_SPACE = 0x20; $VK_SHIFT = 0x10; $VK_A = 0x41; $VK_W = 0x57; $VK_F5 = 0x74
+
+function Invoke-E2eSelfTest([string]$name) {
+    $mark = Get-LogMark
+    Invoke-Chat "/twilightforest selftest `"$name`""
+    $done = Wait-LogLine 'SELFTEST DONE pass=(\d+) fail=(\d+)' 60 -Since $mark
+    if ($done -notmatch 'pass=1 fail=0') { throw "${name}: $done" }
+    if (-not (Get-LeviLog | Select-Object -Skip $mark | Select-String -Pattern 'equipped 1 players' -Quiet)) { throw "${name} equipped nobody (the gf_e2e.tgmove tag)" }
+}
 
 Wait-LogLine "${hostPrefix}GloamingForest world ready" 120 | Out-Null
 Save-Screenshot 'start' | Out-Null
 
-# the test area: x 300..320, z 300..320 of the flat test world (grass at y -61)
+# the test area: x 298..322, z 296..322 of the flat test world (grass at y -61)
 Invoke-Chat '/gamemode survival'
 Invoke-Chat '/effect @s resistance 600 4 true'
+Invoke-Chat '/effect @s saturation 600 1 true'
 Invoke-Teleport '/tp @s 310.5 -60 310.5 0 0' # load the area's chunks before filling it
 Start-Sleep -Seconds 3
 Invoke-Chat '/fill 298 -60 296 322 -40 322 air'
 Invoke-Chat '/fill 298 -61 296 322 -61 322 grass_block'
 Invoke-Chat '/setblock 305 -60 300 stone'
 Invoke-Chat '/fill 310 -61 300 314 -61 306 water'
-$mark = Get-LogMark
-Invoke-Chat '/twilightforest selftest "tgmove.e2e.equip"'
-$done = Wait-LogLine 'SELFTEST DONE pass=(\d+) fail=(\d+)' 60 -Since $mark
-if ($done -notmatch 'pass=1 fail=0') { throw "tgmove.e2e.equip: $done" }
+Invoke-Chat '/fill 316 -63 300 321 -61 316 water'      # the swimming pool, 3 deep
+Invoke-Chat '/fill 298 -61 314 308 -61 315 soul_sand'
+Invoke-Chat '/fill 298 -60 318 308 -59 319 web'
+Invoke-Chat '/setblock 300 -61 322 honey_block'
+Invoke-Chat '/tag @s add gf_e2e.tgmove'
+Invoke-E2eSelfTest 'tgmove.e2e.equip'
 $results = [ordered]@{}
 $script:tgFailures = @()
 function Add-Failure([string]$m) { $script:tgFailures += $m; Write-Step "FAIL: $m" }
 
-# ---- double jump ----
+# the speed of the walk run `what` ("tgmove: speed <what> <v> blocks per tick") since $mark
+function Measure-Walk([string]$what, [string]$tp, [int]$ms, [switch]$Bow, [switch]$Strafe) {
+    Invoke-Teleport $tp
+    Start-Sleep -Seconds 1
+    Focus-Game
+    $mark = Get-LogMark
+    if ($Bow) { [BsE2E.Native]::MouseButton(1, $false); Start-Sleep -Milliseconds 300 }
+    try {
+        [BsE2E.Native]::Key([uint16]$VK_W, $false)
+        if ($Strafe) { Start-Sleep -Milliseconds 300; [BsE2E.Native]::Key([uint16]$VK_A, $false) }
+        Start-Sleep -Milliseconds $ms
+        if ($Bow) { Save-Screenshot 'bow' | Out-Null }
+    } finally {
+        if ($Strafe) { [BsE2E.Native]::Key([uint16]$VK_A, $true) }
+        [BsE2E.Native]::Key([uint16]$VK_W, $true)
+        if ($Bow) { [BsE2E.Native]::MouseButton(1, $true) }
+    }
+    $line = Wait-LogLine "${client}tgmove: speed $what ([0-9.]+) blocks per tick over (\d+) ticks" 15 -Since $mark
+    if ($line -notmatch "speed $what ([0-9.]+) blocks per tick over (\d+)") { throw "no $what speed in '$line'" }
+    [double]$Matches[1]
+}
+function Measure-HoneyJump {
+    Invoke-Teleport '/tp @s 300.5 -60 322.5 180 0'
+    Start-Sleep -Seconds 1
+    Focus-Game
+    $mark = Get-LogMark
+    Hold-Key $VK_SPACE 80
+    $line = Wait-LogLine "${client}tgmove: jump peak ([0-9.]+) blocks from minecraft:honey_block" 10 -Since $mark
+    if ($line -notmatch 'peak ([0-9.]+) blocks') { throw "no honey jump in '$line'" }
+    [double]$Matches[1]
+}
+
+# ---- the wings at rest, third person (TF's idle pose: wings swept back and out) ----
 Invoke-Teleport '/tp @s 300.5 -60 302.5 0 0'
 Start-Sleep -Seconds 2
 Focus-Game
-Hold-Key 0x74 60 # F5: third person, the wings and their particles in view
-Start-Sleep -Milliseconds 500
+Hold-Key $VK_F5 60 # F5: third person, the wings and their particles in view
+Start-Sleep -Milliseconds 800
+Save-Screenshot 'wings-idle' | Out-Null
+
+# ---- double jump ----
 Focus-Game
 $mark = Get-LogMark
 Hold-Key $VK_SPACE 80
 Start-Sleep -Milliseconds 250
-Hold-Key $VK_SPACE 80
-Start-Sleep -Milliseconds 150
-Save-Screenshot 'double-jump' | Out-Null
-Hold-Key 0x74 60; Start-Sleep -Milliseconds 200; Hold-Key 0x74 60 # back to first person
+Hold-Key $VK_SPACE 60
+Save-Screenshot 'double-jump-1' | Out-Null # the particles leave the wings within a few ticks
+Save-Screenshot 'double-jump-2' | Out-Null
+Start-Sleep -Milliseconds 100
+Save-Screenshot 'double-jump-3' | Out-Null
+Hold-Key $VK_F5 60; Start-Sleep -Milliseconds 200; Hold-Key $VK_F5 60 # back to first person
 if ($script:Mode -eq 'remote-vanilla') {
     Wait-LogLine '\[host\].*tgmove: .* double jumped \(vy [0-9.]+, vanilla fallback\)' 20 -Since $mark | Out-Null
     Start-Sleep -Seconds 3
@@ -83,12 +140,16 @@ if ($peak -notmatch 'peak ([0-9.]+) blocks') { throw "no double jump peak in '$p
 $h = [double]$Matches[1]
 $results['double jump height'] = "$h blocks (TF about 2.5)"
 if ($h -lt 2.0 -or $h -gt 3.0) { Add-Failure "double jump peak $h blocks, TF's is about 2.5 (0.62 with Jump Boost II)" }
+try {
+    $pose = Wait-LogLine "${client}tgmove: wings pose double_jump \(right ([-0-9.]+) ([-0-9.]+) ([-0-9.]+)" 10 -Since $mark
+    $results['wings pose'] = ($pose -replace '.*tgmove: ', '') + ' (TF DOUBLE_JUMP target -22.9 -45.8 -5.7, eased in)'
+} catch { Add-Failure "no DOUBLE_JUMP wings pose: $_" }
 if ($remote) { Wait-LogLine '\[host\].*tgmove: .* double jumped \(vy' 20 -Since $mark | Out-Null }
 
 # ---- sidestep (A twice within 4 ticks) ----
 try {
 Invoke-Teleport '/tp @s 300.5 -60 304.5 0 0'
-Start-Sleep -Seconds 3 # the 40 tick cooldown since the teleport is not relevant: last sidestep long ago
+Start-Sleep -Seconds 3 # more than the 40 tick cooldown since the double jump's test
 Focus-Game
 $mark = Get-LogMark
 Hold-Key $VK_A 70
@@ -113,13 +174,17 @@ Invoke-Teleport '/tp @s 300.5 -60 310.5 0 0'
 $mark = Get-LogMark
 Invoke-Chat '/twilightforest selftest "tgmove.e2e.lift"'
 Focus-Game
+Hold-Key $VK_F5 60 # third person: the wings' FALL_SLOW flap
 [BsE2E.Native]::Key([uint16]$VK_SHIFT, $false)
 try {
-Wait-LogLine 'tgmove.e2e.lift: lifted' 20 -Since $mark | Out-Null
+Wait-LogLine 'tgmove.e2e.lift: lifted 1' 20 -Since $mark | Out-Null
 Start-Sleep -Milliseconds 1500
 Save-Screenshot 'glide' | Out-Null
 $glide = Wait-LogLine "${client}tgmove: glide ended after (\d+) ticks, sink ([0-9.]+) blocks per tick" 20 -Since $mark
-} finally { [BsE2E.Native]::Key([uint16]$VK_SHIFT, $true) }
+} finally {
+    [BsE2E.Native]::Key([uint16]$VK_SHIFT, $true)
+    Hold-Key $VK_F5 60; Start-Sleep -Milliseconds 200; Hold-Key $VK_F5 60
+}
 if ($glide -notmatch 'after (\d+) ticks, sink ([0-9.]+)') { throw "no glide line in '$glide'" }
 $ticks = [int]$Matches[1]; $sink = [double]$Matches[2]
 $results['glide sink rate'] = "$sink blocks/tick over $ticks ticks (TF terminal 0.357)"
@@ -127,7 +192,7 @@ if ($ticks -lt 40) { Add-Failure "the glide lasted only $ticks ticks" }
 if ($sink -lt 0.25 -or $sink -gt 0.40) { Add-Failure "glide sink $sink blocks per tick, TF's terminal is 0.357" }
 } catch { Add-Failure "glide: $_" }
 
-# ---- water walk ----
+# ---- water walk (first person: no wings in view) ----
 try {
 $mark = Get-LogMark
 Invoke-Teleport '/tp @s 312.5 -59 300.5 0 40'
@@ -155,6 +220,45 @@ if ($step -notmatch 'stepped up ([0-9.]+)') { throw "no step up line in '$step'"
 $results['step up'] = "$($Matches[1]) blocks (TF step height 0.6 + 0.5)"
 Save-Screenshot 'step-up' | Out-Null
 } catch { Add-Failure "step up: $_" }
+
+# ---- the walks with the gear, then without (tgmove.e2e.plain) ----
+$with = @{}; $without = @{}
+try {
+    Invoke-Chat '/replaceitem entity @s slot.weapon.mainhand 0 bow'
+    Invoke-Chat '/give @s arrow 64'
+    $with.forward  = Measure-Walk 'forward' '/tp @s 302.5 -60 296.5 0 0' 1500
+    $with.bow      = Measure-Walk 'bow' '/tp @s 304.5 -60 296.5 0 0' 1500 -Bow
+    $with.soul     = Measure-Walk 'soul_sand' '/tp @s 299.5 -60 314.5 270 0' 1500
+    $with.web      = Measure-Walk 'cobweb' '/tp @s 299.5 -60 318.5 270 0' 1500
+    $with.swim     = Measure-Walk 'water' '/tp @s 317.5 -62.5 301.5 0 0' 1500
+    $with.honey    = Measure-HoneyJump
+    Invoke-E2eSelfTest 'tgmove.e2e.plain'
+    $without.forward = Measure-Walk 'forward' '/tp @s 302.5 -60 296.5 0 0' 1500 -Strafe
+    $without.bow     = Measure-Walk 'bow' '/tp @s 304.5 -60 296.5 0 0' 1500 -Bow
+    $without.soul    = Measure-Walk 'soul_sand' '/tp @s 299.5 -60 314.5 270 0' 1500
+    $without.web     = Measure-Walk 'cobweb' '/tp @s 299.5 -60 318.5 270 0' 1500
+    $without.swim    = Measure-Walk 'water' '/tp @s 317.5 -62.5 301.5 0 0' 1500
+    $without.honey   = Measure-HoneyJump
+    $results['agile ranger'] = "bow draw walk $($with.bow) with, $($without.bow) without (walk $($with.forward))"
+    if ($with.bow -lt 3 * $without.bow -or $with.bow -lt 0.6 * $with.forward) { Add-Failure "agile ranger: walking while drawing a bow $($with.bow) with, $($without.bow) without, walking $($with.forward)" }
+    $results['unrestrained'] = "soul sand $($with.soul) / $($without.soul), cobweb $($with.web) / $($without.web), honey jump $($with.honey) / $($without.honey)"
+    if ($with.soul -lt 1.8 * $without.soul) { Add-Failure "unrestrained on soul sand: $($with.soul) with, $($without.soul) without" }
+    if ($with.web -lt 3 * $without.web) { Add-Failure "unrestrained in cobweb: $($with.web) with, $($without.web) without" }
+    if ($with.honey -lt $without.honey + 0.5) { Add-Failure "unrestrained honey jump: $($with.honey) with, $($without.honey) without" }
+    $results['swift swim'] = "swim $($with.swim) with the vest, $($without.swim) without"
+    if ($with.swim -lt 1.4 * $without.swim) { Add-Failure "swift swim: $($with.swim) with the vest, $($without.swim) without" }
+    $ratio = $without.forward / $with.forward
+    $results['straight ahead'] = "forward walk x$([Math]::Round($ratio, 3)) ($($without.forward) / $($with.forward))"
+    if ($ratio -lt 1.25 -or $ratio -gt 1.55) { Add-Failure "straight ahead: forward x$ratio, TF x1.4" }
+    $sa = Get-LeviLog | Select-String -Pattern "${client}tgmove: straight ahead strafe ([-0-9.]+) -> ([-0-9.]+)" | Select-Object -Last 1
+    if (-not $sa -or $sa.Line -notmatch 'strafe ([-0-9.]+) -> ([-0-9.]+)') { Add-Failure 'no straight ahead strafe line' }
+    else {
+        $results['straight ahead strafe'] = "$($Matches[1]) -> $($Matches[2]) (TF / 1.4)"
+        if ([Math]::Abs([double]$Matches[2] * 1.4 - [double]$Matches[1]) -gt 0.01) { Add-Failure "straight ahead strafe $($Matches[1]) -> $($Matches[2])" }
+    }
+    $fov = Get-LeviLog | Select-String -Pattern "${client}tgmove: straight ahead fov x([0-9.]+)" | Select-Object -Last 1
+    if (-not $fov) { Add-Failure 'the FOV was not compensated for straight ahead' } else { $results['straight ahead fov'] = $fov.Line -replace '.*tgmove: ', '' }
+} catch { Add-Failure "walks: $_" }
 
 foreach ($k in $results.Keys) { Write-Step "${k}: $($results[$k])" }
 if ($script:tgFailures.Count -gt 0) { throw ($script:tgFailures -join '; ') }

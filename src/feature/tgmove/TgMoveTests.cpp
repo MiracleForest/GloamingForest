@@ -11,7 +11,15 @@
 #include "mc/deps/ecs/gamerefs_entity/EntityContext.h"
 #include "mc/deps/shared_types/legacy/actor/ArmorSlot.h"
 #include "mc/entity/components/BlockMovementSlowdownImmunityComponent.h"
+#include "mc/entity/components/ItemUseSlowdownModifierComponent.h"
 #include "mc/entity/components/MaxAutoStepComponent.h"
+#include "mc/entity/components/MoveInputComponent.h"
+#include "mc/entity/components/WaterWalkSpeedEnchantComponent.h"
+#include "mc/world/actor/Mob.h"
+#include "mc/world/actor/player/AbilitiesIndex.h"
+#include "mc/world/actor/player/LayeredAbilities.h"
+#include "mc/world/effect/EffectDuration.h"
+#include "mc/world/level/block/Block.h"
 #include "mc/entity/components_json_legacy/BreathableComponent.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/attribute/AttributeInstance.h"
@@ -23,7 +31,12 @@
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/Level.h"
 
+#include "feature/combat/Combat.h"
+#include "feature/entity/Entity.h"
+#include "game/Blocks.h"
 #include "feature/ext/ui/Server.h"
+#include "feature/movement/Movement.h"
+#include "feature/spawn/Spawn.h"
 #include "feature/gear/Gear.h"
 #include "feature/net/Net.h"
 #include "feature/tgmove/TgMove.h"
@@ -178,25 +191,25 @@ GF_REGISTER_SELFTEST("tgmove.sidestep", [](Context& ctx) -> ll::coro::CoroTask<>
     auto& p1 = ctx.player();
     const_cast<Vec2&>(p1.getRotation()) = Vec2{0, 0};
     Vec3 before = p1.getPosDelta();
-    ctx.require(tm::tryPerformSidestep(p1, true, true), "a sidestep on the ground");
+    ctx.require(tm::tryPerformSidestep(p1, true), "a sidestep on the ground");
     Vec3 push = p1.getPosDelta() - before;
     double h  = std::sqrt(push.x * push.x + push.z * push.z);
     ctx.check(std::abs(h - 1.6) < 0.01, "pushed 1.6 sideways: " + num(h));
     auto& st = tm::stateOf(p1);
     ctx.check(st.wings.state == tg::WingState::Sidestep && st.wings.sidestepLeft, "the wings sidestep left");
-    ctx.check(!tm::tryPerformSidestep(p1, false, true), "cooldown: not again at once");
+    ctx.check(!tm::tryPerformSidestep(p1, false), "cooldown: not again at once");
     st.wings.lastSidestepTime = tm::gameTime() - tg::kSidestepCooldown;
-    ctx.check(!tm::tryPerformSidestep(p1, false, true), "40 ticks are not enough (more than 40)");
+    ctx.check(!tm::tryPerformSidestep(p1, false), "40 ticks are not enough (more than 40)");
     st.wings.lastSidestepTime = tm::gameTime() - tg::kSidestepCooldown - 1;
     co_await ctx.ticks(1);
     auto& p2 = ctx.player();
     ctx.check(!tm::stateOf(p2).wings.shouldPlayCooldownSound, "the side_step_ready sound played once the cooldown passed");
     co_await ctx.ticks(10);
     auto& p3 = ctx.player();
-    ctx.check(tm::tryPerformSidestep(p3, false, true), "after the cooldown");
+    ctx.check(tm::tryPerformSidestep(p3, false), "after the cooldown");
     p3.setSneaking(true);
     tm::stateOf(p3).wings.lastSidestepTime = -100000;
-    ctx.check(!tm::tryPerformSidestep(p3, false, true), "not while crouching");
+    ctx.check(!tm::tryPerformSidestep(p3, false), "not while crouching");
     p3.setSneaking(false);
     unequipAll(p3);
 });
@@ -311,11 +324,18 @@ GF_REGISTER_SELFTEST("tgmove.straight_ahead", [](Context& ctx) -> ll::coro::Coro
     };
     float base = speed();
     equip(p, 3, "twilightforest:travellers_boots", {"twilightforest:straight_ahead"});
-    const_cast<Vec2&>(p.getRotation()) = Vec2{0, 0};
-    p.lerpMotion(Vec3{0, 0, 0.2f}); // moving forward (yaw 0 faces +z)
+    auto input = [&](float forward) {
+        if (auto in = p.getEntityContext().tryGetComponent<MoveInputComponent>()) in->mMove->y = forward;
+    };
+    ctx.require(p.getEntityContext().hasComponent<MoveInputComponent>(), "the player has a move input");
+    input(1.0f); // the forward key
     tm::tickPlayer(p);
-    ctx.check(std::abs(speed() - base * 1.4f) < 1e-3f, "x1.4 moving forward: " + num(speed()) + " of " + num(base));
-    p.lerpMotion(Vec3{0, 0, -0.2f});
+    ctx.check(std::abs(speed() - base * 1.4f) < 1e-3f, "x1.4 with the forward key: " + num(speed()) + " of " + num(base));
+    input(0.0f);
+    p.lerpMotion(Vec3{0, 0, 0.3f}); // still moving forward, the key released (TF: forwardImpulse only)
+    tm::tickPlayer(p);
+    ctx.check(std::abs(speed() - base) < 1e-4f, "forward momentum without the key: normal speed");
+    input(-1.0f);
     tm::tickPlayer(p);
     ctx.check(std::abs(speed() - base) < 1e-4f, "backwards: normal speed");
     unequipAll(p);
@@ -333,7 +353,7 @@ GF_REGISTER_SELFTEST("tgmove.wings_state", [](Context& ctx) -> ll::coro::CoroTas
     equip(p, 2, "twilightforest:travellers_wings", {"twilightforest:side_step"});
     co_await ctx.ticks(2);
     auto& p1 = ctx.player();
-    ctx.require(tm::tryPerformSidestep(p1, false, false), "a sidestep");
+    ctx.require(tm::tryPerformSidestep(p1, false), "a sidestep");
     int locked = 0;
     for (int i = 0; i < 20; ++i) {
         tm::tickPlayer(p1);
@@ -369,36 +389,268 @@ GF_REGISTER_SELFTEST("tgmove.aquatic_agility", [](Context& ctx) -> ll::coro::Cor
     co_return;
 });
 
-// The client e2e scenario: the real players get the gear it measures (no-op without real players).
-GF_REGISTER_SELFTEST("tgmove.e2e.equip", [](Context& ctx) -> ll::coro::CoroTask<> {
-    auto level = ll::service::getLevel();
-    ctx.require(level.has_value(), "a level");
-    int n = 0;
-    level->forEachPlayer([&](Player& p) {
-        if (p.isSimulated()) return true;
-        equip(p, 2, "twilightforest:travellers_wings", {"twilightforest:double_jump", "twilightforest:side_step", "twilightforest:gradual_glide"});
-        equip(p, 3, "twilightforest:travellers_boots", {"twilightforest:water_walk"});
+GF_REGISTER_SELFTEST("tgmove.effects", [](Context& ctx) -> ll::coro::CoroTask<> {
+    co_await ctx.flatArea(1200, 8);
+    co_await place(ctx, ctx.testPos(1203, 1));
+    auto& p = ctx.player();
+    unequipAll(p);
+    // a weaker Jump Boost of the player's own (a potion): the wings' Jump Boost II replaces it and
+    // it comes back with the time it had left (Java's hidden effect)
+    MobEffectInstance potion(8u, EffectDuration{600});
+    potion.mAmplifier = 0;
+    p.addEffect(potion);
+    equip(p, 2, "twilightforest:travellers_wings", {});
+    tm::tickPlayer(p);
+    auto const* e = p.getEffect(8u);
+    ctx.check(e && e->mAmplifier == tg::kHighJumpAmplifier, "Jump Boost II over a weaker potion: amplifier " + std::to_string(e ? e->mAmplifier : -1));
+    unequipAll(p);
+    tm::tickPlayer(p);
+    e = p.getEffect(8u);
+    ctx.check(e && e->mAmplifier == 0 && e->mDuration->mValue > 500, "the potion is back: amplifier " + std::to_string(e ? e->mAmplifier : -1) + ", "
+                                                                         + std::to_string(e ? e->mDuration->mValue : 0) + " ticks");
+    p.removeEffect(8);
+    // a stronger one stays
+    MobEffectInstance strong(8u, EffectDuration{600});
+    strong.mAmplifier = 3;
+    p.addEffect(strong);
+    equip(p, 2, "twilightforest:travellers_wings", {});
+    tm::tickPlayer(p);
+    e = p.getEffect(8u);
+    ctx.check(e && e->mAmplifier == 3, "a stronger potion stays");
+    unequipAll(p);
+    tm::tickPlayer(p);
+    e = p.getEffect(8u);
+    ctx.check(e && e->mAmplifier == 3, "and is not taken off with the wings");
+    p.removeEffect(8);
+    tm::forget(p);
+    co_return;
+});
+
+GF_REGISTER_SELFTEST("tgmove.restore", [](Context& ctx) -> ll::coro::CoroTask<> {
+    co_await ctx.flatArea(1210, 8);
+    co_await place(ctx, ctx.testPos(1213, 1));
+    auto& p     = ctx.player();
+    auto& ectx  = p.getEntityContext();
+    auto  depth = [&] {
+        auto c = ectx.tryGetComponent<WaterWalkSpeedEnchantComponent>();
+        return c ? c->mValue : -1;
+    };
+    unequipAll(p);
+    tm::tickPlayer(p);
+    int depthBefore = depth();
+    // swift swim: Depth Strider III with the vest, the level before once it is off
+    equip(p, 1, "twilightforest:travellers_vest", {});
+    tm::tickPlayer(p);
+    ctx.check(depth() == tg::kSwiftSwimDepthStrider, "the vest: Depth Strider III (" + std::to_string(depth()) + ")");
+    unequipAll(p);
+    tm::tickPlayer(p);
+    ctx.check(depth() == depthBefore, "without the vest: Depth Strider " + std::to_string(depth()) + " as before (" + std::to_string(depthBefore) + ")");
+    // step up: forgetting the state (tests, respawn) never adds the +0.5 twice
+    auto step = [&] { return ectx.tryGetComponent<MaxAutoStepComponent>()->mValue; };
+    float base = step();
+    equip(p, 3, "twilightforest:travellers_boots", {"twilightforest:unrestrained"});
+    for (int i = 0; i < 3; ++i) {
+        tm::tickPlayer(p);
         tm::forget(p);
-        ++n;
+    }
+    tm::tickPlayer(p);
+    ctx.check(std::abs(step() - (base + 0.5f)) < 1e-4f, "step height +0.5 once after forgetting the state 3 times: " + num(step()) + " of " + num(base));
+    // unrestrained leaves slowdown immunities of others in place
+    auto imm = ectx.tryGetComponent<BlockMovementSlowdownImmunityComponent>();
+    ctx.require(imm.has_value(), "the immunity component");
+    imm->mBlocks->emplace_back(HashedString("minecraft:mud"));
+    unequipAll(p);
+    tm::tickPlayer(p);
+    auto after = ectx.tryGetComponent<BlockMovementSlowdownImmunityComponent>();
+    ctx.check(after.has_value() && after->mBlocks->size() == 1 && after->mBlocks->front() == HashedString("minecraft:mud"), "only the other entry is left");
+    if (after) ectx.removeComponent<BlockMovementSlowdownImmunityComponent>();
+    ctx.check(std::abs(step() - base) < 1e-4f, "the step height is back");
+    tm::forget(p);
+    co_return;
+});
+
+GF_REGISTER_SELFTEST("tgmove.safe_fall_slimy", [](Context& ctx) -> ll::coro::CoroTask<> {
+    co_await ctx.flatArea(1220, 8);
+    co_await place(ctx, ctx.testPos(1223, 1));
+    auto& p = ctx.player();
+    equip(p, 3, "twilightforest:travellers_boots", {"twilightforest:slimy_soles"});
+    auto& st    = tm::stateOf(p);
+    st.safeFall = true; // after a double jump
+    st.fallVy   = -0.8;
+    float a     = 2; // TF: no damage within the +2 safe fall, so no bounce either
+    ctx.check(!tm::onFall(p, a) && st.slimy.bounceVelocity == 0, "a 2 damage landing after a double jump: harmless, no bounce");
+    float b = 4;
+    ctx.check(!tm::onFall(p, b) && st.slimy.bounceVelocity > 0, "a 4 damage landing after a double jump: the bounce");
+    tm::forget(p);
+    unequipAll(p);
+    co_return;
+});
+
+GF_REGISTER_SELFTEST("tgmove.creative_fly", [](Context& ctx) -> ll::coro::CoroTask<> {
+    co_await ctx.flatArea(1230, 8);
+    auto g = ctx.testPos(1233, 1);
+    co_await place(ctx, g);
+    auto& p = ctx.player();
+    equip(p, 2, "twilightforest:travellers_wings", {"twilightforest:double_jump"});
+    co_await ctx.ticks(2);
+    auto& p1 = ctx.player();
+    p1.teleport(at(g, 6), DimensionType(g.dim));
+    co_await ctx.ticks(1);
+    auto& p2 = ctx.player();
+    using gf::movement::Edge;
+    // a may-fly player pressing jump twice within 6 ticks starts flying: no double jump
+    p2.getAbilities().setAbility(AbilitiesIndex::MayFly, true);
+    tm::stateOf(p2).hasDoubleJump = true;
+    tm::onInputEdge(p2, static_cast<int>(Edge::LeftGround));
+    tm::onInputEdge(p2, static_cast<int>(Edge::JumpPressed));
+    tm::onInputEdge(p2, static_cast<int>(Edge::JumpReleased));
+    tm::onInputEdge(p2, static_cast<int>(Edge::JumpPressed));
+    ctx.check(tm::stateOf(p2).hasDoubleJump, "may fly, two presses within 6 ticks: no double jump (avoidCreativeFly)");
+    // without may-fly the same press is the double jump
+    p2.getAbilities().setAbility(AbilitiesIndex::MayFly, false);
+    tm::stateOf(p2).lastJumpPressTick = -100;
+    tm::onInputEdge(p2, static_cast<int>(Edge::JumpPressed));
+    ctx.check(!tm::stateOf(p2).hasDoubleJump, "without may-fly: the double jump");
+    tm::forget(p2);
+    unequipAll(p2);
+    p2.teleport(at(g), DimensionType(g.dim));
+    co_return;
+});
+
+GF_REGISTER_SELFTEST("tgmove.mobs", [](Context& ctx) -> ll::coro::CoroTask<> {
+    co_await ctx.flatArea(1240, 8);
+    auto g = ctx.testPos(1243, 1);
+    co_await place(ctx, g);
+    auto& p      = ctx.player();
+    auto& region = p.getDimensionBlockSource();
+    Actor* a     = gf::spawn::spawnMob(region, "minecraft:zombie", at(g, 10), gf::spawn::SpawnReason::Command);
+    ctx.require(a != nullptr, "a zombie");
+    auto zid = a->getOrCreateUniqueID();
+    a->addTag(tm::kLeashOverrideTag);
+    a->setArmor(Slot::Legs, *gf::game::items::make("twilightforest:travellers_wings", 1));
+    {
+        auto wings = a->getArmor(Slot::Legs);
+        gf::game::items::setData(wings, "gear", {{"twilightforest:gradual_glide", 1}});
+        a->setArmor(Slot::Legs, wings);
+    }
+    ctx.check(tm::activeOn(*a, Mod::GradualGlide) && tm::activeOn(*a, Mod::HighJump), "a mob's wings: gradual glide and high jump");
+    a->lerpMotion(Vec3{0, -0.6f, 0});
+    tm::tickMob(static_cast<Mob&>(*a));
+    ctx.check(std::abs(a->getPosDelta().y + 0.6f * 5 / 6) < 1e-3f, "a mob glides whenever it falls: vy " + num(a->getPosDelta().y));
+    ctx.check(a->getEffect(8u) && a->getEffect(8u)->mAmplifier == tg::kHighJumpAmplifier, "a mob jumps high");
+    co_await ctx.ticks(2);
+    auto* z = ll::service::getLevel()->fetchEntity(zid, false);
+    ctx.require(z != nullptr, "the zombie is still there");
+    ctx.check(!z->hasTag(tm::kLeashOverrideTag), "leashed_pathfinder_override is dropped from a mob that cannot be leashed");
+    z->setArmor(Slot::Legs, ItemStack::EMPTY_ITEM());
+    co_await ctx.ticks(1);
+    if (auto* z2 = ll::service::getLevel()->fetchEntity(zid, false)) {
+        ctx.check(z2->getEffect(8u) == nullptr, "the gear came off: no Jump Boost");
+        z2->despawn();
+    }
+});
+
+GF_REGISTER_SELFTEST("tgmove.aquatic_mining", [](Context& ctx) -> ll::coro::CoroTask<> {
+    co_await ctx.flatArea(1250, 8);
+    auto g = ctx.testPos(1253, 1);
+    co_await place(ctx, g);
+    // water up to the player's eyes
+    for (int dy = 0; dy < 3; ++dy) ctx.setBlock(gf::core::GlobalPos{g.dim, g.x, g.y + dy, g.z}, "minecraft:water");
+    auto& p = ctx.player();
+    p.teleport(at(g), DimensionType(g.dim));
+    co_await ctx.ticks(5);
+    auto& p1    = ctx.player();
+    auto  stone = gf::game::blockWith("minecraft:stone");
+    ctx.require(stone != nullptr, "stone");
+    unequipAll(p1);
+    float without = p1.getDestroyProgress(*stone);
+    equip(p1, 0, "twilightforest:travellers_goggles", {"twilightforest:aquatic_agility"});
+    float with = p1.getDestroyProgress(*stone);
+    ctx.check(without > 0 && std::abs(with / without - 5.0f) < 1e-3f, "submerged mining speed x5: " + num(with) + " / " + num(without));
+    unequipAll(p1);
+    for (int dy = 0; dy < 3; ++dy) ctx.setBlock(gf::core::GlobalPos{g.dim, g.x, g.y + dy, g.z}, "minecraft:air");
+});
+
+GF_REGISTER_SELFTEST("tgmove.armor_time", [](Context& ctx) -> ll::coro::CoroTask<> {
+    co_await ctx.flatArea(1260, 8);
+    co_await place(ctx, ctx.testPos(1263, 1));
+    auto& p = ctx.player();
+    equip(p, 1, "twilightforest:travellers_vest", {});
+    auto& slot = gf::entity::data(p, tm::kLastDamageArmorTimeKey);
+    slot       = nullptr;
+    gf::combat::hurt(p, 1.0f, "minecraft:fall");
+    ctx.check(gf::entity::data(p, tm::kLastDamageArmorTimeKey).is_null(), "fall damage bypasses armour: no armour time");
+    gf::combat::hurt(p, 1.0f, "minecraft:generic");
+    auto const& t = gf::entity::data(p, tm::kLastDamageArmorTimeKey);
+    ctx.check(t.is_number_integer() && std::abs(t.get<long long>() - tm::gameTime()) <= 1, "last_damage_armor_time = the game time: " + t.dump());
+    unequipAll(p);
+    p.heal(20);
+    co_return;
+});
+
+// The client e2e scenario's helpers. They act only on real players that carry the entity tag
+// kE2eTag, which only the scenario adds (/tag @s add gf_e2e.tgmove): a selftest run on a live
+// server (`/twilightforest selftest`, the full run) changes nobody. Armour they replace goes to
+// the player's inventory (or is dropped), never destroyed.
+constexpr char kE2eTag[] = "gf_e2e.tgmove";
+
+template <class F>
+int forE2ePlayers(F&& fn) {
+    auto level = ll::service::getLevel();
+    if (!level) return 0;
+    std::vector<std::int64_t> ids;
+    level->forEachPlayer([&](Player& p) {
+        if (!p.isSimulated() && p.hasTag(kE2eTag)) ids.push_back(p.getOrCreateUniqueID().rawID);
         return true;
+    });
+    int n = 0;
+    for (auto id : ids)
+        if (auto* p = level->getPlayer(ActorUniqueID{id})) {
+            fn(*p);
+            ++n;
+        }
+    return n;
+}
+
+/// Puts gear in a real player's armour slot; what was there goes to the inventory.
+void equipKeeping(Player& p, int slot, std::string const& itemId, std::vector<std::string> const& mods) {
+    auto old = p.getArmor(static_cast<Slot>(slot));
+    if (!gf::game::items::isEmpty(old) && gf::game::items::idOf(old) != itemId && !p.add(old)) p.drop(old, false);
+    equip(p, slot, itemId, mods);
+}
+
+// Everything the scenario measures: the wings (double jump, sidestep, glide, agile ranger, built-in
+// high jump), the vest (built-in swift swim), the boots (water walk, unrestrained, built-in step up).
+GF_REGISTER_SELFTEST("tgmove.e2e.equip", [](Context& ctx) -> ll::coro::CoroTask<> {
+    int n = forE2ePlayers([](Player& p) {
+        equipKeeping(p, 2, "twilightforest:travellers_wings", {"twilightforest:double_jump", "twilightforest:side_step", "twilightforest:gradual_glide", "twilightforest:agile_ranger"});
+        equipKeeping(p, 1, "twilightforest:travellers_vest", {});
+        equipKeeping(p, 3, "twilightforest:travellers_boots", {"twilightforest:water_walk", "twilightforest:unrestrained"});
+        tm::forget(p);
+    });
+    ctx.info("equipped " + std::to_string(n) + " players");
+    co_return;
+});
+
+// The comparison runs: the same gear without agile ranger, unrestrained and swift swim (plain vest
+// slot), and with straight ahead.
+GF_REGISTER_SELFTEST("tgmove.e2e.plain", [](Context& ctx) -> ll::coro::CoroTask<> {
+    int n = forE2ePlayers([](Player& p) {
+        equipKeeping(p, 2, "twilightforest:travellers_wings", {"twilightforest:double_jump", "twilightforest:side_step", "twilightforest:gradual_glide"});
+        auto vest = p.getArmor(Slot::Torso);
+        if (gf::game::items::idOf(vest) == "twilightforest:travellers_vest") p.setArmor(Slot::Torso, ItemStack::EMPTY_ITEM());
+        equipKeeping(p, 3, "twilightforest:travellers_boots", {"twilightforest:water_walk", "twilightforest:straight_ahead"});
+        tm::forget(p);
     });
     ctx.info("equipped " + std::to_string(n) + " players");
     co_return;
 });
 
 // The client e2e scenario's glide: 2 s after it starts (the scenario holds SHIFT meanwhile, typing
-// a command would release it), the real players are lifted 35 blocks.
+// a command would release it), the tagged players are lifted 35 blocks.
 GF_REGISTER_SELFTEST("tgmove.e2e.lift", [](Context& ctx) -> ll::coro::CoroTask<> {
     co_await ctx.ticks(40);
-    auto level = ll::service::getLevel();
-    ctx.require(level.has_value(), "a level");
-    int n = 0;
-    level->forEachPlayer([&](Player& p) {
-        if (p.isSimulated()) return true;
-        p.teleport(p.getFeetPos() + Vec3{0, 35, 0}, p.getDimensionId());
-        ++n;
-        return true;
-    });
+    int n = forE2ePlayers([](Player& p) { p.teleport(p.getFeetPos() + Vec3{0, 35, 0}, p.getDimensionId()); });
     ctx.info("lifted " + std::to_string(n) + " players");
 });
 
