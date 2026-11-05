@@ -36,8 +36,9 @@
 
 #include "feature/families/Signs.h"
 
+#include <cctype>
+#include <charconv>
 #include <cmath>
-#include <cstdio>
 #include <cstring>
 #include <map>
 #include <numbers>
@@ -502,6 +503,29 @@ void checkDisplays() {
     for (auto const& pos : unloaded) forgetUnloaded(pos);
 }
 
+/// Reads "<dim>:<x>:<y>:<z>:<side>" (displayTagOf after its "gf_sign_text:" prefix): the side is
+/// the word that follows, cut at 7 characters (the former "%d:%d:%d:%d:%7s" scan).
+bool parseDisplayTag(std::string_view s, int& dim, int& x, int& y, int& z, std::string& side) {
+    auto skipSpace = [&] {
+        while (!s.empty() && std::isspace(static_cast<unsigned char>(s.front()))) s.remove_prefix(1);
+    };
+    for (int* v : {&dim, &x, &y, &z}) {
+        skipSpace();
+        if (!s.empty() && s.front() == '+') s.remove_prefix(1);
+        auto [end, ec] = std::from_chars(s.data(), s.data() + s.size(), *v);
+        if (ec != std::errc{}) return false;
+        s.remove_prefix(static_cast<std::size_t>(end - s.data()));
+        if (s.empty() || s.front() != ':') return false;
+        s.remove_prefix(1);
+    }
+    skipSpace();
+    std::size_t n = 0;
+    while (n < s.size() && n < 7 && !std::isspace(static_cast<unsigned char>(s[n]))) ++n;
+    if (n == 0) return false;
+    side.assign(s.substr(0, n));
+    return true;
+}
+
 /// Display entities left behind (their sign is gone, or names another entity): removed.
 void sweepDisplays(BlockSource& region, LevelChunk& chunk) {
     ChunkPos const cp = chunk.mPosition;
@@ -511,9 +535,9 @@ void sweepDisplays(BlockSource& region, LevelChunk& chunk) {
         bool keep = false;
         for (auto const& t : a->getTags()) {
             if (!t.starts_with(std::string(kDisplayTag) + ":")) continue;
-            int  dim, x, y, z;
-            char side[8]{};
-            if (std::sscanf(t.c_str() + std::strlen(kDisplayTag) + 1, "%d:%d:%d:%d:%7s", &dim, &x, &y, &z, side) != 5) continue;
+            int         dim, x, y, z;
+            std::string side;
+            if (!parseDisplayTag(std::string_view(t).substr(std::strlen(kDisplayTag) + 1), dim, x, y, z, side)) continue;
             auto const* raw = bd::get(GlobalPos{dim, x, y, z});
             auto const* s   = raw && raw->contains(kKey) ? &(*raw)[kKey] : nullptr;
             keep = s && s->contains("display") && (*s)["display"].value(side, std::int64_t{0}) == a->getOrCreateUniqueID().rawID;

@@ -2011,6 +2011,130 @@ local function entity_textures(g, rpdir, ctx)
 end
 
 -- Generates the family blocks of `entries` into one BP / RP pair. Returns {blocks, skipped, files}.
+-- ---- block sound events the families need ----------------------------------------------------------
+--
+-- The game picks a block's sounds by its sound type (RP blocks.json "sound") in sounds.json
+-- block_sounds; an event the type does not define is reported in the content log ("[Sound][verbose]
+-- No sound found for block type 'wood' and event type 'place_in_water'") and not played from the
+-- type. Two events of the families' blocks are missing from the game's own types:
+-- - place_in_water: the game's LevelSoundEvent PlaceInWater when a block is placed into water and
+--   keeps it (a waterloggable family block). Java's BlockItem#place plays the block's place sound
+--   wherever it is placed (SoundType#getPlaceSound), so the type's place_in_water is its place event.
+-- - chest.open / chest.closed: the game's chest events played with the chest's block (vanilla's
+--   chests have type wood too, which defines neither, so the game falls back to its
+--   individual_event_sounds chest.open / chest.closed). TF's chests are vanilla ChestBlocks of their
+--   wood (ChestBlockEntity#playSound: CHEST_OPEN / CHEST_CLOSE, volume 0.5, pitch 0.9..1.0, which
+--   the inventory contract plays itself, F10): the chest family's types define the same values.
+-- Packs merge sounds.json per event (the game's own vanilla_1.26.10 pack redefines only wood's place
+-- event), so the events are added to the type as it is: its other events stay the game's (or the
+-- import's, for TF's own types).
+
+-- The place events of the game's block sound types (Minecraft Bedrock 1.26.51, the vanilla resource
+-- packs' sounds.json block_sounds, the last pack's definition of each).
+local VANILLA_PLACE = {
+    amethyst_block = {sound = "place.amethyst_block", volume = 1.0, pitch = 0.8},
+    anvil = {sound = "random.anvil_land", volume = 0.5, pitch = {0.8, 1.0}},
+    azalea_leaves = {sound = "place.azalea_leaves", volume = 1.0, pitch = {0.8, 1.0}},
+    bamboo_wood = {sound = "place.bamboo_wood", volume = 1.0, pitch = {0.8, 0.8}},
+    bamboo_wood_hanging_sign = {sound = "place.bamboo_wood_hanging_sign", volume = 1.0, pitch = {0.8, 1.0}},
+    basalt = {sound = "place.basalt", volume = 1.0, pitch = {0.8, 1.0}},
+    bone_block = {sound = "place.bone_block", volume = 1.0, pitch = {0.8, 1.0}},
+    calcite = {sound = "place.calcite", volume = 1.0},
+    candle = {sound = "place.candle", volume = 1.0, pitch = 1.0},
+    chain = {sound = "place.chain", volume = 1.0, pitch = {0.8, 1.0}},
+    cherry_leaves = {sound = "place.cherry_leaves", volume = 1.0},
+    cherry_wood = {sound = "place.cherry_wood", volume = 1.0, pitch = {0.8, 0.8}},
+    cherry_wood_hanging_sign = {sound = "place.cherry_wood_hanging_sign", volume = 1.0, pitch = {0.8, 1.0}},
+    cloth = {sound = "place.cloth", volume = 1.0, pitch = {0.8, 1.0}},
+    copper = {sound = "place.copper", volume = 1.0, pitch = {0.8, 1.0}},
+    deepslate = {sound = "place.deepslate", volume = 1.0, pitch = {0.8, 1.0}},
+    deepslate_bricks = {sound = "place.deepslate_bricks", volume = 1.0, pitch = {0.8, 1.0}},
+    glass = {sound = "place.stone", volume = 1.0, pitch = {0.8, 1.0}},
+    grass = {sound = "place.grass", volume = 0.8, pitch = {0.8, 1.0}},
+    gravel = {sound = "place.gravel", volume = 1.0, pitch = {0.8, 1.0}},
+    hanging_sign = {sound = "place.hanging_sign", volume = 1.0, pitch = {0.8, 1.0}},
+    ladder = {sound = "place.wood", volume = 1.0, pitch = {0.8, 1.0}},
+    lantern = {sound = "block.lantern.place", volume = 1.0, pitch = {0.8, 1.0}},
+    metal = {sound = "place.stone", volume = 1.0, pitch = {1.2, 1.25}},
+    moss_block = {sound = "place.moss", volume = 0.93},
+    moss_carpet = {sound = "place.moss", volume = 0.93},
+    mud_bricks = {sound = "block.mud_bricks.place", volume = 0.3, pitch = {0.6, 0.8}},
+    nether_brick = {sound = "place.nether_brick", volume = 1.0, pitch = {0.8, 1.0}},
+    nether_wood = {sound = "place.nether_wood", volume = 1.0, pitch = {0.8, 0.8}},
+    nether_wood_hanging_sign = {sound = "place.nether_wood_hanging_sign", volume = 1.0, pitch = {0.8, 1.0}},
+    netherite = {sound = "place.netherite", volume = 1.0, pitch = {0.8, 1.0}},
+    normal = {sound = "place.stone", volume = 1.0, pitch = {0.8, 1.0}},
+    sand = {sound = "place.sand", volume = 1.0, pitch = {0.8, 1.0}},
+    scaffolding = {sound = "block.scaffolding.place", volume = 1.0, pitch = {0.8, 0.9}},
+    slime = {sound = "place.slime.big", volume = 1.0, pitch = {0.8, 1.0}},
+    snow = {sound = "place.snow", volume = 1.0, pitch = {0.8, 1.0}},
+    stem = {sound = "place.stem", volume = 1.0, pitch = {0.8, 1.0}},
+    stone = {sound = "place.stone", volume = 1.0, pitch = {0.8, 1.0}},
+    tuff = {sound = "place.tuff", volume = 1.0, pitch = 0.8},
+    vines = {sound = "place.vines", volume = 1.0, pitch = {0.8, 1.0}},
+    wood = {sound = "place.wood", volume = 1.0, pitch = {0.8, 0.8}},
+}
+
+-- The game's own chest events (individual_event_sounds chest.open / chest.closed of the vanilla
+-- pack: ChestBlockEntity's CHEST_OPEN / CHEST_CLOSE at volume 0.5, pitch 0.9..1.0).
+local CHEST_EVENTS = {
+    ["chest.open"] = {sound = "random.chestopen", volume = 0.5, pitch = {0.9, 1.0}},
+    ["chest.closed"] = {sound = "random.chestclosed", volume = 0.5, pitch = {0.9, 1.0}},
+}
+
+-- A sound event definition written to sounds.json (arrays marked as arrays).
+local function sound_event(def)
+    local out = {}
+    for k, v in pairs(def) do out[k] = type(v) == "table" and arr(copy(v)) or v end
+    return out
+end
+
+-- Adds place_in_water to the sound type of every waterloggable family block of `result`, and the
+-- chest events to the sound type of every chest family block, in the pack's sounds.json.
+local function add_family_sound_events(rpdir, result, by_id, errors)
+    local blocks = try_json(path.join(rpdir, "blocks.json")) or {}
+    local function type_of(id)
+        local b = blocks[id]
+        return type(b) == "table" and type(b.sound) == "string" and b.sound or nil
+    end
+    local in_water, chests = {}, {}
+    for id, _ in pairs(result.waterloggable) do
+        local t = type_of(id)
+        if t then in_water[t] = in_water[t] or id end
+    end
+    for id, _ in pairs(result.chests) do
+        local t = by_id[id] and type_of(id)
+        if t then chests[t] = chests[t] or id end
+    end
+    if table.empty(in_water) and table.empty(chests) then return end
+    merge_json_file(path.join(rpdir, "sounds.json"), function (doc)
+        doc = doc or {}
+        doc.block_sounds = doc.block_sounds or {}
+        local function events_of(t)
+            doc.block_sounds[t] = doc.block_sounds[t] or {}
+            doc.block_sounds[t].events = doc.block_sounds[t].events or {}
+            return doc.block_sounds[t].events
+        end
+        for _, t in ipairs(sorted_keys(in_water)) do
+            local own = doc.block_sounds[t] and doc.block_sounds[t].events and doc.block_sounds[t].events.place
+            local place = own or VANILLA_PLACE[t]
+            if place == nil then
+                table.insert(errors, string.format("families: %s is waterloggable, but its block sound type '%s' has no place event to play when it is placed into water (tools/families/families.lua VANILLA_PLACE)", in_water[t], t))
+            else
+                local events = events_of(t)
+                if events.place_in_water == nil then events.place_in_water = type(place) == "table" and sound_event(place) or place end
+            end
+        end
+        for _, t in ipairs(sorted_keys(chests)) do
+            local events = events_of(t)
+            for _, name in ipairs(sorted_keys(CHEST_EVENTS)) do
+                if events[name] == nil then events[name] = sound_event(CHEST_EVENTS[name]) end
+            end
+        end
+        return doc
+    end)
+end
+
 local function generate_set(entries, bpdir, rpdir, opts, errors)
     local by_id, order = group(entries, errors)
     local existing = bp_blocks(bpdir)
@@ -2132,6 +2256,7 @@ local function generate_set(entries, bpdir, rpdir, opts, errors)
             return doc
         end)
     end
+    add_family_sound_events(rpdir, result, by_id, errors)
     return result
 end
 
