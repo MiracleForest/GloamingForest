@@ -523,36 +523,21 @@ int findOnGroundYPosition(PlacementContext const& c, int x, int y, int z, int co
 }
 
 /// AvoidLandmarkModifier#getPositions: F6 decides from the starts referencing the position's chunk
-/// (DecorationClearance, the pieces with UtilityPiece#allowFeatures, the start box's center).
-/// structureTypeBlocksFeaturePlacement skips a start that is not StructureStart#isValid (no pieces:
-/// a site F6 reserved for a landmark without a generator yet); F6's featureBlocked keeps the
-/// clearance square of such a site, so a structure whose starts in this chunk all lack pieces goes
-/// to F6 as allowed (when one structure has a start with and one without pieces here, which F6's
-/// revival of reserved sites leaves no room for, F6's answer stands for both).
+/// (DecorationClearance, the pieces with UtilityPiece#allowFeatures, the start box's center), and it
+/// owns the whole rule: structureTypeBlocksFeaturePlacement's StructureStart#isValid skip (a site F6
+/// reserved for a landmark without a generator yet has no pieces and blocks nothing) included.
+/// F5 only reads the codec fields; structures_allowed is a HolderSet<Structure> (ids, "#tags").
 Positions noStructure(PlacementContext const& c, BlockPos const& pos) {
-    int  dimension = c.region.dimension();
-    auto starts    = landmark::startsIntersecting(dimension, {pos.x >> 4, pos.z >> 4});
-    if (starts.empty()) return {pos}; // ChunkAccess#getAllReferences: none
-    auto allowed   = structureIds(field(c.config, "structures_allowed"));
-    auto isAllowed = [&](std::string const& key) { return std::find(allowed->begin(), allowed->end(), key) != allowed->end(); };
-    std::vector<std::string> withoutPieces;
-    bool                     candidate = false; // a valid start of a structure the feature may not overlap
-    for (auto const& start : starts) {
-        if (isAllowed(start.key)) continue;
-        bool valid = std::any_of(starts.begin(), starts.end(), [&](landmark::Start const& s) { return s.key == start.key && !s.pieceBoxes.empty(); });
-        if (valid) candidate = true;
-        else if (std::find(withoutPieces.begin(), withoutPieces.end(), start.key) == withoutPieces.end()) withoutPieces.push_back(start.key);
-    }
-    if (!candidate) return {pos};
+    // ChunkAccess#getAllReferences: none (most chunks; skips resolving structures_allowed)
+    if (landmark::startsIntersecting(c.region.dimension(), {pos.x >> 4, pos.z >> 4}).empty()) return {pos};
     landmark::ext::Occupancy occupancy;
     occupancy.surface             = c.config.value("occupies_surface", false);
     occupancy.underground         = c.config.value("occupies_underground", false);
     occupancy.vegetation          = c.config.value("occupies_vegetation", false);
     occupancy.additionalClearance = c.config.value("additional_clearance", 0);
-    occupancy.structuresAllowed.reserve(allowed->size() + withoutPieces.size());
+    auto allowed                  = structureIds(field(c.config, "structures_allowed"));
     occupancy.structuresAllowed.assign(allowed->begin(), allowed->end());
-    occupancy.structuresAllowed.insert(occupancy.structuresAllowed.end(), withoutPieces.begin(), withoutPieces.end());
-    if (landmark::ext::featureBlocked(dimension, pos.x, pos.y, pos.z, occupancy)) return {};
+    if (landmark::ext::featureBlocked(c.region.dimension(), pos.x, pos.y, pos.z, occupancy)) return {};
     return {pos};
 }
 

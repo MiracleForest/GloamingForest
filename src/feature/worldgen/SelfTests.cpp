@@ -2,6 +2,7 @@
 // "worldgen.", testPos dx 5500..5599). The determinism goldens are the same on the server and the
 // client build: the fixture feature and the in-memory pipeline must hash identically on both.
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <bit>
 #include <chrono>
@@ -49,6 +50,7 @@
 #include "core/noise/Noise.h"
 #include "feature/dimension/World.h"
 #include "feature/ext/landmark/LandmarkExt.h"
+#include "feature/ext/landmark/LandmarkTest.h"
 #include "feature/ext/worldgen/Carving.h"
 #include "feature/ext/worldgen/FeatureKit.h"
 #include "feature/ext/worldgen/Generation.h"
@@ -609,17 +611,10 @@ GF_REGISTER_SELFTEST("worldgen.carvers", [](Context& ctx) {
 
 namespace {
 
-/// The e2e harness's world: tools/e2e/server/run.ps1 and tools/e2e/client/run.ps1 create "GF-Test"
-/// afresh for every run. landmark::forceStart stores a start that the landmark contract offers no
-/// way to remove, so a test forces one only there (R12: a kept development world keeps nothing).
-bool scratchWorld() {
-    auto level = ll::service::getLevel();
-    return level && level->getLevelData().mLevelName.get() == "GF-Test";
-}
-
-/// A special spawn function of the tests (gf::spawn::onSpecialSpawn has no removal: registered once,
-/// it answers only while a test has it active, inside the test's box): a labelled monster list, an
-/// empty creature override and an ambient list; nullopt otherwise.
+/// A special spawn function of the tests, registered after F6's structureSpecialSpawns
+/// (gf::spawn::onSpecialSpawn has no removal: registered once, it answers only while a test has it
+/// active, inside the test's box): a monster list, an empty creature list and an ambient list;
+/// nullopt otherwise. It shows the order of the chain: where F6 answers it is not asked.
 struct SpecialProbe {
     std::atomic<bool>  active{false};
     std::mutex         mutex;
@@ -674,25 +669,35 @@ std::string entriesText(std::vector<gf::spawn::SpawnEntry> const& list) {
 
 } // namespace
 
-// TF's landmark rules in the spawner and the feature placements.
+// TF's landmark rules in the spawner and the feature placements, on F6's real starts. The starts are
+// forced with landmark::ext::ScopedStart far from every test row, where no chunk is loaded (stored,
+// no block placed), and removed when the test ends (a start they replaced is put back), in every world.
+// ScopedStart cleans up only on a normal scope exit: if the process crashes or is killed, or the world
+// is saved, while the scopes are open, the gf_test fixture starts and a fake dark tower site about
+// 200000 blocks out can stay in the world's landmark data (F6's store). The e2e world GF-Test is made
+// afresh for every run; in a kept development world run this test only where that is acceptable.
 // - NaturalSpawner#mobsAt (spawn::detail::spawnListAt): the special spawn functions in registration
-//   order, the first list wins whole (a landmark's labelled monster list, a structure's empty spawn
-//   override), nullopt passes to the next and then to the biome's list; checked with the tests' own
-//   special spawn function, active in a box far from every start.
-// - Against F6's real starts, in the e2e world only (see scratchWorld): F6's fixture landmark
-//   (gf_test:landmark_fixture: a protected shell and a porch, pieces that are no SpawnIndexProvider,
-//   controlled spawns {monster "0": zombie, ambient: [], water: []}, surface decorations and
-//   vegetation not allowed, underground ones allowed, clearance radius 0) and TF's dark tower
-//   (clearance radius 1 chunk, no surface decorations), forced with landmark::forceStart far from
-//   every test row, where no chunk is loaded (the starts are stored, no block is placed): F6's
-//   structureSpecialSpawns answers before the later special spawn functions, and no_structure
-//   (AvoidLandmarkModifier) over both, the dark tower's site without pieces (no generator yet:
-//   StructureStart#isValid false) blocking nothing.
+//   order, the first list wins whole, nullopt passes to the next and then to the biome's list. F6's
+//   EntityEvents#structureSpecialSpawns end to end:
+//   - gf_test:landmark_fixture (ControlledSpawns, a protected shell and a porch): its
+//     Generator::spawnIndex gives labelled monster list 1 on the shell's upper floor, list 0 on the
+//     porch and none on the shell's ground floor (the biome's monsters); its empty ambient list in
+//     the chunks it reaches, ConfigurableSpawns#getSpawnableList's empty list for creatures;
+//   - gf_test:landmark_fixture_open (no ControlledSpawns): Structure#spawnOverrides, monsters "piece"
+//     (in the shell and the porch, the biome's beside them), ambient "full" (empty in the start box,
+//     the biome's outside it), no override for creatures (the biome's);
+//   - the tests' own special spawn function, registered after F6's, shows the order: where F6
+//     answers it is not asked, where F6 passes it is.
+// - twilightforest:no_structure (AvoidLandmarkModifier) over the locked fixture (surface decorations
+//   and vegetation not allowed, underground ones allowed, clearance radius 0) and TF's dark tower
+//   (clearance radius 1 chunk, no surface decorations); a dark tower site without pieces (no
+//   generator yet: StructureStart#isValid false) blocks nothing, which F6's featureBlocked decides.
 // Then concurrent spawn table lookups.
 GF_REGISTER_SELFTEST("worldgen.landmark_rules", [](Context& ctx) {
     namespace sd = gf::spawn::detail;
     namespace lm = gf::landmark;
     constexpr char kFixture[] = "gf_test:landmark_fixture";
+    constexpr char kOpen[]    = "gf_test:landmark_fixture_open";
     constexpr char kTower[]   = "twilightforest:dark_tower";
     static constexpr char kBiome[] = "gf_test:landmark_rules";
     auto*          bs         = ctx.region();
@@ -711,21 +716,15 @@ GF_REGISTER_SELFTEST("worldgen.landmark_rules", [](Context& ctx) {
         ~ClearTable() { gf::spawn::setBiomeSpawns(kBiome, gf::spawn::Table{}); }
     } clearTable;
     auto list = [&](BlockPos const& p, char const* category) { return entriesText(sd::spawnListAt(*bs, p, category, kBiome)); };
-
-    // the special spawn chain, 50000 blocks past the forced starts (no start reaches it)
-    {
-        BlockPos          probe{((row.x + 250000) & ~15) + 8, 64, (row.z & ~15) + 8};
-        SpecialProbeScope active(row.dim, {probe.x - 8, -64, probe.z - 8, probe.x + 7, 320, probe.z + 7});
-        ctx.check(lm::startsIntersecting(row.dim, {probe.x >> 4, probe.z >> 4}).empty(), "no start reaches the probe's chunk");
-        ctx.check(list(probe, "monster") == entriesText(probeMonsters()),
-                  "a labelled monster list replaces the biome's whole, weights and group sizes kept: " + list(probe, "monster"));
-        ctx.check(list(probe, "creature") == "[]", "an empty spawn override: no creatures instead of the pigs " + list(probe, "creature"));
-        ctx.check(list(probe, "ambient") == entriesText(probeAmbient()), "the ambient list " + list(probe, "ambient"));
-        ctx.check(list(probe, "water_ambient") == "[minecraft:cod 15 3-6]", "a category no special spawn answers: the biome's " + list(probe, "water_ambient"));
-        BlockPos outside{probe.x + 16, probe.y, probe.z};
-        ctx.check(list(outside, "monster") == "[minecraft:skeleton 100 1-1]" && list(outside, "creature") == "[minecraft:pig 10 4-4]",
-                  "outside the probe's box: the biome's lists");
-    }
+    // a labelled list of a descriptor ("[id weight min-max, ...]")
+    auto labelled = [](char const* key, char const* label) {
+        std::vector<gf::spawn::SpawnEntry> converted;
+        if (auto const* d = lm::descriptor(key))
+            for (auto const& e : d->controlledSpawns.value("labelled_monster_spawns", JsonT::object()).value(label, JsonT::array()))
+                converted.push_back({e.value("type", std::string{}), e.value("weight", 1), e.value("minCount", 1), e.value("maxCount", 1)});
+        return entriesText(converted);
+    };
+    std::string const biomeMonsters = "[minecraft:skeleton 100 1-1]";
 
     // twilightforest:no_structure (AvoidLandmarkModifier)
     gf::features::PlacementFn fn;
@@ -748,23 +747,30 @@ GF_REGISTER_SELFTEST("worldgen.landmark_rules", [](Context& ctx) {
         return !fn({view, random, cfg, ""}, p).empty();
     };
 
-    if (!scratchWorld()) {
-        ctx.info("worldgen.landmark_rules: the forced starts are checked in the e2e world GF-Test only (the landmark contract cannot remove a start)");
-    } else {
-        // the middle of a chunk: the fixture's box (x +-3, z -3..+6) stays inside it
-        gf::core::GlobalPos center{row.dim, ((row.x + 200000) & ~15) + 8, 64, (row.z & ~15) + 6};
-        auto                start = lm::forceStart(kFixture, center);
+    // the middle of a chunk: the fixtures' boxes (x +-3, z -3..+6) stay inside it
+    gf::core::GlobalPos center{row.dim, ((row.x + 200000) & ~15) + 8, 64, (row.z & ~15) + 6};
+    auto startsOf = [&](int dx, char const* key) {
+        auto all = lm::startsIntersecting(center.dim, {(center.x + dx) >> 4, center.z >> 4});
+        return std::count_if(all.begin(), all.end(), [&](lm::Start const& s) { return s.key == key; });
+    };
+    auto before = std::array{startsOf(0, kFixture), startsOf(-160, kOpen), startsOf(160, kTower)};
+    {
+        lm::ext::ScopedStart start(kFixture, center);
         ctx.require(start && start->generated && start->pieceBoxes.size() == 2, "F6 forced its fixture landmark (shell and porch)");
         lm::ChunkPos chunk{center.x >> 4, center.z >> 4};
         auto         starts = lm::startsIntersecting(center.dim, chunk);
         ctx.check(std::any_of(starts.begin(), starts.end(), [&](lm::Start const& s) { return s.key == kFixture; }), "startsIntersecting (F6) lists the start");
 
-        // NaturalSpawner#mobsAt: EntityEvents#gatherPotentialSpawns (F6's special spawn) before the biome
-        BlockPos inside{center.x, center.y + 1, center.z};
-        ctx.check(list(inside, "monster") == "[minecraft:skeleton 100 1-1]",
-                  "monsters in the shell: no piece is a SpawnIndexProvider, so no controlled list: the biome's " + list(inside, "monster"));
-        ctx.check(!gf::landmark::ext::potentialSpawns(center.dim, "monster", inside.x, inside.y, inside.z).has_value(),
-                  "F6's gatherPotentialSpawns agrees: null for monsters");
+        // NaturalSpawner#mobsAt: EntityEvents#structureSpecialSpawns (F6's special spawn) before the biome
+        BlockPos inside{center.x, center.y + 1, center.z}; // the shell's ground floor
+        BlockPos upper{center.x, center.y + 5, center.z};  // the shell's upper floor
+        BlockPos porch{center.x, center.y, center.z + 5};  // the porch
+        auto     upperList = labelled(kFixture, "1");
+        ctx.check(upperList != "[]", "the fixture has labelled monster list 1 " + upperList);
+        ctx.check(list(upper, "monster") == upperList, "monsters on the shell's upper floor: labelled list 1 replaces the biome's whole, weights and group sizes kept " + list(upper, "monster"));
+        ctx.check(list(porch, "monster") == labelled(kFixture, "0"), "monsters on the porch: labelled list 0 " + list(porch, "monster"));
+        ctx.check(list(inside, "monster") == biomeMonsters, "monsters on the shell's ground floor: spawn index -1, no controlled list: the biome's " + list(inside, "monster"));
+        ctx.check(!lm::ext::potentialSpawns(center.dim, "monster", inside.x, inside.y, inside.z).has_value(), "F6's gatherPotentialSpawns agrees: null there");
         ctx.check(list(inside, "ambient") == "[]", "ambient in the start's chunk: the fixture's empty ambient list replaces the bats " + list(inside, "ambient"));
         // the corner of the start's chunk, outside the start's box (the shell and porch span x +-3, z -3..+6)
         BlockPos corner{chunk.x * 16, center.y, chunk.z * 16};
@@ -773,51 +779,76 @@ GF_REGISTER_SELFTEST("worldgen.landmark_rules", [](Context& ctx) {
             // F6 registered its special spawn first: where it answers, the later functions are not asked
             SpecialProbeScope active(center.dim, {chunk.x * 16, -64, chunk.z * 16, chunk.x * 16 + 15, 320, chunk.z * 16 + 15});
             ctx.check(list(inside, "ambient") == "[]", "F6's ambient list wins over a later special spawn " + list(inside, "ambient"));
-            ctx.check(list(inside, "monster") == entriesText(probeMonsters()), "F6 passes on monsters: the next special spawn answers " + list(inside, "monster"));
+            ctx.check(list(upper, "monster") == upperList, "F6's labelled list wins over a later special spawn " + list(upper, "monster"));
+            ctx.check(list(inside, "monster") == entriesText(probeMonsters()), "F6 passes on the ground floor's monsters: the next special spawn answers " + list(inside, "monster"));
         }
         BlockPos far{center.x + 400, center.y, center.z};
-        ctx.check(list(far, "ambient") == "[minecraft:bat 10 8-8]" && list(far, "monster") == "[minecraft:skeleton 100 1-1]",
-                  "outside the start's chunks: the biome's lists");
+        ctx.check(list(far, "ambient") == "[minecraft:bat 10 8-8]" && list(far, "monster") == biomeMonsters, "outside the start's chunks: the biome's lists");
 
         ctx.check(!placedAt(config(true, false, false, 0), inside), "a surface feature in the shell is removed");
         ctx.check(placedAt(config(false, true, false, 0), inside), "an underground feature is kept (the fixture allows underground decorations)");
         ctx.check(!placedAt(config(false, false, true, 0), inside), "a vegetation feature is removed (allow_biome_vegetation false)");
         ctx.check(placedAt(config(true, false, false, 0, JsonT::array({kFixture})), inside), "structures_allowed lifts it");
         BlockPos beside{center.x + 5, center.y + 1, center.z}; // 2 east of the shell (BoundingBoxUtils#greatestAxalDistance)
-        ctx.check(placedAt(config(true, false, false, 1), beside) && !placedAt(config(true, false, false, 2), beside),
-                  "2 blocks beside the shell: kept with additional_clearance 1, removed with 2");
+        ctx.check(placedAt(config(true, false, false, 1), beside) && !placedAt(config(true, false, false, 2), beside), "2 blocks beside the shell: kept with additional_clearance 1, removed with 2");
         ctx.check(placedAt(config(true, true, true, 8), far), "far from the start every feature is kept");
+
+        // Structure#spawnOverrides: the open fixture, 10 chunks west (no ControlledSpawns)
+        {
+            gf::core::GlobalPos  openAt{row.dim, center.x - 160, 64, center.z};
+            lm::ext::ScopedStart open(kOpen, openAt);
+            ctx.require(open && open->generated && open->pieceBoxes.size() == 2, "F6 forced its open fixture landmark");
+            std::string const overrideMonsters = "[minecraft:witch 3 1-1, minecraft:creeper 7 2-4]";
+            BlockPos          shell{openAt.x, openAt.y + 1, openAt.z};
+            BlockPos          openPorch{openAt.x, openAt.y, openAt.z + 5};
+            BlockPos          besideShell{openAt.x + 5, openAt.y + 1, openAt.z}; // in the start's chunk, in no piece
+            BlockPos          openCorner{(openAt.x >> 4) * 16, openAt.y, (openAt.z >> 4) * 16};
+            ctx.check(list(shell, "monster") == overrideMonsters, "monsters in the shell: the \"piece\" override " + list(shell, "monster"));
+            ctx.check(list(openPorch, "monster") == overrideMonsters, "monsters on the porch: the \"piece\" override " + list(openPorch, "monster"));
+            ctx.check(list(besideShell, "monster") == biomeMonsters, "monsters beside the pieces: the biome's " + list(besideShell, "monster"));
+            ctx.check(list(shell, "ambient") == "[]", "ambient in the start box: the empty \"full\" override " + list(shell, "ambient"));
+            ctx.check(list(openCorner, "ambient") == "[minecraft:bat 10 8-8]", "ambient outside the start box: the biome's " + list(openCorner, "ambient"));
+            ctx.check(list(shell, "creature") == "[minecraft:pig 10 4-4]", "creatures: no override, the biome's " + list(shell, "creature"));
+            ctx.check(list(shell, "water_ambient") == "[minecraft:cod 15 3-6]", "a category no special spawn answers: the biome's " + list(shell, "water_ambient"));
+            {
+                SpecialProbeScope active(openAt.dim, {openCorner.x, -64, openCorner.z, openCorner.x + 15, 320, openCorner.z + 15});
+                ctx.check(list(shell, "monster") == overrideMonsters, "the override wins over a later special spawn " + list(shell, "monster"));
+                ctx.check(list(shell, "creature") == "[]", "F6 passes on creatures: the next special spawn's empty list " + list(shell, "creature"));
+            }
+        }
 
         // StructureStart#isValid: TF's dark tower, 10 chunks east. Without its generator (before W1) F6
         // reserves the site: no pieces, the clearance square as its box, and Java skips such a start;
         // with one the start has pieces and its clearance (radius 1 chunk) removes surface features
-        gf::core::GlobalPos towerAt{row.dim, center.x + 160, 64, center.z};
-        auto                tower = lm::forceStart(kTower, towerAt);
-        ctx.require(tower.has_value(), "F6 forced a dark tower start");
+        gf::core::GlobalPos  towerAt{row.dim, center.x + 160, 64, center.z};
+        lm::ext::ScopedStart tower(kTower, towerAt);
+        ctx.require(static_cast<bool>(tower), "F6 forced a dark tower start");
         auto const& tb = tower->box;
         BlockPos    middle{tb.minX + (tb.maxX - tb.minX + 1) / 2, towerAt.y, tb.minZ + (tb.maxZ - tb.minZ + 1) / 2}; // BoundingBox#getCenter
-        bool        f6Blocks = gf::landmark::ext::featureBlocked(row.dim, middle.x, middle.y, middle.z, {.surface = true});
+        bool        f6Blocks = lm::ext::featureBlocked(row.dim, middle.x, middle.y, middle.z, {.surface = true});
         if (tower->pieceBoxes.empty()) {
-            ctx.check(placedAt(config(true, false, false, 0), middle), "the dark tower's site without pieces blocks no surface feature (StructureStart#isValid)");
-            ctx.info(std::string("F6's featureBlocked alone at the reserved site: ") + (f6Blocks ? "blocked (its clearance square)" : "kept"));
+            ctx.check(placedAt(config(true, false, false, 0), middle) && !f6Blocks, "the dark tower's site without pieces blocks no surface feature (StructureStart#isValid)");
+            ctx.check(list(middle, "monster") == biomeMonsters, "nor changes the spawns there " + list(middle, "monster"));
         } else {
             ctx.check(!placedAt(config(true, false, false, 0), middle) && f6Blocks, "the dark tower's start (with pieces) removes a surface feature at its center");
             ctx.check(placedAt(config(true, false, false, 0, "#twilightforest:landmark"), middle), "#twilightforest:landmark in structures_allowed lifts it");
             // its controlled spawns through F6: the labelled list of the pieces' spawn index at the
             // center, or (index -1) the dark tower's empty "full" monster override; never the biome's
             std::set<std::string> lists{"[]"};
-            if (auto const* d = lm::descriptor(kTower))
-                for (auto const& [label, entries] : d->controlledSpawns.value("labelled_monster_spawns", JsonT::object()).items()) {
-                    std::vector<gf::spawn::SpawnEntry> converted;
-                    for (auto const& e : entries) converted.push_back({e.value("type", std::string{}), e.value("weight", 1), e.value("minCount", 1), e.value("maxCount", 1)});
-                    lists.insert(entriesText(converted));
-                }
+            if (auto const* d = lm::descriptor(kTower)) {
+                // a local: items() of a temporary would dangle in the range-for
+                JsonT const labels = d->controlledSpawns.value("labelled_monster_spawns", JsonT::object());
+                for (auto const& entry : labels.items()) lists.insert(labelled(kTower, entry.key().c_str()));
+            }
             ctx.check(lists.contains(list(middle, "monster")), "monsters at the dark tower: one of its labelled lists or its override " + list(middle, "monster"));
             ctx.check(list(middle, "creature") == "[]", "creatures at the dark tower: none " + list(middle, "creature"));
         }
         ctx.check(placedAt(config(false, true, false, 0), middle), "an underground feature is kept at the dark tower");
-        gf::log().info("worldgen landmark rules: forced starts checked (fixture, {} with {} pieces)", kTower, tower->pieceBoxes.size());
+        gf::log().info("worldgen landmark rules: forced starts checked (fixtures, {} with {} pieces)", kTower, tower->pieceBoxes.size());
     }
+    // ScopedStart removed the forced starts (any start they replaced is back)
+    auto after = std::array{startsOf(0, kFixture), startsOf(-160, kOpen), startsOf(160, kTower)};
+    ctx.check(after == before, "the forced starts are gone after the test (fixture, open fixture, dark tower: " + std::to_string(after[0]) + " " + std::to_string(after[1]) + " " + std::to_string(after[2]) + " left, " + std::to_string(before[0]) + " " + std::to_string(before[1]) + " " + std::to_string(before[2]) + " before)");
 
     // tableOf from several threads while tables are registered (no data race, the same result)
     std::atomic<int>         mismatches{0};
@@ -840,8 +871,8 @@ GF_REGISTER_SELFTEST("worldgen.landmark_rules", [](Context& ctx) {
 });
 
 // The block and biome tags world generation and the spawner read, against F9's gf::tags: TF's tag
-// data (Java ids renamed to the game's), its vanilla bridge, and the Java 1.21.1 vanilla tags the
-// bridge does not answer; BlockState#canBeReplaced with TF's replaceable blocks.
+// data (Java ids renamed to the game's) and its vanilla bridge of the Java 1.21.1 tags, with nothing
+// built into F5; BlockState#canBeReplaced with TF's replaceable blocks.
 GF_REGISTER_SELFTEST("worldgen.tags", [](Context& ctx) {
     namespace sd = gf::spawn::detail;
     struct Case {
@@ -874,7 +905,7 @@ GF_REGISTER_SELFTEST("worldgen.tags", [](Context& ctx) {
         {"minecraft:snow", "twilightforest:carver_replaceables", true},
         {"minecraft:stone", "twilightforest:carver_replaceables", true},
         {"minecraft:obsidian", "twilightforest:carver_replaceables", false},
-        // the vanilla tags the bridge does not answer (built in, TF's members through the nested tags)
+        // vanilla tags with nested tags (the bridge's includes bring TF's members from its data)
         {"minecraft:oak_fence", "minecraft:fences", true},
         {"minecraft:nether_brick_fence", "minecraft:fences", true},
         {"twilightforest:twilight_oak_fence", "minecraft:fences", true},
@@ -887,6 +918,20 @@ GF_REGISTER_SELFTEST("worldgen.tags", [](Context& ctx) {
         {"minecraft:oak_log", "minecraft:overworld_natural_logs", true},
         {"minecraft:stripped_oak_log", "minecraft:overworld_natural_logs", false},
         {"twilightforest:twilight_oak_log", "minecraft:overworld_natural_logs", false},
+        {"minecraft:copper_door", "minecraft:doors", true},
+        {"minecraft:copper_trapdoor", "minecraft:trapdoors", true},
+        // nested includes reaching TF's data members two or three levels down (the carvers, the lush ground
+        // and lava lake rules read these)
+        {"twilightforest:uberous_soil", "twilightforest:carver_replaceables", true}, // -> overworld_carver_replaceables -> dirt
+        {"twilightforest:root", "twilightforest:worldgen_replaceables", true},       // -> lush_ground_replaceable -> moss_replaceable
+        {"twilightforest:liveroot_block", "twilightforest:worldgen_replaceables", true},
+        {"twilightforest:trollsteinn", "twilightforest:worldgen_replaceables", true},
+        {"twilightforest:uberous_soil", "twilightforest:worldgen_replaceables", true}, // -> moss_replaceable -> dirt
+        {"twilightforest:canopy_leaves", "minecraft:lava_pool_stone_cannot_replace", true}, // -> leaves
+        {"twilightforest:dark_leaves", "minecraft:lava_pool_stone_cannot_replace", true},
+        {"twilightforest:twilight_oak_log", "minecraft:lava_pool_stone_cannot_replace", true}, // -> logs -> twilightforest:logs
+        {"twilightforest:dark_log", "minecraft:lava_pool_stone_cannot_replace", true},
+        {"minecraft:stone", "minecraft:lava_pool_stone_cannot_replace", false},
     };
     int checked = 0;
     for (auto const& c : cases) {
@@ -939,7 +984,7 @@ GF_REGISTER_SELFTEST("worldgen.tags", [](Context& ctx) {
         ++checked;
     }
 
-    // biome tags: TF's from gf::tags, the spawner's vanilla river tag built in
+    // biome tags: TF's and the spawner's vanilla river tag, both from gf::tags
     ctx.check(sd::biomeHasTag("twilightforest:dark_forest", "twilightforest:in_twilight_forest") && !sd::biomeHasTag("minecraft:plains", "twilightforest:in_twilight_forest"),
               "#twilightforest:in_twilight_forest holds TF's biomes (gf::tags)");
     ctx.check(sd::biomeHasTag("minecraft:river", "minecraft:reduce_water_ambient_spawns") && sd::biomeHasTag("minecraft:frozen_river", "minecraft:reduce_water_ambient_spawns")
