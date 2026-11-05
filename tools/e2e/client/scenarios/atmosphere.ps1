@@ -46,17 +46,19 @@ function Invoke-AtmosphereTest([string]$name) {
 }
 
 function Enter-Twilight {
+    # /twilightforest tp keeps x / z and scales y: from the flat overworld's ground it lands inside the
+    # Twilight Forest's ground (the player suffocates), so the player goes up first (y 200 -> about
+    # 166 there), unhurt by the fall, and then stands on a glass platform at y 100 under the open sky
+    Invoke-Chat '/effect @s resistance 99999 255 true'
+    Invoke-Chat '/tp @s ~ 200 ~'
+    Start-Sleep -Seconds 1
     $mark = Get-LogMark
     Invoke-Chat '/twilightforest tp'
     if (-not $vanilla) { Wait-LogLine 'client dimension twilightforest:twilight_forest: y -32\.\.256' 90 -Since $mark | Out-Null }
-    Start-Sleep -Seconds 8 # the chunks around the arrival load
-    Invoke-Chat '/effect @s resistance 99999 255 true'
-    # /twilightforest tp keeps x / z and scales y (a flat overworld lands underground): a glass
-    # platform at y 100 with the open sky above
+    Start-Sleep -Seconds 6 # the chunks around the arrival load
+    Invoke-Chat '/fill ~-3 99 ~-3 ~3 99 ~3 glass'
     Invoke-Chat '/tp @s ~ 100 ~'
-    Start-Sleep -Seconds 2
-    Invoke-Chat '/fill ~-3 ~-1 ~-3 ~3 ~-1 ~3 glass'
-    Start-Sleep -Seconds 2
+    Start-Sleep -Seconds 3
 }
 
 function Set-View([double]$yaw, [double]$pitch) {
