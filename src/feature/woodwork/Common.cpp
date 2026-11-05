@@ -29,6 +29,7 @@
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/dimension/Dimension.h"
 
+#include "feature/common/Interactions.h"
 #include "feature/fx/Fx.h"
 #include "feature/tags/Tags.h"
 #include "game/Blocks.h"
@@ -189,8 +190,11 @@ void spawnItem(BlockSource& region, Vec3 const& at, ItemStack const& stack) {
 void dropItemStack(BlockSource& region, BlockPos const& pos, ItemStack const& stack) {
     if (stack.isNull()) return;
     // Containers.dropItemStack: a random spot in the inner box of the block corner (x, y, z), a
-    // gaussian motion of 0.05 (0.2 up), in blocks per tick
-    std::normal_distribution<double> g(0.0, 1.0);
+    // motion of random.triangle(0, 0.11485) on x / z and triangle(0.2, 0.11485) on y, in blocks
+    // per tick (RandomSource#triangle: mode + deviation * (nextDouble() - nextDouble()))
+    constexpr double kDeviation = 0.11485000171139836;
+    std::uniform_real_distribution<double> unit(0.0, 1.0);
+    auto triangle = [&](double mode) { return mode + kDeviation * (unit(rng()) - unit(rng())); };
     double size = 0.25; // EntityType.ITEM.getWidth()
     double span = 1.0 - size;
     double half = size / 2.0;
@@ -202,9 +206,9 @@ void dropItemStack(BlockSource& region, BlockPos const& pos, ItemStack const& st
     auto* item = region.getLevel().getSpawner().spawnItem(region, stack, nullptr, at, 0);
     if (!item) return;
     const_cast<Vec3&>(item->getPosDelta()) = Vec3{
-        static_cast<float>(g(rng()) * 0.05),
-        static_cast<float>(g(rng()) * 0.05 + 0.2),
-        static_cast<float>(g(rng()) * 0.05)
+        static_cast<float>(triangle(0.0)),
+        static_cast<float>(triangle(0.2)),
+        static_cast<float>(triangle(0.0))
     };
 }
 
@@ -220,7 +224,7 @@ void giveOrDrop(Player& player, ItemStack const& stack) {
 
 void consumeOne(Player& player, ItemStack const& held) {
     if (player.isCreative()) return;
-    auto& item = const_cast<ItemStack&>(held);
+    auto& item = interactions::mutableItem(held);
     if (item.isNull()) return;
     item.remove(1);
     if (item.mCount <= 0) item = ItemStack::EMPTY_ITEM();
@@ -229,7 +233,7 @@ void consumeOne(Player& player, ItemStack const& held) {
 
 void hurtTool(Player& player, ItemStack const& held, int n) {
     if (player.isCreative()) return;
-    auto& item = const_cast<ItemStack&>(held);
+    auto& item = interactions::mutableItem(held);
     if (item.isNull()) return;
     item.hurtAndBreak(n, &player);
     player.sendInventory(false);

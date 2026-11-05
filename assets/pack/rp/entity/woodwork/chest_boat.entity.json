@@ -24,14 +24,30 @@
         "darkoak": "textures/twilightforest/entity/chest_boat/transformation",
         "dark_oak": "textures/twilightforest/entity/chest_boat/transformation",
         "mangrove": "textures/twilightforest/entity/chest_boat/mining",
-        "cherry": "textures/twilightforest/entity/chest_boat/sorting"
+        "cherry": "textures/twilightforest/entity/chest_boat/sorting",
+        "vanilla_chest": "textures/entity/boat/chest_boat_oak"
       },
       "geometry": {
-        "default": "geometry.twilightforest.chest_boat"
+        "default": "geometry.twilightforest.chest_boat",
+        "chest": "geometry.twilightforest.chest_boat_chest"
       },
       "render_controllers": [
-        "controller.render.twilightforest.chest_boat"
-      ]
+        "controller.render.twilightforest.chest_boat",
+        "controller.render.twilightforest.chest_boat_chest"
+      ],
+      "animations": {
+        "paddles": "animation.twilightforest.boat.paddles"
+      },
+      "scripts": {
+        "pre_animation": [
+          "v.gf_rowing = q.has_rider && q.ground_speed > 0.1;",
+          "v.gf_paddle_left = (q.has_rider && (v.gf_rowing || q.yaw_speed > 5)) ? (v.gf_paddle_left ?? 0) + q.delta_time * 450 : 0;",
+          "v.gf_paddle_right = (q.has_rider && (v.gf_rowing || q.yaw_speed < -5)) ? (v.gf_paddle_right ?? 0) + q.delta_time * 450 : 0;"
+        ],
+        "animate": [
+          "paddles"
+        ]
+      }
     }
   }
 }

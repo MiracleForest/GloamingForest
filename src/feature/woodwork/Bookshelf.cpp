@@ -17,14 +17,12 @@
 #include <cmath>
 #include <vector>
 
-#include "ll/api/memory/Hook.h"
-
 #include "mc/deps/core/math/Vec3.h"
-#include "mc/world/item/enchanting/EnchantUtils.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/block/Block.h"
 
+#include "feature/ext/woodwork/EnchantPower.h"
 #include "feature/tags/Tags.h"
 #include "feature/woodwork/Woodwork.h"
 #include "game/Blocks.h"
@@ -60,25 +58,17 @@ std::vector<BlockPos> tfBookshelvesAround(BlockSource& region, BlockPos const& t
 
 } // namespace gf::feature::woodwork
 
-LL_STATIC_HOOK(
-    WoodworkBookcaseHook,
-    ll::memory::HookPriority::Normal,
-    &EnchantUtils::getBookCasePositions,
-    std::vector<Vec3>,
-    BlockSource& source,
-    Vec3 const&  pos
-) {
-    auto list = origin(source, pos);
-    BlockPos table{static_cast<int>(std::floor(pos.x)), static_cast<int>(std::floor(pos.y)), static_cast<int>(std::floor(pos.z))};
-    for (auto const& shelf : gf::feature::woodwork::tfBookshelvesAround(source, table)) {
-        list.push_back(Vec3{static_cast<float>(shelf.x), static_cast<float>(shelf.y), static_cast<float>(shelf.z)});
-    }
-    return list;
-}
-
 namespace gf::feature::woodwork {
 
-void installBookshelves() { WoodworkBookcaseHook::hook(); }
-void uninstallBookshelves() { WoodworkBookcaseHook::unhook(); }
+// the game's table counts the TF bookshelves through the enchantment power extension
+// (src/feature/ext/woodwork/EnchantPower.h: EnchantUtils::getBookCasePositions)
+void installBookshelves() {
+    woodwork_ext::enchantpower::setProvider([](BlockSource& region, BlockPos const& table) { return tfBookshelvesAround(region, table); });
+    woodwork_ext::enchantpower::install();
+}
+void uninstallBookshelves() {
+    woodwork_ext::enchantpower::uninstall();
+    woodwork_ext::enchantpower::setProvider({});
+}
 
 } // namespace gf::feature::woodwork

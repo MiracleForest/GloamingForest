@@ -3,6 +3,7 @@
 // Unit U4 (woodwork): the drying rack's state (DryingRackBlockEntity), shared by the unit's server
 // files, its selftests and its display. Internal to the unit.
 
+#include <cstdint>
 #include <functional>
 #include <optional>
 #include <vector>
@@ -44,5 +45,12 @@ void onChange(ChangeFn fn);
 /// makes the rack at `pos` show its item (or nothing).
 void installDisplay();
 void refreshDisplay(GlobalPos const& pos);
+/// The unique id of the display entity of the rack at pos (0: none).
+[[nodiscard]] std::int64_t displayIdAt(GlobalPos const& pos);
+
+/// The client mod draws the item itself (DryingRackRenderer, src/client/woodwork): every companion
+/// gets "woodwork.rack" {"racks": [{"pos": [dim, x, y, z], "facing", "item" (items::toJson),
+/// "lower" (#twilightforest:lower_on_drying_rack), "display" (the display entity's unique id, which
+/// it hides)}], "gone": [[dim, x, y, z]], "reset": true (the whole list, when it joins)}.
 
 } // namespace gf::feature::woodwork::rack

@@ -35,6 +35,11 @@ Invoke-Build 'gamerule dodaylightcycle false'
 Invoke-Build 'time set 6000'
 
 $y = -60 # the flat world's first air layer
+# the hollow log items in the hotbar (TF's item model: the horizontal hollow log)
+Invoke-Chat '/clear @s'
+foreach ($it in 'hollow_oak_log', 'hollow_canopy_log', 'hollow_twilight_oak_log', 'hollow_crimson_stem', 'oak_banister', 'canopy_drying_rack', 'canopy_boat', 'sorting_chest_boat') { Invoke-Chat "/give @s twilightforest:$it" }
+Start-Sleep -Seconds 2
+Save-Screenshot 'woodwork-items-hotbar' | Out-Null
 $z = 46
 $f = 'twilightforest:facing'
 $tf = 'twilight_oak', 'canopy', 'mangrove', 'dark', 'time', 'transformation', 'mining', 'sorting'
@@ -150,9 +155,9 @@ Start-Sleep -Seconds 3
 Save-Screenshot 'woodwork-hollow-close' | Out-Null
 
 # drying racks holding items (the item drawn on the rack), kelp drying (its particles): the
-# selftest woodwork.showcase fills six racks in the unit's selftest row and logs where
+# selftest woodwork.fixture_showcase fills six racks in the unit's selftest row and logs where
 $mark = Get-LogMark
-if ($script:Mode -eq 'local') { Invoke-SelfTest 'woodwork.showcase' | Out-Null } else { Send-HostConsole 'tf selftest woodwork.showcase' }
+if ($script:Mode -eq 'local') { Invoke-SelfTest 'woodwork.fixture_showcase' | Out-Null } else { Send-HostConsole 'tf selftest woodwork.fixture_showcase' }
 $line = Wait-LogLine 'woodwork: showcase racks at -?\d+ -?\d+ -?\d+' 60 -Since $mark
 if ("$line" -notmatch 'showcase racks at (-?\d+) (-?\d+) (-?\d+)') { throw 'no showcase racks' }
 $rx = [int]$Matches[1]; $ry = [int]$Matches[2]; $rz = [int]$Matches[3]
@@ -162,7 +167,71 @@ Save-Screenshot 'woodwork-rack-items' | Out-Null
 Invoke-Teleport "/tp @s $($rx + 0.5) $($ry + 0.5) $($rz - 1.4) 0 20"
 Start-Sleep -Seconds 3
 Save-Screenshot 'woodwork-rack-kelp-close' | Out-Null
+# the side view: the item hangs below the bar, flat against it (DryingRackRenderer, FIXED)
+Invoke-Teleport "/tp @s $($rx + 6.5) $($ry - 0.4) $($rz + 0.5) 90 5"
+Start-Sleep -Seconds 3
+Save-Screenshot 'woodwork-rack-side' | Out-Null
+if ($script:Mode -ne 'remote-vanilla') {
+    # the client mod draws the rack items itself (the display entities hidden)
+    Wait-LogLine '^(?!\[host\]).*woodwork: a drying rack item drawn by the client mod' 20 | Out-Null
+    if ($env:GF_WOODWORK_RACK_CAL) {
+        # development: the item transform's calibration, one picture per entry of the JSON array
+        $calFile = Join-Path (Join-Path $script:ModsDir $script:ModName) 'woodwork_rack_calibration.json'
+        $cals = $env:GF_WOODWORK_RACK_CAL | ConvertFrom-Json
+        Invoke-Teleport "/tp @s $($rx + 2.5) $($ry + 0.2) $($rz - 2.2) 0 10"
+        for ($i = 0; $i -lt @($cals).Count; $i++) {
+            @($cals)[$i] | ConvertTo-Json -Depth 5 | Set-Content -Path $calFile -Encoding UTF8
+            Start-Sleep -Seconds 2
+            Save-Screenshot "woodwork-rackcal-$i" | Out-Null
+        }
+        Remove-Item $calFile -ErrorAction SilentlyContinue
+    }
+}
 
+# climbing a climbable hollow log (the client mod: the block is climbable, BlockProperty::Climbable)
+if ($script:Mode -ne 'remote-vanilla') {
+    $cx = 950
+    Invoke-Teleport "/tp @s $($cx + 0.5) $($y + 1) $($z - 4.5) 0 10"
+    for ($i = 0; $i -lt 4; $i++) { Invoke-Build "setblock $cx $($y + $i) $z twilightforest:hollow_oak_log_climbable [`"$f`"=`"north`",`"twilightforest:variant`"=`"ladder`"]" }
+    Invoke-Build "setblock $($cx + 1) $y $z twilightforest:hollow_oak_log_climbable [`"$f`"=`"north`",`"twilightforest:variant`"=`"vine`"]"
+    Start-Sleep -Seconds 2
+    Save-Screenshot 'woodwork-climb-logs' | Out-Null
+    $mark = Get-LogMark
+    Invoke-Teleport "/tp @s $($cx + 0.5) $y $($z + 0.5) 0 0"
+    Start-Sleep -Seconds 1
+    Focus-Game
+    Press-Key W 2500
+    Wait-LogLine '^(?!\[host\]).*woodwork: the local player climbs a climbable hollow log' 15 -Since $mark | Out-Null
+    Save-Screenshot 'woodwork-climb-inside' | Out-Null
+    Write-Step 'the local player climbed the laddered hollow log'
+}
+
+# crawling into a horizontal hollow log: sneaking with an empty hand, a right-click into the tunnel
+# at its end (HorizontalHollowLogBlock.useWithoutItem) moves the player into it, where the game
+# crawls under the 14 px ceiling (Java: Pose.SWIMMING); the client mod reports the crawl
+$kx = 960
+Invoke-Build "setblock $kx $y $z twilightforest:hollow_oak_log_horizontal [`"twilightforest:axis`"=`"z`"]"
+Invoke-Build "setblock $kx $y $($z + 1) twilightforest:hollow_oak_log_horizontal [`"twilightforest:axis`"=`"z`"]"
+Invoke-Chat '/clear @s'
+Invoke-Teleport "/tp @s $($kx + 0.5) $y $($z - 0.31) 0 12"
+Start-Sleep -Seconds 1
+$mark = Get-LogMark
+Focus-Game
+[BsE2E.Native]::Key([uint16]0x10, $false)
+Start-Sleep -Milliseconds 300
+[BsE2E.Native]::MouseButton(1, $false); Start-Sleep -Milliseconds 80; [BsE2E.Native]::MouseButton(1, $true)
+Start-Sleep -Milliseconds 300
+[BsE2E.Native]::Key([uint16]0x57, $false)
+Start-Sleep -Milliseconds 1500
+Save-Screenshot 'woodwork-crawl' | Out-Null
+[BsE2E.Native]::Key([uint16]0x57, $true)
+[BsE2E.Native]::Key([uint16]0x10, $true)
+try { Wait-LogLine 'woodwork: \S+ crawls into twilightforest:hollow_oak_log_horizontal' 10 -Since $mark | Out-Null; Write-Step 'the sneak-click moved the player into the hollow log' }
+catch { Write-Step 'warning: no crawl click seen by the server' }
+if ($script:Mode -ne 'remote-vanilla') {
+    try { Wait-LogLine '^(?!\[host\]).*woodwork: the local player crawls in a horizontal hollow log' 5 -Since $mark | Out-Null; Write-Step 'the local player crawls in the hollow log' }
+    catch { Write-Step 'warning: the local player did not crawl in the hollow log (the game crawls only where it allows it)' }
+}
 # boats on a pond, then a ride
 $bx = 900
 Invoke-Teleport "/tp @s $($bx + 3) $($y + 3) $($z - 8) 0 25"
@@ -176,9 +245,20 @@ Start-Sleep -Seconds 4
 Invoke-Teleport "/tp @s $($bx + 4) $($y + 2) $($z - 3) 0 30"
 Start-Sleep -Seconds 3
 Save-Screenshot 'woodwork-boat-pond' | Out-Null
+if ($script:Mode -ne 'remote-vanilla') {
+    # the client mod draws the TF boats with their client entities (TF texture, the vanilla chest)
+    Wait-LogLine '^(?!\[host\]).*woodwork: twilightforest:(chest_)?boat drawn with its client entity' 20 | Out-Null
+}
 Invoke-Chat "/ride @s start_riding @e[type=twilightforest:boat,c=1] teleport_rider"
 Start-Sleep -Seconds 3
 Save-Screenshot 'woodwork-boat-ride' | Out-Null
+# paddling (W): the boat moves, the paddles row
+Focus-Game
+[BsE2E.Native]::Key([uint16]0x57, $false)
+Start-Sleep -Milliseconds 700
+Save-Screenshot 'woodwork-boat-paddling' | Out-Null
+Start-Sleep -Milliseconds 400
+[BsE2E.Native]::Key([uint16]0x57, $true)
 # third person (F5): the rider in the boat
 function Press-F5 {
     Focus-Game
@@ -188,6 +268,11 @@ function Press-F5 {
 Press-F5
 Start-Sleep -Seconds 2
 Save-Screenshot 'woodwork-boat-ride-third' | Out-Null
+Focus-Game
+[BsE2E.Native]::Key([uint16]0x57, $false)
+Start-Sleep -Milliseconds 600
+Save-Screenshot 'woodwork-boat-paddling-third' | Out-Null
+[BsE2E.Native]::Key([uint16]0x57, $true)
 Press-F5
 Press-F5
 Reset-CameraPerspective

@@ -4,7 +4,8 @@
     "description": {
       "identifier": "twilightforest:crimson_drying_rack",
       "menu_category": {
-        "category": "none"
+        "category": "construction",
+        "group": "minecraft:itemGroup.name.fenceGate"
       },
       "states": {
         "twilightforest:facing": ["north", "south", "west", "east"]

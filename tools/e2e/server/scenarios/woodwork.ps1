@@ -4,14 +4,16 @@
 # waterlogged, the item dropped when the water comes or goes and when the rack breaks, automation
 # refused while drying), hollow logs (placement by face, moss / grass / snow / shovel / shears,
 # vine / ladder / shears, the climbable variant), the Java shapes of racks, banisters and hollow
-# logs, chest pairs, the drying recipes; then a rack keeps drying across a server restart, and a
-# boat placed on water from its item and broken drops its TF item.
+# logs, chest pairs, the trapped chest's signal, signs, every recipe with its unlock, fuel, the
+# boats (placed from the item, ridden, broken: the TF item; a crash landing: planks and sticks), the
+# client mod's rack sync and the display entity (one, no drops); then a rack keeps drying across a
+# server restart.
 Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
 Wait-LogLine 'woodwork: installed' 60 | Out-Null
 
 $r = Invoke-SelfTest 'woodwork.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) woodwork selftest(s) failed" }
-if ($r.Pass -lt 10) { throw "expected at least 10 woodwork selftests to pass, got $($r.Pass)" }
+if ($r.Pass -lt 18) { throw "expected at least 18 woodwork selftests to pass, got $($r.Pass)" }
 Write-Step "woodwork selftests: $($r.Pass) passed"
 
 # A drying rack's item and its drying time survive a restart (block data + the rack index), and it

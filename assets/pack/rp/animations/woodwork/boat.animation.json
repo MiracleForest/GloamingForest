@@ -1,0 +1,24 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.twilightforest.boat.paddles": {
+      "loop": true,
+      "bones": {
+        "left_paddle": {
+          "rotation": [
+            "math.lerp(-60, -15, (math.sin(-v.gf_paddle_left) + 1) * 0.5)",
+            "math.lerp(-45, 45, (math.sin(-v.gf_paddle_left + 57.29578) + 1) * 0.5)",
+            0
+          ]
+        },
+        "right_paddle": {
+          "rotation": [
+            "math.lerp(-60, -15, (math.sin(-v.gf_paddle_right) + 1) * 0.5)",
+            "180 - math.lerp(-45, 45, (math.sin(-v.gf_paddle_right + 57.29578) + 1) * 0.5)",
+            0
+          ]
+        }
+      }
+    }
+  }
+}

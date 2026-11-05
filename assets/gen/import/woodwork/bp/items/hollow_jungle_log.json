@@ -4,7 +4,8 @@
     "description": {
       "identifier": "twilightforest:hollow_jungle_log",
       "menu_category": {
-        "category": "none"
+        "category": "construction",
+        "group": "minecraft:itemGroup.name.wood"
       }
     },
     "components": {

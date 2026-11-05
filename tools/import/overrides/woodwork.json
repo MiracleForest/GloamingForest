@@ -12205,6 +12205,14 @@
       4
      ]
     }
+   },
+   {
+    "op": "replace",
+    "path": "/minecraft:block/description/menu_category",
+    "value": {
+     "category": "construction",
+     "group": "minecraft:itemGroup.name.fenceGate"
+    }
    }
   ],
   "bp/blocks/spruce_banister.json": [
@@ -13560,6 +13568,14 @@
       16,
       4
      ]
+    }
+   },
+   {
+    "op": "replace",
+    "path": "/minecraft:block/description/menu_category",
+    "value": {
+     "category": "construction",
+     "group": "minecraft:itemGroup.name.fenceGate"
     }
    }
   ],
@@ -14917,6 +14933,14 @@
       4
      ]
     }
+   },
+   {
+    "op": "replace",
+    "path": "/minecraft:block/description/menu_category",
+    "value": {
+     "category": "construction",
+     "group": "minecraft:itemGroup.name.fenceGate"
+    }
    }
   ],
   "bp/blocks/jungle_banister.json": [
@@ -16272,6 +16296,14 @@
       16,
       4
      ]
+    }
+   },
+   {
+    "op": "replace",
+    "path": "/minecraft:block/description/menu_category",
+    "value": {
+     "category": "construction",
+     "group": "minecraft:itemGroup.name.fenceGate"
     }
    }
   ],
@@ -17629,6 +17661,14 @@
       4
      ]
     }
+   },
+   {
+    "op": "replace",
+    "path": "/minecraft:block/description/menu_category",
+    "value": {
+     "category": "construction",
+     "group": "minecraft:itemGroup.name.fenceGate"
+    }
    }
   ],
   "bp/blocks/dark_oak_banister.json": [
@@ -18984,6 +19024,14 @@
       16,
       4
      ]
+    }
+   },
+   {
+    "op": "replace",
+    "path": "/minecraft:block/description/menu_category",
+    "value": {
+     "category": "construction",
+     "group": "minecraft:itemGroup.name.fenceGate"
     }
    }
   ],
@@ -20341,6 +20389,14 @@
       4
      ]
     }
+   },
+   {
+    "op": "replace",
+    "path": "/minecraft:block/description/menu_category",
+    "value": {
+     "category": "construction",
+     "group": "minecraft:itemGroup.name.fenceGate"
+    }
    }
   ],
   "bp/blocks/warped_banister.json": [
@@ -21696,6 +21752,14 @@
       16,
       4
      ]
+    }
+   },
+   {
+    "op": "replace",
+    "path": "/minecraft:block/description/menu_category",
+    "value": {
+     "category": "construction",
+     "group": "minecraft:itemGroup.name.fenceGate"
     }
    }
   ],
@@ -23053,6 +23117,14 @@
       4
      ]
     }
+   },
+   {
+    "op": "replace",
+    "path": "/minecraft:block/description/menu_category",
+    "value": {
+     "category": "construction",
+     "group": "minecraft:itemGroup.name.fenceGate"
+    }
    }
   ],
   "bp/blocks/bamboo_banister.json": [
@@ -24409,6 +24481,14 @@
       4
      ]
     }
+   },
+   {
+    "op": "replace",
+    "path": "/minecraft:block/description/menu_category",
+    "value": {
+     "category": "construction",
+     "group": "minecraft:itemGroup.name.fenceGate"
+    }
    }
   ],
   "bp/blocks/cherry_banister.json": [
@@ -25764,6 +25844,14 @@
       16,
       4
      ]
+    }
+   },
+   {
+    "op": "replace",
+    "path": "/minecraft:block/description/menu_category",
+    "value": {
+     "category": "construction",
+     "group": "minecraft:itemGroup.name.fenceGate"
     }
    }
   ],
@@ -27223,6 +27311,14 @@
       4
      ]
     }
+   },
+   {
+    "op": "replace",
+    "path": "/minecraft:block/description/menu_category",
+    "value": {
+     "category": "construction",
+     "group": "minecraft:itemGroup.name.fenceGate"
+    }
    }
   ],
   "bp/blocks/spruce_drying_rack.json": [
@@ -27384,6 +27480,14 @@
       4,
       4
      ]
+    }
+   },
+   {
+    "op": "replace",
+    "path": "/minecraft:block/description/menu_category",
+    "value": {
+     "category": "construction",
+     "group": "minecraft:itemGroup.name.fenceGate"
     }
    }
   ],
@@ -27547,6 +27651,14 @@
       4
      ]
     }
+   },
+   {
+    "op": "replace",
+    "path": "/minecraft:block/description/menu_category",
+    "value": {
+     "category": "construction",
+     "group": "minecraft:itemGroup.name.fenceGate"
+    }
    }
   ],
   "bp/blocks/jungle_drying_rack.json": [
@@ -27708,6 +27820,14 @@
       4,
       4
      ]
+    }
+   },
+   {
+    "op": "replace",
+    "path": "/minecraft:block/description/menu_category",
+    "value": {
+     "category": "construction",
+     "group": "minecraft:itemGroup.name.fenceGate"
     }
    }
   ],
@@ -27871,6 +27991,14 @@
       4
      ]
     }
+   },
+   {
+    "op": "replace",
+    "path": "/minecraft:block/description/menu_category",
+    "value": {
+     "category": "construction",
+     "group": "minecraft:itemGroup.name.fenceGate"
+    }
    }
   ],
   "bp/blocks/dark_oak_drying_rack.json": [
@@ -28032,6 +28160,14 @@
       4,
       4
      ]
+    }
+   },
+   {
+    "op": "replace",
+    "path": "/minecraft:block/description/menu_category",
+    "value": {
+     "category": "construction",
+     "group": "minecraft:itemGroup.name.fenceGate"
     }
    }
   ],
@@ -28195,6 +28331,14 @@
       4
      ]
     }
+   },
+   {
+    "op": "replace",
+    "path": "/minecraft:block/description/menu_category",
+    "value": {
+     "category": "construction",
+     "group": "minecraft:itemGroup.name.fenceGate"
+    }
    }
   ],
   "bp/blocks/warped_drying_rack.json": [
@@ -28356,6 +28500,14 @@
       4,
       4
      ]
+    }
+   },
+   {
+    "op": "replace",
+    "path": "/minecraft:block/description/menu_category",
+    "value": {
+     "category": "construction",
+     "group": "minecraft:itemGroup.name.fenceGate"
     }
    }
   ],
@@ -28519,6 +28671,14 @@
       4
      ]
     }
+   },
+   {
+    "op": "replace",
+    "path": "/minecraft:block/description/menu_category",
+    "value": {
+     "category": "construction",
+     "group": "minecraft:itemGroup.name.fenceGate"
+    }
    }
   ],
   "bp/blocks/bamboo_drying_rack.json": [
@@ -28681,6 +28841,14 @@
       4
      ]
     }
+   },
+   {
+    "op": "replace",
+    "path": "/minecraft:block/description/menu_category",
+    "value": {
+     "category": "construction",
+     "group": "minecraft:itemGroup.name.fenceGate"
+    }
    }
   ],
   "bp/blocks/cherry_drying_rack.json": [
@@ -28842,6 +29010,14 @@
       4,
       4
      ]
+    }
+   },
+   {
+    "op": "replace",
+    "path": "/minecraft:block/description/menu_category",
+    "value": {
+     "category": "construction",
+     "group": "minecraft:itemGroup.name.fenceGate"
     }
    }
   ],
@@ -32016,7 +32192,7 @@
     "op": "add",
     "path": "/minecraft:item/components/minecraft:block_placer",
     "value": {
-     "block": "twilightforest:hollow_canopy_log_vertical"
+     "block": "twilightforest:hollow_canopy_log_horizontal"
     }
    },
    {
@@ -32025,6 +32201,10 @@
     "value": {
      "duration": 15
     }
+   },
+   {
+    "op": "remove",
+    "path": "/minecraft:item/components/minecraft:icon"
    }
   ],
   "bp/blocks/hollow_mangrove_log_horizontal.json": [
@@ -43153,7 +43333,7 @@
     "op": "add",
     "path": "/minecraft:item/components/minecraft:block_placer",
     "value": {
-     "block": "twilightforest:hollow_oak_log_vertical"
+     "block": "twilightforest:hollow_oak_log_horizontal"
     }
    },
    {
@@ -43162,6 +43342,18 @@
     "value": {
      "duration": 15
     }
+   },
+   {
+    "op": "replace",
+    "path": "/minecraft:item/description/menu_category",
+    "value": {
+     "category": "construction",
+     "group": "minecraft:itemGroup.name.wood"
+    }
+   },
+   {
+    "op": "remove",
+    "path": "/minecraft:item/components/minecraft:icon"
    }
   ],
   "bp/blocks/hollow_spruce_log_horizontal.json": [
@@ -44752,6 +44944,14 @@
     "path": "/minecraft:item/components/minecraft:fuel",
     "value": {
      "duration": 15
+    }
+   },
+   {
+    "op": "replace",
+    "path": "/minecraft:item/description/menu_category",
+    "value": {
+     "category": "construction",
+     "group": "minecraft:itemGroup.name.wood"
     }
    }
   ],
@@ -46344,6 +46544,14 @@
     "value": {
      "duration": 15
     }
+   },
+   {
+    "op": "replace",
+    "path": "/minecraft:item/description/menu_category",
+    "value": {
+     "category": "construction",
+     "group": "minecraft:itemGroup.name.wood"
+    }
    }
   ],
   "bp/blocks/hollow_jungle_log_horizontal.json": [
@@ -47934,6 +48142,14 @@
     "path": "/minecraft:item/components/minecraft:fuel",
     "value": {
      "duration": 15
+    }
+   },
+   {
+    "op": "replace",
+    "path": "/minecraft:item/description/menu_category",
+    "value": {
+     "category": "construction",
+     "group": "minecraft:itemGroup.name.wood"
     }
    }
   ],
@@ -49526,6 +49742,14 @@
     "value": {
      "duration": 15
     }
+   },
+   {
+    "op": "replace",
+    "path": "/minecraft:item/description/menu_category",
+    "value": {
+     "category": "construction",
+     "group": "minecraft:itemGroup.name.wood"
+    }
    }
   ],
   "bp/blocks/hollow_dark_oak_log_horizontal.json": [
@@ -51116,6 +51340,14 @@
     "path": "/minecraft:item/components/minecraft:fuel",
     "value": {
      "duration": 15
+    }
+   },
+   {
+    "op": "replace",
+    "path": "/minecraft:item/description/menu_category",
+    "value": {
+     "category": "construction",
+     "group": "minecraft:itemGroup.name.wood"
     }
    }
   ],
@@ -52708,6 +52940,14 @@
     "value": {
      "duration": 15
     }
+   },
+   {
+    "op": "replace",
+    "path": "/minecraft:item/description/menu_category",
+    "value": {
+     "category": "construction",
+     "group": "minecraft:itemGroup.name.wood"
+    }
    }
   ],
   "bp/blocks/hollow_warped_stem_horizontal.json": [
@@ -54298,6 +54538,14 @@
     "path": "/minecraft:item/components/minecraft:fuel",
     "value": {
      "duration": 15
+    }
+   },
+   {
+    "op": "replace",
+    "path": "/minecraft:item/description/menu_category",
+    "value": {
+     "category": "construction",
+     "group": "minecraft:itemGroup.name.wood"
     }
    }
   ],
@@ -55890,6 +56138,14 @@
     "value": {
      "duration": 15
     }
+   },
+   {
+    "op": "replace",
+    "path": "/minecraft:item/description/menu_category",
+    "value": {
+     "category": "construction",
+     "group": "minecraft:itemGroup.name.wood"
+    }
    }
   ],
   "bp/blocks/hollow_cherry_log_horizontal.json": [
@@ -57480,6 +57736,374 @@
     "path": "/minecraft:item/components/minecraft:fuel",
     "value": {
      "duration": 15
+    }
+   },
+   {
+    "op": "replace",
+    "path": "/minecraft:item/description/menu_category",
+    "value": {
+     "category": "construction",
+     "group": "minecraft:itemGroup.name.wood"
+    }
+   }
+  ],
+  "bp/items/twilight_oak_door.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 10
+    }
+   }
+  ],
+  "bp/items/twilight_oak_sign.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 10
+    }
+   }
+  ],
+  "bp/items/twilight_oak_hanging_sign.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 40
+    }
+   }
+  ],
+  "bp/items/twilight_oak_boat.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 60
+    }
+   }
+  ],
+  "bp/items/twilight_oak_chest_boat.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 60
+    }
+   }
+  ],
+  "bp/items/canopy_door.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 10
+    }
+   }
+  ],
+  "bp/items/canopy_sign.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 10
+    }
+   }
+  ],
+  "bp/items/canopy_hanging_sign.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 40
+    }
+   }
+  ],
+  "bp/items/canopy_boat.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 60
+    }
+   }
+  ],
+  "bp/items/canopy_chest_boat.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 60
+    }
+   }
+  ],
+  "bp/items/mangrove_door.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 10
+    }
+   }
+  ],
+  "bp/items/mangrove_sign.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 10
+    }
+   }
+  ],
+  "bp/items/mangrove_hanging_sign.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 40
+    }
+   }
+  ],
+  "bp/items/mangrove_boat.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 60
+    }
+   }
+  ],
+  "bp/items/mangrove_chest_boat.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 60
+    }
+   }
+  ],
+  "bp/items/dark_door.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 10
+    }
+   }
+  ],
+  "bp/items/dark_sign.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 10
+    }
+   }
+  ],
+  "bp/items/dark_hanging_sign.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 40
+    }
+   }
+  ],
+  "bp/items/dark_boat.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 60
+    }
+   }
+  ],
+  "bp/items/dark_chest_boat.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 60
+    }
+   }
+  ],
+  "bp/items/time_door.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 10
+    }
+   }
+  ],
+  "bp/items/time_sign.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 10
+    }
+   }
+  ],
+  "bp/items/time_hanging_sign.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 40
+    }
+   }
+  ],
+  "bp/items/time_boat.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 60
+    }
+   }
+  ],
+  "bp/items/time_chest_boat.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 60
+    }
+   }
+  ],
+  "bp/items/transformation_door.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 10
+    }
+   }
+  ],
+  "bp/items/transformation_sign.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 10
+    }
+   }
+  ],
+  "bp/items/transformation_hanging_sign.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 40
+    }
+   }
+  ],
+  "bp/items/transformation_boat.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 60
+    }
+   }
+  ],
+  "bp/items/transformation_chest_boat.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 60
+    }
+   }
+  ],
+  "bp/items/mining_door.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 10
+    }
+   }
+  ],
+  "bp/items/mining_sign.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 10
+    }
+   }
+  ],
+  "bp/items/mining_hanging_sign.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 40
+    }
+   }
+  ],
+  "bp/items/mining_boat.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 60
+    }
+   }
+  ],
+  "bp/items/mining_chest_boat.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 60
+    }
+   }
+  ],
+  "bp/items/sorting_door.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 10
+    }
+   }
+  ],
+  "bp/items/sorting_sign.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 10
+    }
+   }
+  ],
+  "bp/items/sorting_hanging_sign.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 40
+    }
+   }
+  ],
+  "bp/items/sorting_boat.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 60
+    }
+   }
+  ],
+  "bp/items/sorting_chest_boat.json": [
+   {
+    "op": "add",
+    "path": "/minecraft:item/components/minecraft:fuel",
+    "value": {
+     "duration": 60
     }
    }
   ]

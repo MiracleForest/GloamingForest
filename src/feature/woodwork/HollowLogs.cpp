@@ -20,7 +20,9 @@
 
 #include "feature/woodwork/Woodwork.h"
 
+#include <algorithm>
 #include <cmath>
+#include <iterator>
 
 #include "mc/deps/core/math/Vec3.h"
 #include "mc/world/actor/player/Player.h"
@@ -30,6 +32,7 @@
 #include "mc/world/level/block/Block.h"
 
 #include "feature/common/Interactions.h"
+#include "feature/movement/Movement.h"
 #include "game/Blocks.h"
 #include "game/Items.h"
 #include "mod/Log.h"
@@ -91,23 +94,38 @@ void putWater(BlockSource& region, BlockPos const& pos) {
     if (auto const* water = game::blockWith("minecraft:water")) region.setExtraBlock(pos, *water, 3);
 }
 
+/// Removes the water layer of a block whose state holds no water.
+void clearWater(BlockSource& region, BlockPos const& pos) {
+    if (!waterAt(region, pos) || idOf(region.getExtraBlock(pos)) == "minecraft:air") return;
+    if (auto const* air = game::blockWith("minecraft:air")) region.setExtraBlock(pos, *air, 3);
+}
+
 // ---- HollowLogItem -------------------------------------------------------------------------------------
 
 /// HollowLogItem.getPlacementState: the BP item places the vertical log; a side face makes it the
 /// horizontal one (its axis the face's, `waterlogged` in water).
-void onPlaceVertical(ia::PlaceContext const& c) {
+void onPlaceHollow(ia::PlaceContext const& c) {
     auto const* set = hollowLogOf(c.blockId);
-    if (!set || c.blockId != set->vertical) return;
-    if (!isHorizontalFace(c.face)) return;
+    if (!set || (c.blockId != set->vertical && c.blockId != set->horizontal)) return;
+    if (c.itemId != set->item) return; // the hollow log item's own placement
     auto* region = game::regionOf(c.pos.dim);
     if (!region) return;
     BlockPos pos = game::blockPos(c.pos);
-    if (idOf(region->getBlock(pos)) != set->vertical) return;
-    bool        wet = waterSourceAt(*region, pos);
-    std::string axis = (c.face == 4 || c.face == 5) ? "x" : "z";
-    if (auto const* h = game::blockWithStates(set->horizontal, {{kAxis, axis}, {kVariant, wet ? "waterlogged" : "empty"}})) {
-        game::setBlock(*region, pos, *h);
-        if (wet) putWater(*region, pos);
+    if (idOf(region->getBlock(pos)) != c.blockId) return;
+    bool wet = waterSourceAt(*region, pos);
+    if (isHorizontalFace(c.face)) {
+        // a side face: the horizontal log along the face's axis, waterlogged in water
+        std::string axis = (c.face == 4 || c.face == 5) ? "x" : "z";
+        if (auto const* h = game::blockWithStates(set->horizontal, {{kAxis, axis}, {kVariant, wet ? "waterlogged" : "empty"}})) {
+            game::setBlock(*region, pos, *h);
+            if (wet) putWater(*region, pos);
+        }
+    } else if (c.blockId != set->vertical) {
+        // the top or the bottom face: the vertical log
+        if (auto const* v = game::blockWith(set->vertical)) {
+            game::setBlock(*region, pos, *v);
+            if (wet) putWater(*region, pos);
+        }
     }
 }
 
@@ -170,13 +188,73 @@ ia::Result onUseHorizontal(ia::UseOnContext const& c) {
         return ia::Result::Consume;
     }
     // useWithoutItem: sneaking with an empty hand inside the log, facing along it, at its height,
-    // within 0.81 of its bottom centre: Java sets the swimming (crawling) pose. Bedrock has no pose
-    // a server can force on a player; the player crawls through the 14 px tunnel with the client
-    // mod's movement only (docs/units/woodwork.md).
+    // within 0.81 of its bottom centre: Java sets the swimming (crawling) pose. Bedrock's pose is
+    // the client's own (PlayerAuthInput StartCrawling): the server cannot set it. The click moves
+    // the player into the tunnel along the log (gf::movement::applyMotion) instead, where the game
+    // crawls under the 14 px ceiling by itself (docs/units/woodwork.md).
+    if (c.itemId.empty() && c.sneaking) {
+        int  look   = lookFace(c.player);
+        bool along  = axis == ((look == 4 || look == 5) ? "x" : "z");
+        Vec3 feet   = c.player.getFeetPos();
+        auto pos    = game::blockPos(c.pos);
+        double dx   = feet.x - (pos.x + 0.5), dy = feet.y - pos.y, dz = feet.z - (pos.z + 0.5);
+        bool   near = std::sqrt(dx * dx + dy * dy + dz * dz) < 0.81;
+        if (along && static_cast<int>(std::floor(feet.y)) == pos.y && near && !c.player.isGliding()) {
+            auto step = faceStep(look);
+            movement::applyMotion(c.player, Vec3{0.3f * step[0], 0.0f, 0.3f * step[2]});
+            log().info("woodwork: {} crawls into {}", c.player.getRealName(), c.blockId);
+        }
+    }
     return pass();
 }
 
 // ---- VerticalHollowLogBlock ----------------------------------------------------------------------------
+
+/// Java's hit.getDirection() for a click into the shaft: Java's outline is the hollow shape, so the
+/// look ray that enters through the open top (or bottom) hits an inner wall, whose face points into
+/// the shaft (the wall at x 2 px faces east, ...). Bedrock selects the log as a full block and
+/// reports the top / bottom face with the entry point: the ray from the player's eyes through that
+/// point is followed down (up) the shaft to the first inner wall it reaches inside the block. A ray
+/// that leaves the block through the far opening (Java would click the block beyond) takes the
+/// inner wall nearest the entry point. -1: not a top / bottom click.
+int innerWallFace(ia::UseOnContext const& c) {
+    if (c.face != 0 && c.face != 1) return -1;
+    constexpr double lo = 2.0 / 16, hi = 14.0 / 16;
+    Vec3   eye = c.player.getHeadPos();
+    double ex = eye.x - c.pos.x, ey = eye.y - c.pos.y, ez = eye.z - c.pos.z;
+    double hx = c.hit[0], hy = c.hit[1], hz = c.hit[2];
+    double dx = hx - ex, dy = hy - ey, dz = hz - ez;
+    double best = 1e9;
+    int    face = -1;
+    auto   tryWall = [&](double plane, double origin, double dir, int wallFace) {
+        if (std::abs(dir) < 1e-9) return;
+        double t = (plane - origin) / dir;
+        if (t <= 0) return;
+        double y = hy + dy * t;
+        double x = hx + dx * t, z = hz + dz * t;
+        if (y < 0 || y > 1) return; // past the far opening
+        if (wallFace == 4 || wallFace == 5) {
+            if (z < lo || z > hi) return;
+        } else if (x < lo || x > hi) {
+            return;
+        }
+        if (t < best) {
+            best = t;
+            face = wallFace;
+        }
+    };
+    // the inner walls: x = 2 px faces east, x = 14 px west, z = 2 px south, z = 14 px north
+    tryWall(lo, hx, dx, 5);
+    tryWall(hi, hx, dx, 4);
+    tryWall(lo, hz, dz, 3);
+    tryWall(hi, hz, dz, 2);
+    if (face >= 0) return face;
+    // the nearest inner wall to the entry point
+    double dists[4] = {hx - lo, hi - hx, hz - lo, hi - hz};
+    int    faces[4] = {5, 4, 3, 2};
+    int    i        = static_cast<int>(std::min_element(std::begin(dists), std::end(dists)) - std::begin(dists));
+    return faces[i];
+}
 
 ia::Result onUseVertical(ia::UseOnContext const& c) {
     if (!insideVertical(c.hit) || c.sneaking) return ia::Result::Pass;
@@ -189,13 +267,18 @@ ia::Result onUseVertical(ia::UseOnContext const& c) {
     auto& region = c.player.getDimensionBlockSource();
     auto  pos    = game::blockPos(c.pos);
     bool  wet    = waterSourceAt(region, pos);
-    // directionUtil.horizontalOrElse(hit face, the player's direction's opposite)
-    int         facing  = isHorizontalFace(c.face) ? c.face : oppositeFace(lookFace(c.player));
+    // directionUtil.horizontalOrElse(hit face, the player's direction's opposite); a click into the
+    // shaft is Java's click on the inner wall the ray reaches (innerWallFace)
+    int hitFace = isHorizontalFace(c.face) ? c.face : innerWallFace(c);
+    int facing  = isHorizontalFace(hitFace) ? hitFace : oppositeFace(lookFace(c.player));
     std::string variant = vine ? "vine" : (wet ? "ladder_waterlogged" : "ladder");
     auto const* b       = game::blockWithStates(set->climbable, {{kVariant, variant}, {kFacing, faceName(facing)}});
     if (!b) return ia::Result::Pass;
     game::setBlock(region, pos, *b);
     if (variant == "ladder_waterlogged") putWater(region, pos);
+    // the VINE state has no water (Java's climbable vine is never waterlogged): Bedrock's water
+    // layer of the vertical log does not carry over
+    else if (vine) clearWater(region, pos);
     blockSound(region, pos, vine ? "dig.grass" : "dig.wood"); // VINE / LADDER place
     consumeOne(c.player, c.item);
     log().info("woodwork: {} made {} {}", c.player.getRealName(), set->climbable, variant);
@@ -266,7 +349,8 @@ ia::Result onBucket(ia::UseOnContext const& c) {
 
 void installHollowLogs() {
     for (auto const& h : hollowLogs()) {
-        handlerIds().push_back(ia::onPlace({.block = h.vertical}, onPlaceVertical));
+        handlerIds().push_back(ia::onPlace({.block = h.vertical}, onPlaceHollow));
+        handlerIds().push_back(ia::onPlace({.block = h.horizontal}, onPlaceHollow));
         handlerIds().push_back(ia::onUseOn({.block = h.horizontal}, onUseHorizontal));
         handlerIds().push_back(ia::onUseOn({.block = h.vertical}, onUseVertical));
         handlerIds().push_back(ia::onUseOn({.block = h.climbable}, onUseClimbable));

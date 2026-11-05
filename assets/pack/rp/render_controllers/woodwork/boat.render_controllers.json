@@ -50,6 +50,17 @@
       "textures": [
         "Array.woods[q.mark_variant]"
       ]
+    },
+    "controller.render.twilightforest.chest_boat_chest": {
+      "geometry": "Geometry.chest",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.vanilla_chest"
+      ]
     }
   }
 }

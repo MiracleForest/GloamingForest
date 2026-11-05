@@ -1,39 +1,41 @@
 # U4 woodwork: wood sets and wooden furniture
 
-Behaviour spec: [docs/spec/woodwork.md](../spec/woodwork.md). Code: `src/feature/woodwork/`.
+Behaviour spec: [docs/spec/woodwork.md](../spec/woodwork.md). Code: `src/feature/woodwork/` (server),
+`src/client/woodwork/` (client mod), `src/feature/ext/woodwork/` (contract extensions).
 
 ## What comes from where
 
 | Part | Route |
 |---|---|
 | The eight wood sets (logs, wood, stripped, planks, stairs, slabs, fences, gates, doors, trapdoors, buttons, plates, signs, hanging signs, chests, trapped chests) | F11 family data imported by F1 (`assets/gen/import/woodwork/data/gf/families/woodwork.json`): placement, stripping (`AxeItem.STRIPPABLES`), door halves, slab doubling, sign text and editor, chest pairing, containers, lids and the trapped chest's signal are the families kit's. |
-| Banisters | `Banister.cpp`: the shape on placement (connected under a banister), the axe cycle short -> tall -> connected with the extension toggled on a full cycle, the un-extension over a non-short banister (`blockevents::onNeighborChanged`), the gray tooltip. Facing and water: the families kit (`horizontal`, BanisterBlock: look direction; waterloggable). |
-| Drying racks | `DryingRack.cpp`: DryingRackBlockEntity in block data (`drying_rack`: item, dry_time, total_dry_time, drying, the water seen last tick), an index of racks holding an item (`gf:woodwork:racks`) ticked every server tick while loaded, the `twilightforest:drying` recipes F9 loads, the inventory contract's 1-slot handler (insert one item into an empty rack, no extraction while drying; the structure kit's loot fill), the add / remove sounds, the drying particle. `DryingRackDisplay.cpp`: the item shown by a display entity (`gloamingforest:drying_rack_item`) holding it, placed as DryingRackRenderer draws it. |
-| Hollow logs | `HollowLogs.cpp`: the item is a BP block placer of the vertical log, turned into the horizontal log on a side face; moss / grass / snow / shovel / shears inside the tunnel, vine / ladder in the shaft, shears on the climbable log; bucket water follows the variants. Shapes: the import overrides. Climbing: the families kit's climbable modifier (BlockProperty::Climbable). |
-| Boats | `Boats.cpp`: `twilightforest:boat` / `twilightforest:chest_boat` (BP runtime identifiers `minecraft:boat` / `minecraft:chest_boat`: the game's boat physics, seats, paddling and chest), the wood as the entity property `twilightforest:wood` (0..7, TFWoodTypes order) choosing TF's texture on every client. The items place them (BoatItem#use: the view's block or fluid hit within reach). Geometry: Java's BoatModel / ChestBoatModel (`assets/pack/rp/models/entity/woodwork/boat.geo.json`, the boat rows along its local x as Bedrock's boats do). |
-| Canopy bookshelf | `Bookshelf.cpp`: the enchanting table counts TF members of `#minecraft:enchantment_power_provider` on its ring (EnchantUtils::getBookCasePositions). Loot: imported (2 books, Silk Touch itself). |
+| Banisters | `Banister.cpp`: the shape on placement (connected under a banister), the axe cycle short -> tall -> connected with the extension toggled on a full cycle, the un-extension over a non-short banister (`blockevents::onNeighborChanged`), the gray tooltip. Facing and water: the families kit (`horizontal`, BanisterBlock: look direction; waterloggable). Block edits inside a `Consume` interaction are not rolled back (Interactions.h: unlike a cancelled PlayerInteractBlockEvent), so they stay in the click. |
+| Drying racks | `DryingRack.cpp`: DryingRackBlockEntity in block data (`drying_rack`: item, dry_time, total_dry_time, drying, the water seen last tick), an index of racks holding an item (`gf:woodwork:racks`) ticked every server tick while loaded, the `twilightforest:drying` recipes F9 loads, the inventory contract's 1-slot handler (insert one item into an empty rack, no extraction while drying; the structure kit's loot fill), the add / remove sounds, the drying particle (ParticleUtils.spawnParticleOnFace: 0.3 out on the facing axis, no speed). |
+| Rack item (DryingRackRenderer) | Client mod: `src/client/woodwork/WoodworkClient.cpp` draws the item with the game's item renderer in Java's pose (0.4 towards the facing, 0.5 / 0.325 / 0.45 high, scale 0.99, -yRot, FIXED context) from what the server sends (`woodwork.rack`), and hides the display entity. Vanilla clients: `DryingRackDisplay.cpp`, a display entity (`gloamingforest:drying_rack_item`, a GloamingForest-only id, not summonable) holding the item, placed where the renderer draws it; one per rack (twins that load late are adopted or removed), it never drops its item. |
+| Hollow logs | `HollowLogs.cpp`: the item places by the clicked face (side: horizontal along the face's axis, top / bottom: vertical); moss / grass / snow / shovel / shears inside the tunnel, vine / ladder in the shaft (a click from above faces the inner wall the look reaches; a vine leaves no water), shears on the climbable log; bucket water follows the variants; a sneak-click with an empty hand at the tunnel's end moves the player into it. Shapes: the import overrides. Climbing: the families kit's climbable modifier (BlockProperty::Climbable). |
+| Boats | `Boats.cpp`: `twilightforest:boat` / `twilightforest:chest_boat` (BP runtime identifiers `minecraft:boat` / `minecraft:chest_boat`: the game's boat physics, seats, paddling and chest), the wood as the entity property `twilightforest:wood` (0..7, TFWoodTypes order) and mark variant. The items place them (BoatItem#use). A destroyed TF boat drops its TF item (`ext/woodwork/BoatDrops`); a TF boat landing after a fall of more than 3 blocks breaks into 3 planks and 2 sticks (Boat#checkFallDamage, the entity contract's tick). Client mod: the boats are drawn with their client entities (`ext/woodwork/EntityRenderers`): Java's BoatModel / ChestBoatModel geometry, TF's textures, the chest part with the game's own chest boat texture, paddles animated from the rider's movement. |
+| Canopy bookshelf | `Bookshelf.cpp`: the enchanting table counts TF members of `#minecraft:enchantment_power_provider` on its ring (`ext/woodwork/EnchantPower`). Loot: imported (2 books, Silk Touch itself). |
+| Fuel | `Fuel.cpp` + `ext/woodwork/Fuel`: Java's vanilla fuel tags for the wood set items (logs, planks 300, slabs 150, stairs, fences, gates, trapdoors, plates 300, doors and signs 200, buttons 100, hanging signs 800, boats 1200), HollowLogItem 300; banisters keep TF's data map row. The BP items with a file (doors, signs, hanging signs, boats, hollow logs) also carry `minecraft:fuel` for vanilla clients. |
+| Creative inventory | The vanilla-wood banisters and drying racks go into the vanilla fence gate group, the vanilla-wood hollow logs into the vanilla wood group (TFCreativeTabs insertAfter); the TF woods are in TF's own tab (F1's catalog). |
 | Shapes | `tools/import/overrides/woodwork.json` (generated from the Java VoxelShapes): per-permutation collision and selection boxes of the banisters, drying racks and the three hollow log blocks; the horizontal hollow logs' water layer; the hollow log items' block placer and 15 s fuel. Boxes are written unturned: Bedrock turns them with the permutation's transformation. |
 
-## Engine hooks of the unit
+## Contract extensions (rule R18, `src/feature/ext/woodwork/`)
 
-R8 keeps the listed engine events with W0; these two are specific to this unit's own content:
-
-- `Boat::$destroy` / `ChestBoat::$destroy`: after the game's own drop, a TF boat's vanilla boat item
-  (the game drops the item of the entity's variant) is replaced by the TF item. Other boats pass.
-- `EnchantUtils::getBookCasePositions`: the TF bookshelves are added to the game's list.
+- `BoatDrops.{h,cpp}`: `Boat::$destroy` / `ChestBoat::$destroy`; a replacement item for the boats a
+  unit names; only the items that boat's own destroy call spawned are replaced.
+- `EnchantPower.{h,cpp}`: `EnchantUtils::getBookCasePositions`; extra enchantment power providers.
+- `Fuel.{h,cpp}`: `FurnaceBlockActor::getBurnDuration` for items without a `neoforge:furnace_fuels` row.
+- `EntityRenderers.{h,cpp}` (client): `ActorRenderDispatcher::_getRenderer`; draw a data-driven entity
+  with its client entity instead of the renderer of its runtime identifier, hide entities the client mod
+  draws itself.
 
 ## Deviations
 
-- Drying rack item: drawn as an item held by a display entity (both clients), not by a block entity
-  renderer. The pose is not yet Java's FIXED one: the game's third-person hand transform tilts the
-  item (pose probes in tools/e2e/client/scenarios/woodwork.display.ps1); a changed item respawns the
-  display (a held item set later does not reach clients already watching).
 - Banister extension and the climbable hollow logs' shapes keep Bedrock's limits: a block's boxes
   stay inside its own space (the extension's posts 8 px below the block have no box), and a
   selection box is one box (the hollow logs select as a full block; collisions are Java's).
-- Horizontal hollow log crawling: Java sets the swimming pose on a sneak-click inside the log; the
-  server cannot force a pose on a Bedrock player.
-- Boats: the client draws the TF boat entities with the game's own boat renderer (runtime
-  identifier minecraft:boat), which ignores the client entity's geometry and textures: TF boats look
-  like oak boats on every client so far (the TF textures, the Java-model geometry and the wood
-  property / mark variant are in place for a data-driven renderer). Open item.
+- Horizontal hollow log crawling: Java sets the swimming pose on a sneak-click; Bedrock's pose is the
+  client's own (PlayerAuthInput StartCrawling), so the click moves the player into the tunnel and the
+  game crawls under the 14 px ceiling where it allows it.
+- Climbing the climbable hollow logs needs the client mod (Bedrock has no data-driven climbable block).
+- Vanilla clients: TF boats look like the game's boats (the game's boat renderer, by runtime
+  identifier); the rack item is a held item of the display entity (the game's third-person hand pose).

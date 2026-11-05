@@ -11,9 +11,9 @@
 // the entities twilightforest:boat and twilightforest:chest_boat (BP runtime identifiers
 // minecraft:boat / minecraft:chest_boat: the game's own boat physics, seats, paddling and chest)
 // with the wood as the entity property twilightforest:wood (0..7, kTfWoods order), which picks the
-// texture on every client, vanilla ones included. The items place them as Java's BoatItem#use
-// does, and a destroyed TF boat drops its TF item instead of the vanilla boat item the game's
-// Boat#destroy drops for the entity's (oak) variant.
+// texture. The items place them as Java's BoatItem#use does, a destroyed TF boat drops its TF item
+// instead of the game's boat item (src/feature/ext/woodwork/BoatDrops.h), and a TF boat breaks on a
+// fall as Java's Boat#checkFallDamage (the entity contract's tick).
 
 #include "feature/woodwork/Woodwork.h"
 
@@ -22,7 +22,7 @@
 #include <optional>
 #include <variant>
 
-#include "ll/api/memory/Hook.h"
+#include <utility>
 #include "ll/api/service/Bedrock.h"
 
 #include "mc/deps/core/math/Vec2.h"
@@ -32,8 +32,8 @@
 #include "mc/server/commands/CommandUtils.h"
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/ActorDefinitionIdentifier.h"
-#include "mc/world/actor/item/Boat.h"
-#include "mc/world/actor/item/ChestBoat.h"
+#include "mc/world/actor/ActorDamageSource.h"
+#include "mc/world/level/BlockPos.h"
 #include "mc/world/actor/item/ItemActor.h"
 #include "mc/deps/core/string/HashedString.h"
 #include "mc/world/actor/state/PropertyComponent.h"
@@ -45,9 +45,12 @@
 #include "mc/world/level/ShapeType.h"
 #include "mc/world/level/Spawner.h"
 #include "mc/world/phys/AABB.h"
+#include "mc/world/level/storage/GameRuleId.h"
+#include "mc/world/level/storage/GameRules.h"
 #include "mc/world/phys/HitResult.h"
 
 #include "feature/common/Interactions.h"
+#include "feature/ext/woodwork/BoatDrops.h"
 #include "feature/entity/Entity.h"
 #include "game/Items.h"
 #include "mod/Log.h"
@@ -135,50 +138,72 @@ ia::Result useBoatItem(ia::UseContext const& c, int wood, bool chest) {
     return ia::Result::Consume;
 }
 
-/// After Boat#destroy / ChestBoat#destroy of a TF boat: the vanilla boat item the game dropped for
-/// the entity's variant becomes the TF item.
-void replaceDrop(Actor& boat) {
-    auto tf = dropItemOf(boat);
-    if (!tf) return;
-    auto& region = boat.getDimensionBlockSource();
-    auto  pos    = boat.getPosition();
-    AABB  box{Vec3{pos.x - 2.5f, pos.y - 2.5f, pos.z - 2.5f}, Vec3{pos.x + 2.5f, pos.y + 2.5f, pos.z + 2.5f}};
-    for (Actor* a : region.getEntities(box, 0.0f)) {
-        if (!a || a->getTypeName() != "minecraft:item") continue;
-        auto& stack = static_cast<ItemActor*>(a)->item();
-        auto  id    = game::items::idOf(stack);
-        if (!id.starts_with("minecraft:") || !(id.ends_with("_boat") || id.ends_with("_raft"))) continue;
-        if (static_cast<ItemActor*>(a)->mAge > 1) continue; // only the item the game just dropped
-        Vec3 at     = a->getPosition();
-        Vec3 motion = a->getPosDelta();
-        int  delay  = static_cast<ItemActor*>(a)->pickupDelay();
-        int  n      = stack.mCount;
-        a->remove();
-        if (auto s = game::items::make(*tf, n)) {
-            // the same spot, motion and pickup delay as the game's drop
-            if (auto* fresh = region.getLevel().getSpawner().spawnItem(region, *s, nullptr, at, 0)) {
-                static_cast<ItemActor*>(fresh)->pickupDelay() = delay;
-                const_cast<Vec3&>(fresh->getPosDelta())       = motion;
-            }
-        }
-        log().info("woodwork: a destroyed TF boat dropped {}", *tf);
+/// Boat#checkFallDamage (Java 1.21.1, every boat type): a boat that is not riding anything counts
+/// the distance it falls while it is not over water; landing after more than 3 blocks on land
+/// (status ON_LAND: on the ground, out of water) breaks it: the riders take the fall
+/// (Entity#causeFallDamage propagates to the passengers), the boat goes without its item (kill) and,
+/// with doEntityDrops, drops 3 planks of its wood and 2 sticks (Boat.Type: the wood's planks,
+/// minecraft:stick). Landing in water resets the distance. The game's boats never break on a fall:
+/// this runs for the TF boats only.
+void checkFallDamage(Actor& boat) {
+    auto& fall = entity::data(boat, "woodwork_fall"); // {"d": fallDistance, "y": last y}
+    if (!fall.is_object()) fall = Json{{"d", 0.0}, {"y", boat.getPosition().y}};
+    double y     = boat.getPosition().y;
+    double dy    = y - fall.value("y", y);
+    double dist  = fall.value("d", 0.0);
+    fall["y"]    = y;
+    if (boat.getVehicle()) {
+        fall["d"] = 0.0;
         return;
     }
+    auto& region = boat.getDimensionBlockSource();
+    if (boat.isOnGround()) {
+        if (dist > 3.0 && !boat.isInWater() && !waterAt(region, BlockPos{static_cast<int>(std::floor(boat.getPosition().x)), static_cast<int>(std::floor(y)), static_cast<int>(std::floor(boat.getPosition().z))})) {
+            // causeFallDamage(fallDistance, 1.0F, fall): the boat itself is immune, the riders fall
+            auto pos = boat.getPosition();
+            AABB box{Vec3{pos.x - 3.f, pos.y - 3.f, pos.z - 3.f}, Vec3{pos.x + 3.f, pos.y + 4.f, pos.z + 3.f}};
+            for (Actor* rider : region.getEntities(box, 0.0f)) {
+                if (rider && rider->getVehicle() == &boat) rider->causeFallDamageToActor(static_cast<float>(dist), 1.0f, ActorDamageSource(SharedTypes::Legacy::ActorDamageCause::Fall, ""));
+            }
+            int  wood  = woodOf(boat);
+            bool drops = true;
+            if (auto level = ll::service::getLevel()) {
+                GameRuleId rule;
+                rule.mValue = static_cast<int>(GameRules::GameRulesIndex::DoEntityDrops);
+                drops       = level->getGameRules().getBool(rule, true);
+            }
+            if (drops) {
+                std::string planks = std::string(kNs) + std::string(kTfWoods[static_cast<std::size_t>(wood)]) + "_planks";
+                for (int i = 0; i < 3; ++i)
+                    if (auto s = game::items::make(planks)) boat.spawnAtLocation(*s, 0.0f);
+                for (int i = 0; i < 2; ++i)
+                    if (auto s = game::items::make("minecraft:stick")) boat.spawnAtLocation(*s, 0.0f);
+            }
+            log().info("woodwork: a {} boat broke on landing after a {:.1f} block fall", kTfWoods[static_cast<std::size_t>(wood)], dist);
+            // kill(): gone without the boat item (the game's destroy would drop it); the riders
+            // dismount as the boat is removed
+            // removed on the next tick: not inside the actor's own tick (Actor::tick)
+            auto id = boat.getOrCreateUniqueID();
+            ia::nextTick([id] {
+                auto level = ll::service::getLevel();
+                if (!level) return;
+                if (auto* b = level->fetchEntity(id, false)) {
+                    b->removeAllPassengers(true, true);
+                    b->remove();
+                }
+            });
+            fall["d"] = 0.0;
+            return;
+        }
+        fall["d"] = 0.0;
+        return;
+    }
+    // the fluid below the boat: no fall over water (canBoatInFluid)
+    BlockPos below{static_cast<int>(std::floor(boat.getPosition().x)), static_cast<int>(std::floor(y)) - 1, static_cast<int>(std::floor(boat.getPosition().z))};
+    if (!waterAt(region, below) && !boat.isInWater() && dy < 0.0) fall["d"] = dist - dy;
 }
 
 } // namespace
-
-// Boat#destroy is the game's own drop of a boat (no loot table, no contract event): the TF boats
-// alone (by entity type) get their TF item; every other boat passes through untouched.
-LL_TYPE_INSTANCE_HOOK(WoodworkBoatDestroyHook, ll::memory::HookPriority::Normal, Boat, &Boat::$destroy, void, ::Actor* source) {
-    origin(source);
-    replaceDrop(*this);
-}
-
-LL_TYPE_INSTANCE_HOOK(WoodworkChestBoatDestroyHook, ll::memory::HookPriority::Normal, ChestBoat, &ChestBoat::$destroy, void, ::Actor* source) {
-    origin(source);
-    replaceDrop(*this);
-}
 
 void installBoats() {
     for (std::size_t i = 0; i < kTfWoods.size(); ++i) {
@@ -188,13 +213,20 @@ void installBoats() {
             handlerIds().push_back(ia::onUse(item, [wood, chest](ia::UseContext const& c) { return useBoatItem(c, wood, chest); }));
         }
     }
-    WoodworkBoatDestroyHook::hook();
-    WoodworkChestBoatDestroyHook::hook();
+    static bool once = false;
+    if (!std::exchange(once, true)) {
+        // registrations of the entity contract last for the process
+        for (auto const* type : {kBoat, kChestBoat}) entity::registerType(type, {.tick = [](Actor& boat) { checkFallDamage(boat); }});
+    }
+    // Boat#getDropItem: the TF item of the boat's wood instead of the game's boat item
+    // (src/feature/ext/woodwork/BoatDrops.h)
+    woodwork_ext::boatdrops::setReplacement([](Actor& boat) { return dropItemOf(boat); });
+    woodwork_ext::boatdrops::install();
 }
 
 void uninstallBoats() {
-    WoodworkChestBoatDestroyHook::unhook();
-    WoodworkBoatDestroyHook::unhook();
+    woodwork_ext::boatdrops::uninstall();
+    woodwork_ext::boatdrops::setReplacement({});
     for (auto id : handlerIds()) ia::remove(id);
     handlerIds().clear();
 }

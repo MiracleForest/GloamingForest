@@ -17,9 +17,11 @@ public:
         installHollowLogs();
         installBoats();
         installBookshelves();
+        installFuel();
         log().info("woodwork: installed ({} banisters, {} drying racks, {} hollow log sets)", banisterIds().size(), dryingRackIds().size(), hollowLogs().size());
     }
     void uninstall() {
+        uninstallFuel();
         uninstallBookshelves();
         uninstallBoats();
         uninstallHollowLogs();

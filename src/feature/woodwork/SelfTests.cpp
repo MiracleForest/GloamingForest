@@ -3,12 +3,16 @@
 // player's do (the interactions dispatch, then vanilla).
 
 #include <algorithm>
+#include <climits>
 #include <cmath>
 #include <cstdio>
 #include <optional>
+#include <utility>
 #include <variant>
 
 #include "ll/api/coro/CoroTask.h"
+#include "ll/api/event/EventBus.h"
+#include "ll/api/event/world/ServerLevelTickEvent.h"
 #include "ll/api/service/Bedrock.h"
 
 #include "mc/deps/core/math/Vec3.h"
@@ -578,9 +582,8 @@ GF_REGISTER_SELFTEST("woodwork.boats", [](Context& ctx) -> ll::coro::CoroTask<> 
         ctx.require(item.has_value(), std::string(k.item) + " exists");
         sp.simulateSetItem(*item, true, 0);
         co_await ctx.ticks(kClickGap);
-        auto& player = ctx.player();
-        auto  r      = ia::dispatchUse(ia::UseContext{player, player.getSelectedItem(), std::string(k.item), false, false});
-        ctx.check(r == ia::Result::Consume, std::string(k.item) + " is used on the water");
+        // the player uses the item as a client does (the game's item use, then the interactions)
+        simPlayer(ctx).simulateUseItemInSlot(0);
         co_await ctx.ticks(2);
         auto boats = boatsNear(ctx, c, k.entity);
         ctx.require(boats.size() == 1, std::string(k.item) + " placed one " + k.entity + " (" + std::to_string(boats.size()) + ")");
@@ -635,29 +638,79 @@ GF_REGISTER_SELFTEST("woodwork.boats", [](Context& ctx) -> ll::coro::CoroTask<> 
 
 // ---- a showcase for the client scenario's pictures -----------------------------------------------------
 
-GF_REGISTER_SELFTEST("woodwork.showcase", [](Context& ctx) -> ll::coro::CoroTask<> {
-    // six racks against a wall holding items (kelp drying), left in the unit's row (dz 2..3) for
-    // the client scenario to photograph
+namespace {
+/// Blocks the showcase put down, removed once the deadline tick passed (the 'full' run leaves
+/// nothing behind; the client scenario photographs them first).
+struct Showcase {
+    std::vector<GlobalPos>  blocks;
+    std::int64_t            until = 0;
+    ll::event::ListenerPtr  tick;
+};
+Showcase& showcase() {
+    static Showcase s;
+    return s;
+}
+std::int64_t serverTick() {
+    auto level = ll::service::getLevel();
+    return level ? static_cast<std::int64_t>(level->getCurrentServerTick().tickID) : 0;
+}
+void clearShowcase() {
+    auto& s = showcase();
+    for (auto const& p : s.blocks) {
+        if (auto* region = gf::game::regionOf(p.dim)) {
+            BlockPos bp = gf::game::blockPos(p);
+            if (!region->hasChunksAt(bp, 0, false)) continue;
+            if (auto h = gf::inventory::find(*region, bp); h && h->set) h->set(p, 0, ItemStack{});
+            gf::game::clearBlock(*region, bp);
+        }
+    }
+    s.blocks.clear();
+    if (s.tick) ll::event::EventBus::getInstance().removeListener(s.tick);
+    s.tick = nullptr;
+}
+} // namespace
+
+GF_REGISTER_SELFTEST("woodwork.fixture_showcase", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // five racks against a wall holding items (kelp drying), in the unit's row (dz 2..3), for the
+    // client scenario to photograph; removed again after 60 seconds
     auto p = ctx.testPos(495, 2);
     ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
+    clearShowcase();
+    static bool hooked = false;
+    if (!std::exchange(hooked, true)) gf::game::db::onWorldClosed([] {
+            auto& sc = showcase();
+            sc.blocks.clear(); // another world's positions
+            if (sc.tick) ll::event::EventBus::getInstance().removeListener(sc.tick);
+            sc.tick = nullptr;
+        });
     auto* region = ctx.region();
     char const* items[] = {"minecraft:kelp", "minecraft:rotten_flesh", "minecraft:oak_sapling", "twilightforest:treated_leather", "minecraft:oak_log"};
     auto const* rackBlock = gf::game::blockWithStates("twilightforest:oak_drying_rack", {{"twilightforest:facing", "south"}});
     auto const* wall      = gf::game::blockWith("minecraft:stone");
     ctx.require(region && rackBlock && wall, "blocks");
+    auto& s = showcase();
     for (int i = 0; i < 5; ++i) {
         auto r = at(p, i, 1, 0);
         gf::game::setBlock(*region, gf::game::blockPos(at(r, 0, 0, 1)), *wall);
         gf::game::setBlock(*region, gf::game::blockPos(r), *rackBlock);
+        s.blocks.push_back(r);
+        s.blocks.push_back(at(r, 0, 0, 1));
         if (auto h = gf::inventory::find(*region, gf::game::blockPos(r)); h && h->set) {
-            if (auto s = gf::game::items::make(items[i])) h->set(r, 0, *s);
+            if (auto st = gf::game::items::make(items[i])) h->set(r, 0, *st);
         }
     }
+    s.until = serverTick() + 20 * 60;
+    s.tick  = ll::event::EventBus::getInstance().emplaceListener<ll::event::ServerLevelTickEvent>([](auto&) {
+        if (serverTick() < showcase().until) return;
+        showcase().until = INT64_MAX;
+        ia::nextTick([] { clearShowcase(); }); // not inside the listener being removed
+    });
     co_await ctx.ticks(2);
     auto r0 = rack::at(at(p, 0, 1, 0));
     ctx.check(r0 && r0->drying, "the kelp is drying");
     gf::log().info("woodwork: showcase racks at {} {} {}", p.x, p.y + 1, p.z);
 });
+
 
 // ---- a rack across a restart (the server scenario runs a, restarts, runs b) ------------------------------
 

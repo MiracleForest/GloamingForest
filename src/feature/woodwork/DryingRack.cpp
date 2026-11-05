@@ -213,13 +213,15 @@ void dryingParticle(BlockSource& region, BlockPos const& pos, int face) {
     if (!level) return;
     auto dim = level->getDimension(region.getDimensionId()).lock();
     if (!dim) return;
+    // the block centre, `offset` (0.3) along the face's axis, a random -0.5..0.5 on the two others;
+    // the speed is Vec3.ZERO (0 on the face's axis, speed.x / y / z = 0 on the others)
     auto                                   step = faceStep(face);
     std::uniform_real_distribution<double> u(-0.5, 0.5);
-    double x = pos.x + 0.5 + (step[0] == 0 ? u(rng()) : step[0] * 0.55);
-    double y = pos.y + 0.5 + (step[1] == 0 ? u(rng()) : step[1] * 0.55);
-    double z = pos.z + 0.5 + (step[2] == 0 ? u(rng()) : step[2] * 0.55);
-    Vec3   vel{static_cast<float>(0.3 * step[0]), static_cast<float>(0.3 * step[1]), static_cast<float>(0.3 * step[2])};
-    fx::particle(*dim, "twilightforest:drying_rack", Vec3{static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)}, vel);
+    constexpr double                       kOffset = 0.3;
+    double x = pos.x + 0.5 + (step[0] == 0 ? u(rng()) : step[0] * kOffset);
+    double y = pos.y + 0.5 + (step[1] == 0 ? u(rng()) : step[1] * kOffset);
+    double z = pos.z + 0.5 + (step[2] == 0 ? u(rng()) : step[2] * kOffset);
+    fx::particle(*dim, "twilightforest:drying_rack", Vec3{static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)}, Vec3{0.f, 0.f, 0.f});
 }
 
 /// One tick of one rack (DryingRackBlockEntity#tick); false when the rack is gone.
@@ -281,7 +283,10 @@ void tickAll() {
         if (!tickRack(p)) gone.push_back(p);
         else if (refresh) refreshDisplay(p);
     }
-    for (auto const& p : gone) track(p, false);
+    for (auto const& p : gone) {
+        s.live.erase(p); // a stale live copy would come back with a rack placed here later
+        track(p, false);
+    }
 }
 
 // ---- interactions --------------------------------------------------------------------------------------

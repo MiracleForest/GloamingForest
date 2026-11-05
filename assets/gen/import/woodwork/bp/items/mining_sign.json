@@ -20,6 +20,9 @@
       "minecraft:block_placer": {
         "block": "twilightforest:mining_sign",
         "replace_block_item": true
+      },
+      "minecraft:fuel": {
+        "duration": 10
       }
     }
   }

@@ -10,7 +10,7 @@ Invoke-Build 'gamerule sendcommandfeedback false'
 Invoke-Build 'time set 6000'
 $y = -60; $z = 46
 $mark = Get-LogMark
-if ($script:Mode -eq 'local') { Invoke-SelfTest 'woodwork.showcase' | Out-Null } else { Send-HostConsole 'tf selftest woodwork.showcase' }
+if ($script:Mode -eq 'local') { Invoke-SelfTest 'woodwork.fixture_showcase' | Out-Null } else { Send-HostConsole 'tf selftest woodwork.fixture_showcase' }
 $line = Wait-LogLine 'woodwork: showcase racks at -?\d+ -?\d+ -?\d+' 60 -Since $mark
 if ("$line" -notmatch 'showcase racks at (-?\d+) (-?\d+) (-?\d+)') { throw 'no showcase racks' }
 $rx = [int]$Matches[1]; $ry = [int]$Matches[2]; $rz = [int]$Matches[3]

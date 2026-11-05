@@ -11,6 +11,7 @@
 
 #include <array>
 #include <map>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -120,6 +121,10 @@ void uninstallHollowLogs();
 void installBoats();
 void uninstallBoats();
 void installBookshelves();
+void installFuel();
+void uninstallFuel();
+/// Java's fuel value (ticks) of a wood set item from the vanilla fuel tags (nullopt: none).
+[[nodiscard]] std::optional<int> javaFuelTicks(std::string const& itemId);
 void uninstallBookshelves();
 
 /// The TF bookshelves (#minecraft:enchantment_power_provider) an enchanting table at `table` counts.

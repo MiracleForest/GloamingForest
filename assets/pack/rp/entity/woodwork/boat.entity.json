@@ -31,7 +31,20 @@
       },
       "render_controllers": [
         "controller.render.twilightforest.boat"
-      ]
+      ],
+      "animations": {
+        "paddles": "animation.twilightforest.boat.paddles"
+      },
+      "scripts": {
+        "pre_animation": [
+          "v.gf_rowing = q.has_rider && q.ground_speed > 0.1;",
+          "v.gf_paddle_left = (q.has_rider && (v.gf_rowing || q.yaw_speed > 5)) ? (v.gf_paddle_left ?? 0) + q.delta_time * 450 : 0;",
+          "v.gf_paddle_right = (q.has_rider && (v.gf_rowing || q.yaw_speed < -5)) ? (v.gf_paddle_right ?? 0) + q.delta_time * 450 : 0;"
+        ],
+        "animate": [
+          "paddles"
+        ]
+      }
     }
   }
 }

@@ -16,7 +16,10 @@
       "minecraft:display_name": {
         "value": "item.twilightforest:twilight_oak_boat.name"
       },
-      "minecraft:max_stack_size": 1
+      "minecraft:max_stack_size": 1,
+      "minecraft:fuel": {
+        "duration": 60
+      }
     }
   }
 }

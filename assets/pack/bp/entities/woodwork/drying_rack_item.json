@@ -4,7 +4,7 @@
     "description": {
       "identifier": "gloamingforest:drying_rack_item",
       "is_spawnable": false,
-      "is_summonable": true,
+      "is_summonable": false,
       "is_experimental": false
     },
     "components": {
@@ -40,6 +40,14 @@
         "max": 1
       },
       "minecraft:fire_immune": {},
+      "minecraft:equipment": {
+        "table": "loot_tables/empty.json",
+        "slot_drop_chance": [
+          {"slot": "slot.weapon.mainhand", "drop_chance": 0.0},
+          {"slot": "slot.weapon.offhand", "drop_chance": 0.0}
+        ]
+      },
+      "minecraft:loot": {"table": "loot_tables/empty.json"},
       "minecraft:persistent": {},
       "minecraft:conditional_bandwidth_optimization": {}
     }
