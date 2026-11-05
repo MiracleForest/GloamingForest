@@ -185,6 +185,7 @@ void tomeAiStep(Actor& a) {
         // the tome stands in the lectern's block, or on its top (0.875 high) when the engine lifted it
         if (!isLecternAt(region, at)) at.y -= 1;
         if (isLecternAt(region, at)) {
+            ge::data(a, "lectern_missed") = 0;
             // face the lectern's FACING (Bedrock: direction 0 south .. 3 east -> yaw)
             int   dir = game::intState(region.getBlock(at), "direction").value_or(0);
             float yaw = static_cast<float>(dir) * 90.0F;
@@ -202,6 +203,12 @@ void tomeAiStep(Actor& a) {
             }
             return;
         }
+        // a tome placed on a lectern this tick may still see the spawner's adjusted position: the
+        // lectern counts as gone once the tome has missed it for 5 ticks in a row
+        auto& missed = ge::data(a, "lectern_missed");
+        int   n      = missed.is_number_integer() ? missed.get<int>() + 1 : 1;
+        missed       = n;
+        if (n < 5) return;
         log().info("lich: a death tome is off its lectern ({} below it)", game::blockIdAt(region, at));
         setTomeOnLectern(a, false);
     }
