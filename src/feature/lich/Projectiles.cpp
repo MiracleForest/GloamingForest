@@ -15,6 +15,7 @@
 #include <cfloat>
 #include <cmath>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "ll/api/service/Bedrock.h"
 
@@ -188,11 +189,17 @@ void reflectBolt(Actor& bolt, Actor& by, Actor* direct) {
 
 void explodeBomb(Actor& bomb) {
     auto level = ll::service::getLevel();
-    if (!level || !bomb.isAlive()) return;
+    if (!level) return;
+    // once: the explosion's own damage reaches the bomb again (and is ignored there)
+    static std::unordered_set<std::int64_t> exploding;
+    auto uid = uidOf(bomb);
+    if (!exploding.insert(uid).second) return;
     auto pos = bomb.getPosition();
     level->explode(bomb.getDimensionBlockSource(), &bomb, pos, 2.0F, false, false, FLT_MAX, false);
-    owners().erase(uidOf(bomb));
+    exploding.erase(uid);
+    owners().erase(uid);
     discard(bomb);
+    log().info("lich: a lich bomb exploded");
 }
 
 void registerProjectiles() {

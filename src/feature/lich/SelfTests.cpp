@@ -355,9 +355,16 @@ GF_REGISTER_SELFTEST("lich.projectile_hits", [](Context& ctx) -> ll::coro::CoroT
     player = static_cast<SimulatedPlayer*>(actorById(pid));
     bomb   = actorById(bombId);
     ctx.require(player && bomb, "the bomb waits in front of the player");
-    player->simulateLookAt(*bomb, sim::LookDuration::Instant);
-    player->simulateAttack(bomb);
-    co_await ctx.ticks(2);
+    // a few swings (the player's previous swing may still be on its cooldown)
+    for (int i = 0; i < 10 && actorById(bombId); ++i) {
+        player = static_cast<SimulatedPlayer*>(actorById(pid));
+        bomb   = actorById(bombId);
+        if (!player || !bomb) break;
+        gf::projectile::ext::setVelocity(*bomb, Vec3{0.0f, 0.0f, 0.0f});
+        player->simulateLookAt(*bomb, sim::LookDuration::Instant);
+        player->simulateAttack(bomb);
+        co_await ctx.ticks(2);
+    }
     ctx.check(actorById(bombId) == nullptr, "the attacked bomb exploded");
     ctx.check(countAround(ctx, c, "minecraft:item", 8.0f) >= items, "the explosion left the dropped item alone");
     removeAround(ctx, c, "minecraft:item", 6.0f);
@@ -518,8 +525,8 @@ constexpr std::int64_t  kGoldenSeed   = 21;
 constexpr std::uint64_t kGoldenLayout = 9018693297151821187ull; // U22 absent
 // the placed layout depends on where it stands (its chunk seeds the layout): the golden holds for
 // the test area of the e2e worlds (seed 20260521, the BDS spawn); elsewhere it is logged only
-constexpr char const* kGoldenVolume   = ""; // U22 absent
-constexpr int         kGoldenVolumeAt[2] = {0, 0};
+constexpr char const* kGoldenVolume   = "42aa3923e38e53c8"; // U22 absent
+constexpr int         kGoldenVolumeAt[2] = {64, 100};
 
 std::uint64_t layoutHash(std::vector<tower::PieceBox> const& pieces, BlockPos const& origin, std::map<std::string, int>& counts) {
     std::uint64_t hash = 1469598103934665603ull;
