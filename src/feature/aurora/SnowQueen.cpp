@@ -700,7 +700,7 @@ bool queenHurt(Actor& actor, float&, std::string const&, Actor*) {
 
 /// The piercing level of an arrow (ProjectileComponent; 0 for anything else).
 int pierceLevel(Actor& projectile) {
-    auto* pc = projectile.getEntityContext().tryGetComponent<ProjectileComponent>();
+    auto pc = projectile.getEntityContext().tryGetComponent<ProjectileComponent>();
     return pc ? static_cast<int>(pc->mPiercingEnchantLevel) : 0;
 }
 

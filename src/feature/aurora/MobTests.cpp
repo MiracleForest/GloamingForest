@@ -20,6 +20,8 @@
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
+#include "mc/world/level/block/Block.h"
+#include "mc/world/level/block/BlockType.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/GameType.h"
 #include "mc/world/level/Level.h"
@@ -423,7 +425,7 @@ GF_REGISTER_SELFTEST("aurora.snow_queen_shields", [](Context& ctx) -> ll::coro::
     auto* arrow = level->getSpawner().spawnProjectile(*ctx.region(), ActorDefinitionIdentifier("minecraft:arrow"), &ctx.player(),
                                                       Vec3{sp.x - 3.0f, sp.y + 0.3f, sp.z}, Vec3{1.0f, 0.0f, 0.0f});
     ctx.require(arrow != nullptr, "an arrow");
-    if (auto* pc = arrow->getEntityContext().tryGetComponent<ProjectileComponent>()) pc->mPiercingEnchantLevel = 1;
+    if (auto pc = arrow->getEntityContext().tryGetComponent<ProjectileComponent>()) pc->mPiercingEnchantLevel = 1;
     gf::projectile::ext::setVelocity(*arrow, Vec3{1.5f, 0.0f, 0.0f});
     float before = static_cast<float>(q->getHealth());
     gf::combat::hurt(*shield, 6.0f, "minecraft:arrow", &ctx.player(), arrow);

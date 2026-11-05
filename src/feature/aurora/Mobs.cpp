@@ -226,7 +226,8 @@ void dropSnowGuardianGear(Actor& dead, std::vector<ItemStack>& drops, gf::loot::
         float chance = 0.085F + 0.01F * static_cast<float>(looting);
         if (ctx.player != nullptr && rng().nextFloat() < chance) {
             if (stack.isDamageableItem()) {
-                int maxDamage = stack.getItem() ? stack.getItem()->getMaxDamage() : 0;
+                auto* item      = stack.mItem.get();
+                int   maxDamage = item ? item->getMaxDamage() : 0;
                 if (maxDamage > 0) stack.setDamageValue(static_cast<short>(maxDamage - rng().nextInt(1 + rng().nextInt(std::max(maxDamage - 3, 1)))));
             }
             drops.push_back(stack);
