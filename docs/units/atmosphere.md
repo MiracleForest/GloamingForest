@@ -41,11 +41,16 @@ fallback. Spec: [docs/spec/atmosphere.md](../spec/atmosphere.md).
 
 ## Bedrock adaptation
 
-- No GLSL: the stars and the aurora are vertex-coloured meshes drawn with the level renderer's stars material in the
-  sky pass (additive like TF's stars; TF draws the aurora with alpha blending, over the dark sky the two look alike);
-  the aurora grid (64 x 64 cells over the faded radius 2.75 x fog end) is evaluated on a worker thread and drawn
-  scaled towards the camera (the same picture inside the sky's depth range). The weather columns use the particle
-  engine's blend material, split at the texture's edges (TF relies on a repeating sampler).
+- No GLSL: the stars are a vertex-coloured mesh drawn with the level renderer's stars material in the sky pass
+  (additive, no fog, like TF's stars). The aurora is drawn in the sky pass with the particle engine's blend material
+  and a white texture (`textures/atmosphere/white`; TF alpha-blends it). Its grid (96 x 96 cells, each drawn in the
+  mean colour of its corners, over the faded radius 2.75 x fog end) is evaluated on a worker thread and drawn scaled
+  towards the camera (the same picture inside the sky's depth range). The stars material ignores vertex alpha (the
+  e2e's `aurora-stars-material` calibration shot). The weather columns use the particle engine's blend material,
+  split at the texture's edges (TF relies on a repeating sampler).
+- Vibrant Visuals: the sky provider runs, but the VV sky draws over TF's stars (none show), and F12's volumetric fog
+  of the provider's fog colour tints the sky strongly (the glacier's purple). The weather columns draw with VV's
+  lighting. Classic is the faithful mode.
 - No sun / moon: the level renderer's sun, moon and star meshes are swapped for an empty mesh while the player is in
   the Twilight Forest and put back outside it; TF's star field is drawn by the provider at full brightness.
 - Fog: Bedrock has one distance fog; it takes FogHandler's terrain planes (the sky fog is smoothed alongside), stepped

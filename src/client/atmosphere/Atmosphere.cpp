@@ -404,7 +404,7 @@ private:
                 u     = s.uniforms;
                 scale = s.auroraScale;
             }
-            constexpr int n      = 64;
+            constexpr int n      = 96; // about 11 blocks a cell at a 192-block fog end
             float const   extent = std::min(scale, std::max(u.fogEnd, 1.0f) * 2.75f);
             auto          grid   = std::make_shared<AuroraGrid>();
             grid->camX           = u.camX;
