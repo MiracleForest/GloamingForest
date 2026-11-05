@@ -56,6 +56,16 @@ bool pickBlock(Player& player, BlockPos const& pos) {
     if (!picked) return true;
     auto&     inv      = player.getInventory();
     int const selected = player.getSelectedItemSlot();
+    // Inventory#getSuitableHotbarSlot: the selected slot when empty, else the next empty one, else
+    // the selected slot
+    auto suitable = [&] {
+        if (game::items::isEmpty(inv.getItem(selected))) return selected;
+        for (int k = 1; k < 9; ++k) {
+            int i = (selected + k) % 9;
+            if (game::items::isEmpty(inv.getItem(i))) return i;
+        }
+        return selected;
+    };
     // Inventory#findSlotMatchingItem
     int found = -1;
     for (int i = 0; i < 36 && i < inv.getContainerSize(); ++i) {
@@ -69,21 +79,14 @@ bool pickBlock(Player& player, BlockPos const& pos) {
         player.setSelectedSlot(found); // in the hotbar: select it
     } else if (found >= 9) {
         // Inventory#pickSlot: into the suitable hotbar slot, the hotbar's stack goes back
-        int  target = selected;
+        int  target = suitable();
         auto inHand = inv.getItem(target);
         auto moving = inv.getItem(found);
         inv.setItem(target, moving);
         inv.setItem(found, inHand);
         player.setSelectedSlot(target);
     } else if (player.isCreative()) {
-        // Inventory#getSuitableHotbarSlot: the selected slot when empty, else the next empty one
-        int target = -1;
-        if (game::items::isEmpty(inv.getItem(selected))) target = selected;
-        for (int k = 0; k < 9 && target < 0; ++k) {
-            int i = (selected + k) % 9;
-            if (game::items::isEmpty(inv.getItem(i))) target = i;
-        }
-        if (target < 0) target = selected;
+        int target = suitable();
         inv.setItem(target, *picked);
         player.setSelectedSlot(target);
     } else {

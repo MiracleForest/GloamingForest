@@ -229,7 +229,9 @@ std::optional<double> occlusionTop(BlockSource& region, BlockPos const& pos, Blo
     AABB        buffer{};
     AABB const& box = state.getBlockType().getOutline(state, region, pos, buffer);
     if (!(box.max.y > box.min.y) && !(box.max.x > box.min.x)) return std::nullopt; // empty
-    return static_cast<double>(box.max.y) - pos.y;                                  // the outline is in world space
+    // the outline is in world space (a block-local box, 0..1.5, is taken as it is)
+    bool world = box.min.y >= static_cast<float>(pos.y) - 1.0f && box.max.y <= static_cast<float>(pos.y) + 2.5f;
+    return world ? static_cast<double>(box.max.y) - pos.y : static_cast<double>(box.max.y);
 }
 
 int timeEffect(BlockSource& region, BlockPos const& pos) {

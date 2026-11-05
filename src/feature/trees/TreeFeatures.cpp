@@ -672,7 +672,12 @@ bool darkCanopy(FeatureContext const& c) {
     Json const  size        = config.value("minimum_size", Json::object());
     int         k1          = i;
     for (int y = 0; y <= i + 1 && k1 == i; ++y) {
-        int j = (y < size.value("limit", 1)) ? size.value("lower_size", 0) : size.value("upper_size", 1);
+        // FeatureSize#getSizeAtHeight (two_layers / three_layers_feature_size)
+        int j = 0;
+        if (size.value("type", std::string("minecraft:two_layers_feature_size")).ends_with("three_layers_feature_size")) {
+            if (y < size.value("limit", 1)) j = size.value("lower_size", 0);
+            else j = y >= i - size.value("upper_limit", 1) ? size.value("upper_size", 1) : size.value("middle_size", 1);
+        } else j = y < size.value("limit", 1) ? size.value("lower_size", 0) : size.value("upper_size", 1);
         for (int dx = -j; dx <= j && k1 == i; ++dx)
             for (int dz = -j; dz <= j && k1 == i; ++dz)
                 if (!kit::validTreePos(c.region, at(pos, dx, y, dz)) || !ignoreVines) k1 = y - 2;

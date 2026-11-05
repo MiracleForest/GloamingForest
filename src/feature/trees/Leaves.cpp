@@ -72,6 +72,7 @@ void displayTicks(Player& player) {
     int      sent = 0;
     for (int j = 0; j < 667 && sent < kMaxVanillaRunes; ++j) {
         for (int range : {16, 32}) {
+            if (sent >= kMaxVanillaRunes) break;
             BlockPos p{at.x + nextInt(range) - nextInt(range), at.y + nextInt(range) - nextInt(range), at.z + nextInt(range) - nextInt(range)};
             if (p.y < minY || p.y >= maxY) continue;
             if (region.getBlock(p).getTypeName() != kTransformationLeaves) continue;
