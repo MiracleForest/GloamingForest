@@ -899,7 +899,11 @@ GF_REGISTER_SELFTEST("progression.client_locked_toast", [](Context& ctx) -> ll::
     pcl::setClientBiomeOverride("");
     if (auto* p = playerById(who)) {
         p->setPlayerGameType(type);
-        if (had) pr::grant(*p, "twilightforest:progress_lich");
+        if (had) {
+            pc::setQuietGrants(true); // put back without a toast or chat line
+            pr::grant(*p, "twilightforest:progress_lich");
+            pc::setQuietGrants(false);
+        }
     }
 });
 
