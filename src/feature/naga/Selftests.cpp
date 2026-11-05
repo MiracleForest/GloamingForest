@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <fstream>
 #include <map>
 #include <set>
 
@@ -46,6 +47,7 @@
 #include "game/Blocks.h"
 #include "game/Items.h"
 #include "mod/Log.h"
+#include "mod/Main.h"
 #include "selftest/SelfTest.h"
 
 #ifdef GF_CLIENT
@@ -119,6 +121,18 @@ struct NagaScope {
         if (auto* a = byId(uid)) a->remove();
     }
 };
+
+/// A real (not simulated) player is in the level: a client looks at the display tests. They only
+/// exist for the client screenshots, so the server's naga.* and full runs skip them.
+bool clientWatching() {
+    bool found = false;
+    if (auto level = ll::service::getLevel())
+        level->forEachPlayer(std::function<bool(Player&)>([&](Player& p) {
+            found = found || !p.isSimulated();
+            return !found;
+        }));
+    return found;
+}
 
 int activeSegments(NagaState const& s) {
     int n = 0;
@@ -604,7 +618,7 @@ GF_REGISTER_SELFTEST("naga.spawner", [](Context& ctx) -> ll::coro::CoroTask<> {
 GF_REGISTER_SELFTEST("naga.death", [](Context& ctx) -> ll::coro::CoroTask<> {
     DifficultyScope easy(Difficulty::Easy);
     static std::map<std::string, int> triggers;
-    static std::string                killedEntity, hurtBossData;
+    static std::string                killedEntity, hurtBossData, hurtBossEntity;
     static bool                       sawScale = false, sawTrophy = false;
     static bool                       listening = false;
     if (!std::exchange(listening, true)) {
@@ -613,7 +627,7 @@ GF_REGISTER_SELFTEST("naga.death", [](Context& ctx) -> ll::coro::CoroTask<> {
                 if (player.getNameTag() != "naga_fight") return;
                 triggers[id]++;
                 if (id == "minecraft:player_killed_entity") killedEntity = data.value("entity", std::string());
-                if (id == "twilightforest:hurt_boss") hurtBossData = data.dump();
+                if (id == "twilightforest:hurt_boss") hurtBossData = data.dump(), hurtBossEntity = data.value("entity", std::string());
                 if (id == "minecraft:inventory_changed") {
                     auto const& inv = player.getInventory();
                     for (int i = 0; i < inv.getContainerSize(); i++) {
@@ -627,6 +641,7 @@ GF_REGISTER_SELFTEST("naga.death", [](Context& ctx) -> ll::coro::CoroTask<> {
     triggers.clear();
     killedEntity.clear();
     hurtBossData.clear();
+    hurtBossEntity.clear();
     sawScale = sawTrophy = false;
     auto         box  = co_await ctx.flatArea(2070, 16);
     auto         home = ctx.testPos(2078, 2);
@@ -714,6 +729,42 @@ GF_REGISTER_SELFTEST("naga.death", [](Context& ctx) -> ll::coro::CoroTask<> {
     co_await ctx.ticks(3);
     ctx.check(triggers["minecraft:inventory_changed"] >= 1 && sawScale && sawTrophy,
               "inventory_changed fired with the naga scale and the naga trophy in the inventory (progress_naga's scale and trophy criteria)");
+    // progress_naga end to end as far as this build goes: its criteria (the imported advancement
+    // JSON the mod ships) matched against the trigger data that fired, the way a vanilla criteria
+    // engine reads them (entity_properties type, item predicates), and its requirements met.
+    {
+        auto file = Mod::getInstance().getSelf().getModDir() / "data" / "twilightforest" / "advancement" / "progress_naga.json";
+        std::ifstream in(file);
+        ctx.require(in.good(), "the progress_naga advancement ships (" + file.string() + ")");
+        auto adv = nlohmann::json::parse(in, nullptr, false);
+        ctx.require(adv.is_object() && adv.contains("criteria"), "progress_naga parses");
+        auto entityType = [](nlohmann::json const& conds, char const* key) {
+            for (auto const& c : conds.value(key, nlohmann::json::array()))
+                if (c.value("condition", std::string()) == "minecraft:entity_properties") return c.value("predicate", nlohmann::json::object()).value("type", std::string());
+            return std::string();
+        };
+        std::set<std::string> met;
+        for (auto const& [name, crit] : adv["criteria"].items()) {
+            auto trig  = crit.value("trigger", std::string());
+            auto conds = crit.value("conditions", nlohmann::json::object());
+            bool ok    = false;
+            if (trig == "minecraft:player_killed_entity") ok = triggers[trig] >= 1 && entityType(conds, "entity") == killedEntity;
+            else if (trig == "twilightforest:hurt_boss") ok = triggers[trig] >= 1 && entityType(conds, "hurt_entity") == hurtBossEntity;
+            else if (trig == "minecraft:inventory_changed") {
+                auto item = conds.value("items", nlohmann::json::array()).empty() ? std::string() : conds["items"][0].value("items", std::string());
+                ok        = triggers[trig] >= 1 && ((item == "twilightforest:naga_scale" && sawScale) || (item == "twilightforest:naga_trophy" && sawTrophy));
+            }
+            ctx.check(ok, "progress_naga criterion " + name + " (" + trig + ") is met by the fight");
+            if (ok) met.insert(name);
+        }
+        bool all = true;
+        for (auto const& group : adv.value("requirements", nlohmann::json::array())) {
+            bool any = false;
+            for (auto const& c : group) any = any || met.contains(c.get<std::string>());
+            all = all && any;
+        }
+        ctx.check(all && met.size() == 4, "progress_naga's requirements are met (" + std::to_string(met.size()) + " of 4 criteria)");
+    }
     if (auto* pl = byId(spId); pl && pl->isPlayer()) {
         if (gf::progression::has(*static_cast<Player*>(pl), "twilightforest:progress_naga")) ctx.info("progress_naga granted (U14's criteria engine)");
         else ctx.info("progress_naga not granted: no criteria engine in this build (U14)");
@@ -745,10 +796,14 @@ void faceCamera(Mob& m) {
 }
 } // namespace
 
-// The Naga next to the camera for the client screenshots: 10 s as it is (12 segments, nagahead),
+// The Naga next to the camera for the client screenshots (skipped without a client): 10 s as it is (12 segments, nagahead),
 // 8 s charging (nagahead_charging) and 8 s dazed (nagahead_dazed, the head lowered, crit sparkles).
 // It is held in place (no target, put back every tick) and removed at the end.
 GF_REGISTER_SELFTEST("naga.display", [](Context& ctx) -> ll::coro::CoroTask<> {
+    if (!clientWatching()) {
+        ctx.info("no client connected: the display is skipped");
+        co_return;
+    }
     DifficultyScope easy(Difficulty::Easy);
     auto            box = co_await ctx.flatArea(2050, 32);
     auto            at  = ctx.testPos(2066, 2);
@@ -825,7 +880,8 @@ namespace {
 // the block position), so a golden volume hash only holds at one absolute position: the seeded
 // courtyard is built at a fixed site far from the test rows (x, z -4000..-3857, the dais at y 250),
 // in any world, with its own ticking area. Nothing there belongs to a test row (rule R12): every
-// run clears and rebuilds it, and leaves it built (the client scenario looks at it).
+// run snapshots the site, clears it, builds the courtyard and restores what was there at the end
+// (also when the test fails), as Context::flatArea does, so no block is left behind.
 constexpr int  kSiteMinX = -4000, kSiteMinZ = -4000, kSiteSize = 144;
 constexpr int  kSiteCy    = 250;          ///< the courtyard's y (CourtyardMain's origin)
 constexpr int  kSiteFloor = kSiteCy - 5;  ///< the grass layer (a flat area's ground layer)
@@ -833,14 +889,40 @@ constexpr int  kSiteTop   = kSiteCy + 24; ///< the cleared air reaches up to her
 constexpr int  kSiteCx = kSiteMinX + 70, kSiteCz = kSiteMinZ + 70;
 constexpr char kSiteArea[] = "gf_naga_courtyard";
 
-/// Removes the site's ticking area when the test ends (also when it fails).
+/// The site's original blocks (kSiteFloor..kSiteTop, y, z, x order) and its ticking area: when the
+/// test ends (also when it fails) the blocks are put back, Nagas a spawner may have made there are
+/// removed (not killed: no death chest), then the ticking area.
 struct SiteArea {
-    int dim = 0;
-    ~SiteArea() { (void)gf::selftest::runServerCommand(std::string("tickingarea remove ") + kSiteArea, dim); }
+    int                       dim = 0;
+    std::vector<Block const*> blocks;
+    template <class Fn>
+    static void forEach(Fn&& fn) {
+        for (int y = kSiteFloor; y <= kSiteTop; ++y)
+            for (int z = kSiteMinZ; z < kSiteMinZ + kSiteSize; ++z)
+                for (int x = kSiteMinX; x < kSiteMinX + kSiteSize; ++x) fn(BlockPos{x, y, z});
+    }
+    ~SiteArea() {
+        if (auto* region = game::regionOf(dim); region && !blocks.empty()) {
+            std::size_t i = 0;
+            forEach([&](BlockPos const& p) {
+                Block const* want = blocks[i++];
+                if (want && region->hasChunksAt(p, 0, false) && &region->getBlock(p) != want) game::setBlock(*region, p, *want);
+            });
+        }
+        // removed, not killed: a death would place the boss death chest after the restore
+        if (auto level = ll::service::getLevel())
+            for (auto* a : level->getRuntimeActorList()) {
+                if (!a || a->getTypeName() != kNagaId || static_cast<int>(a->getDimensionId()) != dim) continue;
+                auto p = a->getFeetPos();
+                if (p.x >= kSiteMinX - 16 && p.x < kSiteMinX + kSiteSize + 16 && p.z >= kSiteMinZ - 16 && p.z < kSiteMinZ + kSiteSize + 16) a->remove();
+            }
+        (void)gf::selftest::runServerCommand(std::string("tickingarea remove ") + kSiteArea, dim);
+    }
 };
 
-/// Loads the site and clears it: grass at kSiteFloor, air above up to kSiteTop.
-ll::coro::CoroTask<> prepareSite(Context& ctx) {
+/// Loads the site, snapshots it into `site` and clears it: grass at kSiteFloor, air above up to
+/// kSiteTop.
+ll::coro::CoroTask<> prepareSite(Context& ctx, SiteArea& site) {
     int dim = ctx.dimension();
     (void)gf::selftest::runServerCommand(std::string("tickingarea remove ") + kSiteArea, dim); // a crashed run's
     auto added = gf::selftest::runServerCommand("tickingarea add " + std::to_string(kSiteMinX) + " 0 " + std::to_string(kSiteMinZ) + " " +
@@ -863,6 +945,9 @@ ll::coro::CoroTask<> prepareSite(Context& ctx) {
     auto const* grass  = game::blockWith("minecraft:grass_block");
     auto const* air    = game::blockWith("minecraft:air");
     ctx.require(grass && air && region, "vanilla blocks available");
+    site.blocks.clear();
+    site.blocks.reserve(static_cast<std::size_t>(kSiteSize) * kSiteSize * (kSiteTop - kSiteFloor + 1));
+    SiteArea::forEach([&](BlockPos const& p) { site.blocks.push_back(region->hasChunksAt(p, 0, false) ? &region->getBlock(p) : nullptr); });
     for (int x = kSiteMinX; x < kSiteMinX + kSiteSize; ++x)
         for (int z = kSiteMinZ; z < kSiteMinZ + kSiteSize; ++z)
             for (int y = kSiteFloor; y <= kSiteTop; ++y) {
@@ -902,7 +987,7 @@ BlockBox placeSeededCourtyard(Context& ctx) {
 // compared in every world) and the spawner block at the center.
 GF_REGISTER_SELFTEST("naga.courtyard_layout", [](Context& ctx) -> ll::coro::CoroTask<> {
     SiteArea site{ctx.dimension()};
-    co_await prepareSite(ctx);
+    co_await prepareSite(ctx, site);
     auto all = placeSeededCourtyard(ctx);
     co_await ctx.ticks(2);
     int      cx = kSiteCx, cy = kSiteCy, cz = kSiteCz;
@@ -925,15 +1010,19 @@ GF_REGISTER_SELFTEST("naga.courtyard_layout", [](Context& ctx) -> ll::coro::Coro
         }
     ctx.check(hedges > 20, "the maze has hedges (" + std::to_string(hedges) + " samples)");
     ctx.check(bricks > 5, "the wall has stone bricks (" + std::to_string(bricks) + " samples)");
-    static char const* const kGolden = "69dee0ca2240c26d"; // reviewed with the client screenshots
+    static char const* const kGolden = "69dee0ca2240c26d"; // R19 screenshot review pending (client harness)
     ctx.check(hash == kGolden, "the golden volume hash " + std::string(kGolden) + " (got " + hash + ")");
 });
 
 // The seeded courtyard of naga.courtyard_layout, built at the same site for the client
-// screenshots and held for 30 s.
+// screenshots, held for 30 s and then restored (skipped without a client).
 GF_REGISTER_SELFTEST("naga.display_courtyard", [](Context& ctx) -> ll::coro::CoroTask<> {
+    if (!clientWatching()) {
+        ctx.info("no client connected: the display is skipped");
+        co_return;
+    }
     SiteArea site{ctx.dimension()};
-    co_await prepareSite(ctx);
+    co_await prepareSite(ctx, site);
     (void)placeSeededCourtyard(ctx);
     ctx.info("courtyard at " + std::to_string(kSiteCx) + " " + std::to_string(kSiteCy) + " " + std::to_string(kSiteCz));
     co_await ctx.ticks(600);

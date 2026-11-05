@@ -20,14 +20,14 @@
       "minecraft:movement": { "value": 0.5 },
       "minecraft:movement.basic": {},
       "minecraft:jump.static": {},
-      "minecraft:navigation.walk": { "avoid_water": true, "avoid_damage_blocks": true, "can_open_doors": false, "can_pass_doors": true, "can_path_over_water": false },
+      "minecraft:navigation.walk": { "avoid_water": false, "avoid_damage_blocks": true, "can_open_doors": false, "can_pass_doors": true, "can_path_over_water": false },
       "minecraft:follow_range": { "value": 80, "max": 80 },
       "minecraft:knockback_resistance": { "value": 0.25 },
       "minecraft:variable_max_auto_step": { "base_value": 2.0, "jump_prevented_value": 2.0 },
       "minecraft:physics": {},
       "minecraft:pushable": { "is_pushable": false, "is_pushable_by_piston": true },
       "minecraft:fire_immune": true,
-      "minecraft:breathable": { "total_supply": 15, "suffocate_time": 0 },
+      "minecraft:breathable": { "total_supply": 15 },
       "minecraft:damage_sensor": {
         "triggers": [
           { "cause": "fall", "deals_damage": "no" },

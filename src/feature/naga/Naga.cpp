@@ -26,6 +26,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
 #include <deque>
 #include <limits>
 #include <numbers>
@@ -41,6 +42,7 @@
 #include "mc/deps/ecs/gamerefs_entity/EntityContext.h"
 #include "mc/deps/shared_types/legacy/Difficulty.h"
 #include "mc/deps/shared_types/legacy/actor/ActorDamageCause.h"
+#include "mc/deps/shared_types/legacy/actor/ArmorSlot.h"
 #include "mc/entity/components_json_legacy/NavigationComponent.h"
 #include "mc/legacy/ActorUniqueID.h"
 #include "mc/platform/UUID.h"
@@ -140,6 +142,22 @@ bool attackable(Actor& a) {
     return true;
 }
 
+/// LivingEntity#getVisibilityPercent(naga): 0.8 while crouching; invisible: 0.7 * the armor cover
+/// (worn armor pieces / 4, at least 0.1). No mob-head factor: the Naga is not a skeleton, zombie,
+/// piglin or creeper.
+double visibilityPercent(Actor const& a) {
+    double v = 1.0;
+    if (a.isSneaking()) v *= 0.8;
+    if (a.isInvisible()) {
+        int worn = 0;
+        for (auto slot : {SharedTypes::Legacy::ArmorSlot::Head, SharedTypes::Legacy::ArmorSlot::Torso, SharedTypes::Legacy::ArmorSlot::Legs,
+                          SharedTypes::Legacy::ArmorSlot::Feet})
+            if (!game::items::isEmpty(a.getArmor(slot))) ++worn;
+        v *= 0.7 * std::max(static_cast<double>(worn) / 4.0, 0.1);
+    }
+    return v;
+}
+
 /// LivingEntity#isDeadOrDying.
 bool isDeadOrDying(Actor const& a) { return !a.isAlive() || a.getHealth() <= 0; }
 
@@ -213,9 +231,8 @@ std::unordered_set<std::string> const kVanishingBlocks{
 };
 
 bool isLeaves(Block const& block) {
-    auto id = game::blockId(block);
-    if (gf::tags::has(gf::tags::Registry::Block, "minecraft:leaves", id)) return true;
-    return id.size() > 6 && id.compare(id.size() - 6, 6, "leaves") == 0;
+    // state.is(BlockTags.LEAVES) only (R6: TF leaves join the tag through their owners' fragments)
+    return gf::tags::has(gf::tags::Registry::Block, "minecraft:leaves", game::blockId(block));
 }
 
 /// A boolean block state ("true" / "false" in the block's serialized states; false when absent).
@@ -860,13 +877,51 @@ protected:
     std::int64_t mUid;
 };
 
+/// Entity#getFluidHeight(FluidTags.WATER): how far the water surface is above the bottom of the
+/// mob's box, over the blocks its box touches. A water block's surface is y + amount / 9 (amount 8
+/// for a source or falling water, 8 - liquid_depth for flowing water), y + 1 under more water.
+double waterHeight(Mob& m) {
+    auto& region = m.getDimensionBlockSource();
+    auto  bb     = m.getAABB();
+    auto  water  = [&](BlockPos const& p) -> Block const* {
+        for (Block const* b : {&region.getBlock(p), &region.getLiquidBlock(p)}) {
+            auto id = game::blockId(*b);
+            if (id == "minecraft:water" || id == "minecraft:flowing_water") return b;
+        }
+        return nullptr;
+    };
+    double best = 0.0;
+    int    x0 = static_cast<int>(std::floor(bb.min.x + 0.001)), x1 = static_cast<int>(std::ceil(bb.max.x - 0.001));
+    int    y0 = static_cast<int>(std::floor(bb.min.y + 0.001)), y1 = static_cast<int>(std::ceil(bb.max.y - 0.001));
+    int    z0 = static_cast<int>(std::floor(bb.min.z + 0.001)), z1 = static_cast<int>(std::ceil(bb.max.z - 0.001));
+    for (int x = x0; x < x1; ++x)
+        for (int y = y0; y < y1; ++y)
+            for (int z = z0; z < z1; ++z) {
+                Block const* b = water(BlockPos{x, y, z});
+                if (!b) continue;
+                double surface;
+                if (water(BlockPos{x, y + 1, z})) surface = y + 1.0;
+                else {
+                    auto states = game::statesOf(*b);
+                    auto it     = states.find("liquid_depth");
+                    int  depth  = it != states.end() ? std::atoi(it->second.c_str()) : 0;
+                    int  amount = depth == 0 || depth >= 8 ? 8 : 8 - depth;
+                    surface     = y + amount / 9.0;
+                }
+                if (surface >= bb.min.y) best = std::max(best, surface - bb.min.y);
+            }
+    return best;
+}
+
 /// FloatGoal.
 class FloatGoal final : public NagaGoal {
 public:
     explicit FloatGoal(std::int64_t uid) : NagaGoal(uid) { flags = Jump; }
     bool canUse() override {
         auto* m = mob();
-        return m && m->isInWater(); // Naga#isInLava is always false
+        // isInWater() && getFluidHeight(WATER) > getFluidJumpThreshold() (0.4: eye height 2.85 of a
+        // 3-high mob); Naga#isInLava is always false
+        return m && m->isInWater() && waterHeight(*m) > 0.4;
     }
     bool requiresUpdateEveryTick() override { return true; }
     void tick() override {
@@ -1133,19 +1188,21 @@ public:
         auto* s = state();
         if (!m || !s) return false;
         if (s->random.nextInt(10) != 0) return false; // reducedTickDelay(10)
-        auto        bb = m->getAABB();
-        Player*     best = nullptr;
-        double      bestD = 1e300;
-        auto        level = ll::service::getLevel();
+        // NearestAttackableTargetGoal#findTarget for Player.class: level.getNearestPlayer(targetConditions,
+        // mob, x, eyeY, z). No search box (getTargetSearchArea is for other target types):
+        // TargetingConditions#test keeps players within max(80 * visibility, 2) of the mob's feet,
+        // and the nearest to (x, eyeY, z) wins.
+        Vec3    feet  = m->getFeetPos();
+        Vec3    eye{feet.x, m->getEyePos().y, feet.z};
+        Player* best  = nullptr;
+        double  bestD = 1e300;
+        auto    level = ll::service::getLevel();
         if (!level) return false;
         level->forEachPlayer(std::function<bool(Player&)>([&](Player& p) {
             if (static_cast<int>(p.getDimensionId()) != static_cast<int>(m->getDimensionId()) || !attackable(p)) return true;
-            auto const& pb = p.getAABB();
-            // getTargetSearchArea: the box inflated by (80, 4, 80)
-            if (!(pb.min.x < bb.max.x + 80 && pb.max.x > bb.min.x - 80 && pb.min.y < bb.max.y + 4 && pb.max.y > bb.min.y - 4 && pb.min.z < bb.max.z + 80 &&
-                  pb.max.z > bb.min.z - 80))
-                return true;
-            double d = distSqr(m->getFeetPos(), p.getFeetPos());
+            double range = std::max(80.0 * visibilityPercent(p), 2.0);
+            if (distSqr(feet, p.getFeetPos()) > range * range) return true;
+            double d = distSqr(eye, p.getFeetPos());
             if (d < bestD) bestD = d, best = &p;
             return true;
         }));
@@ -1514,6 +1571,19 @@ std::string shieldCooldownCategory(ItemStack const& stack) {
     return colon == std::string::npos ? id : id.substr(colon + 1);
 }
 
+/// player.getUsedItemHand() of the raised shield: Player::getCurrentActiveShield is the stack the
+/// player blocks with (Bedrock blocks with a shield in either hand); it is the offhand slot itself
+/// when the offhand blocks. Without an active shield, the offhand when it holds minecraft:shield.
+bool shieldInOffhand(Player const& player) {
+    auto const& active  = player.getCurrentActiveShield();
+    auto const& offhand = player.getOffhandSlot();
+    if (&active == &offhand) return true;
+    if (&active == &player.getCarriedItem()) return false;
+    // a copy: Bedrock looks at the offhand shield first
+    if (!game::items::isEmpty(active)) return game::items::idOf(active) == game::items::idOf(offhand);
+    return game::items::idOf(offhand) == "minecraft:shield";
+}
+
 /// Naga#doHurtTarget.
 bool nagaHurtTarget(Mob& naga, Actor& toAttack) {
     auto* sp = stateOf(naga);
@@ -1525,8 +1595,8 @@ bool nagaHurtTarget(Mob& naga, Actor& toAttack) {
             if (toAttack.isPlayer()) {
                 auto& player = static_cast<Player&>(toAttack);
                 // the used item (the raised shield) takes 5 durability
-                bool offhand = game::items::idOf(player.getOffhandSlot()).find("shield") != std::string::npos;
-                ItemStack used = offhand ? player.getOffhandSlot() : player.getCarriedItem();
+                bool      offhand = shieldInOffhand(player);
+                ItemStack used    = offhand ? player.getOffhandSlot() : player.getCarriedItem();
                 if (!game::items::isEmpty(used)) {
                     used.hurtAndBreak(5, &player);
                     if (offhand) player.setOffhandSlot(used);
@@ -1534,7 +1604,10 @@ bool nagaHurtTarget(Mob& naga, Actor& toAttack) {
                 }
                 // toAttack.push on a ServerPlayer only changes the server's copy of its motion (no
                 // hurtMarked: nothing is sent to its own client); what moves the player is the
-                // MovePlayerPacket, whose handler pushes the client by (x * 3, y + 0.75, z * 3)
+                // MovePlayerPacket, whose handler pushes the client by (x * 3, y + 0.75, z * 3).
+                // Bedrock has no additive motion packet (SetActorMotionPacket sets the velocity), so
+                // the push is added to the server's delta, which under server-authoritative movement
+                // is the client's own delta from its last PlayerAuthInputPacket (one tick old at most).
                 auto v = player.getPosDelta();
                 gf::movement::applyMotion(player, Vec3{v.x + motion.x * 3.0f, v.y + motion.y + 0.75f, v.z + motion.z * 3.0f});
             } else push(toAttack, Vec3{motion.x * 1.5f, 0.5f, motion.z * 1.5f});
@@ -1548,8 +1621,8 @@ bool nagaHurtTarget(Mob& naga, Actor& toAttack) {
         if (s.state == MovementState::StunlessCharge) {
             if (toAttack.isPlayer()) {
                 auto& player  = static_cast<Player&>(toAttack);
-                bool  offhand = game::items::idOf(player.getOffhandSlot()).find("shield") != std::string::npos;
-                ItemStack used = offhand ? player.getOffhandSlot() : player.getCarriedItem();
+                bool      offhand = shieldInOffhand(player);
+                ItemStack used    = offhand ? player.getOffhandSlot() : player.getCarriedItem();
                 if (!game::items::isEmpty(used)) {
                     // ItemCooldowns#addCooldown(item, 200): the item's own cooldown category
                     // (Bedrock's shield: the one an axe hit also disables it through)
