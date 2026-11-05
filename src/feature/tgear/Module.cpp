@@ -12,11 +12,12 @@
 //
 // U11's server module: the per-tick modifiers (haste, stealth, auto repair, the item display's map,
 // arrow magnetism), perfect dodge (combat), the never-break rule and the last armour damage time
-// (ext/tgear armour hook), efficient eater (ext/tgear movement exhaustion), the companion channels
+// (ext/tgear armour hook), efficient eater (the ExhaustionComponent coefficients), the companion channels
 // tgear.goggles_zoom / tgear.swap_hotbar / tgear.cycle_map_slot, the vanilla fallbacks (sneak-use the
 // goggles: item display form; sneak-use a belt / wings: hotbar swap), the add_modifier trigger of
 // crafted gear and the red thread's multiface placement.
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <limits>
 #include <map>
@@ -32,6 +33,7 @@
 
 #include "mc/deps/ecs/gamerefs_entity/EntityContext.h"
 #include "mc/deps/shared_types/legacy/actor/ArmorSlot.h"
+#include "mc/entity/components/ExhaustionComponent.h"
 #include "mc/entity/components_json_legacy/InsomniaComponent.h"
 #include "mc/entity/components_json_legacy/ProjectileComponent.h"
 #include "mc/world/actor/ActorCategory.h"
@@ -77,6 +79,7 @@ struct State {
     std::mutex                             mutex;
     std::mt19937_64                        rng{std::random_device{}()};
     std::unordered_map<std::int64_t, std::int64_t> lastArmorDamage; ///< player uid -> game time
+    std::unordered_map<std::int64_t, std::array<float, 5>> exhaustionBase; ///< walk, sprint, swim, jump, sprint jump
     std::unordered_map<std::int64_t, bool>         zoom;            ///< player uid -> zooming
     struct Arrow {
         std::int64_t firstTick = 0;
@@ -132,6 +135,32 @@ bool isDay(Dimension& dim, int time) {
 
 // ---- per-tick modifiers ------------------------------------------------------------------------------
 
+/// PlayerHooks (efficient eater): TF divides the exhaustion of checkMovementStatistics and of jumps by the
+/// component value (2). Bedrock's movement exhaustion is the FoodExhaustionSystem's, from the player's
+/// ExhaustionComponent coefficients: while the modifier is active its walk, sprint, swim, jump and sprint
+/// jump coefficients are the player's own divided by the value (mining, attacking, damage and healing
+/// keep theirs, as in TF).
+void applyEfficientEater(Player& player) {
+    auto c = player.getEntityContext().tryGetComponent<ExhaustionComponent>();
+    if (!c) return;
+    float divisor = isActive(player, ids::kEfficientEater) ? static_cast<float>(numberOf(ids::kEfficientEater, 2.0)) : 1.f;
+    if (divisor <= 0) divisor = 1.f;
+    auto            uid = uidOf(player);
+    std::lock_guard lock(state().mutex);
+    auto            it = state().exhaustionBase.find(uid);
+    if (it == state().exhaustionBase.end()) {
+        if (divisor == 1.f) return; // nothing scaled yet: the component holds the player's own values
+        it = state().exhaustionBase.emplace(uid, std::array<float, 5>{c->mWalk, c->mSprint, c->mSwim, c->mJump, c->mSprintJump}).first;
+    }
+    auto const& b = it->second;
+    c->mWalk       = b[0] / divisor;
+    c->mSprint     = b[1] / divisor;
+    c->mSwim       = b[2] / divisor;
+    c->mJump       = b[3] / divisor;
+    c->mSprintJump = b[4] / divisor;
+    if (divisor == 1.f) state().exhaustionBase.erase(it);
+}
+
 void tickPlayer(Player& player, std::int64_t now) {
     if (!player.isAlive()) return;
     // TravellersGearLogic#travellersVestHaste
@@ -141,6 +170,7 @@ void tickPlayer(Player& player, std::int64_t now) {
     if (isActive(player, ids::kStealth) && player.isSneaking()) hiddenEffect(player, kInvisibilityEffect, 0);
     autoRepair(player, now);
     tickDisplayMap(player);
+    applyEfficientEater(player);
     // TravellersGearEvents#cancelPhantomSpawns: Bedrock spawns phantoms once the insomnia component's
     // time since rest passes its threshold; the active goggles keep it at 0
     if (isActive(player, ids::kAllNight))
@@ -171,7 +201,8 @@ void tickArrows(Level& level, std::int64_t now) {
         {
             std::lock_guard lock(s.mutex);
             auto            it = s.arrows.find(id);
-            rec = it == s.arrows.end() ? State::Arrow{now, a->getPosition(), false} : it->second;
+            // a new arrow counts as flying: one that hits a block on its first tick is stuck at once
+            rec = it == s.arrows.end() ? State::Arrow{now, Vec3{a->getPosition().x + 1.f, a->getPosition().y, a->getPosition().z}, false} : it->second;
         }
         auto const& pos   = a->getPosition();
         bool        still = std::abs(pos.x - rec.last.x) < 1e-4f && std::abs(pos.y - rec.last.y) < 1e-4f && std::abs(pos.z - rec.last.z) < 1e-4f;
@@ -228,7 +259,7 @@ void onArmorHurt(Player& player, std::array<ItemStack, 4> const& before) {
         auto const& was = before[i];
         auto const& now = player.getArmor(static_cast<Slot>(i));
         bool        broke = !items::isEmpty(was) && (items::isEmpty(now) || items::idOf(now) != items::idOf(was));
-        if (!broke && !items::isEmpty(now) && now.getDamageValue() > was.getDamageValue()) damaged = true;
+        if (broke || (!items::isEmpty(now) && now.getDamageValue() > was.getDamageValue())) damaged = true;
         if (items::isEmpty(was) || !isGear(items::idOf(was)) || !was.isDamageableItem()) continue;
         int max = maxDamageOf(was);
         if (broke || now.getDamageValue() >= max) {
@@ -381,10 +412,6 @@ public:
         if (!once) {
             once = true;
             gf::ext::tgear::onArmorHurt(&onArmorHurt);
-            gf::ext::tgear::setMovementExhaustionDivisor([](Player& p) {
-                // PlayerHooks: movement exhaustion divided by the efficient eater component (2)
-                return isActive(p, ids::kEfficientEater) ? static_cast<float>(numberOf(ids::kEfficientEater, 2.0)) : 1.f;
-            });
             combat::onIncoming(combat::priority::High, &onIncoming);
             progression::events::onInventoryChanged([](Player& p) { fireCraftedTriggers(p); });
             game::db::onWorldReady([] { registerRecipes(); });
@@ -399,6 +426,7 @@ public:
             std::lock_guard lock(state().mutex);
             state().zoom.erase(uidOf(ev.self()));
             state().lastArmorDamage.erase(uidOf(ev.self()));
+            state().exhaustionBase.erase(uidOf(ev.self()));
         });
     }
     void uninstall() {
@@ -446,7 +474,9 @@ private:
                     game::setBlock(*region, pos, *b);
                     if (!c.player.isCreative()) {
                         auto& hand = ia::mutableItem(c.item);
-                        c.player.setSelectedItem(items::withCount(hand, items::countOf(hand) - 1));
+                        auto  rest = items::withCount(hand, items::countOf(hand) - 1);
+                        if (c.offhand) c.player.setOffhandSlot(rest);
+                        else c.player.setSelectedItem(rest);
                     }
                 }
                 return ia::Result::Consume;

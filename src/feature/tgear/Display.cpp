@@ -61,7 +61,7 @@ bool displayInsert(ItemStack& goggles, ItemStack& source, ItemStack& replaced) {
     auto r        = core::tgear::trySwap(contents, item);
     if (!r.ok) return false;
     if (!d->items[r.slot].is_null()) replaced = items::fromJson(d->items[r.slot]);
-    d->items[r.slot] = displayJsonOf(source);
+    d->items[r.slot] = displayJsonOf(items::withCount(source, 1)); // split(1)
     d->chosenMapSlot = contents.chosenMapSlot;
     source           = items::withCount(source, items::countOf(source) - 1);
     setDisplay(goggles, *d);

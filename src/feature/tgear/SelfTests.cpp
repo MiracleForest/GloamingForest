@@ -3,6 +3,7 @@
 // gloves merge, the command, the per-tick modifiers, efficient eater, never-break, the belt swap, the
 // item display, the zoom channel and the red thread placement. Behaviour from TF 4.8 (see the headers of
 // the files under test).
+#include <cmath>
 #include <string>
 #include <vector>
 
@@ -10,6 +11,7 @@
 
 #include "mc/deps/ecs/gamerefs_entity/EntityContext.h"
 #include "mc/deps/shared_types/legacy/actor/ArmorSlot.h"
+#include "mc/entity/components/ExhaustionComponent.h"
 #include "mc/entity/components_json_legacy/InsomniaComponent.h"
 #include "mc/server/SimulatedPlayer.h"
 #include "mc/world/actor/player/Inventory.h"
@@ -20,7 +22,6 @@
 
 #include "feature/combat/Combat.h"
 #include "feature/common/Interactions.h"
-#include "feature/ext/tgear/PlayerHooks.h"
 #include "feature/net/Net.h"
 #include "feature/progression/Progression.h"
 #include "feature/recipes/Recipes.h"
@@ -100,7 +101,7 @@ GF_REGISTER_SELFTEST("tgear.modifier_recipes", [](Context& ctx) {
             ++checked;
         }
     }
-    ctx.check(checked == 24, "24 modifier recipes (got " + std::to_string(checked) + ")");
+    ctx.check(checked == 26, "26 modifier recipes (got " + std::to_string(checked) + ")");
     // the BP potion layouts are special too
     ctx.check(gf::recipes::internal::isSpecial("twilightforest:add_modifier_to_travellers_gear/travellers_vest/stealth_modifier_1"), "the long invisibility layout crafts stealth");
     // free slots: three modifiers fill the goggles
@@ -232,25 +233,33 @@ GF_REGISTER_SELFTEST("tgear.tick_modifiers", [](Context& ctx) -> ll::coro::CoroT
     }
 });
 
-GF_REGISTER_SELFTEST("tgear.efficient_eater", [](Context& ctx) {
-    namespace ext = gf::ext::tgear;
-    auto& p = ctx.player();
-    clearArmor(p);
-    p.setPlayerGameType(GameType::Survival);
-    auto measure = [&] {
-        ext::setExhaustion(p, 0);
-        p.checkMovementStats(Vec3{3.f, 0.f, 0.f});
-        return ext::exhaustion(p);
-    };
-    float plain = measure();
-    ctx.require(plain > 0, "walking adds exhaustion (got " + std::to_string(plain) + ")");
-    auto vest = make(tg::ids::kVest);
-    tg::addModifier(vest, tg::ids::kEfficientEater);
-    p.setArmor(Slot::Torso, vest);
-    float eater = measure();
-    ctx.check(std::abs(eater - plain / 2) < 1e-4f, "efficient eater halves it (" + std::to_string(plain) + " -> " + std::to_string(eater) + ")");
-    clearArmor(p);
-    ext::setExhaustion(p, 0);
+GF_REGISTER_SELFTEST("tgear.efficient_eater", [](Context& ctx) -> ll::coro::CoroTask<> {
+    float walk = 0, jump = 0;
+    {
+        auto& p = ctx.player();
+        clearArmor(p);
+        auto c = p.getEntityContext().tryGetComponent<ExhaustionComponent>();
+        ctx.require(static_cast<bool>(c), "the player has an exhaustion component");
+        walk = c->mWalk;
+        jump = c->mJump;
+        auto vest = make(tg::ids::kVest);
+        tg::addModifier(vest, tg::ids::kEfficientEater);
+        p.setArmor(Slot::Torso, vest);
+    }
+    co_await ctx.ticks(2);
+    {
+        auto& p = ctx.player();
+        auto  c = p.getEntityContext().tryGetComponent<ExhaustionComponent>();
+        ctx.check(c && std::abs(c->mWalk - walk / 2) < 1e-6f && std::abs(c->mJump - jump / 2) < 1e-6f,
+                  "efficient eater halves the walking and jumping exhaustion (" + std::to_string(walk) + " -> " + std::to_string(c ? c->mWalk : -1.f) + ")");
+        clearArmor(p);
+    }
+    co_await ctx.ticks(2);
+    {
+        auto& p = ctx.player();
+        auto  c = p.getEntityContext().tryGetComponent<ExhaustionComponent>();
+        ctx.check(c && c->mWalk == walk && c->mJump == jump, "taking the vest off restores them");
+    }
 });
 
 GF_REGISTER_SELFTEST("tgear.auto_repair", [](Context& ctx) {
@@ -329,7 +338,9 @@ GF_REGISTER_SELFTEST("tgear.belt_swap", [](Context& ctx) {
     ctx.check(tg::trySwapHotbar(p), "swapping back");
     ctx.check(items::countOf(p.getInventory().getItem(0)) == 10, "the stone is back");
     // through the companion channel
+    gf::net::setTestCompanion(p, true);
     gf::net::injectFromClient(p, "tgear.swap_hotbar", nlohmann::json::object());
+    gf::net::setTestCompanion(p, false);
     ctx.check(items::isEmpty(p.getInventory().getItem(0)), "tgear.swap_hotbar swaps");
     for (int i = 0; i < 9; ++i) p.getInventory().setItem(i, ItemStack::EMPTY_ITEM());
     clearArmor(p);
@@ -364,6 +375,7 @@ GF_REGISTER_SELFTEST("tgear.item_display", [](Context& ctx) {
 GF_REGISTER_SELFTEST("tgear.zoom_channel", [](Context& ctx) {
     auto& p = ctx.player();
     clearArmor(p);
+    gf::net::setTestCompanion(p, true);
     gf::net::injectFromClient(p, "tgear.goggles_zoom", {{"zoom", true}});
     ctx.check(!tg::usingZoom(p), "no goggles: no zoom");
     p.setArmor(Slot::Head, make(tg::ids::kGoggles));
@@ -371,6 +383,7 @@ GF_REGISTER_SELFTEST("tgear.zoom_channel", [](Context& ctx) {
     ctx.check(tg::usingZoom(p), "goggles: zooming");
     gf::net::injectFromClient(p, "tgear.goggles_zoom", {{"zoom", false}});
     ctx.check(!tg::usingZoom(p), "zoom out");
+    gf::net::setTestCompanion(p, false);
     clearArmor(p);
 });
 

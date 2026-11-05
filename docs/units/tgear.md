@@ -13,7 +13,7 @@ its vanilla fallbacks and its deviations from TF 4.8 (for A8's deviation list).
 | `src/feature/tgear/Command.cpp` | `/twilightforest travellers_gear add_modifier|remove_modifier <modifier>` |
 | `src/feature/tgear/Module.cpp` | Ticks (haste, stealth, auto repair, map ticking, arrow magnetism), perfect dodge, never-break, efficient eater, net channels, vanilla fallbacks, red thread placement |
 | `src/feature/tgear/{Belt,Display,Tooltips}.cpp` | Hotbar swap, item display storage / cycle / form, lore tooltips; config section `tgear` |
-| `src/feature/ext/tgear/PlayerHooks.{h,cpp}` | Contract extension: armour damage and movement exhaustion hooks (R18) |
+| `src/feature/ext/tgear/PlayerHooks.{h,cpp}` | Contract extension: the armour damage hook (R18) |
 | `src/client/tgear/TgearClient.cpp` | Keys, zoom FOV, item display HUD, red thread glow, Shift descriptions |
 | `assets/pack/bp/items/tgear`, `assets/pack/bp/recipes/tgear`, `assets/pack/bp/blocks/tgear` | Wearable gear items, 35 BP recipes (one per potion variant), the red thread multiface block |
 | `assets/pack/rp/{models/blocks,particles}/tgear`, `assets/pack/rp/terrain_texture.d/tgear.json` | Red thread block geometry, the perfect dodge particle (PortalParticle path) |
@@ -39,6 +39,8 @@ its vanilla fallbacks and its deviations from TF 4.8 (for A8's deviation list).
 - Broken pieces keep their armour points: Bedrock's wearable protection is per item, not per stack
   (TF moves the attribute modifiers to `stored_broken_attributes`). The broken mark is a lore line, not
   part of the item name. All modifiers but auto repair are inactive, as in TF.
+- Efficient eater halves the player's ExhaustionComponent walk / sprint / swim / jump / sprint jump
+  coefficients while active (Bedrock's FoodExhaustionSystem; TF divides the exhaustion PlayerHooks sees).
 - Auto repair, haste, stealth and the map ticking run for players only (TF ticks every LivingEntity).
   `isDay` for the auto repair boost ignores rain / thunder darkening.
 - Arrow magnetism detects a vanilla arrow stuck in a block by it not moving for a tick after it flew
