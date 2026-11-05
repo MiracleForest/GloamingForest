@@ -14,7 +14,9 @@
 // (twilightforest:flame_jet) ticks every popping / flaming jet from a registry of positions, the
 // smokers' TFSmokerBlockEntity (twilightforest:smoker) every smoker near a player. The registry is
 // filled when a jet starts (random tick, redstone) and by a palette scan around the players (a jet
-// still popping or flaming after a reload, smokers placed by world generation). The encased blocks
+// still popping or flaming after a reload, smokers placed by world generation); placed jets and
+// smokers of every dimension are remembered in the world DB (gf:hydra:jets) and come back with
+// their chunk, as Java's block entities do (watches are dropped while the chunk is unloaded). The encased blocks
 // read redstone through gf::redstone (custom blocks get no neighbour updates): F11's neighbour
 // changes plus a watch on every encased block the scan or a placement found. TF's client-side
 // effects (particles, the jet's active / start sounds) go out through gf::fx.
@@ -24,6 +26,7 @@
 
 #include <map>
 #include <memory>
+#include <set>
 #include <unordered_set>
 
 #include "ll/api/service/Bedrock.h"
@@ -77,6 +80,11 @@ struct JetState {
     int                                               smokeParticles = 0;
     std::uint64_t                                     tick           = 0;
     bool                                              hooked         = false;
+    /// Jets and smokers placed in any dimension (Java keeps their block entities with the chunk):
+    /// kept in the world DB (gf:hydra:jets), re-attached whenever their chunk is loaded.
+    std::set<GlobalPos>                               known;
+    bool                                              knownDirty  = false;
+    bool                                              knownLoaded = false;
 };
 JetState& J() {
     static JetState s;
@@ -341,10 +349,85 @@ void scan() {
     }
 }
 
+constexpr char kKnownKey[] = "gf:hydra:jets";
+
+void loadKnown() {
+    auto& s = J();
+    if (s.knownLoaded || !game::db::available()) return;
+    s.knownLoaded = true;
+    if (auto j = game::db::get(kKnownKey); j && j->is_array())
+        for (auto const& e : *j)
+            if (e.is_array() && e.size() == 4) s.known.insert(GlobalPos{e[0].get<int>(), e[1].get<int>(), e[2].get<int>(), e[3].get<int>()});
+}
+
+void saveKnown() {
+    auto& s = J();
+    if (!s.knownDirty || !game::db::available()) return;
+    auto arr = nlohmann::json::array();
+    for (auto const& gp : s.known) arr.push_back({gp.dim, gp.x, gp.y, gp.z});
+    game::db::put(kKnownKey, arr);
+    s.knownDirty = false;
+}
+
+/// A jet or smoker placed at `gp` (any dimension): remembered across reloads.
+void remember(GlobalPos const& gp) {
+    loadKnown();
+    if (J().known.insert(gp).second) J().knownDirty = true;
+}
+
+void dropWatch(GlobalPos const& gp) {
+    auto it = J().watches.find(gp);
+    if (it == J().watches.end()) return;
+    gf::redstone::unwatch(it->second);
+    J().watches.erase(it);
+}
+
+bool loaded(BlockSource* region, BlockPos const& pos) { return region && region->hasChunksAt(pos, 0, false); }
+
+/// The block entities of the remembered jets and smokers whose chunk is loaded come back (the
+/// encased blocks' redstone watch, a smoker's ticking, a jet still popping or flaming); the ones
+/// whose block is gone are forgotten. Watches whose chunk unloaded are dropped (they come back with
+/// the chunk).
+void revisit() {
+    auto& s = J();
+    loadKnown();
+    for (auto it = s.known.begin(); it != s.known.end();) {
+        auto*    region = game::regionOf(it->dim);
+        BlockPos pos    = game::blockPos(*it);
+        if (!loaded(region, pos)) {
+            ++it;
+            continue;
+        }
+        Block const& block = region->getBlock(pos);
+        auto         id    = game::blockId(block);
+        if (!isJet(id) && !isSmoker(id)) {
+            dropWatch(*it);
+            it           = s.known.erase(it);
+            s.knownDirty = true;
+            continue;
+        }
+        if (id == kEncasedJet || id == kEncasedSmoker) watch(*region, pos);
+        if (isSmoker(id)) s.smokers.try_emplace(*it);
+        if (isJet(id)) {
+            auto v = stateValue(block, "twilightforest:state");
+            if (v == "popping" || v == "flame") track(*it);
+        }
+        ++it;
+    }
+    std::vector<GlobalPos> gone;
+    for (auto const& [gp, id] : s.watches)
+        if (!loaded(game::regionOf(gp.dim), game::blockPos(gp))) gone.push_back(gp);
+    for (auto const& gp : gone) dropWatch(gp);
+    saveKnown();
+}
+
 void onLevelTick() {
     auto& s = J();
     ++s.tick;
-    if (s.tick % kScanInterval == 0) scan();
+    if (s.tick % kScanInterval == 0) {
+        scan();
+        revisit();
+    }
     for (auto it = s.jets.begin(); it != s.jets.end();) it = tickJet(it->first, it->second) ? std::next(it) : s.jets.erase(it);
     // a smoker ticks while its chunk is loaded (it is forgotten with the chunk; the scan finds it again)
     for (auto it = s.smokers.begin(); it != s.smokers.end();) it = tickSmoker(it->first, it->second) ? std::next(it) : s.smokers.erase(it);
@@ -371,6 +454,25 @@ int smokeParticlesForTest() { return J().smokeParticles; }
 
 bool encasedWatched(GlobalPos const& pos) { return J().watches.contains(pos); }
 
+bool smokerTracked(GlobalPos const& pos) { return J().smokers.contains(pos); }
+
+bool jetRemembered(GlobalPos const& pos) {
+    loadKnown();
+    return J().known.contains(pos);
+}
+
+void reloadJetsForTest() {
+    auto& s = J();
+    s.knownDirty = true;
+    saveKnown();
+    for (auto const& [gp, id] : s.watches) gf::redstone::unwatch(id);
+    s.watches.clear();
+    s.jets.clear();
+    s.smokers.clear();
+    s.known.clear();
+    s.knownLoaded = false;
+}
+
 void installJets() {
     auto& s = J();
     if (!s.hooked) {
@@ -394,10 +496,22 @@ void installJets() {
             });
         for (auto const* id : {kSmoker, kEncasedSmoker})
             gf::blockevents::onPlaced(id, [](BlockSource& region, BlockPos const& pos, Block const&, Actor*) { J().smokers.try_emplace(game::globalPos(region, pos)); });
+        // every jet and smoker placed outside the Twilight Forest is remembered with the world (the
+        // palette scan, which also finds the generated ones, covers only the Twilight Forest)
+        for (auto const* id : {kFireJet, kEncasedJet, kSmoker, kEncasedSmoker})
+            gf::blockevents::onPlaced(id, [](BlockSource& region, BlockPos const& pos, Block const&, Actor*) {
+                if (!gf::world::isTwilight(region.getDimension())) remember(game::globalPos(region, pos));
+            });
+        gf::game::db::onWorldReady([] { loadKnown(); });
+        gf::game::db::onWorldSave([] { saveKnown(); });
         gf::game::db::onWorldClosed([] {
+            saveKnown();
             J().jets.clear();
             J().smokers.clear();
             J().watches.clear(); // dropped with the world (Redstone.h)
+            J().known.clear();
+            J().knownLoaded = false;
+            J().knownDirty  = false;
         });
     }
     if (!s.tickId) s.tickId = fe::onLevelTick(onLevelTick);

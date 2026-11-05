@@ -8,7 +8,10 @@
 # client in remote-vanilla sees the host's resource pack do it.
 # Screenshots: out/hydra*/hydra-<mode>.png (idle heads), hydra-flame-<mode>.png (fire breath),
 # hydra-pitch-<mode>.png (head 1 up, head 2 biting), hydra-dying-<mode>.png (head 1 dying),
-# hydra-jets-<mode>.png (jets and smokers), hydra-mortar-<mode>.png (the mortar in flight).
+# hydra-jets-<mode>.png (jets and smokers), hydra-mortar-<mode>.png (the mortar in flight); then
+# hydra.client_lair: hydra-lair-<mode>.png (the arena and its spawner), hydra-lair-ceiling-<mode>.png
+# (the dome and the ore stalactites), hydra-lair-outside-<mode>.png (the hill), hydra-blocks-<mode>.png
+# (fire jet, encased fire jet, smoker, encased smoker, their items and the spawn egg in the hotbar).
 # Local mode also runs the hydra.* selftests on the integrated server.
 Save-Screenshot 'hud' | Out-Null
 $remote = $script:Mode -ne 'local'
@@ -38,10 +41,28 @@ Wait-LogLine "${hostLine}$script:SelfTestDoneRegex" 60 -Since $mark | Out-Null
 $r = ConvertFrom-SelfTestLines (Get-LeviLog -Since $mark) 'hydra.client_showcase'
 if (-not (Register-SelfTestResult $r)) { throw 'hydra.client_showcase failed' }
 
+# The lair (rule R19's one-time screenshot review of the golden volume hash): inside the arena, its
+# ceiling, the hill from outside; then the four blocks close up with their items and the spawn egg
+# in the hotbar.
+$mark = Get-LogMark
+$command = Format-SelfTestCommand 'hydra.client_lair'
+if ($remote) { Send-HostConsole $command } else { Send-SelfTestCommand $command }
+Wait-LogLine "${hostLine}hydra\.client_lair: lair inside ready" 180 -Since $mark | Out-Null
+Save-Screenshot "hydra-lair-$($script:Mode)" | Out-Null
+Wait-LogLine "${hostLine}hydra\.client_lair: lair ceiling ready" 60 -Since $mark | Out-Null
+Save-Screenshot "hydra-lair-ceiling-$($script:Mode)" | Out-Null
+Wait-LogLine "${hostLine}hydra\.client_lair: lair outside ready" 60 -Since $mark | Out-Null
+Save-Screenshot "hydra-lair-outside-$($script:Mode)" | Out-Null
+Wait-LogLine "${hostLine}hydra\.client_lair: blocks ready" 60 -Since $mark | Out-Null
+Save-Screenshot "hydra-blocks-$($script:Mode)" | Out-Null
+Wait-LogLine "${hostLine}$script:SelfTestDoneRegex" 60 -Since $mark | Out-Null
+$r = ConvertFrom-SelfTestLines (Get-LeviLog -Since $mark) 'hydra.client_lair'
+if (-not (Register-SelfTestResult $r)) { throw 'hydra.client_lair failed' }
+
 if (-not $remote) {
     $r = Invoke-SelfTest 'hydra.*'
     if ($r.Fail -gt 0) { throw "$($r.Fail) hydra selftest(s) failed" }
-    if ($r.Pass -lt 18) { throw "expected at least 18 hydra selftests to pass, got $($r.Pass)" }
+    if ($r.Pass -lt 23) { throw "expected at least 23 hydra selftests to pass, got $($r.Pass)" }
 } elseif (-not (Get-GameProcess)) {
     throw 'the game closed while connected to the host'
 }

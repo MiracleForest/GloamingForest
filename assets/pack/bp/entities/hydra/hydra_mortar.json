@@ -19,6 +19,15 @@
         "width": 0.75,
         "height": 0.75
       },
+      "minecraft:custom_hit_test": {
+        "hitboxes": [
+          {
+            "width": 3.75,
+            "height": 3.75,
+            "pivot": [0, 0.375, 0]
+          }
+        ]
+      },
       "minecraft:health": {
         "value": 1000,
         "max": 1000

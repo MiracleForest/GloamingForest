@@ -636,6 +636,150 @@ GF_REGISTER_SELFTEST("hydra.smokers", [](Context& ctx) -> ll::coro::CoroTask<> {
     (void)box;
 });
 
+// Jets and smokers keep their block entities over a world reload in any dimension (TF saves them
+// with the chunk; gf:hydra:jets here): outside the Twilight Forest, where no palette scan finds
+// them, the encased smoker's redstone watch and the plain smoker's smoke come back; a removed one
+// is forgotten.
+GF_REGISTER_SELFTEST("hydra.jets_remembered", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto box    = co_await ctx.flatArea(2470, 8, 8);
+    auto esm    = ctx.testPos(2472, 2);
+    auto plain  = ctx.testPos(2474, 2);
+    auto region = ctx.region();
+    ctx.require(region != nullptr, "region");
+    ctx.require(ctx.setBlock(esm, kEncasedSmoker), "an encased smoker");
+    ctx.require(ctx.setBlock(plain, kSmoker), "a smoker");
+    (void)ctx.player(); // a player near the smokers
+    co_await ctx.ticks(2);
+    ctx.check(jetRemembered(esm) && jetRemembered(plain), "both are remembered with the world");
+    reloadJetsForTest();
+    ctx.check(!encasedWatched(esm) && !smokerTracked(plain), "a reload forgets them in memory");
+    for (int t = 0; t < 45 && !(encasedWatched(esm) && smokerTracked(plain)); ++t) co_await ctx.ticks(1);
+    ctx.check(encasedWatched(esm), "the encased smoker's redstone is watched again");
+    ctx.check(smokerTracked(plain), "the smoker ticks again");
+    int puffs = smokeParticlesForTest();
+    co_await ctx.ticks(12);
+    ctx.check(smokeParticlesForTest() >= puffs + 2, "the smoker smokes after the reload (" + std::to_string(smokeParticlesForTest() - puffs) + ")");
+    ctx.require(ctx.setBlock(esm.offset(0, 0, 1), "minecraft:redstone_block"), "power");
+    bool on = false;
+    for (int t = 0; t < 10 && !on; ++t) {
+        co_await ctx.ticks(1);
+        on = game::statesOf(region->getBlock(game::blockPos(esm)))["twilightforest:active"] == "true";
+    }
+    ctx.check(on, "powered after the reload: active");
+    ctx.setBlock(esm.offset(0, 0, 1), "minecraft:air");
+    ctx.setBlock(esm, "minecraft:air");
+    ctx.setBlock(plain, "minecraft:air");
+    for (int t = 0; t < 45 && (jetRemembered(esm) || jetRemembered(plain)); ++t) co_await ctx.ticks(1);
+    ctx.check(!jetRemembered(esm) && !jetRemembered(plain), "removed blocks are forgotten");
+    ctx.check(!encasedWatched(esm), "and their watch dropped");
+    (void)box;
+});
+
+// LivingEntity#hurt's invulnerability window on the part path (Hydra#attackEntityFromPart's
+// tookDamage): inside the window a hit lands only when stronger than the last one, and only a hit
+// that lands resets the heal timer; the head counts every armoured hit.
+GF_REGISTER_SELFTEST("hydra.invulnerability", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope normal(Difficulty::Normal);
+    auto            box  = co_await ctx.flatArea(2420, 48, 32);
+    auto            home = ctx.testPos(2444, 2);
+    auto            uid  = spawnHydra(ctx, home, 2426);
+    ctx.require(uid != 0, "the hydra spawns");
+    ctx.require(co_await ready(uid), "the hydra ticks");
+    auto& sp   = ctx.spawnPlayer();
+    auto  spId = sp.getOrCreateUniqueID().rawID;
+    sp.teleport(Vec3{home.x + 0.5f, float(home.y), home.z + 6.5f}, DimensionType(home.dim));
+    co_await ctx.ticks(3);
+    auto hit = [&](float amount) {
+        auto* h  = byId(uid);
+        auto* pl = fe::playerById(spId);
+        if (!h || !pl) return;
+        if (auto* head0 = ge::partActor(ge::ext::parts(*fe::asMob(*h))[ch::headPartIndex(0)]))
+            gf::combat::hurt(*head0, amount, "minecraft:player_attack", pl, pl);
+    };
+    auto* h = byId(uid);
+    ctx.require(h != nullptr, "the hydra");
+    int   hp0 = h->getHealth();
+    float dt0 = damageTakenForTest(*h);
+    hit(16.0F); // round(16 / 8) = 2
+    co_await ctx.ticks(3);
+    h = byId(uid);
+    ctx.require(h != nullptr, "the hydra is there");
+    ctx.check(hp0 - h->getHealth() == 2, "the first hit lands for 2 (" + std::to_string(hp0 - h->getHealth()) + ")");
+    int since = ticksSinceDamagedForTest(*h);
+    // 3 ticks later (window 17 > 10): an equal hit is refused
+    int hp1 = h->getHealth();
+    hit(16.0F);
+    co_await ctx.ticks(1);
+    h = byId(uid);
+    ctx.require(h != nullptr, "the hydra is there");
+    ctx.check(h->getHealth() == hp1, "an equal hit inside the window is refused (" + std::to_string(hp1 - h->getHealth()) + ")");
+    ctx.check(damageTakenForTest(*h) == dt0 + 2.0F, "the hydra counted only the first hit");
+    ctx.check(ticksSinceDamagedForTest(*h) > since, "a refused hit keeps the heal timer running (" + std::to_string(ticksSinceDamagedForTest(*h)) + ")");
+    ctx.check(headView(*h, 0)->damageTaken == 4, "the head counts both armoured hits (" + std::to_string(headView(*h, 0)->damageTaken) + ")");
+    // a stronger hit inside the window lands (round(40 / 8) = 5) and resets the timer
+    int hp2 = h->getHealth();
+    hit(40.0F);
+    co_await ctx.ticks(1);
+    h = byId(uid);
+    ctx.require(h != nullptr, "the hydra is there");
+    int lost = hp2 - h->getHealth();
+    ctx.info("a stronger hit inside the window took " + std::to_string(lost) + " health");
+    ctx.check(lost == 3, "a stronger hit inside the window deals the difference 5 - 2 = 3 (" + std::to_string(lost) + ")");
+    ctx.check(ticksSinceDamagedForTest(*h) <= 1, "and resets the heal timer (" + std::to_string(ticksSinceDamagedForTest(*h)) + ")");
+    discard(uid);
+    co_await ctx.ticks(2);
+    (void)box;
+});
+
+// Hydra#attackEntityFromPart: the range limit is 400 (20 blocks) plus 200 when the direct entity is a
+// mortar, whatever the damage type: the explosion of a mortar a player reflected reaches the hydra
+// from 22 blocks; the same player's explosion without a mortar does not.
+GF_REGISTER_SELFTEST("hydra.mortar_leeway", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope normal(Difficulty::Normal);
+    auto            box  = co_await ctx.flatArea(2420, 48, 32);
+    auto            home = ctx.testPos(2444, 2);
+    auto            uid  = spawnHydra(ctx, home, 2427);
+    ctx.require(uid != 0, "the hydra spawns");
+    ctx.require(co_await ready(uid), "the hydra ticks");
+    auto& sp   = ctx.spawnPlayer();
+    auto  spId = sp.getOrCreateUniqueID().rawID;
+    sp.teleport(Vec3{home.x + 0.5f, float(home.y), home.z + 22.5f}, DimensionType(home.dim));
+    co_await ctx.ticks(3);
+    auto* h  = byId(uid);
+    auto* pl = fe::playerById(spId);
+    ctx.require(h && pl, "hydra and player");
+    double d2 = fe::distanceSqr(*h, *pl);
+    ctx.require(d2 > 400.0 && d2 <= 600.0, "the player stands 20 to 24.5 blocks away (" + std::to_string(d2) + ")");
+    auto head0 = ge::partActor(ge::ext::parts(*fe::asMob(*h))[ch::headPartIndex(0)]);
+    ctx.require(head0 != nullptr, "head 0's part actor");
+    float before = damageTakenForTest(*h);
+    gf::combat::hurt(*head0, 16.0F, "minecraft:player_explosion", pl, pl);
+    co_await ctx.ticks(1);
+    h = byId(uid);
+    ctx.require(h != nullptr, "the hydra is there");
+    ctx.check(damageTakenForTest(*h) == before, "without a mortar the hit from 22 blocks is refused");
+    auto v = headView(*h, 0);
+    auto* m = launchMortar(*fe::asMob(*h), 0, v->pos, v->xRot, v->yRot, false);
+    ctx.require(m != nullptr, "a mortar");
+    auto mid = fe::uidOf(*m);
+    pl       = fe::playerById(spId);
+    head0    = ge::partActor(ge::ext::parts(*fe::asMob(*h))[ch::headPartIndex(0)]);
+    ctx.require(pl && head0, "player and head");
+    reflectMortar(*m, *pl);
+    // the mortar itself far from every part, so only the explosion's damage can reach head 0
+    m->moveTo(Vec3{home.x + 0.5f, float(home.y) + 40.0f, home.z + 30.5f}, Vec2{0, 0});
+    gf::projectile::ext::setVelocity(*m, Vec3{0.0f, 0.0f, 0.0f});
+    gf::combat::hurt(*head0, 16.0F, "minecraft:player_explosion", pl, m);
+    co_await ctx.ticks(1);
+    h = byId(uid);
+    ctx.require(h != nullptr, "the hydra is there");
+    ctx.check(damageTakenForTest(*h) > before, "the reflected mortar's explosion from 22 blocks lands (" + std::to_string(damageTakenForTest(*h) - before) + ")");
+    if (auto* mm = byId(mid)) mm->remove();
+    discard(uid);
+    co_await ctx.ticks(2);
+    (void)box;
+});
+
 // The client e2e's showcase: a hydra in front of the real player (idle heads, then a fire breath and
 // a mortar), the fire jets and smokers beside it. Without a real player (the server runs) it only
 // checks that it can find none.
@@ -724,6 +868,91 @@ GF_REGISTER_SELFTEST("hydra.client_showcase", [](Context& ctx) -> ll::coro::Coro
     co_await ctx.ticks(100);
     discard(uid);
     co_await ctx.ticks(2);
+});
+
+// The client e2e's lair review (rule R19): the golden volume of hydra.lair_golden built again (the
+// same floor, start and terraformed hill; the hash is checked), then the real player is put inside
+// the arena (grass patch, stone dome, ore stalactites, the boss spawner at local (27, 3, 27)),
+// above the hill outside, and in front of the four jet and smoker blocks with their items and the
+// spawn egg in the hotbar. Without a real player it only checks that it can find none.
+GF_REGISTER_SELFTEST("hydra.client_lair", [](Context& ctx) -> ll::coro::CoroTask<> {
+    std::int64_t realId = 0;
+    if (auto level = ll::service::getLevel())
+        level->forEachPlayer(std::function<bool(Player&)>([&](Player& p) {
+            if (!p.isSimulatedPlayer()) realId = p.getOrCreateUniqueID().rawID;
+            return realId == 0;
+        }));
+    if (!realId) {
+        ctx.info("no real player: nothing to show");
+        co_return;
+    }
+    auto box    = co_await ctx.flatArea(2400, 80, 64);
+    auto region = ctx.region();
+    ctx.require(region != nullptr, "test region");
+    auto const* dirt  = game::blockWith("minecraft:dirt");
+    auto const* grass = game::blockWith("minecraft:grass_block");
+    ctx.require(dirt && grass, "dirt and grass blocks");
+    for (int x = box.minX; x <= box.maxX; ++x)
+        for (int z = box.minZ; z <= box.maxZ; ++z)
+            for (int y = box.minY; y <= box.minY + 3; ++y) game::setBlock(*region, BlockPos{x, y, z}, y == box.minY + 3 ? *grass : *dirt);
+    int  cx = box.minX + 40, cz = box.minZ + 40, cy = box.minY + 4;
+    auto pieceBox = placeLairForTest(*region, box, cx, cy, cz, 2400, true);
+    auto hash     = ctx.snapshotVolume(box);
+    ctx.check(hash == kLairGolden, "the shown lair is the golden volume " + std::string(kLairGolden) + " (got " + hash + ")");
+    auto*       real = fe::playerById(realId);
+    ctx.require(real != nullptr, "the real player");
+    std::string name     = "\"" + real->getRealName() + "\"";
+    std::string mode;
+    switch (static_cast<int>(real->getPlayerGameType())) {
+    case 0: mode = "survival"; break;
+    case 1: mode = "creative"; break;
+    case 2: mode = "adventure"; break;
+    case 6: mode = "spectator"; break;
+    default: mode = "default"; break;
+    }
+    int         dim      = ctx.testPos(2400).dim;
+    auto        run      = [&](std::string const& cmd) { (void)gf::selftest::runServerCommand(cmd, dim); };
+    auto        xyz      = [](int x, int y, int z) { return std::to_string(x) + " " + std::to_string(y) + " " + std::to_string(z); };
+    int         spX      = pieceBox.minX + 27, spY = pieceBox.minY + 3, spZ = pieceBox.minZ + 27;
+    auto        c        = ch::boxCenter(pieceBox);
+    ctx.info("lair at " + xyz(c.x, cy, c.z) + ", spawner at " + xyz(spX, spY, spZ) + ", piece box " + xyz(pieceBox.minX, pieceBox.minY, pieceBox.minZ) + " .. " +
+             xyz(pieceBox.maxX, pieceBox.maxY, pieceBox.maxZ));
+    // a floating camera that sees in the dark (the arena is lit by its glowstone only)
+    run("gamemode spectator " + name);
+    run("effect " + name + " night_vision 120 1 true");
+    // inside: from the arena's edge, over the grass, towards the spawner and the far wall
+    run("tp " + name + " " + xyz(c.x + 16, cy + 5, c.z + 14) + " facing " + xyz(spX, spY, spZ));
+    co_await ctx.ticks(100);
+    ctx.info("lair inside ready");
+    co_await ctx.ticks(60);
+    // inside, looking up at the dome and the hanging ore stalactites
+    run("tp " + name + " " + xyz(c.x - 12, cy + 2, c.z - 10) + " facing " + xyz(c.x + 6, cy + 14, c.z + 6));
+    co_await ctx.ticks(60);
+    ctx.info("lair ceiling ready");
+    co_await ctx.ticks(60);
+    // outside: the hill from above its south-east side
+    run("tp " + name + " " + xyz(c.x + 46, cy + 30, c.z + 46) + " facing " + xyz(c.x, cy + 6, c.z));
+    co_await ctx.ticks(100);
+    ctx.info("lair outside ready");
+    co_await ctx.ticks(60);
+    // the four blocks on the flat ground of the volume's corner (outside the hill), close up, and
+    // their items and the spawn egg in the hotbar
+    int gy = box.minY + 4;
+    int bx = box.minX + 4, bz = box.minZ + 4;
+    ctx.setBlock(core::GlobalPos{dim, bx, gy, bz}, kFireJet);
+    ctx.setBlock(core::GlobalPos{dim, bx + 2, gy, bz}, kEncasedJet);
+    ctx.setBlock(core::GlobalPos{dim, bx + 4, gy, bz}, kSmoker);
+    ctx.setBlock(core::GlobalPos{dim, bx + 6, gy, bz}, kEncasedSmoker);
+    run("gamemode " + mode + " " + name);
+    char const* items[] = {kFireJet, kEncasedJet, kSmoker, kEncasedSmoker, "twilightforest:hydra_spawn_egg"};
+    for (auto const* id : items) run("give " + name + " " + std::string(id) + " 1");
+    run("tp " + name + " " + xyz(bx + 3, gy, bz + 5) + " facing " + xyz(bx + 3, gy, bz));
+    co_await ctx.ticks(80);
+    ctx.info("blocks ready");
+    co_await ctx.ticks(60);
+    for (auto const* id : items) run("clear " + name + " " + std::string(id) + " -1 1");
+    run("effect " + name + " clear");
+    (void)box;
 });
 
 // Shield shatter (HydraHeadContainer#bite): a player blocking with a shield loses 112 durability

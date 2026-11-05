@@ -80,6 +80,8 @@ void seedForTest(Actor& hydra, std::int64_t seed);
 [[nodiscard]] bool hasGravityForTest(Actor& hydra);
 /// Damage the hydra took through parts so far.
 [[nodiscard]] float damageTakenForTest(Actor& hydra);
+/// Hydra#ticksSinceDamaged (-1: no such hydra).
+[[nodiscard]] int ticksSinceDamagedForTest(Actor& hydra);
 /// The part id of a part actor of a hydra ("" when not one).
 [[nodiscard]] std::string partIdOf(Actor& part);
 
@@ -117,6 +119,13 @@ void neighborChanged(BlockSource& region, BlockPos const& pos);
 [[nodiscard]] int jetCounter(core::GlobalPos const& pos);
 /// Whether the redstone of the encased block at `pos` is watched (selftests).
 [[nodiscard]] bool encasedWatched(core::GlobalPos const& pos);
+/// Whether the smoker at `pos` ticks (its TFSmokerBlockEntity; selftests).
+[[nodiscard]] bool smokerTracked(core::GlobalPos const& pos);
+/// Whether the jet / smoker at `pos` is remembered with the world (gf:hydra:jets; selftests).
+[[nodiscard]] bool jetRemembered(core::GlobalPos const& pos);
+/// Saves the remembered jets and smokers and forgets everything in memory, as a world reload does
+/// (selftests).
+void reloadJetsForTest();
 /// Smoker particles emitted so far (selftests).
 [[nodiscard]] int smokeParticlesForTest();
 

@@ -123,6 +123,8 @@ struct Runtime {
     std::int64_t  target = 0;
     int           tickCount = 0;
     int           hurtTime  = 0;
+    int           invulnerableTime = 0; ///< LivingEntity#invulnerableTime (20 after an accepted hit)
+    float         lastHurt  = 0;        ///< LivingEntity#lastHurt
     int           deathTime = 0;
     std::uint64_t lastTick  = 0;
     bool          brain = true;
@@ -140,6 +142,10 @@ struct State_ {
     int                                            levelTick = 0;
     std::vector<ia::HandlerId>                    handlers;
     std::unique_ptr<fe::JavaRandom>               levelRandom;
+    /// The direct entity of the damage now going through the pipeline to a hydra (DamageSource#
+    /// getDirectEntity: Behaviour::hurt only gets the causing entity), by uid (0: none).
+    std::int64_t                                  hurtDirect  = 0;
+    bool                                          combatHooked = false;
 };
 State_& S() {
     static State_ s;
@@ -573,9 +579,11 @@ Actor* headLookTarget(Mob& hydra, Runtime& rt, int i) {
     for (auto* e : fe::actorsIn(region, dim, search)) {
         if (!e || e == headActor || e == skip[0] || e == skip[1] || e == skip[2]) continue;
         bool isPart   = fe::parentOfPart(*e) != 0;
-        bool pickable = isPart || (living(*e) && !e->isSpectator());
+        bool isMortar = e->getTypeName() == kMortar; // HydraMortar#isPickable, #getPickRadius 1.5
+        bool pickable = isPart || isMortar || (living(*e) && !e->isSpectator());
         if (!pickable) continue;
-        AABB const& bb = e->getAABB();
+        float border = isMortar ? 1.5F : 0.0F;
+        AABB  bb     = inflate(e->getAABB(), border, border, border);
         if (contains(bb, src)) {
             pointed = e;
             hitDist = 0.0;
@@ -904,9 +912,12 @@ bool unsteadySurfaceBeneath(Mob& hydra) {
 }
 
 /// The Java hydra's 16 x 12 box rests on any block under its footprint; the Bedrock actor's box is
-/// 2 x 3 (a bigger one would take the players' hits meant for the parts: Bedrock has no
-/// non-pickable mob). While a block under the Java footprint holds the box the actor has no
-/// gravity, so it never drops into a gap or a hole the Java hydra would stand over.
+/// 2 x 3. Hydra#isPickable is false: the client's picking skips the actor through its near-empty
+/// minecraft:custom_hit_test, but F8's simulated projectiles (Projectile.cpp canHit: every mob is
+/// pickable; the hit test uses getAABB) would stop on a 16 x 12 box, and nearly every head and
+/// neck of the hydra lies inside that box: a seeker or ice arrow aimed at a head would deflect off
+/// the body. While a block under the Java footprint holds the box the actor has no gravity, so it
+/// never drops into a gap or a hole the Java hydra would stand over.
 void restOnJavaBox(Mob& hydra, Runtime& rt) {
     auto&  region = hydra.getDimensionBlockSource();
     auto   p      = hydra.getFeetPos();
@@ -1122,6 +1133,8 @@ void tickHydra(Mob& hydra, Runtime& rt) {
         collideWithEntities(hydra, rt, 1);
     }
     if (rt.hurtTime > 0) rt.hurtTime--;
+    // LivingEntity#baseTick
+    if (rt.invulnerableTime > 0) rt.invulnerableTime--;
     // LivingEntity#tick after aiStep: the body turns (Hydra#tickHeadTurn)
     rt.bodyYaw = ch::tickBodyTurn(rt.bodyYaw, rt.yRot);
     applyRotation(hydra, rt);
@@ -1155,7 +1168,9 @@ void aiStep(Actor& actor) {
 
 /// Hydra#attackEntityFromPart, Hydra#hurt and #isInvulnerableTo.
 bool hurt(Actor& self, float& amount, std::string const& type, Actor* attacker) {
-    std::string const& part = ge::ext::hurtPart();
+    // read once: a later hit never sees this one's direct entity (noteDirect)
+    std::int64_t const directId = std::exchange(S().hurtDirect, 0);
+    std::string const& part     = ge::ext::hurtPart();
     if (part.empty()) {
         // the hydra itself only takes damage that bypasses invulnerability (/kill)
         return type == "minecraft:generic_kill" || type == "minecraft:out_of_world"
@@ -1168,18 +1183,26 @@ bool hurt(Actor& self, float& amount, std::string const& type, Actor* attacker) 
     // explosions reach the parts (NeoForge's Level#getEntities returns PartEntity instances): a
     // player's TNT, a creeper, a reflected mortar; the hydra's own mortars are refused just below
     // (their causing entity is the hydra)
-    auto uid = fe::uidOf(self);
+    auto   uid    = fe::uidOf(self);
+    Actor* direct = directId ? fe::actorById(directId) : nullptr;
+    // the explosion of a mortar (Explosion#getIndirectSourceEntity): caused by the mortar's owner (the
+    // hydra for its own mortars, the player who reflected one), the mortar is the direct entity
+    if (attacker && attacker->getTypeName() == kMortar) {
+        if (!direct) direct = attacker;
+        auto mv  = mortarView(*attacker);
+        attacker = mv && mv->owner ? fe::actorById(mv->owner) : nullptr;
+    }
     if (attacker && (attacker == &self || partOf(*attacker, uid))) return false;
-    // the explosion of one of its own mortars (Explosion#getIndirectSourceEntity: the mortar's owner)
-    if (attacker && attacker->getTypeName() == kMortar)
-        if (auto mv = mortarView(*attacker); mv && mv->owner == uid) return false;
+    if (direct && (direct == &self || partOf(*direct, uid))) return false;
     int idx     = partIndex(part);
     int headCon = -1;
     if (idx >= 0 && isHeadPart(idx)) headCon = headOf(idx);
     else if (idx >= 0 && headOf(idx) >= 0 && rt->heads[headOf(idx)].head.isDead()) return false; // a dead head's neck
     double range = attacker ? fe::distanceSqr(self, *attacker) : -1.0;
-    // give some leeway for reflected mortars
-    if (range > 400.0 + (type == "twilightforest:hydra_mortar" ? 200.0 : 0.0)) return false;
+    // give some leeway for reflected mortars: source.getDirectEntity() instanceof HydraMortar (the
+    // mortar's own damage and the explosion it causes both have the mortar as direct entity)
+    bool fromMortar = (direct && direct->getTypeName() == kMortar) || type == "twilightforest:hydra_mortar";
+    if (range > 400.0 + (fromMortar ? 200.0 : 0.0)) return false;
     // ignore hits on dying heads, it's weird
     if (headCon >= 0 && rt->heads[headCon].head.isDead()) return false;
     if (headCon >= 0 && rt->heads[headCon].head.currentMouthOpen() > 0.5F) {
@@ -1189,13 +1212,32 @@ bool hurt(Actor& self, float& amount, std::string const& type, Actor* attacker) 
         amount      = static_cast<float>(armored);
         if (headCon >= 0) rt->heads[headCon].head.addDamage(static_cast<float>(armored));
     }
-    // LivingEntity#hurt accepts a hit of 0 too (tookDamage): the hurt flash and the heal timer reset;
-    // the engine is not asked to apply nothing
+    // super.hurt (LivingEntity#hurt): tookDamage. Inside the second half of the 20-tick
+    // invulnerability window only a stronger hit lands (for the difference, without a new hurt
+    // flash); outside it every hit lands, a hit of 0 too (the flash, the heal timer)
+    bool took = true;
+    if (rt->invulnerableTime > 10 && !gf::tags::has(gf::tags::Registry::DamageType, "minecraft:bypasses_cooldown", type)) {
+        took = amount > rt->lastHurt;
+        if (took) rt->lastHurt = amount;
+    } else {
+        rt->lastHurt         = amount;
+        rt->invulnerableTime = 20;
+        rt->hurtTime         = kHurtTime;
+    }
+    if (!took) return false;
     rt->ticksSinceDamaged = 0;
-    rt->hurtTime          = kHurtTime;
+    // the engine is not asked to apply nothing (its own window applies the difference)
     if (amount <= 0.0F) return false;
     rt->damageTaken += amount;
     return true;
+}
+
+/// Records the direct entity of damage on its way to a hydra (read by hurt, which the contract's
+/// Behaviour::hurt calls with the causing entity only). Runs after F8's part forwarding (High) and
+/// before F8's Behaviour::hurt dispatch (Normal).
+gf::combat::Verdict noteDirect(gf::combat::DamageInfo& d) {
+    if (d.victim.getTypeName() == kHydra) S().hurtDirect = d.direct ? fe::uidOf(*d.direct) : 0;
+    return gf::combat::Verdict::Pass;
 }
 
 /// HydraHead#interact (a neck forwards to its head): a named name tag names the head.
@@ -1309,6 +1351,11 @@ float damageTakenForTest(Actor& hydra) {
     return rt ? rt->damageTaken : 0.0F;
 }
 
+int ticksSinceDamagedForTest(Actor& hydra) {
+    auto* rt = find(fe::uidOf(hydra));
+    return rt ? rt->ticksSinceDamaged : -1;
+}
+
 std::string partIdOf(Actor& part) {
     Actor* parent = ge::ext::parentOf(part);
     if (!parent) return {};
@@ -1385,6 +1432,8 @@ void installHydra() {
         .particle = "minecraft:flame",
     });
     S().handlers.push_back(ia::onInteract({.block = kHydraPart}, nameTag, ia::priority::High + 10));
+    // the contract has no removal: once per process
+    if (!std::exchange(S().combatHooked, true)) gf::combat::onIncoming(gf::combat::priority::Normal + 1, noteDirect);
     // forget the runtimes of hydras that are gone (every 100 ticks)
     if (!S().levelTick)
         S().levelTick = fe::onLevelTick([] {
