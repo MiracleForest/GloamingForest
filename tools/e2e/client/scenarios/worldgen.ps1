@@ -12,7 +12,8 @@
 # Remote modes (a BDS host with the probe, installed by worldgen.host-prelaunch.ps1): the painted
 # probe 3000 blocks east and the painted desert 3000 blocks south reach the client through the chunk
 # data; the client mod is not involved (remote-vanilla: no client mod), so the evidence is the
-# screenshots: the desert's ground must be tinted unlike the home ground, the probe's is recorded.
+# screenshots: the desert's ground must be tinted unlike the home ground, the probe's magenta
+# (Assert-ProbeTint, in the local mode too).
 # Screenshots: out/worldgen/{world,home,custom_biome,custom_biome_desert,generated_probe,generated_desert,selftest}.png
 #              remote: out/worldgen/{world,home,remote_probe,remote_desert,selftest}.png
 
