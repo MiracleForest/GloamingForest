@@ -19,6 +19,7 @@
 #ifdef GF_CLIENT
 
 #include <algorithm>
+#include <cstdint>
 
 #include "mc/client/player/LocalPlayer.h"
 #include "mc/world/gamemode/GameMode.h"
@@ -53,6 +54,12 @@ void tickLocalMining() {
     if (!player || player->getPlayerGameType() != GameType::Survival || !gf::progression::client::has("twilightforest:progress_glacier")) {
         m = {};
         return;
+    }
+    // another world or player: start over (the coordinates alone could repeat)
+    static std::int64_t who = 0;
+    if (auto uid = player->getOrCreateUniqueID().rawID; uid != who) {
+        who = uid;
+        m   = {};
     }
     auto* gameMode = player->mGameMode.get();
     if (!gameMode) return;
