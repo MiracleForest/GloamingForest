@@ -52,11 +52,11 @@ enum Flags : std::uint16_t {
 };
 
 std::uint16_t flagsOf(State const& s, Block const& b) {
-    thread_local State const*                                   owner = nullptr;
+    thread_local std::uint64_t                                  owner = 0;
     thread_local std::unordered_map<Block const*, std::uint16_t> cache;
-    if (owner != &s) {
+    if (owner != s.generation) {
         cache.clear();
-        owner = &s;
+        owner = s.generation;
     }
     if (auto it = cache.find(&b); it != cache.end()) return it->second;
     std::uint16_t f  = 0;
@@ -110,14 +110,10 @@ struct Carver {
     int                          genMinY, genDepth; ///< WorldGenerationContext
     Block const*                 caveAir;
 
-    // the configured carver
-    float probability = 0.1F;
-    float floorLevel = -0.7F;
 
     Block const& get(int x, int y, int z) const {
-        static Block const* air = kit::javaBlock("minecraft:air");
-        int                 lx = x - chunk.chunkX() * 16, lz = z - chunk.chunkZ() * 16;
-        if (y < minY || y >= maxY || lx < 0 || lz < 0 || lx > 15 || lz > 15) return *air;
+        int lx = x - chunk.chunkX() * 16, lz = z - chunk.chunkZ() * 16;
+        if (y < minY || y >= maxY || lx < 0 || lz < 0 || lx > 15 || lz > 15) return *s.block(code::Air);
         return chunk.getBlock(lx, y, lz);
     }
     void set(int x, int y, int z, Block const& b) const {
@@ -195,9 +191,7 @@ struct Carver {
         auto         randomFromPos = s.oreRandom->at(x, y, z);
         Block const* place         = caveAir;
         if (flags(x, y + 2, z) & kFluid) {
-            static Block const* rooted = kit::javaBlock("minecraft:rooted_dirt");
-            static Block const* coarse = kit::javaBlock("minecraft:coarse_dirt");
-            place                      = randomFromPos->nextBoolean() ? rooted : coarse;
+            place = randomFromPos->nextBoolean() ? s.rootedDirt : s.coarseDirt;
         }
         if (!place) return false;
         set(x, y, z, *place);
@@ -374,12 +368,8 @@ void carveWith(State const& st, bool highlands, worldgen::Chunk& chunk, worldgen
     float probability = cfg.contains("probability") ? cfg["probability"].get<float>() : 0.1F;
     if (!highlands && !(random.nextFloat() <= probability)) return;
     auto start = std::chrono::steady_clock::now();
-    static Block const* caveAir = [] {
-        auto const* b = kit::javaBlock("minecraft:cave_air");
-        return b ? b : kit::javaBlock("minecraft:air");
-    }();
     auto shape = s->gen->shape();
-    Carver c{highlands, *s, chunk, *ctx, {}, cfg, chunk.minY(), chunk.maxY(), std::max(chunk.minY(), shape.minY), std::min(chunk.maxY() - chunk.minY(), shape.height), caveAir};
+    Carver c{highlands, *s, chunk, *ctx, {}, cfg, chunk.minY(), chunk.maxY(), std::max(chunk.minY(), shape.minY), std::min(chunk.maxY() - chunk.minY(), shape.height), s->caveAir};
     c.carve(random);
     addChunkMs(std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count());
 }

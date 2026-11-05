@@ -60,6 +60,10 @@ struct State {
     Blankets                         blankets;
     std::vector<Block const*>        blocks; ///< code -> Block (codes from the table; nullptr: unknown)
     Block const*                     stone = nullptr; ///< the default block
+    Block const* caveAir = nullptr; ///< the carvers' blocks (Block pointers belong to the world: kept per state)
+    Block const* rootedDirt = nullptr;
+    Block const* coarseDirt = nullptr;
+    std::uint64_t generation = 0; ///< unique per state (per-thread caches key on it, not on the address)
     std::string                      error;
     std::unique_ptr<core::jrand::PositionalRandomFactory> oreRandom; ///< RandomState#oreRandom
 

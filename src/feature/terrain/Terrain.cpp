@@ -22,6 +22,7 @@
 #include "feature/terrain/Terrain.h"
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <deque>
 #include <filesystem>
@@ -80,6 +81,11 @@ std::shared_ptr<State const>& cachedState() {
 }
 std::atomic<int>& skylightFlag() { // -1 unknown, 0 / 1
     static std::atomic<int> v{-1};
+    return v;
+}
+
+std::atomic<bool>& installed() {
+    static std::atomic<bool> v{false};
     return v;
 }
 
@@ -181,7 +187,13 @@ std::shared_ptr<State const> makeState(std::int64_t seed, bool skylight) {
         s->blocks[core::terrain::code::FirstNamed + i] = kit::javaBlock(e.name, e.properties);
         if (!s->blocks[core::terrain::code::FirstNamed + i]) gf::log().warn("terrain: block {} {} is unknown", e.name, e.properties.dump());
     }
-    s->oreRandom = randomStateFactory(seed)->fromHashOf("minecraft:ore")->forkPositional();
+    s->oreRandom  = randomStateFactory(seed)->fromHashOf("minecraft:ore")->forkPositional();
+    s->caveAir    = kit::javaBlock("minecraft:cave_air");
+    if (!s->caveAir) s->caveAir = s->blocks[core::terrain::code::Air];
+    s->rootedDirt = kit::javaBlock("minecraft:rooted_dirt");
+    s->coarseDirt = kit::javaBlock("minecraft:coarse_dirt");
+    static std::atomic<std::uint64_t> generations{0};
+    s->generation = ++generations;
     return s;
 }
 
@@ -192,8 +204,11 @@ bool skylightWorld() {
 }
 
 std::shared_ptr<State const> state() {
+    if (!installed()) return nullptr;
     std::int64_t seed     = worldgen::seed();
     bool         skylight = skylightWorld();
+    static std::mutex buildMutex;
+    std::lock_guard   building(buildMutex);
     {
         std::lock_guard lock(stateMutex());
         auto&           c = cachedState();
@@ -255,11 +270,11 @@ namespace {
 
 /// The code of a block (thread-local cache by permutation, reset when the state changes).
 std::uint16_t classify(State const& s, Block const& b) {
-    thread_local State const*                                   owner = nullptr;
+    thread_local std::uint64_t                                  owner = 0;
     thread_local std::unordered_map<Block const*, std::uint16_t> cache;
-    if (owner != &s) {
+    if (owner != s.generation) {
         cache.clear();
-        owner = &s;
+        owner = s.generation;
     }
     if (auto it = cache.find(&b); it != cache.end()) return it->second;
     std::uint16_t c;
@@ -488,8 +503,9 @@ std::optional<int> heightProvider(int dimension, int x, int z, worldgen::Heightm
     if (tf >= 0 && dimension != tf) return std::nullopt;
     auto s = state();
     if (!s) return std::nullopt;
-    bool ocean = type == worldgen::Heightmap::OceanFloorWg || type == worldgen::Heightmap::OceanFloor || type == worldgen::Heightmap::MotionBlocking
-              || type == worldgen::Heightmap::MotionBlockingNoLeaves;
+    // OCEAN_FLOOR(_WG): blocks motion; WORLD_SURFACE(_WG) and MOTION_BLOCKING(_NO_LEAVES) also
+    // count fluids (the noise terrain has no leaves)
+    bool ocean = type == worldgen::Heightmap::OceanFloorWg || type == worldgen::Heightmap::OceanFloor;
     TerrainSampler sampler = [&](int bx, int bz) { return sampleTerrain(bx, bz, [&](int qx, int qz) { return s->columnAt(qx, qz); }); };
     // ChunkGenerator#getFirstOccupiedHeight = getBaseHeight - 1
     return s->gen->baseHeight(x, z, ocean, sampler) - 1;
@@ -538,6 +554,7 @@ void onWorldReady() {
 
 struct TerrainModule {
     void install() {
+        installed() = true;
         registerDensityTypes();
         worldgen::setTerrain(terrainProvider);
         worldgen::setSurface(surfaceProvider);
@@ -565,6 +582,8 @@ struct TerrainModule {
     void uninstall() {
         worldgen::setTerrain({});
         worldgen::setSurface({});
+        // F5 has no unregistration: the blanket, carvers and steps stay registered and do nothing
+        installed() = false;
         landmark::ext::setHeightProvider({});
         std::lock_guard lock(stateMutex());
         cachedState().reset();

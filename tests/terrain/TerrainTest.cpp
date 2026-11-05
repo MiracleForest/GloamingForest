@@ -10,6 +10,7 @@
 #include <sstream>
 
 #include "TerrainHarness.h"
+#include "core/landmark/Landmark.h"
 
 namespace gf::tests::terrain {
 namespace {
@@ -166,8 +167,7 @@ TEST(TerrainGolden, BaseHeightsMatch) {
             if (bad < bestBad) best = variant, bestBad = bad, bestTested = tested;
         }
         ASSERT_GE(best, 0);
-        std::cout << "[ terrain  ] " << seedFile(seed) << ": biome rows transposed " << ((best & 1) != 0) << ", heights z-major " << ((best & 2) != 0) << "
-";
+        std::cout << "[ terrain  ] " << seedFile(seed) << ": biome rows transposed " << ((best & 1) != 0) << ", heights z-major " << ((best & 2) != 0) << "\n";
         bool transposed = (best & 1) != 0, zMajor = (best & 2) != 0;
         auto w          = loadWorld(seed, "twilight_noise_gen", transposed);
         auto sampler    = w->sampler();
@@ -190,6 +190,8 @@ TEST(TerrainGolden, BaseHeightsMatch) {
 }
 
 
+constexpr int kLandmarkRadius = 48;
+
 TEST(TerrainGolden, SurfaceGridMatches) {
     for (auto seed : seeds()) {
         json g = golden::readJson(golden::goldenDir() / "surface" / seedFile(seed));
@@ -202,7 +204,7 @@ TEST(TerrainGolden, SurfaceGridMatches) {
         auto sampler = w->sampler();
         auto biome   = w->blockBiome();
         // [variant][0 = height mismatches, 1 = top mismatches]
-        int bad[2][2] = {}, checked = 0;
+        int bad[2][2] = {}, checked = 0, nearLandmark = 0;
         std::vector<std::string> samples[2];
         for (int cx = x0 >> 4; cx < (x0 + n * step) >> 4; ++cx)
             for (int cz = z0 >> 4; cz < (z0 + n * step) >> 4; ++cz) {
@@ -218,6 +220,13 @@ TEST(TerrainGolden, SurfaceGridMatches) {
                 for (int x = 0; x < 16; x += step)
                     for (int z = 0; z < 16; z += step) {
                         int bx = cx * 16 + x, bz = cz * 16 + z, i = (bx - x0) / step, j = (bz - z0) / step;
+                        // the oracle's chunks carry the landmark terraforming (F6 starts, not in gf-core):
+                        // leave out the cells near a landmark center
+                        auto lc = core::landmark::nearestCenter(cx, cz);
+                        if ((bx - lc.x) * (bx - lc.x) + (bz - lc.z) * (bz - lc.z) < kLandmarkRadius * kLandmarkRadius) {
+                            ++nearLandmark;
+                            continue;
+                        }
                         ++checked;
                         int         ws  = grid.worldSurfaceWg(x, z) + 1;
                         auto        c   = grid.get(x, ws - 1, z);
@@ -235,10 +244,8 @@ TEST(TerrainGolden, SurfaceGridMatches) {
                     }
             }
         int v = bad[0][0] + bad[0][1] <= bad[1][0] + bad[1][1] ? 0 : 1;
-        std::cout << "[ terrain  ] surface " << seedFile(seed) << ": " << checked << " cells, z-major " << v << ", height mismatches " << bad[v][0] << ", top mismatches " << bad[v][1] << "
-";
-        for (auto const& line : samples[v]) std::cout << "             " << line << "
-";
+        std::cout << "[ terrain  ] surface " << seedFile(seed) << ": " << checked << " cells (" << nearLandmark << " near a landmark left out), z-major " << v << ", height mismatches " << bad[v][0] << ", top mismatches " << bad[v][1] << "\n";
+        for (auto const& line : samples[v]) std::cout << "             " << line << "\n";
         EXPECT_EQ(bad[v][0] + bad[v][1], 0) << seedFile(seed);
     }
 }

@@ -11,14 +11,14 @@ SEEDS = [(0, "seed-0.json"), (123456789, "seed-123456789.json"), (-8346138912345
 
 # orientation of the golden grids (checked by the gtests: TerrainGolden.*)
 BIOME_ROWS_ARE_Z = True   # main.rows[z][x]
-HEIGHTS_I_MAJOR = True    # worldSurfaceWg[i][j], i along x
-SURFACE_I_MAJOR = True
+HEIGHTS_I_MAJOR = False    # worldSurfaceWg[i][j], i along x
+SURFACE_I_MAJOR = False
 
 QW = 72          # quart window -36 .. 35 (sampleTerrain reaches 3 quarts)
 QX0 = -36
 HX0, HN, HSTEP = -128, 32, 8   # heights: blocks -128 .. 120
-SC0, SN = -2, 4                # surface: chunks -2 .. 1
-SX0, SSTEP = -32, 2
+SC0, SN = 4, 4                 # surface: chunks 4 .. 7 (away from the landmark at (8, 8), whose terraforming the goldens carry)
+SX0, SSTEP = 64, 2
 SW = (SN * 16) // SSTEP
 
 
