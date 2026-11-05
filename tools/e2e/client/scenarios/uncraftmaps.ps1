@@ -105,7 +105,12 @@ Start-Sleep -Seconds 1
 Save-Screenshot 'uncraftmaps-6-items' | Out-Null
 $mark = Get-LogMark
 if ($script:Mode -eq 'local') { Invoke-Chat '/twilightforest tp' } else { Send-HostConsole "execute as @a at @s run twilightforest tp" }
-Start-Sleep -Seconds 8
+Start-Sleep -Seconds 2
+# the test world's Twilight Forest has no ground here: a platform high up, before the fall reaches the void
+Invoke-Teleport "/tp $who 40.5 100 72.5"
+if ($script:Mode -eq 'local') { Invoke-Chat '/fill 38 98 70 43 98 75 stone' } else { Send-HostConsole 'execute as @a at @s run fill 38 98 70 43 98 75 stone' }
+Invoke-Teleport "/tp $who 40.5 99 72.5 0 30"
+Start-Sleep -Seconds 4
 Invoke-Build "replaceitem entity $who slot.hotbar 0 twilightforest:magic_map"
 Press-Key '1'
 # look up into the air and use the empty map (EmptyMagicMapItem#use)
