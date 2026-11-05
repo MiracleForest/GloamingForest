@@ -21,6 +21,8 @@
 #include "mc/world/level/BlockSource.h"
 #include "mc/deps/shared_types/legacy/Difficulty.h"
 #include "mc/world/level/GameType.h"
+#include "mc/world/level/storage/GameRuleId.h"
+#include "mc/world/level/storage/GameRules.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/dimension/DimensionType.h"
@@ -99,6 +101,29 @@ struct DifficultyScope {
     }
     ~DifficultyScope() {
         if (auto* l = level()) l->setDifficulty(previous);
+    }
+};
+
+/// Explosions of the mobs' fireballs and the reactor must not dig into the shared test world:
+/// mobGriefing and doFireTick are off while a mob test runs (restored afterwards).
+struct GriefScope {
+    bool griefing = true, fireTick = true;
+    static bool get(GameRules::GameRulesIndex index) {
+        auto* l = level();
+        if (!l) return true;
+        GameRuleId id;
+        id.mValue = static_cast<int>(index);
+        return l->getGameRules().getBool(id, true);
+    }
+    GriefScope() {
+        griefing = get(GameRules::GameRulesIndex::MobGriefing);
+        fireTick = get(GameRules::GameRulesIndex::DoFireTick);
+        (void)selftest::runServerCommand("gamerule mobgriefing false");
+        (void)selftest::runServerCommand("gamerule dofiretick false");
+    }
+    ~GriefScope() {
+        (void)selftest::runServerCommand(std::string("gamerule mobgriefing ") + (griefing ? "true" : "false"));
+        (void)selftest::runServerCommand(std::string("gamerule dofiretick ") + (fireTick ? "true" : "false"));
     }
 };
 
@@ -251,6 +276,7 @@ GF_REGISTER_SELFTEST("darktower.antibuilder", [](Context& ctx) -> ll::coro::Coro
 // carminite reactor: six redstone blocks fire it up; fake gold/diamond at tick 5; it explodes at 350
 GF_REGISTER_SELFTEST("darktower.reactor", [](Context& ctx) -> ll::coro::CoroTask<> {
     DifficultyScope easy;
+    GriefScope noGrief;
     auto box = co_await ctx.flatArea(2645, 24, 40);
     (void)box;
     auto c = ctx.testPos(2657, 2).offset(0, 18, 0);
@@ -301,11 +327,13 @@ GF_REGISTER_SELFTEST("darktower.slider", [](Context& ctx) -> ll::coro::CoroTask<
 // Ur-Ghast (tantrum off, trapped, pulled, activate_ghast_trap for the players around)
 GF_REGISTER_SELFTEST("darktower.ghast_trap_fight", [](Context& ctx) -> ll::coro::CoroTask<> {
     DifficultyScope easy;
+    GriefScope noGrief;
     auto box = co_await ctx.flatArea(2600, 30, 48);
     (void)box;
     auto trap = ctx.testPos(2615, 2).offset(0, 1, 0);
     ctx.require(ctx.setBlock(trap, id::GhastTrap), "ghast trap placed");
     placePlayer(ctx, trap, 3.5f, 0.5f);
+    static_cast<Player&>(ctx.player()).setPlayerGameType(GameType::Creative); // no fireballs at the test player
     static int  fired      = 0;
     static bool listening  = false;
     fired                  = 0;
@@ -330,6 +358,7 @@ GF_REGISTER_SELFTEST("darktower.ghast_trap_fight", [](Context& ctx) -> ll::coro:
     ctx.require(ur != nullptr, "the Ur-Ghast spawned");
     auto urId = uidOf(*ur);
     ghasts::setTantrum(*ur, true);
+    removeAround(ctx, trap, id::Ghastling, 30.0f); // the minions the tantrum summons at the trap (not part of this script)
     ctx.check(ghasts::inTantrum(*ur), "the Ur-Ghast is in a tantrum");
     float before = static_cast<float>(ur->getHealth());
     // power the trap
@@ -353,6 +382,7 @@ GF_REGISTER_SELFTEST("darktower.ghast_trap_fight", [](Context& ctx) -> ll::coro:
 // Ur-Ghast phases: 10 damage starts a tantrum, which divides damage by 10; 18 more ends it
 GF_REGISTER_SELFTEST("darktower.urghast_phases", [](Context& ctx) -> ll::coro::CoroTask<> {
     DifficultyScope easy;
+    GriefScope noGrief;
     auto box = co_await ctx.flatArea(2620, 24, 32);
     (void)box;
     auto at = ctx.testPos(2632, 2).offset(0, 6, 0);

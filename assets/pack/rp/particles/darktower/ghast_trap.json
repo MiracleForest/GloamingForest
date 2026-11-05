@@ -9,11 +9,12 @@
       }
     },
     "components": {
-      "minecraft:emitter_initialization": {
-        "creation_expression": "variable.vx = variable.velocity.x ?? 0; variable.vy = variable.velocity.y ?? 0; variable.vz = variable.velocity.z ?? 0;"
+      "minecraft:emitter_rate_instant": {
+        "num_particles": 1
       },
-      "minecraft:emitter_rate_instant": { "num_particles": 1 },
-      "minecraft:emitter_lifetime_once": { "active_time": 0 },
+      "minecraft:emitter_lifetime_once": {
+        "active_time": 0
+      },
       "minecraft:emitter_shape_point": {},
       "minecraft:particle_initialization": {
         "per_render_expression": "variable.size = (0.1 * (variable.particle_random_3 * 0.5 + 0.5) * 2.0) * 0.75 * 3.0;"
@@ -23,9 +24,9 @@
       },
       "minecraft:particle_motion_parametric": {
         "relative_position": [
-          "variable.vx * (1.0 - variable.particle_age / variable.particle_lifetime)",
-          "variable.vy * (1.0 - variable.particle_age / variable.particle_lifetime)",
-          "variable.vz * (1.0 - variable.particle_age / variable.particle_lifetime)"
+          "variable.velocity.x * (1.0 - variable.particle_age / variable.particle_lifetime)",
+          "variable.velocity.y * (1.0 - variable.particle_age / variable.particle_lifetime)",
+          "variable.velocity.z * (1.0 - variable.particle_age / variable.particle_lifetime)"
         ]
       },
       "minecraft:particle_appearance_billboard": {
@@ -38,9 +39,18 @@
           "texture_width": 128,
           "texture_height": 128,
           "flipbook": {
-            "base_UV": [56, 0],
-            "size_UV": [8, 8],
-            "step_UV": [-8, 0],
+            "base_UV": [
+              56,
+              0
+            ],
+            "size_UV": [
+              8,
+              8
+            ],
+            "step_UV": [
+              -8,
+              0
+            ],
             "max_frame": 8,
             "stretch_to_lifetime": true,
             "loop": false
