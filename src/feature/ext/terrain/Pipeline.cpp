@@ -157,7 +157,9 @@ std::atomic<int>& orderVerdict() { // -1 unknown, 0 wrong, 1 right
 bool indexOrderVerified(LevelChunk& lc, int chunkMinY, int chunkMaxY) {
     int v = orderVerdict().load();
     if (v >= 0) return v == 1;
-    int checked = 0, wrong = 0;
+    int          checked = 0, wrong = 0;
+    bool         varied  = false; // the probed positions themselves hold different blocks
+    Block const* first   = nullptr;
     for (int y = chunkMinY; y < chunkMaxY && checked < 64; y += 3)
         for (int k = 0; k < 4; ++k) {
             int lx = (y * 7 + k * 5) & 15, lz = (y * 3 + k * 11) & 15, ly = 0;
@@ -167,14 +169,9 @@ bool indexOrderVerified(LevelChunk& lc, int chunkMinY, int chunkMaxY) {
             Block const& viaChunk = lc.getBlock(chunkPos(lx, y, lz, chunkMinY));
             ++checked;
             if (&viaIndex != &viaChunk) ++wrong;
+            if (!first) first = &viaChunk;
+            else if (first != &viaChunk) varied = true;
         }
-    bool         varied = false;
-    Block const* first  = nullptr;
-    for (int y = chunkMinY; y < chunkMaxY && !varied; y += 5) {
-        Block const& b = lc.getBlock(chunkPos(y & 15, y, (y * 3) & 15, chunkMinY));
-        if (!first) first = &b;
-        else if (first != &b) varied = true;
-    }
     if (!varied || checked == 0)
         return false; // unproven: the layer stays unread in this chunk (one block everywhere carves nothing)
     int expected = -1;
