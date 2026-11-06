@@ -38,6 +38,7 @@
 #include "feature/ext/entity/EntityExt.h"
 #include "feature/fx/Fx.h"
 #include "game/Blocks.h"
+#include "game/WorldDb.h"
 #include "mod/Log.h"
 
 namespace gf::feature::caves {
@@ -132,6 +133,7 @@ void tickIce(Actor& ice) {
         if ((t > 100 && (blockpos.y <= region.getMinHeight() || blockpos.y > region.getMaxHeight())) || t > 1000) {
             fe::removeLater(uid);
             ices().erase(uid);
+            return;
         }
     } else {
         causeFallDamage(ice, s.fallDistance);
@@ -140,9 +142,9 @@ void tickIce(Actor& ice) {
         bool         flag3 = isFree(region.getBlock(BlockPos{blockpos.x, blockpos.y - 1, blockpos.z}));
         if (flag2 && !flag3)
             if (auto const* b = game::blockWith(block)) game::setBlock(region, blockpos, *b);
+        gf::log().info("caves: falling ice landed after {:.1f} blocks", s.fallDistance);
         fe::removeLater(uid);
         ices().erase(uid);
-        gf::log().info("caves: falling ice landed after {:.1f} blocks", s.fallDistance);
         return;
     }
     s.vy *= 0.98F;
@@ -176,12 +178,9 @@ void installFallingIce() {
     b.onSpawn = [](Actor& self) { gf::entity::setProperty(self, "twilightforest:block", iceIndex(blockOf(self))); };
     b.tick    = [](Actor& self) {
         if (!self.isAlive()) return;
-        if (blockOf(self).empty()) {
-            fe::removeLater(fe::uidOf(self));
-            return;
-        }
         tickIce(self);
     };
+    gf::game::db::onWorldClosed([] { ices().clear(); });
     b.hurt = [](Actor&, float&, std::string const&, Actor*) { return false; }; // isAttackable: false
     gf::entity::registerType(kFallingIce, b);
 }

@@ -38,6 +38,7 @@
 #include "feature/projectile/Projectile.h"
 #include "feature/spawn/Spawn.h"
 #include "game/Blocks.h"
+#include "game/WorldDb.h"
 #include "mod/Log.h"
 
 namespace gf::feature::caves {
@@ -91,7 +92,8 @@ BlockPos clipBlock(BlockSource& region, Vec3 const& from, Vec3 const& to, BlockP
     for (int i = 0; i <= steps; i++) {
         double   t = static_cast<double>(i) / steps;
         BlockPos p{static_cast<int>(std::floor(from.x + dx * t)), static_cast<int>(std::floor(from.y + dy * t)), static_cast<int>(std::floor(from.z + dz * t))};
-        if (!region.getBlock(p).isAir()) return p;
+        Block const& b = region.getBlock(p);
+        if (!b.isAir() && !structure::blocks::isLiquid(b)) return p; // Fluid.NONE: liquids are passed through
     }
     return fallback;
 }
@@ -262,6 +264,7 @@ void installTroll() {
     };
     gf::entity::registerType(kTroll, b);
     fe::onLevelTick(ripenTick);
+    gf::game::db::onWorldClosed([] { ripenings().clear(); });
     gf::spawn::registerPlacement(kTroll, gf::spawn::PlacementRule::OnGround);
 
     // ThrownBlock (TFThrowable: gravity 0.03)
@@ -276,7 +279,8 @@ void installTroll() {
         gf::log().info("caves: a thrown block hit {}", target.getTypeName());
         return true;
     };
-    spec.onHitBlock = [](Actor& p, BlockPos const&, int) {
+    spec.onHitBlock = [](Actor& p, BlockPos const& pos, int) {
+        gf::log().debug("caves: a thrown block hit the block at {} {} {}", pos.x, pos.y, pos.z);
         gf::fx::particle(p.getDimension(), "minecraft:block", p.getFeetPos(), Vec3{}, 20, nlohmann::json{{"block", thrownBlockState(p)}});
         return true;
     };

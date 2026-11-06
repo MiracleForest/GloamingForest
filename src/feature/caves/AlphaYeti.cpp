@@ -50,6 +50,7 @@
 #include "feature/spawn/Spawn.h"
 #include "feature/tags/Tags.h"
 #include "game/Blocks.h"
+#include "game/WorldDb.h"
 #include "mod/Log.h"
 
 namespace gf::feature::caves {
@@ -98,18 +99,30 @@ void setTired(Actor& yeti, bool tired) {
     gf::entity::setProperty(yeti, "twilightforest:tired", tired);
 }
 
+/// #minecraft:is_projectile (vanilla 1.21.1 members, plus what gf::tags adds: TF's own types).
+bool isProjectileDamage(std::string const& type) {
+    static char const* const kVanilla[] = {"minecraft:arrow",   "minecraft:trident",       "minecraft:mob_projectile", "minecraft:unattributed_fireball",
+                                           "minecraft:fireball", "minecraft:wither_skull", "minecraft:thrown",          "minecraft:wind_charge"};
+    for (auto const* v : kVanilla)
+        if (type == v) return true;
+    return gf::tags::has(gf::tags::Registry::DamageType, "minecraft:is_projectile", type);
+}
+
 /// The ice sound (vol 1, pitch 1 / (r x 0.4 + 0.8)).
 void iceSound(Mob& yeti) {
     auto& r = fe::randomOf(yeti);
     gf::fx::sound(yeti.getDimension(), "entity.twilightforest.alpha_yeti.ice", yeti.getFeetPos(), 1.0F, 1.0F / (r.nextFloat() * 0.4F + 0.8F));
 }
 
-/// EntityUtil#canDestroyBlock (hardness 0..50, not air, not #minecraft:dragon_immune / wither_immune).
-bool canDestroyBlock(Block const& b) {
+/// EntityUtil#canDestroyBlock (hardness 0..50, not air, no container block entity).
+bool canDestroyBlock(BlockSource& region, BlockPos const& pos) {
+    Block const& b = region.getBlock(pos);
     if (b.isAir()) return false;
     float hardness = b.getBlockType().getDestroySpeed();
     if (!(hardness >= 0.0F && hardness < 50.0F)) return false;
-    return !structure::blocks::inTag(b, "minecraft:dragon_immune");
+    // TF keeps Container block entities; Bedrock's block actors are kept as a whole (no container
+    // test on the BlockActor API): chests, barrels, furnaces ... and also signs, banners
+    return region.getBlockEntity(pos) == nullptr;
 }
 
 /// AlphaYeti#destroyBlocksInAABB.
@@ -118,12 +131,12 @@ void destroyBlocksInAABB(Mob& yeti, AABB const& box) {
     auto  level  = ll::service::getLevel();
     auto& region = yeti.getDimensionBlockSource();
     if (!level) return;
-    // WorldUtil#getAllInBB: Mth.floor of the box corners
-    for (int x = static_cast<int>(std::floor(box.min.x)); x <= static_cast<int>(std::floor(box.max.x)); x++)
-        for (int y = static_cast<int>(std::floor(box.min.y)); y <= static_cast<int>(std::floor(box.max.y)); y++)
-            for (int z = static_cast<int>(std::floor(box.min.z)); z <= static_cast<int>(std::floor(box.max.z)); z++) {
+    // WorldUtil#getAllInBB: the box corners cast to int (toward zero)
+    for (int x = static_cast<int>(box.min.x); x <= static_cast<int>(box.max.x); x++)
+        for (int y = static_cast<int>(box.min.y); y <= static_cast<int>(box.max.y); y++)
+            for (int z = static_cast<int>(box.min.z); z <= static_cast<int>(box.max.z); z++) {
                 BlockPos p{x, y, z};
-                if (!canDestroyBlock(region.getBlock(p))) continue;
+                if (!canDestroyBlock(region, p)) continue;
                 BlockChangeContext ctx{};
                 level->destroyBlock(region, p, false, ctx);
             }
@@ -353,12 +366,18 @@ void installAlphaYeti() {
     b.hurt = [](Actor& self, float&, std::string const& type, Actor*) {
         auto& s = stateOf(self);
         // no arrow damage when in ranged mode
-        if (!s.canRampage && !s.tired && gf::tags::has(gf::tags::Registry::DamageType, "minecraft:is_projectile", type)) return false;
-        if (!s.canRampage) gf::log().info("caves: alpha yeti can rampage");
-        s.canRampage = true;
+        if (!s.canRampage && !s.tired && isProjectileDamage(type)) return false;
         return true;
     };
+    // AlphaYeti#hurt: canRampage once a hit actually landed (super.hurt returned true)
+    gf::combat::onDealt(gf::combat::priority::Normal, [](gf::combat::DamageInfo const& d) {
+        if (d.victim.getTypeName() != kAlphaYeti || d.amount <= 0.0F) return;
+        auto& s = stateOf(d.victim);
+        if (!s.canRampage) gf::log().info("caves: alpha yeti can rampage");
+        s.canRampage = true;
+    });
     b.die = [](Actor& self, std::string const&, Actor*) { states().erase(fe::uidOf(self)); };
+    gf::game::db::onWorldClosed([] { states().clear(); });
     gf::entity::registerType(kAlphaYeti, b);
 
     gf::boss::registerBoss({

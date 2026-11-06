@@ -177,8 +177,11 @@ GF_REGISTER_SELFTEST("caves.troll_rock", [](Context& ctx) -> ll::coro::CoroTask<
     auto* t = mobById(trollId);
     ctx.require(t != nullptr, "the troll is still there");
     giveTrollRockForTest(*t, "minecraft:granite");
-    auto pigAt = at(base, 0, 0, 7);
-    for (int dy = 0; dy <= 2; dy++) ctx.setBlock(at(base, 0, dy, 2), "minecraft:air");
+    auto pigAt = at(base, 0, 0, 4);
+    // the ring away: the 1 x 1 block flies clear
+    for (int dx = -2; dx <= 2; dx++)
+        for (int dz = -2; dz <= 2; dz++)
+            for (int dy = 0; dy <= 2; dy++) ctx.setBlock(at(base, dx, dy, dz), "minecraft:air");
     auto* pig = spawnAt(pigAt, "minecraft:pig");
     ctx.require(pig != nullptr, "a pig spawns");
     auto  pigId  = pig->getOrCreateUniqueID().rawID;
@@ -277,7 +280,8 @@ GF_REGISTER_SELFTEST("caves.alpha_yeti", [](Context& ctx) -> ll::coro::CoroTask<
     }
     ctx.check(rampaged, "it rampages");
     bool tired = false;
-    for (int i = 0; i < 220 && !tired; i++) {
+    // (a goal without requiresUpdateEveryTick ticks every other tick: 180 goal ticks are 360 game ticks)
+    for (int i = 0; i < 420 && !tired; i++) {
         co_await ctx.ticks(1);
         auto* y = mobById(id);
         if (!y) break;
