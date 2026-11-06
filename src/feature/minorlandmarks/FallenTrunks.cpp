@@ -223,12 +223,6 @@ bool hasInvalidNearbyBiome(std::string const& biomes, int x, int y, int z, int r
     return found;
 }
 
-    int                                      length = 0, radius = 0;
-    std::int64_t                             seed   = 0;
-    cml::Dir                                 dir    = cml::Dir::South;
-    std::unique_ptr<cml::TrunkUnderDensity> density;
-};
-
 } // namespace
 
 FallenTrunkConfig FallenTrunkConfig::fromJson(Json const& s) {
