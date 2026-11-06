@@ -12,7 +12,7 @@
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // Giant blocks fill an aligned 4 x 4 x 4 cell. Their texture tiling (GiantBlockModel) is the block
-// state twilightforest:giant_cell (1..64 = the position in the cell, 0 = untiled: the item and a
+// states twilightforest:giant_tiled + giant_x / _y / _z (the position in the cell; untiled: the item and a
 // block nobody fixed yet), whose permutations pick a geometry with that face's 4 x 4 sub-square
 // (assets/pack/rp/models/blocks/giants/giant_cell.geo.json); every client, vanilla included, draws
 // the tiling. Blocks placed by world generation get their state when they are placed (onPlaced) or
@@ -183,7 +183,12 @@ bool isGiantBlock(std::string const& blockId) {
 }
 
 Block const* giantBlockAt(std::string const& blockId, int x, int y, int z) {
-    return game::blockWithStates(blockId, {{id::GiantCell, cg::cellState(x, y, z)}});
+    return game::blockWithStates(blockId, {{id::GiantTiled, true}, {id::GiantX, x & 3}, {id::GiantY, y & 3}, {id::GiantZ, z & 3}});
+}
+
+int tilingOf(Block const& block) {
+    if (game::intState(block, id::GiantTiled).value_or(0) == 0) return 0;
+    return cg::cellState(game::intState(block, id::GiantX).value_or(0), game::intState(block, id::GiantY).value_or(0), game::intState(block, id::GiantZ).value_or(0));
 }
 
 void fillGiantCell(BlockSource& region, BlockPos const& pos, std::string const& blockId) {
@@ -201,7 +206,7 @@ void fixGiantCell(BlockSource& region, BlockPos const& pos) {
         auto        bid = game::blockId(b);
         if (!isGiantBlock(bid)) return;
         int want = cg::cellState(p.x, p.y, p.z);
-        if (game::intState(b, id::GiantCell).value_or(0) == want) return;
+        if (tilingOf(b) == want) return;
         if (auto const* fixed = giantBlockAt(bid, p.x, p.y, p.z)) game::setBlock(region, p, *fixed);
     });
 }
@@ -261,11 +266,11 @@ void installGiantBlocks() {
         // the tiling state of blocks placed without it (world generation, commands)
         gf::blockevents::onPlaced(gid, [](BlockSource& region, BlockPos const& pos, Block const& block, Actor*) {
             int want = cg::cellState(pos.x, pos.y, pos.z);
-            if (game::intState(block, id::GiantCell).value_or(0) == want) return;
+            if (tilingOf(block) == want) return;
             if (auto const* fixed = giantBlockAt(game::blockId(block), pos.x, pos.y, pos.z)) game::setBlock(region, pos, *fixed);
         });
         gf::blockevents::onRandomTick(gid, [](BlockSource& region, BlockPos const& pos, Block const& block, gf::blockevents::RandomSource&) {
-            if (game::intState(block, id::GiantCell).value_or(0) != cg::cellState(pos.x, pos.y, pos.z)) fixGiantCell(region, pos);
+            if (tilingOf(block) != cg::cellState(pos.x, pos.y, pos.z)) fixGiantCell(region, pos);
         });
     }
 

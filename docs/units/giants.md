@@ -11,7 +11,7 @@ Spec: [docs/spec/giants.md](../spec/giants.md). Code: `src/core/giants` (gtested
 | Beanstalk rumble | dust: block particles (5 a tick instead of 20); camera shake: `giants.rumble` to companions (F12 `camera::shake`) |
 | `SpecialStemLeavesBlock` | F11 leaves family; `huge_stalk` carries the families `log` flag so the leaf distance counts from it |
 | `UberousSoilBlock` | F11 `onNeighborChanged` / `onPlaced`, `interactions::onPlace` (getStateForPlacement), bone meal through `BlockType::onFertilized` (15 times on the next tick) |
-| `GiantBlockModel` | block state `twilightforest:giant_cell` (0 = untiled item / unfixed block, 1..64 = cell position) whose permutations pick one of 64 geometries with the face's 4 x 4 sub-square and only the cell's outer faces: every client, vanilla included, draws the tiling |
+| `GiantBlockModel` | block states `twilightforest:giant_tiled` (false = untiled item / unfixed block) and `giant_x` / `giant_y` / `giant_z` (0..3, the cell position; Bedrock allows 16 values per state) whose permutations pick one of 64 geometries with the face's 4 x 4 sub-square and only the cell's outer faces: every client, vanilla included, draws the tiling |
 | `GiantBlock` placement / removal | `interactions::onUseOn` refuses an occupied cell, `onPlace` fills it next tick, F11 `onRemoved` removes an incomplete cell without drops |
 | Giant pickaxe mining + loot modifier | `interactions::onDestroy` / `onDestroyed`, F10 `registerCondition("twilightforest:giant_pick_used")` and `addGlobalModifier("twilightforest:giant_block_grouping")` |
 | Cloud weather | F11 random ticks (cauldrons, snow layers; farmland moisture and fire out under rainy clouds); `rainingFromCloudAt` = BlockHooks#isRainingAt's scan |

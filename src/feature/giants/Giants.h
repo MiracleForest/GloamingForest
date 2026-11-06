@@ -65,7 +65,12 @@ inline constexpr char GiantMiner[]       = "twilightforest:giant_miner";
 inline constexpr char ArmoredGiant[]     = "twilightforest:armored_giant";
 inline constexpr char GiantHouse[]       = "twilightforest:giant_house";
 inline constexpr char CloudPuff[]        = "twilightforest:cloud_puff";
-inline constexpr char GiantCell[]        = "twilightforest:giant_cell";
+/// The giant blocks' tiling states (added, rule R1): tiled false = the whole texture (item, a
+/// block nobody fixed yet); else the position in the cell (0..3 each).
+inline constexpr char GiantTiled[] = "twilightforest:giant_tiled";
+inline constexpr char GiantX[]     = "twilightforest:giant_x";
+inline constexpr char GiantY[]     = "twilightforest:giant_y";
+inline constexpr char GiantZ[]     = "twilightforest:giant_z";
 } // namespace id
 
 /// The module's random source (Java's level random).
@@ -120,8 +125,10 @@ struct PrecipitationColumn {
 // ---- GiantBlocks.cpp -------------------------------------------------------------------------------
 void installGiantBlocks();
 [[nodiscard]] bool isGiantBlock(std::string const& blockId);
-/// The giant block `blockId` at `pos` with its giant_cell tiling state (nullptr: unknown id).
+/// The giant block `blockId` at `pos` with its tiling states (nullptr: unknown id).
 [[nodiscard]] Block const* giantBlockAt(std::string const& blockId, int x, int y, int z);
+/// The tiling of a giant block as core::giants::cellState (1..64), 0 when untiled.
+[[nodiscard]] int tilingOf(Block const& block);
 /// GiantBlock#setPlacedBy: fills the cell of `pos` with `blockId`.
 void fillGiantCell(BlockSource& region, BlockPos const& pos, std::string const& blockId);
 /// Gives every block of the giant block type in the cell of `pos` its tiling state.

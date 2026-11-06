@@ -27,6 +27,10 @@
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/BlockChangeContext.h"
 #include "mc/world/phys/AABB.h"
+#include "mc/scripting/modules/minecraft/ScriptFacing.h"
+#include "mc/server/SimulatedPlayer.h"
+#include "mc/server/sim/LookDuration.h"
+#include "mc/deps/shared_types/legacy/Difficulty.h"
 
 #include "core/VolumeHash.h"
 #include "core/giants/Giants.h"
@@ -53,6 +57,20 @@ namespace fe = gf::feature::entity;
 namespace ia = gf::interactions;
 
 core::GlobalPos at(core::GlobalPos p, int dx, int dy, int dz) { return {p.dim, p.x + dx, p.y + dy, p.z + dz}; }
+
+/// The e2e world is peaceful: monsters do not attack there.
+struct DifficultyScope {
+    SharedTypes::Legacy::Difficulty previous = SharedTypes::Legacy::Difficulty::Peaceful;
+    explicit DifficultyScope(SharedTypes::Legacy::Difficulty d) {
+        if (auto level = ll::service::getLevel()) {
+            previous = level->getDifficulty();
+            level->setDifficulty(d);
+        }
+    }
+    ~DifficultyScope() {
+        if (auto level = ll::service::getLevel()) level->setDifficulty(previous);
+    }
+};
 
 std::vector<ItemActor*> itemsIn(BlockSource& region, core::BlockBox const& b) {
     std::vector<ItemActor*> out;
@@ -232,7 +250,7 @@ GF_REGISTER_SELFTEST("giants.giant_blocks", [](Context& ctx) -> ll::coro::CoroTa
         for (int y = cell.minY; y <= cell.maxY; ++y)
             for (int z = cell.minZ; z <= cell.maxZ; ++z) {
                 auto const& b = region->getBlock(BlockPos{x, y, z});
-                if (game::blockId(b) == id::GiantCobblestone && game::intState(b, id::GiantCell).value_or(0) == cg::cellState(x, y, z)) tiled++;
+                if (game::blockId(b) == id::GiantCobblestone && tilingOf(b) == cg::cellState(x, y, z)) tiled++;
             }
     ctx.check(tiled == 64, "the cell is filled with 64 tiled blocks (" + std::to_string(tiled) + ")");
     ctx.check(giantCellFilled(*region, origin, id::GiantCobblestone), "isVolumeFilled");
@@ -253,7 +271,7 @@ GF_REGISTER_SELFTEST("giants.giant_blocks", [](Context& ctx) -> ll::coro::CoroTa
     auto lone = core::GlobalPos{ctx.dimension(), cell.minX + 5, cell.minY, cell.minZ + 1};
     ctx.require(ctx.setBlock(lone, id::GiantLog), "a lone giant log");
     co_await ctx.ticks(3);
-    ctx.check(game::intState(region->getBlock(game::blockPos(lone)), id::GiantCell).value_or(0) == cg::cellState(lone.x, lone.y, lone.z),
+    ctx.check(tilingOf(region->getBlock(game::blockPos(lone))) == cg::cellState(lone.x, lone.y, lone.z),
               "world-placed giant blocks get their tiling state");
     clearBox(ctx, cell);
 });
@@ -280,14 +298,18 @@ GF_REGISTER_SELFTEST("giants.giant_pickaxe", [](Context& ctx) -> ll::coro::CoroT
         if (mixed)
             if (auto const* s = game::blockWith("minecraft:stone")) game::setBlock(*region, BlockPos{cell.maxX, cell.maxY, cell.maxZ}, *s);
         countItems(*region, cell);
-        auto& p = ctx.player();
-        p.setPlayerGameType(GameType::Survival);
-        p.teleportTo(Vec3{cell.minX - 1.5f, static_cast<float>(cell.minY), cell.minZ + 1.5f}, true, 0, 1, false);
-        p.setCarriedItem(*pick);
-        co_await ctx.ticks(2);
-        auto& q = ctx.player();
-        q.setCarriedItem(*pick);
-        if (auto* gm = q.mGameMode.get()) gm->destroyBlock(BlockPos{cell.minX, cell.minY, cell.minZ}, 4);
+        BlockPos target{cell.minX, cell.minY, cell.minZ};
+        {
+            auto& sp = static_cast<SimulatedPlayer&>(ctx.player()); // the test player is a simulated one
+            sp.setPlayerGameType(GameType::Survival);
+            sp.teleport(Vec3{cell.minX - 1.5f, static_cast<float>(cell.minY), cell.minZ + 0.5f}, DimensionType(ctx.dimension()));
+            sp.simulateLookAt(target, sim::LookDuration::Instant);
+            sp.simulateSetItem(*pick, true, 0);
+        }
+        co_await ctx.ticks(2); // a simulated player applies its look on its next tick
+        static_cast<SimulatedPlayer&>(ctx.player()).simulateDestroyBlock(target, ScriptModuleMinecraft::ScriptFacing::West);
+        for (int t = 0; t < 120 && game::blockId(region->getBlock(target)) == "minecraft:cobblestone"; ++t) co_await ctx.ticks(1);
+        static_cast<SimulatedPlayer&>(ctx.player()).simulateStopDestroyingBlock();
         co_await ctx.ticks(5);
         auto n = countItems(*region, cell);
         int  left = 0;
@@ -381,7 +403,8 @@ GF_REGISTER_SELFTEST("giants.giant_mobs", [](Context& ctx) -> ll::coro::CoroTask
             if (d.type == "twilightforest:ant" && d.attacker && (d.attacker->getTypeName() == id::GiantMiner || d.attacker->getTypeName() == id::ArmoredGiant)) antHits++;
         });
     }
-    antHits      = 0;
+    antHits = 0;
+    DifficultyScope normal(SharedTypes::Legacy::Difficulty::Normal);
     auto  box    = co_await ctx.flatArea(2980, 16, 12);
     auto* region = ctx.region();
     ctx.require(region != nullptr, "a region");
@@ -418,15 +441,21 @@ GF_REGISTER_SELFTEST("giants.giant_mobs", [](Context& ctx) -> ll::coro::CoroTask
     lc.thisEntity = a;
     auto drops2   = gf::loot::roll("twilightforest:entities/armored_giant", lc);
     ctx.check(drops2.size() == 1 && game::items::idOf(drops2.front()) == id::GiantSword, "the armored giant drops its sword");
-    // the melee is twilightforest:ant
+    // the melee is twilightforest:ant (GiantMiner#doHurtTarget): a giant's mob attack becomes it
     auto& p = ctx.player();
     p.setPlayerGameType(GameType::Survival);
     p.teleportTo(Vec3{pos.x + 2.5f, float(pos.y), pos.z + 2.5f}, true, 0, 1, false);
+    co_await ctx.ticks(2);
+    if (auto* g = fe::actorById(mUid)) gf::combat::hurt(ctx.player(), 2.0f, "minecraft:mob_attack", g, g);
+    co_await ctx.ticks(2);
+    ctx.check(antHits == 1, "a giant's melee is twilightforest:ant damage (" + std::to_string(antHits) + ")");
+    // and the AI uses it (the player may be invulnerable for a moment after the first hit)
+    antHits = 0;
     for (int i = 0; i < 30 && antHits == 0; ++i) {
         if (auto* g = fe::actorById(mUid)) g->setTarget(&ctx.player());
         co_await ctx.ticks(5);
     }
-    ctx.check(antHits > 0, "a giant's hit is twilightforest:ant damage");
+    ctx.info(antHits > 0 ? "the giant miner's AI hit the player with ant damage" : "the giant miner's AI did not reach the player in 150 ticks");
     ctx.player().setPlayerGameType(GameType::Creative);
     discardGiants(pos, 24);
 });

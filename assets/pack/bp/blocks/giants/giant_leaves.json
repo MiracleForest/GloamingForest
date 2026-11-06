@@ -7,72 +7,27 @@
         "category": "construction"
       },
       "states": {
-        "twilightforest:giant_cell": [
+        "twilightforest:giant_tiled": [
+          false,
+          true
+        ],
+        "twilightforest:giant_x": [
           0,
           1,
           2,
-          3,
-          4,
-          5,
-          6,
-          7,
-          8,
-          9,
-          10,
-          11,
-          12,
-          13,
-          14,
-          15,
-          16,
-          17,
-          18,
-          19,
-          20,
-          21,
-          22,
-          23,
-          24,
-          25,
-          26,
-          27,
-          28,
-          29,
-          30,
-          31,
-          32,
-          33,
-          34,
-          35,
-          36,
-          37,
-          38,
-          39,
-          40,
-          41,
-          42,
-          43,
-          44,
-          45,
-          46,
-          47,
-          48,
-          49,
-          50,
-          51,
-          52,
-          53,
-          54,
-          55,
-          56,
-          57,
-          58,
-          59,
-          60,
-          61,
-          62,
-          63,
-          64
+          3
+        ],
+        "twilightforest:giant_y": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "twilightforest:giant_z": [
+          0,
+          1,
+          2,
+          3
         ]
       }
     },
@@ -99,385 +54,385 @@
     },
     "permutations": [
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 1",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 0 && q.block_state('twilightforest:giant_y') == 0 && q.block_state('twilightforest:giant_z') == 0",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_1"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 2",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 1 && q.block_state('twilightforest:giant_y') == 0 && q.block_state('twilightforest:giant_z') == 0",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_2"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 3",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 2 && q.block_state('twilightforest:giant_y') == 0 && q.block_state('twilightforest:giant_z') == 0",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_3"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 4",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 3 && q.block_state('twilightforest:giant_y') == 0 && q.block_state('twilightforest:giant_z') == 0",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_4"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 5",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 0 && q.block_state('twilightforest:giant_y') == 1 && q.block_state('twilightforest:giant_z') == 0",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_5"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 6",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 1 && q.block_state('twilightforest:giant_y') == 1 && q.block_state('twilightforest:giant_z') == 0",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_6"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 7",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 2 && q.block_state('twilightforest:giant_y') == 1 && q.block_state('twilightforest:giant_z') == 0",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_7"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 8",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 3 && q.block_state('twilightforest:giant_y') == 1 && q.block_state('twilightforest:giant_z') == 0",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_8"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 9",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 0 && q.block_state('twilightforest:giant_y') == 2 && q.block_state('twilightforest:giant_z') == 0",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_9"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 10",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 1 && q.block_state('twilightforest:giant_y') == 2 && q.block_state('twilightforest:giant_z') == 0",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_10"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 11",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 2 && q.block_state('twilightforest:giant_y') == 2 && q.block_state('twilightforest:giant_z') == 0",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_11"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 12",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 3 && q.block_state('twilightforest:giant_y') == 2 && q.block_state('twilightforest:giant_z') == 0",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_12"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 13",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 0 && q.block_state('twilightforest:giant_y') == 3 && q.block_state('twilightforest:giant_z') == 0",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_13"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 14",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 1 && q.block_state('twilightforest:giant_y') == 3 && q.block_state('twilightforest:giant_z') == 0",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_14"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 15",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 2 && q.block_state('twilightforest:giant_y') == 3 && q.block_state('twilightforest:giant_z') == 0",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_15"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 16",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 3 && q.block_state('twilightforest:giant_y') == 3 && q.block_state('twilightforest:giant_z') == 0",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_16"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 17",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 0 && q.block_state('twilightforest:giant_y') == 0 && q.block_state('twilightforest:giant_z') == 1",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_17"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 18",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 1 && q.block_state('twilightforest:giant_y') == 0 && q.block_state('twilightforest:giant_z') == 1",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_18"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 19",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 2 && q.block_state('twilightforest:giant_y') == 0 && q.block_state('twilightforest:giant_z') == 1",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_19"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 20",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 3 && q.block_state('twilightforest:giant_y') == 0 && q.block_state('twilightforest:giant_z') == 1",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_20"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 21",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 0 && q.block_state('twilightforest:giant_y') == 1 && q.block_state('twilightforest:giant_z') == 1",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_21"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 22",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 1 && q.block_state('twilightforest:giant_y') == 1 && q.block_state('twilightforest:giant_z') == 1",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_22"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 23",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 2 && q.block_state('twilightforest:giant_y') == 1 && q.block_state('twilightforest:giant_z') == 1",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_23"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 24",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 3 && q.block_state('twilightforest:giant_y') == 1 && q.block_state('twilightforest:giant_z') == 1",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_24"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 25",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 0 && q.block_state('twilightforest:giant_y') == 2 && q.block_state('twilightforest:giant_z') == 1",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_25"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 26",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 1 && q.block_state('twilightforest:giant_y') == 2 && q.block_state('twilightforest:giant_z') == 1",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_26"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 27",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 2 && q.block_state('twilightforest:giant_y') == 2 && q.block_state('twilightforest:giant_z') == 1",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_27"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 28",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 3 && q.block_state('twilightforest:giant_y') == 2 && q.block_state('twilightforest:giant_z') == 1",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_28"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 29",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 0 && q.block_state('twilightforest:giant_y') == 3 && q.block_state('twilightforest:giant_z') == 1",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_29"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 30",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 1 && q.block_state('twilightforest:giant_y') == 3 && q.block_state('twilightforest:giant_z') == 1",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_30"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 31",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 2 && q.block_state('twilightforest:giant_y') == 3 && q.block_state('twilightforest:giant_z') == 1",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_31"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 32",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 3 && q.block_state('twilightforest:giant_y') == 3 && q.block_state('twilightforest:giant_z') == 1",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_32"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 33",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 0 && q.block_state('twilightforest:giant_y') == 0 && q.block_state('twilightforest:giant_z') == 2",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_33"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 34",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 1 && q.block_state('twilightforest:giant_y') == 0 && q.block_state('twilightforest:giant_z') == 2",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_34"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 35",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 2 && q.block_state('twilightforest:giant_y') == 0 && q.block_state('twilightforest:giant_z') == 2",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_35"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 36",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 3 && q.block_state('twilightforest:giant_y') == 0 && q.block_state('twilightforest:giant_z') == 2",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_36"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 37",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 0 && q.block_state('twilightforest:giant_y') == 1 && q.block_state('twilightforest:giant_z') == 2",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_37"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 38",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 1 && q.block_state('twilightforest:giant_y') == 1 && q.block_state('twilightforest:giant_z') == 2",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_38"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 39",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 2 && q.block_state('twilightforest:giant_y') == 1 && q.block_state('twilightforest:giant_z') == 2",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_39"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 40",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 3 && q.block_state('twilightforest:giant_y') == 1 && q.block_state('twilightforest:giant_z') == 2",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_40"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 41",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 0 && q.block_state('twilightforest:giant_y') == 2 && q.block_state('twilightforest:giant_z') == 2",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_41"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 42",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 1 && q.block_state('twilightforest:giant_y') == 2 && q.block_state('twilightforest:giant_z') == 2",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_42"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 43",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 2 && q.block_state('twilightforest:giant_y') == 2 && q.block_state('twilightforest:giant_z') == 2",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_43"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 44",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 3 && q.block_state('twilightforest:giant_y') == 2 && q.block_state('twilightforest:giant_z') == 2",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_44"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 45",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 0 && q.block_state('twilightforest:giant_y') == 3 && q.block_state('twilightforest:giant_z') == 2",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_45"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 46",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 1 && q.block_state('twilightforest:giant_y') == 3 && q.block_state('twilightforest:giant_z') == 2",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_46"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 47",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 2 && q.block_state('twilightforest:giant_y') == 3 && q.block_state('twilightforest:giant_z') == 2",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_47"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 48",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 3 && q.block_state('twilightforest:giant_y') == 3 && q.block_state('twilightforest:giant_z') == 2",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_48"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 49",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 0 && q.block_state('twilightforest:giant_y') == 0 && q.block_state('twilightforest:giant_z') == 3",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_49"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 50",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 1 && q.block_state('twilightforest:giant_y') == 0 && q.block_state('twilightforest:giant_z') == 3",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_50"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 51",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 2 && q.block_state('twilightforest:giant_y') == 0 && q.block_state('twilightforest:giant_z') == 3",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_51"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 52",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 3 && q.block_state('twilightforest:giant_y') == 0 && q.block_state('twilightforest:giant_z') == 3",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_52"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 53",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 0 && q.block_state('twilightforest:giant_y') == 1 && q.block_state('twilightforest:giant_z') == 3",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_53"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 54",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 1 && q.block_state('twilightforest:giant_y') == 1 && q.block_state('twilightforest:giant_z') == 3",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_54"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 55",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 2 && q.block_state('twilightforest:giant_y') == 1 && q.block_state('twilightforest:giant_z') == 3",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_55"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 56",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 3 && q.block_state('twilightforest:giant_y') == 1 && q.block_state('twilightforest:giant_z') == 3",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_56"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 57",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 0 && q.block_state('twilightforest:giant_y') == 2 && q.block_state('twilightforest:giant_z') == 3",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_57"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 58",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 1 && q.block_state('twilightforest:giant_y') == 2 && q.block_state('twilightforest:giant_z') == 3",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_58"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 59",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 2 && q.block_state('twilightforest:giant_y') == 2 && q.block_state('twilightforest:giant_z') == 3",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_59"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 60",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 3 && q.block_state('twilightforest:giant_y') == 2 && q.block_state('twilightforest:giant_z') == 3",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_60"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 61",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 0 && q.block_state('twilightforest:giant_y') == 3 && q.block_state('twilightforest:giant_z') == 3",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_61"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 62",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 1 && q.block_state('twilightforest:giant_y') == 3 && q.block_state('twilightforest:giant_z') == 3",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_62"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 63",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 2 && q.block_state('twilightforest:giant_y') == 3 && q.block_state('twilightforest:giant_z') == 3",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_63"
         }
       },
       {
-        "condition": "q.block_state('twilightforest:giant_cell') == 64",
+        "condition": "q.block_state('twilightforest:giant_tiled') && q.block_state('twilightforest:giant_x') == 3 && q.block_state('twilightforest:giant_y') == 3 && q.block_state('twilightforest:giant_z') == 3",
         "components": {
           "minecraft:geometry": "geometry.twilightforest.giant_cell_64"
         }

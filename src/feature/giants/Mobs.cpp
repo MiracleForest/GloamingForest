@@ -26,6 +26,7 @@
 #include "mc/world/phys/AABB.h"
 
 #include "feature/combat/Combat.h"
+#include "feature/common/Interactions.h"
 #include "feature/entity/Entity.h"
 #include "feature/ext/giants/W0Internals.h"
 #include "feature/giants/Giants.h"
@@ -128,8 +129,15 @@ void installMobs() {
         if (!d.attacker || !isGiant(*d.attacker) || (d.direct && d.direct != d.attacker)) return gf::combat::Verdict::Pass;
         if (d.type == "twilightforest:ant") return gf::combat::Verdict::Pass;
         if (d.type != "minecraft:mob_attack" && d.type != "minecraft:generic") return gf::combat::Verdict::Pass;
+        // the ant damage goes through the whole pipeline once this hurt is over (a hurt inside the
+        // handlers would skip them), on the next tick (R16: by unique id)
         float amount = giantAttackDamage(*d.attacker);
-        gf::combat::hurt(d.victim, amount, "twilightforest:ant", d.attacker, d.attacker);
+        auto  victim = fe::uidOf(d.victim), giant = fe::uidOf(*d.attacker);
+        gf::interactions::nextTick([victim, giant, amount] {
+            auto* v = fe::actorById(victim);
+            auto* g = fe::actorById(giant);
+            if (v && g && v->isAlive() && g->isAlive()) gf::combat::hurt(*v, amount, "twilightforest:ant", g, g);
+        });
         return gf::combat::Verdict::Cancel;
     });
     // setDropChance(slot, 0): the gear never drops (the loot tables give the tool to players)
