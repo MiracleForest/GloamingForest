@@ -1,0 +1,28 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:attachable": {
+    "description": {
+      "identifier": "twilightforest:arctic_leggings",
+      "materials": {
+        "default": "armor_leather",
+        "enchanted": "armor_leather_enchanted",
+        "overlay": "armor"
+      },
+      "textures": {
+        "default": "textures/twilightforest/models/armor/arctic_layer_2_dyed",
+        "overlay": "textures/twilightforest/models/armor/arctic_layer_2_overlay",
+        "enchanted": "textures/misc/enchanted_item_glint"
+      },
+      "geometry": {
+        "default": "geometry.twilightforest.arctic_armor.leggings"
+      },
+      "scripts": {
+        "parent_setup": "variable.leg_layer_visible = 0.0;"
+      },
+      "render_controllers": [
+        "controller.render.armor",
+        "controller.render.twilightforest.armory.overlay"
+      ]
+    }
+  }
+}
