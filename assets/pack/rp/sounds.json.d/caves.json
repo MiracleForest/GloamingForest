@@ -1,0 +1,33 @@
+{
+  "entity_sounds": {
+    "entities": {
+      "twilightforest:troll": {
+        "volume": 1.0,
+        "pitch": [0.8, 1.2],
+        "events": {
+          "ambient": "entity.twilightforest.troll.ambient",
+          "hurt": "entity.twilightforest.troll.hurt",
+          "death": "entity.twilightforest.troll.death"
+        }
+      },
+      "twilightforest:yeti": {
+        "volume": 1.0,
+        "pitch": [1.35, 1.75],
+        "events": {
+          "ambient": "entity.twilightforest.yeti.growl",
+          "hurt": "entity.twilightforest.yeti.hurt",
+          "death": "entity.twilightforest.yeti.death"
+        }
+      },
+      "twilightforest:alpha_yeti": {
+        "volume": 4.0,
+        "pitch": [0.5, 1.0],
+        "events": {
+          "ambient": "entity.twilightforest.alpha_yeti.growl",
+          "hurt": "entity.twilightforest.alpha_yeti.hurt",
+          "death": "entity.twilightforest.alpha_yeti.death"
+        }
+      }
+    }
+  }
+}

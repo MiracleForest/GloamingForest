@@ -1,0 +1,29 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:troll",
+      "materials": { "default": "entity_alphatest" },
+      "textures": {
+        "default": "textures/twilightforest/entity/troll",
+        "stone": "textures/blocks/stone",
+        "granite": "textures/blocks/stone_granite",
+        "diorite": "textures/blocks/stone_diorite",
+        "andesite": "textures/blocks/stone_andesite",
+        "tuff": "textures/blocks/tuff",
+        "deepslate": "textures/blocks/deepslate/deepslate"
+      },
+      "geometry": {
+        "default": "geometry.twilightforest.troll",
+        "rock": "geometry.twilightforest.caves_troll_rock"
+      },
+      "render_controllers": [
+        "controller.render.default",
+        { "controller.render.twilightforest.troll_rock": "q.property('twilightforest:rock') > 0" }
+      ],
+      "animations": { "setup": "animation.twilightforest.troll.setup" },
+      "scripts": { "animate": ["setup"] },
+      "spawn_egg": { "base_color": "#9ea98f", "overlay_color": "#b0948e" }
+    }
+  }
+}

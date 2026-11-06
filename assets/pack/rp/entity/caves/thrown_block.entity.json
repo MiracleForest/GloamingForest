@@ -1,0 +1,19 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:thrown_block",
+      "materials": { "default": "entity_alphatest" },
+      "textures": {
+        "stone": "textures/blocks/stone",
+        "granite": "textures/blocks/stone_granite",
+        "diorite": "textures/blocks/stone_diorite",
+        "andesite": "textures/blocks/stone_andesite",
+        "tuff": "textures/blocks/tuff",
+        "deepslate": "textures/blocks/deepslate/deepslate"
+      },
+      "geometry": { "default": "geometry.twilightforest.caves_block" },
+      "render_controllers": ["controller.render.twilightforest.thrown_block"]
+    }
+  }
+}
