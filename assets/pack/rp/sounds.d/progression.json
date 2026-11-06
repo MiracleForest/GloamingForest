@@ -1,0 +1,10 @@
+{
+  "gf.progression.challenge_complete": {
+    "category": "ui",
+    "sounds": [
+      {
+        "name": "sounds/progression/challenge_complete"
+      }
+    ]
+  }
+}
