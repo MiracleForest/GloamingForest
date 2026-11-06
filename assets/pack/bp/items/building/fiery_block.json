@@ -1,0 +1,23 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:fiery_block",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:block_placer": {
+        "block": "twilightforest:fiery_block",
+        "replace_block_item": true
+      },
+      "minecraft:rarity": {
+        "value": "uncommon"
+      },
+      "minecraft:fire_resistant": {
+        "value": true
+      }
+    }
+  }
+}

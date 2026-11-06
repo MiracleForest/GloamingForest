@@ -1,0 +1,74 @@
+{
+  "format_version": "1.26.50",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:towerwood",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 40
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 30
+      },
+      "minecraft:tags": [
+        "minecraft:is_axe_item_destructible"
+      ],
+      "minecraft:map_color": "#d87f33",
+      "minecraft:flammable": {
+        "catch_chance_modifier": 0,
+        "destroy_chance_modifier": 1
+      },
+      "minecraft:geometry": "minecraft:geometry.full_block",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_building_var_towerwood_north",
+          "render_method": "opaque",
+          "tint_method": "dry_foliage"
+        },
+        "up": {
+          "texture": "tf_building_var_towerwood_up",
+          "render_method": "opaque",
+          "tint_method": "dry_foliage"
+        },
+        "down": {
+          "texture": "tf_building_var_towerwood_down",
+          "render_method": "opaque",
+          "tint_method": "dry_foliage"
+        },
+        "north": {
+          "texture": "tf_building_var_towerwood_north",
+          "render_method": "opaque",
+          "tint_method": "dry_foliage"
+        },
+        "south": {
+          "texture": "tf_building_var_towerwood_south",
+          "render_method": "opaque",
+          "tint_method": "dry_foliage"
+        },
+        "east": {
+          "texture": "tf_building_var_towerwood_east",
+          "render_method": "opaque",
+          "tint_method": "dry_foliage"
+        },
+        "west": {
+          "texture": "tf_building_var_towerwood_west",
+          "render_method": "opaque",
+          "tint_method": "dry_foliage"
+        }
+      },
+      "minecraft:item_visual": {
+        "geometry": "minecraft:geometry.full_block",
+        "material_instances": {
+          "*": {
+            "texture": "tf_building_icon_towerwood",
+            "render_method": "opaque"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,645 @@
+{
+  "format_version": "1.26.50",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:ur_ghast_trophy",
+      "menu_category": {
+        "category": "none"
+      },
+      "states": {
+        "twilightforest:powered": [
+          true,
+          false
+        ],
+        "twilightforest:rotation": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15
+        ]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 0
+      },
+      "minecraft:light_dampening": 0,
+      "minecraft:geometry": "geometry.twilightforest.building.ur_ghast_trophy_r0",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_building_towerboss",
+          "render_method": "alpha_test"
+        }
+      }
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('twilightforest:rotation') == 0",
+        "components": {
+          "minecraft:geometry": "geometry.twilightforest.building.ur_ghast_trophy_r0",
+          "minecraft:transformation": {
+            "rotation": [
+              0,
+              0,
+              0
+            ]
+          },
+          "minecraft:selection_box": {
+            "origin": [
+              -4,
+              8,
+              -4
+            ],
+            "size": [
+              8,
+              8,
+              8
+            ]
+          },
+          "minecraft:collision_box": {
+            "origin": [
+              -4,
+              8,
+              -4
+            ],
+            "size": [
+              8,
+              8,
+              8
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:rotation') == 1",
+        "components": {
+          "minecraft:geometry": "geometry.twilightforest.building.ur_ghast_trophy_r1",
+          "minecraft:transformation": {
+            "rotation": [
+              0,
+              0,
+              0
+            ]
+          },
+          "minecraft:selection_box": {
+            "origin": [
+              -4,
+              8,
+              -4
+            ],
+            "size": [
+              8,
+              8,
+              8
+            ]
+          },
+          "minecraft:collision_box": {
+            "origin": [
+              -4,
+              8,
+              -4
+            ],
+            "size": [
+              8,
+              8,
+              8
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:rotation') == 2",
+        "components": {
+          "minecraft:geometry": "geometry.twilightforest.building.ur_ghast_trophy_r2",
+          "minecraft:transformation": {
+            "rotation": [
+              0,
+              0,
+              0
+            ]
+          },
+          "minecraft:selection_box": {
+            "origin": [
+              -4,
+              8,
+              -4
+            ],
+            "size": [
+              8,
+              8,
+              8
+            ]
+          },
+          "minecraft:collision_box": {
+            "origin": [
+              -4,
+              8,
+              -4
+            ],
+            "size": [
+              8,
+              8,
+              8
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:rotation') == 3",
+        "components": {
+          "minecraft:geometry": "geometry.twilightforest.building.ur_ghast_trophy_r3",
+          "minecraft:transformation": {
+            "rotation": [
+              0,
+              0,
+              0
+            ]
+          },
+          "minecraft:selection_box": {
+            "origin": [
+              -4,
+              8,
+              -4
+            ],
+            "size": [
+              8,
+              8,
+              8
+            ]
+          },
+          "minecraft:collision_box": {
+            "origin": [
+              -4,
+              8,
+              -4
+            ],
+            "size": [
+              8,
+              8,
+              8
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:rotation') == 4",
+        "components": {
+          "minecraft:geometry": "geometry.twilightforest.building.ur_ghast_trophy_r0",
+          "minecraft:transformation": {
+            "rotation": [
+              0,
+              -90,
+              0
+            ]
+          },
+          "minecraft:selection_box": {
+            "origin": [
+              -4,
+              8,
+              -4
+            ],
+            "size": [
+              8,
+              8,
+              8
+            ]
+          },
+          "minecraft:collision_box": {
+            "origin": [
+              -4,
+              8,
+              -4
+            ],
+            "size": [
+              8,
+              8,
+              8
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:rotation') == 5",
+        "components": {
+          "minecraft:geometry": "geometry.twilightforest.building.ur_ghast_trophy_r1",
+          "minecraft:transformation": {
+            "rotation": [
+              0,
+              -90,
+              0
+            ]
+          },
+          "minecraft:selection_box": {
+            "origin": [
+              -4,
+              8,
+              -4
+            ],
+            "size": [
+              8,
+              8,
+              8
+            ]
+          },
+          "minecraft:collision_box": {
+            "origin": [
+              -4,
+              8,
+              -4
+            ],
+            "size": [
+              8,
+              8,
+              8
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:rotation') == 6",
+        "components": {
+          "minecraft:geometry": "geometry.twilightforest.building.ur_ghast_trophy_r2",
+          "minecraft:transformation": {
+            "rotation": [
+              0,
+              -90,
+              0
+            ]
+          },
+          "minecraft:selection_box": {
+            "origin": [
+              -4,
+              8,
+              -4
+            ],
+            "size": [
+              8,
+              8,
+              8
+            ]
+          },
+          "minecraft:collision_box": {
+            "origin": [
+              -4,
+              8,
+              -4
+            ],
+            "size": [
+              8,
+              8,
+              8
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:rotation') == 7",
+        "components": {
+          "minecraft:geometry": "geometry.twilightforest.building.ur_ghast_trophy_r3",
+          "minecraft:transformation": {
+            "rotation": [
+              0,
+              -90,
+              0
+            ]
+          },
+          "minecraft:selection_box": {
+            "origin": [
+              -4,
+              8,
+              -4
+            ],
+            "size": [
+              8,
+              8,
+              8
+            ]
+          },
+          "minecraft:collision_box": {
+            "origin": [
+              -4,
+              8,
+              -4
+            ],
+            "size": [
+              8,
+              8,
+              8
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:rotation') == 8",
+        "components": {
+          "minecraft:geometry": "geometry.twilightforest.building.ur_ghast_trophy_r0",
+          "minecraft:transformation": {
+            "rotation": [
+              0,
+              -180,
+              0
+            ]
+          },
+          "minecraft:selection_box": {
+            "origin": [
+              -4,
+              8,
+              -4
+            ],
+            "size": [
+              8,
+              8,
+              8
+            ]
+          },
+          "minecraft:collision_box": {
+            "origin": [
+              -4,
+              8,
+              -4
+            ],
+            "size": [
+              8,
+              8,
+              8
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:rotation') == 9",
+        "components": {
+          "minecraft:geometry": "geometry.twilightforest.building.ur_ghast_trophy_r1",
+          "minecraft:transformation": {
+            "rotation": [
+              0,
+              -180,
+              0
+            ]
+          },
+          "minecraft:selection_box": {
+            "origin": [
+              -4,
+              8,
+              -4
+            ],
+            "size": [
+              8,
+              8,
+              8
+            ]
+          },
+          "minecraft:collision_box": {
+            "origin": [
+              -4,
+              8,
+              -4
+            ],
+            "size": [
+              8,
+              8,
+              8
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:rotation') == 10",
+        "components": {
+          "minecraft:geometry": "geometry.twilightforest.building.ur_ghast_trophy_r2",
+          "minecraft:transformation": {
+            "rotation": [
+              0,
+              -180,
+              0
+            ]
+          },
+          "minecraft:selection_box": {
+            "origin": [
+              -4,
+              8,
+              -4
+            ],
+            "size": [
+              8,
+              8,
+              8
+            ]
+          },
+          "minecraft:collision_box": {
+            "origin": [
+              -4,
+              8,
+              -4
+            ],
+            "size": [
+              8,
+              8,
+              8
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:rotation') == 11",
+        "components": {
+          "minecraft:geometry": "geometry.twilightforest.building.ur_ghast_trophy_r3",
+          "minecraft:transformation": {
+            "rotation": [
+              0,
+              -180,
+              0
+            ]
+          },
+          "minecraft:selection_box": {
+            "origin": [
+              -4,
+              8,
+              -4
+            ],
+            "size": [
+              8,
+              8,
+              8
+            ]
+          },
+          "minecraft:collision_box": {
+            "origin": [
+              -4,
+              8,
+              -4
+            ],
+            "size": [
+              8,
+              8,
+              8
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:rotation') == 12",
+        "components": {
+          "minecraft:geometry": "geometry.twilightforest.building.ur_ghast_trophy_r0",
+          "minecraft:transformation": {
+            "rotation": [
+              0,
+              -270,
+              0
+            ]
+          },
+          "minecraft:selection_box": {
+            "origin": [
+              -4,
+              8,
+              -4
+            ],
+            "size": [
+              8,
+              8,
+              8
+            ]
+          },
+          "minecraft:collision_box": {
+            "origin": [
+              -4,
+              8,
+              -4
+            ],
+            "size": [
+              8,
+              8,
+              8
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:rotation') == 13",
+        "components": {
+          "minecraft:geometry": "geometry.twilightforest.building.ur_ghast_trophy_r1",
+          "minecraft:transformation": {
+            "rotation": [
+              0,
+              -270,
+              0
+            ]
+          },
+          "minecraft:selection_box": {
+            "origin": [
+              -4,
+              8,
+              -4
+            ],
+            "size": [
+              8,
+              8,
+              8
+            ]
+          },
+          "minecraft:collision_box": {
+            "origin": [
+              -4,
+              8,
+              -4
+            ],
+            "size": [
+              8,
+              8,
+              8
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:rotation') == 14",
+        "components": {
+          "minecraft:geometry": "geometry.twilightforest.building.ur_ghast_trophy_r2",
+          "minecraft:transformation": {
+            "rotation": [
+              0,
+              -270,
+              0
+            ]
+          },
+          "minecraft:selection_box": {
+            "origin": [
+              -4,
+              8,
+              -4
+            ],
+            "size": [
+              8,
+              8,
+              8
+            ]
+          },
+          "minecraft:collision_box": {
+            "origin": [
+              -4,
+              8,
+              -4
+            ],
+            "size": [
+              8,
+              8,
+              8
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:rotation') == 15",
+        "components": {
+          "minecraft:geometry": "geometry.twilightforest.building.ur_ghast_trophy_r3",
+          "minecraft:transformation": {
+            "rotation": [
+              0,
+              -270,
+              0
+            ]
+          },
+          "minecraft:selection_box": {
+            "origin": [
+              -4,
+              8,
+              -4
+            ],
+            "size": [
+              8,
+              8,
+              8
+            ]
+          },
+          "minecraft:collision_box": {
+            "origin": [
+              -4,
+              8,
+              -4
+            ],
+            "size": [
+              8,
+              8,
+              8
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "format_version": "1.26.50",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:yellow_castle_rune_brick",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 100
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 250
+      },
+      "minecraft:tags": [
+        "minecraft:is_pickaxe_item_destructible",
+        "minecraft:diamond_tier_destructible"
+      ],
+      "minecraft:map_color": "#e5e533",
+      "minecraft:geometry": "geometry.tf.twilightforest.block.castle_rune_brick_0",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_castle_brick",
+          "render_method": "alpha_test"
+        },
+        "t_twilightforest_block_castle_brick": {
+          "texture": "tf_block_castle_brick",
+          "render_method": "alpha_test"
+        },
+        "north": {
+          "texture": "tf_building_rune_yellow",
+          "render_method": "alpha_test"
+        },
+        "south": {
+          "texture": "tf_building_rune_yellow",
+          "render_method": "alpha_test"
+        },
+        "east": {
+          "texture": "tf_building_rune_yellow",
+          "render_method": "alpha_test"
+        },
+        "west": {
+          "texture": "tf_building_rune_yellow",
+          "render_method": "alpha_test"
+        },
+        "up": {
+          "texture": "tf_building_rune_yellow",
+          "render_method": "alpha_test"
+        },
+        "down": {
+          "texture": "tf_building_rune_yellow",
+          "render_method": "alpha_test"
+        }
+      }
+    }
+  }
+}

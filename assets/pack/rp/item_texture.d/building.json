@@ -1,0 +1,11 @@
+{
+  "tf_building_item_trophy": {
+    "textures": "textures/twilightforest/item/trophy"
+  },
+  "tf_building_item_trophy_minor": {
+    "textures": "textures/twilightforest/item/trophy_minor"
+  },
+  "tf_building_item_trophy_quest": {
+    "textures": "textures/twilightforest/item/trophy_quest"
+  }
+}

@@ -16,7 +16,7 @@
       },
       "minecraft:tags": ["minecraft:is_pickaxe_item_destructible", "minecraft:iron_tier_destructible"],
       "minecraft:map_color": "#251610",
-      "minecraft:geometry": "geometry.tf.twilightforest.block.fiery_block",
+      "minecraft:geometry": "geometry.twilightforest.building.fiery_block",
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_block_fiery_block",
@@ -24,11 +24,15 @@
         },
         "all": {
           "texture": "tf_block_fiery_block_inner",
-          "render_method": "alpha_test"
+          "render_method": "alpha_test",
+          "ambient_occlusion": 0,
+          "face_dimming": false
         },
         "over": {
           "texture": "tf_block_fiery_pattern",
-          "render_method": "alpha_test"
+          "render_method": "alpha_test",
+          "ambient_occlusion": 0,
+          "face_dimming": false
         }
       },
       "minecraft:collision_box": {

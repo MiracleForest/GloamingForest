@@ -1,0 +1,79 @@
+{
+  "format_version": "1.26.50",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:carminite_block",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 1.5
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 50
+      },
+      "minecraft:tags": [
+        "minecraft:is_pickaxe_item_destructible"
+      ],
+      "minecraft:map_color": "#993333",
+      "minecraft:geometry": "geometry.tf.twilightforest.block.carminite_block",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_building_var_carminite_block_north",
+          "render_method": "alpha_test"
+        },
+        "bottom": {
+          "texture": "tf_building_var_carminite_block_bottom",
+          "render_method": "alpha_test"
+        },
+        "bottom2": {
+          "texture": "tf_building_var_carminite_block_bottom2",
+          "render_method": "alpha_test"
+        },
+        "east": {
+          "texture": "tf_building_var_carminite_block_east",
+          "render_method": "alpha_test"
+        },
+        "east2": {
+          "texture": "tf_building_var_carminite_block_east2",
+          "render_method": "alpha_test"
+        },
+        "north": {
+          "texture": "tf_building_var_carminite_block_north",
+          "render_method": "alpha_test"
+        },
+        "north2": {
+          "texture": "tf_building_var_carminite_block_north2",
+          "render_method": "alpha_test"
+        },
+        "south": {
+          "texture": "tf_building_var_carminite_block_south",
+          "render_method": "alpha_test"
+        },
+        "south2": {
+          "texture": "tf_building_var_carminite_block_south2",
+          "render_method": "alpha_test"
+        },
+        "top": {
+          "texture": "tf_building_var_carminite_block_top",
+          "render_method": "alpha_test"
+        },
+        "top2": {
+          "texture": "tf_building_var_carminite_block_top2",
+          "render_method": "alpha_test"
+        },
+        "west": {
+          "texture": "tf_building_var_carminite_block_west",
+          "render_method": "alpha_test"
+        },
+        "west2": {
+          "texture": "tf_building_var_carminite_block_west2",
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:light_dampening": 0
+    }
+  }
+}
