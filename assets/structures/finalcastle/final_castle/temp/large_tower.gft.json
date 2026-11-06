@@ -55,6 +55,6 @@
     {"pos":[6,1,7],"marker":"sign","data":{"lines":["","Parkour area 1","Unique monster?",""]}}
   ],
   "jigsaw": [
-    {"pos":[1,1,2],"front":"west","top":"up","pool":"minecraft:empty","name":"twilightforest:final_castle/large_tower","target":"minecraft:empty"}
+    {"pos":[1,1,2],"front":"west","top":"up","pool":"minecraft:empty","name":"gf:final_castle/large_tower","target":"minecraft:empty"}
   ]
 }

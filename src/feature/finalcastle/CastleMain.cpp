@@ -352,7 +352,7 @@ void Gazebo::addChildren(Piece&, PieceList& list, RandomSource& rand) {
     deco->fenceState  = &J(id::VioletField);
     BlockPos pos      = getWorldPos(10, -1, 10);
     auto     oriented = ext::rotate(ext::FrontAndTop::UpSouth, rotation);
-    auto templatePiece = ext::initializeTemplateFromPool(id::GazeboPool, pos, oriented, "twilightforest:final_castle/final_boss", rand, genDepth + 1);
+    auto templatePiece = ext::initializeTemplateFromPool(id::GazeboPool, pos, oriented, id::FinalBossJigsaw, rand, genDepth + 1);
     if (templatePiece) list.push_back(std::move(templatePiece));
 }
 
@@ -470,7 +470,7 @@ void LargeTower::addChildren(Piece& parent, PieceList& list, RandomSource& rand)
 
     BlockPos pos      = getWorldPos(0, 1, 2);
     auto     oriented = ext::rotate(ext::FrontAndTop::WestUp, rotation);
-    auto templatePiece = ext::initializeTemplateFromPool(id::LargeTowerPool, pos, oriented, "twilightforest:final_castle/large_tower", rand, genDepth + 1);
+    auto templatePiece = ext::initializeTemplateFromPool(id::LargeTowerPool, pos, oriented, id::LargeTowerJigsaw, rand, genDepth + 1);
     if (templatePiece) list.push_back(std::move(templatePiece));
 }
 

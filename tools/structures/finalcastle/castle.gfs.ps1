@@ -20,6 +20,10 @@
 #                              entrance floor at y 8, a spiral stair up to the bell room floor at y 47
 #                              (under the blue force-field windows, y 48..62) with its bell, and TF's sign.
 #
+# Connector names: TF's are "twilightforest:final_castle/<name>"; assemble's dangling-reference check
+# refuses twilightforest: strings that are no registry id, so the pair (template and host) uses
+# "gf:final_castle/<name>" (the U21 lich tower does the same). The pool logic is unchanged.
+#
 # Cells a template leaves alone are structure_void (the tower walls, door and windows stay the host's).
 
 $brick   = 'twilightforest:castle_brick'
@@ -87,7 +91,7 @@ Set-GftBox $t 0 0 0 0 10 20 $field
 Set-GftBox $t 20 0 0 20 10 20 $field
 Set-GftBox $t 0 11 0 20 11 20 $field
 # the connector and the WIP marker share the centre block (air: the texts stand above it)
-Add-GftJigsaw $t 10 0 10 -Front down -Top north -Pool 'minecraft:empty' -Name 'twilightforest:final_castle/final_boss' -Target 'minecraft:empty'
+Add-GftJigsaw $t 10 0 10 -Front down -Top north -Pool 'minecraft:empty' -Name 'gf:final_castle/final_boss' -Target 'minecraft:empty'
 Add-GftMarker $t 10 0 10 'final_castle_wip'
 Save-Gft $t
 
@@ -109,7 +113,7 @@ Set-GftBlock $t 6 1 7 'minecraft:oak_sign' @{ rotation = '0'; waterlogged = 'fal
 Add-GftMarker $t 6 1 7 'sign' @{ lines = @('', 'Parkour area 1', 'Unique monster?', '') }
 # the connector inside the door
 Set-GftBlock $t 1 1 2 'minecraft:air'
-Add-GftJigsaw $t 1 1 2 -Front west -Top up -Pool 'minecraft:empty' -Name 'twilightforest:final_castle/large_tower' -Target 'minecraft:empty'
+Add-GftJigsaw $t 1 1 2 -Front west -Top up -Pool 'minecraft:empty' -Name 'gf:final_castle/large_tower' -Target 'minecraft:empty'
 Save-Gft $t
 
 # ---- the bell tower ----------------------------------------------------------------------------------------------
@@ -136,5 +140,5 @@ Set-GftBlock $t 7 9 8 'minecraft:oak_sign' @{ rotation = '4'; waterlogged = 'fal
 Add-GftMarker $t 7 9 8 'sign' @{ lines = @('', 'Parkour area 2', 'mini-boss 1', '') }
 # the connector inside the door
 Set-GftBlock $t 1 9 10 'minecraft:air'
-Add-GftJigsaw $t 1 9 10 -Front west -Top up -Pool 'minecraft:empty' -Name 'twilightforest:final_castle/room' -Target 'minecraft:empty'
+Add-GftJigsaw $t 1 9 10 -Front west -Top up -Pool 'minecraft:empty' -Name 'gf:final_castle/room' -Target 'minecraft:empty'
 Save-Gft $t

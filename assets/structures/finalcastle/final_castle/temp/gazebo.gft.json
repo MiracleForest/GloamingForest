@@ -41,6 +41,6 @@
     {"pos":[10,0,10],"marker":"final_castle_wip","data":{}}
   ],
   "jigsaw": [
-    {"pos":[10,0,10],"front":"down","top":"north","pool":"minecraft:empty","name":"twilightforest:final_castle/final_boss","target":"minecraft:empty"}
+    {"pos":[10,0,10],"front":"down","top":"north","pool":"minecraft:empty","name":"gf:final_castle/final_boss","target":"minecraft:empty"}
   ]
 }

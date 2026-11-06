@@ -662,7 +662,7 @@ void BellTower::addChildren(Piece& parent, PieceList& list, RandomSource& rand) 
 
     BlockPos pos      = getWorldPos(0, 9, 10);
     auto     oriented = ext::rotate(ext::FrontAndTop::WestUp, rotation);
-    auto templatePiece = ext::initializeTemplateFromPool(id::BellTowerPool, pos, oriented, "twilightforest:final_castle/room", rand, genDepth + 1);
+    auto templatePiece = ext::initializeTemplateFromPool(id::BellTowerPool, pos, oriented, id::RoomJigsaw, rand, genDepth + 1);
     if (templatePiece) list.push_back(std::move(templatePiece));
 }
 

@@ -60,6 +60,6 @@
     {"pos":[7,9,8],"marker":"sign","data":{"lines":["","Parkour area 2","mini-boss 1",""]}}
   ],
   "jigsaw": [
-    {"pos":[1,9,10],"front":"west","top":"up","pool":"minecraft:empty","name":"twilightforest:final_castle/room","target":"minecraft:empty"}
+    {"pos":[1,9,10],"front":"west","top":"up","pool":"minecraft:empty","name":"gf:final_castle/room","target":"minecraft:empty"}
   ]
 }

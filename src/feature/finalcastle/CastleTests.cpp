@@ -169,8 +169,8 @@ Site siteNear(int dim) {
 
 // Recorded from the translation (GloamingForest's own goldens, seed 20260521, the site nearest to
 // the origin of the e2e world, y 0).
-constexpr char kLayout[] = "";
-constexpr char kHash[]   = "";
+constexpr char kLayout[] = "TFFCBeF21=1 TFFCBelTo=1 TFFCBoGaz=1 TFFCBri=34 TFFCDamT=8 TFFCDunBoR=1 TFFCDunEn=2 TFFCDunEx=2 TFFCDunR31=17 TFFCDunSt=6 TFFCEnBoTo=1 TFFCEnSiTo=1 TFFCEnSt=4 TFFCEnTo=1 TFFCFTh21=12 TFFCLaTo=1 TFFCMain=1 TFFCMur=2 TFFCRo13Con=12 TFFCRo13Cr=7 TFFCRo13Pk=2 TFFCRo48Cr=1 TFFCRo9Cr=4 TFFCSiTo=18 TFFCStTo=3 TFFCToF13=28 TFFCToF48=1 TFFCWrT=4 TFJigsawTemplate=3 -634,-14,374,560,200,651";
+constexpr char kHash[]   = "5de8f9303d4ac1b0"; // site chunk (-31, 29)
 
 } // namespace
 
@@ -316,9 +316,9 @@ GF_REGISTER_SELFTEST("finalcastle.castle_templates", [](Context& ctx) {
         char const* front;
     };
     static Expect const kTemplates[] = {
-        {id::GazeboPool, 21, 12, 21, "twilightforest:final_castle/final_boss", {10, 0, 10}, "down"},
-        {id::LargeTowerPool, 13, 61, 13, "twilightforest:final_castle/large_tower", {1, 1, 2}, "west"},
-        {id::BellTowerPool, 21, 65, 21, "twilightforest:final_castle/room", {1, 9, 10}, "west"},
+        {id::GazeboPool, 21, 12, 21, id::FinalBossJigsaw, {10, 0, 10}, "down"},
+        {id::LargeTowerPool, 13, 61, 13, id::LargeTowerJigsaw, {1, 1, 2}, "west"},
+        {id::BellTowerPool, 21, 65, 21, id::RoomJigsaw, {1, 9, 10}, "west"},
     };
     for (auto const& e : kTemplates) {
         auto const* t = tpl::parsed(e.id);
@@ -347,8 +347,8 @@ GF_REGISTER_SELFTEST("finalcastle.castle_start", [](Context& ctx) -> ll::coro::C
     ctx.require(co_await ctx.inTwilight(), "the Twilight Forest is available");
     // a start forced far from the test rows (removed afterwards; its chunks are not loaded, so no block is placed)
     auto pos = ctx.testPos(3090);
-    pos.x += 12288;
-    pos.z -= 12288;
+    pos.x = ((pos.x + 12288) >> 8 << 8) + 7; // a chunk centre on the 256 grid, as the landmark grid's
+    pos.z = ((pos.z - 12288) >> 8 << 8) + 7; // centres are: the mazes stay within 128 blocks of it
     {
         gf::landmark::ext::ScopedStart forced(kFinalCastle, pos);
         ctx.require(forced && forced->generated, "forced a final castle start");

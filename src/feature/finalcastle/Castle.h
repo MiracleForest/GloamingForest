@@ -112,6 +112,12 @@ inline constexpr char Deadrock[]    = "twilightforest:deadrock";
 inline constexpr char GazeboPool[]     = "twilightforest:final_castle/temp/gazebo";
 inline constexpr char LargeTowerPool[] = "twilightforest:final_castle/temp/large_tower";
 inline constexpr char BellTowerPool[]  = "twilightforest:final_castle/temp/bell_tower";
+/// The jigsaw names the hosts select (TF: "twilightforest:final_castle/final_boss", ".../large_tower",
+/// ".../room"; GloamingForest names them in its own namespace, as assemble refuses twilightforest:
+/// strings that are no registry id).
+inline constexpr char FinalBossJigsaw[]  = "gf:final_castle/final_boss";
+inline constexpr char LargeTowerJigsaw[] = "gf:final_castle/large_tower";
+inline constexpr char RoomJigsaw[]       = "gf:final_castle/room";
 } // namespace id
 
 /// A Java block state as a Bedrock block (structure::blocks::java).
