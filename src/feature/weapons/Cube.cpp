@@ -53,9 +53,14 @@ Json& stateOf(Actor& cube) {
     return d;
 }
 
+Actor* ownerOf(Actor& cube) {
+    auto const& o = stateOf(cube)["owner"];
+    return o.is_number_integer() ? world::actorById(o.get<std::int64_t>()) : nullptr;
+}
+
 /// CubeOfAnnihilation#isReturning.
 bool returning(Actor& cube) {
-    auto* owner = gf::projectile::ext::owner(cube);
+    auto* owner = ownerOf(cube);
     if (stateOf(cube).value("obstacle", false) || !owner || !owner->isPlayer()) return true;
     return usedItemId(static_cast<Player&>(*owner)) != kCube;
 }
@@ -64,7 +69,7 @@ void removeCube(Actor& cube) {
     auto& st = stateOf(cube);
     if (st.value("removed", false)) return;
     st["removed"] = true;
-    auto* owner   = gf::projectile::ext::owner(cube);
+    auto* owner   = ownerOf(cube);
     if (owner && owner->isPlayer() && usedItemId(static_cast<Player&>(*owner)) == kCube) static_cast<Player&>(*owner).stopUsingItem();
     world::removeLater(world::uidOf(cube));
 }
@@ -89,7 +94,7 @@ void particles(Actor& cube, BlockPos const& pos) {
 
 /// CubeOfAnnihilation#affectBlocksInAABB.
 void affectBlocks(Actor& cube) {
-    auto* owner = gf::projectile::ext::owner(cube);
+    auto* owner = ownerOf(cube);
     if (!owner || !owner->isPlayer()) return;
     auto& player = static_cast<Player&>(*owner);
     auto& region = cube.getDimensionBlockSource();
@@ -109,23 +114,35 @@ void affectBlocks(Actor& cube) {
     }
 }
 
-bool onHitEntity(Actor& cube, Actor& target) {
-    if (!isLiving(target)) return false;
-    auto*       owner = gf::projectile::ext::owner(cube);
-    std::string type  = owner && owner->isPlayer() ? "minecraft:player_attack" : owner ? "minecraft:mob_attack" : "minecraft:thrown";
-    gf::combat::hurt(target, 10.0F, type, owner ? owner : &cube, owner ? owner : &cube);
-    return false;
+/// CubeOfAnnihilation#onHitEntity: living things the cube touches take 10.
+void hitEntities(Actor& cube, Actor* owner) {
+    auto const& bb = cube.getAABB();
+    AABB        box{Vec3{bb.min.x - 0.3f, bb.min.y - 0.3f, bb.min.z - 0.3f}, Vec3{bb.max.x + 0.3f, bb.max.y + 0.3f, bb.max.z + 0.3f}};
+    std::string type = owner && owner->isPlayer() ? "minecraft:player_attack" : owner ? "minecraft:mob_attack" : "minecraft:thrown";
+    for (auto* e : world::actorsIn(cube.getDimensionBlockSource(), static_cast<int>(cube.getDimensionId()), box)) {
+        if (!e || e == owner || e == &cube || !e->isAlive() || !isLiving(*e)) continue;
+        if (e->isPlayer() && static_cast<Player&>(*e).isSpectator()) continue;
+        gf::combat::hurt(*e, 10.0F, type, owner ? owner : &cube, owner ? owner : &cube);
+    }
 }
 
-bool onHitBlock(Actor& cube, BlockPos const& pos, int) {
-    if (!cube.getDimensionBlockSource().getBlock(pos).isAir()) affectBlocks(cube);
-    return false;
-}
-
-/// CubeOfAnnihilation#tick (server).
+/// CubeOfAnnihilation#tick (server). The cube moves itself (no gravity; Java's ThrowableProjectile
+/// keeps moving through what it hits, annihilating it or turning back).
 void tick(Actor& cube) {
-    if (stateOf(cube).value("removed", false)) return;
-    auto* owner = gf::projectile::ext::owner(cube);
+    auto& st = stateOf(cube);
+    if (st.value("removed", false)) return;
+    if (auto& launch = gf::entity::data(cube, "weapons:launch"); launch.is_array() && launch.size() == 3) {
+        st["vel"] = launch;
+        launch    = nullptr;
+    }
+    // the move of this tick with last tick's velocity, then the hits
+    if (auto const& v = st["vel"]; v.is_array() && v.size() == 3) {
+        auto p = cube.getPosition();
+        Vec3 d{v[0].get<float>(), v[1].get<float>(), v[2].get<float>()};
+        cube.moveTo(Vec3{p.x + d.x, p.y + d.y, p.z + d.z}, cube.getRotation());
+    }
+    auto* owner = ownerOf(cube);
+    hitEntities(cube, owner);
     if (!owner) {
         removeCube(cube);
         return;
@@ -143,7 +160,8 @@ void tick(Actor& cube) {
     }
     auto const& bb     = cube.getAABB();
     cw::V3      centre = {cube.getFeetPos().x, cube.getFeetPos().y + (bb.max.y - bb.min.y) / 2.0, cube.getFeetPos().z};
-    gf::projectile::ext::setVelocity(cube, vec(cw::cubeVelocity(centre, dest)));
+    auto v    = cw::cubeVelocity(centre, dest);
+    st["vel"] = {v.x, v.y, v.z};
     affectBlocks(cube);
 }
 
@@ -152,8 +170,11 @@ void tick(Actor& cube) {
 std::int64_t throwCube(Player& player, ItemStack& stack) {
     auto thrown = gf::item::getData(stack, kThrownKey);
     if (thrown.is_number_integer() && world::actorById(thrown.get<std::int64_t>())) return 0;
-    Actor* cube = gf::projectile::shoot(player, kCube, lookOf(player), 1.5F, 1.0F);
+    // ThrowableProjectile(type, shooter): at the eye - 0.1, shot from the rotation at 1.5
+    auto   feet = player.getFeetPos();
+    Actor* cube = world::shootFrom(player.getDimensionBlockSource(), Vec3{feet.x, eyeOf(player).y - 0.1f, feet.z}, kCube, lookOf(player), 1.5F, 1.0F);
     if (!cube) return 0;
+    stateOf(*cube)["owner"] = world::uidOf(player);
     stateOf(*cube)["stack"] = game::items::toJson(stack);
     gf::item::setData(stack, kThrownKey, world::uidOf(*cube));
     log().info("weapons: {} threw a cube of annihilation", player.getRealName());
@@ -161,7 +182,7 @@ std::int64_t throwCube(Player& player, ItemStack& stack) {
 }
 
 void registerCube() {
-    gf::projectile::registerType(kCube, {.gravity = 0.0F, .drag = 0.99F, .onHitEntity = onHitEntity, .onHitBlock = onHitBlock, .tick = tick});
+    gf::entity::registerType(kCube, {.tick = tick});
     gf::entity::ext::setCanUsePortal(kCube, false);
     auto inventoryTick = [](ItemStack& stack, Player&, int, bool) {
         auto thrown = gf::item::getData(stack, kThrownKey);

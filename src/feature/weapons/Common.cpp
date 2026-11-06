@@ -123,6 +123,8 @@ float javaExplosionResistance(Block const& block) {
 
 bool isLiving(Actor& actor) {
     if (gf::entity::ext::parentOf(actor)) return false;
+    // TF's projectile entities are BP entities the engine files as mobs
+    if (gf::projectile::ext::isProjectile(actor) || actor.hasFamily(HashedString("inanimate"))) return false;
     return actor.isPlayer() || actor.hasCategory(ActorCategory::Mob);
 }
 
