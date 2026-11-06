@@ -1,0 +1,14 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.gloamingforest.drying_rack_item.pose": {
+      "loop": true,
+      "bones": {
+        "rightItem": {
+          "rotation": [0, 90, 0],
+          "scale": 1.6
+        }
+      }
+    }
+  }
+}

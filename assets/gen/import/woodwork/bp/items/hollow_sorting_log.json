@@ -8,13 +8,14 @@
       }
     },
     "components": {
-      "minecraft:icon": {
-        "textures": {
-          "default": "tf_block_sorting_log"
-        }
-      },
       "minecraft:display_name": {
         "value": "item.twilightforest:hollow_sorting_log.name"
+      },
+      "minecraft:block_placer": {
+        "block": "twilightforest:hollow_sorting_log_horizontal"
+      },
+      "minecraft:fuel": {
+        "duration": 15
       }
     }
   }

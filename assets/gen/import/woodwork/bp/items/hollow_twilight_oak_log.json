@@ -8,13 +8,14 @@
       }
     },
     "components": {
-      "minecraft:icon": {
-        "textures": {
-          "default": "tf_block_twilight_oak_log"
-        }
-      },
       "minecraft:display_name": {
         "value": "item.twilightforest:hollow_twilight_oak_log.name"
+      },
+      "minecraft:block_placer": {
+        "block": "twilightforest:hollow_twilight_oak_log_horizontal"
+      },
+      "minecraft:fuel": {
+        "duration": 15
       }
     }
   }

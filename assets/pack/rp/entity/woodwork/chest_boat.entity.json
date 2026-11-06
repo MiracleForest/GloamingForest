@@ -1,0 +1,53 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:chest_boat",
+      "materials": {
+        "default": "entity"
+      },
+      "textures": {
+        "tf_twilight_oak": "textures/twilightforest/entity/chest_boat/twilight_oak",
+        "tf_canopy": "textures/twilightforest/entity/chest_boat/canopy",
+        "tf_mangrove": "textures/twilightforest/entity/chest_boat/mangrove",
+        "tf_dark": "textures/twilightforest/entity/chest_boat/dark",
+        "tf_time": "textures/twilightforest/entity/chest_boat/time",
+        "tf_transformation": "textures/twilightforest/entity/chest_boat/transformation",
+        "tf_mining": "textures/twilightforest/entity/chest_boat/mining",
+        "tf_sorting": "textures/twilightforest/entity/chest_boat/sorting",
+        "oak": "textures/twilightforest/entity/chest_boat/twilight_oak",
+        "default": "textures/twilightforest/entity/chest_boat/twilight_oak",
+        "spruce": "textures/twilightforest/entity/chest_boat/canopy",
+        "birch": "textures/twilightforest/entity/chest_boat/mangrove",
+        "jungle": "textures/twilightforest/entity/chest_boat/dark",
+        "acacia": "textures/twilightforest/entity/chest_boat/time",
+        "darkoak": "textures/twilightforest/entity/chest_boat/transformation",
+        "dark_oak": "textures/twilightforest/entity/chest_boat/transformation",
+        "mangrove": "textures/twilightforest/entity/chest_boat/mining",
+        "cherry": "textures/twilightforest/entity/chest_boat/sorting",
+        "vanilla_chest": "textures/entity/boat/chest_boat_oak"
+      },
+      "geometry": {
+        "default": "geometry.twilightforest.chest_boat",
+        "chest": "geometry.twilightforest.chest_boat_chest"
+      },
+      "render_controllers": [
+        "controller.render.twilightforest.chest_boat",
+        "controller.render.twilightforest.chest_boat_chest"
+      ],
+      "animations": {
+        "paddles": "animation.twilightforest.boat.paddles"
+      },
+      "scripts": {
+        "pre_animation": [
+          "v.gf_rowing = q.has_rider && q.ground_speed > 0.1;",
+          "v.gf_paddle_left = (q.has_rider && (v.gf_rowing || q.yaw_speed > 5)) ? (v.gf_paddle_left ?? 0) + q.delta_time * 450 : 0;",
+          "v.gf_paddle_right = (q.has_rider && (v.gf_rowing || q.yaw_speed < -5)) ? (v.gf_paddle_right ?? 0) + q.delta_time * 450 : 0;"
+        ],
+        "animate": [
+          "paddles"
+        ]
+      }
+    }
+  }
+}

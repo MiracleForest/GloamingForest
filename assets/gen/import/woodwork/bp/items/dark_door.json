@@ -19,6 +19,9 @@
       "minecraft:block_placer": {
         "block": "twilightforest:dark_door",
         "replace_block_item": true
+      },
+      "minecraft:fuel": {
+        "duration": 10
       }
     }
   }

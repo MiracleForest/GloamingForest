@@ -4,17 +4,19 @@
     "description": {
       "identifier": "twilightforest:hollow_oak_log",
       "menu_category": {
-        "category": "none"
+        "category": "construction",
+        "group": "minecraft:itemGroup.name.wood"
       }
     },
     "components": {
-      "minecraft:icon": {
-        "textures": {
-          "default": "tf_vanilla_block_oak_log"
-        }
-      },
       "minecraft:display_name": {
         "value": "item.twilightforest:hollow_oak_log.name"
+      },
+      "minecraft:block_placer": {
+        "block": "twilightforest:hollow_oak_log_horizontal"
+      },
+      "minecraft:fuel": {
+        "duration": 15
       }
     }
   }

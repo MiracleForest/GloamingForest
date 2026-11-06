@@ -1,0 +1,374 @@
+// GloamingForest - The Twilight Forest for Minecraft: Bedrock Edition.
+// Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
+//   src/main/java/twilightforest/block/HorizontalHollowLogBlock.java
+//   src/main/java/twilightforest/block/VerticalHollowLogBlock.java
+//   src/main/java/twilightforest/block/ClimbableHollowLogBlock.java
+//   src/main/java/twilightforest/item/HollowLogItem.java
+//   src/main/java/twilightforest/enums/HollowLogVariants.java
+// Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
+// Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
+// of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
+//
+// Hollow logs (18 woods x horizontal, vertical, climbable). The item (HollowLogItem) is a BP block
+// placer of the horizontal log without an icon, so the game draws that block as the item (TF's item
+// model is block/hollow_<wood>_log_horizontal); the placement here becomes the vertical log on a top
+// or bottom face and the horizontal log along the clicked side face's axis (getPlacementState). Java's `waterlogged` / variant `waterlogged` /
+// `ladder_waterlogged` are Bedrock's water layer (liquid detection); the variants follow it where
+// Java's setWaterlog would change them. Shapes and collisions are the blocks' permutations
+// (tools/import/overrides/woodwork.json); the climbable block is climbable through F11's
+// climbable modifier (assets/data/families: BlockProperty::Climbable on the server and in the
+// client mod).
+
+#include "feature/woodwork/Woodwork.h"
+
+#include <algorithm>
+#include <cmath>
+#include <iterator>
+
+#include "mc/deps/core/math/Vec3.h"
+#include "mc/world/actor/player/Player.h"
+#include "mc/world/item/ItemStack.h"
+#include "mc/world/level/BlockPos.h"
+#include "mc/world/level/BlockSource.h"
+#include "mc/world/level/block/Block.h"
+
+#include "feature/common/Interactions.h"
+#include "feature/net/Net.h"
+#include "feature/movement/Movement.h"
+#include "game/Blocks.h"
+#include "game/Items.h"
+#include "mod/Log.h"
+
+namespace gf::feature::woodwork {
+
+namespace ia = interactions;
+
+namespace {
+
+constexpr char kAxis[]    = "twilightforest:axis";
+constexpr char kVariant[] = "twilightforest:variant";
+constexpr char kFacing[]  = "twilightforest:facing";
+
+constexpr char kMossPatch[]  = "twilightforest:moss_patch";
+constexpr char kShortGrass[] = "minecraft:short_grass";
+
+std::vector<ia::HandlerId>& handlerIds() {
+    static std::vector<ia::HandlerId> ids;
+    return ids;
+}
+
+bool isHorizontalFace(int face) { return face >= 2 && face <= 5; }
+
+/// HorizontalHollowLogBlock.isInside: 2..14 px on y and on the cross axis.
+bool insideHorizontal(ia::Vec const& hit, std::string const& axis) {
+    if (0.124 > hit[1] || hit[1] > 0.876) return false;
+    if (axis == "x") return 0.124 <= hit[2] && hit[2] <= 0.876;
+    if (axis == "z") return 0.124 <= hit[0] && hit[0] <= 0.876;
+    return false;
+}
+
+/// VerticalHollowLogBlock / ClimbableHollowLogBlock.isInside: 2..14 px on x and z.
+bool insideVertical(ia::Vec const& hit) { return 0.124 <= hit[0] && hit[0] <= 0.876 && 0.124 <= hit[2] && hit[2] <= 0.876; }
+
+/// HorizontalHollowLogBlock.canChangeVariant: empty, or waterlogged with no water at either end.
+bool canChangeVariant(BlockSource& region, BlockPos const& pos, std::string const& variant, std::string const& axis) {
+    if (variant == "empty") return true;
+    if (variant != "waterlogged") return false;
+    BlockPos neg = axis == "x" ? BlockPos{pos.x - 1, pos.y, pos.z} : BlockPos{pos.x, pos.y, pos.z - 1};
+    BlockPos posi = axis == "x" ? BlockPos{pos.x + 1, pos.y, pos.z} : BlockPos{pos.x, pos.y, pos.z + 1};
+    return !waterSourceAt(region, neg) && !waterSourceAt(region, posi);
+}
+
+/// HorizontalHollowLogBlock.playPlaceSound / playBreakSound: the block's sound, volume (v + 1) / 2,
+/// pitch p * 0.8 (every sound type used here has volume 1 and pitch 1). The names are Bedrock's
+/// own place sounds of those block sound types (vanilla RP sounds.json, block_sounds.<type>.events.place:
+/// grass and vine -> dig.grass, snow -> dig.snow, ladder -> dig.wood; moss carpet -> dig.moss),
+/// not the use.<type> sounds, which are the item.use.on event.
+void blockSound(BlockSource& region, BlockPos const& pos, char const* bedrockName) { playSound(region, pos, bedrockName, 1.0f, 0.8f); }
+
+void dropAt(BlockSource& region, BlockPos const& pos, char const* itemId) {
+    if (auto s = game::items::make(itemId)) spawnItem(region, Vec3{pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f}, *s);
+}
+
+void setState(BlockSource& region, BlockPos const& pos, Block const& block, Json const& changes) {
+    if (auto const* b = withStates(block, changes)) game::setBlock(region, pos, *b);
+}
+
+/// Puts the water layer back into a block that keeps it (Java: the waterlogged state carries over).
+void putWater(BlockSource& region, BlockPos const& pos) {
+    if (auto const* water = game::blockWith("minecraft:water")) region.setExtraBlock(pos, *water, 3);
+}
+
+/// Removes the water layer of a block whose state holds no water.
+void clearWater(BlockSource& region, BlockPos const& pos) {
+    if (!waterAt(region, pos) || idOf(region.getExtraBlock(pos)) == "minecraft:air") return;
+    if (auto const* air = game::blockWith("minecraft:air")) region.setExtraBlock(pos, *air, 3);
+}
+
+// ---- HollowLogItem -------------------------------------------------------------------------------------
+
+/// HollowLogItem.getPlacementState: the BP item places the vertical log; a side face makes it the
+/// horizontal one (its axis the face's, `waterlogged` in water).
+void onPlaceHollow(ia::PlaceContext const& c) {
+    auto const* set = hollowLogOf(c.blockId);
+    if (!set || (c.blockId != set->vertical && c.blockId != set->horizontal)) return;
+    if (c.itemId != set->item) return; // the hollow log item's own placement
+    auto* region = game::regionOf(c.pos.dim);
+    if (!region) return;
+    BlockPos pos = game::blockPos(c.pos);
+    if (idOf(region->getBlock(pos)) != c.blockId) return;
+    bool wet = waterSourceAt(*region, pos);
+    if (isHorizontalFace(c.face)) {
+        // a side face: the horizontal log along the face's axis, waterlogged in water
+        std::string axis = (c.face == 4 || c.face == 5) ? "x" : "z";
+        if (auto const* h = game::blockWithStates(set->horizontal, {{kAxis, axis}, {kVariant, wet ? "waterlogged" : "empty"}})) {
+            game::setBlock(*region, pos, *h);
+            if (wet) putWater(*region, pos);
+        }
+    } else if (c.blockId != set->vertical) {
+        // the top or the bottom face: the vertical log
+        if (auto const* v = game::blockWith(set->vertical)) {
+            game::setBlock(*region, pos, *v);
+            if (wet) putWater(*region, pos);
+        }
+    }
+}
+
+// ---- HorizontalHollowLogBlock --------------------------------------------------------------------------
+
+ia::Result onUseHorizontal(ia::UseOnContext const& c) {
+    auto axis = stateOf(c.block, kAxis);
+    if (!insideHorizontal(c.hit, axis)) return ia::Result::Pass;
+    if (c.sneaking && !c.itemId.empty()) return ia::Result::Pass; // Java: sneaking with an item skips useItemOn
+    auto& region  = c.player.getDimensionBlockSource();
+    auto  pos     = game::blockPos(c.pos);
+    auto  variant = stateOf(c.block, kVariant);
+    auto  pass    = [&] { return ia::Result::Pass; };
+    if (c.itemId == kMossPatch) {
+        if (!canChangeVariant(region, pos, variant, axis)) return pass();
+        if (repeatedUse(c.player, c.pos, c.firstEvent)) return ia::Result::Consume;
+        setState(region, pos, c.block, {{kVariant, "moss"}});
+        blockSound(region, pos, "dig.moss"); // MOSS_CARPET place
+        consumeOne(c.player, c.item);
+        log().info("woodwork: {} put moss into {}", c.player.getRealName(), c.blockId);
+        return ia::Result::Consume;
+    }
+    if (c.itemId == kShortGrass || c.itemId == "minecraft:tallgrass") {
+        if (variant != "moss") return pass();
+        if (repeatedUse(c.player, c.pos, c.firstEvent)) return ia::Result::Consume;
+        setState(region, pos, c.block, {{kVariant, "moss_and_grass"}});
+        blockSound(region, pos, "dig.grass"); // GRASS place
+        consumeOne(c.player, c.item);
+        return ia::Result::Consume;
+    }
+    if (c.itemId == "minecraft:snowball") {
+        if (!canChangeVariant(region, pos, variant, axis)) return pass();
+        if (repeatedUse(c.player, c.pos, c.firstEvent)) return ia::Result::Consume;
+        setState(region, pos, c.block, {{kVariant, "snow"}});
+        blockSound(region, pos, "dig.snow"); // SNOW place
+        consumeOne(c.player, c.item);
+        return ia::Result::Consume;
+    }
+    if (isShovel(c.itemId)) {
+        if (variant != "snow") return pass();
+        if (repeatedUse(c.player, c.pos, c.firstEvent)) return ia::Result::Consume;
+        setState(region, pos, c.block, {{kVariant, "empty"}});
+        blockSound(region, pos, "dig.snow"); // SNOW break
+        if (!c.player.isCreative()) {
+            hurtTool(c.player, c.item);
+            dropAt(region, pos, "minecraft:snowball");
+        }
+        return ia::Result::Consume;
+    }
+    if (isShears(c.itemId)) {
+        if (variant != "moss" && variant != "moss_and_grass") return pass();
+        if (repeatedUse(c.player, c.pos, c.firstEvent)) return ia::Result::Consume;
+        setState(region, pos, c.block, {{kVariant, "empty"}});
+        playSound(region, pos, "entity.sheep.shear", 1.0f, 1.0f);
+        if (!c.player.isCreative()) {
+            hurtTool(c.player, c.item);
+            dropAt(region, pos, kMossPatch);
+            if (variant == "moss_and_grass") dropAt(region, pos, kShortGrass);
+        }
+        return ia::Result::Consume;
+    }
+    // useWithoutItem: sneaking with an empty hand inside the log, facing along it, at its height,
+    // within 0.81 of its bottom centre: Java sets the swimming (crawling) pose. Bedrock's pose is
+    // the client's own (PlayerAuthInput): the server cannot set it. The click moves the player into
+    // the tunnel along the log (gf::movement::applyMotion); the client mod's local player takes the
+    // swimming pose there ("woodwork.crawl", src/client/woodwork), a vanilla client crawls only
+    // where the game itself does (docs/units/woodwork.md).
+    if (c.itemId.empty() && c.sneaking) {
+        int  look   = lookFace(c.player);
+        bool along  = axis == ((look == 4 || look == 5) ? "x" : "z");
+        Vec3 feet   = c.player.getFeetPos();
+        auto pos    = game::blockPos(c.pos);
+        double dx   = feet.x - (pos.x + 0.5), dy = feet.y - pos.y, dz = feet.z - (pos.z + 0.5);
+        bool   near = std::sqrt(dx * dx + dy * dy + dz * dz) < 0.81;
+        if (along && static_cast<int>(std::floor(feet.y)) == pos.y && near && !c.player.isGliding()) {
+            auto step = faceStep(look);
+            movement::applyMotion(c.player, Vec3{0.3f * step[0], 0.0f, 0.3f * step[2]});
+            // the client mod puts its local player into the swimming (crawling) pose itself
+            if (net::isCompanion(c.player)) net::send(c.player, "woodwork.crawl", Json{{"pos", {c.pos.dim, c.pos.x, c.pos.y, c.pos.z}}});
+            log().info("woodwork: {} crawls into {}", c.player.getRealName(), c.blockId);
+        }
+    }
+    return pass();
+}
+
+// ---- VerticalHollowLogBlock ----------------------------------------------------------------------------
+
+/// Java's hit.getDirection() for a click into the shaft: Java's outline is the hollow shape, so the
+/// look ray that enters through the open top (or bottom) hits an inner wall, whose face points into
+/// the shaft (the wall at x 2 px faces east, ...). Bedrock selects the log as a full block and
+/// reports the top / bottom face with the entry point: the ray from the player's eyes through that
+/// point is followed down (up) the shaft to the first inner wall it reaches inside the block. A ray
+/// that leaves the block through the far opening (Java would click the block beyond) takes the
+/// inner wall nearest the entry point. -1: not a top / bottom click.
+int innerWallFace(ia::UseOnContext const& c) {
+    if (c.face != 0 && c.face != 1) return -1;
+    constexpr double lo = 2.0 / 16, hi = 14.0 / 16;
+    Vec3   eye = c.player.getHeadPos();
+    double ex = eye.x - c.pos.x, ey = eye.y - c.pos.y, ez = eye.z - c.pos.z;
+    double hx = c.hit[0], hy = c.hit[1], hz = c.hit[2];
+    double dx = hx - ex, dy = hy - ey, dz = hz - ez;
+    double best = 1e9;
+    int    face = -1;
+    auto   tryWall = [&](double plane, double origin, double dir, int wallFace) {
+        if (std::abs(dir) < 1e-9) return;
+        double t = (plane - origin) / dir;
+        if (t <= 0) return;
+        double y = hy + dy * t;
+        double x = hx + dx * t, z = hz + dz * t;
+        if (y < 0 || y > 1) return; // past the far opening
+        if (wallFace == 4 || wallFace == 5) {
+            if (z < lo || z > hi) return;
+        } else if (x < lo || x > hi) {
+            return;
+        }
+        if (t < best) {
+            best = t;
+            face = wallFace;
+        }
+    };
+    // the inner walls: x = 2 px faces east, x = 14 px west, z = 2 px south, z = 14 px north
+    tryWall(lo, hx, dx, 5);
+    tryWall(hi, hx, dx, 4);
+    tryWall(lo, hz, dz, 3);
+    tryWall(hi, hz, dz, 2);
+    if (face >= 0) return face;
+    // the nearest inner wall to the entry point
+    double dists[4] = {hx - lo, hi - hx, hz - lo, hi - hz};
+    int    faces[4] = {5, 4, 3, 2};
+    int    i        = static_cast<int>(std::min_element(std::begin(dists), std::end(dists)) - std::begin(dists));
+    return faces[i];
+}
+
+ia::Result onUseVertical(ia::UseOnContext const& c) {
+    if (!insideVertical(c.hit) || c.sneaking) return ia::Result::Pass;
+    auto const* set = hollowLogOf(c.blockId);
+    if (!set) return ia::Result::Pass;
+    bool vine   = c.itemId == "minecraft:vine";
+    bool ladder = c.itemId == "minecraft:ladder";
+    if (!vine && !ladder) return ia::Result::Pass;
+    if (repeatedUse(c.player, c.pos, c.firstEvent)) return ia::Result::Consume;
+    auto& region = c.player.getDimensionBlockSource();
+    auto  pos    = game::blockPos(c.pos);
+    bool  wet    = waterSourceAt(region, pos);
+    // directionUtil.horizontalOrElse(hit face, the player's direction's opposite); a click into the
+    // shaft is Java's click on the inner wall the ray reaches (innerWallFace)
+    int hitFace = isHorizontalFace(c.face) ? c.face : innerWallFace(c);
+    int facing  = isHorizontalFace(hitFace) ? hitFace : oppositeFace(lookFace(c.player));
+    std::string variant = vine ? "vine" : (wet ? "ladder_waterlogged" : "ladder");
+    auto const* b       = game::blockWithStates(set->climbable, {{kVariant, variant}, {kFacing, faceName(facing)}});
+    if (!b) return ia::Result::Pass;
+    game::setBlock(region, pos, *b);
+    if (variant == "ladder_waterlogged") putWater(region, pos);
+    // the VINE state has no water (Java's climbable vine is never waterlogged): Bedrock's water
+    // layer of the vertical log does not carry over
+    else if (vine) clearWater(region, pos);
+    blockSound(region, pos, vine ? "dig.grass" : "dig.wood"); // VINE / LADDER place
+    consumeOne(c.player, c.item);
+    log().info("woodwork: {} made {} {}", c.player.getRealName(), set->climbable, variant);
+    return ia::Result::Consume;
+}
+
+// ---- ClimbableHollowLogBlock ---------------------------------------------------------------------------
+
+ia::Result onUseClimbable(ia::UseOnContext const& c) {
+    if (!insideVertical(c.hit) || !isShears(c.itemId) || c.sneaking) return ia::Result::Pass;
+    auto const* set = hollowLogOf(c.blockId);
+    if (!set) return ia::Result::Pass;
+    if (repeatedUse(c.player, c.pos, c.firstEvent)) return ia::Result::Consume;
+    auto& region  = c.player.getDimensionBlockSource();
+    auto  pos     = game::blockPos(c.pos);
+    auto  variant = stateOf(c.block, kVariant);
+    if (auto const* v = game::blockWith(set->vertical)) {
+        game::setBlock(region, pos, *v);
+        if (variant == "ladder_waterlogged") putWater(region, pos);
+    }
+    playSound(region, pos, "entity.sheep.shear", 1.0f, 1.0f);
+    if (!c.player.isCreative()) {
+        hurtTool(c.player, c.item);
+        dropAt(region, pos, variant == "vine" ? "minecraft:vine" : "minecraft:ladder");
+    }
+    log().info("woodwork: {} sheared {} back to {}", c.player.getRealName(), c.blockId, set->vertical);
+    return ia::Result::Consume;
+}
+
+// ---- water (WaterloggedBlock.setWaterlog) --------------------------------------------------------------
+
+/// A bucket emptied into or filled from a hollow log: the variant follows the water layer on the
+/// next tick (HorizontalHollowLogBlock: empty <-> waterlogged; ClimbableHollowLogBlock: a vine
+/// variant becomes a waterlogged vertical log, ladder <-> ladder_waterlogged).
+ia::Result onBucket(ia::UseOnContext const& c) {
+    if (c.itemId != "minecraft:water_bucket" && c.itemId != "minecraft:bucket") return ia::Result::Pass;
+    auto gp = c.pos;
+    ia::nextTick([gp] {
+        auto* region = game::regionOf(gp.dim);
+        if (!region) return;
+        BlockPos     pos   = game::blockPos(gp);
+        Block const& block = region->getBlock(pos);
+        auto         id    = idOf(block);
+        auto const*  set   = hollowLogOf(id);
+        if (!set) return;
+        bool wet     = waterSourceAt(*region, pos);
+        auto variant = stateOf(block, kVariant);
+        if (id == set->horizontal) {
+            if (wet && variant == "empty") setState(*region, pos, block, {{kVariant, "waterlogged"}});
+            else if (!wet && variant == "waterlogged") setState(*region, pos, block, {{kVariant, "empty"}});
+        } else if (id == set->climbable) {
+            if (wet && variant == "vine") {
+                if (auto const* v = game::blockWith(set->vertical)) {
+                    game::setBlock(*region, pos, *v);
+                    putWater(*region, pos);
+                }
+            } else if (wet && variant == "ladder") {
+                setState(*region, pos, block, {{kVariant, "ladder_waterlogged"}});
+            } else if (!wet && variant == "ladder_waterlogged") {
+                setState(*region, pos, block, {{kVariant, "ladder"}});
+            }
+        }
+    });
+    return ia::Result::Pass;
+}
+
+} // namespace
+
+void installHollowLogs() {
+    for (auto const& h : hollowLogs()) {
+        handlerIds().push_back(ia::onPlace({.block = h.vertical}, onPlaceHollow));
+        handlerIds().push_back(ia::onPlace({.block = h.horizontal}, onPlaceHollow));
+        handlerIds().push_back(ia::onUseOn({.block = h.horizontal}, onUseHorizontal));
+        handlerIds().push_back(ia::onUseOn({.block = h.vertical}, onUseVertical));
+        handlerIds().push_back(ia::onUseOn({.block = h.climbable}, onUseClimbable));
+        for (auto const* id : {&h.horizontal, &h.climbable}) handlerIds().push_back(ia::onUseOn({.block = *id}, onBucket, ia::priority::High));
+    }
+}
+
+void uninstallHollowLogs() {
+    for (auto id : handlerIds()) ia::remove(id);
+    handlerIds().clear();
+}
+
+} // namespace gf::feature::woodwork
