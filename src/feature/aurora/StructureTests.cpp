@@ -146,7 +146,7 @@ void golden(Context& ctx, std::string const& name, std::string const& expected, 
 
 // Recorded from the translation (docs/spec/aurora.md section 1.3: GloamingForest's own goldens).
 constexpr char kPalaceLayout[] = "twilightforest:TFITBea=9 twilightforest:TFITBoss=1 twilightforest:TFITBri=1 twilightforest:TFITEnt=1 twilightforest:TFITMai=1 twilightforest:TFITRoof=20 twilightforest:TFITSt=3 twilightforest:TFITWin=17 twilightforest:TFUtilityPiece=10 26,36,-49,122,181,11";
-constexpr char kPalaceHash[]   = "bef3297054a3da60"; // with the aurora block variants and the varied tower bases
+constexpr char kPalaceHash[]   = "998d5322f7fa3e2b"; // with the aurora block variants (the stairs' lowest steps too) and the varied tower bases
 constexpr char kMushroomLayout[] = "twilightforest:TFMTBri=82 twilightforest:TFMTMB=2 twilightforest:TFMTMai=3 twilightforest:TFMTRoofMush=72 twilightforest:TFMTWin=82 -119,9,25,-11,90,133";
 constexpr char kMushroomHash[]   = "541b39f142c085fd";
 

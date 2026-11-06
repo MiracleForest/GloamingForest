@@ -96,6 +96,13 @@ std::map<std::int64_t, Queen>& queens() {
 
 std::int64_t uidOf(Actor const& a) { return a.getOrCreateUniqueID().rawID; }
 
+/// The queens that got their native goals in this process: one whose F8 state lost them (F8's
+/// sweep of an unloaded actor) comes back as a new Java entity.
+std::set<std::int64_t>& goalsEverAdded() {
+    static std::set<std::int64_t> s;
+    return s;
+}
+
 
 Queen& stateOf(Actor& self) {
     auto [it, fresh] = queens().try_emplace(uidOf(self));
@@ -798,8 +805,9 @@ void queenTick(Actor& actor) {
 void queenSpawn(Actor& actor) {
     auto* self = fe::asMob(actor);
     if (!self || nativeGoalsPresent(*self)) return;
-    // the fields of a new SnowQueen (not saved): SUMMON with 6 summons
-    queens().erase(uidOf(*self));
+    // back after F8 dropped her state: the fields of a new SnowQueen (not saved), SUMMON with 6
+    // summons (a first spawn keeps what was set before her first tick)
+    if (!goalsEverAdded().insert(uidOf(*self)).second) queens().erase(uidOf(*self));
     (void)stateOf(*self);
     gf::entity::setMoveControl(*self, gf::entity::MoveKind::Hovering);
     gf::entity::addGoal(*self, 1, std::make_shared<HoverSummonGoal>(*self));
@@ -874,13 +882,13 @@ void installSnowQueen() {
         .hurt    = queenHurt,
         .die     = [](Actor& self, std::string const&, Actor*) {
             queens().erase(uidOf(self));
-
+            goalsEverAdded().erase(uidOf(self));
         },
     });
     // a client opens many worlds in one process and unique ids repeat: no state outlives its world
     gf::game::db::onWorldClosed([] {
         queens().clear();
-
+        goalsEverAdded().clear();
         arrowSnaps().clear();
     });
     // SnowQueen#hurt: damageWhileBeaming += damage when the hurt succeeded (not the shields' hits)
