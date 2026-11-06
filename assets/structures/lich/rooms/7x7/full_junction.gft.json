@@ -1,0 +1,47 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "twilightforest:lich_tower/7x7/full_junction",
+  "size": [9, 9, 9],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"minecraft:stone_bricks"},
+    {"Name":"minecraft:air"},
+    {"Name":"minecraft:chiseled_stone_bricks"},
+    {"Name":"minecraft:polished_andesite"},
+    {"Name":"minecraft:iron_bars"},
+    {"Name":"twilightforest:twisted_stone_pillar"}
+  ],
+  "blocks": [
+    [1, 81], [3, 1], [1, 3], [2, 1], [1, 3], [3, 1], [1, 1], [2, 7], [1, 2], [2, 1], [6, 1], [2, 3], [6, 1], [2, 1], [1, 2], [2, 7],
+    [1, 1], [2, 9], [1, 1], [2, 7], [1, 2], [2, 1], [6, 1], [2, 3], [6, 1], [2, 1], [1, 2], [2, 7], [1, 1], [3, 1], [1, 3], [2, 1],
+    [1, 3], [3, 2], [1, 3], [2, 1], [1, 3], [3, 1], [1, 1], [2, 7], [1, 1], [5, 1], [2, 1], [6, 1], [2, 3], [6, 1], [2, 1], [5, 1],
+    [1, 1], [2, 7], [1, 1], [2, 9], [1, 1], [2, 7], [1, 1], [5, 1], [2, 1], [6, 1], [2, 3], [6, 1], [2, 1], [5, 1], [1, 1], [2, 7],
+    [1, 1], [3, 1], [1, 1], [5, 1], [1, 1], [2, 1], [1, 1], [5, 1], [1, 1], [3, 2], [1, 7], [3, 1], [1, 1], [2, 7], [1, 2], [2, 1],
+    [6, 1], [2, 3], [6, 1], [2, 1], [1, 2], [2, 7], [1, 2], [2, 7], [1, 2], [2, 7], [1, 2], [2, 1], [6, 1], [2, 3], [6, 1], [2, 1],
+    [1, 2], [2, 7], [1, 1], [3, 1], [1, 7], [3, 2], [1, 7], [3, 1], [1, 1], [2, 7], [1, 2], [2, 1], [6, 1], [2, 3], [6, 1], [2, 1],
+    [1, 2], [2, 7], [1, 2], [2, 7], [1, 2], [2, 7], [1, 2], [2, 1], [6, 1], [2, 3], [6, 1], [2, 1], [1, 2], [2, 7], [1, 1], [3, 1],
+    [1, 7], [3, 2], [1, 7], [3, 1], [1, 1], [2, 7], [1, 2], [2, 1], [6, 1], [2, 3], [6, 1], [2, 1], [1, 2], [2, 7], [1, 2], [2, 7],
+    [1, 2], [2, 7], [1, 2], [2, 1], [6, 1], [2, 3], [6, 1], [2, 1], [1, 2], [2, 7], [1, 1], [3, 1], [1, 7], [3, 2], [1, 7], [3, 1],
+    [1, 1], [2, 7], [1, 2], [2, 1], [6, 1], [2, 3], [6, 1], [2, 1], [1, 2], [2, 7], [1, 2], [2, 7], [1, 2], [2, 7], [1, 2], [2, 1],
+    [6, 1], [2, 3], [6, 1], [2, 1], [1, 2], [2, 7], [1, 1], [3, 1], [1, 7], [3, 2], [4, 7], [3, 1], [4, 1], [2, 7], [4, 2], [2, 1],
+    [6, 1], [2, 3], [6, 1], [2, 1], [4, 2], [2, 7], [4, 2], [2, 7], [4, 2], [2, 7], [4, 2], [2, 1], [6, 1], [2, 3], [6, 1], [2, 1],
+    [4, 2], [2, 7], [4, 1], [3, 1], [4, 7], [3, 1], [1, 81]
+  ],
+  "markers": [
+    {"pos":[1,1,1],"marker":"data","data":{"metadata":"candle:1-2"}},
+    {"pos":[7,1,1],"marker":"data","data":{"metadata":"candle:1-2"}}
+  ],
+  "jigsaw": [
+    {"pos":[4,1,0],"front":"north","top":"up","pool":"minecraft:empty","name":"gf:lich_tower/room","target":""},
+    {"pos":[8,1,4],"front":"east","top":"up","pool":"minecraft:empty","name":"gf:lich_tower/bridge_out","target":"gf:lich_tower/bridge"},
+    {"pos":[4,1,8],"front":"south","top":"up","pool":"minecraft:empty","name":"gf:lich_tower/bridge_out","target":"gf:lich_tower/bridge"},
+    {"pos":[0,1,4],"front":"west","top":"up","pool":"minecraft:empty","name":"gf:lich_tower/bridge_out","target":"gf:lich_tower/bridge"},
+    {"pos":[4,8,4],"front":"north","top":"up","pool":"minecraft:empty","name":"gf:lich_tower/roof_up","target":"gf:lich_tower/roof"},
+    {"pos":[4,0,4],"front":"down","top":"north","pool":"minecraft:empty","name":"gf:lich_tower/beard_down","target":"gf:lich_tower/beard"},
+    {"pos":[1,1,7],"front":"up","top":"north","pool":"minecraft:empty","name":"gf:lich_tower/ladder_up","target":"gf:ladder_below/0"},
+    {"pos":[2,1,7],"front":"up","top":"north","pool":"minecraft:empty","name":"gf:lich_tower/ladder_up","target":"gf:ladder_below/1"},
+    {"pos":[6,1,7],"front":"up","top":"north","pool":"minecraft:empty","name":"gf:lich_tower/ladder_up","target":"gf:ladder_below/3"},
+    {"pos":[7,1,7],"front":"up","top":"north","pool":"minecraft:empty","name":"gf:lich_tower/ladder_up","target":"gf:ladder_below/4"}
+  ]
+}

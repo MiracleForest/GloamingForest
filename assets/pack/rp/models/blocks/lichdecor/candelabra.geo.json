@@ -1,0 +1,1813 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.lichdecor.candelabra",
+        "texture_width": 16,
+        "texture_height": 16,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3,
+        "visible_bounds_offset": [
+          0,
+          0.75,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "root",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                1,
+                0
+              ],
+              "size": [
+                16,
+                6,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    16,
+                    6
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "south": {
+                  "uv": [
+                    16,
+                    0
+                  ],
+                  "uv_size": [
+                    -16,
+                    6
+                  ],
+                  "material_instance": "candelabra"
+                }
+              }
+            },
+            {
+              "origin": [
+                0,
+                1,
+                -3
+              ],
+              "size": [
+                0,
+                6,
+                6
+              ],
+              "uv": {
+                "east": {
+                  "uv": [
+                    0,
+                    6
+                  ],
+                  "uv_size": [
+                    6,
+                    6
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "west": {
+                  "uv": [
+                    6,
+                    6
+                  ],
+                  "uv_size": [
+                    -6,
+                    6
+                  ],
+                  "material_instance": "candelabra"
+                }
+              }
+            },
+            {
+              "origin": [
+                3,
+                7,
+                -2
+              ],
+              "size": [
+                4,
+                1,
+                4
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    12
+                  ],
+                  "uv_size": [
+                    4,
+                    1
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "east": {
+                  "uv": [
+                    0,
+                    12
+                  ],
+                  "uv_size": [
+                    4,
+                    1
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "south": {
+                  "uv": [
+                    0,
+                    12
+                  ],
+                  "uv_size": [
+                    4,
+                    1
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "west": {
+                  "uv": [
+                    0,
+                    12
+                  ],
+                  "uv_size": [
+                    4,
+                    1
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "up": {
+                  "uv": [
+                    4,
+                    16
+                  ],
+                  "uv_size": [
+                    -4,
+                    -4
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "down": {
+                  "uv": [
+                    4,
+                    16
+                  ],
+                  "uv_size": [
+                    -4,
+                    -4
+                  ],
+                  "material_instance": "candelabra"
+                }
+              }
+            },
+            {
+              "origin": [
+                -2,
+                7,
+                -2
+              ],
+              "size": [
+                4,
+                1,
+                4
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    12
+                  ],
+                  "uv_size": [
+                    4,
+                    1
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "east": {
+                  "uv": [
+                    0,
+                    12
+                  ],
+                  "uv_size": [
+                    4,
+                    1
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "south": {
+                  "uv": [
+                    0,
+                    12
+                  ],
+                  "uv_size": [
+                    4,
+                    1
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "west": {
+                  "uv": [
+                    0,
+                    12
+                  ],
+                  "uv_size": [
+                    4,
+                    1
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "up": {
+                  "uv": [
+                    4,
+                    16
+                  ],
+                  "uv_size": [
+                    -4,
+                    -4
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "down": {
+                  "uv": [
+                    4,
+                    16
+                  ],
+                  "uv_size": [
+                    -4,
+                    -4
+                  ],
+                  "material_instance": "candelabra"
+                }
+              }
+            },
+            {
+              "origin": [
+                -7,
+                7,
+                -2
+              ],
+              "size": [
+                4,
+                1,
+                4
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    12
+                  ],
+                  "uv_size": [
+                    4,
+                    1
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "east": {
+                  "uv": [
+                    0,
+                    12
+                  ],
+                  "uv_size": [
+                    4,
+                    1
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "south": {
+                  "uv": [
+                    0,
+                    12
+                  ],
+                  "uv_size": [
+                    4,
+                    1
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "west": {
+                  "uv": [
+                    0,
+                    12
+                  ],
+                  "uv_size": [
+                    4,
+                    1
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "up": {
+                  "uv": [
+                    4,
+                    16
+                  ],
+                  "uv_size": [
+                    -4,
+                    -4
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "down": {
+                  "uv": [
+                    4,
+                    16
+                  ],
+                  "uv_size": [
+                    -4,
+                    -4
+                  ],
+                  "material_instance": "candelabra"
+                }
+              }
+            },
+            {
+              "origin": [
+                -2,
+                0,
+                -2
+              ],
+              "size": [
+                4,
+                1,
+                4
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    12
+                  ],
+                  "uv_size": [
+                    4,
+                    1
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "east": {
+                  "uv": [
+                    0,
+                    12
+                  ],
+                  "uv_size": [
+                    4,
+                    1
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "south": {
+                  "uv": [
+                    0,
+                    12
+                  ],
+                  "uv_size": [
+                    4,
+                    1
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "west": {
+                  "uv": [
+                    0,
+                    12
+                  ],
+                  "uv_size": [
+                    4,
+                    1
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "up": {
+                  "uv": [
+                    4,
+                    16
+                  ],
+                  "uv_size": [
+                    -4,
+                    -4
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "down": {
+                  "uv": [
+                    4,
+                    16
+                  ],
+                  "uv_size": [
+                    -4,
+                    -4
+                  ],
+                  "material_instance": "candelabra"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "candle_1",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                4.04,
+                7.04,
+                -1
+              ],
+              "size": [
+                2,
+                6,
+                2
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    8
+                  ],
+                  "uv_size": [
+                    2,
+                    6
+                  ],
+                  "material_instance": "candle"
+                },
+                "south": {
+                  "uv": [
+                    0,
+                    8
+                  ],
+                  "uv_size": [
+                    2,
+                    6
+                  ],
+                  "material_instance": "candle"
+                },
+                "east": {
+                  "uv": [
+                    0,
+                    8
+                  ],
+                  "uv_size": [
+                    2,
+                    6
+                  ],
+                  "material_instance": "candle"
+                },
+                "west": {
+                  "uv": [
+                    0,
+                    8
+                  ],
+                  "uv_size": [
+                    2,
+                    6
+                  ],
+                  "material_instance": "candle"
+                },
+                "up": {
+                  "uv": [
+                    0,
+                    6
+                  ],
+                  "uv_size": [
+                    2,
+                    2
+                  ],
+                  "material_instance": "candle"
+                },
+                "down": {
+                  "uv": [
+                    0,
+                    14
+                  ],
+                  "uv_size": [
+                    2,
+                    2
+                  ],
+                  "material_instance": "candle"
+                }
+              }
+            },
+            {
+              "origin": [
+                4.54,
+                13.04,
+                0
+              ],
+              "size": [
+                1,
+                1,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    5
+                  ],
+                  "uv_size": [
+                    1,
+                    1
+                  ],
+                  "material_instance": "candle"
+                },
+                "south": {
+                  "uv": [
+                    0,
+                    5
+                  ],
+                  "uv_size": [
+                    1,
+                    1
+                  ],
+                  "material_instance": "candle"
+                }
+              }
+            },
+            {
+              "origin": [
+                5.04,
+                13.04,
+                -0.5
+              ],
+              "size": [
+                0,
+                1,
+                1
+              ],
+              "uv": {
+                "east": {
+                  "uv": [
+                    0,
+                    5
+                  ],
+                  "uv_size": [
+                    1,
+                    1
+                  ],
+                  "material_instance": "candle"
+                },
+                "west": {
+                  "uv": [
+                    0,
+                    5
+                  ],
+                  "uv_size": [
+                    1,
+                    1
+                  ],
+                  "material_instance": "candle"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "candle_2",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -1.0,
+                7.04,
+                -1
+              ],
+              "size": [
+                2,
+                6,
+                2
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    8
+                  ],
+                  "uv_size": [
+                    2,
+                    6
+                  ],
+                  "material_instance": "candle"
+                },
+                "south": {
+                  "uv": [
+                    0,
+                    8
+                  ],
+                  "uv_size": [
+                    2,
+                    6
+                  ],
+                  "material_instance": "candle"
+                },
+                "east": {
+                  "uv": [
+                    0,
+                    8
+                  ],
+                  "uv_size": [
+                    2,
+                    6
+                  ],
+                  "material_instance": "candle"
+                },
+                "west": {
+                  "uv": [
+                    0,
+                    8
+                  ],
+                  "uv_size": [
+                    2,
+                    6
+                  ],
+                  "material_instance": "candle"
+                },
+                "up": {
+                  "uv": [
+                    0,
+                    6
+                  ],
+                  "uv_size": [
+                    2,
+                    2
+                  ],
+                  "material_instance": "candle"
+                },
+                "down": {
+                  "uv": [
+                    0,
+                    14
+                  ],
+                  "uv_size": [
+                    2,
+                    2
+                  ],
+                  "material_instance": "candle"
+                }
+              }
+            },
+            {
+              "origin": [
+                -0.5,
+                13.04,
+                0
+              ],
+              "size": [
+                1,
+                1,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    5
+                  ],
+                  "uv_size": [
+                    1,
+                    1
+                  ],
+                  "material_instance": "candle"
+                },
+                "south": {
+                  "uv": [
+                    0,
+                    5
+                  ],
+                  "uv_size": [
+                    1,
+                    1
+                  ],
+                  "material_instance": "candle"
+                }
+              }
+            },
+            {
+              "origin": [
+                0.0,
+                13.04,
+                -0.5
+              ],
+              "size": [
+                0,
+                1,
+                1
+              ],
+              "uv": {
+                "east": {
+                  "uv": [
+                    0,
+                    5
+                  ],
+                  "uv_size": [
+                    1,
+                    1
+                  ],
+                  "material_instance": "candle"
+                },
+                "west": {
+                  "uv": [
+                    0,
+                    5
+                  ],
+                  "uv_size": [
+                    1,
+                    1
+                  ],
+                  "material_instance": "candle"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "candle_3",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -6.04,
+                7.04,
+                -1
+              ],
+              "size": [
+                2,
+                6,
+                2
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    8
+                  ],
+                  "uv_size": [
+                    2,
+                    6
+                  ],
+                  "material_instance": "candle"
+                },
+                "south": {
+                  "uv": [
+                    0,
+                    8
+                  ],
+                  "uv_size": [
+                    2,
+                    6
+                  ],
+                  "material_instance": "candle"
+                },
+                "east": {
+                  "uv": [
+                    0,
+                    8
+                  ],
+                  "uv_size": [
+                    2,
+                    6
+                  ],
+                  "material_instance": "candle"
+                },
+                "west": {
+                  "uv": [
+                    0,
+                    8
+                  ],
+                  "uv_size": [
+                    2,
+                    6
+                  ],
+                  "material_instance": "candle"
+                },
+                "up": {
+                  "uv": [
+                    0,
+                    6
+                  ],
+                  "uv_size": [
+                    2,
+                    2
+                  ],
+                  "material_instance": "candle"
+                },
+                "down": {
+                  "uv": [
+                    0,
+                    14
+                  ],
+                  "uv_size": [
+                    2,
+                    2
+                  ],
+                  "material_instance": "candle"
+                }
+              }
+            },
+            {
+              "origin": [
+                -5.54,
+                13.04,
+                0
+              ],
+              "size": [
+                1,
+                1,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    5
+                  ],
+                  "uv_size": [
+                    1,
+                    1
+                  ],
+                  "material_instance": "candle"
+                },
+                "south": {
+                  "uv": [
+                    0,
+                    5
+                  ],
+                  "uv_size": [
+                    1,
+                    1
+                  ],
+                  "material_instance": "candle"
+                }
+              }
+            },
+            {
+              "origin": [
+                -5.04,
+                13.04,
+                -0.5
+              ],
+              "size": [
+                0,
+                1,
+                1
+              ],
+              "uv": {
+                "east": {
+                  "uv": [
+                    0,
+                    5
+                  ],
+                  "uv_size": [
+                    1,
+                    1
+                  ],
+                  "material_instance": "candle"
+                },
+                "west": {
+                  "uv": [
+                    0,
+                    5
+                  ],
+                  "uv_size": [
+                    1,
+                    1
+                  ],
+                  "material_instance": "candle"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.lichdecor.wall_candelabra",
+        "texture_width": 16,
+        "texture_height": 16,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3,
+        "visible_bounds_offset": [
+          0,
+          0.75,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "root",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                1,
+                4
+              ],
+              "size": [
+                16,
+                6,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    16,
+                    6
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "south": {
+                  "uv": [
+                    16,
+                    0
+                  ],
+                  "uv_size": [
+                    -16,
+                    6
+                  ],
+                  "material_instance": "candelabra"
+                }
+              }
+            },
+            {
+              "origin": [
+                0,
+                1,
+                1
+              ],
+              "size": [
+                0,
+                6,
+                6
+              ],
+              "uv": {
+                "east": {
+                  "uv": [
+                    0,
+                    6
+                  ],
+                  "uv_size": [
+                    6,
+                    6
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "west": {
+                  "uv": [
+                    6,
+                    6
+                  ],
+                  "uv_size": [
+                    -6,
+                    6
+                  ],
+                  "material_instance": "candelabra"
+                }
+              }
+            },
+            {
+              "origin": [
+                3,
+                7,
+                2
+              ],
+              "size": [
+                4,
+                1,
+                4
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    12
+                  ],
+                  "uv_size": [
+                    4,
+                    1
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "east": {
+                  "uv": [
+                    0,
+                    12
+                  ],
+                  "uv_size": [
+                    4,
+                    1
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "south": {
+                  "uv": [
+                    0,
+                    12
+                  ],
+                  "uv_size": [
+                    4,
+                    1
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "west": {
+                  "uv": [
+                    0,
+                    12
+                  ],
+                  "uv_size": [
+                    4,
+                    1
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "up": {
+                  "uv": [
+                    4,
+                    16
+                  ],
+                  "uv_size": [
+                    -4,
+                    -4
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "down": {
+                  "uv": [
+                    4,
+                    16
+                  ],
+                  "uv_size": [
+                    -4,
+                    -4
+                  ],
+                  "material_instance": "candelabra"
+                }
+              }
+            },
+            {
+              "origin": [
+                -2,
+                7,
+                2
+              ],
+              "size": [
+                4,
+                1,
+                4
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    12
+                  ],
+                  "uv_size": [
+                    4,
+                    1
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "east": {
+                  "uv": [
+                    0,
+                    12
+                  ],
+                  "uv_size": [
+                    4,
+                    1
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "south": {
+                  "uv": [
+                    0,
+                    12
+                  ],
+                  "uv_size": [
+                    4,
+                    1
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "west": {
+                  "uv": [
+                    0,
+                    12
+                  ],
+                  "uv_size": [
+                    4,
+                    1
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "up": {
+                  "uv": [
+                    4,
+                    16
+                  ],
+                  "uv_size": [
+                    -4,
+                    -4
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "down": {
+                  "uv": [
+                    4,
+                    16
+                  ],
+                  "uv_size": [
+                    -4,
+                    -4
+                  ],
+                  "material_instance": "candelabra"
+                }
+              }
+            },
+            {
+              "origin": [
+                -7,
+                7,
+                2
+              ],
+              "size": [
+                4,
+                1,
+                4
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    12
+                  ],
+                  "uv_size": [
+                    4,
+                    1
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "east": {
+                  "uv": [
+                    0,
+                    12
+                  ],
+                  "uv_size": [
+                    4,
+                    1
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "south": {
+                  "uv": [
+                    0,
+                    12
+                  ],
+                  "uv_size": [
+                    4,
+                    1
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "west": {
+                  "uv": [
+                    0,
+                    12
+                  ],
+                  "uv_size": [
+                    4,
+                    1
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "up": {
+                  "uv": [
+                    4,
+                    16
+                  ],
+                  "uv_size": [
+                    -4,
+                    -4
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "down": {
+                  "uv": [
+                    4,
+                    16
+                  ],
+                  "uv_size": [
+                    -4,
+                    -4
+                  ],
+                  "material_instance": "candelabra"
+                }
+              }
+            },
+            {
+              "origin": [
+                -2,
+                2,
+                7
+              ],
+              "size": [
+                4,
+                4,
+                1
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    12
+                  ],
+                  "uv_size": [
+                    4,
+                    4
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "east": {
+                  "uv": [
+                    3,
+                    12
+                  ],
+                  "uv_size": [
+                    1,
+                    4
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "south": {
+                  "uv": [
+                    0,
+                    12
+                  ],
+                  "uv_size": [
+                    4,
+                    4
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "west": {
+                  "uv": [
+                    3,
+                    12
+                  ],
+                  "uv_size": [
+                    1,
+                    4
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "up": {
+                  "uv": [
+                    4,
+                    13
+                  ],
+                  "uv_size": [
+                    -4,
+                    -1
+                  ],
+                  "material_instance": "candelabra"
+                },
+                "down": {
+                  "uv": [
+                    4,
+                    13
+                  ],
+                  "uv_size": [
+                    -4,
+                    -1
+                  ],
+                  "material_instance": "candelabra"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "candle_1",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                4.04,
+                7.04,
+                3
+              ],
+              "size": [
+                2,
+                6,
+                2
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    8
+                  ],
+                  "uv_size": [
+                    2,
+                    6
+                  ],
+                  "material_instance": "candle"
+                },
+                "south": {
+                  "uv": [
+                    0,
+                    8
+                  ],
+                  "uv_size": [
+                    2,
+                    6
+                  ],
+                  "material_instance": "candle"
+                },
+                "east": {
+                  "uv": [
+                    0,
+                    8
+                  ],
+                  "uv_size": [
+                    2,
+                    6
+                  ],
+                  "material_instance": "candle"
+                },
+                "west": {
+                  "uv": [
+                    0,
+                    8
+                  ],
+                  "uv_size": [
+                    2,
+                    6
+                  ],
+                  "material_instance": "candle"
+                },
+                "up": {
+                  "uv": [
+                    0,
+                    6
+                  ],
+                  "uv_size": [
+                    2,
+                    2
+                  ],
+                  "material_instance": "candle"
+                },
+                "down": {
+                  "uv": [
+                    0,
+                    14
+                  ],
+                  "uv_size": [
+                    2,
+                    2
+                  ],
+                  "material_instance": "candle"
+                }
+              }
+            },
+            {
+              "origin": [
+                4.54,
+                13.04,
+                4
+              ],
+              "size": [
+                1,
+                1,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    5
+                  ],
+                  "uv_size": [
+                    1,
+                    1
+                  ],
+                  "material_instance": "candle"
+                },
+                "south": {
+                  "uv": [
+                    0,
+                    5
+                  ],
+                  "uv_size": [
+                    1,
+                    1
+                  ],
+                  "material_instance": "candle"
+                }
+              }
+            },
+            {
+              "origin": [
+                5.04,
+                13.04,
+                3.5
+              ],
+              "size": [
+                0,
+                1,
+                1
+              ],
+              "uv": {
+                "east": {
+                  "uv": [
+                    0,
+                    5
+                  ],
+                  "uv_size": [
+                    1,
+                    1
+                  ],
+                  "material_instance": "candle"
+                },
+                "west": {
+                  "uv": [
+                    0,
+                    5
+                  ],
+                  "uv_size": [
+                    1,
+                    1
+                  ],
+                  "material_instance": "candle"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "candle_2",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -1.0,
+                7.04,
+                3
+              ],
+              "size": [
+                2,
+                6,
+                2
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    8
+                  ],
+                  "uv_size": [
+                    2,
+                    6
+                  ],
+                  "material_instance": "candle"
+                },
+                "south": {
+                  "uv": [
+                    0,
+                    8
+                  ],
+                  "uv_size": [
+                    2,
+                    6
+                  ],
+                  "material_instance": "candle"
+                },
+                "east": {
+                  "uv": [
+                    0,
+                    8
+                  ],
+                  "uv_size": [
+                    2,
+                    6
+                  ],
+                  "material_instance": "candle"
+                },
+                "west": {
+                  "uv": [
+                    0,
+                    8
+                  ],
+                  "uv_size": [
+                    2,
+                    6
+                  ],
+                  "material_instance": "candle"
+                },
+                "up": {
+                  "uv": [
+                    0,
+                    6
+                  ],
+                  "uv_size": [
+                    2,
+                    2
+                  ],
+                  "material_instance": "candle"
+                },
+                "down": {
+                  "uv": [
+                    0,
+                    14
+                  ],
+                  "uv_size": [
+                    2,
+                    2
+                  ],
+                  "material_instance": "candle"
+                }
+              }
+            },
+            {
+              "origin": [
+                -0.5,
+                13.04,
+                4
+              ],
+              "size": [
+                1,
+                1,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    5
+                  ],
+                  "uv_size": [
+                    1,
+                    1
+                  ],
+                  "material_instance": "candle"
+                },
+                "south": {
+                  "uv": [
+                    0,
+                    5
+                  ],
+                  "uv_size": [
+                    1,
+                    1
+                  ],
+                  "material_instance": "candle"
+                }
+              }
+            },
+            {
+              "origin": [
+                0.0,
+                13.04,
+                3.5
+              ],
+              "size": [
+                0,
+                1,
+                1
+              ],
+              "uv": {
+                "east": {
+                  "uv": [
+                    0,
+                    5
+                  ],
+                  "uv_size": [
+                    1,
+                    1
+                  ],
+                  "material_instance": "candle"
+                },
+                "west": {
+                  "uv": [
+                    0,
+                    5
+                  ],
+                  "uv_size": [
+                    1,
+                    1
+                  ],
+                  "material_instance": "candle"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "candle_3",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -6.04,
+                7.04,
+                3
+              ],
+              "size": [
+                2,
+                6,
+                2
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    8
+                  ],
+                  "uv_size": [
+                    2,
+                    6
+                  ],
+                  "material_instance": "candle"
+                },
+                "south": {
+                  "uv": [
+                    0,
+                    8
+                  ],
+                  "uv_size": [
+                    2,
+                    6
+                  ],
+                  "material_instance": "candle"
+                },
+                "east": {
+                  "uv": [
+                    0,
+                    8
+                  ],
+                  "uv_size": [
+                    2,
+                    6
+                  ],
+                  "material_instance": "candle"
+                },
+                "west": {
+                  "uv": [
+                    0,
+                    8
+                  ],
+                  "uv_size": [
+                    2,
+                    6
+                  ],
+                  "material_instance": "candle"
+                },
+                "up": {
+                  "uv": [
+                    0,
+                    6
+                  ],
+                  "uv_size": [
+                    2,
+                    2
+                  ],
+                  "material_instance": "candle"
+                },
+                "down": {
+                  "uv": [
+                    0,
+                    14
+                  ],
+                  "uv_size": [
+                    2,
+                    2
+                  ],
+                  "material_instance": "candle"
+                }
+              }
+            },
+            {
+              "origin": [
+                -5.54,
+                13.04,
+                4
+              ],
+              "size": [
+                1,
+                1,
+                0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0,
+                    5
+                  ],
+                  "uv_size": [
+                    1,
+                    1
+                  ],
+                  "material_instance": "candle"
+                },
+                "south": {
+                  "uv": [
+                    0,
+                    5
+                  ],
+                  "uv_size": [
+                    1,
+                    1
+                  ],
+                  "material_instance": "candle"
+                }
+              }
+            },
+            {
+              "origin": [
+                -5.04,
+                13.04,
+                3.5
+              ],
+              "size": [
+                0,
+                1,
+                1
+              ],
+              "uv": {
+                "east": {
+                  "uv": [
+                    0,
+                    5
+                  ],
+                  "uv_size": [
+                    1,
+                    1
+                  ],
+                  "material_instance": "candle"
+                },
+                "west": {
+                  "uv": [
+                    0,
+                    5
+                  ],
+                  "uv_size": [
+                    1,
+                    1
+                  ],
+                  "material_instance": "candle"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

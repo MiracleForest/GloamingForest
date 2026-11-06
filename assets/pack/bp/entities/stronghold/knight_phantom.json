@@ -1,0 +1,181 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "twilightforest:knight_phantom",
+      "is_spawnable": true,
+      "is_summonable": true,
+      "is_experimental": false,
+      "properties": {
+        "twilightforest:charging": {
+          "type": "bool",
+          "default": false,
+          "client_sync": true
+        },
+        "twilightforest:formation": {
+          "type": "int",
+          "range": [
+            0,
+            11
+          ],
+          "default": 0,
+          "client_sync": true
+        },
+        "twilightforest:number": {
+          "type": "int",
+          "range": [
+            0,
+            15
+          ],
+          "default": 0,
+          "client_sync": true
+        },
+        "twilightforest:guarding": {
+          "type": "bool",
+          "default": false,
+          "client_sync": true
+        },
+        "twilightforest:dying_visible": {
+          "type": "bool",
+          "default": true,
+          "client_sync": true
+        }
+      }
+    },
+    "components": {
+      "minecraft:type_family": {
+        "family": [
+          "twilightforest",
+          "knight_phantom",
+          "boss",
+          "monster",
+          "mob"
+        ]
+      },
+      "minecraft:collision_box": {
+        "width": 1.25,
+        "height": 2.5
+      },
+      "minecraft:health": {
+        "value": 35,
+        "max": 35
+      },
+      "minecraft:attack": {
+        "damage": 1
+      },
+      "minecraft:movement": {
+        "value": 0.7
+      },
+      "minecraft:follow_range": {
+        "value": 16,
+        "max": 16
+      },
+      "minecraft:can_fly": {},
+      "minecraft:physics": {
+        "has_gravity": false,
+        "has_collision": false
+      },
+      "minecraft:pushable": {
+        "is_pushable": false,
+        "is_pushable_by_piston": false
+      },
+      "minecraft:breathable": {
+        "total_supply": 15,
+        "suffocate_time": 0,
+        "breathes_water": true
+      },
+      "minecraft:damage_sensor": {
+        "triggers": [
+          {
+            "cause": "fall",
+            "deals_damage": "no"
+          },
+          {
+            "cause": "suffocation",
+            "deals_damage": "no"
+          }
+        ]
+      },
+      "minecraft:experience_reward": {
+        "on_death": "93"
+      },
+      "minecraft:persistent": {},
+      "minecraft:nameable": {},
+      "minecraft:conditional_bandwidth_optimization": {},
+      "minecraft:behavior.nearest_attackable_target": {
+        "priority": 0,
+        "must_see": false,
+        "reselect_targets": true,
+        "entity_types": [
+          {
+            "filters": {
+              "test": "is_family",
+              "subject": "other",
+              "value": "player"
+            },
+            "max_dist": 16
+          }
+        ]
+      }
+    },
+    "component_groups": {
+      "charging": {
+        "minecraft:collision_box": {
+          "width": 1.75,
+          "height": 4.0
+        }
+      },
+      "not_charging": {
+        "minecraft:collision_box": {
+          "width": 1.25,
+          "height": 2.5
+        }
+      },
+      "untouchable": {
+        "minecraft:collision_box": {
+          "width": 0.1,
+          "height": 0.1
+        }
+      }
+    },
+    "events": {
+      "charging": {
+        "remove": {
+          "component_groups": [
+            "not_charging"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "charging"
+          ]
+        }
+      },
+      "not_charging": {
+        "remove": {
+          "component_groups": [
+            "charging"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "not_charging"
+          ]
+        }
+      },
+      "untouchable": {
+        "remove": {
+          "component_groups": [
+            "charging",
+            "not_charging"
+          ]
+        },
+        "add": {
+          "component_groups": [
+            "untouchable"
+          ]
+        }
+      }
+    }
+  }
+}

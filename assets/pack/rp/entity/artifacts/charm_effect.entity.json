@@ -1,0 +1,20 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:charm_effect",
+      "materials": { "default": "entity_alphatest" },
+      "textures": {
+        "life_1": "textures/twilightforest/item/charm_of_life_1",
+        "life_2": "textures/twilightforest/item/charm_of_life_2",
+        "keeping_1": "textures/twilightforest/item/charm_of_keeping_1",
+        "keeping_2": "textures/twilightforest/item/charm_of_keeping_2",
+        "keeping_3": "textures/twilightforest/item/charm_of_keeping_3"
+      },
+      "geometry": { "default": "geometry.item_sprite" },
+      "scripts": { "scale": "0.5", "animate": ["billboard"] },
+      "animations": { "billboard": "animation.actor.billboard" },
+      "render_controllers": ["controller.render.twilightforest.charm_effect"]
+    }
+  }
+}

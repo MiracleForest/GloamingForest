@@ -1,0 +1,75 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "twilightforest:loyal_zombie",
+      "is_spawnable": false,
+      "is_summonable": true,
+      "is_experimental": false
+    },
+    "component_groups": {
+      "gf:tamed": {
+        "minecraft:is_tamed": {}
+      },
+      "gf:untamed": {
+        "minecraft:despawn": { "despawn_from_distance": { "min_distance": 32, "max_distance": 128 } }
+      },
+      "gf:baby": {
+        "minecraft:is_baby": {},
+        "minecraft:scale": { "value": 0.5 },
+        "minecraft:movement": { "value": 0.45 }
+      }
+    },
+    "components": {
+      "minecraft:type_family": { "family": ["twilightforest", "loyal_zombie", "mob"] },
+      "minecraft:collision_box": { "width": 0.6, "height": 1.95 },
+      "minecraft:health": { "value": 40, "max": 40 },
+      "minecraft:attack": { "damage": 7 },
+      "minecraft:movement": { "value": 0.3 },
+      "minecraft:follow_range": { "value": 16, "max": 16 },
+      "minecraft:navigation.walk": { "can_path_over_water": false, "avoid_water": true, "can_pass_doors": true, "can_open_doors": false, "avoid_portals": true },
+      "minecraft:movement.basic": {},
+      "minecraft:jump.static": {},
+      "minecraft:can_climb": {},
+      "minecraft:physics": {},
+      "minecraft:pushable": { "is_pushable": true, "is_pushable_by_piston": true },
+      "minecraft:nameable": {},
+      "minecraft:breathable": { "total_supply": 15, "suffocate_time": 0, "breathes_air": true, "breathes_water": false },
+      "minecraft:experience_reward": { "on_death": "0" },
+      "minecraft:loot": { "table": "loot_tables/artifacts/empty.json" },
+      "minecraft:behavior.float": { "priority": 1 },
+      "minecraft:behavior.melee_attack": { "priority": 4, "speed_multiplier": 1.0, "track_target": true },
+      "minecraft:behavior.follow_owner": { "priority": 5, "speed_multiplier": 1.0, "start_distance": 10, "stop_distance": 2 },
+      "minecraft:behavior.random_stroll": { "priority": 7, "speed_multiplier": 1.0 },
+      "minecraft:behavior.look_at_player": { "priority": 9, "look_distance": 8 },
+      "minecraft:behavior.random_look_around": { "priority": 9 },
+      "minecraft:behavior.owner_hurt_by_target": { "priority": 1 },
+      "minecraft:behavior.owner_hurt_target": { "priority": 2 },
+      "minecraft:behavior.hurt_by_target": { "priority": 3 },
+      "minecraft:behavior.nearest_attackable_target": {
+        "priority": 4,
+        "must_see": true,
+        "reselect_targets": true,
+        "entity_types": [
+          {
+            "filters": {
+              "all_of": [
+                { "test": "is_family", "subject": "other", "value": "monster" },
+                { "test": "is_family", "subject": "other", "operator": "!=", "value": "creeper" },
+                { "test": "is_family", "subject": "other", "operator": "!=", "value": "ghast" }
+              ]
+            },
+            "max_dist": 16
+          }
+        ]
+      },
+      "minecraft:ambient_sound_interval": { "value": 8.0, "range": 16.0, "event_name": "ambient" }
+    },
+    "events": {
+      "gf:tame": { "add": { "component_groups": ["gf:tamed"] }, "remove": { "component_groups": ["gf:untamed"] } },
+      "gf:as_baby": { "add": { "component_groups": ["gf:baby"] } },
+      "gf:as_adult": { "remove": { "component_groups": ["gf:baby"] } },
+      "minecraft:entity_spawned": { "add": { "component_groups": ["gf:untamed"] } }
+    }
+  }
+}

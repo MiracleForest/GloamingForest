@@ -218,9 +218,10 @@ Shared files get one owner by rule:
   tier changes nothing in Java). With these, the vanilla pickaxes, axes, shovels and hoes mine and harvest a TF
   block exactly as the vanilla block of the same Java values (measured, `import.harvest_mining`). Bedrock's vanilla
   shears and swords single out their own leaves and cobwebs by block type, not by a tag a JSON block can carry:
-  on TF's leaves the vanilla shears mine at 5 (the speed they give `minecraft:is_shears_item_destructible`; Java
-  15) and a vanilla sword at 1 (Java 1.5) - a gap of the engine, left to the leaves' owner (U3) and the sword
-  owners, who can correct it at run time through F9's item contract.
+  on a JSON block the vanilla shears mine at 5 (the speed they give `minecraft:is_shears_item_destructible`; Java
+  15 on `#minecraft:leaves`) and a vanilla sword at 1 (Java 1.5) - a gap of the engine, closed by the leaves' owner
+  (U3) with the leaves' `destructible_by_mining` `item_specific_speeds` (`tools/import/overrides/trees.json`): on
+  TF's leaves the shears mine at Java's 15 (`import.harvest_mining`, `trees.leaf_tool_speeds`).
   A JSON block cannot declare Java's `requiresCorrectToolForDrops` (vanilla blocks carry it in their vanilla
   block data), so the import lists those blocks in `data/gf/import/harvest.json` and the runtime
   (`src/feature/ext/import/Harvest.cpp`, extension of this contract) sets the engine's flag on their block types

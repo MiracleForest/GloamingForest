@@ -1,0 +1,19 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "twilightforest:lich_tower/7x7/flat_roof",
+  "size": [9, 2, 9],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"minecraft:stone_brick_slab","Properties":{"type":"bottom"}},
+    {"Name":"minecraft:stone_bricks"},
+    {"Name":"minecraft:stone_brick_wall"}
+  ],
+  "blocks": [
+    [2, 10], [1, 7], [2, 2], [1, 7], [2, 2], [1, 7], [2, 2], [1, 7], [2, 2], [1, 7], [2, 2], [1, 7], [2, 2], [1, 7], [2, 10], [3, 1],
+    [0, 7], [3, 1], [0, 63], [3, 1], [0, 7], [3, 1]
+  ],
+  "jigsaw": [
+    {"pos":[4,0,4],"front":"down","top":"north","pool":"minecraft:empty","name":"gf:lich_tower/roof","target":""}
+  ]
+}

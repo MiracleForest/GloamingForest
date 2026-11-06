@@ -1,0 +1,19 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "twilightforest:lich_tower/5x5/beard_trim",
+  "size": [7, 3, 7],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"minecraft:cobblestone"},
+    {"Name":"minecraft:stone_bricks"},
+    {"Name":"minecraft:mossy_cobblestone"}
+  ],
+  "blocks": [
+    [1, 49], [3, 8], [1, 5], [3, 2], [1, 5], [3, 2], [1, 5], [3, 2], [1, 5], [3, 2], [1, 5], [3, 8], [2, 8], [1, 5], [2, 2], [1, 5],
+    [2, 2], [1, 5], [2, 2], [1, 5], [2, 2], [1, 5], [2, 8]
+  ],
+  "jigsaw": [
+    {"pos":[3,2,3],"front":"up","top":"north","pool":"minecraft:empty","name":"gf:lich_tower/beard","target":""}
+  ]
+}
