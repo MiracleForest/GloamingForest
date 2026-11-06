@@ -93,6 +93,9 @@ $mx = 4300; $mz = 4300; $my = -60
 Invoke-Chat '/clear @s'
 # a hollow 3 x 4 x 3 shell of aurora blocks around the player: the crosshair is on an aurora block
 # (within reach) whichever way the camera points
+# (go there first: /fill needs the chunk loaded)
+Invoke-Teleport "/tp @s $($mx + 0.5) $($my + 6) $($mz + 0.5)"
+Start-Sleep -Seconds 2
 Invoke-Chat "/fill $($mx - 1) $my $($mz - 1) $($mx + 1) $($my + 3) $($mz + 1) twilightforest:aurora_block hollow"
 Invoke-SelfTest 'aurora.client_miner' | Out-Null
 Invoke-Chat '/gamemode survival'
