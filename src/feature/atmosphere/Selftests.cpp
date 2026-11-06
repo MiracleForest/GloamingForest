@@ -14,6 +14,7 @@
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/level/dimension/DimensionType.h"
 #include "mc/world/level/Level.h"
+#include "mc/world/actor/Actor.h"
 
 #include "core/atmosphere/Atmosphere.h"
 #include "feature/atmosphere/Atmosphere.h"
@@ -98,13 +99,22 @@ GF_REGISTER_SELFTEST("atmosphere.fog_feet", [](Context& ctx) -> ll::coro::CoroTa
     // getPosition is the eyes, 1.62 higher). Feet at y 19.5 in the dark forest: the near fog.
     ctx.require(co_await ctx.inTwilight(), "the Twilight Forest is available");
     auto  at = ctx.testPos(1510, 2);
-    auto& sp = ctx.spawnPlayer();
+    auto const id = ctx.spawnPlayer().getOrCreateUniqueID();
+    auto       find = [&]() -> Player* {
+        auto level = ll::service::getLevel();
+        auto* a    = level ? level->fetchEntity(id, false) : nullptr;
+        return a && a->isPlayer() ? static_cast<Player*>(a) : nullptr;
+    };
+    ctx.require(find() != nullptr, "simulated player spawned");
+    find()->teleport(Vec3{at.x + 0.5f, 19.5f, at.z + 0.5f}, DimensionType(at.dim));
+    co_await ctx.ticks(1);
+    Player* p = find();
+    ctx.require(p != nullptr, "simulated player still there");
+    auto& sp = *p;
+    // the feet as the teleport put them (held there for this check: gravity moves them later)
     sp.teleport(Vec3{at.x + 0.5f, 19.5f, at.z + 0.5f}, DimensionType(at.dim));
     double const feet = sp.getFeetPos().y, eyes = sp.getPosition().y;
-    if (std::abs(feet - 19.5) > 0.01) {
-        ctx.info("the simulated player's feet are at y " + std::to_string(feet) + " after the teleport: the feet case is not checked");
-        co_return;
-    }
+    ctx.check(feet > 18.9 && feet < 19.9, "the simulated player's feet are just below y 20 (" + std::to_string(feet) + ")");
     ctx.check(eyes > 20.0, "the eyes are above y 20 (" + std::to_string(eyes) + ")");
     at::forgetFog(sp);
     at::updateFog(sp, "twilightforest:dark_forest");

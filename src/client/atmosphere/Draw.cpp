@@ -85,6 +85,7 @@ struct TextureCache {
     struct Entry {
         mce::TexturePtr*                      ptr = nullptr; ///< kept for the process (handed out)
         unsigned                              generation = 0;
+        bool                                  fallback   = false; ///< the white upload failed: the pack's texture
         std::chrono::steady_clock::time_point checked{};
     };
     std::mutex                             mutex;
@@ -139,8 +140,8 @@ mce::TexturePtr const* texture(std::string const& path) {
     auto group = c->getTextureGroup();
     if (!group) return nullptr;
     bool const white    = path == kWhiteKey;
-    auto const location = white ? ResourceLocation(Core::PathView("gf_atmosphere/white")) : render::textureLocation(path);
     auto&      e        = tc.entries[path];
+    auto const location = !white ? render::textureLocation(path) : e.fallback ? render::textureLocation("textures/atmosphere/white") : ResourceLocation(Core::PathView("gf_atmosphere/white"));
     auto const now      = std::chrono::steady_clock::now();
     bool       fetch    = !e.ptr || e.generation != tc.generation;
     // once a second: still loaded? (a resource reload drops what it does not know)
@@ -155,9 +156,11 @@ mce::TexturePtr const* texture(std::string const& path) {
     e.generation = tc.generation;
     e.checked    = now;
     if (white) {
-        if (uploadWhite(*group, location, *e.ptr)) return e.ptr;
-        // the pack's own white texture when the upload failed
-        *e.ptr = group->getTexture(render::textureLocation("textures/atmosphere/white"), true, std::nullopt, cg::TextureSetLayerType::Color);
+        e.fallback = false;
+        if (uploadWhite(*group, ResourceLocation(Core::PathView("gf_atmosphere/white")), *e.ptr)) return e.ptr;
+        // the pack's own white texture when the upload failed (checked under its own location)
+        e.fallback = true;
+        *e.ptr     = group->getTexture(render::textureLocation("textures/atmosphere/white"), true, std::nullopt, cg::TextureSetLayerType::Color);
         return e.ptr;
     }
     *e.ptr = group->getTexture(location, e.generation > 1, std::nullopt, cg::TextureSetLayerType::Color);

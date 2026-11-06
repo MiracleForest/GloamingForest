@@ -10,7 +10,8 @@ fallback. Spec: [docs/spec/atmosphere.md](../spec/atmosphere.md).
 |---|---|
 | `src/core/atmosphere/` | Pure maths (gtested in `tests/atmosphere/`): biome sky / fog colours, fixed time, fog colour and planes, `FogSmoother` (FogHandler), TF's star field, the weather columns (`lockedColumn`, `sparkleColumn`, IntervalUtils), the Ur-Ghast rain, the aurora counter and the aurora shader (OpenSimplex2 ImproveXY, ray march, fog) on the CPU, the birthday splash. |
 | `src/client/atmosphere/` | Client mod: F12 sky provider for the TF dimension (sky, stars, fog, clouds, weather), the aurora worker thread, the Ur-Ghast rain splashes and sounds, the `atmosphere.*` client selftests. |
-| `src/feature/atmosphere/` | Config section `atmosphere`, the vanilla fog fallback (PlayerFogPacket), server selftests and the `atmosphere.show_*` previews of the client scenario. |
+| `src/feature/atmosphere/` | Config section `atmosphere`, the vanilla fog fallback (PlayerFogPacket), the `atmosphere.aurora_biomes` screen type (the "Edit Biomes" editor; a form for vanilla players), server selftests and the `atmosphere.show_*` previews and `atmosphere.show_cal_*` calibration previews of the client scenario. |
+| `src/client/atmosphere/AuroraBiomesScreen.cpp` | TFClientConfig's auroraBiomes list editor (config.twilightforest.aurora_biomes, .button, .tooltip): edits the client's own `config/atmosphere.json`, also when joined to a remote server. |
 | `src/feature/ext/atmosphere/ClientHooks.cpp` | Contract extension (R18): HudVignetteRenderer (killVignette) and SplashTextRenderer (birthday splash) hooks. |
 | `src/feature/ext/atmosphere/SkyView.{h,cpp}` | Contract extension (R18, to fold into F12's SkyProvider): a per-dimension view override that sets the frame's cloud colour and hides the sunrise colour band (`ViewRenderObject` in `LevelRendererCamera::$render`). |
 | `assets/pack/rp/fogs/atmosphere/` | 24 resource pack fog definitions. |
@@ -64,6 +65,23 @@ fallback. Spec: [docs/spec/atmosphere.md](../spec/atmosphere.md).
 - Fog: Bedrock has one distance fog; it takes FogHandler's terrain planes (the sky fog is smoothed alongside), stepped
   by the time since the last step in frames of 1/60 s (TF steps per rendered frame). A boss bar asking for world fog
   (the companion's TFBossBarPacket state) gives the near fog, as `BossOverlay#shouldCreateWorldFog`.
+  - Only for FogType.NONE: with the camera under the surface of water or lava (FluidState#getHeight) or in powder snow
+    the provider returns nothing and the game's own fog stays (`atmosphere.client_fog_fluid`).
+  - isFoggyAt and FogHandler read the feet (`player.position()`, `player.blockPosition()`); Bedrock's getPosition is
+    the eyes, so the client and the vanilla fallback use getFeetPos / getFeetBlockPos (`atmosphere.fog_feet`).
+  - The colour is FogRenderer#setupColor's: the biome fog and sky colours blended over the 6 x 6 x 6 quart cells around
+    the camera (CubicSampler), darkened by the rain and thunder levels and towards black below the dimension's floor.
+- Stars: TFSkyRenderer draws them after FogRenderer.setupNoFog. Bedrock fogs the sky pass by distance, so the stars (and
+  the sky-pass aurora and void plate) are scaled to a few blocks from the camera (the same picture), inside every fog
+  start: the stars stay over the spooky forest's near fog.
+- Void plate: the dark buffer is opaque black (shader colour 0 0 0 1, no blend) drawn after the stars, fogged by TF's
+  sky fog through the position shader (black below, the fog colour towards the horizon, 32 rings per fan triangle);
+  drawn with the particle blend material at alpha 1, so the stars below the horizon are hidden.
+- Textures: looked up again for every level renderer and after leaving a level, and reloaded when the texture group
+  dropped them (a remote server's pack stack loads on join: the aurora drew the missing texture, magenta x its colours,
+  on a modded client joined to a BDS). The white texture of the vertex-coloured draws is uploaded from memory.
+- The config is read through a snapshot rebuilt only on the thread that loaded it (install, `gf::config::onReload`):
+  the render thread never touches the live struct.
 - Vibrant Visuals (deferred PBR, no way to add a shader):
   - VV paints its own sky after the sky pass, so the stars, the aurora and the void plate draw in the world pass there
     (at 90 % of the far plane, depth tested). VV lights those draws with the scene light: at night the aurora shows as

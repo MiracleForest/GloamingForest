@@ -177,6 +177,7 @@ struct Shared {
     // the camera of the last frame (render thread) and what it is in (client tick): FogHandler and
     // TF's fog colour apply only for FogType.NONE
     std::optional<Vec3> camera;
+    int                 cameraDim = -1; ///< the dimension the camera was in
     bool                cameraInFluid = false;
     // FogRenderer#setupColor's inputs (client tick): the biome fog and sky colours blended around
     // the camera (CubicSampler), the level's rain and thunder, the camera's height above the floor
@@ -481,17 +482,20 @@ bool cameraInFluid(BlockSource& region, Vec3 const& cam) {
 /// (CubicSampler#gaussianSampleVec3 of FogRenderer#setupColor and ClientLevel#getSkyColor). A biome
 /// that is not TF's takes vanilla Java's default fog (0xC0D8FF) and plains sky (0x78A7FF) colours.
 struct BlendGrid {
-    int                     i = 0, j = 0, k = 0, gen = -1;
-    BlockSource const*      region = nullptr;
+    int                     i = 0, j = 0, k = 0, gen = -1, dim = -1;
+    unsigned                level = 0; ///< textureGeneration(): bumped with every level left or renderer made
     std::array<ca::Rgb, 216> fog{}, sky{};
 };
 void blendedColours(BlockSource& region, Vec3 const& cam, Preview const& preview, int previewGen, int minY, int maxY, ca::Rgb& fog, ca::Rgb& sky) {
     static BlendGrid grid; // client thread
     double const     qx = (cam.x - 2.0) * 0.25, qy = (cam.y - 2.0) * 0.25, qz = (cam.z - 2.0) * 0.25;
     int const        i = static_cast<int>(std::floor(qx)), j = static_cast<int>(std::floor(qy)), k = static_cast<int>(std::floor(qz));
-    if (grid.gen != previewGen || grid.region != &region || grid.i != i || grid.j != j || grid.k != k) {
-        grid.gen    = previewGen;
-        grid.region = &region;
+    unsigned const level = textureGeneration();
+    int const      dim   = static_cast<int>(region.getDimensionId());
+    if (grid.gen != previewGen || grid.level != level || grid.dim != dim || grid.i != i || grid.j != j || grid.k != k) {
+        grid.gen   = previewGen;
+        grid.level = level;
+        grid.dim   = dim;
         grid.i = i, grid.j = j, grid.k = k;
         std::unordered_map<std::string, std::pair<ca::Rgb, ca::Rgb>> memo;
         for (int l = 0; l < 6; ++l)
@@ -548,12 +552,14 @@ void clientTick() {
     checkAuroraBiomes(p->getLevel(), *cfg);
     Preview             preview;
     std::optional<Vec3> lastCamera;
+    int                 lastCameraDim = -1;
     int                 previewGen = 0, scanX = 0, scanZ = 0, scanTick = 0, scanGen = 0, ticks = 0;
     {
         std::lock_guard lock(s.mutex);
         preview    = s.preview;
         previewGen = s.previewGen;
         lastCamera = s.camera;
+        lastCameraDim = s.cameraDim;
         scanX = s.scanX, scanZ = s.scanZ, scanTick = s.scanTick, scanGen = s.scanGen, ticks = s.ticks + 1;
     }
     bool const  twilight = inTwilight(*p);
@@ -563,7 +569,7 @@ void clientTick() {
 
     // FogRenderer's view of the camera: its fluid (FogType), the blended biome colours, the weather
     // and the height above the floor (the render thread reads them for the fog)
-    Vec3 const  cam      = lastCamera && (lastCamera->x - p->getPosition().x) * (lastCamera->x - p->getPosition().x) + (lastCamera->z - p->getPosition().z) * (lastCamera->z - p->getPosition().z) < 64.0f * 64.0f ? *lastCamera : p->getPosition();
+    Vec3 const  cam      = lastCamera && lastCameraDim == static_cast<int>(p->getDimensionId()) && (lastCamera->x - p->getPosition().x) * (lastCamera->x - p->getPosition().x) + (lastCamera->z - p->getPosition().z) * (lastCamera->z - p->getPosition().z) < 64.0f * 64.0f ? *lastCamera : p->getPosition();
     bool const  inFluid  = cameraInFluid(region, cam);
     int const   minY     = p->getDimension().mHeightRange->mMin;
     int const   maxY     = p->getDimension().mHeightRange->mMax;
@@ -1193,7 +1199,8 @@ void worldFrame(render::RenderContext& ctx, float partial) {
     if (!p) return;
     {
         std::lock_guard lock(shared().mutex);
-        shared().camera = Vec3{static_cast<float>(ctx.camera.x), static_cast<float>(ctx.camera.y), static_cast<float>(ctx.camera.z)};
+        shared().camera    = Vec3{static_cast<float>(ctx.camera.x), static_cast<float>(ctx.camera.y), static_cast<float>(ctx.camera.z)};
+        shared().cameraDim = static_cast<int>(p->getDimensionId());
     }
     auto cfg = config();
     if (cfg->aurora) {
@@ -1512,17 +1519,15 @@ std::vector<std::string> auroraBiomesConfigured() { return config()->raw; }
 bool setAuroraBiomes(std::vector<std::string> const& biomes) {
     // the client's own config file (a client joined to a remote server edits its own copy); the
     // snapshot is rebuilt from it here, the live struct at the next reload
-    bool written = false;
-    for (auto const& e : gf::config::ConfigRegistry::entries())
-        if (e.section == "atmosphere" && e.write) {
-            nlohmann::ordered_json patch = nlohmann::ordered_json::object();
-            patch["auroraBiomes"]        = biomes;
-            written                      = e.write(patch, gf::config::configDir() / "atmosphere.json");
-        }
+    // written from the snapshot (never the live struct, which a reload assigns on the server thread)
     auto const           cur = config();
     at::AtmosphereConfig copy{};
     copy.auroraBiomes = biomes;
     copy.sky = cur->sky, copy.fog = cur->fog, copy.weather = cur->weather, copy.aurora = cur->aurora;
+    bool written = false;
+    try {
+        written = ll::config::saveConfig(copy, gf::config::configDir() / "atmosphere.json");
+    } catch (...) {}
     buildConfigView(copy);
     log().info("atmosphere: aurora biomes set to {} ({})", nlohmann::json(biomes).dump(), written ? "saved" : "not saved");
     return written;

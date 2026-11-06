@@ -22,7 +22,6 @@
 #include "mc/deps/core/math/Color.h"
 #include "mc/deps/minecraft_renderer/objects/CloudRenderObject.h"
 #include "mc/deps/minecraft_renderer/objects/SkyRenderObject.h"
-#include "mc/deps/minecraft_renderer/objects/SkyRenderObject.h"
 #include "mc/deps/minecraft_renderer/objects/ViewRenderData.h"
 #include "mc/deps/minecraft_renderer/objects/ViewRenderObject.h"
 
@@ -98,7 +97,8 @@ LL_TYPE_INSTANCE_HOOK(
             if (o->noSunrise) {
                 auto& s = obj.mViewData->mSunriseColor.get();
                 s       = mce::Color{0.0f, 0.0f, 0.0f, 0.0f};
-            }            if (o->starBrightness) obj.mSkyState->mStarBrightness = *o->starBrightness;
+            }
+            if (o->starBrightness) obj.mSkyState->mStarBrightness = *o->starBrightness;
             if (o->timeOfDay) {
                 obj.mSkyState->mTimeOfDay   = *o->timeOfDay;
                 obj.mSkyState->mSunAngleOne = *o->timeOfDay;
