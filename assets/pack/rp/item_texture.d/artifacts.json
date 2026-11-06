@@ -1,0 +1,4 @@
+{
+  "tf_artifacts_brittle_potion_flask": { "textures": "textures/twilightforest/item/brittle_potion_flask" },
+  "tf_artifacts_greater_potion_flask": { "textures": "textures/twilightforest/item/greater_potion_flask" }
+}

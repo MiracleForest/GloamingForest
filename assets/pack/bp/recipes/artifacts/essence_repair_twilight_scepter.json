@@ -1,0 +1,25 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "twilightforest:essence_repair_recipe_twilight_scepter"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "ingredients": [
+      {
+        "item": "twilightforest:twilight_scepter"
+      },
+      {
+        "item": "twilightforest:exanimate_essence"
+      }
+    ],
+    "unlock": {
+      "context": "AlwaysUnlocked"
+    },
+    "result": {
+      "item": "twilightforest:twilight_scepter"
+    }
+  }
+}
