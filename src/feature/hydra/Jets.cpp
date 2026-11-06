@@ -548,6 +548,10 @@ void installJets() {
             gf::blockevents::onPlaced(id, [](BlockSource& region, BlockPos const& pos, Block const&, Actor*) {
                 if (!takeGenerated(pos.x, pos.y, pos.z)) remember(game::globalPos(region, pos));
             });
+        // a generated jet's note whose placement was never reported (or that a later write of the
+        // feature covered) goes with the block: a jet placed there later is remembered
+        for (auto const* id : {kFireJet, kEncasedJet, kSmoker, kEncasedSmoker})
+            gf::blockevents::onRemoved(id, [](BlockSource&, BlockPos const& pos, Block const&) { (void)takeGenerated(pos.x, pos.y, pos.z); });
         gf::game::db::onWorldReady([] { loadKnown(); });
         gf::game::db::onWorldSave([] { saveKnown(); });
         gf::game::db::onWorldClosed([] {

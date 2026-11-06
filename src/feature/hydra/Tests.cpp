@@ -841,6 +841,48 @@ GF_REGISTER_SELFTEST("hydra.mortar_leeway", [](Context& ctx) -> ll::coro::CoroTa
     (void)box;
 });
 
+namespace {
+
+/// Summons a vanilla projectile `id` at `at` moving `motion` (shooter `owner`, 0: none); nullptr: failed.
+Actor* summonProjectile(BlockSource& region, int dim, std::string const& id, Vec3 const& at, Vec3 const& motion, std::int64_t owner) {
+    char cmd[200];
+    std::snprintf(cmd, sizeof cmd, "summon %s %.3f %.3f %.3f", id.c_str(), at.x, at.y, at.z);
+    (void)gf::selftest::runServerCommand(cmd, dim);
+    Actor* p = nullptr;
+    for (auto* a : fe::actorsIn(region, dim, AABB{Vec3{at.x - 0.6f, at.y - 0.6f, at.z - 0.6f}, Vec3{at.x + 0.6f, at.y + 0.6f, at.z + 0.6f}}))
+        if (a->getTypeName() == id) p = a;
+    if (!p) return nullptr;
+    if (owner) {
+        ActorUniqueID o;
+        o.rawID = owner;
+        p->setOwner(o);
+    }
+    fe::setMotion(*p, motion);
+    p->lerpMotion(motion);
+    return p;
+}
+
+/// Holds mortar `mid` still at `at` (feet) until its fuse changes or `ticks` pass; its fuse then.
+ll::coro::CoroTask<int> holdMortar(std::int64_t mid, Vec3 at, int ticks) {
+    int start = -1;
+    for (int i = 0; i < ticks; ++i) {
+        auto* m = fe::actorById(mid);
+        if (!m) co_return -1;
+        auto mv = mortarView(*m);
+        if (!mv) co_return -1;
+        if (start < 0) start = mv->fuse;
+        if (mv->fuse != start) co_return mv->fuse;
+        m->moveTo(at, Vec2{0, 0});
+        gf::projectile::ext::setVelocity(*m, Vec3{0.0f, 0.0f, 0.0f});
+        co_await Context::ticks(1);
+    }
+    auto* m = fe::actorById(mid);
+    auto  mv = m ? mortarView(*m) : std::nullopt;
+    co_return mv ? mv->fuse : -1;
+}
+
+} // namespace
+
 // HydraMortar's boxes: the pick radius 1.5 (custom_hit_test, a player's melee) is not what a
 // projectile hits; a Java projectile clips the 0.75 box inflated by 0.3. A vanilla arrow beside the
 // mortar (1.4 blocks off, inside the pick box) does not reflect it; one inside the Java box does.
@@ -874,12 +916,7 @@ GF_REGISTER_SELFTEST("hydra.mortar_projectile_box", [](Context& ctx) -> ll::coro
         auto const& bb = mm->getAABB();
         float       cx = (bb.min.x + bb.max.x) / 2.0f, cz = (bb.min.z + bb.max.z) / 2.0f;
         Vec3        ap{cx + off, bb.min.y + 0.3f, cz};
-        char        cmd[160];
-        std::snprintf(cmd, sizeof cmd, "summon minecraft:arrow %.3f %.3f %.3f", ap.x, ap.y, ap.z);
-        (void)gf::selftest::runServerCommand(cmd, home.dim);
-        Actor* arrow = nullptr;
-        for (auto* a : fe::actorsIn(*region, home.dim, AABB{Vec3{ap.x - 0.6f, ap.y - 0.6f, ap.z - 0.6f}, Vec3{ap.x + 0.6f, ap.y + 0.6f, ap.z + 0.6f}}))
-            if (a->getTypeName() == "minecraft:arrow") arrow = a;
+        Actor*      arrow = summonProjectile(*region, home.dim, "minecraft:arrow", ap, Vec3{0.0f, 0.0f, 0.0f}, 0);
         if (!arrow) return false;
         gf::combat::hurt(*mm, 2.0F, "minecraft:arrow", pl, arrow);
         arrow->remove();
@@ -897,47 +934,6 @@ GF_REGISTER_SELFTEST("hydra.mortar_projectile_box", [](Context& ctx) -> ll::coro
     co_await ctx.ticks(2);
     (void)box;
 });
-
-namespace {
-
-/// Summons a vanilla projectile `id` at `at` moving `motion` (shooter `owner`, 0: none); nullptr: failed.
-Actor* summonProjectile(BlockSource& region, int dim, std::string const& id, Vec3 const& at, Vec3 const& motion, std::int64_t owner) {
-    char cmd[200];
-    std::snprintf(cmd, sizeof cmd, "summon %s %.3f %.3f %.3f", id.c_str(), at.x, at.y, at.z);
-    (void)gf::selftest::runServerCommand(cmd, dim);
-    Actor* p = nullptr;
-    for (auto* a : fe::actorsIn(region, dim, AABB{Vec3{at.x - 0.6f, at.y - 0.6f, at.z - 0.6f}, Vec3{at.x + 0.6f, at.y + 0.6f, at.z + 0.6f}}))
-        if (a->getTypeName() == id) p = a;
-    if (!p) return nullptr;
-    if (owner) {
-        ActorUniqueID o;
-        o.rawID = owner;
-        p->setOwner(o);
-    }
-    fe::setMotion(*p, motion);
-    return p;
-}
-
-/// Holds mortar `mid` still at `at` (feet) until its fuse changes or `ticks` pass; its fuse then.
-ll::coro::CoroTask<int> holdMortar(std::int64_t mid, Vec3 at, int ticks) {
-    int start = -1;
-    for (int i = 0; i < ticks; ++i) {
-        auto* m = fe::actorById(mid);
-        if (!m) co_return -1;
-        auto mv = mortarView(*m);
-        if (!mv) co_return -1;
-        if (start < 0) start = mv->fuse;
-        if (mv->fuse != start) co_return mv->fuse;
-        m->moveTo(at, Vec2{0, 0});
-        gf::projectile::ext::setVelocity(*m, Vec3{0.0f, 0.0f, 0.0f});
-        co_await Context::ticks(1);
-    }
-    auto* m = fe::actorById(mid);
-    auto  mv = m ? mortarView(*m) : std::nullopt;
-    co_return mv ? mv->fuse : -1;
-}
-
-} // namespace
 
 // HydraMortar#hurt with a shooterless arrow (a dispenser's, a summoned one): in 1.21.1 the arrow is
 // its own causing entity (arrow(this, owner ?: this)), so the mortar is reflected along the arrow's
