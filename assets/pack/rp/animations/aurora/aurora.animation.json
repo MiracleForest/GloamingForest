@@ -1043,119 +1043,12 @@
     "animation.twilightforest.unstable_ice_core.swell": {
       "loop": true,
       "bones": {
-        "head": {
-          "scale": [
-            "v.swell_xz",
-            "v.swell_y",
-            "v.swell_xz"
-          ]
-        },
-        "spike_0": {
-          "scale": [
-            "v.swell_xz",
-            "v.swell_y",
-            "v.swell_xz"
-          ]
-        },
-        "spike_1": {
-          "scale": [
-            "v.swell_xz",
-            "v.swell_y",
-            "v.swell_xz"
-          ]
-        },
-        "spike_2": {
-          "scale": [
-            "v.swell_xz",
-            "v.swell_y",
-            "v.swell_xz"
-          ]
-        },
-        "spike_3": {
-          "scale": [
-            "v.swell_xz",
-            "v.swell_y",
-            "v.swell_xz"
-          ]
-        },
-        "spike_4": {
-          "scale": [
-            "v.swell_xz",
-            "v.swell_y",
-            "v.swell_xz"
-          ]
-        },
-        "spike_5": {
-          "scale": [
-            "v.swell_xz",
-            "v.swell_y",
-            "v.swell_xz"
-          ]
-        },
-        "spike_6": {
-          "scale": [
-            "v.swell_xz",
-            "v.swell_y",
-            "v.swell_xz"
-          ]
-        },
-        "spike_7": {
-          "scale": [
-            "v.swell_xz",
-            "v.swell_y",
-            "v.swell_xz"
-          ]
-        },
-        "spike_8": {
-          "scale": [
-            "v.swell_xz",
-            "v.swell_y",
-            "v.swell_xz"
-          ]
-        },
-        "spike_9": {
-          "scale": [
-            "v.swell_xz",
-            "v.swell_y",
-            "v.swell_xz"
-          ]
-        },
-        "spike_10": {
-          "scale": [
-            "v.swell_xz",
-            "v.swell_y",
-            "v.swell_xz"
-          ]
-        },
-        "spike_11": {
-          "scale": [
-            "v.swell_xz",
-            "v.swell_y",
-            "v.swell_xz"
-          ]
-        },
-        "spike_12": {
-          "scale": [
-            "v.swell_xz",
-            "v.swell_y",
-            "v.swell_xz"
-          ]
-        },
-        "spike_13": {
-          "scale": [
-            "v.swell_xz",
-            "v.swell_y",
-            "v.swell_xz"
-          ]
-        },
-        "spike_14": {
-          "scale": [
-            "v.swell_xz",
-            "v.swell_y",
-            "v.swell_xz"
-          ]
-        },
-        "spike_15": {
+        "root": {
+          "position": [
+            0,
+            "math.sin(((q.life_time * 20) * 0.2) * 57.29578) * 0.15 * 16",
+            0
+          ],
           "scale": [
             "v.swell_xz",
             "v.swell_y",

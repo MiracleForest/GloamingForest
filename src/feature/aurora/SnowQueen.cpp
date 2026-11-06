@@ -96,11 +96,6 @@ std::map<std::int64_t, Queen>& queens() {
 
 std::int64_t uidOf(Actor const& a) { return a.getOrCreateUniqueID().rawID; }
 
-/// The queens whose native goals are added (in this process).
-std::set<std::int64_t>& queenGoals() {
-    static std::set<std::int64_t> s;
-    return s;
-}
 
 Queen& stateOf(Actor& self) {
     auto [it, fresh] = queens().try_emplace(uidOf(self));
@@ -753,7 +748,9 @@ void recordArrows(Mob& self);
 void queenTick(Actor& actor) {
     auto* self = fe::asMob(actor);
     if (!self || !self->isAlive()) return;
-    if (!queenGoals().contains(uidOf(*self))) queenSpawn(*self); // a queen loaded from disk: her goals (and a fresh SUMMON)
+    // a queen whose F8 state is new (loaded from disk, or back after F8 swept the state of her
+    // unloaded chunk): her goals, move control and a fresh SUMMON, as a new Java entity
+    if (!nativeGoalsPresent(*self)) queenSpawn(*self);
     auto& q = stateOf(*self);
     // the hover goals push up; she sinks 0.05 a tick
     auto v = self->getPosDelta();
@@ -780,7 +777,9 @@ void queenTick(Actor& actor) {
 
 void queenSpawn(Actor& actor) {
     auto* self = fe::asMob(actor);
-    if (!self || !queenGoals().insert(uidOf(*self)).second) return;
+    if (!self || nativeGoalsPresent(*self)) return;
+    // the fields of a new SnowQueen (not saved): SUMMON with 6 summons
+    queens().erase(uidOf(*self));
     (void)stateOf(*self);
     gf::entity::setMoveControl(*self, gf::entity::MoveKind::Hovering);
     gf::entity::addGoal(*self, 1, std::make_shared<HoverSummonGoal>(*self));
@@ -855,13 +854,13 @@ void installSnowQueen() {
         .hurt    = queenHurt,
         .die     = [](Actor& self, std::string const&, Actor*) {
             queens().erase(uidOf(self));
-            queenGoals().erase(uidOf(self));
+
         },
     });
     // a client opens many worlds in one process and unique ids repeat: no state outlives its world
     gf::game::db::onWorldClosed([] {
         queens().clear();
-        queenGoals().clear();
+
         arrowSnaps().clear();
     });
     // SnowQueen#hurt: damageWhileBeaming += damage when the hurt succeeded (not the shields' hits)

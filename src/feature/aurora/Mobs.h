@@ -47,6 +47,12 @@ int crystalMaxAgeForTest(Actor& crystal);
 /// recompute it with the box).
 void applyJavaEyeHeight(Actor& actor);
 
+/// Whether F8's per-actor state of `actor` holds native goals (it is dropped by F8's sweep some
+/// time after the actor stops resolving, e.g. in an unloaded chunk: the goals must come back).
+[[nodiscard]] bool nativeGoalsPresent(Actor& actor);
+/// Test hook: forgets F8's goals, move control and spawn mark of `actor`, as F8's sweep does.
+void dropNativeStateForTest(Actor& actor);
+
 void installMobs();
 void installSnowQueen();
 

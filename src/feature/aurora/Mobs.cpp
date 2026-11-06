@@ -477,7 +477,8 @@ void unstableCoreTick(Actor& self) {
         auto v = self.getPosDelta();
         fe::setMotion(self, Vec3{0.0f, std::min(v.y, 0.0f), 0.0f});
     }
-    if (t % 2 == 0 || t >= 60) gf::entity::setProperty(self, "twilightforest:dying", std::min(t, 60));
+    // deathTime, every tick (the client renderer flashes on (t / 2) % 2 and swells with sin(t x 100))
+    gf::entity::setProperty(self, "twilightforest:dying", std::min(t, 60));
     if (t == 60) {
         auto level = ll::service::getLevel();
         bool grief = mobGriefing();
@@ -509,12 +510,24 @@ std::map<std::int64_t, CrystalAge>& crystalAges() {
     return m;
 }
 
-std::set<std::int64_t>& goalsAdded() {
-    static std::set<std::int64_t> s;
-    return s;
+} // namespace
+
+bool nativeGoalsPresent(Actor& actor) {
+    auto const* s = fe::findState(actor.getOrCreateUniqueID().rawID);
+    return s && s->goals && s->goals->size() > 0;
 }
 
-} // namespace
+void dropNativeStateForTest(Actor& actor) {
+    // what F8's sweep leaves for an actor that comes back: a fresh state (no goals, no move
+    // control, onSpawn due on its next tick)
+    if (auto* s = fe::findState(actor.getOrCreateUniqueID().rawID)) {
+        s->goals.reset();
+        s->targets.reset();
+        s->moveKind.reset();
+        s->moveFn  = {};
+        s->spawned = false;
+    }
+}
 
 void applyJavaEyeHeight(Actor& actor) {
     auto const& id = actor.getTypeName();
@@ -532,8 +545,9 @@ void installMobs() {
         gf::entity::Behaviour b;
         b.tick = [type](Actor& self) {
             applyJavaEyeHeight(self);
-            // the native goals, once per actor in this process (spawned or loaded)
-            if (type == kStableIceCore && goalsAdded().insert(self.getOrCreateUniqueID().rawID).second)
+            // the native goals, whenever F8's state of the actor has none (spawned, loaded, or back
+            // after F8 swept the state of its unloaded chunk)
+            if (type == kStableIceCore && !nativeGoalsPresent(self))
                 if (auto* mob = fe::asMob(self)) gf::entity::addGoal(*mob, 1, std::make_shared<RangedAttackGoal>(*mob, 1.25, 20, 10.0F));
             baseIceMobTick(self, type);
             if (type == kUnstableIceCore) unstableCoreTick(self);
@@ -563,7 +577,7 @@ void installMobs() {
                     if (auto* mob = fe::asMob(self)) syncEquipment(*mob);
             };
         }
-        if (type == kStableIceCore) b.die = [](Actor& self, std::string const&, Actor*) { goalsAdded().erase(self.getOrCreateUniqueID().rawID); };
+
         if (type == kIceCrystal) {
             // a crystal read back from the world is a new Java entity: maxCrystalAge 0, it stays
             b.load = [](Actor& self, nlohmann::json const&) { crystalAges().erase(self.getOrCreateUniqueID().rawID); };
@@ -582,8 +596,8 @@ void installMobs() {
         if (dead.getTypeName() == kSnowGuardian) dropSnowGuardianGear(dead, drops, ctx);
     });
     gf::game::db::onWorldClosed([] {
-        goalsAdded().clear();
         crystalAges().clear();
+
     });
 
     // UnstableIceCore#tickDeath: the corpse stays 60 ticks, then explodes

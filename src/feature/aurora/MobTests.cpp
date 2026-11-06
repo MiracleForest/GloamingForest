@@ -37,6 +37,8 @@
 #include "mc/world/attribute/AttributeInstanceConstRef.h"
 #include "mc/world/attribute/SharedAttributes.h"
 #include "mc/deps/shared_types/legacy/EquipmentSlot.h"
+#include "mc/world/Container.h"
+#include "mc/world/actor/player/Inventory.h"
 
 #include "core/aurora/AuroraColor.h"
 #include "feature/aurora/Mobs.h"
@@ -660,6 +662,21 @@ GF_REGISTER_SELFTEST("aurora.aurora_block_mining", [](Context& ctx) -> ll::coro:
         if (ctx.blockAt(block) != "twilightforest:aurora_block") broken = t;
     }
     ctx.check(broken > 0 && broken <= 14, "held mining breaks it in ~10 ticks: " + std::to_string(broken));
+    // the block drops itself (its loot table): an item on the ground, or already in the miner's
+    // inventory (picked up)
+    int drops = 0;
+    for (int t = 0; t < 10 && drops == 0; t++) {
+        co_await ctx.ticks(2);
+        for (auto* a : around(block, "minecraft:item", 3))
+            if (game::items::idOf(static_cast<ItemActor*>(a)->item()) == "twilightforest:aurora_block") drops++;
+        if (auto* pp = static_cast<SimulatedPlayer*>(fe::actorById(spId))) {
+            auto& inv = pp->getInventory();
+            for (int i = 0; i < inv.getContainerSize(); ++i)
+                if (game::items::idOf(inv.getItem(i)) == "twilightforest:aurora_block") drops += game::items::countOf(inv.getItem(i));
+        }
+    }
+    ctx.check(broken < 0 || drops > 0, "the broken aurora block drops itself: " + std::to_string(drops));
+    for (auto* a : around(block, "minecraft:item", 3)) a->remove();
     if (auto* pp = static_cast<SimulatedPlayer*>(fe::actorById(spId))) {
         pp->simulateStopDestroyingBlock();
         gf::progression::revoke(*pp, "twilightforest:progress_glacier");
@@ -777,6 +794,41 @@ GF_REGISTER_SELFTEST("aurora.snow_queen_spawner", [](Context& ctx) -> ll::coro::
     ctx.check(spawned, "the queen appears for a player within 9 and above spawnerY - 4");
     ctx.check(ctx.blockAt(spawner) != "twilightforest:snow_queen_boss_spawner", "the spawner is used up");
     discardAround(spawner, 30);
+});
+
+GF_REGISTER_SELFTEST("aurora.native_state_reload", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // F8 drops the state (goals, move control) of an actor that stopped resolving for 200 ticks (an
+    // unloaded chunk); the Snow Queen and the stable ice core come back with their goals, and the
+    // queen as a new Java entity: SUMMON with six summons
+    DifficultyScope normal(Difficulty::Normal);
+    auto            box   = co_await ctx.flatArea(2870, 24, 24);
+    auto            pos   = core::GlobalPos{ctx.dimension(), box.minX + 12, box.minY + 1, box.minZ + 12};
+    auto*           queen = spawnAt(pos, kSnowQueen, 0.5f, 4.0f);
+    auto*           core  = spawnAt(at(pos, 6, 0, 6), kStableIceCore);
+    ctx.require(queen && core, "a Snow Queen and a stable ice core");
+    auto qid = uidOf(*queen), cid = uidOf(*core);
+    co_await ctx.ticks(3);
+    auto* q = mobById(qid);
+    auto* c = mobById(cid);
+    ctx.require(q && c, "both still there");
+    ctx.check(nativeGoalsPresent(*q) && nativeGoalsPresent(*c), "both have their native goals");
+    setQueenPhaseForTest(*q, 2);
+    ctx.check(queenPhaseForTest(*q) == 2, "the queen beams");
+    dropNativeStateForTest(*q);
+    dropNativeStateForTest(*c);
+    ctx.check(!nativeGoalsPresent(*q) && !nativeGoalsPresent(*c), "F8's state forgotten (as its sweep does)");
+    co_await ctx.ticks(3);
+    q = mobById(qid);
+    c = mobById(cid);
+    ctx.require(q && c, "both still there after the reset");
+    ctx.check(nativeGoalsPresent(*q), "the queen's goals are back");
+    ctx.check(nativeGoalsPresent(*c), "the stable core's ranged attack goal is back");
+    if (auto const* s = fe::findState(qid)) ctx.check(s->moveKind == gf::entity::MoveKind::Hovering, "the queen hovers again");
+    ctx.check(queenPhaseForTest(*q) == 0 && queenSummonsForTest(*q) == 6, "she starts over in SUMMON with six summons");
+    ctx.check(gf::entity::ext::parts(*q).size() == 7, "with seven shields");
+    if (auto* a = fe::actorById(qid)) a->remove();
+    if (auto* a = fe::actorById(cid)) a->remove();
+    discardAround(pos, 30);
 });
 
 // aurora.auroralized_glass_beacon is gone: BDS never computes beacon beam sections (the beam is
