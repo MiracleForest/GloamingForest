@@ -155,6 +155,8 @@ void onTick() {
 } // namespace
 
 void queueWip(worldgen::Region& region, BlockPos const& pos) {
+    // a scratch region (selftest hashes, dimension -1) has no world to spawn the carriers in
+    if (region.dimension() < 0) return;
     auto&           s = st();
     std::lock_guard lock(s.mutex);
     s.jobs.push_back(Job{region.dimension(), pos});
