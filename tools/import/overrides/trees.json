@@ -67,6 +67,19 @@
             "destroy_speed": 0.133333
           }
         ]
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:item_visual",
+        "value": {
+          "geometry": "minecraft:geometry.full_block",
+          "material_instances": {
+            "*": {
+              "texture": "tf_trees_twilight_oak_leaves_item",
+              "render_method": "alpha_test"
+            }
+          }
+        }
       }
     ],
     "bp/blocks/canopy_leaves.json": [
@@ -103,6 +116,19 @@
             "destroy_speed": 0.133333
           }
         ]
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:item_visual",
+        "value": {
+          "geometry": "minecraft:geometry.full_block",
+          "material_instances": {
+            "*": {
+              "texture": "tf_trees_canopy_leaves_item",
+              "render_method": "alpha_test"
+            }
+          }
+        }
       }
     ],
     "bp/blocks/mangrove_leaves.json": [
@@ -139,6 +165,19 @@
             "destroy_speed": 0.133333
           }
         ]
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:item_visual",
+        "value": {
+          "geometry": "minecraft:geometry.full_block",
+          "material_instances": {
+            "*": {
+              "texture": "tf_trees_mangrove_leaves_item",
+              "render_method": "alpha_test"
+            }
+          }
+        }
       }
     ],
     "bp/blocks/rainbow_oak_leaves.json": [
@@ -175,6 +214,19 @@
             "destroy_speed": 0.133333
           }
         ]
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:item_visual",
+        "value": {
+          "geometry": "minecraft:geometry.full_block",
+          "material_instances": {
+            "*": {
+              "texture": "tf_trees_rainbow_oak_leaves_item",
+              "render_method": "alpha_test"
+            }
+          }
+        }
       }
     ],
     "bp/blocks/time_leaves.json": [
@@ -211,6 +263,23 @@
             "destroy_speed": 0.133333
           }
         ]
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:item_visual",
+        "value": {
+          "geometry": "geometry.tf.twilightforest.block.time_leaves",
+          "material_instances": {
+            "*": {
+              "texture": "tf_trees_time_leaves_item",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_trees_time_leaves_item",
+              "render_method": "alpha_test"
+            }
+          }
+        }
       }
     ],
     "bp/blocks/transformation_leaves.json": [
@@ -247,6 +316,23 @@
             "destroy_speed": 0.133333
           }
         ]
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:item_visual",
+        "value": {
+          "geometry": "geometry.tf.twilightforest.block.transformation_leaves",
+          "material_instances": {
+            "*": {
+              "texture": "tf_trees_transformation_leaves_item",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_trees_transformation_leaves_item",
+              "render_method": "alpha_test"
+            }
+          }
+        }
       }
     ],
     "bp/blocks/mining_leaves.json": [
@@ -283,6 +369,23 @@
             "destroy_speed": 0.133333
           }
         ]
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:item_visual",
+        "value": {
+          "geometry": "geometry.tf.twilightforest.block.mining_leaves",
+          "material_instances": {
+            "*": {
+              "texture": "tf_trees_mining_leaves_item",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_trees_mining_leaves_item",
+              "render_method": "alpha_test"
+            }
+          }
+        }
       }
     ],
     "bp/blocks/sorting_leaves.json": [
@@ -319,6 +422,23 @@
             "destroy_speed": 0.133333
           }
         ]
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:item_visual",
+        "value": {
+          "geometry": "geometry.tf.twilightforest.block.sorting_leaves",
+          "material_instances": {
+            "*": {
+              "texture": "tf_trees_sorting_leaves_item",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_trees_sorting_leaves_item",
+              "render_method": "alpha_test"
+            }
+          }
+        }
       }
     ],
     "bp/blocks/dark_leaves.json": [
@@ -355,6 +475,19 @@
             "destroy_speed": 1.333333
           }
         ]
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:item_visual",
+        "value": {
+          "geometry": "minecraft:geometry.full_block",
+          "material_instances": {
+            "*": {
+              "texture": "tf_trees_dark_leaves_item",
+              "render_method": "alpha_test"
+            }
+          }
+        }
       }
     ],
     "data/twilightforest/worldgen/configured_feature/tree/canopy_tree.json": [

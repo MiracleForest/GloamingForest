@@ -70,7 +70,20 @@
           "render_method": "alpha_test"
         }
       },
-      "minecraft:light_dampening": 0
+      "minecraft:light_dampening": 0,
+      "minecraft:item_visual": {
+        "geometry": "geometry.tf.twilightforest.block.time_leaves",
+        "material_instances": {
+          "*": {
+            "texture": "tf_trees_time_leaves_item",
+            "render_method": "alpha_test"
+          },
+          "all": {
+            "texture": "tf_trees_time_leaves_item",
+            "render_method": "alpha_test"
+          }
+        }
+      }
     }
   }
 }

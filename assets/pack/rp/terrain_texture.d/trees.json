@@ -1,0 +1,11 @@
+{
+  "tf_trees_twilight_oak_leaves_item": { "textures": { "path": "textures/blocks/leaves_oak", "tint_color": "#48b518" } },
+  "tf_trees_rainbow_oak_leaves_item": { "textures": { "path": "textures/blocks/leaves_oak", "tint_color": "#48b518" } },
+  "tf_trees_canopy_leaves_item": { "textures": { "path": "textures/blocks/leaves_spruce", "tint_color": "#619961" } },
+  "tf_trees_mangrove_leaves_item": { "textures": { "path": "textures/blocks/leaves_birch", "tint_color": "#80a755" } },
+  "tf_trees_dark_leaves_item": { "textures": { "path": "textures/twilightforest/block/darkwood_leaves", "tint_color": "#48b518" } },
+  "tf_trees_time_leaves_item": { "textures": "textures/blocks/trees/tf-derived/time_leaves_item" },
+  "tf_trees_transformation_leaves_item": { "textures": "textures/blocks/trees/tf-derived/transformation_leaves_item" },
+  "tf_trees_mining_leaves_item": { "textures": "textures/blocks/trees/tf-derived/mining_leaves_item" },
+  "tf_trees_sorting_leaves_item": { "textures": "textures/blocks/trees/tf-derived/sorting_leaves_item" }
+}

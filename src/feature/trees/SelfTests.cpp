@@ -717,19 +717,30 @@ GF_REGISTER_SELFTEST("trees.time_core_ticks", [](Context& ctx) -> ll::coro::Coro
     auto* region = ctx.region();
     ctx.require(region != nullptr, "a region");
     int grown = 0, ticked = 0;
+    // one cycle at a time until a cycle grew the wheat; the farmland is wetted before each cycle (its
+    // own random ticks may dry it out)
     for (int cycle = 0; cycle < 40 && grown == 0; ++cycle) {
+        region = ctx.region();
+        ctx.require(region != nullptr, "a region");
+        if (auto const* wet = game::blockWithStates("minecraft:farmland", {{"moisturized_amount", 7}}); wet && &region->getBlock(bp(soil)) != wet)
+            (void)ctx.setBlock(soil, "minecraft:farmland", {{"moisturized_amount", 7}});
         ticked += performCoreEffect(Core::Time, *region, bp(core));
         grown = game::intState(region->getBlock(bp(crop)), "growth").value_or(0);
         co_await ctx.ticks(1);
     }
     ctx.check(ticked > 0, "the core ticked blocks (" + std::to_string(ticked) + ")");
     ctx.check(grown > 0, "the wheat grew to " + std::to_string(grown));
-    // BlockState#isRandomlyTicking: the state decides, not the block type
+    ctx.cleanupBlock(crop);
+    // BlockState#isRandomlyTicking: the state decides, not the block type. A probe cell the core's
+    // cube never reached (range 1), cleared first, so each probe state is a change
     region = ctx.region();
     ctx.require(region != nullptr, "a region");
+    GlobalPos probe = core.offset(-1, 3, 0);
+    ctx.cleanupBlock(probe);
     auto works = [&](char const* id, nlohmann::json const& states) {
-        ctx.require(ctx.setBlock(crop, id, states), std::string(id) + " " + states.dump());
-        return timeCoreWorks(*region, bp(crop));
+        (void)ctx.setBlock(probe, "minecraft:air", nlohmann::json::object());
+        ctx.require(ctx.setBlock(probe, id, states), std::string(id) + " " + states.dump());
+        return timeCoreWorks(*region, bp(probe));
     };
     ctx.check(works("minecraft:wheat", {{"growth", 3}}), "growing wheat ticks");
     ctx.check(!works("minecraft:wheat", {{"growth", 7}}), "fully grown wheat does not tick (CropBlock: below the maximum age only)");
@@ -742,7 +753,7 @@ GF_REGISTER_SELFTEST("trees.time_core_ticks", [](Context& ctx) -> ll::coro::Coro
     ctx.check(!works("minecraft:nether_wart", {{"age", 3}}), "ripe nether wart does not tick");
     ctx.check(works("minecraft:nether_wart", {{"age", 1}}), "growing nether wart ticks");
     ctx.check(!works("minecraft:cave_vines_body_with_berries", nlohmann::json::object()), "a cave vines body never ticks");
-    ctx.cleanupBlock(crop);
+    (void)ctx.setBlock(probe, "minecraft:air", nlohmann::json::object());
 });
 
 GF_REGISTER_SELFTEST("trees.transformation_core_biome", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -1386,7 +1397,7 @@ GF_REGISTER_SELFTEST("trees.particles_probe", [](Context& ctx) -> ll::coro::Coro
             for (int dy = 0; dy < 6; ++dy)
                 if (!region->getBlock(bp(base.offset(dx, dy, dz))).isAir()) set(base.offset(dx, dy, dz), "minecraft:air", nlohmann::json::object());
         }
-    GlobalPos sorter = base.offset(-4, 0, 0), in = sorter.offset(2, 0, 0), out = sorter.offset(-2, 0, 0), trans = base.offset(4, 0, 0);
+    GlobalPos sorter = base.offset(-4, 0, 0), in = sorter.offset(2, 0, 0), out = sorter.offset(-3, 0, 0), trans = base.offset(4, 0, 0);
     set(sorter, "twilightforest:sorting_log_core", {{"twilightforest:axis", "y"}});
     set(in, "minecraft:chest", nlohmann::json::object());
     set(out, "minecraft:chest", nlohmann::json::object());

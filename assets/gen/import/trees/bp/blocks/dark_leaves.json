@@ -89,6 +89,15 @@
           "texture": "tf_block_darkwood_leaves",
           "render_method": "alpha_test"
         }
+      },
+      "minecraft:item_visual": {
+        "geometry": "minecraft:geometry.full_block",
+        "material_instances": {
+          "*": {
+            "texture": "tf_trees_dark_leaves_item",
+            "render_method": "alpha_test"
+          }
+        }
       }
     }
   }
