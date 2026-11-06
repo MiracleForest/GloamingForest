@@ -443,3 +443,23 @@ TEST(Atmosphere, VoidPlateFogged) {
     EXPECT_NEAR(plate[15][1].pos.x, quads[0][1].x, 1e-3f);
     EXPECT_NEAR(plate[15][2].pos.z, quads[0][2].z, 1e-3f);
 }
+
+TEST(Atmosphere, SkyDome) {
+    Rgb const sky{0.1f, 0.1f, 0.3f}, fog{0.6f, 0.7f, 0.6f};
+    // straight up: the disc's centre (distance 16): almost the sky colour
+    auto up = skyDomeColour({0, 1, 0}, sky, fog, 0.0f, 192.0f);
+    EXPECT_NEAR(up.b, sky.b + (fog.b - sky.b) * linearFogValue(16.0f, 0.0f, 192.0f), 1e-6f);
+    // at and below the horizon, and beyond the disc's rim: the clear (fog) colour
+    EXPECT_EQ(skyDomeColour({1, 0, 0}, sky, fog, 0.0f, 192.0f), fog);
+    EXPECT_EQ(skyDomeColour({0, -1, 0}, sky, fog, 0.0f, 192.0f), fog);
+    float e = 0.02f; // below atan(16 / 512): past the rim
+    EXPECT_EQ(skyDomeColour({std::cos(e), std::sin(e), 0}, sky, fog, 0.0f, 192.0f), fog);
+    // 45 degrees: the disc 16 blocks out, fogged as the centre
+    float s = std::sqrt(0.5f);
+    auto  d = skyDomeColour({s, s, 0}, sky, fog, 0.0f, 192.0f);
+    EXPECT_NEAR(d.r, up.r, 1e-5f);
+    // 10 degrees: 90.7 blocks out, more fog
+    auto low = skyDomeColour({std::cos(0.1745f), std::sin(0.1745f), 0}, sky, fog, 0.0f, 192.0f);
+    EXPECT_NEAR(low.g, sky.g + (fog.g - sky.g) * linearFogValue(16.0f / std::tan(0.1745f), 0.0f, 192.0f), 1e-4f);
+    EXPECT_GT(low.g, up.g);
+}

@@ -193,6 +193,15 @@ std::vector<std::array<FoggedVertex, 4>> voidPlateFogged(float fogStart, float f
     return out;
 }
 
+Rgb skyDomeColour(Vec3f dir, Rgb sky, Rgb fog, float fogStart, float fogEnd) {
+    if (dir.y <= 0.0f) return fog;
+    float const horiz = std::hypot(dir.x, dir.z);
+    float const h     = 16.0f * horiz / dir.y; // where the ray meets the disc, horizontally
+    if (h > 512.0f) return fog;
+    float const k = linearFogValue(std::max(h, 16.0f), fogStart, fogEnd);
+    return {sky.r + (fog.r - sky.r) * k, sky.g + (fog.g - sky.g) * k, sky.b + (fog.b - sky.b) * k};
+}
+
 std::optional<std::string> parseResourceLocation(std::string_view id) {
     auto             colon = id.find(':');
     std::string_view ns    = colon == std::string_view::npos ? std::string_view{"minecraft"} : id.substr(0, colon);

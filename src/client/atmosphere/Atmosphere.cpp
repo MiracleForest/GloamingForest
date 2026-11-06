@@ -136,9 +136,10 @@ struct Preview {
     bool                                                        bossFog    = false; ///< a boss bar with world fog
     // calibration of the e2e scenario: the material (materialFor's names; "+tex": with the white
     // texture) each part is drawn with instead of the mode's default ("": the default)
-    std::string starsMat, auroraMat, weatherMat, plateMat;
+    std::string starsMat, auroraMat, weatherMat, plateMat, domeMat;
     float       vvSkyTime  = -1; ///< Vibrant Visuals: the sky object's time of day (< 0: the game's)
-    int         vvStarMesh = -1; ///< Vibrant Visuals: TF's stars in the level renderer's star mesh (-1 default, 0 off, 1 on)
+    int         vvStarMesh = -1; ///< Vibrant Visuals: TF's stars in the level renderer's star mesh (-1 default: off, 1 on)
+    bool        vvNoDome   = false; ///< Vibrant Visuals: no TF sky dome (the game's own sky; calibration)
 };
 
 /// A material choice: "name" or "name+tex" (sampled from the white texture).
@@ -760,7 +761,7 @@ void hideVanillaSky(ScreenContext& screen) {
     // with its own sky material: there the mesh is TF's star field (at full brightness through the
     // view override); in Classic the stars are drawn by starsFrame
     std::shared_ptr<mce::Mesh> starsWanted = m.hidden;
-    if (vibrantVisuals() && previewNow().vvStarMesh != 0) {
+    if (vibrantVisuals() && previewNow().vvStarMesh == 1) {
         if (!m.tfStars) m.tfStars = buildMesh(screen, starVerticesRaw(), "gf_atmosphere_stars");
         starsWanted = m.tfStars;
         logOnce("stars_mesh", "atmosphere: TF stars in the level renderer's star mesh (Vibrant Visuals)");
@@ -846,10 +847,15 @@ Preview previewNow() {
     return shared().preview;
 }
 
-/// The fog thinning under Vibrant Visuals: F12 turns the provider's far plane into a uniform air fog
-/// (extinction 3 / end); Vibrant Visuals fogs its sky with it too, so at TF's planes the sky is the
-/// fog colour. The planes are stretched by this factor there (the fog colour stays TF's).
-constexpr float kVibrantFogStretch = 3.0f;
+/// The planes under Vibrant Visuals: F12 turns the provider's far plane into a uniform air fog
+/// (extinction 3 / end, exponential); TF's linear fog is half the fog colour halfway between its
+/// planes. The planes are stretched so the air fog is half too there: k = 3 x mid / (end x ln 2)
+/// (about 4 for the biome fogs, 3.8 for the spooky forest's, 1.2 for the dark forests' near fog).
+/// The sky behind is TF's own dome there (drawVibrantDome), so the fog no longer hides a sky.
+float vibrantFogStretch(ca::FogPlanes const& p) {
+    if (p.end <= 0) return 1.0f;
+    return std::max(1.0f, 3.0f * 0.5f * (p.start + p.end) / (p.end * 0.69314718f));
+}
 
 /// The provider's fog. TwilightForestRenderInfo#isFoggyAt and FogHandler read the player's feet
 /// (player.position().y, player.blockPosition(); Bedrock's getPosition is the eyes), so the biome
@@ -878,7 +884,7 @@ std::optional<sky::FogSpec> fogAt(std::optional<std::string> const& forcedBiome)
     auto c = fogColourOf(biome, !forcedBiome);
     logOnce("fog:" + biome, fmt::format("atmosphere: fog of {} {:.1f}..{:.1f}", biome, planes->start, planes->end));
     if (vibrantVisuals()) {
-        float k = preview.vvFog > 0 ? preview.vvFog : kVibrantFogStretch;
+        float k = preview.vvFog > 0 ? preview.vvFog : vibrantFogStretch(*planes);
         logOnce("fog_vv", fmt::format("atmosphere: Vibrant Visuals fog stretched x{:.1f}", k));
         return sky::FogSpec{{c.r, c.g, c.b}, planes->start * k, planes->end * k};
     }
@@ -980,7 +986,8 @@ constexpr char kClassicAurora[] = "@particles_blend+tex";
 constexpr char kVibrantStars[]  = "lightning";
 constexpr char kVibrantPlate[]  = "@particles_blend+tex";
 constexpr char kVibrantAurora[] = "lightning";
-constexpr char kVibrantWeather[] = "glow_sign_text";
+constexpr char kVibrantWeather[] = "@particles_blend";
+constexpr char kVibrantDome[]    = "lightning";
 constexpr char kClassicWeather[] = "@particles_blend";
 
 AuroraMode auroraModeFor(Preview const& preview, bool inTwilightSky) {
@@ -1156,10 +1163,55 @@ void drawWorldSky(render::RenderContext& ctx, bool stars, bool voidPlate, StarsM
         if (drawWith(ctx.screen, choose(spec), scaled(starVertices(), r / 100.0f)))
             logOnce("stars_world", fmt::format("atmosphere: TF stars drawn in the world pass (radius {:.0f}, {})", r, spec));
     }
-    if (voidPlate) {
+    if (voidPlate) { // in front of the stars below the horizon
         std::string spec = !preview.plateMat.empty() ? preview.plateMat : std::string(kVibrantPlate);
-        if (drawWith(ctx.screen, choose(spec), scaled(currentVoidPlate(), r / 512.0f))) logOnce("void_plate_world", "atmosphere: void plate drawn in the world pass (" + spec + ")");
+        if (drawWith(ctx.screen, choose(spec), scaled(currentVoidPlate(), 0.95f * r / 512.0f))) logOnce("void_plate_world", "atmosphere: void plate drawn in the world pass (" + spec + ")");
     }
+}
+
+/// Vibrant Visuals paints its own physical sky (its sun at the fixed 13000 is just below the
+/// horizon: an orange dusk band TF has not) after the world pass, wherever nothing was drawn. In the
+/// Twilight Forest TF's sky is drawn there instead, as TFSkyRenderer draws it: the sky disc in the
+/// sky colour fogged by the sky fog, the fog colour at and below the horizon, as a sphere behind the
+/// stars (at 0.95 of the far plane) with a material Vibrant Visuals does not light. The stars, the
+/// aurora and the void plate then draw over it, and the sky's own pass leaves it alone.
+void drawVibrantDome(render::RenderContext& ctx) {
+    auto const preview = previewNow();
+    float      far     = farPlane(ctx.screen);
+    float      r       = 1.05f * (far > 0 ? std::min(0.9f * far, 2000.0f) : 400.0f);
+    std::string biome;
+    float       rain = 0, thunder = 0;
+    ca::Rgb     skyBiome{};
+    {
+        std::lock_guard lock(shared().mutex);
+        auto const&     s = shared();
+        biome             = s.preview.biome ? *s.preview.biome : s.cameraBiome;
+        rain = s.rain, thunder = s.thunder;
+        if (s.blendedValid) skyBiome = s.blendedSky;
+    }
+    auto look = ca::biomeLook(biome);
+    if (!look) return;
+    if (skyBiome == ca::Rgb{}) skyBiome = ca::rgbOf(look->sky);
+    ca::Rgb const       sky    = ca::skyColor(skyBiome, ca::daylight(ca::timeOfDay(ca::kFixedTime)), rain, thunder);
+    ca::Rgb const       fog    = fogColourOf(biome);
+    ca::FogPlanes const planes = skyFogPlanes();
+    constexpr int       kLat = 48, kLon = 64;
+    std::vector<ColourVertex> quads;
+    quads.reserve(kLat * kLon * 8);
+    auto vertex = [&](int la, int lo) {
+        float const e = (static_cast<float>(la) / kLat - 0.5f) * 3.14159265f; // -90..90 degrees
+        float const a = static_cast<float>(lo) / kLon * 6.28318531f;
+        ca::Vec3f   d{std::cos(e) * std::cos(a), std::sin(e), std::cos(e) * std::sin(a)};
+        auto        c = ca::skyDomeColour(d, sky, fog, planes.start, planes.end);
+        return ColourVertex{d.x * r, d.y * r, d.z * r, c.r, c.g, c.b, 1.0f};
+    };
+    for (int la = 0; la < kLat; ++la)
+        for (int lo = 0; lo < kLon; ++lo) {
+            auto a = vertex(la, lo), b = vertex(la, lo + 1), c = vertex(la + 1, lo + 1), d = vertex(la + 1, lo);
+            quads.insert(quads.end(), {a, b, c, d, d, c, b, a});
+        }
+    std::string spec = !preview.domeMat.empty() ? preview.domeMat : std::string(kVibrantDome);
+    if (drawWith(ctx.screen, choose(spec), quads)) logOnce("vv_dome", "atmosphere: TF's sky dome drawn under Vibrant Visuals (" + spec + ")");
 }
 
 bool skyFrame(render::RenderContext& ctx, float) {
@@ -1203,18 +1255,21 @@ void worldFrame(render::RenderContext& ctx, float partial) {
         shared().cameraDim = static_cast<int>(p->getDimensionId());
     }
     auto cfg = config();
-    if (cfg->aurora) {
-        publishAuroraUniforms(ctx);
-        drawAurora(ctx, partial, false);
-    }
+    if (cfg->aurora) publishAuroraUniforms(ctx);
+    if (inTwilight(*p) && cfg->sky && vibrantVisuals() && !previewNow().vvNoDome) drawVibrantDome(ctx);
     if (inTwilight(*p) && cfg->sky) {
         auto const preview = previewNow();
         StarsMode  mode    = starsModeFor(preview);
-        // Vibrant Visuals draws TF's stars from the level renderer's star mesh (hideVanillaSky); the
-        // world-pass stars are the calibration's (a preview material or stars mode)
-        bool const stars = (mode == StarsMode::WorldBlend || mode == StarsMode::WorldStars) && (!vibrantVisuals() || !preview.starsMat.empty() || preview.starsMode != StarsMode::Auto || preview.vvStarMesh == 0);
-        bool const plate = vibrantVisuals() && drawsVoidPlate(preview);
-        if (stars || plate) drawWorldSky(ctx, stars, plate, mode, preview);
+        // Vibrant Visuals: TF's dome, the stars, the aurora and the void plate in the world pass, in
+        // that order (the level renderer's star mesh only for the calibration's vvStarMesh)
+        bool const vv    = vibrantVisuals();
+        bool const stars = (mode == StarsMode::WorldBlend || mode == StarsMode::WorldStars) && !(vv && preview.vvStarMesh == 1 && preview.starsMat.empty());
+        bool const plate = vv && drawsVoidPlate(preview);
+        if (stars) drawWorldSky(ctx, true, false, mode, preview);
+        if (cfg->aurora) drawAurora(ctx, partial, false);
+        if (plate) drawWorldSky(ctx, false, true, mode, preview);
+    } else if (cfg->aurora) {
+        drawAurora(ctx, partial, false);
     }
 }
 
@@ -1389,6 +1444,8 @@ void applyPreview(Json const& msg) {
     p.auroraMat  = msg.value("auroraMat", std::string{});
     p.weatherMat = msg.value("weatherMat", std::string{});
     p.plateMat   = msg.value("plateMat", std::string{});
+    p.domeMat    = msg.value("domeMat", std::string{});
+    p.vvNoDome   = msg.value("vvNoDome", false);
     p.vvSkyTime  = msg.value("vvSkyTime", -1.0f);
     p.vvStarMesh = msg.value("vvStarMesh", -1);
     if (msg.contains("protected") && msg["protected"].is_array()) {

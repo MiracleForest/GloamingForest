@@ -131,6 +131,11 @@ struct FoggedVertex {
 /// vertex with its fog value for the sky fog planes `fogStart`..`fogEnd`: drawn opaque, black at
 /// the centre and the fog colour towards the horizon, as Java's dark buffer is.
 [[nodiscard]] std::vector<std::array<FoggedVertex, 4>> voidPlateFogged(float fogStart, float fogEnd, int rings);
+/// TF's sky seen in the direction dir (unit vector), as TFSkyRenderer draws it over the clear colour:
+/// the vanilla sky disc (y 16 above the camera, radius 512) in the sky colour, fogged by the sky fog
+/// (ogStart..ogEnd, cylindrical distance of the disc's vertex: max(length(xz), 16)); the fog
+/// colour (FogRenderer's clear colour) where the disc does not reach (at and below the horizon).
+[[nodiscard]] Rgb skyDomeColour(Vec3f dir, Rgb sky, Rgb fog, float fogStart, float fogEnd);
 
 /// ResourceLocation#tryParse as TFConfig#getValidAuroraBiomes reads an id: "namespace:path" (or
 /// "path" in "minecraft"), the namespace of [a-z0-9_.-], the path of [a-z0-9_.-/]; nullopt when

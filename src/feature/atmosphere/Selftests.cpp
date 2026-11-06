@@ -273,6 +273,7 @@ struct CalibrationTests {
             {"aurora", "auroraMat", {{"biome", "twilightforest:glacier"}}, {"@particles_blend+tex", "lightning", "particles_add+tex", "glow_sign_text+tex", "@stars"}},
             {"weather", "weatherMat", {{"biome", "twilightforest:snowy_forest"}, {"locked", true}}, {"@particles_blend", "particles_add", "glow_sign_text", "sign_text", "@particles_alpha"}},
             {"plate", "plateMat", {{"biome", "twilightforest:forest"}, {"voidPlate", true}}, {"@particles_blend+tex", "@particles_opaque+tex", "debug", "@stars"}},
+            {"dome", "domeMat", {{"biome", "twilightforest:forest"}}, {"lightning", "debug", "@particles_blend+tex"}},
         };
         for (auto const& p : parts)
             for (auto const& spec : p.specs) {
@@ -281,11 +282,13 @@ struct CalibrationTests {
                 std::string id = std::string("atmosphere.show_cal_") + p.part + "_" + calName(spec);
                 gf::selftest::detail::TestRegistrar(id, [msg](Context& ctx) { preview(ctx, msg); });
             }
-        for (float t : {0.3f, 0.4f, 0.5f}) {
+        // Vibrant Visuals' own sky (no TF dome) with the sky object's time of day set (no effect on
+        // its sun: the dusk band stays), and the level renderer's star mesh holding TF's stars
+        for (float t : {0.3f, 0.5f}) {
             std::string id = "atmosphere.show_cal_skytime_" + std::to_string(static_cast<int>(std::lround(t * 10)));
-            gf::selftest::detail::TestRegistrar(id, [t](Context& ctx) { preview(ctx, {{"biome", "twilightforest:forest"}, {"vvSkyTime", t}}); });
+            gf::selftest::detail::TestRegistrar(id, [t](Context& ctx) { preview(ctx, {{"biome", "twilightforest:forest"}, {"vvSkyTime", t}, {"vvNoDome", true}}); });
         }
-        gf::selftest::detail::TestRegistrar("atmosphere.show_cal_star_mesh_off", [](Context& ctx) { preview(ctx, {{"biome", "twilightforest:forest"}, {"vvStarMesh", 0}}); });
+        gf::selftest::detail::TestRegistrar("atmosphere.show_cal_star_mesh_on", [](Context& ctx) { preview(ctx, {{"biome", "twilightforest:spooky_forest"}, {"vvStarMesh", 1}, {"vvNoDome", true}}); });
     }
 };
 CalibrationTests const gCalibrationTests;

@@ -290,6 +290,7 @@ function Invoke-AtmosphereViews([string]$mode) {
             aurora  = @(@(0, -50), @('particles_blend_tex', 'lightning', 'particles_add_tex', 'glow_sign_text_tex', 'stars'))
             weather = @(@(0, 5), @('particles_blend', 'particles_add', 'glow_sign_text', 'sign_text', 'particles_alpha'))
             plate   = @(@(0, 10), @('particles_blend_tex', 'particles_opaque_tex', 'debug', 'stars'))
+            dome    = @(@(90, -15), @('lightning', 'debug', 'particles_blend_tex'))
         }
         foreach ($part in $cal.Keys) {
             Set-View $cal[$part][0][0] $cal[$part][0][1]
@@ -303,7 +304,7 @@ function Invoke-AtmosphereViews([string]$mode) {
         }
         if ($vv) {
             Set-View 90 -15
-            foreach ($t in 'skytime_3', 'skytime_4', 'skytime_5', 'star_mesh_off') {
+            foreach ($t in 'skytime_3', 'skytime_5', 'star_mesh_on') {
                 $shot = Show-Atmosphere "show_cal_$t" "$mode-cal-$t" '' 4
                 Write-Step "calibration $mode $t`: pink $((Get-AtmosphereSignature $shot).Pink), stars $((Get-AtmosphereSignature $shot).Stars)"
             }
@@ -315,13 +316,16 @@ function Invoke-AtmosphereViews([string]$mode) {
 # The aurora biome list editor (TFClientConfig's "Edit Biomes"), opened by the server for the
 # tagged companion; closed with Esc.
 function Show-AuroraBiomesEditor([string]$mode) {
+    Invoke-Chat '/effect @s clear' # the host scene of native screens is the effects screen
+    Start-Sleep -Seconds 1
     $mark = Get-LogMark
     Invoke-AtmosphereTest 'atmosphere.show_aurora_biomes_screen' | Out-Null
-    Wait-LogLine 'atmosphere: aurora biome editor opened' 30 -Since $mark | Out-Null
-    Start-Sleep -Seconds 2
+    Wait-LogLine 'screen opened: ' 30 -Since $mark | Out-Null
+    Start-Sleep -Seconds 4
     Save-Screenshot "$mode-aurora-biomes-editor" | Out-Null
     Press-Key 'ESC'
     Start-Sleep -Seconds 1
+    Invoke-Chat '/effect @s resistance 99999 255 true'
 }
 
 if ($vanilla) {
