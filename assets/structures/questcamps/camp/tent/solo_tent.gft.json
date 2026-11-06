@@ -1,0 +1,29 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "twilightforest:camp/tent/solo_tent",
+  "size": [5, 4, 6],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"minecraft:air"},
+    {"Name":"minecraft:light_gray_wool"},
+    {"Name":"twilightforest:twilight_oak_fence"},
+    {"Name":"minecraft:red_bed","Properties":{"facing":"south","occupied":"false","part":"foot"}},
+    {"Name":"minecraft:red_bed","Properties":{"facing":"south","occupied":"false","part":"head"}},
+    {"Name":"minecraft:chest","Properties":{"facing":"east","type":"single","waterlogged":"false"}}
+  ],
+  "blocks": [
+    [2, 1], [1, 3], [2, 2], [1, 3], [2, 2], [1, 3], [2, 2], [1, 1], [4, 1], [1, 1], [2, 2], [6, 1], [5, 1], [1, 1], [2, 6], [1, 1],
+    [2, 1], [1, 1], [2, 1], [1, 2], [2, 1], [1, 1], [2, 1], [1, 2], [2, 1], [1, 1], [2, 1], [1, 2], [2, 1], [1, 1], [2, 1], [1, 2],
+    [2, 1], [1, 1], [2, 1], [1, 2], [2, 3], [1, 3], [2, 1], [1, 4], [2, 1], [1, 4], [2, 1], [1, 4], [2, 1], [1, 4], [2, 1], [1, 4],
+    [2, 1], [1, 2], [3, 1], [1, 1], [3, 1], [1, 1], [3, 1], [1, 22], [3, 1], [1, 2]
+  ],
+  "markers": [
+    {"pos":[1,0,4],"marker":"loot","data":{"table":"twilightforest:camp_tent"}},
+    {"pos":[3,0,4],"marker":"data","data":{"metadata":"tent_pot@west"}},
+    {"pos":[1,0,1],"marker":"data","data":{"metadata":"twilight_oak_slab@south"}}
+  ],
+  "jigsaw": [
+    {"pos":[2,0,0],"front":"north","top":"up","pool":"minecraft:empty","name":"twilightforest:camp/tent","target":""}
+  ]
+}

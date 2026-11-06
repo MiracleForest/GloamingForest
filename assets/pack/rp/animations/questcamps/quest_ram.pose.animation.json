@@ -1,0 +1,178 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.twilightforest.quest_ram.pose": {
+      "loop": true,
+      "bones": {
+        "head": {
+          "position": [
+            0,
+            0,
+            "-v.qr_count"
+          ]
+        },
+        "neck": {
+          "position": [
+            0,
+            0,
+            "-v.qr_count"
+          ]
+        },
+        "front_torso": {
+          "position": [
+            0,
+            0,
+            "-v.qr_count"
+          ]
+        },
+        "back_torso": {
+          "position": [
+            0,
+            0,
+            "v.qr_count"
+          ]
+        },
+        "left_back_leg": {
+          "position": [
+            0,
+            0,
+            "v.qr_count"
+          ]
+        },
+        "right_back_leg": {
+          "position": [
+            0,
+            0,
+            "v.qr_count"
+          ]
+        },
+        "left_front_leg": {
+          "position": [
+            0,
+            0,
+            "-0.5 - v.qr_count"
+          ]
+        },
+        "right_front_leg": {
+          "position": [
+            0,
+            0,
+            "-0.5 - v.qr_count"
+          ]
+        },
+        "segment0": {
+          "position": [
+            0,
+            0,
+            "2 * 0 - v.qr_count"
+          ]
+        },
+        "segment8": {
+          "position": [
+            0,
+            0,
+            "2 * (v.qr_b0) - v.qr_count"
+          ]
+        },
+        "segment7": {
+          "position": [
+            0,
+            0,
+            "2 * (v.qr_b0 + v.qr_b8) - v.qr_count"
+          ]
+        },
+        "segment15": {
+          "position": [
+            0,
+            0,
+            "2 * (v.qr_b0 + v.qr_b8 + v.qr_b7) - v.qr_count"
+          ]
+        },
+        "segment14": {
+          "position": [
+            0,
+            0,
+            "2 * (v.qr_b0 + v.qr_b8 + v.qr_b7 + v.qr_b15) - v.qr_count"
+          ]
+        },
+        "segment1": {
+          "position": [
+            0,
+            0,
+            "2 * (v.qr_b0 + v.qr_b8 + v.qr_b7 + v.qr_b15 + v.qr_b14) - v.qr_count"
+          ]
+        },
+        "segment4": {
+          "position": [
+            0,
+            0,
+            "2 * (v.qr_b0 + v.qr_b8 + v.qr_b7 + v.qr_b15 + v.qr_b14 + v.qr_b1) - v.qr_count"
+          ]
+        },
+        "segment5": {
+          "position": [
+            0,
+            0,
+            "2 * (v.qr_b0 + v.qr_b8 + v.qr_b7 + v.qr_b15 + v.qr_b14 + v.qr_b1 + v.qr_b4) - v.qr_count"
+          ]
+        },
+        "segment13": {
+          "position": [
+            0,
+            0,
+            "2 * (v.qr_b0 + v.qr_b8 + v.qr_b7 + v.qr_b15 + v.qr_b14 + v.qr_b1 + v.qr_b4 + v.qr_b5) - v.qr_count"
+          ]
+        },
+        "segment3": {
+          "position": [
+            0,
+            0,
+            "2 * (v.qr_b0 + v.qr_b8 + v.qr_b7 + v.qr_b15 + v.qr_b14 + v.qr_b1 + v.qr_b4 + v.qr_b5 + v.qr_b13) - v.qr_count"
+          ]
+        },
+        "segment9": {
+          "position": [
+            0,
+            0,
+            "2 * (v.qr_b0 + v.qr_b8 + v.qr_b7 + v.qr_b15 + v.qr_b14 + v.qr_b1 + v.qr_b4 + v.qr_b5 + v.qr_b13 + v.qr_b3) - v.qr_count"
+          ]
+        },
+        "segment11": {
+          "position": [
+            0,
+            0,
+            "2 * (v.qr_b0 + v.qr_b8 + v.qr_b7 + v.qr_b15 + v.qr_b14 + v.qr_b1 + v.qr_b4 + v.qr_b5 + v.qr_b13 + v.qr_b3 + v.qr_b9) - v.qr_count"
+          ]
+        },
+        "segment10": {
+          "position": [
+            0,
+            0,
+            "2 * (v.qr_b0 + v.qr_b8 + v.qr_b7 + v.qr_b15 + v.qr_b14 + v.qr_b1 + v.qr_b4 + v.qr_b5 + v.qr_b13 + v.qr_b3 + v.qr_b9 + v.qr_b11) - v.qr_count"
+          ]
+        },
+        "segment2": {
+          "position": [
+            0,
+            0,
+            "2 * (v.qr_b0 + v.qr_b8 + v.qr_b7 + v.qr_b15 + v.qr_b14 + v.qr_b1 + v.qr_b4 + v.qr_b5 + v.qr_b13 + v.qr_b3 + v.qr_b9 + v.qr_b11 + v.qr_b10) - v.qr_count"
+          ]
+        },
+        "segment6": {
+          "position": [
+            0,
+            0,
+            "2 * (v.qr_b0 + v.qr_b8 + v.qr_b7 + v.qr_b15 + v.qr_b14 + v.qr_b1 + v.qr_b4 + v.qr_b5 + v.qr_b13 + v.qr_b3 + v.qr_b9 + v.qr_b11 + v.qr_b10 + v.qr_b2) - v.qr_count"
+          ]
+        },
+        "segment12": {
+          "position": [
+            0,
+            0,
+            "2 * (v.qr_b0 + v.qr_b8 + v.qr_b7 + v.qr_b15 + v.qr_b14 + v.qr_b1 + v.qr_b4 + v.qr_b5 + v.qr_b13 + v.qr_b3 + v.qr_b9 + v.qr_b11 + v.qr_b10 + v.qr_b2 + v.qr_b6) - v.qr_count"
+          ]
+        }
+      }
+    }
+  }
+}

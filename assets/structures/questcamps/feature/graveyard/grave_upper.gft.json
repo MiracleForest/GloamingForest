@@ -1,0 +1,17 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "gloamingforest:feature/graveyard/grave_upper",
+  "size": [4, 4, 1],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"minecraft:dirt"},
+    {"Name":"minecraft:coarse_dirt"},
+    {"Name":"minecraft:air"},
+    {"Name":"minecraft:stone_brick_wall"},
+    {"Name":"minecraft:stone_brick_slab","Properties":{"type":"bottom","waterlogged":"false"}}
+  ],
+  "blocks": [
+    [1, 4], [2, 4], [4, 1], [3, 3], [5, 1], [3, 3]
+  ]
+}

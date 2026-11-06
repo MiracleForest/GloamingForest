@@ -1,0 +1,134 @@
+{
+  "format_version": "1.8.0",
+  "render_controllers": {
+    "controller.render.twilightforest.quest_ram": {
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ],
+      "part_visibility": [
+        {
+          "*": true
+        },
+        {
+          "segment0": "v.qr_b0 == 1"
+        },
+        {
+          "segment1": "v.qr_b1 == 1"
+        },
+        {
+          "segment2": "v.qr_b2 == 1"
+        },
+        {
+          "segment3": "v.qr_b3 == 1"
+        },
+        {
+          "segment4": "v.qr_b4 == 1"
+        },
+        {
+          "segment5": "v.qr_b5 == 1"
+        },
+        {
+          "segment6": "v.qr_b6 == 1"
+        },
+        {
+          "segment7": "v.qr_b7 == 1"
+        },
+        {
+          "segment8": "v.qr_b8 == 1"
+        },
+        {
+          "segment9": "v.qr_b9 == 1"
+        },
+        {
+          "segment10": "v.qr_b10 == 1"
+        },
+        {
+          "segment11": "v.qr_b11 == 1"
+        },
+        {
+          "segment12": "v.qr_b12 == 1"
+        },
+        {
+          "segment13": "v.qr_b13 == 1"
+        },
+        {
+          "segment14": "v.qr_b14 == 1"
+        },
+        {
+          "segment15": "v.qr_b15 == 1"
+        }
+      ]
+    },
+    "controller.render.twilightforest.quest_ram_lines": {
+      "geometry": "Geometry.lines",
+      "materials": [
+        {
+          "*": "Material.lines"
+        }
+      ],
+      "textures": [
+        "Texture.lines"
+      ],
+      "ignore_lighting": true,
+      "part_visibility": [
+        {
+          "*": true
+        },
+        {
+          "segment0": "v.qr_b0 == 1"
+        },
+        {
+          "segment1": "v.qr_b1 == 1"
+        },
+        {
+          "segment2": "v.qr_b2 == 1"
+        },
+        {
+          "segment3": "v.qr_b3 == 1"
+        },
+        {
+          "segment4": "v.qr_b4 == 1"
+        },
+        {
+          "segment5": "v.qr_b5 == 1"
+        },
+        {
+          "segment6": "v.qr_b6 == 1"
+        },
+        {
+          "segment7": "v.qr_b7 == 1"
+        },
+        {
+          "segment8": "v.qr_b8 == 1"
+        },
+        {
+          "segment9": "v.qr_b9 == 1"
+        },
+        {
+          "segment10": "v.qr_b10 == 1"
+        },
+        {
+          "segment11": "v.qr_b11 == 1"
+        },
+        {
+          "segment12": "v.qr_b12 == 1"
+        },
+        {
+          "segment13": "v.qr_b13 == 1"
+        },
+        {
+          "segment14": "v.qr_b14 == 1"
+        },
+        {
+          "segment15": "v.qr_b15 == 1"
+        }
+      ]
+    }
+  }
+}

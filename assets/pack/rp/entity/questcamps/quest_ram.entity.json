@@ -1,0 +1,58 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:quest_ram",
+      "materials": {
+        "default": "entity_alphatest",
+        "lines": "entity_alphablend"
+      },
+      "textures": {
+        "default": "textures/entity/questcamps/tf-derived/questram_tinted",
+        "lines": "textures/twilightforest/entity/questram_lines"
+      },
+      "geometry": {
+        "default": "geometry.twilightforest.quest_ram_tinted",
+        "lines": "geometry.twilightforest.quest_ram_lines"
+      },
+      "render_controllers": [
+        "controller.render.twilightforest.quest_ram",
+        "controller.render.twilightforest.quest_ram_lines"
+      ],
+      "animations": {
+        "base": "animation.twilightforest.quest_ram.base",
+        "pose": "animation.twilightforest.quest_ram.pose"
+      },
+      "scripts": {
+        "pre_animation": [
+          "v.qr_flags = query.property('twilightforest:color_flags');",
+          "v.qr_b0 = math.mod(math.floor(v.qr_flags / 1), 2);",
+          "v.qr_b1 = math.mod(math.floor(v.qr_flags / 2), 2);",
+          "v.qr_b2 = math.mod(math.floor(v.qr_flags / 4), 2);",
+          "v.qr_b3 = math.mod(math.floor(v.qr_flags / 8), 2);",
+          "v.qr_b4 = math.mod(math.floor(v.qr_flags / 16), 2);",
+          "v.qr_b5 = math.mod(math.floor(v.qr_flags / 32), 2);",
+          "v.qr_b6 = math.mod(math.floor(v.qr_flags / 64), 2);",
+          "v.qr_b7 = math.mod(math.floor(v.qr_flags / 128), 2);",
+          "v.qr_b8 = math.mod(math.floor(v.qr_flags / 256), 2);",
+          "v.qr_b9 = math.mod(math.floor(v.qr_flags / 512), 2);",
+          "v.qr_b10 = math.mod(math.floor(v.qr_flags / 1024), 2);",
+          "v.qr_b11 = math.mod(math.floor(v.qr_flags / 2048), 2);",
+          "v.qr_b12 = math.mod(math.floor(v.qr_flags / 4096), 2);",
+          "v.qr_b13 = math.mod(math.floor(v.qr_flags / 8192), 2);",
+          "v.qr_b14 = math.mod(math.floor(v.qr_flags / 16384), 2);",
+          "v.qr_b15 = math.mod(math.floor(v.qr_flags / 32768), 2);",
+          "v.qr_count = v.qr_b0 + v.qr_b1 + v.qr_b2 + v.qr_b3 + v.qr_b4 + v.qr_b5 + v.qr_b6 + v.qr_b7 + v.qr_b8 + v.qr_b9 + v.qr_b10 + v.qr_b11 + v.qr_b12 + v.qr_b13 + v.qr_b14 + v.qr_b15;"
+        ],
+        "animate": [
+          "base",
+          "pose"
+        ]
+      },
+      "spawn_egg": {
+        "base_color": "#fefeee",
+        "overlay_color": "#33aadd"
+      }
+    }
+  }
+}

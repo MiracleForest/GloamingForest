@@ -1,0 +1,24 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "gloamingforest:feature/well/simple_well_bottom",
+  "size": [5, 9, 5],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"minecraft:cobblestone"},
+    {"Name":"minecraft:air"},
+    {"Name":"minecraft:water"},
+    {"Name":"minecraft:mossy_cobblestone"}
+  ],
+  "blocks": [
+    [0, 6], [1, 3], [0, 2], [1, 1], [3, 1], [1, 1], [0, 2], [1, 3], [0, 12], [1, 3], [0, 2], [1, 1], [3, 1], [1, 1], [0, 2], [1, 3],
+    [0, 12], [1, 3], [0, 2], [1, 1], [3, 1], [1, 1], [0, 2], [1, 3], [0, 12], [1, 3], [0, 2], [1, 1], [2, 2], [0, 2], [1, 3], [0, 12],
+    [1, 1], [2, 1], [1, 1], [0, 2], [1, 1], [2, 1], [1, 1], [0, 2], [1, 3], [0, 12], [1, 3], [0, 2], [1, 1], [2, 1], [1, 1], [0, 2],
+    [1, 3], [0, 12], [1, 3], [0, 2], [1, 1], [2, 1], [1, 1], [0, 2], [1, 3], [0, 12], [1, 3], [0, 2], [1, 1], [2, 1], [1, 1], [0, 2],
+    [1, 3], [0, 12], [4, 1], [1, 2], [0, 2], [1, 1], [2, 1], [1, 1], [0, 2], [1, 3], [0, 6]
+  ],
+  "markers": [
+    {"pos":[2,4,1],"marker":"data","data":{"metadata":"lootS"}},
+    {"pos":[3,3,2],"marker":"data","data":{"metadata":"lootW"}}
+  ]
+}

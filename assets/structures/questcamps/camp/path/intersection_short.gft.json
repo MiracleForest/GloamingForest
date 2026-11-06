@@ -1,0 +1,22 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "twilightforest:camp/path/intersection_short",
+  "size": [6, 3, 4],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"minecraft:dirt"},
+    {"Name":"minecraft:dirt_path"},
+    {"Name":"minecraft:coarse_dirt"}
+  ],
+  "blocks": [
+    [0, 2], [1, 2], [0, 4], [1, 2], [0, 2], [1, 12], [0, 2], [2, 2], [0, 4], [2, 2], [0, 2], [2, 2], [3, 1], [2, 6], [3, 1], [2, 2],
+    [0, 24]
+  ],
+  "jigsaw": [
+    {"pos":[2,2,0],"front":"north","top":"up","pool":"minecraft:empty","name":"twilightforest:camp/path","target":""},
+    {"pos":[0,2,2],"front":"west","top":"up","pool":"twilightforest:camp/path","name":"twilightforest:camp/exit","target":"twilightforest:camp/path"},
+    {"pos":[5,2,3],"front":"east","top":"up","pool":"twilightforest:camp/path","name":"twilightforest:camp/exit","target":"twilightforest:camp/path"},
+    {"pos":[3,2,3],"front":"south","top":"up","pool":"twilightforest:camp/tent","name":"twilightforest:camp/exit","target":"twilightforest:camp/tent"}
+  ]
+}
