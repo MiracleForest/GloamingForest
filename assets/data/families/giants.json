@@ -1,0 +1,29 @@
+[
+  {
+    "id": "twilightforest:beanstalk_leaves",
+    "family": "leaves",
+    "params": {
+      "class": "SpecialStemLeavesBlock",
+      "vanillaClass": "LeavesBlock",
+      "traits": ["waterloggable"],
+      "states": ["distance", "persistent"],
+      "tags": [
+        "minecraft:is_hoe_item_destructible",
+        "minecraft:leaves",
+        "minecraft:is_shears_item_destructible",
+        "minecraft:is_sword_item_destructible"
+      ],
+      "comment": "SpecialStemLeavesBlock: the distance counts from twilightforest:huge_stalk (its 'log' flag below)"
+    }
+  },
+  {
+    "id": "twilightforest:huge_stalk",
+    "family": "pillar",
+    "params": {
+      "class": "RotatedPillarBlock",
+      "states": ["axis"],
+      "tags": ["minecraft:is_axe_item_destructible"],
+      "log": true
+    }
+  }
+]

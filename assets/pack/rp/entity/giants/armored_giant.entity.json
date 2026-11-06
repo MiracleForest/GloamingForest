@@ -1,0 +1,51 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:armored_giant",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/steve"
+      },
+      "geometry": {
+        "default": "geometry.humanoid.custom"
+      },
+      "scripts": {
+        "scale": "4.0",
+        "initialize": [
+          "variable.gliding_speed_value = 1.0;",
+          "variable.is_holding_left = 0.0;"
+        ],
+        "pre_animation": [
+          "variable.tcos0 = (math.cos(query.modified_distance_moved * 38.17) * query.modified_move_speed / variable.gliding_speed_value) * 57.3;"
+        ],
+        "animate": [
+          "humanoid_base_pose",
+          "look_at_target",
+          "move",
+          "holding",
+          "attack.rotations",
+          "bob"
+        ]
+      },
+      "animations": {
+        "humanoid_base_pose": "animation.humanoid.base_pose",
+        "look_at_target": "animation.humanoid.look_at_target.default",
+        "move": "animation.humanoid.move",
+        "holding": "animation.humanoid.holding",
+        "attack.rotations": "animation.humanoid.attack.rotations",
+        "bob": "animation.humanoid.bob"
+      },
+      "render_controllers": [
+        "controller.render.default"
+      ],
+      "enable_attachables": true,
+      "spawn_egg": {
+        "base_color": "#239391",
+        "overlay_color": "#9a9a9a"
+      }
+    }
+  }
+}
