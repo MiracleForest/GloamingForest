@@ -1,0 +1,25 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "twilightforest:essence_repair_recipe_fortification_scepter"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "ingredients": [
+      {
+        "item": "twilightforest:fortification_scepter"
+      },
+      {
+        "item": "twilightforest:exanimate_essence"
+      }
+    ],
+    "unlock": {
+      "context": "AlwaysUnlocked"
+    },
+    "result": {
+      "item": "twilightforest:fortification_scepter"
+    }
+  }
+}
