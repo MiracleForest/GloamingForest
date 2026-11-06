@@ -11,6 +11,7 @@
 #include "mc/legacy/ActorUniqueID.h"
 #include "mc/deps/core/math/Vec3.h"
 #include "mc/world/actor/Actor.h"
+#include "mc/world/actor/item/ItemActor.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"

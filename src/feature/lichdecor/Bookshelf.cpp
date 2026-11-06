@@ -204,7 +204,7 @@ bool attemptSpawnTome(BlockSource& region, BlockPos const& pos, int slot, bool f
     }
     float yaw    = randomFloat(0.0F, 360.0F);
     auto* spawned = gf::spawn::spawnMob(region, entity, Vec3{(float)x, (float)y, (float)z}, gf::spawn::SpawnReason::Spawner, [&](Actor& a) {
-        a.setRotationWrapped(Vec2{0.0F, yaw});
+        const_cast<Vec2&>(a.getRotation()) = Vec2{0.0F, yaw};
         if (fire) a.setOnFire(10, true);
         if (assailant && a.hasCategory(ActorCategory::Mob)) static_cast<Mob&>(a).setTarget(assailant);
     });
