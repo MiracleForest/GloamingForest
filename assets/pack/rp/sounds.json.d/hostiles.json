@@ -1,0 +1,212 @@
+{
+  "entity_sounds": {
+    "entities": {
+      "twilightforest:hostile_wolf": {
+        "volume": 0.4,
+        "pitch": [
+          0.8,
+          1.2
+        ],
+        "events": {
+          "ambient": "entity.twilightforest.hostile_wolf.ambient",
+          "hurt": "entity.twilightforest.hostile_wolf.hurt",
+          "death": "entity.twilightforest.hostile_wolf.death",
+          "step": {
+            "sound": "mob.wolf.step",
+            "volume": 0.15,
+            "pitch": 1.0
+          }
+        }
+      },
+      "twilightforest:mist_wolf": {
+        "volume": 0.4,
+        "pitch": [
+          0.4,
+          0.8
+        ],
+        "events": {
+          "ambient": "entity.twilightforest.mist_wolf.ambient",
+          "hurt": "entity.twilightforest.mist_wolf.hurt",
+          "death": "entity.twilightforest.mist_wolf.death",
+          "step": {
+            "sound": "mob.wolf.step",
+            "volume": 0.15,
+            "pitch": 1.0
+          }
+        }
+      },
+      "twilightforest:winter_wolf": {
+        "volume": 0.4,
+        "pitch": [
+          0.4,
+          0.8
+        ],
+        "events": {
+          "ambient": "entity.twilightforest.winter_wolf.ambient",
+          "hurt": "entity.twilightforest.winter_wolf.hurt",
+          "death": "entity.twilightforest.winter_wolf.death",
+          "step": {
+            "sound": "mob.wolf.step",
+            "volume": 0.15,
+            "pitch": 1.0
+          }
+        }
+      },
+      "twilightforest:king_spider": {
+        "volume": 1.0,
+        "pitch": [
+          0.8,
+          1.2
+        ],
+        "events": {
+          "ambient": "entity.twilightforest.king_spider.ambient",
+          "hurt": "entity.twilightforest.king_spider.hurt",
+          "death": "entity.twilightforest.king_spider.death",
+          "step": {
+            "sound": "entity.twilightforest.king_spider.step",
+            "volume": 0.15,
+            "pitch": 1.0
+          }
+        }
+      },
+      "twilightforest:hedge_spider": {
+        "volume": 1.0,
+        "pitch": [
+          0.8,
+          1.2
+        ],
+        "events": {
+          "ambient": "entity.twilightforest.hedge_spider.ambient",
+          "hurt": "entity.twilightforest.hedge_spider.hurt",
+          "death": "entity.twilightforest.hedge_spider.death",
+          "step": {
+            "sound": "entity.twilightforest.hedge_spider.step",
+            "volume": 0.15,
+            "pitch": 1.0
+          }
+        }
+      },
+      "twilightforest:swarm_spider": {
+        "volume": 1.0,
+        "pitch": [
+          1.3,
+          1.7
+        ],
+        "events": {
+          "ambient": "entity.twilightforest.swarm_spider.ambient",
+          "hurt": "entity.twilightforest.swarm_spider.hurt",
+          "death": "entity.twilightforest.swarm_spider.death",
+          "step": {
+            "sound": "entity.twilightforest.swarm_spider.step",
+            "volume": 0.15,
+            "pitch": 1.0
+          }
+        }
+      },
+      "twilightforest:skeleton_druid": {
+        "volume": 1.0,
+        "pitch": [
+          0.8,
+          1.2
+        ],
+        "events": {
+          "ambient": "entity.twilightforest.skeleton_druid.ambient",
+          "hurt": "entity.twilightforest.skeleton_druid.hurt",
+          "death": "entity.twilightforest.skeleton_druid.death",
+          "step": {
+            "sound": "entity.twilightforest.skeleton_druid.step",
+            "volume": 0.15,
+            "pitch": 1.0
+          }
+        }
+      },
+      "twilightforest:redcap": {
+        "volume": 1.0,
+        "pitch": [
+          0.8,
+          1.2
+        ],
+        "events": {
+          "ambient": "entity.twilightforest.redcap.ambient",
+          "hurt": "entity.twilightforest.redcap.hurt",
+          "death": "entity.twilightforest.redcap.death"
+        }
+      },
+      "twilightforest:redcap_sapper": {
+        "volume": 1.0,
+        "pitch": [
+          0.8,
+          1.2
+        ],
+        "events": {
+          "ambient": "entity.twilightforest.redcap.ambient",
+          "hurt": "entity.twilightforest.redcap.hurt",
+          "death": "entity.twilightforest.redcap.death"
+        }
+      },
+      "twilightforest:wraith": {
+        "volume": 1.0,
+        "pitch": [
+          0.8,
+          1.2
+        ],
+        "events": {
+          "ambient": "entity.twilightforest.wraith.ambient",
+          "hurt": "entity.twilightforest.wraith.hurt",
+          "death": "entity.twilightforest.wraith.death"
+        }
+      },
+      "twilightforest:fire_beetle": {
+        "volume": 1.0,
+        "pitch": [
+          0.8,
+          1.2
+        ],
+        "events": {
+          "ambient": "entity.twilightforest.fire_beetle.ambient",
+          "hurt": "entity.twilightforest.fire_beetle.hurt",
+          "death": "entity.twilightforest.fire_beetle.death",
+          "step": {
+            "sound": "entity.twilightforest.fire_beetle.step",
+            "volume": 0.15,
+            "pitch": 1.0
+          }
+        }
+      },
+      "twilightforest:slime_beetle": {
+        "volume": 1.0,
+        "pitch": [
+          0.8,
+          1.2
+        ],
+        "events": {
+          "ambient": "entity.twilightforest.slime_beetle.ambient",
+          "hurt": "entity.twilightforest.slime_beetle.hurt",
+          "death": "entity.twilightforest.slime_beetle.death",
+          "step": {
+            "sound": "entity.twilightforest.slime_beetle.step",
+            "volume": 0.15,
+            "pitch": 1.0
+          }
+        }
+      },
+      "twilightforest:pinch_beetle": {
+        "volume": 1.0,
+        "pitch": [
+          0.8,
+          1.2
+        ],
+        "events": {
+          "ambient": "entity.twilightforest.pinch_beetle.ambient",
+          "hurt": "entity.twilightforest.pinch_beetle.hurt",
+          "death": "entity.twilightforest.pinch_beetle.death",
+          "step": {
+            "sound": "entity.twilightforest.pinch_beetle.step",
+            "volume": 0.15,
+            "pitch": 1.0
+          }
+        }
+      }
+    }
+  }
+}

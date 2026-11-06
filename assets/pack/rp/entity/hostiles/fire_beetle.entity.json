@@ -1,0 +1,32 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:fire_beetle",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/firebeetle"
+      },
+      "geometry": {
+        "default": "geometry.twilightforest.fire_beetle"
+      },
+      "render_controllers": [
+        "controller.render.default"
+      ],
+      "animations": {
+        "base": "animation.twilightforest.fire_beetle.base"
+      },
+      "scripts": {
+        "animate": [
+          "base"
+        ]
+      },
+      "spawn_egg": {
+        "base_color": "#1d0b00",
+        "overlay_color": "#cb6f25"
+      }
+    }
+  }
+}
