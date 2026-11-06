@@ -511,6 +511,16 @@ GF_REGISTER_SELFTEST("armory.set_reactions", [](Context& ctx) -> ll::coro::CoroT
         p->setArmor(Slot::Feet, make("twilightforest:yeti_boots"));
     }
     auto c3 = cowAt(4);
+    // twilightforest:frosted is U10's effect: until it is registered the chill aura has nothing to give
+    bool frostedKnown = false;
+    if (auto* m = mobById(c3)) {
+        frostedKnown = gf::effects::apply(*m, ids::kFrosted, 1, 0);
+        if (frostedKnown) gf::effects::remove(*m, ids::kFrosted);
+    }
+    if (!frostedKnown) {
+        ctx.info("twilightforest:frosted is not registered (U10): the yeti chill aura is not checked");
+        co_return;
+    }
     co_await ctx.ticks(12);
     hurtBy(c3);
     auto* cow3 = mobById(c3);

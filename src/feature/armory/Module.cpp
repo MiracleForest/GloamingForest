@@ -63,6 +63,7 @@
 #include "mc/world/actor/Mob.h"
 #include "mc/world/actor/item/ExperienceOrb.h"
 #include "mc/world/actor/player/Player.h"
+#include "mc/world/item/Item.h"
 #include "mc/world/item/ItemInstance.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/item/crafting/Recipes.h"
@@ -479,8 +480,10 @@ public:
             if (!destroyed || c.player.isCreative()) return;
             ItemStack held = c.player.getCarriedItem();
             if (items::isEmpty(held) || !held.isDamageableItem() || items::idOf(held) == ids::kMazebreaker) return;
-            bool broke = held.hurtAndBreak(ca::kMazebreakerExtraWear, &c.player);
-            c.player.setCarriedItem(broke || items::isEmpty(held) ? ItemStack::EMPTY_ITEM() : held);
+            held.hurtAndBreak(ca::kMazebreakerExtraWear, &c.player);
+            auto const* item  = held.mItem.get();
+            bool        broke = items::isEmpty(held) || (item && held.getDamageValue() >= item->getMaxDamage());
+            c.player.setCarriedItem(broke ? ItemStack::EMPTY_ITEM() : held);
             c.player.sendInventory(false);
         });
         gf::log().info("armory: {} armour pieces, {} tools, {} crafted enchantments installed", ca::armorPieces().size(), ca::tools().size(),
