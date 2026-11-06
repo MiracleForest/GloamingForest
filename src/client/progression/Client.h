@@ -40,6 +40,14 @@ void drawToasts(screen::Canvas& canvas, bool fromScreen);
 /// Removes the toasts of `what` (selftests); returns how many.
 std::size_t cancelToasts(std::string const& what);
 void        registerToastLayer();
+/// Drops the toasts when the client leaves a level (install) / stops doing so (uninstall).
+void watchLevelExit();
+void unwatchLevelExit();
+/// An advancement screen was created (true) or destroyed (false): while one is open and drawing,
+/// it draws the toasts over itself and the HUD layer does not.
+void toastScreenOpen(bool open);
+/// Drops every toast, waiting or shown (leaving a level).
+void clearToasts();
 /// StringSplitter#splitLines: `text` on lines of at most `width` GUI pixels.
 [[nodiscard]] std::vector<std::string> splitLines(screen::Canvas& canvas, std::string const& text, float width);
 

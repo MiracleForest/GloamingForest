@@ -204,7 +204,13 @@ private:
 
 class AdvancementScreen : public screen::Screen {
 public:
-    explicit AdvancementScreen(Json const& data) : Screen("", kWinW, kWinH) { load(data, true); }
+    explicit AdvancementScreen(Json const& data) : Screen("", kWinW, kWinH) {
+        toastScreenOpen(true);
+        load(data, true);
+    }
+    ~AdvancementScreen() override { toastScreenOpen(false); }
+    AdvancementScreen(AdvancementScreen const&)            = delete;
+    AdvancementScreen& operator=(AdvancementScreen const&) = delete;
 
     void init() override { add<TreeView>(*this); }
 

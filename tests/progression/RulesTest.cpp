@@ -168,30 +168,3 @@ TEST(ProgressionRules, RenderComponent) {
     EXPECT_EQ(renderComponent(json::parse(R"({"text":"x","extra":[{"text":"y"},"z"]})"), tr), "xyz");
     EXPECT_EQ(renderComponent(json::parse(R"({"translate":"missing.key"})"), tr), "missing.key");
 }
-
-TEST(ProgressionRules, ChallengeFanfare) {
-    auto const& notes = challengeFanfare();
-    ASSERT_FALSE(notes.empty());
-    EXPECT_EQ(notes.front().ms, 0);
-    EXPECT_TRUE(std::is_sorted(notes.begin(), notes.end(), [](auto const& a, auto const& b) { return a.ms < b.ms; }));
-    for (auto const& n : notes) {
-        EXPECT_GE(n.note, 0);
-        EXPECT_LE(n.note, 24);
-        EXPECT_GT(n.volume, 0.0f);
-        EXPECT_EQ(std::string(n.sound).rfind("note.", 0), 0u);
-    }
-    EXPECT_LE(notes.back().ms, 2000); // over well before the toast's 5 s
-    EXPECT_FLOAT_EQ(notePitch(12), 1.0f);
-    EXPECT_FLOAT_EQ(notePitch(0), 0.5f);
-    EXPECT_FLOAT_EQ(notePitch(24), 2.0f);
-    EXPECT_FLOAT_EQ(notePitch(30), 2.0f);
-    // every note exactly once over consecutive windows, the first one including 0
-    std::size_t seen = 0;
-    long        last = -1;
-    for (long t = 0; t <= 2000; t += 50) {
-        seen += fanfareBetween(last, t).size();
-        last = t;
-    }
-    EXPECT_EQ(seen, notes.size());
-    EXPECT_TRUE(fanfareBetween(5000, 6000).empty());
-}

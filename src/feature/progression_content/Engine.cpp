@@ -241,11 +241,8 @@ std::string dimensionName(Actor const& actor) {
     }
 }
 
-BlockPos feetOf(Actor const& actor) {
-    // Java's blockPosition(): the feet (Bedrock keeps a player's position at the eyes)
-    auto p = actor.getFeetPos();
-    return {static_cast<int>(std::floor(p.x)), static_cast<int>(std::floor(p.y + 0.001f)), static_cast<int>(std::floor(p.z))};
-}
+BlockPos feetOf(Actor const& actor) { return blockPositionOf(actor); }
+
 
 bool doneCriterion(Player const& p, std::string const& adv, std::string const& crit) {
     return pr::has(p, adv) || pr::done(p, adv, crit);
@@ -705,6 +702,13 @@ Progress progressOf(Player const& player, Advancement const& adv) {
         if (any) ++p.met;
     }
     return p;
+}
+
+BlockPos blockPositionOf(Actor const& actor) {
+    // Java's blockPosition(): the feet (Bedrock keeps a player's position at the eyes); the epsilon
+    // keeps a feet y of 63.9999 (float rounding of a player standing on y 64) on block 64
+    auto p = actor.getFeetPos();
+    return {static_cast<int>(std::floor(p.x)), static_cast<int>(std::floor(p.y + 0.001f)), static_cast<int>(std::floor(p.z))};
 }
 
 } // namespace gf::feature::progression_content

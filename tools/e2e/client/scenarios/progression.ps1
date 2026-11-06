@@ -16,7 +16,7 @@
 #   challenge-toast.png      experiment_115_115 earned, 1 s in: the pink "Challenge Complete!" at
 #                            (30, 11) (its title is wider than 125 pixels) with the "think"
 #                            Experiment 115 (client mod); the game's toast, title pink (vanilla).
-#                            The original challenge fanfare plays.
+#                            U14's synthesized challenge sound (gf.progression.challenge_complete) plays.
 #   challenge-toast-title.png  2.5 s in (client mod): the title's two lines centred in the toast,
 #                            faded in
 #   locked-biome-toast.png   TF's LockedBiomeToast after the 60-step countdown in the dark forest
@@ -118,8 +118,8 @@ try {
     if (Test-ClientTrace) {
         try { Wait-LogLine 'client toast: twilightforest:experiment_115_115 drawn in slot \d' 20 -Since $mark | Out-Null }
         catch { $failures.Add('the client mod drew no challenge toast') }
-        try { Wait-LogLine 'client toast: challenge fanfare for twilightforest:experiment_115_115' 10 -Since $mark | Out-Null }
-        catch { $failures.Add('the challenge toast played no fanfare') }
+        try { Wait-LogLine 'client toast: challenge sound gf.progression.challenge_complete for twilightforest:experiment_115_115' 10 -Since $mark | Out-Null }
+        catch { $failures.Add('the challenge toast played no challenge sound') }
         Start-Sleep -Milliseconds 1000
         Save-Screenshot 'challenge-toast' | Out-Null
         Start-Sleep -Milliseconds 1500

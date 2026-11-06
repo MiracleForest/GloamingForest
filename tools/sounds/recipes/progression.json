@@ -1,0 +1,60 @@
+{
+  "about": "U14's original sounds (rendered with the synth toolkit's renderer; U14 owns no TF sound_event row, so tools/sounds/synth.ps1 does not render this file: docs/units/progression.md, 'Challenge sound', gives the command). gf.progression.challenge_complete stands in for Mojang's ui.toast.challenge_complete (All Rights Reserved, no Bedrock counterpart): an original glockenspiel arpeggio resolving on a bell chord.",
+  "files": {
+    "ui/challenge_complete": {
+      "track": {
+        "rate": 44100,
+        "quality": 0.4,
+        "seed": 115,
+        "bpm": 150,
+        "rpb": 4,
+        "length": 2.2,
+        "instruments": {
+          "glock": {
+            "patch": "music/glock",
+            "gain": -7
+          },
+          "bell": {
+            "patch": "music/bell",
+            "gain": -6
+          },
+          "pad": {
+            "patch": "music/pad",
+            "gain": -15
+          }
+        },
+        "patterns": {
+          "F": {
+            "rows": 22,
+            "channels": [
+              {
+                "inst": "glock",
+                "notes": "G4:0.75 C5:0.8 E5:0.85 G5:0.9 . C6:1 . . . . . . . . . . . . . . . ."
+              },
+              {
+                "inst": "bell",
+                "notes": ". . . . . G4+C5+E5+G5:0.85 . . . . . . . . . . . . . . . ."
+              },
+              {
+                "inst": "pad",
+                "notes": ". . . . . C4+G4+C5:0.6 . . . . . . . . . . - . . . . ."
+              }
+            ]
+          }
+        },
+        "order": [
+          "F"
+        ],
+        "fx": [
+          {
+            "type": "reverb",
+            "room": 0.6,
+            "mix": 0.2
+          }
+        ],
+        "normalize": -3,
+        "fadeOut": 0.4
+      }
+    }
+  }
+}

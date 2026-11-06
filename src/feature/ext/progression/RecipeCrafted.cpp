@@ -12,6 +12,12 @@
 // ingredients into numbered layouts, "twilightforest:equipment/travellers_belt_3"; the criteria
 // engine counts every layout as the Java recipe). TF's craft_travellers_gear, maze_map,
 // naga_armors and ore_map criteria use it.
+//
+// R8: F9 already hooks CraftHandlerCrafting::$_handleCraftAction (feature/recipes/Recipes.cpp) and
+// exposes no crafted-recipe callback, and F10's events have no crafting event, so this second LL
+// hook (Low priority; it runs the original and fires only on Success) is the only way U14 sees a craft.
+// Routed to A8 / F9: raise minecraft:recipe_crafted from F9's hook (or add a recipes::onCrafted
+// callback) and delete this file.
 
 #include "ll/api/memory/Hook.h"
 #include "ll/api/service/Bedrock.h"
@@ -41,8 +47,15 @@ std::string recipeOf(ItemStackRequestActionCraftBase const& action) {
     if (type != ItemStackRequestActionType::CraftRecipe && type != ItemStackRequestActionType::CraftRecipeAuto) return {};
     auto level = ll::service::getLevel();
     if (!level) return {};
-    // ItemStackRequestActionCraft<RecipeNetId, 12 | 13>: the net id follows the craft base as in
-    // ItemStackRequestActionCraftRecipeOptional (F9 reads it the same way)
+    // The layout, checked against the LeviLamina 26.51.7 headers: ItemStackRequestAction is
+    // {vptr, ItemStackRequestActionType mActionType}, ItemStackRequestActionCraftBase adds
+    // {uchar mNumCrafts}; ItemStackRequestActionCraftRecipeAuto derives from
+    // ItemStackRequestActionCraft<RecipeNetId, 13> (whose first member is the RecipeNetId, the first
+    // argument of CraftRecipeAuto's constructor) and only then adds its mIngredients / mNumIngredients;
+    // ItemStackRequestActionCraftRecipeOptional derives from the craft base with
+    // {RecipeNetId mRecipeNetId; int mFilteredStringIndex}. So for CraftRecipe (12, the same template)
+    // and CraftRecipeAuto (13) the 4-byte net id sits right after the craft base at the same offset
+    // as CraftRecipeOptional's mRecipeNetId (F9's Recipes.cpp reads it the same way).
     RecipeNetId const& netId  = static_cast<ItemStackRequestActionCraftRecipeOptional const&>(action).mRecipeNetId;
     auto const*        recipe = level->getRecipes().getRecipeByNetId(netId);
     if (!recipe) return {};

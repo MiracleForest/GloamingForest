@@ -61,24 +61,32 @@ armor's owner (U7) writes.
 ## Flask doses
 
 TF resets the flask dose tracking when an advancement with a `drink_from_flask` criterion is
-earned (`EntityEvents#resetFlaskLogic`, `PotionFlaskTrackingAttachment#resetDoses`). U14 does it on
-every such grant (TF's only one is `full_mettle_alchemist`):
+earned (`EntityEvents#resetFlaskLogic`, `PotionFlaskTrackingAttachment#resetDoses`: `dosesDrank`
+0, `lastUsedPotion` cleared, `lastTimeStarted` kept). TF's only such advancement is
+`full_mettle_alchemist`.
 
-- the player's entity data under TF's attachment id `twilightforest:flask_doses`
-  (`gf::entity::data(player, "twilightforest:flask_doses")`), when it is an object: `doses_drank`
-  set to 0 and `last_used_potion` removed (the attachment codec's field names;
-  `last_game_time_started` is kept, as `resetDoses` keeps `lastTimeStarted`);
-- the trigger `twilightforest:flask_doses_reset` (`{"advancement": id}`) for an owner that keeps
-  the tracking elsewhere.
+The tracking (the attachment `twilightforest:flask_doses`) and `drink_from_flask` are U9's in
+owners.tsv, so U14 does not write the tracking (R2). On every such grant it fires, on F10's
+trigger bus:
 
-The tracking itself (consecutive doses of one potion, `drink_from_flask`) is U9's: U9 should keep
-it in that entity data document (selftest `progression.flask_reset`).
+    twilightforest:flask_doses_reset   {"advancement": "<the advancement id>"}
 
+**Hand-off for U9 (checklist item):** register
+`gf::progression::onTrigger("twilightforest:flask_doses_reset", fn)` and in `fn` do
+`resetDoses` on the player's tracking (doses to 0, the last potion cleared, the start time kept).
+F0 should add the row `trigger twilightforest:flask_doses_reset U14 manual` (fired by U14,
+consumed by U9); A8 checks the pair when it folds W1. Selftest `progression.flask_reset` checks
+that the trigger fires for `full_mettle_alchemist` only and that U14 leaves the tracking alone.
 ## Screens and toasts
 
 - `/twilightforest advancements` and the client mod's `L` key open `progression.advancements`:
   the native tree for companions, a form list (with a detail form per advancement) for vanilla
   clients.
+- Java's `announceAdvancements` gamerule is GloamingForest's bool gamerule `announceAdvancements`
+  (default true, `/twilightforest gamerule announceAdvancements false`; Bedrock's `/gamerule` has no
+  such rule): while false nobody gets the chat line, the toast and rewards stay (selftest
+  `progression.announce_gamerule`). Its owners.tsv row (`gamerule announceAdvancements U14`) is F0's
+  to add.
 - Earning an advancement: the experience reward, the chat announcement to every player (the title
   in `AdvancementType#getChatColor`: green, dark purple for challenges), the toast
   (`progression.toast` to companions, the game's text toast for vanilla clients, its first line
@@ -88,16 +96,38 @@ it in that entity data document (selftest `progression.flask_reset`).
   ToastComponent: AdvancementToast at Java's offsets (icon with its variant at 8,8, text at 30,7
   and 30,18; a title wider than 125 pixels: the toast name at 30,11 for 1.5 s, then the title's
   lines centred, fading in) and TF's LockedBiomeToast (icon at 6,8, text at 25,7 and 25,18), 5
-  slots, 600 ms slides, over the HUD and over the advancement screen. F12's toast queue only has
-  TF's layout; the slots it holds (other units' toasts) are left free.
+  slots, 600 ms slides, over the HUD and over the advancement screen (exactly one of the two draws
+  them in a frame, decided by draw order: the screen tells the toasts when it opens and closes, and
+  while it is open and drawing the HUD layer leaves them to it; leaving a level, ClientExitLevelEvent,
+  drops them, as F12's queue). F12's toast queue only has TF's layout; the
+  slots it holds (other units' toasts) when a U14 toast takes a slot are left free, but an F12 toast
+  that arrives later takes slot 0 even under a U14 toast: F12's slot table is internal to
+  `src/client/ui/Ui.cpp`, so one shared table needs an F12 API (slot reservation, or an icon-stack
+  field and the advancement layout in `toast::show`), routed to A8/F12.
 - Locked biome toast: the client mod runs TF's static countdown; vanilla clients get the same
   countdown per player on the server and the game's toast.
-- A challenge's sound: Java's `ui.toast.challenge_complete` is Mojang's (All Rights Reserved) and has
-  no Bedrock counterpart, and F3's synth renders only sound events with an owners.tsv row. U14 plays
-  an original fanfare of the game's note block sounds instead
-  (`core::progression::challengeFanfare`: a C major arpeggio and chord, 1.2 s): the client mod when
-  its challenge toast first shows (as AdvancementToast), the server to vanilla clients with their
-  toast.
+- A challenge's sound (Challenge sound): Java's `ui.toast.challenge_complete` is Mojang's (All Rights
+  Reserved) and has no Bedrock counterpart. U14 plays its own original synthesized sound event
+  `gf.progression.challenge_complete` (`core::progression::kChallengeSound`, category `ui`): the
+  client mod with `playUI` when its challenge toast first shows (as AdvancementToast), the server
+  with `fx::soundTo` to vanilla clients with their toast. It is defined in
+  `assets/pack/rp/sounds.d/progression.json` on `assets/pack/rp/sounds/progression/challenge_complete.ogg`,
+  rendered by the synth toolkit's renderer (`src/core/synth`) from the track in
+  `tools/sounds/recipes/progression.json` (a glockenspiel arpeggio resolving on a bell chord, 2.2 s).
+  F3's `synth.ps1` renders only events with an owners.tsv `sound_event` row, which U14 has none of,
+  so the file is rendered with the same renderer directly (the gtest
+  `ProgressionChallengeSound.PackDefinesTheOriginalSound` re-renders the recipe and checks the
+  committed file's format and length; selftest `progression.challenge_sound` checks the assembled
+  pack):
+
+      pwsh tools/sounds/synth.ps1 -Check   # compiles the renderer into %LOCALAPPDATA%\gf-synth\<hash>\gf-synth.exe
+      # job file: {"threads": 1, "library": {<tools/sounds/patches/**.json by name>}, "jobs": [{"name":
+      #   "progression/ui/challenge_complete", "kind": "track", "track": <the recipe's track>,
+      #   "rate": 44100, "quality": 0.4, "out": "assets/pack/rp/sounds/progression/challenge_complete.ogg"}]}
+      & $env:LOCALAPPDATA\gf-synth\<hash>\gf-synth.exe render <job file>
+
+  F0/A8 may add the row `sound_event gf.progression.challenge_complete U14` so that `synth.ps1 -Unit
+  progression` renders it like every other owner's.
 - The window header is the selected tab's title at (8, 6) in 0x404040
   (`AdvancementsScreen#renderWindow`; "Advancements" without a tab).
 - The native tree pans by dragging with the left button and with the wheel (Shift: sideways); the

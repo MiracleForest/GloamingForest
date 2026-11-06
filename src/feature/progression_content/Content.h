@@ -7,6 +7,8 @@
 // unit loads TF's advancement JSON (data/twilightforest/advancement/*.json), listens to every
 // trigger the criteria name and grants the criteria through progression::grant.
 
+#include <cstdint>
+#include <functional>
 #include <map>
 #include <optional>
 #include <set>
@@ -17,6 +19,8 @@
 
 #include "core/progression/Criteria.h"
 #include "core/progression/Rules.h"
+
+#include "mc/world/level/BlockPos.h"
 
 class Actor;
 class Player;
@@ -70,6 +74,8 @@ struct Advancement {
 [[nodiscard]] core::progression::ItemView itemView(ItemStack const& stack);
 [[nodiscard]] core::progression::EntityView entityView(Actor& actor, bool withVehicle = true);
 [[nodiscard]] core::progression::EntityView playerView(Player& player);
+/// Java's Entity#blockPosition(): the block of the actor's feet (with feetOf's epsilon).
+[[nodiscard]] BlockPos blockPositionOf(Actor const& actor);
 /// The biome at an actor's feet ("" when unloaded).
 [[nodiscard]] std::string biomeAt(Actor& actor);
 /// The landmark structures whose pieces hold `actor`.
@@ -86,6 +92,11 @@ void evaluateInventory(Player& player);
 /// While set, earning an advancement shows and awards nothing (no toast, chat line, experience
 /// or message): progress the e2e demo restores (Presentation.cpp).
 void setQuietGrants(bool quiet);
+/// The same for one player only (selftests that earn advancements without checking what they show:
+/// no chat line reaches the server's real players). Nests: each true needs its false.
+void setQuietFor(std::int64_t playerUniqueId, bool quiet);
+/// Tests: the announcement goes to `sink` instead of every player's chat (empty: the chat again).
+void setAnnounceSink(std::function<void(Player&, Advancement const&)> sink);
 
 /// Number of criteria the engine grants by trigger id (tests).
 [[nodiscard]] std::map<std::string, int> criteriaByTrigger();

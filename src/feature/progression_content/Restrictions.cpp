@@ -171,8 +171,7 @@ void tickPlayer(Player& player) {
         landmark::Start hint;
         hint.key       = r->structureKey;
         hint.dimension = static_cast<int>(player.getDimensionId());
-        auto feet      = player.getFeetPos();
-        landmark::trySpawnHint(player, hint, BlockPos{static_cast<int>(std::floor(feet.x)), static_cast<int>(std::floor(feet.y)), static_cast<int>(std::floor(feet.z))});
+        landmark::trySpawnHint(player, hint, blockPositionOf(player)); // StructureHints: player.blockPosition()
     }
 }
 

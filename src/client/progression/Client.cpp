@@ -165,6 +165,7 @@ public:
     // and the keys, before the game builds its input handler (so the key is in the controls)
     void load() {
         watchMouseRelease();
+        watchLevelExit(); // as F12's toast queue, at load
         registerAdvancementsKey();
     }
     void install() {

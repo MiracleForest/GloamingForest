@@ -16,26 +16,34 @@
 // (EntityEvents#alertPlayerCastleIsWIP). Bedrock's chat has no click events, so the Discord link's
 // URL is written out after its blue, underlined text.
 //
-// A challenge's toast sound (ui.toast.challenge_complete, Mojang's and All Rights Reserved) is
-// replaced by GloamingForest's original fanfare of note block sounds
-// (core::progression::challengeFanfare): the client mod plays it when its toast appears, as
-// AdvancementToast does; for vanilla clients the server plays it to the player.
+// A challenge's toast sound (ui.toast.challenge_complete, Mojang's and All Rights Reserved, no
+// Bedrock counterpart) is U14's original synthesized sound event gf.progression.challenge_complete
+// (core::progression::kChallengeSound; tools/sounds/recipes/progression.json, rendered into the
+// resource pack): the client mod plays it when its toast appears, as AdvancementToast does; for
+// vanilla clients the server plays it to the player with their toast (fx::soundTo).
 //
 // EntityEvents#resetFlaskLogic: earning an advancement with a twilightforest:drink_from_flask
 // criterion resets the player's flask dose tracking (TF's attachment twilightforest:flask_doses,
 // PotionFlaskTrackingAttachment#resetDoses: doses_drank 0, no last_used_potion). The tracking is
-// U9's (it fires drink_from_flask): the reset is written to the player's entity data under the
-// attachment's id with the codec's field names, and announced as the trigger
-// twilightforest:flask_doses_reset for an owner that keeps the tracking elsewhere.
+// U9's (the attachment and drink_from_flask are U9's in owners.tsv), so U14 does not write it
+// (R2): it fires the trigger twilightforest:flask_doses_reset ({"advancement": id}) on the
+// trigger bus, and U9 resets its tracking in progression::onTrigger of that id (the hand-off is
+// documented in docs/units/progression.md, "Flask doses"; the trigger row is F0's).
+//
+// Java's announceAdvancements gamerule (PlayerAdvancements#award announces only while it is
+// true) is GloamingForest's bool gamerule announceAdvancements (default true, /twilightforest
+// gamerule announceAdvancements false): Bedrock's /gamerule has no such rule.
 //
 // The advancement screen ("progression.advancements"): the client mod's native tree (TF's tab
 // with the mazestone background, redrawn frames), opened with the advancements key (L) or
 // /twilightforest advancements; vanilla clients get a form list with a detail form per advancement.
 
-#include <functional>
-
 #include <algorithm>
 #include <atomic>
+#include <cstdint>
+#include <functional>
+#include <mutex>
+#include <set>
 
 #include "ll/api/chrono/GameChrono.h"
 #include "ll/api/command/CommandHandle.h"
@@ -52,8 +60,8 @@
 #include "mc/world/level/Level.h"
 
 #include "feature/common/Screens.h"
-#include "feature/entity/Entity.h"
 #include "feature/fx/Fx.h"
+#include "feature/gamerules/GameRules.h"
 #include "feature/net/Net.h"
 #include "feature/progression/Progression.h"
 #include "feature/progression_content/Config.h"
@@ -74,9 +82,9 @@ inline constexpr char kScreen[]      = "progression.advancements";
 inline constexpr char kToastChannel[] = "progression.toast";
 inline constexpr char kOpenChannel[]  = "progression.open";
 inline constexpr char kDiscordUrl[]   = "https://discord.experiment115.com/";
-inline constexpr char kFlaskDoses[]     = "twilightforest:flask_doses";       ///< TFDataAttachments.FLASK_DOSES
-inline constexpr char kFlaskTrigger[]   = "twilightforest:drink_from_flask";
-inline constexpr char kFlaskReset[]     = "twilightforest:flask_doses_reset"; ///< announced for the tracking's owner
+inline constexpr char kFlaskTrigger[] = "twilightforest:drink_from_flask";
+inline constexpr char kFlaskReset[]   = "twilightforest:flask_doses_reset"; ///< for the tracking's owner (U9)
+inline constexpr char kAnnounceRule[] = "announceAdvancements";            ///< Java's GameRules.RULE_ANNOUNCE_ADVANCEMENTS
 
 namespace {
 
@@ -97,39 +105,30 @@ char const* chatColor(Frame f) { return f == Frame::Challenge ? "§5" : "§a"; }
 char const* toastColor(Frame f) { return f == Frame::Challenge ? "§d" : "§e"; }
 
 std::atomic<bool> gQuiet{false};
+std::mutex                        gQuietMutex;
+std::multiset<std::int64_t>       gQuietPlayers; ///< setQuietFor (selftests)
+std::function<void(Player&, Advancement const&)> gAnnounceSink; ///< tests: replaces the broadcast
 
-/// The fanfare for a vanilla client (the client mod plays it with its toast), note by note on the
-/// server thread; the player is looked up again before each note (R16).
-void playFanfare(Player& player) {
-    auto id = player.getOrCreateUniqueID();
-    ll::coro::keepThis([id]() -> ll::coro::CoroTask<> {
-        long at = 0;
-        for (auto const& n : cp::challengeFanfare()) {
-            if (n.ms > at) {
-                co_await ll::chrono::ticks((n.ms - at + 49) / 50);
-                at = n.ms;
-            }
-            auto level = ll::service::getLevel();
-            auto* p    = level ? level->getPlayer(id) : nullptr;
-            if (!p) co_return;
-            fx::soundTo(*p, n.sound, n.volume, cp::notePitch(n.note));
-        }
-    }).launch(ll::thread::ServerThreadExecutor::getDefault());
+bool quietFor(Player& player) {
+    if (gQuiet) return true;
+    std::lock_guard lock(gQuietMutex);
+    return gQuietPlayers.contains(player.getOrCreateUniqueID().rawID);
 }
 
-/// EntityEvents#resetFlaskLogic.
+/// The challenge sound for a vanilla client (the client mod plays it with its toast).
+void playChallengeSound(Player& player) { fx::soundTo(player, cp::kChallengeSound, 1.0f, 1.0f); }
+/// EntityEvents#resetFlaskLogic: the reset goes to the tracking's owner over the trigger bus.
 void resetFlask(Player& player, Advancement const& adv) {
     if (std::none_of(adv.criteria.begin(), adv.criteria.end(), [](Criterion const& c) { return c.trigger == kFlaskTrigger; })) return;
-    auto& doses = gf::entity::data(player, kFlaskDoses);
-    if (doses.is_object()) {
-        doses["doses_drank"] = 0;
-        doses.erase("last_used_potion");
-    }
     pr::trigger(player, kFlaskReset, {{"advancement", adv.id}});
     log().info("progression: flask doses of {} reset ({})", player.getRealName(), adv.id);
 }
 
 void announce(Player& earner, Advancement const& adv) {
+    if (gAnnounceSink) {
+        gAnnounceSink(earner, adv);
+        return;
+    }
     auto level = ll::service::getLevel();
     if (!level) return;
     auto name = earner.getRealName();
@@ -167,8 +166,8 @@ void showToast(Player& player, Advancement const& adv) {
         pkt.mTitle   = std::string(toastColor(adv.frame)) + toastTitle(player, adv.frame);
         pkt.mContent = textFor(player, adv.title);
         pkt.sendTo(player);
-        // AdvancementToast#render: a challenge's sound when the toast appears (the original fanfare)
-        if (adv.frame == Frame::Challenge) playFanfare(player);
+        // AdvancementToast#render: a challenge's sound when the toast appears (kChallengeSound)
+        if (adv.frame == Frame::Challenge) playChallengeSound(player);
     }
 }
 
@@ -176,12 +175,13 @@ void onEarned(Player& player, std::string const& id) {
     auto const* adv = find(id);
     if (!adv) return;
     resetFlask(player, *adv);
-    if (gQuiet) return;
+    if (quietFor(player)) return;
     // AdvancementRewards#grant
     if (adv->experience > 0) player.addExperience(adv->experience);
     if (adv->hasDisplay) {
         if (adv->showToast) showToast(player, *adv);
-        if (adv->announceToChat) announce(player, *adv);
+        // PlayerAdvancements#award: announce_to_chat && the announceAdvancements gamerule
+        if (adv->announceToChat && gamerules::getBool(kAnnounceRule)) announce(player, *adv);
     }
     log().info("progression: {} earned {} ({})", player.getRealName(), id, frameName(adv->frame));
     if (id == "twilightforest:progression_end") {
@@ -235,6 +235,7 @@ public:
         static bool registered = false;
         if (registered) return;
         registered = true;
+        gamerules::registerBool(kAnnounceRule, true);
         pr::onGranted([](Player& p, std::string const& id) {
             if (id.starts_with("twilightforest:")) onEarned(p, id);
         });
@@ -255,6 +256,14 @@ public:
 bool openAdvancements(Player& player) { return openFor(player); }
 
 void setQuietGrants(bool quiet) { gQuiet = quiet; }
+
+void setQuietFor(std::int64_t id, bool quiet) {
+    std::lock_guard lock(gQuietMutex);
+    if (quiet) gQuietPlayers.insert(id);
+    else if (auto it = gQuietPlayers.find(id); it != gQuietPlayers.end()) gQuietPlayers.erase(it);
+}
+
+void setAnnounceSink(std::function<void(Player&, Advancement const&)> sink) { gAnnounceSink = std::move(sink); }
 
 } // namespace gf::feature::progression_content
 

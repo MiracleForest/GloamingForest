@@ -85,22 +85,11 @@ struct TreeNode {
 };
 void layoutTree(std::vector<TreeNode>& nodes);
 
-/// AdvancementToast plays ui.toast.challenge_complete (Mojang's, All Rights Reserved) when a
-/// challenge toast appears. GloamingForest plays an original fanfare in its place, built from the
-/// game's note block sounds: a C major arpeggio over a bass, then the high chord (note block notes
-/// 0..24, F#3..F#5; Bedrock's pitch 2^((note - 12) / 12)).
-struct FanfareNote {
-    int         ms;     ///< after the start
-    char const* sound;  ///< a Bedrock sound definition (note.*)
-    int         note;   ///< note block note 0..24
-    float       volume;
-};
-[[nodiscard]] std::vector<FanfareNote> const& challengeFanfare();
-/// Bedrock's note block pitch of `note` (0..24, clamped): 2^((note - 12) / 12).
-[[nodiscard]] float notePitch(int note);
-/// The fanfare's notes due in (fromMs, toMs], relative to its start (fromMs < 0 includes 0).
-[[nodiscard]] std::vector<FanfareNote> fanfareBetween(long fromMs, long toMs);
-
+/// AdvancementToast plays ui.toast.challenge_complete (Mojang's, All Rights Reserved; no Bedrock
+/// counterpart) when a challenge toast appears. GloamingForest plays U14's original synthesized
+/// sound event in its place (assets/pack/rp/sounds/progression/challenge_complete.ogg, rendered
+/// from tools/sounds/recipes/progression.json; category ui).
+inline constexpr char kChallengeSound[] = "gf.progression.challenge_complete";
 /// A Minecraft text component as a string: a string, {"text"}, {"translate", "with",
 /// "fallback"} (each argument rendered first), lists and "extra" appended. `translate(key,
 /// fallback, args)` formats a translation (fallback: the component's "fallback", else the key).

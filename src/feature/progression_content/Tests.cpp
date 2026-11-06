@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
+#include <memory>
 #include <regex>
 #include <set>
 
@@ -67,6 +68,27 @@ Player* playerById(std::int64_t raw) {
 void resetProgress(Player& p) {
     for (auto const& a : pc::advancements()) pr::revoke(p, a.id);
 }
+
+/// The test player's advancements show nothing while the scope lives (no toast, chat line to the
+/// server's real players, experience or fanfare): for tests that do not check the presentation.
+struct QuietScope {
+    std::int64_t id;
+    explicit QuietScope(Player& p) : id(p.getOrCreateUniqueID().rawID) { pc::setQuietFor(id, true); }
+    ~QuietScope() { pc::setQuietFor(id, false); }
+    QuietScope(QuietScope const&)            = delete;
+    QuietScope& operator=(QuietScope const&) = delete;
+};
+
+/// The chat announcements go to a list instead of every player while the scope lives.
+struct AnnounceCapture {
+    std::shared_ptr<std::vector<std::string>> seen = std::make_shared<std::vector<std::string>>();
+    AnnounceCapture() {
+        pc::setAnnounceSink([seen = seen](Player&, pc::Advancement const& a) { seen->push_back(a.id); });
+    }
+    ~AnnounceCapture() { pc::setAnnounceSink({}); }
+    AnnounceCapture(AnnounceCapture const&)            = delete;
+    AnnounceCapture& operator=(AnnounceCapture const&) = delete;
+};
 
 // ---- data -----------------------------------------------------------------------------------------
 
@@ -218,9 +240,31 @@ GF_REGISTER_SELFTEST("progression.recipe_unlocks", [](Context& ctx) {
     ctx.check(missing.empty(), std::to_string(missing.size()) + " rewarded recipes resolve to no recipe:" + list);
 });
 
+// The challenge toast's sound (for Mojang's ui.toast.challenge_complete): U14's original sound is in
+// the assembled resource pack (category ui, its .ogg present), so fx::soundTo and the client's
+// playUI find it.
+GF_REGISTER_SELFTEST("progression.challenge_sound", [](Context& ctx) {
+    std::filesystem::path mod;
+    try {
+        mod = gf::Mod::getInstance().getSelf().getModDir();
+    } catch (...) {}
+    ctx.require(!mod.empty(), "the mod directory");
+    auto          rp = mod / "resource_packs" / "GloamingForest_RP";
+    std::ifstream in(rp / "sounds" / "sound_definitions.json");
+    auto          j    = Json::parse(in, nullptr, false, true);
+    auto const&   defs = j.is_object() && j.contains("sound_definitions") ? j["sound_definitions"] : j;
+    ctx.require(defs.is_object() && defs.contains(cp::kChallengeSound), std::string("the resource pack defines ") + cp::kChallengeSound);
+    auto const& def = defs[cp::kChallengeSound];
+    ctx.check(def.value("category", std::string{}) == "ui", "its category is ui (Java's forUI)");
+    auto name = def.value("sounds", Json::array()).empty() ? std::string{} : def["sounds"][0].value("name", std::string{});
+    std::error_code ec;
+    ctx.check(!name.empty() && std::filesystem::is_regular_file(rp / (name + ".ogg"), ec), "its file " + name + ".ogg is in the pack");
+});
+
 // ---- criteria ----------------------------------------------------------------------------------
 
 GF_REGISTER_SELFTEST("progression.inventory_criteria", [](Context& ctx) -> ll::coro::CoroTask<> {
+    QuietScope quiet{ctx.player()};
     auto  id = ctx.player().getOrCreateUniqueID().rawID;
     resetProgress(ctx.player());
     // lich_scepters needs all four scepters at once
@@ -255,6 +299,7 @@ GF_REGISTER_SELFTEST("progression.inventory_criteria", [](Context& ctx) -> ll::c
 });
 
 GF_REGISTER_SELFTEST("progression.kill_criteria", [](Context& ctx) -> ll::coro::CoroTask<> {
+    QuietScope quiet{ctx.player()};
     auto id = ctx.player().getOrCreateUniqueID().rawID;
     resetProgress(ctx.player());
     auto killNear = [&](std::string const& type) -> bool {
@@ -281,26 +326,62 @@ GF_REGISTER_SELFTEST("progression.kill_criteria", [](Context& ctx) -> ll::coro::
     resetProgress(*playerById(id));
 });
 
-// EntityEvents#resetFlaskLogic: earning an advancement with a drink_from_flask criterion resets
-// the flask dose tracking (twilightforest:flask_doses); others leave it alone.
+// EntityEvents#resetFlaskLogic: earning an advancement with a drink_from_flask criterion hands the
+// reset of the flask dose tracking to its owner (U9) as the trigger
+// twilightforest:flask_doses_reset {"advancement": id}; other advancements do not. U14 never
+// writes U9's tracking (R2).
+std::vector<std::string>& flaskResets() {
+    static std::vector<std::string> seen;
+    static bool                     listening = false;
+    if (!listening) {
+        listening = true;
+        pr::onTrigger("twilightforest:flask_doses_reset", [](Player& p, Json const& data) {
+            if (p.isSimulated()) flaskResets().push_back(data.value("advancement", std::string{}));
+        });
+    }
+    return seen;
+}
+
 GF_REGISTER_SELFTEST("progression.flask_reset", [](Context& ctx) {
-    auto& p = ctx.player();
+    auto&      p = ctx.player();
+    QuietScope quiet{p};
     resetProgress(p);
-    auto& doses = gf::entity::data(p, "twilightforest:flask_doses");
-    auto  saved = doses;
-    doses       = Json{{"doses_drank", 2}, {"last_used_potion", "minecraft:strong_harming"}, {"last_game_time_started", 100}};
+    auto& seen = flaskResets();
+    seen.clear();
+    auto const before = gf::entity::data(p, "twilightforest:flask_doses"); // whatever its owner keeps there
     pr::grant(p, "twilightforest:hedge");
-    ctx.check(gf::entity::data(p, "twilightforest:flask_doses").value("doses_drank", -1) == 2, "an advancement without a flask criterion keeps the doses");
+    ctx.check(seen.empty(), "an advancement without a flask criterion hands over no reset");
     pr::grant(p, "twilightforest:full_mettle_alchemist");
-    auto const& after = gf::entity::data(p, "twilightforest:flask_doses");
-    ctx.check(after.value("doses_drank", -1) == 0 && !after.contains("last_used_potion") && after.value("last_game_time_started", 0) == 100,
-              "full_mettle_alchemist resets doses_drank and last_used_potion (resetDoses)");
-    gf::entity::data(p, "twilightforest:flask_doses") = saved;
+    ctx.check(seen == std::vector<std::string>{"twilightforest:full_mettle_alchemist"},
+              "full_mettle_alchemist hands the reset to the tracking's owner (twilightforest:flask_doses_reset)");
+    ctx.check(gf::entity::data(p, "twilightforest:flask_doses") == before, "U14 leaves U9's tracking data alone");
+    seen.clear();
     resetProgress(p);
 });
 
+// PlayerAdvancements#award announces only while the announceAdvancements gamerule is true.
+GF_REGISTER_SELFTEST("progression.announce_gamerule", [](Context& ctx) {
+    auto&           p = ctx.player();
+    AnnounceCapture capture;
+    resetProgress(p);
+    pr::trigger(p, "twilightforest:make_tf_portal"); // the root (announced: true)
+    // the world's rule is put back however the test ends
+    struct RuleRestore {
+        bool was = gf::gamerules::getBool("announceAdvancements");
+        ~RuleRestore() { gf::gamerules::set("announceAdvancements", was); }
+    } restore;
+    ctx.require(gf::gamerules::set("announceAdvancements", true), "announceAdvancements is a registered bool gamerule");
+    capture.seen->clear();
+    pr::grant(p, "twilightforest:hedge");
+    ctx.check(*capture.seen == std::vector<std::string>{"twilightforest:hedge"}, "announceAdvancements true: hedge is announced");
+    gf::gamerules::set("announceAdvancements", false);
+    pr::grant(p, "twilightforest:hill1");
+    ctx.check(capture.seen->size() == 1 && pr::has(p, "twilightforest:hill1"), "announceAdvancements false: hill1 is earned without an announcement");
+    resetProgress(p);
+});
 // The demo's restore is quiet: no toast, chat line or experience for re-granted progress.
 GF_REGISTER_SELFTEST("progression.quiet_grants", [](Context& ctx) {
+    AnnounceCapture capture; // the chat lines stay out of real players' chat
     auto& p = ctx.player();
     resetProgress(p);
     pr::trigger(p, "twilightforest:make_tf_portal"); // the root
@@ -323,6 +404,7 @@ GF_REGISTER_SELFTEST("progression.quiet_grants", [](Context& ctx) {
 });
 
 GF_REGISTER_SELFTEST("progression.trigger_criteria", [](Context& ctx) -> ll::coro::CoroTask<> {
+    QuietScope quiet{ctx.player()};
     auto  id = ctx.player().getOrCreateUniqueID().rawID;
     auto& p  = ctx.player();
     resetProgress(p);
@@ -382,6 +464,7 @@ GF_REGISTER_SELFTEST("progression.trigger_criteria", [](Context& ctx) -> ll::cor
 
 // Grants follow the tick criteria at once: progress_naga makes progress_lich's "kill_naga" true.
 GF_REGISTER_SELFTEST("progression.playthrough", [](Context& ctx) -> ll::coro::CoroTask<> {
+    QuietScope quiet{ctx.player()};
     auto id = ctx.player().getOrCreateUniqueID().rawID;
     resetProgress(ctx.player());
     {
@@ -432,6 +515,7 @@ ll::coro::CoroTask<int> stayIn(Context& ctx, std::int64_t id, std::string biome,
 }
 
 GF_REGISTER_SELFTEST("progression.enforce_darkness", [](Context& ctx) -> ll::coro::CoroTask<> {
+    QuietScope quiet{ctx.player()};
     auto id = ctx.player().getOrCreateUniqueID().rawID;
     ctx.player().setPlayerGameType(GameType::Survival);
     resetProgress(ctx.player());
@@ -447,6 +531,7 @@ GF_REGISTER_SELFTEST("progression.enforce_darkness", [](Context& ctx) -> ll::cor
 });
 
 GF_REGISTER_SELFTEST("progression.enforce_acid_rain", [](Context& ctx) -> ll::coro::CoroTask<> {
+    QuietScope quiet{ctx.player()};
     auto id = ctx.player().getOrCreateUniqueID().rawID;
     ctx.player().setPlayerGameType(GameType::Survival);
     resetProgress(ctx.player());
@@ -456,6 +541,7 @@ GF_REGISTER_SELFTEST("progression.enforce_acid_rain", [](Context& ctx) -> ll::co
 });
 
 GF_REGISTER_SELFTEST("progression.enforce_fire_hunger_frost", [](Context& ctx) -> ll::coro::CoroTask<> {
+    QuietScope quiet{ctx.player()};
     auto id = ctx.player().getOrCreateUniqueID().rawID;
     ctx.player().setPlayerGameType(GameType::Survival);
     resetProgress(ctx.player());
@@ -473,6 +559,7 @@ GF_REGISTER_SELFTEST("progression.enforce_fire_hunger_frost", [](Context& ctx) -
 });
 
 GF_REGISTER_SELFTEST("progression.enforce_rules", [](Context& ctx) -> ll::coro::CoroTask<> {
+    QuietScope quiet{ctx.player()};
     auto id = ctx.player().getOrCreateUniqueID().rawID;
     ctx.player().setPlayerGameType(GameType::Survival);
     resetProgress(ctx.player());
@@ -492,6 +579,7 @@ GF_REGISTER_SELFTEST("progression.enforce_rules", [](Context& ctx) -> ll::coro::
 // ---- presentation ------------------------------------------------------------------------------
 
 GF_REGISTER_SELFTEST("progression.toasts_and_screen", [](Context& ctx) {
+    AnnounceCapture capture; // the chat lines stay out of real players' chat
     auto& p = ctx.player();
     resetProgress(p);
     pr::trigger(p, "twilightforest:make_tf_portal"); // the root
@@ -529,6 +617,7 @@ GF_REGISTER_SELFTEST("progression.toasts_and_screen", [](Context& ctx) {
 
 // The vanilla fallback of LockedBiomeToastHandler: the server's own countdown per player.
 GF_REGISTER_SELFTEST("progression.vanilla_locked_toast", [](Context& ctx) -> ll::coro::CoroTask<> {
+    QuietScope quiet{ctx.player()};
     auto id = ctx.player().getOrCreateUniqueID().rawID;
     ctx.player().setPlayerGameType(GameType::Survival);
     resetProgress(ctx.player());
@@ -568,6 +657,7 @@ GF_REGISTER_SELFTEST("progression.descriptions", [](Context& ctx) {
 
 // TreeNodePosition over the whole tree (Java's server layout), sent unchanged to the screen.
 GF_REGISTER_SELFTEST("progression.tree_layout", [](Context& ctx) {
+    QuietScope quiet{ctx.player()};
     std::set<std::pair<float, float>> cells;
     for (auto const& a : pc::advancements()) {
         ctx.check(a.placed, a.id + " is laid out");
@@ -618,6 +708,7 @@ GF_REGISTER_SELFTEST("progression.icon_variants", [](Context& ctx) {
 // jerky. The vehicle is read before die() dismounts the rider; a kill whose direct entity is not
 // the player (a projectile) does not count.
 GF_REGISTER_SELFTEST("progression.chicken_jockey", [](Context& ctx) -> ll::coro::CoroTask<> {
+    QuietScope quiet{ctx.player()};
     auto id = ctx.player().getOrCreateUniqueID().rawID;
     resetProgress(ctx.player());
     auto base = ctx.testPos(1404, 3);
