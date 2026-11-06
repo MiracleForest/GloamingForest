@@ -87,6 +87,7 @@
 #include "feature/tags/Tags.h"
 #include "game/Blocks.h"
 #include "game/Items.h"
+#include "game/WorldDb.h"
 #include "mod/I18n.h"
 #include "mod/Log.h"
 #include "mod/Module.h"
@@ -235,7 +236,7 @@ void onDealt(combat::DamageInfo const& d) {
     int yeti  = countPieces(d.victim, "yeti");
     if (fiery > 0) {
         auto r = ca::fireReact(fiery, fireRoll());
-        if (r.ignite && !d.attacker->isFireImmune() && !d.attacker->isOnFire()) d.attacker->setOnFire(r.seconds, true);
+        if (r.ignite && !d.attacker->isFireImmune()) d.attacker->setOnFire(r.seconds, true);
     }
     if (auto* target = asMob(*d.attacker)) {
         auto c = ca::chillAura(yeti);
@@ -251,11 +252,7 @@ void onDealt(combat::DamageInfo const& d) {
 void applySnowFlags(Actor& wearer) {
     auto feet   = idOf(wearer.getArmor(Slot::Feet));
     bool snow   = feet == ids::kArcticBoots || feet == ids::kYetiBoots;
-    bool freeze = false;
-    for (int i = 0; i < 4; ++i) {
-        auto id = idOf(wearer.getArmor(static_cast<Slot>(i)));
-        if (auto const* p = ca::armorPiece(id); p && (p->material == "fiery" || p->material == "arctic" || p->material == "yeti")) freeze = true;
-    }
+    bool freeze = wearsFreezeImmune(wearer);
     auto& ec  = wearer.getEntityContext();
     auto  uid = wearer.getOrCreateUniqueID().rawID;
     int   had = 0;
@@ -472,13 +469,18 @@ public:
         combat::onIncoming(combat::priority::Normal, &onIncoming);
         combat::onDealt(combat::priority::Normal, &onDealt);
         loot::addGlobalModifier(ids::kSmeltingModifier, &smeltingModifier);
+        // the flags this module added belong to the world's entities
+        game::db::onWorldClosed([] {
+            std::lock_guard lock(state().mutex);
+            state().snowFlags.clear();
+        });
         // ToolEvents#damageNonMazebreakerToolsMore: any other damageable tool loses 16 more there
         ia::onDestroyed(ia::Match::tag(ids::kMazebreakerTag), [](ia::DestroyContext const& c, bool destroyed) {
             if (!destroyed || c.player.isCreative()) return;
             ItemStack held = c.player.getCarriedItem();
             if (items::isEmpty(held) || !held.isDamageableItem() || items::idOf(held) == ids::kMazebreaker) return;
-            held.hurtAndBreak(ca::kMazebreakerExtraWear, &c.player);
-            c.player.setCarriedItem(held);
+            bool broke = held.hurtAndBreak(ca::kMazebreakerExtraWear, &c.player);
+            c.player.setCarriedItem(broke || items::isEmpty(held) ? ItemStack::EMPTY_ITEM() : held);
             c.player.sendInventory(false);
         });
         gf::log().info("armory: {} armour pieces, {} tools, {} crafted enchantments installed", ca::armorPieces().size(), ca::tools().size(),
