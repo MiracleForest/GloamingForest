@@ -15,10 +15,10 @@
 // the inactive pedestal unbreakable and the active one minable (TrophyPedestalBlock#getDestroyProgress).
 //
 // The stronghold shield: breakable only from its inside face (StrongholdShieldBlock
-// #getDestroyProgress). The BP gives it Java's break times (digSpeed(stone) / 1.5 / 100 a tick: 7.5 s
-// by hand, 150 / tool speed ticks with a pickaxe); a survival player's mining that starts (or ends) on
-// any other face is refused here, which is Java's "unbreakable from outside". Explosions and mobs
-// cannot break it (BP: not destructible by explosions).
+// #getDestroyProgress). The imported BP keeps it unbreakable (strength -1, F1's import.behaviour
+// checks that); a survival player's mining that starts (or ends) on any other face is refused here
+// as well, so the face rule holds once the inside-face break time (digSpeed(stone) / 150 a tick) is
+// given to the block. Explosions and mobs cannot break it.
 #include "feature/stronghold/Blocks.h"
 
 #include <algorithm>
