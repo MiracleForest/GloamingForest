@@ -463,6 +463,8 @@ GF_REGISTER_SELFTEST("woodwork.rack_sync", [](Context& ctx) -> ll::coro::CoroTas
         h->set(p, 0, *gf::game::items::make("minecraft:kelp"));
         co_await ctx.ticks(2);
         (void)gf::feature::net::takeTestMessages(ctx.player());
+        ctx.player().getInventory().removeAllItems();
+        clearItemsNear(ctx, p);
         ctx.require(ctx.setBlock(p, "minecraft:air"), "the rack removed");
         co_await ctx.ticks(3);
         int goneCount = 0;
@@ -470,7 +472,14 @@ GF_REGISTER_SELFTEST("woodwork.rack_sync", [](Context& ctx) -> ll::coro::CoroTas
             if (e.channel == "woodwork.rack")
                 for (auto const& g : e.payload.value("gone", nlohmann::json::array())) goneCount += g == nlohmann::json::array({p.dim, p.x, p.y, p.z}) ? 1 : 0;
         ctx.check(goneCount == 1, "a removed rack is withdrawn once (" + std::to_string(goneCount) + " gone messages)");
-        ctx.check(countNear(ctx, p, "minecraft:kelp") == 1, "and drops its item");
+        // on the ground, or already picked up by the test player standing next to the rack
+        auto kelpStack = *gf::game::items::make("minecraft:kelp");
+        int  kelp      = 0;
+        for (int i = 0; i < 20 && kelp == 0; ++i) {
+            kelp = countNear(ctx, p, "minecraft:kelp") + ctx.player().getInventory().getItemCount(kelpStack);
+            if (kelp == 0) co_await ctx.ticks(1);
+        }
+        ctx.check(kelp == 1, "and drops its item (" + std::to_string(kelp) + ")");
     }
     clearItemsNear(ctx, p);
     ctx.cleanupBlock(p);
