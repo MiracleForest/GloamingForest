@@ -1,0 +1,32 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:squirrel",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/squirrel2"
+      },
+      "geometry": {
+        "default": "geometry.twilightforest.squirrel"
+      },
+      "animations": {
+        "setup": "animation.twilightforest.squirrel.base"
+      },
+      "scripts": {
+        "animate": [
+          "setup"
+        ]
+      },
+      "render_controllers": [
+        "controller.render.default"
+      ],
+      "spawn_egg": {
+        "base_color": "#904f12",
+        "overlay_color": "#eeeeee"
+      }
+    }
+  }
+}

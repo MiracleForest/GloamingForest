@@ -1,0 +1,33 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:helmet_crab",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/helmetcrab",
+        "blue": "textures/twilightforest/entity/helmetcrabblue"
+      },
+      "geometry": {
+        "default": "geometry.twilightforest.helmet_crab"
+      },
+      "render_controllers": [
+        "controller.render.twilightforest.helmet_crab"
+      ],
+      "animations": {
+        "base": "animation.twilightforest.helmet_crab.base"
+      },
+      "scripts": {
+        "animate": [
+          "base"
+        ]
+      },
+      "spawn_egg": {
+        "base_color": "#fb904b",
+        "overlay_color": "#d3e7bc"
+      }
+    }
+  }
+}
