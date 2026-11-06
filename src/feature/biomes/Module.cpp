@@ -20,10 +20,15 @@
 #include <filesystem>
 #include <fstream>
 #include <mutex>
+#include <unordered_map>
 
 #include "ll/api/service/Bedrock.h"
 
+#include "mc/network/ServerNetworkHandler.h"
+#include "mc/network/packet/BiomeDefinitionListPacket.h"
+#include "mc/network/packet/BiomeDefinitionListPacketPayload.h"
 #include "mc/world/level/Level.h"
+#include "mc/world/level/biome/serialization/BiomeDefinitionData.h"
 #include "mc/world/level/biome/Biome.h"
 #include "mc/world/level/biome/registry/BiomeRegistry.h"
 
@@ -138,8 +143,9 @@ std::atomic<std::uint64_t>& generation() {
 static int applyWaterColours() {
     auto level = ll::service::getLevel();
     if (!level) return 0;
-    auto& registry = level->getBiomeRegistry();
-    int   n        = 0;
+    auto&                                  registry = level->getBiomeRegistry();
+    int                                    n        = 0;
+    std::unordered_map<unsigned short, int> byId; // biome id -> TF's water (ARGB)
     for (auto const& id : biomeIds()) {
         auto* biome = registry.lookupByName(id);
         auto  water = core::biomes::colors::water(id);
@@ -147,7 +153,24 @@ static int applyWaterColours() {
         auto old              = static_cast<unsigned>(static_cast<int>(biome->mMapWaterColor));
         // the colour only: the high byte keeps whatever the game stores there
         biome->mMapWaterColor = static_cast<int>((old & 0xFF000000u) | static_cast<unsigned>(*water));
+        byId[biome->mId->mValue] = biome->mMapWaterColor;
         ++n;
+    }
+    // the biome definitions the server sends joining clients are built once and cached: they get the
+    // same colours (a world whose list was built before this ran would send the old ones)
+    if (auto handler = ll::service::getServerNetworkHandler()) {
+        int patched = 0;
+        for (auto* cached : {handler->mBiomeDefinitionListWithoutCSCG.get(), handler->mBiomeDefinitionListWithCSCG.get()}) {
+            if (!cached) continue;
+            auto& list = const_cast<BiomeDefinitionListPacket&>(*cached);
+            for (auto& [key, data] : *list.mBiomeData) {
+                auto it = byId.find(data.mId->mValue);
+                if (it == byId.end()) continue;
+                data.mMapWaterColorARGB = it->second;
+                ++patched;
+            }
+        }
+        if (patched) gf::log().info("biomes: TF's water colours set in {} cached biome definitions", patched);
     }
     return n;
 }
