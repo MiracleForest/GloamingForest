@@ -349,9 +349,13 @@ GF_REGISTER_SELFTEST("artifacts.flask", [](Context& ctx) -> ll::coro::CoroTask<>
     auto& p = ctx.player();
     clearInventory(p);
     ItemStack flask  = make(kBrittleFlask);
-    ItemStack potion = make("minecraft:potion", 3, 14); // swiftness
-    for (int i = 0; i < 3; ++i) ctx.check(fillFlask(p, flask, potion, true), "dose " + std::to_string(i + 1) + " went in");
-    ctx.check(!fillFlask(p, flask, potion, true), "no fourth dose");
+    for (int i = 0; i < 3; ++i) {
+        ItemStack potion = make("minecraft:potion", 1, 14); // swiftness (potions do not stack)
+        ctx.check(fillFlask(p, flask, potion, true), "dose " + std::to_string(i + 1) + " went in");
+        ctx.check(items::isEmpty(potion), "the potion was used up");
+    }
+    ItemStack more = make("minecraft:potion", 1, 14);
+    ctx.check(!fillFlask(p, flask, more, true), "no fourth dose");
     ctx.check(flaskOf(flask).doses == 3 && flaskOf(flask).potion == 14, "3 doses of swiftness");
     drinkFlask(p, flask);
     ctx.check(hasEffect(p, "speed"), "Speed applied");
@@ -403,7 +407,8 @@ GF_REGISTER_SELFTEST("artifacts.recipes", [](Context& ctx) -> ll::coro::CoroTask
     ItemStack pearl = make("minecraft:ender_pearl");
     auto      out   = test::craft("scepter", {&scepter, &pearl, &pearl}, "twilightforest:equipment/twilight_scepter");
     ctx.check(out && out->getDamageValue() == 2, "two pearls restore 18 charges");
-    ctx.check(!test::craft("scepter", {&scepter, &pearl, &pearl, &pearl}, "twilightforest:equipment/twilight_scepter"), "a third pearl would overshoot");
+    ctx.check(test::craft("scepter", {&scepter, &pearl, &pearl, &pearl}, "twilightforest:equipment/twilight_scepter").has_value(), "a third pearl tops it up");
+    ctx.check(!test::craft("scepter", {&scepter, &pearl, &pearl, &pearl, &pearl}, "twilightforest:equipment/twilight_scepter"), "a fourth pearl would overshoot by a whole pearl");
     ItemStack essence = make(kEssence);
     auto      full    = test::craft("essence", {&essence, &scepter});
     ctx.check(full && full->getDamageValue() == 0, "an essence repairs fully");
@@ -423,7 +428,7 @@ GF_REGISTER_SELFTEST("artifacts.recipes", [](Context& ctx) -> ll::coro::CoroTask
     ctx.setBlock(c.offset(0, 1, 0), "minecraft:cauldron", Json{{"fill_level", 6}, {"cauldron_liquid", "water"}});
     auto& player = ctx.player();
     player.setSelectedItem(*clothed);
-    ItemStack held = player.getCarriedItem();
+    ItemStack const& held = player.getCarriedItem(); // the hand slot itself, as the dispatch gives it
     std::string itemId = "minecraft:iron_helmet", blockId = "minecraft:cauldron";
     auto* region = ctx.region();
     auto  cpos   = c.offset(0, 1, 0);
@@ -471,4 +476,5 @@ GF_REGISTER_SELFTEST("artifacts.ore_meter", [](Context& ctx) -> ll::coro::CoroTa
 });
 
 } // namespace gf::feature::artifacts
+
 
