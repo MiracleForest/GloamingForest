@@ -14,6 +14,8 @@
 
 #include "feature/weapons/Weapons.h"
 
+#include "feature/ext/entity/EntityExt.h"
+
 #include <cctype>
 
 #include <unordered_map>
@@ -22,6 +24,7 @@
 #include "mc/world/actor/ActorCategory.h"
 #include "mc/world/actor/ActorType.h"
 #include "mc/world/actor/player/Player.h"
+#include "mc/world/item/Item.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
@@ -104,7 +107,7 @@ bool pushable(Actor& e) {
     if (isLiving(e)) return true;
     auto t = e.getEntityTypeId();
     return t == ActorType::ItemEntity || t == ActorType::BoatRideable || t == ActorType::ChestBoatRideable || t == ActorType::MinecartRideable ||
-           gf::projectile::ext::isProjectile(e) || e.hasCategory(ActorCategory::Projectile);
+           gf::projectile::ext::isProjectile(e) || t == ActorType::Arrow;
 }
 
 } // namespace

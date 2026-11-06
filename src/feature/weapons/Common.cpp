@@ -43,6 +43,7 @@
 #include "feature/landmark/Landmark.h"
 #include "feature/tags/Tags.h"
 #include "feature/weapons/World.h"
+#include "game/Blocks.h"
 #include "game/Items.h"
 #include "mod/Config.h"
 

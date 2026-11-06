@@ -17,6 +17,8 @@
 
 #include "feature/weapons/Weapons.h"
 
+#include "feature/ext/entity/EntityExt.h"
+
 #include <string>
 
 #include "ll/api/service/Bedrock.h"

@@ -15,6 +15,7 @@
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/ActorDefinitionIdentifier.h"
 #include "mc/world/actor/Mob.h"
+#include "mc/world/actor/item/ItemActor.h"
 #include "mc/world/actor/player/Inventory.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/actor/player/PlayerItemInUse.h"
@@ -34,6 +35,8 @@
 #include "feature/projectile/Projectile.h"
 #include "feature/stats/Stats.h"
 #include "feature/weapons/Weapons.h"
+
+#include "feature/ext/entity/EntityExt.h"
 #include "feature/weapons/World.h"
 #include "game/Blocks.h"
 #include "game/Items.h"

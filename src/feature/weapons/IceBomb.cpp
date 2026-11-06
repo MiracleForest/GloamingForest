@@ -13,6 +13,8 @@
 
 #include "feature/weapons/Weapons.h"
 
+#include "feature/ext/entity/EntityExt.h"
+
 #include <cmath>
 #include <numbers>
 
