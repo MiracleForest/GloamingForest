@@ -60,6 +60,14 @@ inline constexpr char PinchBeetle[]  = "twilightforest:pinch_beetle";
 [[nodiscard]] std::int64_t uidOf(Actor const& actor);
 [[nodiscard]] Actor*       actorById(std::int64_t uid);
 [[nodiscard]] Mob*         asMob(Actor& actor);
+/// The living mob with unique id `uid` (nullptr: gone or dead).
+[[nodiscard]] Mob* liveMob(std::int64_t uid);
+/// Attributes.ATTACK_DAMAGE of the mob (`fallback` without the attribute).
+[[nodiscard]] float attackDamage(Mob& mob, float fallback);
+/// Forgets the unit's per-actor state of a mob (its die hook; stale entries are also pruned).
+void forgetActor(Actor& actor, std::string const& = {}, Actor* = nullptr);
+/// Registers per-uid state of another file for the pruning of gone actors.
+void onForget(std::function<void(std::int64_t uid)> fn);
 [[nodiscard]] std::string  typeOf(Actor const& actor);
 [[nodiscard]] bool         isType(Actor const* actor, char const* id);
 /// A living mob or player (Java's LivingEntity; projectiles, items and the like are not).
@@ -138,8 +146,8 @@ void setPropertyCached(Actor& actor, std::string const& name, ge::PropertyValue 
 
 /// Spawns a mob (spawn reason as given; nullptr on failure).
 Mob* spawnMob(BlockSource& region, std::string const& id, Vec3 const& pos, gf::spawn::SpawnReason reason, float yaw = 0.0f);
-/// A non-mob actor by id (primed TNT).
-Actor* spawnActor(BlockSource& region, std::string const& id, Vec3 const& pos);
+/// A non-mob actor by id (primed TNT), `owner` its owner / igniter.
+Actor* spawnActor(BlockSource& region, std::string const& id, Vec3 const& pos, Actor* owner = nullptr);
 /// The first finalizeSpawn of a mob runs once per mob (persisted in its data).
 [[nodiscard]] bool firstSpawn(Actor& actor);
 
@@ -150,6 +158,11 @@ Actor* spawnActor(BlockSource& region, std::string const& id, Vec3 const& pos);
 class MoveLock {
 public:
     explicit MoveLock(std::int64_t uid) : mUid(uid) {}
+    /// A goal destroyed while it runs (F8 sweeps the goals of an unloaded actor without stop())
+    /// releases its lock.
+    ~MoveLock() { hold(false); }
+    MoveLock(MoveLock const&)            = delete;
+    MoveLock& operator=(MoveLock const&) = delete;
     void hold(bool on);
     [[nodiscard]] static bool held(std::int64_t uid);
     static void              forget(std::int64_t uid);

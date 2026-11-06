@@ -87,6 +87,7 @@ void druidTick(Actor& self) {
     }
     // reassessWeaponGoal: anything but a hoe takes AbstractSkeleton's melee goal
     setGroup(self, "melee", !holdsHoe(*m));
+    syncVanillaMove(*m); // the stroll (5) waits while the ranged goal (4) runs
 }
 
 // ---- NatureBolt ------------------------------------------------------------------------------------------
@@ -159,7 +160,7 @@ void performRangedAttack(Mob& druid, Actor& target) {
 }
 
 void install() {
-    ge::registerType(id::Druid, {.tick = druidTick, .die = [](Actor& a, std::string const&, Actor*) { MoveLock::forget(uidOf(a)); }});
+    ge::registerType(id::Druid, {.tick = druidTick, .die = forgetActor});
     gf::loot::onEntityDrops([](Actor& dead, std::vector<ItemStack>& drops, gf::loot::LootContext const& ctx) {
         if (typeOf(dead) != id::Druid) return;
         if (auto* m = asMob(dead)) {

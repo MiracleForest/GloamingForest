@@ -47,10 +47,7 @@ namespace {
 
 constexpr int kHomeRadius = 20; // Wraith#getHomeRadius
 
-Mob* wraithById(std::int64_t uid) {
-    auto* a = actorById(uid);
-    return a && a->isAlive() ? asMob(*a) : nullptr;
-}
+Mob* wraithById(std::int64_t uid) { return liveMob(uid); }
 
 /// EnforcedHomePoint#isMobWithinHomeArea (no valid home point: everywhere).
 bool withinHome(Mob& m) {
@@ -168,11 +165,6 @@ private:
     std::int64_t mId;
 };
 
-float attackDamage(Mob& m) {
-    auto ref = m.getMutableAttribute(SharedAttributes::ATTACK_DAMAGE());
-    if (auto* inst = ref.mInstance->mPtr) return inst->mCurrentValue;
-    return 5.0F;
-}
 
 void wraithTick(Actor& self) {
     auto* m = asMob(self);
@@ -200,7 +192,7 @@ void wraithTick(Actor& self) {
 } // namespace
 
 void install() {
-    ge::registerType(id::Wraith, {.tick = wraithTick, .die = [](Actor& a, std::string const&, Actor*) { MoveLock::forget(uidOf(a)); }});
+    ge::registerType(id::Wraith, {.tick = wraithTick, .die = forgetActor});
     // Wraith#doHurtTarget: first TFDamageTypes.HAUNT of its attack damage, then the vanilla hit, which
     // the hurt's invulnerable time swallows (same amount): the haunt is the hit
     gf::combat::onIncoming(gf::combat::priority::Normal, [](gf::combat::DamageInfo& d) {
@@ -210,7 +202,7 @@ void install() {
         ia::nextTick([victim, wraith] {
             auto* v = actorById(victim);
             auto* w = wraithById(wraith);
-            if (v && w && v->isAlive()) gf::combat::hurt(*v, attackDamage(*w), "twilightforest:haunt", w);
+            if (v && w && v->isAlive()) gf::combat::hurt(*v, attackDamage(*w, 5.0F), "twilightforest:haunt", w);
         });
         return gf::combat::Verdict::Cancel;
     });

@@ -533,6 +533,8 @@ GF_REGISTER_SELFTEST("hostiles.wraith_home", [](Context& ctx) -> ll::coro::CoroT
     // a stone wall 6 blocks east of home, the wraith 26 blocks east
     for (int y = -2; y < 8; ++y)
         for (int z = -2; z <= 4 - 2; ++z) ctx.setBlock(home.offset(6, y, z), "minecraft:stone");
+    // a (creative) player near home: without one in range the engine despawns the wraith
+    ctx.player().teleportTo(center(home.offset(-4, -2, 0)), true, 0, 1, false);
     auto* w   = spawn(ctx, id::Wraith, center(home.offset(26, 0, 0)));
     auto  wid = uidOf(*w);
     ge::setHome(*w, gf::core::GlobalPos{home.dim, home.x, home.y, home.z}, 20);

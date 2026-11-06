@@ -15,6 +15,12 @@
           "track_target": false
         }
       },
+      "gf:vanilla_move": {
+        "minecraft:behavior.random_stroll": {
+          "priority": 5,
+          "speed_multiplier": 1.0
+        }
+      },
       "gf:baby": {
         "minecraft:is_baby": {},
         "minecraft:scale": {
@@ -114,10 +120,6 @@
           }
         ]
       },
-      "minecraft:behavior.random_stroll": {
-        "priority": 5,
-        "speed_multiplier": 1.0
-      },
       "minecraft:behavior.look_at_player": {
         "priority": 6,
         "look_distance": 8,
@@ -187,6 +189,27 @@
         "remove": {
           "component_groups": [
             "gf:melee"
+          ]
+        }
+      },
+      "gf:vanilla_move_on": {
+        "add": {
+          "component_groups": [
+            "gf:vanilla_move"
+          ]
+        }
+      },
+      "gf:vanilla_move_off": {
+        "remove": {
+          "component_groups": [
+            "gf:vanilla_move"
+          ]
+        }
+      },
+      "minecraft:entity_spawned": {
+        "add": {
+          "component_groups": [
+            "gf:vanilla_move"
           ]
         }
       },

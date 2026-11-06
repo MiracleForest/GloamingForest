@@ -39,6 +39,10 @@
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/item/enchanting/Enchant.h"
 #include "mc/world/item/enchanting/EnchantUtils.h"
+#include "mc/world/attribute/AttributeInstance.h"
+#include "mc/world/attribute/AttributeInstanceRef.h"
+#include "mc/world/attribute/MutableAttributeWithContext.h"
+#include "mc/world/attribute/SharedAttributes.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
@@ -67,6 +71,17 @@ std::int64_t uidOf(Actor const& actor) { return fe::uidOf(actor); }
 Actor*       actorById(std::int64_t uid) { return fe::actorById(uid); }
 Mob*         asMob(Actor& actor) { return fe::asMob(actor); }
 std::string  typeOf(Actor const& actor) { return actor.getTypeName(); }
+
+Mob* liveMob(std::int64_t uid) {
+    auto* a = actorById(uid);
+    return a && a->isAlive() ? fe::asMob(*a) : nullptr;
+}
+
+float attackDamage(Mob& mob, float fallback) {
+    auto ref = mob.getMutableAttribute(SharedAttributes::ATTACK_DAMAGE());
+    if (auto* inst = ref.mInstance->mPtr) return inst->mCurrentValue;
+    return fallback;
+}
 bool         isType(Actor const* actor, char const* id) { return actor && actor->getTypeName() == id; }
 
 bool isLiving(Actor const& actor) { return actor.isPlayer() || actor.hasCategory(ActorCategory::Mob); }
@@ -257,10 +272,30 @@ std::unordered_map<std::int64_t, std::unordered_map<std::string, ge::PropertyVal
     return m;
 }
 std::unordered_map<std::int64_t, int>& moveLocks() {
-    static std::unordered_map<std::int64_t, int> m;
-    return m;
+    // never destroyed: goals (and their locks) may outlive it at process exit
+    static auto* m = new std::unordered_map<std::int64_t, int>();
+    return *m;
+}
+std::vector<std::function<void(std::int64_t)>>& forgetters() {
+    static std::vector<std::function<void(std::int64_t)>> v;
+    return v;
+}
+/// Every minute, the state of actors that are no longer in the level (despawned, unloaded) goes.
+void prune() {
+    std::unordered_set<std::int64_t> uids;
+    for (auto const& [uid, _] : groupStates()) uids.insert(uid);
+    for (auto const& [uid, _] : propertyCache()) uids.insert(uid);
+    for (auto uid : uids) {
+        if (actorById(uid)) continue;
+        groupStates().erase(uid);
+        propertyCache().erase(uid);
+        for (auto const& fn : forgetters()) fn(uid);
+    }
 }
 [[maybe_unused]] bool sCleared = [] {
+    fe::onLevelTick([] {
+        if (fe::currentTick() % 1200 == 0) prune();
+    });
     gf::game::db::onWorldClosed([] {
         groupStates().clear();
         propertyCache().clear();
@@ -309,10 +344,10 @@ Mob* spawnMob(BlockSource& region, std::string const& id, Vec3 const& pos, gf::s
     return a ? fe::asMob(*a) : nullptr;
 }
 
-Actor* spawnActor(BlockSource& region, std::string const& id, Vec3 const& pos) {
+Actor* spawnActor(BlockSource& region, std::string const& id, Vec3 const& pos, Actor* owner) {
     auto level = ll::service::getLevel();
     if (!level) return nullptr;
-    auto owned = level->getActorFactory().createSpawnedActor(ActorDefinitionIdentifier(id), nullptr, pos, Vec2{0.0F, 0.0F});
+    auto owned = level->getActorFactory().createSpawnedActor(ActorDefinitionIdentifier(id), owner, pos, Vec2{0.0F, 0.0F});
     return owned ? level->addEntity(region, std::move(owned)) : nullptr;
 }
 
@@ -339,10 +374,14 @@ bool MoveLock::held(std::int64_t uid) {
 }
 
 void MoveLock::forget(std::int64_t uid) {
-    moveLocks().erase(uid);
     groupStates().erase(uid);
     propertyCache().erase(uid);
+    for (auto const& fn : forgetters()) fn(uid);
 }
+
+void forgetActor(Actor& actor, std::string const&, Actor*) { MoveLock::forget(uidOf(actor)); }
+
+void onForget(std::function<void(std::int64_t uid)> fn) { forgetters().push_back(std::move(fn)); }
 
 LockedGoal::LockedGoal(Mob& mob, ge::GoalPtr inner) : mInner(std::move(inner)), mLock(uidOf(mob)) { flags = mInner->flags; }
 
@@ -359,10 +398,7 @@ void LockedGoal::stop() {
 void syncVanillaMove(Mob& mob) { setGroup(mob, "vanilla_move", !MoveLock::held(uidOf(mob))); }
 
 namespace {
-Mob* mobOf(std::int64_t id) {
-    auto* a = actorById(id);
-    return a && a->isAlive() ? fe::asMob(*a) : nullptr;
-}
+Mob* mobOf(std::int64_t id) { return liveMob(id); }
 } // namespace
 
 RangedAttackGoal::RangedAttackGoal(Mob& mob, double speed, int intervalMin, int intervalMax, float radius, Attack attack, std::function<bool(Mob&)> usable)

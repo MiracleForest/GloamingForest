@@ -98,7 +98,7 @@ void spiderTick(Actor& self) {
 
 void install() {
     for (char const* type : {id::KingSpider, id::HedgeSpider, id::SwarmSpider})
-        ge::registerType(type, {.tick = spiderTick, .die = [](Actor& a, std::string const&, Actor*) { MoveLock::forget(uidOf(a)); }});
+        ge::registerType(type, {.tick = spiderTick, .die = forgetActor});
     // SwarmSpider#doHurtTarget: only one melee attack in four lands
     gf::combat::onIncoming(gf::combat::priority::Normal, [](gf::combat::DamageInfo& d) {
         if (!isType(d.attacker, id::SwarmSpider) || (d.direct && d.direct != d.attacker) || d.type != "minecraft:mob_attack") return gf::combat::Verdict::Pass;

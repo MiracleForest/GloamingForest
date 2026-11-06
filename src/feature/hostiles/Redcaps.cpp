@@ -30,6 +30,7 @@
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/block/Block.h"
+#include "mc/world/level/block/BlockType.h"
 #include "mc/world/phys/AABB.h"
 
 #include "feature/entity/Entity.h"
@@ -51,10 +52,7 @@ namespace {
 
 using Slot = SharedTypes::Legacy::EquipmentSlot;
 
-Mob* redcapById(std::int64_t uid) {
-    auto* a = actorById(uid);
-    return a && a->isAlive() ? asMob(*a) : nullptr;
-}
+Mob* redcapById(std::int64_t uid) { return liveMob(uid); }
 
 bool isSapper(Actor const& a) { return typeOf(a) == id::RedcapSapper; }
 
@@ -116,13 +114,16 @@ bool isTargetLookingAtMe(Actor& redcap, Actor& target) {
 }
 
 std::optional<BlockPos> findBlockTNTNearby(Actor& redcap, int range) {
-    auto& region = redcap.getDimensionBlockSource();
-    auto  p      = blockPosOf(redcap);
+    static Block const* tnt = gf::game::blockWith("minecraft:tnt");
+    if (!tnt) return std::nullopt;
+    auto const& tntType = tnt->getBlockType();
+    auto&       region  = redcap.getDimensionBlockSource();
+    auto        p       = blockPosOf(redcap);
     for (int x = -range; x <= range; x++)
         for (int y = -range; y <= range; y++)
             for (int z = -range; z <= range; z++) {
                 BlockPos at{p.x + x, p.y + y, p.z + z};
-                if (gf::game::blockIdAt(region, at) == "minecraft:tnt") return at;
+                if (&region.getBlock(at).getBlockType() == &tntType) return at;
             }
     return std::nullopt;
 }
@@ -246,7 +247,7 @@ public:
             playAmbient(*m);
             // TntBlock#onCaughtFire -> explode: a primed TNT at the block's centre, by the redcap
             auto& region = m->getDimensionBlockSource();
-            spawnActor(region, "minecraft:tnt", Vec3{p.x + 0.5f, float(p.y), p.z + 0.5f});
+            spawnActor(region, "minecraft:tnt", Vec3{p.x + 0.5f, float(p.y), p.z + 0.5f}, m);
             gf::fx::sound(m->getDimension(), "random.fuse", Vec3{p.x + 0.5f, float(p.y), p.z + 0.5f}, 1.0F, 1.0F);
             m->swing(ActorSwingSource::Attack, HandSlot::Mainhand);
             gf::game::clearBlock(region, p);
@@ -315,7 +316,7 @@ int tntLeft(Actor& redcap) { return tntCount(redcap); }
 
 void install() {
     for (char const* type : {id::Redcap, id::RedcapSapper})
-        ge::registerType(type, {.tick = redcapTick, .die = [](Actor& a, std::string const&, Actor*) { MoveLock::forget(uidOf(a)); }});
+        ge::registerType(type, {.tick = redcapTick, .die = forgetActor});
     gf::loot::onEntityDrops([](Actor& dead, std::vector<ItemStack>& drops, gf::loot::LootContext const& ctx) {
         auto type = typeOf(dead);
         if (type != id::Redcap && type != id::RedcapSapper) return;

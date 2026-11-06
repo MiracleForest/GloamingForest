@@ -112,8 +112,7 @@ void wolfTick(Actor& self) {
 void install() {
     for (char const* type : {id::HostileWolf, id::MistWolf, id::WinterWolf}) {
         ge::registerType(type, {.tick = wolfTick, .die = [](Actor& a, std::string const&, Actor*) {
-                                        lastTargets().erase(uidOf(a));
-                                        MoveLock::forget(uidOf(a));
+                                        forgetActor(a);
                                     }});
     }
     // MistWolf#doHurtTarget: a hit in the dark (raw brightness 0 at the wolf, its block not solid)
@@ -129,6 +128,7 @@ void install() {
         if (seconds > 0 && !mobs::legacySolid(region, pos)) addEffect(d.victim, Effect::Blindness, seconds * 20, 0);
     });
     gf::game::db::onWorldClosed([] { lastTargets().clear(); });
+    onForget([](std::int64_t uid) { lastTargets().erase(uid); });
 }
 
 } // namespace gf::feature::hostiles::wolves

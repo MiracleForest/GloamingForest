@@ -55,11 +55,6 @@ namespace ia   = gf::feature::common::interactions;
 
 namespace {
 
-float attackDamage(Mob& m, float fallback) {
-    auto ref = m.getMutableAttribute(SharedAttributes::ATTACK_DAMAGE());
-    if (auto* inst = ref.mInstance->mPtr) return inst->mCurrentValue;
-    return fallback;
-}
 
 // ---- FireBeetle ---------------------------------------------------------------------------------------------
 
@@ -149,7 +144,7 @@ void pinchBeetleTick(Actor& self) {
             for (int i = 0; i < 3; i++) spawnAt(self, boatPlanks(v->getVariant()));
             for (int j = 0; j < 2; j++) spawnAt(self, "minecraft:stick");
         }
-        v->kill();
+        v->remove(); // Boat#kill: gone, without dropping itself
         playSound(self, "minecraft:entity.zombie.break_wooden_door", 1.0F, voicePitch(self));
     }
     // PinchBeetle#aiStep: the held passenger
@@ -209,7 +204,7 @@ void slimeShoot(Mob& beetle, Actor& target) {
 }
 
 void install() {
-    ge::registerType(id::FireBeetle, {.tick = fireBeetleTick, .die = [](Actor& a, std::string const&, Actor*) { MoveLock::forget(uidOf(a)); }});
+    ge::registerType(id::FireBeetle, {.tick = fireBeetleTick, .die = forgetActor});
     // FireBeetle#doBreathAttack: 2 scorched damage to a target that is not fire immune, then 10 s of fire
     ge::ext::onBreathAttack(id::FireBeetle, [](Mob& beetle, Actor& target) {
         if (!target.isFireImmune() && gf::combat::hurt(target, 2.0F, "twilightforest:scorched", &beetle)) target.setOnFire(10, true);
@@ -228,7 +223,7 @@ void install() {
         return gf::combat::Verdict::Cancel;
     });
 
-    ge::registerType(id::SlimeBeetle, {.tick = slimeBeetleTick, .die = [](Actor& a, std::string const&, Actor*) { MoveLock::forget(uidOf(a)); }});
+    ge::registerType(id::SlimeBeetle, {.tick = slimeBeetleTick, .die = forgetActor});
     // SlimeProjectile: gravity 0.006, a trail of 2 slime particles; 4 thrown damage to a living target
     gf::projectile::Spec blob;
     blob.gravity     = 0.006f;
@@ -254,7 +249,7 @@ void install() {
         return gf::combat::Verdict::Cancel;
     });
 
-    ge::registerType(id::PinchBeetle, {.tick = pinchBeetleTick, .die = [](Actor& a, std::string const&, Actor*) {
+    ge::registerType(id::PinchBeetle, {.tick = pinchBeetleTick, .die = [](Actor& a, std::string const& t, Actor* k) {
                                                // PinchBeetle#die: every passenger gets off
                                                while (Actor* p = a.getFirstPassenger()) {
                                                    ge::ext::hostileDismount(*p);
@@ -263,7 +258,7 @@ void install() {
                                                        if (a.getFirstPassenger() == p) break;
                                                    }
                                                }
-                                               MoveLock::forget(uidOf(a));
+                                               forgetActor(a, t, k);
                                            }});
     ge::ext::markHostileMount(id::PinchBeetle);
     gf::combat::onIncoming(gf::combat::priority::Normal, [](gf::combat::DamageInfo& d) {
