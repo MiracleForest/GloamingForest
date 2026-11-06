@@ -20,7 +20,10 @@
 //   clicked block's own use passed: interactions::onUnusedUseOn); otherwise it is food (the BP's
 //   minecraft:food) and eaten. Its BP block_placer exists for the block's item only (use_on lists
 //   experiment_115 itself, whose clicks are handled here): it never places by itself.
+#include <cstdint>
+#include <mutex>
 #include <random>
+#include <unordered_map>
 #include <string>
 
 #include "ll/api/service/Bedrock.h"
@@ -98,7 +101,30 @@ void giveSlice(Player& player) {
     player.sendInventory(false);
 }
 
+/// The result of each player's last first use-on event of the block (the repeats while the button
+/// is held answer the same, without acting).
+std::mutex&                                    lastMutex() { static std::mutex m; return m; }
+std::unordered_map<std::int64_t, ia::Result>& lastResult() { static std::unordered_map<std::int64_t, ia::Result> m; return m; }
+
+ia::Result decide(ia::UseOnContext const& c);
+
 ia::Result onUseBlock(ia::UseOnContext const& c) {
+    auto uid = c.player.getOrCreateUniqueID().rawID;
+    if (!c.firstEvent && !c.offhand) {
+        std::lock_guard lock(lastMutex());
+        auto it = lastResult().find(uid);
+        auto r  = it == lastResult().end() ? ia::Result::Pass : it->second;
+        return r == ia::Result::Pass && c.itemId == ids::kE115 ? ia::Result::Deny : r;
+    }
+    auto r = decide(c);
+    if (!c.offhand) {
+        std::lock_guard lock(lastMutex());
+        lastResult()[uid] = r;
+    }
+    return r;
+}
+
+ia::Result decide(ia::UseOnContext const& c) {
     bool holdsE115 = c.itemId == ids::kE115;
     if (c.offhand) return holdsE115 ? ia::Result::Deny : ia::Result::Pass;
     auto* region = game::regionOf(c.pos.dim);
@@ -106,7 +132,6 @@ ia::Result onUseBlock(ia::UseOnContext const& c) {
     auto pos   = game::blockPos(c.pos);
     auto state = e115Of(c.block);
     if (state.bites < 0) return ia::Result::Pass;
-    if (!c.firstEvent) return holdsE115 || c.itemId.empty() ? ia::Result::Consume : ia::Result::Pass;
 
     cp::E115Use use;
     use.holdsE115     = holdsE115;
@@ -197,6 +222,8 @@ bool placeE115(Player& player, BlockSource& region, BlockPos const& clicked, int
         target = BlockPos{clicked.x + off[face][0], clicked.y + off[face][1], clicked.z + off[face][2]};
         if (!game::replaceable(region, target)) return false;
     }
+    if (target.y < region.getMinHeight() || target.y >= region.getMaxHeight()) return false;
+    if (player.isAdventure()) return false; // Player#mayUseItemAt
     if (::gf::landmark::isProtectedFor(player, target)) return false;
     if (!solidAt(region, BlockPos{target.x, target.y - 1, target.z})) return false; // canSurvive
     if (!setE115(region, target, {7, false})) return false;

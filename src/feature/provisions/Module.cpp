@@ -126,6 +126,7 @@ void levelTick() {
         if (!p.isClientSide()) renewalTick(p);
         return true;
     });
+    thawFrozen();
 }
 
 class ProvisionsModule {

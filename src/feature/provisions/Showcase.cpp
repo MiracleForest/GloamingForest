@@ -2,8 +2,8 @@
 // U10 (provisions): the client e2e's showcase (provisions.real_arm / provisions.real_clear). It gives
 // every real player U10's items (the foods, stale bread, Experiment 115 and the discs) and frosted II,
 // and builds a row of Experiment 115 in its 16 states in front of them, for the screenshots of
-// tools/e2e/client/scenarios/provisions.ps1. Not part of the 'full' run's checks (no real players
-// there: it passes doing nothing).
+// tools/e2e/client/scenarios/provisions.ps1. Only players carrying the entity tag
+// gf_provisions_showcase (the scenario adds it) are touched: in a 'full' run it does nothing.
 #include <string>
 
 #include "ll/api/service/Bedrock.h"
@@ -35,7 +35,7 @@ int forRealPlayers(Fn&& fn) {
     auto level = ll::service::getLevel();
     if (!level) return 0;
     level->forEachPlayer([&](Player& p) {
-        if (p.isSimulatedPlayer() || p.isClientSide()) return true;
+        if (p.isSimulatedPlayer() || p.isClientSide() || !p.hasTag("gf_provisions_showcase")) return true;
         fn(p);
         ++n;
         return true;

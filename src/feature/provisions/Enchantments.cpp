@@ -139,11 +139,10 @@ void postAttackEffects(Actor& victim, Actor& attacker) {
 
 void renewalTick(Player& player) {
     auto check = [&](ItemStack const& held, auto&& write) {
-        if (game::items::isEmpty(held)) return;
+        if (game::items::isEmpty(held) || held.getDamageValue() == 0 || held.getDamageValue() != maxDamageOf(held)) return;
         auto id = game::items::idOf(held);
         if (!::gf::tags::has(::gf::tags::Registry::Item, "twilightforest:scepters", id)) return;
         if (::gf::enchant::level(held, ids::kRenewal) <= 0) return;
-        if (held.getDamageValue() != maxDamageOf(held)) return;
         ItemStack copy = held;
         if (gf::provisions::ext::rechargeScepter(player, copy)) {
             write(copy);

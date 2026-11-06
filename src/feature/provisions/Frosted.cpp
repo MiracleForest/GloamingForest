@@ -120,8 +120,10 @@ void frostedTick(Actor& a, int amplifier) {
     }
 }
 
+} // namespace
+
 /// The counters of entities no longer frosted thaw (2 a tick) and are forgotten at 0.
-void thawTick() {
+void thawFrozen() {
     auto level = ll::service::getLevel();
     if (!level) return;
     std::vector<std::pair<std::int64_t, int>> update;
@@ -145,6 +147,8 @@ void thawTick() {
     }
 }
 
+namespace {
+
 int remainingTicks(Actor& a, std::string const& id) {
     for (auto const& e : ::gf::effects::internal::activeOf(a))
         if (e.id == id) return e.ticks;
@@ -158,6 +162,8 @@ int remainingTicks(Actor& a, std::string const& id) {
     if (d.type == "minecraft:freeze") {
         d.amount = cp::frostedFreezeDamage(d.amount, amp);
     } else if (::gf::combat::damageTypeHasTag(d.type, "minecraft:is_fire")) {
+        // LivingEntity#hurt returns before the event for a fire-immune entity
+        if (::gf::effects::has(d.victim, "minecraft:fire_resistance") || d.victim.isFireImmune()) return ::gf::combat::Verdict::Pass;
         int ticks = remainingTicks(d.victim, ids::kFrosted);
         ::gf::effects::remove(d.victim, ids::kFrosted);
         int next = cp::frostedAfterFire(amp);
@@ -166,7 +172,6 @@ int remainingTicks(Actor& a, std::string const& id) {
     return ::gf::combat::Verdict::Pass;
 }
 
-ll::event::ListenerPtr gThaw;
 
 } // namespace
 
@@ -194,8 +199,7 @@ void installFrosted() {
          .tickInterval         = 1}
     );
     ::gf::effects::ext::setIcon(ids::kFrosted, "textures/twilightforest/mob_effect/frosted");
-    ::gf::combat::onIncoming(::gf::combat::priority::High, &onIncoming);
-    gThaw = ll::event::EventBus::getInstance().emplaceListener<ll::event::ServerLevelTickEvent>([](auto&) { thawTick(); });
+    ::gf::combat::onIncoming(::gf::combat::priority::Low, &onIncoming);
 }
 
 } // namespace gf::feature::provisions

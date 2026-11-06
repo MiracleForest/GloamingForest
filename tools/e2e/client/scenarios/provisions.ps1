@@ -21,6 +21,7 @@ Invoke-Chat '/time set 1000'
 Invoke-Chat '/weather clear'
 Invoke-Chat '/fill 8 -61 18 30 -61 30 stone'
 Invoke-Chat '/fill 8 -60 18 30 -55 30 air'
+Invoke-Chat '/tag @s add gf_provisions_showcase'
 $mark = Get-LogMark
 $r = Invoke-SelfTest 'provisions.real_arm'
 if ($r.Fail -gt 0) { throw 'provisions.real_arm failed' }

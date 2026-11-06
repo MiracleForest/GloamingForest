@@ -67,6 +67,9 @@ struct Counters {
 /// fire_react / chill_aura of every armour piece `victim` wears, after `attacker` damaged it.
 void postAttackEffects(Actor& victim, Actor& attacker);
 
+/// Frozen counters of entities no longer frosted thaw (every server tick).
+void thawFrozen();
+
 /// The renewal tick of one player (the main hand and the off hand).
 void renewalTick(Player& player);
 
