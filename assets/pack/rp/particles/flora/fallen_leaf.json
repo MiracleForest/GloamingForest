@@ -1,0 +1,60 @@
+{
+  "format_version": "1.10.0",
+  "particle_effect": {
+    "description": {
+      "identifier": "twilightforest:fallen_leaf",
+      "basic_render_parameters": {
+        "material": "particles_alpha",
+        "texture": "textures/twilightforest/particle/fallen_leaf"
+      }
+    },
+    "components": {
+      "minecraft:emitter_initialization": {
+        "creation_expression": "variable.vx = (variable.velocity.x ?? 0); variable.vy = (variable.velocity.y ?? 0); variable.vz = (variable.velocity.z ?? 0); variable.r = (variable.color.r ?? 1); variable.g = (variable.color.g ?? 1); variable.b = (variable.color.b ?? 1);"
+      },
+      "minecraft:emitter_rate_instant": { "num_particles": 1 },
+      "minecraft:emitter_lifetime_once": { "active_time": 0 },
+      "minecraft:emitter_shape_point": {
+        "direction": [
+          "(math.random(-0.4, 0.4) * 0.3 * 0.1 + variable.vx) * 20",
+          "((math.random(-0.4, 0.4) * 0.3 + 0.1) * 0.1 + variable.vy) * 20",
+          "(math.random(-0.4, 0.4) * 0.3 * 0.1 + variable.vz) * 20"
+        ]
+      },
+      "minecraft:particle_initial_speed": 1,
+      "minecraft:particle_initial_spin": {
+        "rotation": "(variable.particle_random_2 * 2 - 1) * 57.3",
+        "rotation_rate": 100
+      },
+      "minecraft:particle_lifetime_expression": {
+        "max_lifetime": "(160 + math.floor(variable.particle_random_1 * 30)) / 20"
+      },
+      "minecraft:particle_motion_dynamic": {
+        "linear_acceleration": [0, -9.5, 0],
+        "linear_drag_coefficient": 7.13
+      },
+      "minecraft:particle_motion_collision": {
+        "collision_radius": 0.05,
+        "collision_drag": 7.13
+      },
+      "minecraft:particle_appearance_billboard": {
+        "size": ["0.075 * (1 + variable.particle_random_3)", "0.075 * (1 + variable.particle_random_3)"],
+        "facing_camera_mode": "rotate_xyz",
+        "uv": {
+          "texture_width": 5,
+          "texture_height": 5,
+          "uv": [0, 0],
+          "uv_size": [5, 5]
+        }
+      },
+      "minecraft:particle_appearance_tinting": {
+        "color": [
+          "variable.r",
+          "variable.g",
+          "variable.b",
+          "math.min(math.clamp(variable.particle_age, 0, 1), math.clamp(variable.particle_lifetime - variable.particle_age, 0, 1))"
+        ]
+      }
+    }
+  }
+}
