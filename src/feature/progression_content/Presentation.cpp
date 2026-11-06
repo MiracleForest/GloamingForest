@@ -175,7 +175,10 @@ void onEarned(Player& player, std::string const& id) {
     auto const* adv = find(id);
     if (!adv) return;
     resetFlask(player, *adv);
-    if (quietFor(player)) return;
+    if (quietFor(player)) {
+        log().info("progression: {} earned {} ({}), quietly", player.getRealName(), id, frameName(adv->frame));
+        return;
+    }
     // AdvancementRewards#grant
     if (adv->experience > 0) player.addExperience(adv->experience);
     if (adv->hasDisplay) {
