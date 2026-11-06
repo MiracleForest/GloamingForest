@@ -157,12 +157,13 @@ void afterBreak(ia::DestroyContext const& c, bool destroyed) {
         if (region && gm) {
             BlockPos origin = game::blockPos(pend.pos);
             int      count  = 1;
+            bool     grouping = m.conversion > 0;
             forCell(origin, [&](BlockPos const& p) {
                 if (p == origin || game::blockId(region->getBlock(p)) != pend.blockId) return;
                 if (gm->destroyBlock(p, static_cast<uchar>(pend.face))) ++count;
             });
             gf::log().info("giants: giant pickaxe broke {} {} block(s) at {} {} {} (conversion {})", count, pend.blockId, origin.x, origin.y, origin.z,
-                           m.conversion > 0 ? "on" : "off");
+                           grouping ? "on" : "off");
         }
     }
     m.breaking = false;

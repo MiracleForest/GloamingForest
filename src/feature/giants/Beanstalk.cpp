@@ -249,7 +249,6 @@ void bonemealParticles(BlockSource& region, BlockPos const& pos) {
     // LevelEvent.PARTICLES_AND_SOUND_PLANT_GROWTH (data 15): the composter / bone meal sparkles
     gf::fx::particle(region.getDimension(), "minecraft:happy_villager", Vec3{pos.x + .5f, pos.y + .5f, pos.z + .5f}, Vec3{}, 8,
                      {{"spread", {0.4, 0.4, 0.4}}});
-    gf::fx::sound(region.getDimension(), "minecraft:item.bone_meal.use", Vec3{pos.x + .5f, pos.y + .5f, pos.z + .5f});
 }
 
 /// The server's next tick: 15 bone meals on the plant (with a fake player in TF).

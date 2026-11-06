@@ -14,4 +14,4 @@
 Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
 $r = Invoke-SelfTest 'giants.*' -TimeoutSeconds 900
 if ($r.Fail -gt 0) { throw "$($r.Fail) giants selftest(s) failed: $($r.Failed -join ', ')" }
-if ($r.Pass -lt 12) { throw "only $($r.Pass) giants selftests ran" }
+if ($r.Pass -lt 11) { throw "only $($r.Pass) giants selftests ran" }

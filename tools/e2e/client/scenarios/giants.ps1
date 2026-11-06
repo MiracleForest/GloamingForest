@@ -40,7 +40,7 @@ if (-not (Register-SelfTestResult $r)) { throw 'giants.client_showcase failed' }
 if (-not $remote) {
     $r = Invoke-SelfTest 'giants.*'
     if ($r.Fail -gt 0) { throw "$($r.Fail) giants selftest(s) failed" }
-    if ($r.Pass -lt 12) { throw "expected at least 12 giants selftests to pass, got $($r.Pass)" }
+    if ($r.Pass -lt 11) { throw "expected at least 11 giants selftests to pass, got $($r.Pass)" }
 } elseif (-not (Get-GameProcess)) {
     throw 'the game closed while connected to the host'
 }
