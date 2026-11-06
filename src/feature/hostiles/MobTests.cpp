@@ -543,8 +543,9 @@ GF_REGISTER_SELFTEST("hostiles.wraith_home", [](Context& ctx) -> ll::coro::CoroT
     for (int i = 0; i < 1200 && !back; ++i) {
         co_await ctx.ticks(1);
         auto* m = mobById(wid);
-        ctx.require(m != nullptr && m->isAlive(), "the wraith is there");
+        ctx.require(m != nullptr && m->isAlive(), "the wraith is there (tick " + std::to_string(i) + ")");
         auto p = m->getFeetPos();
+        if (i % 100 == 0) ctx.info("wraith at " + std::to_string(int(p.x - home.x)) + " " + std::to_string(int(p.y - home.y)) + " " + std::to_string(int(p.z - home.z)));
         if (p.x < home.x + 6) crossed = true;
         if (auto* region = ctx.region(); region && gf::game::blockIdAt(*region, blockPosOf(*m)) == "minecraft:stone") inStone = true;
         double dx = p.x - home.x, dy = p.y - home.y, dz = p.z - home.z;

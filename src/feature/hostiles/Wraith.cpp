@@ -9,7 +9,7 @@
 // The wraith: a FlyingMob without physics (the BP: no gravity, no block collision) steered by F8's
 // NoClipMoveControl. Its goals are native: 2 MoveTowardsHome 0.85, 4 SimplifiedAttack (F8),
 // 5 FlyTowardsTarget, 6 RandomFloatAround, 7 LookAround (the ghast's); the target (nearest player,
-// no sight needed) is the BP's. A wraith from a spawner or a structure keeps a home of radius 20.
+// no sight needed) is the BP's. A wraith from a spawner keeps a home of radius 20.
 
 #include <cmath>
 #include <memory>
@@ -170,11 +170,10 @@ void wraithTick(Actor& self) {
     auto* m = asMob(self);
     if (!m || !self.isAlive()) return;
     if (firstSpawn(self)) {
-        // Wraith#finalizeSpawn: STRUCTURE / SPAWNER spawns keep their spawn position as home
+        // Wraith#finalizeSpawn: a SPAWNER spawn keeps its spawn position as home (a structure that
+        // places a wraith gives it its home with gf::entity::setHome; Bedrock keeps no spawn reason)
         auto method = static_cast<MobSpawnMethod>(m->mSpawnMethod);
-        bool spawner   = method == MobSpawnMethod::Spawner;
-        bool structure = method == MobSpawnMethod::Unknown && !m->mNaturallySpawned;
-        if (spawner || structure) {
+        if (method == MobSpawnMethod::Spawner && !ge::home(*m)) {
             auto p = blockPosOf(self);
             ge::setHome(*m, gf::core::GlobalPos{dimOf(self), p.x, p.y, p.z}, kHomeRadius);
         }
