@@ -138,6 +138,8 @@ function Show-Mob([string]$id, [string]$shot, [double]$dy = 0, [double]$dist = 4
     Save-Screenshot $shot | Out-Null
     Invoke-Chat "/kill @e[type=$id]"
 }
+# (no griefing: a killed unstable core explodes 3 s later)
+Invoke-Chat '/gamerule mobgriefing false'
 Show-Mob 'twilightforest:snow_queen' 'snow-queen' 1 6
 # its gear (a TF sword, chestplate and helmet) reaches the client with the equipment packets
 Show-Mob 'twilightforest:snow_guardian' 'snow-guardian' 0 3 2.5
@@ -146,21 +148,23 @@ Show-Mob 'twilightforest:unstable_ice_core' 'ice-core-unstable'
 Show-Mob 'twilightforest:ice_crystal' 'ice-crystal'
 # the dying unstable ice core (UnstableIceCoreRenderer): swollen 1.4 x 1.1 with the sin(t x 100)
 # wobble, flashing white every other 2 ticks, for 60 ticks before it explodes
-Invoke-Chat '/gamerule mobgriefing false'
 $dx = 4400; $dz = 4400; $dy = -60
 Invoke-Teleport "/tp @s $($dx + 4) $($dy) $($dz + 0.5) facing $($dx + 0.5) $($dy + 1) $($dz + 0.5)"
 Start-Sleep -Seconds 2
-Invoke-Chat "/summon twilightforest:unstable_ice_core $($dx + 0.5) $($dy) $($dz + 0.5) facing @p"
-Start-Sleep -Seconds 1
 $dyingMark = Get-LogMark
-Invoke-Chat '/damage @e[type=twilightforest:unstable_ice_core] 100'
-Wait-LogLine 'aurora: unstable ice core dying' 10 -Since $dyingMark | Out-Null
-Start-Sleep -Milliseconds 400
+Invoke-Chat "/summon twilightforest:unstable_ice_core $($dx + 0.5) $($dy) $($dz + 0.5) facing @p"
+Invoke-Chat '/damage @e[type=twilightforest:unstable_ice_core,c=1] 100'
+$dying = Wait-LogLine 'aurora: unstable ice core dying at (-?[\d.]+) (-?[\d.]+) (-?[\d.]+)' 10 -Since $dyingMark
+if ($dying -match 'dying at (-?[\d.]+) (-?[\d.]+) (-?[\d.]+)') {
+    # the body lies still where it died: look at it from 3.5 blocks
+    $cx = [double]$Matches[1]; $cy = [double]$Matches[2]; $cz = [double]$Matches[3]
+    Invoke-Teleport "/tp @s $($cx + 3.5) $cy $cz facing $cx $($cy + 1) $cz"
+}
+Start-Sleep -Milliseconds 200
 foreach ($k in 1..3) { Save-Screenshot "ice-core-dying-$k" | Out-Null; Start-Sleep -Milliseconds 130 }
 Start-Sleep -Seconds 3
 Invoke-Chat '/kill @e[type=twilightforest:unstable_ice_core]'
 Invoke-Chat '/gamerule mobgriefing true'
-
 # ---- the mushroom tower -------------------------------------------------------------------------
 $tx = 4600; $tz = 4600; $ty = -60
 Invoke-Teleport "/tp @s $($tx + 20) $($ty + 30) $($tz + 20)"

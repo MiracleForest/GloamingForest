@@ -48,7 +48,9 @@ void logPalaceViews(structure::bases::PieceList const& pieces) {
     for (auto const& p : pieces) {
         if (!boss && p->typeId == "twilightforest:TFITBoss") {
             boss    = true;
-            auto at = p->getWorldPos(7, 29, 2), look = p->getWorldPos(7, 34, 7);
+            // on the room's floor in a corner free of the ice stairs, looking up across the
+            // glowstone ceiling (y 38 .. 39) past the spawner (7, 34, 7)
+            auto at = p->getWorldPos(4, 35, 4), look = p->getWorldPos(10, 39, 10);
             gf::log().info("aurora: snow queen room view {} {} {} facing {} {} {}", at.x, at.y, at.z, look.x, look.y, look.z);
         }
         if (!wing && p->typeId == "twilightforest:TFITWin") {

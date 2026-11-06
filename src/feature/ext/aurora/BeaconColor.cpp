@@ -93,9 +93,10 @@ void recolour(BeaconBlockActor& beacon, BlockSource& region) {
     for (auto const& s : sections) total += s.mHeight;
     if (total <= 0 || multipliers().empty()) return;
     BlockPos const base = beacon.getPosition();
-    // Bedrock's sections start at the beacon block itself (its beam is drawn from there): an
-    // unobstructed beam's sections add up to one block more than the blocks above the beacon. That
-    // lead block belongs to the first (beacon's own) section, as Java's beam starts white there.
+    // Bedrock's sections start at the beacon block itself: the engine's own sections of a vanilla
+    // beacon under red stained glass two blocks up are 2 white (the beacon and the air block), then
+    // red, then a last section past the world's top. That lead block belongs to the first (beacon's
+    // own) section, so the beam is white up to the first coloured block, as Java's.
     int const above = region.getMaxHeight() - 1 - base.y;
     int const lead  = std::clamp(total - above, 0, 1);
     // the colour multiplier of each block of the beam above the beacon (nullopt: none)
