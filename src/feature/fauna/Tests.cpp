@@ -432,9 +432,11 @@ GF_REGISTER_SELFTEST("fauna.flying_bird", [](Context& ctx) -> ll::coro::CoroTask
     bird = mobById(uid);
     ctx.require(bird && birdLanded(*bird), "the raven starts landed");
     // Raven#isSpooked: hurt by a mob
+    // (the attacker stays: lastHurtByMob resolves only a live mob)
+    std::int64_t attacker = 0;
     if (auto* boar = spawnAt(at(pos, 1, 0, 0), kBoar)) {
+        attacker = uidOf(*boar);
         gf::combat::hurt(*bird, 1.0f, "minecraft:mob_attack", boar, boar);
-        boar->remove();
     }
     bool tookOff = false, landedAgain = false;
     for (int t = 0; t < 400 && !landedAgain; ++t) {
@@ -446,6 +448,7 @@ GF_REGISTER_SELFTEST("fauna.flying_bird", [](Context& ctx) -> ll::coro::CoroTask
     }
     ctx.check(tookOff, "the spooked raven took off");
     ctx.check(landedAgain, "and landed again on solid ground");
+    if (auto* a = fe::actorById(attacker)) a->remove();
     if (auto* b = mobById(uid)) b->remove();
     clearAround(pos, 4, box.minZ);
 });
