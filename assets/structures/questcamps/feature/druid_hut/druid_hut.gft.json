@@ -1,0 +1,39 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "gloamingforest:feature/druid_hut/druid_hut",
+  "size": [9, 9, 9],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"minecraft:air"},
+    {"Name":"minecraft:cobblestone"},
+    {"Name":"minecraft:oak_planks"},
+    {"Name":"minecraft:oak_log","Properties":{"axis":"y"}},
+    {"Name":"minecraft:glass_pane","Properties":{"east":"false","north":"false","south":"false","waterlogged":"false","west":"false"}},
+    {"Name":"minecraft:oak_door","Properties":{"facing":"north","half":"lower","hinge":"left","open":"false","powered":"false"}},
+    {"Name":"minecraft:oak_door","Properties":{"facing":"north","half":"upper","hinge":"left","open":"false","powered":"false"}},
+    {"Name":"minecraft:oak_stairs","Properties":{"facing":"south","half":"bottom","shape":"straight","waterlogged":"false"}},
+    {"Name":"minecraft:oak_stairs","Properties":{"facing":"north","half":"bottom","shape":"straight","waterlogged":"false"}},
+    {"Name":"minecraft:crafting_table"},
+    {"Name":"minecraft:cauldron"},
+    {"Name":"minecraft:moss_carpet"},
+    {"Name":"minecraft:lantern","Properties":{"hanging":"true","waterlogged":"false"}}
+  ],
+  "blocks": [
+    [0, 10], [2, 7], [0, 2], [2, 1], [3, 5], [2, 1], [0, 2], [2, 1], [3, 5], [2, 1], [0, 2], [2, 1], [3, 1], [12, 2], [3, 2], [2, 1],
+    [0, 2], [2, 1], [3, 5], [2, 1], [0, 2], [2, 1], [3, 5], [2, 1], [0, 2], [2, 7], [0, 10], [1, 10], [4, 1], [2, 5], [4, 1], [1, 2],
+    [2, 1], [10, 1], [1, 3], [11, 1], [2, 1], [1, 2], [2, 1], [1, 5], [2, 1], [1, 2], [2, 1], [1, 5], [2, 1], [1, 2], [2, 1], [1, 5],
+    [2, 1], [1, 2], [2, 1], [1, 5], [2, 1], [1, 2], [4, 1], [2, 2], [6, 1], [2, 2], [4, 1], [1, 20], [4, 1], [3, 2], [5, 1], [3, 2],
+    [4, 1], [1, 2], [3, 1], [1, 5], [3, 1], [1, 2], [3, 1], [1, 5], [3, 1], [1, 2], [5, 1], [1, 5], [5, 1], [1, 2], [3, 1], [1, 5],
+    [3, 1], [1, 2], [3, 1], [1, 5], [3, 1], [1, 2], [4, 1], [3, 2], [7, 1], [3, 2], [4, 1], [1, 20], [4, 1], [3, 5], [4, 1], [1, 2],
+    [3, 1], [1, 5], [3, 1], [1, 2], [3, 1], [1, 5], [3, 1], [1, 2], [3, 1], [1, 5], [3, 1], [1, 2], [3, 1], [1, 5], [3, 1], [1, 2],
+    [3, 1], [1, 5], [3, 1], [1, 2], [4, 1], [3, 5], [4, 1], [1, 10], [8, 9], [3, 9], [1, 22], [13, 1], [1, 22], [3, 9], [9, 9], [1, 9],
+    [8, 9], [3, 9], [1, 27], [3, 9], [9, 9], [1, 27], [8, 9], [3, 9], [1, 9], [3, 9], [9, 9], [1, 45], [8, 9], [3, 9], [9, 9], [1, 63],
+    [8, 9], [1, 36]
+  ],
+  "markers": [
+    {"pos":[6,1,6],"marker":"data","data":{"metadata":"lootNSJ"}},
+    {"pos":[2,1,6],"marker":"data","data":{"metadata":"barrelU"}},
+    {"pos":[4,2,2],"marker":"data","data":{"metadata":"paintingS1"}}
+  ]
+}

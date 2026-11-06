@@ -1,0 +1,19 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "gloamingforest:camp/deco/berries_support",
+  "size": [3, 3, 4],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"minecraft:air"},
+    {"Name":"twilightforest:twilight_oak_log","Properties":{"axis":"y"}},
+    {"Name":"twilightforest:blueberry_bush","Properties":{"age":"3","layers":"0"}}
+  ],
+  "blocks": [
+    [1, 3], [2, 1], [3, 1], [2, 1], [3, 3], [2, 1], [3, 1], [2, 1], [1, 3], [2, 1], [1, 1], [2, 1], [1, 3], [2, 1], [1, 1], [2, 1],
+    [1, 12]
+  ],
+  "jigsaw": [
+    {"pos":[1,0,0],"front":"north","top":"up","pool":"minecraft:empty","name":"gloamingforest:camp/deco","target":""}
+  ]
+}

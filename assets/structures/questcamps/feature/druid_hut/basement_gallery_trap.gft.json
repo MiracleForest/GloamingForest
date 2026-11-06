@@ -1,0 +1,35 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "gloamingforest:feature/druid_hut/basement_gallery_trap",
+  "size": [8, 13, 8],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"minecraft:stone_bricks"},
+    {"Name":"minecraft:air"},
+    {"Name":"minecraft:spruce_planks"},
+    {"Name":"minecraft:ladder","Properties":{"facing":"south","waterlogged":"false"}},
+    {"Name":"minecraft:dirt"},
+    {"Name":"minecraft:spruce_trapdoor","Properties":{"facing":"south","half":"top","open":"false","powered":"false","waterlogged":"false"}},
+    {"Name":"minecraft:lantern","Properties":{"hanging":"true","waterlogged":"false"}},
+    {"Name":"minecraft:chiseled_stone_bricks"}
+  ],
+  "blocks": [
+    [1, 9], [3, 6], [1, 2], [3, 6], [1, 2], [3, 6], [1, 2], [3, 6], [1, 2], [3, 6], [1, 2], [3, 6], [1, 18], [2, 2], [8, 1], [2, 3],
+    [1, 2], [4, 1], [2, 5], [1, 2], [2, 5], [8, 1], [1, 2], [2, 6], [1, 2], [2, 6], [1, 2], [2, 6], [1, 18], [2, 2], [8, 1], [2, 3],
+    [1, 2], [4, 1], [2, 5], [1, 2], [2, 5], [8, 1], [1, 2], [2, 6], [1, 2], [2, 6], [1, 2], [2, 6], [1, 18], [2, 2], [8, 1], [2, 3],
+    [1, 2], [4, 1], [2, 5], [1, 2], [2, 5], [8, 1], [1, 2], [2, 6], [1, 2], [2, 6], [1, 2], [2, 6], [1, 18], [2, 2], [8, 1], [2, 2],
+    [7, 1], [1, 2], [4, 1], [2, 5], [1, 2], [2, 5], [8, 1], [1, 2], [2, 6], [1, 2], [2, 6], [1, 2], [2, 5], [7, 1], [1, 17], [5, 1],
+    [1, 1], [5, 1], [1, 5], [5, 1], [4, 1], [5, 1], [1, 5], [5, 3], [1, 37], [0, 8], [5, 3], [0, 5], [5, 1], [4, 1], [5, 1], [0, 5],
+    [5, 3], [0, 45], [5, 3], [0, 5], [5, 1], [4, 1], [5, 1], [0, 5], [5, 3], [0, 45], [5, 3], [0, 5], [5, 1], [4, 1], [5, 1], [0, 5],
+    [5, 3], [0, 45], [5, 3], [0, 5], [5, 1], [4, 1], [5, 1], [0, 5], [5, 3], [0, 45], [5, 3], [0, 5], [5, 1], [4, 1], [5, 1], [0, 5],
+    [5, 3], [0, 45], [5, 3], [0, 5], [5, 1], [4, 1], [5, 1], [0, 5], [5, 3], [0, 54], [6, 1], [0, 46]
+  ],
+  "markers": [
+    {"pos":[4,1,4],"marker":"data","data":{"metadata":"spawner"}},
+    {"pos":[5,1,6],"marker":"data","data":{"metadata":"lootNST"}},
+    {"pos":[4,2,1],"marker":"data","data":{"metadata":"paintingS1"}},
+    {"pos":[6,2,4],"marker":"data","data":{"metadata":"paintingW1"}},
+    {"pos":[2,2,6],"marker":"data","data":{"metadata":"paintingN1"}}
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "gloamingforest:camp/deco/repair_station",
+  "size": [4, 3, 3],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"minecraft:air"},
+    {"Name":"minecraft:anvil","Properties":{"facing":"east"}},
+    {"Name":"minecraft:grindstone","Properties":{"face":"floor","facing":"north"}},
+    {"Name":"minecraft:crafting_table"},
+    {"Name":"minecraft:smithing_table"}
+  ],
+  "blocks": [
+    [1, 4], [2, 1], [1, 2], [3, 1], [4, 1], [5, 1], [1, 26]
+  ],
+  "markers": [
+    {"pos":[3,0,2],"marker":"data","data":{"metadata":"camp_armor_rack@north"}}
+  ],
+  "jigsaw": [
+    {"pos":[1,0,0],"front":"north","top":"up","pool":"minecraft:empty","name":"gloamingforest:camp/deco","target":""}
+  ]
+}

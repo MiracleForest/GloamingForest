@@ -1,0 +1,16 @@
+{
+  "entity_sounds": {
+    "entities": {
+      "twilightforest:quest_ram": {
+        "volume": 1.0,
+        "pitch": [0.5, 0.9],
+        "events": {
+          "ambient": "entity.twilightforest.quest_ram.ambient",
+          "hurt": "entity.twilightforest.quest_ram.hurt",
+          "death": "entity.twilightforest.quest_ram.death",
+          "step": { "sound": "entity.twilightforest.quest_ram.step", "volume": 0.15, "pitch": 1.0 }
+        }
+      }
+    }
+  }
+}

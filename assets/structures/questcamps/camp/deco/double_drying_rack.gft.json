@@ -1,0 +1,21 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "gloamingforest:camp/deco/double_drying_rack",
+  "size": [3, 2, 3],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"minecraft:air"},
+    {"Name":"twilightforest:twilight_oak_log","Properties":{"axis":"y"}}
+  ],
+  "blocks": [
+    [1, 3], [2, 1], [1, 1], [2, 1], [1, 12]
+  ],
+  "markers": [
+    {"pos":[1,0,1],"marker":"data","data":{"metadata":"birch_drying_rack@north"}},
+    {"pos":[1,0,2],"marker":"data","data":{"metadata":"birch_drying_rack@south"}}
+  ],
+  "jigsaw": [
+    {"pos":[1,0,0],"front":"north","top":"up","pool":"minecraft:empty","name":"gloamingforest:camp/deco","target":""}
+  ]
+}

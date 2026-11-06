@@ -1,0 +1,110 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.twilightforest.troll.setup": {
+      "loop": true,
+      "bones": {
+        "head": { "rotation": ["query.target_x_rotation", "query.target_y_rotation", 0] },
+        "hat": { "rotation": ["query.target_x_rotation", "query.target_y_rotation", 0] },
+        "rightLeg": { "rotation": ["math.cos(query.modified_distance_moved * 38.1704) * query.modified_move_speed * 80.2141", 0, 0] },
+        "leftLeg": { "rotation": ["math.cos(query.modified_distance_moved * 38.1704 + 180) * query.modified_move_speed * 80.2141", 0, 0] },
+        "rightArm": {
+          "rotation": [
+            "(q.property('twilightforest:rock') > 0 ? 180 : math.cos(query.modified_distance_moved * 38.1704 + 180) * query.modified_move_speed * 57.2958) + (variable.attack_time > 0 ? (variable.attack_time - 1) * 180 : 0) + (q.property('twilightforest:rock') > 0 ? 0 : math.sin(query.life_time * 76.7763) * 2.8648)",
+            0,
+            "q.property('twilightforest:rock') > 0 ? 0 : math.cos(query.life_time * 103.1324) * 2.8648 + 2.8648"
+          ]
+        },
+        "leftArm": {
+          "rotation": [
+            "(q.property('twilightforest:rock') > 0 ? 180 : math.cos(query.modified_distance_moved * 38.1704) * query.modified_move_speed * 57.2958) + (variable.attack_time > 0 ? (variable.attack_time - 1) * 180 : 0) - (q.property('twilightforest:rock') > 0 ? 0 : math.sin(query.life_time * 76.7763) * 2.8648)",
+            0,
+            "q.property('twilightforest:rock') > 0 ? 0 : math.cos(query.life_time * 103.1324) * (-2.8648) - 2.8648"
+          ]
+        }
+      }
+    },
+    "animation.twilightforest.yeti.setup": {
+      "loop": true,
+      "bones": {
+        "head": { "rotation": ["query.target_x_rotation", "query.target_y_rotation", 0] },
+        "hat": { "rotation": ["query.target_x_rotation", "query.target_y_rotation", 0] },
+        "rightLeg": { "rotation": ["math.cos(query.modified_distance_moved * 38.1704) * query.modified_move_speed * 80.2141", 0, 0] },
+        "leftLeg": { "rotation": ["math.cos(query.modified_distance_moved * 38.1704 + 180) * query.modified_move_speed * 80.2141", 0, 0] },
+        "rightArm": {
+          "rotation": [
+            "q.property('twilightforest:angry') ? (-90 - math.sin(variable.attack_time * 180) * 68.7549 + math.sin((1 - (1 - variable.attack_time) * (1 - variable.attack_time)) * 180) * 22.9183 - (query.has_rider ? 90 : 0)) : (math.cos(query.modified_distance_moved * 38.1704 + 180) * query.modified_move_speed * 57.2958 + (query.has_rider ? 180 : 0) + math.sin(query.life_time * 76.7763) * 2.8648)",
+            "q.property('twilightforest:angry') ? math.sin(variable.attack_time * 180) * 34.3775 - 5.7296 : 0",
+            "q.property('twilightforest:angry') ? 0 : math.cos(query.life_time * 103.1324) * 2.8648 + 2.8648"
+          ]
+        },
+        "leftArm": {
+          "rotation": [
+            "q.property('twilightforest:angry') ? (-90 - math.sin(variable.attack_time * 180) * 68.7549 + math.sin((1 - (1 - variable.attack_time) * (1 - variable.attack_time)) * 180) * 22.9183 - (query.has_rider ? 90 : 0)) : (math.cos(query.modified_distance_moved * 38.1704) * query.modified_move_speed * 57.2958 + (query.has_rider ? 180 : 0) - math.sin(query.life_time * 76.7763) * 2.8648)",
+            "q.property('twilightforest:angry') ? 5.7296 - math.sin(variable.attack_time * 180) * 34.3775 : 0",
+            "q.property('twilightforest:angry') ? 0 : math.cos(query.life_time * 103.1324) * (-2.8648) - 2.8648"
+          ]
+        },
+        "right_eye": { "scale": "q.property('twilightforest:angry') ? 0 : 1" },
+        "left_eye": { "scale": "q.property('twilightforest:angry') ? 0 : 1" },
+        "angry_right_eye": { "scale": "q.property('twilightforest:angry') ? 1 : 0" },
+        "angry_left_eye": { "scale": "q.property('twilightforest:angry') ? 1 : 0" }
+      }
+    },
+    "animation.twilightforest.alpha_yeti.setup": {
+      "loop": true,
+      "bones": {
+        "head": { "rotation": ["query.target_x_rotation", "query.target_y_rotation", 0] },
+        "body": {
+          "rotation": ["query.target_x_rotation", 0, 0],
+          "position": [0, "q.property('twilightforest:tired') ? -12 : 0", 0]
+        },
+        "rightLeg": {
+          "rotation": [
+            "q.property('twilightforest:tired') ? -72 : math.cos(variable.limb_swing * 38.1704) * variable.limb_amount * 80.2141",
+            "q.property('twilightforest:tired') ? 18 : 0",
+            0
+          ],
+          "position": [0, "q.property('twilightforest:tired') ? -8 : 0", 0]
+        },
+        "leftLeg": {
+          "rotation": [
+            "q.property('twilightforest:tired') ? -72 : math.cos(variable.limb_swing * 38.1704 + 180) * variable.limb_amount * 80.2141",
+            "q.property('twilightforest:tired') ? -18 : 0",
+            0
+          ],
+          "position": [0, "q.property('twilightforest:tired') ? -8 : 0", 0]
+        },
+        "rightArm": {
+          "rotation": [
+            "(q.property('twilightforest:rampaging') ? math.cos(variable.limb_swing * 37.8152 + 180) * variable.limb_amount * 57.2958 + 225 : (q.property('twilightforest:tired') ? math.cos(variable.limb_swing * 38.1704 + 180) * variable.limb_amount * 57.2958 - 36 : -90 - math.sin(variable.attack_time * 180) * 68.7549 + math.sin((1 - (1 - variable.attack_time) * (1 - variable.attack_time)) * 180) * 22.9183 + math.sin(query.life_time * 76.7763) * 2.8648)) + (query.has_rider ? 180 : 0)",
+            "math.sin(variable.attack_time * 180) * 34.3775 - 5.7296 + (q.property('twilightforest:rampaging') ? math.cos(variable.limb_swing * 14.3239) * 28.6479 + 28.6479 : 0)",
+            "(q.property('twilightforest:rampaging') || q.property('twilightforest:tired')) ? 0 : math.cos(query.life_time * 103.1324) * 2.8648 + 2.8648"
+          ]
+        },
+        "leftArm": {
+          "rotation": [
+            "(q.property('twilightforest:rampaging') ? math.cos(variable.limb_swing * 37.8152) * variable.limb_amount * 57.2958 + 225 : (q.property('twilightforest:tired') ? math.cos(variable.limb_swing * 38.1704) * variable.limb_amount * 57.2958 - 36 : -90 - math.sin(variable.attack_time * 180) * 68.7549 + math.sin((1 - (1 - variable.attack_time) * (1 - variable.attack_time)) * 180) * 22.9183 - math.sin(query.life_time * 76.7763) * 2.8648)) + (query.has_rider ? 180 : 0)",
+            "5.7296 - math.sin(variable.attack_time * 180) * 34.3775 - (q.property('twilightforest:rampaging') ? math.cos(variable.limb_swing * 14.3239) * 28.6479 + 28.6479 : 0)",
+            "(q.property('twilightforest:rampaging') || q.property('twilightforest:tired')) ? 0 : math.cos(query.life_time * 103.1324) * (-2.8648) - 2.8648"
+          ]
+        }
+      }
+    },
+    "animation.twilightforest.alpha_yeti.tired_fx": {
+      "loop": true,
+      "animation_length": 0.05,
+      "particle_effects": { "0.0": { "effect": "splash" } }
+    },
+    "animation.twilightforest.alpha_yeti.rampage_fx": {
+      "loop": true,
+      "animation_length": 0.05,
+      "particle_effects": { "0.0": { "effect": "snow" } }
+    },
+    "animation.twilightforest.falling_ice.trail": {
+      "loop": true,
+      "animation_length": 0.05,
+      "particle_effects": { "0.0": { "effect": "trail" } }
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "twilightforest:quest_ram",
+      "is_spawnable": true,
+      "is_summonable": true,
+      "is_experimental": false,
+      "properties": {
+        "twilightforest:color_flags": { "type": "int", "range": [0, 65535], "default": 0, "client_sync": true }
+      }
+    },
+    "components": {
+      "minecraft:type_family": { "family": ["twilightforest", "quest_ram", "animal", "creature", "mob"] },
+      "minecraft:collision_box": { "width": 1.25, "height": 2.9 },
+      "minecraft:health": { "value": 70, "max": 70 },
+      "minecraft:movement": { "value": 0.23 },
+      "minecraft:movement.basic": {},
+      "minecraft:jump.static": {},
+      "minecraft:navigation.walk": { "avoid_water": true, "avoid_damage_blocks": true, "can_path_over_water": false, "can_pass_doors": true },
+      "minecraft:physics": {},
+      "minecraft:pushable": { "is_pushable": true, "is_pushable_by_piston": true },
+      "minecraft:breathable": { "total_supply": 15, "suffocate_time": 0 },
+      "minecraft:leashable": { "soft_distance": 4.0, "hard_distance": 6.0, "max_distance": 10.0 },
+      "minecraft:nameable": {},
+      "minecraft:experience_reward": { "on_death": "query.last_hit_by_player ? Math.Random(1, 3) : 0" },
+      "minecraft:ambient_sound_interval": { "value": 4.0, "range": 8.0, "event_name": "ambient" },
+      "minecraft:behavior.float": { "priority": 0 },
+      "minecraft:behavior.panic": { "priority": 1, "speed_multiplier": 1.38 },
+      "minecraft:behavior.random_stroll": { "priority": 5, "speed_multiplier": 1.0 },
+      "minecraft:behavior.random_look_around": { "priority": 6 },
+      "minecraft:conditional_bandwidth_optimization": {}
+    }
+  }
+}

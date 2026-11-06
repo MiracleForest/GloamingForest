@@ -1,0 +1,33 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "gloamingforest:camp/campfire_east",
+  "size": [9, 3, 9],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"minecraft:air"},
+    {"Name":"twilightforest:twilight_oak_log","Properties":{"axis":"x"}},
+    {"Name":"minecraft:cobblestone_slab"},
+    {"Name":"twilightforest:twilight_oak_log","Properties":{"axis":"z"}},
+    {"Name":"minecraft:campfire","Properties":{"facing":"north","lit":"true","signal_fire":"false","waterlogged":"false"}},
+    {"Name":"minecraft:cobblestone_slab","Properties":{"type":"bottom","waterlogged":"false"}}
+  ],
+  "blocks": [
+    [1, 12], [2, 3], [1, 5], [6, 1], [1, 3], [6, 1], [1, 3], [4, 1], [1, 2], [6, 1], [1, 2], [4, 1], [1, 2], [4, 1], [1, 1], [6, 1],
+    [5, 1], [6, 1], [1, 1], [4, 1], [1, 2], [4, 1], [1, 2], [6, 1], [1, 2], [4, 1], [1, 3], [6, 1], [1, 3], [6, 1], [1, 5], [2, 3],
+    [1, 174]
+  ],
+  "markers": [
+    {"pos":[3,0,2],"marker":"data","data":{"metadata":"twilight_oak_slab@south"}},
+    {"pos":[5,0,6],"marker":"data","data":{"metadata":"twilight_oak_slab@north"}},
+    {"pos":[1,0,1],"marker":"data","data":{"metadata":"birch_drying_rack@south"}},
+    {"pos":[7,0,7],"marker":"data","data":{"metadata":"birch_drying_rack@north"}}
+  ],
+  "jigsaw": [
+    {"pos":[4,0,4],"front":"down","top":"south","pool":"minecraft:empty","name":"gloamingforest:camp/structure_start","target":""},
+    {"pos":[4,0,0],"front":"north","top":"up","pool":"gloamingforest:camp/tent","name":"gloamingforest:camp/exit","target":"gloamingforest:camp/tent"},
+    {"pos":[4,0,8],"front":"south","top":"up","pool":"gloamingforest:camp/tent","name":"gloamingforest:camp/exit","target":"gloamingforest:camp/tent"},
+    {"pos":[0,0,4],"front":"west","top":"up","pool":"gloamingforest:camp/tent","name":"gloamingforest:camp/exit","target":"gloamingforest:camp/tent"},
+    {"pos":[8,0,4],"front":"east","top":"up","pool":"gloamingforest:camp/main_path","name":"gloamingforest:camp/exit","target":"gloamingforest:camp/path"}
+  ]
+}
