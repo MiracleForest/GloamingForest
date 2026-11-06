@@ -574,15 +574,13 @@ GF_REGISTER_SELFTEST("building.storage_blocks", [](Context& ctx) -> ll::coro::Co
         ctx.setBlock(control, "minecraft:air");
         ctx.setBlock(stone, "minecraft:air");
     }
-    // KnightmetalBlock#getBlockPathType DAMAGE_OTHER and RopeBlock#isScaffolding as the game's block
-    // properties (CausesDamage as magma; climbing reads Scaffolding)
+    // FieryBlock#isFireSource and RopeBlock#isScaffolding as the game's block properties
     {
         auto has = [](char const* id, BlockProperty prop) {
             auto const* b = gf::game::blockWith(id);
             return b && (static_cast<std::uint64_t>(b->getBlockType().mProperties) & static_cast<std::uint64_t>(prop)) != 0;
         };
         ctx.check(has("twilightforest:fiery_block", BlockProperty::InfiniBurn), "the fiery block is an infinite fire source");
-        ctx.check(has("twilightforest:knightmetal_block", BlockProperty::CausesDamage), "the knightmetal block causes damage (BlockProperty::CausesDamage, as magma)");
         ctx.check(has("twilightforest:rope", BlockProperty::Scaffolding) && has("twilightforest:rope", BlockProperty::Climbable), "the rope climbs as scaffolding");
     }
     co_await rest();

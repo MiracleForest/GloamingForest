@@ -112,14 +112,14 @@ bool sameBox(AABB const& a, AABB const& b) {
 /// Whether a sneaking player has exactly this box (the client mod's local player first, then the
 /// players of the server level).
 bool sneakingPlayerWithBox(AABB const& box) {
+    // the server level's players from the server's own thread; any other thread is the client mod's
+    // game thread, whose only moving player is the local one
+    if (std::this_thread::get_id() != serverThread().load(std::memory_order_relaxed)) {
 #ifdef GF_CLIENT
-    if (auto* local = gf::client::currentPlayer()) {
-        if (sameBox(local->getAABB(), box)) return local->isSneaking();
-    }
+        if (auto* local = gf::client::currentPlayer(); local && sameBox(local->getAABB(), box)) return local->isSneaking();
 #endif
-    // the server level's players only from the server's own thread (the client mod's game thread
-    // must not walk the integrated server's player list)
-    if (std::this_thread::get_id() != serverThread().load(std::memory_order_relaxed)) return false;
+        return false;
+    }
     bool found = false;
     if (auto level = ll::service::getLevel()) {
         level->forEachPlayer([&](Player& p) {

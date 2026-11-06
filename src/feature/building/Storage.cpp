@@ -12,8 +12,8 @@
 // - Fiery block: stepping on it hurts 1 fiery damage, unless the entity is fire immune or a living
 //   entity wearing fiery boots.
 // - Block properties the game's own systems read: the fiery block keeps fire on top burning
-//   (InfiniBurn), mobs path around the knightmetal block (DAMAGE_OTHER), the rope climbs like
-//   scaffolding (Scaffolding).
+//   (InfiniBurn) and the rope climbs like scaffolding (Scaffolding). Knightmetal's DAMAGE_OTHER path
+//   type has no Bedrock counterpart for custom blocks (building.knightmetal_path records it).
 // - Arctic fur block: a fall onto it causes a tenth of the fall damage (fallOn: causeFallDamage with
 //   multiplier 0.1); shears mine it at 0.2 progress a tick (the BP's item-specific speed).
 // - Tooltips of the knightmetal and arctic fur blocks.
@@ -85,17 +85,15 @@ void applyBlockProperties() {
     // magma), so the fiery block's type carries it: the game's own fire tick keeps that fire, and
     // any other way of putting it out (a hit, water, a potion, a command) still works.
     bool fiery = add(kFiery, BlockProperty::InfiniBurn);
-    // KnightmetalBlock#getBlockPathType: DAMAGE_OTHER. The block type carries CausesDamage like
-    // Bedrock's own damaging blocks (magma, sweet berry bush). Bedrock's walk evaluator does not
-    // avoid it for that (building.knightmetal_path shows magma avoided, knightmetal not; a test
-    // replacing the knightmetal type's dealsContactDamage showed the evaluator never asks it).
-    bool knightmetal = add(kKnightmetal, BlockProperty::CausesDamage);
+    // KnightmetalBlock#getBlockPathType DAMAGE_OTHER is not set: Bedrock's walk evaluator avoids
+    // magma but neither CausesDamage on the block type (tried) nor a replaced dealsContactDamage
+    // (never asked during pathfinding) makes it avoid a custom block (building.knightmetal_path).
     // RopeBlock#isScaffolding: climbing it, a sneaking player still slides down (Java's
     // LivingEntity#handleOnClimbable holds a sneaking player only on non-scaffolding climbables);
     // Bedrock's climb movement does the same for BlockProperty::Scaffolding types. The rope is
     // already climbable (F11's climbable family).
     bool rope = add("twilightforest:rope", BlockProperty::Scaffolding);
-    log().info("building: block properties (fiery infiniburn {}, knightmetal causes damage {}, rope scaffolding {})", fiery, knightmetal, rope);
+    log().info("building: block properties (fiery infiniburn {}, rope scaffolding {})", fiery, rope);
 }
 
 void installStorage() {
