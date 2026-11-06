@@ -1,0 +1,19 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "twilightforest:emperors_cloth_smithing_elytra"
+    },
+    "tags": ["crafting_table"],
+    "ingredients": [
+      { "item": "minecraft:elytra" },
+      { "item": "twilightforest:emperors_cloth" }
+    ],
+    "unlock": [
+      { "item": "twilightforest:emperors_cloth" }
+    ],
+    "result": {
+      "item": "minecraft:elytra"
+    }
+  }
+}

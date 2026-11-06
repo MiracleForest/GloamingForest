@@ -24,11 +24,13 @@
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_block_huge_lily_pad_1",
-          "render_method": "alpha_test"
+          "render_method": "alpha_test",
+          "tint_method": "default_foliage"
         },
         "texture": {
           "texture": "tf_block_huge_lily_pad_1",
-          "render_method": "alpha_test"
+          "render_method": "alpha_test",
+          "tint_method": "default_foliage"
         }
       },
       "minecraft:collision_box": false,
@@ -46,11 +48,13 @@
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_huge_lily_pad_1",
-              "render_method": "alpha_test"
+              "render_method": "alpha_test",
+              "tint_method": "default_foliage"
             },
             "texture": {
               "texture": "tf_block_huge_lily_pad_1",
-              "render_method": "alpha_test"
+              "render_method": "alpha_test",
+              "tint_method": "default_foliage"
             }
           },
           "minecraft:transformation": {
@@ -70,11 +74,13 @@
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_huge_lily_pad_2",
-              "render_method": "alpha_test"
+              "render_method": "alpha_test",
+              "tint_method": "default_foliage"
             },
             "texture": {
               "texture": "tf_block_huge_lily_pad_2",
-              "render_method": "alpha_test"
+              "render_method": "alpha_test",
+              "tint_method": "default_foliage"
             }
           },
           "minecraft:transformation": {
@@ -94,11 +100,13 @@
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_huge_lily_pad_0",
-              "render_method": "alpha_test"
+              "render_method": "alpha_test",
+              "tint_method": "default_foliage"
             },
             "texture": {
               "texture": "tf_block_huge_lily_pad_0",
-              "render_method": "alpha_test"
+              "render_method": "alpha_test",
+              "tint_method": "default_foliage"
             }
           },
           "minecraft:transformation": {
@@ -118,11 +126,13 @@
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_huge_lily_pad_3",
-              "render_method": "alpha_test"
+              "render_method": "alpha_test",
+              "tint_method": "default_foliage"
             },
             "texture": {
               "texture": "tf_block_huge_lily_pad_3",
-              "render_method": "alpha_test"
+              "render_method": "alpha_test",
+              "tint_method": "default_foliage"
             }
           },
           "minecraft:transformation": {
@@ -142,11 +152,13 @@
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_huge_lily_pad_0",
-              "render_method": "alpha_test"
+              "render_method": "alpha_test",
+              "tint_method": "default_foliage"
             },
             "texture": {
               "texture": "tf_block_huge_lily_pad_0",
-              "render_method": "alpha_test"
+              "render_method": "alpha_test",
+              "tint_method": "default_foliage"
             }
           },
           "minecraft:transformation": {
@@ -166,11 +178,13 @@
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_huge_lily_pad_1",
-              "render_method": "alpha_test"
+              "render_method": "alpha_test",
+              "tint_method": "default_foliage"
             },
             "texture": {
               "texture": "tf_block_huge_lily_pad_1",
-              "render_method": "alpha_test"
+              "render_method": "alpha_test",
+              "tint_method": "default_foliage"
             }
           },
           "minecraft:transformation": {
@@ -190,11 +204,13 @@
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_huge_lily_pad_3",
-              "render_method": "alpha_test"
+              "render_method": "alpha_test",
+              "tint_method": "default_foliage"
             },
             "texture": {
               "texture": "tf_block_huge_lily_pad_3",
-              "render_method": "alpha_test"
+              "render_method": "alpha_test",
+              "tint_method": "default_foliage"
             }
           },
           "minecraft:transformation": {
@@ -214,11 +230,13 @@
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_huge_lily_pad_2",
-              "render_method": "alpha_test"
+              "render_method": "alpha_test",
+              "tint_method": "default_foliage"
             },
             "texture": {
               "texture": "tf_block_huge_lily_pad_2",
-              "render_method": "alpha_test"
+              "render_method": "alpha_test",
+              "tint_method": "default_foliage"
             }
           },
           "minecraft:transformation": {
@@ -238,11 +256,13 @@
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_huge_lily_pad_2",
-              "render_method": "alpha_test"
+              "render_method": "alpha_test",
+              "tint_method": "default_foliage"
             },
             "texture": {
               "texture": "tf_block_huge_lily_pad_2",
-              "render_method": "alpha_test"
+              "render_method": "alpha_test",
+              "tint_method": "default_foliage"
             }
           },
           "minecraft:transformation": {
@@ -262,11 +282,13 @@
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_huge_lily_pad_3",
-              "render_method": "alpha_test"
+              "render_method": "alpha_test",
+              "tint_method": "default_foliage"
             },
             "texture": {
               "texture": "tf_block_huge_lily_pad_3",
-              "render_method": "alpha_test"
+              "render_method": "alpha_test",
+              "tint_method": "default_foliage"
             }
           },
           "minecraft:transformation": {
@@ -286,11 +308,13 @@
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_huge_lily_pad_1",
-              "render_method": "alpha_test"
+              "render_method": "alpha_test",
+              "tint_method": "default_foliage"
             },
             "texture": {
               "texture": "tf_block_huge_lily_pad_1",
-              "render_method": "alpha_test"
+              "render_method": "alpha_test",
+              "tint_method": "default_foliage"
             }
           },
           "minecraft:transformation": {
@@ -310,11 +334,13 @@
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_huge_lily_pad_0",
-              "render_method": "alpha_test"
+              "render_method": "alpha_test",
+              "tint_method": "default_foliage"
             },
             "texture": {
               "texture": "tf_block_huge_lily_pad_0",
-              "render_method": "alpha_test"
+              "render_method": "alpha_test",
+              "tint_method": "default_foliage"
             }
           },
           "minecraft:transformation": {
@@ -334,11 +360,13 @@
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_huge_lily_pad_3",
-              "render_method": "alpha_test"
+              "render_method": "alpha_test",
+              "tint_method": "default_foliage"
             },
             "texture": {
               "texture": "tf_block_huge_lily_pad_3",
-              "render_method": "alpha_test"
+              "render_method": "alpha_test",
+              "tint_method": "default_foliage"
             }
           },
           "minecraft:transformation": {
@@ -358,11 +386,13 @@
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_huge_lily_pad_0",
-              "render_method": "alpha_test"
+              "render_method": "alpha_test",
+              "tint_method": "default_foliage"
             },
             "texture": {
               "texture": "tf_block_huge_lily_pad_0",
-              "render_method": "alpha_test"
+              "render_method": "alpha_test",
+              "tint_method": "default_foliage"
             }
           },
           "minecraft:transformation": {
@@ -382,11 +412,13 @@
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_huge_lily_pad_2",
-              "render_method": "alpha_test"
+              "render_method": "alpha_test",
+              "tint_method": "default_foliage"
             },
             "texture": {
               "texture": "tf_block_huge_lily_pad_2",
-              "render_method": "alpha_test"
+              "render_method": "alpha_test",
+              "tint_method": "default_foliage"
             }
           },
           "minecraft:transformation": {
@@ -406,11 +438,13 @@
           "minecraft:material_instances": {
             "*": {
               "texture": "tf_block_huge_lily_pad_1",
-              "render_method": "alpha_test"
+              "render_method": "alpha_test",
+              "tint_method": "default_foliage"
             },
             "texture": {
               "texture": "tf_block_huge_lily_pad_1",
-              "render_method": "alpha_test"
+              "render_method": "alpha_test",
+              "tint_method": "default_foliage"
             }
           },
           "minecraft:transformation": {

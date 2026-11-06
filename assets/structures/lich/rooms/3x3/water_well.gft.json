@@ -1,0 +1,21 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "twilightforest:lich_tower/3x3/water_well",
+  "size": [3, 4, 3],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"minecraft:cobblestone"},
+    {"Name":"minecraft:water"},
+    {"Name":"twilightforest:canopy_fence"},
+    {"Name":"twilightforest:canopy_slab","Properties":{"type":"bottom"}},
+    {"Name":"minecraft:chain"}
+  ],
+  "blocks": [
+    [1, 4], [2, 1], [1, 4], [3, 1], [0, 1], [3, 1], [0, 3], [3, 1], [0, 1], [3, 2], [0, 1], [3, 1], [0, 1], [5, 1], [0, 1], [3, 1],
+    [0, 1], [3, 1], [4, 9]
+  ],
+  "jigsaw": [
+    {"pos":[1,0,1],"front":"down","top":"north","pool":"minecraft:empty","name":"gf:lich_tower/decor","target":""}
+  ]
+}

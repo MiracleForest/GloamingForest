@@ -242,11 +242,12 @@ GF_REGISTER_SELFTEST("import.harvest_mining", [](Context& ctx) {
                      + s.vanilla + " " + num(v) + " (speed " + num(Miner::speed(s.vanilla, *b)) + ", harvests " + (Miner::harvests(s.vanilla, *b) ? "yes" : "no") + ")");
             ctx.check(near(a, v), std::string(s.tf) + " mines " + id + " as " + s.vanilla + " (progress " + num(a) + ", vanilla " + num(v) + ")");
         }
-    // the vanilla shears on TF's leaves: Bedrock's shears single out their own leaves by block type (15 there); on a JSON
-    // block they read minecraft:is_shears_item_destructible, at 5 (Java: 15 on #minecraft:leaves)
+    // the vanilla shears on TF's leaves: Java's ShearsItem overrides the speed to 15 on #minecraft:leaves (TF's leaves are
+    // members). Bedrock's shears read minecraft:is_shears_item_destructible on a JSON block at 5, so the leaves' own
+    // destructible_by_mining item_specific_speeds (U3, tools/import/overrides/trees.json) give the shears Java's 15
     if (auto const* leaves = blockOf("twilightforest:twilight_oak_leaves")) {
         double hand = m.progress("", *leaves), shears = m.progress("minecraft:shears", *leaves);
-        ctx.check(near(shears / hand, 5.0), "vanilla shears on twilight_oak_leaves: " + num(shears / hand) + " x an empty hand (the game's shears speed on JSON blocks, 5)");
+        ctx.check(near(shears / hand, 15.0, 0.02), "vanilla shears on twilight_oak_leaves: " + num(shears / hand) + " x an empty hand (Java: 15 on #minecraft:leaves)");
     }
     // a sword's #minecraft:sword_efficient speed (Java 1.5; Bedrock's digger speed is an integer, the import writes 2) on
     // TF's and vanilla leaves

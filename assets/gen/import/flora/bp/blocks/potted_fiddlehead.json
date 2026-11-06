@@ -30,7 +30,8 @@
         },
         "plant": {
           "texture": "tf_block_potted_fiddlehead",
-          "render_method": "alpha_test"
+          "render_method": "alpha_test",
+          "tint_method": "grass"
         }
       },
       "minecraft:collision_box": {

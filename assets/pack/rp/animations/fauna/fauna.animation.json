@@ -1,0 +1,237 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.twilightforest.fauna.quadruped": {
+      "loop": true,
+      "bones": {
+        "head": {
+          "rotation": [
+            "query.target_x_rotation",
+            "query.target_y_rotation",
+            0
+          ]
+        },
+        "leg0": {
+          "rotation": [
+            "math.cos(query.modified_distance_moved * 38.1704) * query.modified_move_speed * 80.2141",
+            0,
+            0
+          ]
+        },
+        "leg1": {
+          "rotation": [
+            "math.cos(query.modified_distance_moved * 38.1704 + 180) * query.modified_move_speed * 80.2141",
+            0,
+            0
+          ]
+        },
+        "leg2": {
+          "rotation": [
+            "math.cos(query.modified_distance_moved * 38.1704 + 180) * query.modified_move_speed * 80.2141",
+            0,
+            0
+          ]
+        },
+        "leg3": {
+          "rotation": [
+            "math.cos(query.modified_distance_moved * 38.1704) * query.modified_move_speed * 80.2141",
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "animation.twilightforest.bighorn_sheep.horns": {
+      "loop": true,
+      "bones": {
+        "left_horn": {
+          "scale": "q.is_baby ? 0 : 1"
+        },
+        "right_horn": {
+          "scale": "q.is_baby ? 0 : 1"
+        }
+      }
+    },
+    "animation.twilightforest.deer.antlers": {
+      "loop": true,
+      "bones": {
+        "left_antler": {
+          "scale": "q.is_baby ? 0 : 1"
+        },
+        "right_antler": {
+          "scale": "q.is_baby ? 0 : 1"
+        }
+      }
+    },
+    "animation.twilightforest.bighorn_sheep.graze": {
+      "loop": false,
+      "animation_length": 2.0,
+      "bones": {
+        "head": {
+          "position": [
+            0,
+            "-9 * ((q.anim_time * 20) < 4 ? (q.anim_time * 20) / 4 : ((q.anim_time * 20) <= 36 ? 1 : math.max(0, (40 - (q.anim_time * 20)) / 4)))",
+            0
+          ],
+          "rotation": [
+            "((q.anim_time * 20) > 4 && (q.anim_time * 20) <= 36) ? 36 + 12.6 * math.sin((((q.anim_time * 20) - 4) / 32) * 28.7 * 57.29578) : 36",
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "animation.twilightforest.penguin.setup": {
+      "loop": true,
+      "bones": {
+        "head": {
+          "rotation": [
+            "query.target_x_rotation",
+            "query.target_y_rotation",
+            0
+          ]
+        },
+        "rightLeg": {
+          "rotation": [
+            "math.cos(query.modified_distance_moved * 57.29578) * query.modified_move_speed * 40.107",
+            0,
+            0
+          ]
+        },
+        "leftLeg": {
+          "rotation": [
+            "math.cos(query.modified_distance_moved * 57.29578 + 180) * query.modified_move_speed * 40.107",
+            0,
+            0
+          ]
+        },
+        "rightArm": {
+          "rotation": [
+            0,
+            0,
+            "v.bob * 57.29578"
+          ]
+        },
+        "leftArm": {
+          "rotation": [
+            0,
+            0,
+            "-v.bob * 57.29578"
+          ]
+        }
+      }
+    },
+    "animation.twilightforest.tiny_bird.setup": {
+      "loop": true,
+      "bones": {
+        "head": {
+          "rotation": [
+            "query.target_x_rotation",
+            "query.target_y_rotation",
+            0
+          ]
+        },
+        "right_foot": {
+          "rotation": [
+            "math.cos(query.modified_distance_moved * 38.1704) * query.modified_move_speed * 80.2141",
+            0,
+            0
+          ],
+          "position": [
+            0,
+            "q.property('twilightforest:landed') ? 0 : 0.5",
+            0
+          ]
+        },
+        "left_foot": {
+          "rotation": [
+            "math.cos(query.modified_distance_moved * 38.1704 + 180) * query.modified_move_speed * 80.2141",
+            0,
+            0
+          ],
+          "position": [
+            0,
+            "q.property('twilightforest:landed') ? 0 : 0.5",
+            0
+          ]
+        },
+        "right_wing": {
+          "rotation": [
+            0,
+            0,
+            "v.bob * 57.29578"
+          ]
+        },
+        "left_wing": {
+          "rotation": [
+            0,
+            0,
+            "-v.bob * 57.29578"
+          ]
+        }
+      }
+    },
+    "animation.twilightforest.raven.setup": {
+      "loop": true,
+      "bones": {
+        "head": {
+          "rotation": [
+            "query.target_x_rotation",
+            "query.target_y_rotation",
+            "(query.target_y_rotation > 5) ? -15 : 0"
+          ]
+        },
+        "right_leg": {
+          "rotation": [
+            "math.cos(query.modified_distance_moved * 38.1704) * query.modified_move_speed * 80.2141",
+            0,
+            0
+          ],
+          "position": [
+            0,
+            "q.property('twilightforest:landed') ? 0 : 1",
+            0
+          ]
+        },
+        "left_leg": {
+          "rotation": [
+            "math.cos(query.modified_distance_moved * 38.1704 + 180) * query.modified_move_speed * 80.2141",
+            0,
+            0
+          ],
+          "position": [
+            0,
+            "q.property('twilightforest:landed') ? 0 : 1",
+            0
+          ]
+        },
+        "right_wing": {
+          "rotation": [
+            0,
+            0,
+            "v.bob * 57.29578"
+          ]
+        },
+        "left_wing": {
+          "rotation": [
+            0,
+            0,
+            "-v.bob * 57.29578"
+          ]
+        }
+      }
+    },
+    "animation.twilightforest.kobold.jaw": {
+      "loop": true,
+      "bones": {
+        "mouth": {
+          "rotation": [
+            "q.vertical_speed > 0 ? 70.5 : 0",
+            0,
+            0
+          ]
+        }
+      }
+    }
+  }
+}

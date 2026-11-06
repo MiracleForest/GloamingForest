@@ -1,0 +1,48 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:blockchain_goblin",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/blockgoblin",
+        "ball": "textures/twilightforest/entity/block_and_chain"
+      },
+      "geometry": {
+        "default": "geometry.twilightforest.blockchain_goblin",
+        "ball": "geometry.twilightforest.chain_block"
+      },
+      "render_controllers": [
+        "controller.render.twilightforest.blockchain_goblin",
+        "controller.render.twilightforest.blockchain_goblin_ball"
+      ],
+      "animations": {
+        "base": "animation.twilightforest.blockchain_goblin.base",
+        "ball": "animation.twilightforest.blockchain_goblin.ball"
+      },
+      "scripts": {
+        "animate": [
+          "base",
+          "ball"
+        ],
+        "pre_animation": [
+          "v.len = q.property('twilightforest:chain_length') / 127.0;",
+          "v.ang = q.property('twilightforest:chain_pos') / 255.0 * 360.0;",
+          "v.thr = q.property('twilightforest:throw_length') / 10.0;",
+          "v.wx = v.thr > 0 ? -math.sin(q.head_y_rotation(0)) * v.thr : math.cos(v.ang) * v.len;",
+          "v.wz = v.thr > 0 ? math.cos(q.head_y_rotation(0)) * v.thr : math.sin(v.ang) * v.len;",
+          "v.by = v.thr > 0 ? 1.19 : 1.5 - v.len / 4.0;",
+          "v.yaw = q.body_y_rotation;",
+          "v.bx = v.wx * math.cos(v.yaw) + v.wz * math.sin(v.yaw);",
+          "v.bz = v.wx * math.sin(v.yaw) - v.wz * math.cos(v.yaw);"
+        ]
+      },
+      "spawn_egg": {
+        "base_color": "#d3e7bc",
+        "overlay_color": "#1f3fff"
+      }
+    }
+  }
+}
