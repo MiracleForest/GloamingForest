@@ -190,11 +190,21 @@ GF_REGISTER_SELFTEST("caves.troll_rock", [](Context& ctx) -> ll::coro::CoroTask<
     ctx.check(!trollHasRock(*t), "the rock is gone from the troll");
     auto blocks = around(base, kThrownBlock, 4.0f);
     ctx.check(!blocks.empty() && thrownBlockState(*blocks.front()) == "minecraft:granite", "a thrown block carrying granite");
+    // (the throw has TF's spread, 4 - difficulty, and the pig may step aside: up to three throws)
     bool hit = false;
-    for (int i = 0; i < 40 && !hit; i++) {
-        co_await ctx.ticks(1);
-        auto* p = mobById(pigId);
-        hit     = !p || p->getHealth() <= before - 6.0f + 0.01f;
+    for (int attempt = 0; attempt < 3 && !hit; attempt++) {
+        if (attempt > 0) {
+            auto* tr = mobById(trollId);
+            auto* pg = mobById(pigId);
+            if (!tr || !pg) break;
+            giveTrollRockForTest(*tr, "minecraft:granite");
+            trollThrowForTest(*tr, *pg);
+        }
+        for (int i = 0; i < 30 && !hit; i++) {
+            co_await ctx.ticks(1);
+            auto* p = mobById(pigId);
+            hit     = !p || p->getHealth() <= before - 6.0f + 0.01f;
+        }
     }
     ctx.check(hit, "the thrown block deals 6 damage");
     discardAround(base, 12.0f);
