@@ -31,6 +31,11 @@ using JavaRandom = core::jrand::LegacyRandom;
 [[nodiscard]] std::int64_t freshSeed();
 /// The unit's shared java.util.Random (Level#getRandom stand-in; server thread).
 [[nodiscard]] JavaRandom& random();
+/// Java's `r.next() - r.next()` with its left-to-right order (C++ leaves the operands of `-`
+/// unsequenced).
+inline float  diffF(JavaRandom& r) { float a = r.nextFloat(); return a - r.nextFloat(); }
+inline double diffD(JavaRandom& r) { double a = r.nextDouble(); return a - r.nextDouble(); }
+inline int    diffI(JavaRandom& r, int n) { int a = r.nextInt(n); return a - r.nextInt(n); }
 /// Reseeds it (deterministic selftests).
 void seedRandom(std::int64_t seed);
 

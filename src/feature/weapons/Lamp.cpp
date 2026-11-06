@@ -69,9 +69,9 @@ void lampBurn(Player& player) {
             for (int dz = -range; dz <= range; ++dz) burnBlock(region, BlockPos{c.x + dx, c.y + dy, c.z + dz});
     auto& r = world::random();
     for (int i = 0; i < 6; ++i) {
-        int x = c.x + r.nextInt(range) - r.nextInt(range);
+        int x = c.x + world::diffI(r, range);
         int y = c.y + r.nextInt(2);
-        int z = c.z + r.nextInt(range) - r.nextInt(range);
+        int z = c.z + world::diffI(r, range);
         region.getLevel().broadcastLevelEvent(SharedTypes::Legacy::LevelEvent::ParticlesMobBlockSpawn, Vec3{x + .5f, y + .5f, z + .5f}, 0, nullptr);
     }
     // burn mobs: new AABB(pos.below(2)).inflate(4)
@@ -110,8 +110,8 @@ void registerLamp() {
             gf::fx::sound(player->getDimension(), "item.twilightforest.lamp.burn", player->getFeetPos(), 0.5F, 1.5F);
             auto& r = world::random();
             for (int i = 0; i < 10; ++i) {
-                Vec3 at{pos.x + 0.5F + (r.nextFloat() - r.nextFloat()) * 0.75F, pos.y + 0.5F + (r.nextFloat() - r.nextFloat()) * 0.75F,
-                        pos.z + 0.5F + (r.nextFloat() - r.nextFloat()) * 0.75F};
+                Vec3 at{pos.x + 0.5F + (world::diffF(r)) * 0.75F, pos.y + 0.5F + (world::diffF(r)) * 0.75F,
+                        pos.z + 0.5F + (world::diffF(r)) * 0.75F};
                 gf::fx::particle(player->getDimension(), "minecraft:smoke", at);
                 gf::fx::particle(player->getDimension(), "minecraft:flame", at);
             }

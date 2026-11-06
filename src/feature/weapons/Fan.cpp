@@ -114,6 +114,8 @@ bool pushable(Actor& e) {
 
 void setFanFalling(Player& player, bool on) { falling()[world::uidOf(player)].flagged = on; }
 
+void forgetFanFlags() { falling().clear(); }
+
 bool fanFalling(Player const& player) {
     auto it = falling().find(world::uidOf(player));
     return it != falling().end() && it->second.flagged;

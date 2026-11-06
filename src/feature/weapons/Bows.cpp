@@ -108,7 +108,7 @@ void consumeAmmo(Player& player, Ammo const& ammo) {
 }
 
 /// A vanilla minecraft:arrow (Bedrock's Arrow entity) fired by `player`.
-Actor* vanillaArrow(Player& player, ItemStack const& arrowStack, Vec3 const& dir, float speed, float inaccuracy, bool crit, bool creativeOnly) {
+Actor* vanillaArrow(Player& player, ItemStack const& bow, ItemStack const& arrowStack, Vec3 const& dir, float speed, float inaccuracy, bool crit, bool creativeOnly) {
     auto level = ll::service::getLevel();
     if (!level) return nullptr;
     auto  feet = player.getFeetPos();
@@ -121,7 +121,7 @@ Actor* vanillaArrow(Player& player, ItemStack const& arrowStack, Vec3 const& dir
     arrow.mIsCreative    = creativeOnly || player.isCreative();
     if (int aux = arrowStack.getAuxValue(); aux > 0) arrow.setAuxValue(aux);
     if (auto pc = a->getEntityContext().tryGetComponent<ProjectileComponent>()) {
-        int power = EnchantUtils::getEnchantLevel(Enchant::Type::Power, player.getCarriedItem());
+        int power = EnchantUtils::getEnchantLevel(Enchant::Type::Power, bow);
         if (power > 0) pc->mEnchantPower = power;
         if (crit) pc->mCritParticleOnHurt = true;
     }
@@ -152,7 +152,7 @@ void bowRelease(Player& player, ItemStack& bow, int used) {
     if (id == kTripleBow) {
         auto lift = cw::tripleBowLift();
         for (int j = -1; j < 2; ++j) {
-            Actor* a = vanillaArrow(player, ammo->stack, dir, f * 2.5F, 1.0F, crit, j != 0 || infinite);
+            Actor* a = vanillaArrow(player, bow, ammo->stack, dir, f * 2.5F, 1.0F, crit, j != 0 || infinite);
             if (!a) continue;
             auto v = a->getPosDelta();
             world::setMotion(*a, Vec3{v.x, v.y + static_cast<float>(lift[j + 1]), v.z});
@@ -160,7 +160,7 @@ void bowRelease(Player& player, ItemStack& bow, int used) {
             if (EnchantUtils::getEnchantLevel(Enchant::Type::Flame, bow) > 0) a->setOnFire(100, true);
         }
     } else if (id == kEnderBow) {
-        Actor* a = vanillaArrow(player, ammo->stack, dir, f * 3.0F, 1.0F, crit, infinite);
+        Actor* a = vanillaArrow(player, bow, ammo->stack, dir, f * 3.0F, 1.0F, crit, infinite);
         if (a) {
             a->addTag(kEnderTag);
             if (EnchantUtils::getEnchantLevel(Enchant::Type::Flame, bow) > 0) a->setOnFire(100, true);

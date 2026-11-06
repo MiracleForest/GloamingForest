@@ -235,7 +235,7 @@ Actor* shootFrom(BlockSource& region, Vec3 const& pos, std::string const& entity
     if (len < 1e-9) return nullptr;
     auto&  r      = random();
     double spread = 0.0172275 * inaccuracy;
-    auto   tri    = [&] { return spread * (r.nextDouble() - r.nextDouble()); };
+    auto   tri    = [&] { return spread * (diffD(r)); };
     double vx = (direction.x / len + tri()) * speed, vy = (direction.y / len + tri()) * speed, vz = (direction.z / len + tri()) * speed;
     auto   owned = level->getActorFactory().createSpawnedActor(ActorDefinitionIdentifier(entityId), nullptr, pos, Vec2{0, 0});
     if (!owned) return nullptr;

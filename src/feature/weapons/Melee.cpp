@@ -40,7 +40,9 @@
 #include "feature/stats/Stats.h"
 #include "feature/tags/Tags.h"
 #include "feature/weapons/World.h"
+#include "feature/common/Interactions.h"
 #include "game/Items.h"
+#include "game/WorldDb.h"
 #include "mod/I18n.h"
 #include "mod/Log.h"
 
@@ -116,8 +118,16 @@ gf::combat::Verdict blockAndParry(gf::combat::DamageInfo& d) {
             double speed = std::sqrt(double(v.x) * v.x + double(v.y) * v.y + double(v.z) * v.z);
             auto   look  = lookOf(player);
             Vec3   nv{static_cast<float>(look.x * speed), static_cast<float>(look.y * speed), static_cast<float>(look.z * speed)};
-            if (tf) gf::projectile::ext::setVelocity(*direct, nv);
-            else world::setMotion(*direct, nv);
+            // the projectile kit handles the cancelled hit after this (an arrow's REVERSE
+            // deflection): the parry's aim goes in on the next tick. Bedrock's kit has no owner
+            // setter, so the projectile keeps its shooter (Java makes the blocker its owner).
+            auto uid = world::uidOf(*direct);
+            if (tf) {
+                gf::projectile::ext::setVelocity(*direct, nv);
+                gf::interactions::nextTick([uid, nv] {
+                    if (auto* a = world::actorById(uid)) gf::projectile::ext::setVelocity(*a, nv);
+                });
+            } else world::setMotion(*direct, nv);
             ++gParries;
             log().info("weapons: {} parried a {}", player.getRealName(), direct->getTypeName());
             return gf::combat::Verdict::Cancel;
@@ -140,7 +150,8 @@ gf::combat::Verdict blockAndParry(gf::combat::DamageInfo& d) {
         cw::V3 k = cw::normalize({a.x - p.x, 0, a.z - p.z});
         world::push(*causing, Vec3{static_cast<float>(k.x * 0.5), 0.1F, static_cast<float>(k.z * 0.5)});
         auto weapon = causing->isPlayer() ? static_cast<Player&>(*causing).getCarriedItem() : causing->getCarriedItem();
-        if (isAxe(weapon)) disableShield(player);
+        // Item#canDisableShield: axes and the cube of annihilation
+        if (isAxe(weapon) || game::items::idOf(weapon) == kCube) disableShield(player);
     }
     ++gShieldBlocks;
     return gf::combat::Verdict::Cancel;
@@ -184,8 +195,10 @@ void registerShield() {
     );
     gf::combat::onIncoming(gf::combat::priority::High + 10, blockAndParry);
     // the raise time of a sneak-raised shield counts from the tick the sneak started
-    gf::progression::events::onTick([](Player& player) {
-        if (handHolding(player, kShield)) (void)isBlocking(player);
+    gf::progression::events::onTick([](Player& player) { (void)trackSneak(player); });
+    game::db::onWorldClosed([] {
+        forgetPlayers();
+        forgetFanFlags();
     });
 }
 

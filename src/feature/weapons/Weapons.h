@@ -108,6 +108,11 @@ void chillAura(Actor& victim, int duration, int amplifier, bool shouldHit);
 /// A dispensed projectile's launch velocity (world::shootFrom) handed to the projectile kit; call
 /// first in the type's tick.
 void applyLaunch(Actor& projectile);
+/// The ticks the player has been sneaking (-1: not sneaking); call every tick (Melee.cpp does).
+int trackSneak(Player& player);
+/// Forgets the per-player state of the world that closed (sneak starts, fan flags).
+void forgetPlayers();
+void forgetFanFlags();
 /// Player#disableShield: the raised shield goes down and is disabled for 100 ticks.
 void disableShield(Player& player);
 

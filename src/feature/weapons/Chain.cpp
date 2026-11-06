@@ -136,7 +136,7 @@ void smash(Actor& chain, ItemStack const& stack, Player& player, Vec3 const& at)
             BlockPos     p{start.x + x, start.y, start.z + z};
             Block const& b = region.getBlock(p);
             if (b.isAir()) continue;
-            if (!canBreakBlockAt(stack, b)) continue;
+            if (!canBreakBlockAt(stack, b) || !mayBreak(player, p)) continue;
             region.getLevel().destroyBlock(region, p, !player.isCreative(), BlockChangeContext{});
             ++smashed;
         }
@@ -200,7 +200,10 @@ bool onHitBlock(Actor& chain, BlockPos const& pos, int face) {
     auto* owner = gf::projectile::ext::owner(chain);
     if (owner && owner->isPlayer() && gf::enchant::level(stack, "twilightforest:destruction") > 0)
         smash(chain, stack, static_cast<Player&>(*owner), Vec3{pos.x + 0.0f, pos.y + 0.0f, pos.z + 0.5f});
-    // the chain flies on (ThrowableProjectile keeps moving after onHitBlock): the tick steers it
+    // the chain flies on (ThrowableProjectile keeps moving after onHitBlock): the kit stops a
+    // throwable whose block hit keeps it, so the tick gives this velocity back
+    auto v       = gf::projectile::ext::velocity(chain);
+    st["flight"] = {v.x, v.y, v.z};
     return false;
 }
 
@@ -221,10 +224,13 @@ void tick(Actor& chain) {
             double dx = std::abs(pos.x - st["last"][0].get<double>());
             double dz = std::abs(pos.z - st["last"][1].get<double>());
             if ((dx > 0 || dz > 0) && dx < 0.003F && dz < 0.003F) st["stuck"] = st.value("stuck", 0) + 1;
-            if (gf::projectile::ext::inGround(chain)) st["stuck"] = st.value("stuck", 0) + 1;
         }
         if (st.value("stuck", 0) >= kMaxStuckTicks) st["returning"] = true;
+        if (auto f = st.find("flight"); f != st.end() && f->is_array() && gf::projectile::ext::inGround(chain) && !st.value("returning", false)) {
+            gf::projectile::ext::setVelocity(chain, Vec3{(*f)[0].get<float>(), (*f)[1].get<float>(), (*f)[2].get<float>()});
+        }
     }
+    st.erase("flight");
     st["last"]     = {pos.x, pos.z};
     auto   ownPos  = owner->getFeetPos();
     double dist    = std::sqrt(world::distanceSqr(chain, ownPos));

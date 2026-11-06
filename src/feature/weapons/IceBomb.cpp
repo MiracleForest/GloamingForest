@@ -134,7 +134,7 @@ void tick(Actor& bomb) {
         // makeIceZone, client part: 16 snow_guardian particles in a 3.5 radius
         for (int i = 0; i < 16; ++i)
             gf::fx::particle(bomb.getDimension(), "twilightforest:snow_guardian",
-                             Vec3{pos.x + (r.nextFloat() - r.nextFloat()) * 3.5F, pos.y + (r.nextFloat() - r.nextFloat()) * 3.5F, pos.z + (r.nextFloat() - r.nextFloat()) * 3.5F});
+                             Vec3{pos.x + (world::diffF(r)) * 3.5F, pos.y + (world::diffF(r)) * 3.5F, pos.z + (world::diffF(r)) * 3.5F});
         if (zone == 99) iceTerrain(bomb.getDimensionBlockSource(), pos, 3);
         if (zone % 20 == 0) hitNearby(bomb);
         if (zone <= 0) {
@@ -149,8 +149,8 @@ void tick(Actor& bomb) {
         auto  pos   = bomb.getPosition();
         for (int i = 0; i < n; ++i)
             gf::fx::particle(bomb.getDimension(), "twilightforest:snow_guardian",
-                             Vec3{static_cast<float>(pos.x + 0.5 * (r.nextDouble() - r.nextDouble())), static_cast<float>(pos.y + 0.5 * (r.nextDouble() - r.nextDouble()) + 0.5),
-                                  static_cast<float>(pos.z + 0.5 * (r.nextDouble() - r.nextDouble()))});
+                             Vec3{static_cast<float>(pos.x + 0.5 * (world::diffD(r))), static_cast<float>(pos.y + 0.5 * (world::diffD(r)) + 0.5),
+                                  static_cast<float>(pos.z + 0.5 * (world::diffD(r)))});
     }
 }
 

@@ -172,22 +172,31 @@ bool isBlocking(Player& player, int* ticks) {
         return t >= 5;
     }
     // Bedrock: a shield is raised by sneaking (the vanilla shield's own logic, and the knightmetal
-    // shield held in a hand)
-    auto uid = world::uidOf(player);
-    if (player.isSneaking() && handHolding(player, kShield) && gf::item::cooldownLeft(player, kShield) <= 0) {
-        auto now = world::currentTick();
-        auto it  = sneakStarts().try_emplace(uid, now).first;
-        int  t   = static_cast<int>(now - it->second);
-        if (ticks) *ticks = t;
-        return t >= 5;
+    // shield held in a hand); the raise time counts from the sneak's start (trackSneak)
+    int sneak = trackSneak(player);
+    if (sneak >= 0 && handHolding(player, kShield) && gf::item::cooldownLeft(player, kShield) <= 0) {
+        if (ticks) *ticks = sneak;
+        return sneak >= 5;
     }
-    sneakStarts().erase(uid);
     if (player.isBlocking()) {
-        if (ticks) *ticks = used == "minecraft:shield" ? ticksUsingItem(player) : 5;
+        if (ticks) *ticks = used == "minecraft:shield" ? ticksUsingItem(player) : std::max(sneak, 0);
         return true;
     }
     return false;
 }
+
+int trackSneak(Player& player) {
+    auto uid = world::uidOf(player);
+    if (!player.isSneaking()) {
+        sneakStarts().erase(uid);
+        return -1;
+    }
+    auto now = world::currentTick();
+    auto it  = sneakStarts().try_emplace(uid, now).first;
+    return static_cast<int>(now - it->second);
+}
+
+void forgetPlayers() { sneakStarts().clear(); }
 
 void applyLaunch(Actor& projectile) {
     auto& d = gf::entity::data(projectile, "weapons:launch");
