@@ -1,0 +1,117 @@
+{
+  "twilightforest:twilight_forest": {
+    "event_name": "music.twilightforest.twilight_forest",
+    "min_delay": 60,
+    "max_delay": 600
+  },
+  "twilightforest:clearing": {
+    "event_name": "music.twilightforest.twilight_forest",
+    "min_delay": 60,
+    "max_delay": 600
+  },
+  "twilightforest:dark_forest": {
+    "event_name": "music.twilightforest.twilight_forest",
+    "min_delay": 60,
+    "max_delay": 600
+  },
+  "twilightforest:dark_forest_center": {
+    "event_name": "music.twilightforest.twilight_forest",
+    "min_delay": 60,
+    "max_delay": 600
+  },
+  "twilightforest:dense_forest": {
+    "event_name": "music.twilightforest.twilight_forest",
+    "min_delay": 60,
+    "max_delay": 600
+  },
+  "twilightforest:dense_mushroom_forest": {
+    "event_name": "music.twilightforest.twilight_forest",
+    "min_delay": 60,
+    "max_delay": 600
+  },
+  "twilightforest:enchanted_forest": {
+    "event_name": "music.twilightforest.twilight_forest",
+    "min_delay": 60,
+    "max_delay": 600
+  },
+  "twilightforest:final_plateau": {
+    "event_name": "music.twilightforest.twilight_forest",
+    "min_delay": 60,
+    "max_delay": 600
+  },
+  "twilightforest:fire_swamp": {
+    "event_name": "music.twilightforest.twilight_forest",
+    "min_delay": 60,
+    "max_delay": 600
+  },
+  "twilightforest:firefly_forest": {
+    "event_name": "music.twilightforest.twilight_forest",
+    "min_delay": 60,
+    "max_delay": 600
+  },
+  "twilightforest:forest": {
+    "event_name": "music.twilightforest.twilight_forest",
+    "min_delay": 60,
+    "max_delay": 600
+  },
+  "twilightforest:glacier": {
+    "event_name": "music.twilightforest.twilight_forest",
+    "min_delay": 60,
+    "max_delay": 600
+  },
+  "twilightforest:highlands": {
+    "event_name": "music.twilightforest.twilight_forest",
+    "min_delay": 60,
+    "max_delay": 600
+  },
+  "twilightforest:highlands_underground": {
+    "event_name": "music.twilightforest.twilight_forest",
+    "min_delay": 60,
+    "max_delay": 600
+  },
+  "twilightforest:lake": {
+    "event_name": "music.twilightforest.twilight_forest",
+    "min_delay": 60,
+    "max_delay": 600
+  },
+  "twilightforest:mushroom_forest": {
+    "event_name": "music.twilightforest.twilight_forest",
+    "min_delay": 60,
+    "max_delay": 600
+  },
+  "twilightforest:oak_savannah": {
+    "event_name": "music.twilightforest.twilight_forest",
+    "min_delay": 60,
+    "max_delay": 600
+  },
+  "twilightforest:snowy_forest": {
+    "event_name": "music.twilightforest.twilight_forest",
+    "min_delay": 60,
+    "max_delay": 600
+  },
+  "twilightforest:spooky_forest": {
+    "event_name": "music.twilightforest.twilight_forest",
+    "min_delay": 60,
+    "max_delay": 600
+  },
+  "twilightforest:stream": {
+    "event_name": "music.twilightforest.twilight_forest",
+    "min_delay": 60,
+    "max_delay": 600
+  },
+  "twilightforest:swamp": {
+    "event_name": "music.twilightforest.twilight_forest",
+    "min_delay": 60,
+    "max_delay": 600
+  },
+  "twilightforest:thornlands": {
+    "event_name": "music.twilightforest.twilight_forest",
+    "min_delay": 60,
+    "max_delay": 600
+  },
+  "twilightforest:underground": {
+    "event_name": "music.twilightforest.twilight_forest",
+    "min_delay": 60,
+    "max_delay": 600
+  }
+}
