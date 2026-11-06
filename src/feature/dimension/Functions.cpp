@@ -129,8 +129,14 @@ void runTp(CommandOrigin const& commandOrigin, CommandOutput& output, bool toTwi
     if (from == tp->dim) {
         target->teleport(tp->pos, DimensionType(tp->dim), rot);
     } else {
-        // Java's tp is no portal trip: no portal::onTeleported
-        moveAcross(*target, tp->dim, tp->pos, rot.y, rot.x, {}, [name, dim = tp->dim](Player* p) {
+        // Java's tp is no portal trip: no portal::onTeleported. Java puts the player exactly at
+        // the position; Bedrock's dimension change settles it off (its eye height higher), so once
+        // it is there it is placed exactly, as finishTrip does after a portal trip
+        auto at = tp->pos;
+        moveAcross(*target, tp->dim, at, rot.y, rot.x, [at, dim = tp->dim, rot](Player& p) {
+            p.teleport(at, DimensionType(dim), rot);
+            p.setFallDistance(0.0f);
+        }, [name, dim = tp->dim](Player* p) {
             log().warn("dimension: the function teleport of {} to {} did not complete", name, dimensionName(dim));
             (void)p;
         });

@@ -1,0 +1,29 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "twilightforest:equipment/zombie_scepter_long_strength"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "ingredients": [
+      {
+        "item": "twilightforest:zombie_scepter"
+      },
+      {
+        "item": "minecraft:potion",
+        "data": 32
+      },
+      {
+        "item": "minecraft:rotten_flesh"
+      }
+    ],
+    "unlock": {
+      "context": "AlwaysUnlocked"
+    },
+    "result": {
+      "item": "twilightforest:zombie_scepter"
+    }
+  }
+}

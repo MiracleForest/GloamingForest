@@ -1,0 +1,43 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:maze_slime",
+      "materials": {
+        "default": "entity_alphatest",
+        "outer": "entity_alphablend"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/mazeslime"
+      },
+      "geometry": {
+        "default": "geometry.twilightforest.maze_slime"
+      },
+      "scripts": {
+        "initialize": [
+          "variable.squish = 0.0;",
+          "variable.target_squish = 0.0;",
+          "variable.in_air = 0.0;",
+          "variable.prev_time = query.life_time;"
+        ],
+        "pre_animation": [
+          "variable.dt = math.clamp((query.life_time - variable.prev_time) * 20.0, 0.0, 5.0);",
+          "variable.prev_time = query.life_time;",
+          "variable.target_squish = (query.is_on_ground && variable.in_air) ? -0.5 : ((!query.is_on_ground && !variable.in_air) ? 1.0 : variable.target_squish * math.pow(0.6, variable.dt));",
+          "variable.squish = variable.squish + (variable.target_squish - variable.squish) * math.min(1.0, 0.5 * variable.dt);",
+          "variable.in_air = !query.is_on_ground;"
+        ],
+        "scale": "math.max(1, query.variant) * 0.999",
+        "animate": ["squish"]
+      },
+      "animations": {
+        "squish": "animation.twilightforest.maze_slime.squish"
+      },
+      "render_controllers": ["controller.render.twilightforest.maze_slime"],
+      "spawn_egg": {
+        "base_color": "#a3a3a3",
+        "overlay_color": "#2a3b17"
+      }
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "twilightforest:charm_effect",
+      "is_spawnable": false,
+      "is_summonable": false,
+      "is_experimental": false,
+      "properties": {
+        "twilightforest:charm": { "type": "int", "range": [0, 4], "default": 0, "client_sync": true }
+      }
+    },
+    "components": {
+      "minecraft:type_family": { "family": ["twilightforest", "charm_effect", "inanimate"] },
+      "minecraft:collision_box": { "width": 0.01, "height": 0.01 },
+      "minecraft:health": { "value": 1000, "max": 1000 },
+      "minecraft:physics": { "has_gravity": false, "has_collision": false },
+      "minecraft:pushable": { "is_pushable": false, "is_pushable_by_piston": false },
+      "minecraft:fire_immune": {},
+      "minecraft:breathable": { "breathes_air": true, "breathes_water": true, "breathes_lava": true, "breathes_solids": true },
+      "minecraft:damage_sensor": { "triggers": [ { "cause": "all", "deals_damage": "no" } ] }
+    }
+  }
+}

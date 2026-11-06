@@ -1,0 +1,27 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:greater_potion_flask",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_artifacts_greater_potion_flask"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "item.twilightforest:greater_potion_flask.name"
+      },
+      "minecraft:max_stack_size": 1,
+      "minecraft:use_modifiers": {
+        "use_duration": 1.6,
+        "movement_modifier": 0.2
+      },
+      "minecraft:use_animation": "drink"
+    }
+  }
+}

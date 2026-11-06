@@ -1,0 +1,71 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:steeleaf_sword",
+      "menu_category": {
+        "category": "equipment"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_item_steeleaf_sword"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "item.twilightforest:steeleaf_sword.name"
+      },
+      "minecraft:max_stack_size": 1,
+      "minecraft:durability": {
+        "max_durability": 131
+      },
+      "minecraft:hand_equipped": true,
+      "minecraft:damage": {
+        "value": 6
+      },
+      "minecraft:digger": {
+        "use_efficiency": true,
+        "destroy_speeds": [
+          {
+            "block": "minecraft:web",
+            "speed": 15
+          },
+          {
+            "block": {
+              "tags": "q.any_tag('minecraft:is_sword_item_destructible', 'minecraft:leaves')"
+            },
+            "speed": 2
+          }
+        ]
+      },
+      "minecraft:enchantable": {
+        "slot": "sword",
+        "value": 9
+      },
+      "minecraft:repairable": {
+        "repair_items": [
+          {
+            "items": [
+              "twilightforest:steeleaf_ingot"
+            ],
+            "repair_amount": "query.max_durability * 0.25"
+          },
+          {
+            "items": [
+              "twilightforest:steeleaf_sword"
+            ],
+            "repair_amount": "context.other->query.remaining_durability + 0.12 * context.other->query.max_durability"
+          }
+        ]
+      },
+      "minecraft:tags": {
+        "tags": [
+          "minecraft:is_sword",
+          "minecraft:diamond_tier",
+          "alexscaves:ferromagnetic_items"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "format_version": "1.10.0",
+  "animation_controllers": {
+    "controller.animation.twilightforest.knight_phantom.charging": {
+      "initial_state": "default",
+      "states": {
+        "default": {
+          "transitions": [
+            {
+              "charging": "q.property('twilightforest:charging') && q.property('twilightforest:dying_visible')"
+            }
+          ]
+        },
+        "charging": {
+          "particle_effects": [
+            {
+              "effect": "smoke"
+            }
+          ],
+          "transitions": [
+            {
+              "default": "!q.property('twilightforest:charging') || !q.property('twilightforest:dying_visible')"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

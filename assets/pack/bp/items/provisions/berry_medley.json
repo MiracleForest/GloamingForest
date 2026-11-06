@@ -1,0 +1,38 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:berry_medley",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_item_berry_medley"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "item.twilightforest:berry_medley.name"
+      },
+      "minecraft:max_stack_size": 1,
+      "minecraft:tags": {
+        "tags": [
+          "c:foods"
+        ]
+      },
+      "minecraft:food": {
+        "nutrition": 5,
+        "saturation_modifier": 0.6,
+        "can_always_eat": false,
+        "using_converts_to": "minecraft:bowl"
+      },
+      "minecraft:use_modifiers": {
+        "use_duration": 1.6,
+        "movement_modifier": 0.2
+      },
+      "minecraft:use_animation": "eat"
+    }
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "format_version": "1.8.0",
+  "render_controllers": {
+    "controller.render.twilightforest.tiny_bird": {
+      "arrays": {
+        "textures": {
+          "Array.skins": [
+            "Texture.blue",
+            "Texture.brown",
+            "Texture.gold",
+            "Texture.red"
+          ]
+        }
+      },
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Array.skins[q.variant]"
+      ]
+    },
+    "controller.render.twilightforest.dwarf_rabbit": {
+      "arrays": {
+        "textures": {
+          "Array.skins": [
+            "Texture.brown",
+            "Texture.dutch",
+            "Texture.white"
+          ]
+        }
+      },
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Array.skins[q.variant]"
+      ]
+    },
+    "controller.render.twilightforest.bighorn_sheep_fur": {
+      "geometry": "Geometry.fur",
+      "materials": [
+        {
+          "*": "Material.fur"
+        }
+      ],
+      "textures": [
+        "Texture.fur"
+      ]
+    }
+  }
+}

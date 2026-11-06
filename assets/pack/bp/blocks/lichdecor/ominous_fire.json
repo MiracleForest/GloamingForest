@@ -1,0 +1,48 @@
+{
+  "format_version": "1.26.50",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:ominous_fire",
+      "menu_category": {
+        "category": "none"
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 0
+      },
+      "minecraft:light_emission": 15,
+      "minecraft:map_color": "#7f3fb2",
+      "minecraft:collision_box": false,
+      "minecraft:geometry": {
+        "identifier": "geometry.tf.twilightforest.block.ominous_fire.multipart"
+      },
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_ominous_fire_0",
+          "render_method": "alpha_test"
+        },
+        "t_twilightforest_block_ominous_fire_0": {
+          "texture": "tf_block_ominous_fire_0",
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:selection_box": {
+        "origin": [
+          -8,
+          0,
+          -8
+        ],
+        "size": [
+          16,
+          1,
+          16
+        ]
+      },
+      "minecraft:light_dampening": 0
+    }
+  }
+}

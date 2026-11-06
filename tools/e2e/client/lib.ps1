@@ -23,35 +23,132 @@ $script:OutRoot      = Join-Path $PSScriptRoot 'out'
 # BeDD (https://github.com/LiteLDev/BeDD, docs https://docs.levimc.org/BeDD/): a test-only client
 # mod that lets run.ps1 drive the game through a control pipe instead of the real mouse and
 # keyboard. Its files (DLL, BeDD.psm1, harness-shim.ps1, Start-BeDDGame.ps1, clone-instance.ps1)
-# are taken from $env:BEDD_DIR, a local build in %USERPROFILE%\Desktop\BeDD\bin\BeDD, or the
-# latest release, downloaded once into %LOCALAPPDATA%\gf-e2e\BeDD (Install-BeDDRelease).
+# come from, in this order (Resolve-BeDD, docs/spec/e2e.md "BeDD"):
+#   1. $env:BEDD_DIR (any BeDD bin folder, used as it is);
+#   2. the local development build %USERPROFILE%\Desktop\BeDD\bin\BeDD, only when opted in with
+#      $env:GF_E2E_BEDD_DEV=1 (a development build may not fit this game version: one that logged
+#      "FTL Couldn't find: bool ClientInstance::$update(bool, bool)" made every run exit after the
+#      player spawned);
+#   3. the pinned release (below), downloaded once into %LOCALAPPDATA%\gf-e2e\BeDD, its zip checked
+#      against the release's SHA-256 (Install-BeDDRelease). $env:GF_BEDD_URL (+ optional
+#      $env:GF_BEDD_SHA256) installs another zip there instead.
+# A BeDD that fails to hook the game is caught as the game loads (Assert-BeDDLoaded): the run stops
+# at once, and a BeDD other than the release copy is retried once with the release copy (run.ps1).
+$script:BeDDReleaseVersion = '0.3.1'
+$script:BeDDReleaseUrl     = "https://github.com/LiteLDev/BeDD/releases/download/v$($script:BeDDReleaseVersion)/bedd-client-windows-x64.zip"
+$script:BeDDReleaseSha256  = 'd377490c013b39ee422fdd999d4dbf22d97dad5a43df97b52caf9c2051c34a28'
+$script:BeDDReleaseDir     = Join-Path $env:LOCALAPPDATA 'gf-e2e\BeDD'
+$script:BeDDDevDir         = Join-Path $env:USERPROFILE 'Desktop\BeDD\bin\BeDD'
+$script:BeDDRequiredFiles  = @('BeDD.dll', 'manifest.json', 'BeDD.psm1', 'harness-shim.ps1', 'Start-BeDDGame.ps1', 'clone-instance.ps1')
+
+# The "version" of a BeDD folder's manifest.json ($null when it has none).
+function Get-BeDDVersion([string]$Dir) {
+    try { return [string](Get-Content (Join-Path $Dir 'manifest.json') -Raw -ErrorAction Stop | ConvertFrom-Json).version } catch { return $null }
+}
+
+# The files a BeDD folder lacks (none: it is complete).
+function Get-BeDDMissingFiles([string]$Dir) {
+    @($script:BeDDRequiredFiles | Where-Object { -not (Test-Path (Join-Path $Dir $_)) })
+}
+
+# Whether the release copy is complete and the one this harness wants: the pinned version, or with
+# $env:GF_BEDD_URL the zip it names (remembered in gf-bedd.json at install).
+function Test-BeDDReleaseCopy([string]$Dir) {
+    if (@(Get-BeDDMissingFiles $Dir).Count -gt 0) { return $false }
+    if ($env:GF_BEDD_URL) {
+        try { return ((Get-Content (Join-Path $Dir 'gf-bedd.json') -Raw -ErrorAction Stop | ConvertFrom-Json).url -eq $env:GF_BEDD_URL) } catch { return $false }
+    }
+    return (Get-BeDDVersion $Dir) -eq $script:BeDDReleaseVersion
+}
+
+# Makes %LOCALAPPDATA%\gf-e2e\BeDD the wanted release (downloads it when it is missing, incomplete or
+# another version) and returns the folder.
 function Install-BeDDRelease {
-    $home_ = Join-Path $env:LOCALAPPDATA 'gf-e2e'
-    $dest = Join-Path $home_ 'BeDD'
-    if (Test-Path (Join-Path $dest 'harness-shim.ps1')) { return $dest }
+    $dest = $script:BeDDReleaseDir
+    $home_ = Split-Path $dest -Parent
+    if (Test-BeDDReleaseCopy $dest) { return $dest }
     New-Item -ItemType Directory -Force $home_ | Out-Null
     $lock = Enter-FileLock (Join-Path $home_ 'bedd-install.lock') -TimeoutMinutes 30 -What 'BeDD install lock'
     try {
-        if (Test-Path (Join-Path $dest 'harness-shim.ps1')) { return $dest }
-        $url = if ($env:GF_BEDD_URL) { $env:GF_BEDD_URL } else { 'https://github.com/LiteLDev/BeDD/releases/latest/download/bedd-client-windows-x64.zip' }
+        if (Test-BeDDReleaseCopy $dest) { return $dest }
+        $url = if ($env:GF_BEDD_URL) { $env:GF_BEDD_URL } else { $script:BeDDReleaseUrl }
+        $sha = if ($env:GF_BEDD_URL) { $env:GF_BEDD_SHA256 } else { $script:BeDDReleaseSha256 }
         $tmp = Join-Path $home_ "bedd-$PID"
         if (Test-Path $tmp) { Remove-Item -Recurse -Force $tmp }
         New-Item -ItemType Directory $tmp | Out-Null
-        Write-Step "downloading BeDD from $url"
-        Invoke-WebRequest -Uri $url -OutFile (Join-Path $tmp 'bedd.zip') -UseBasicParsing
-        Expand-Archive (Join-Path $tmp 'bedd.zip') -DestinationPath (Join-Path $tmp 'x')
-        $src = Get-ChildItem (Join-Path $tmp 'x') -Recurse -Filter 'harness-shim.ps1' | Select-Object -First 1
-        if (-not $src) { throw "the BeDD release has no harness-shim.ps1 ($url)" }
-        if (Test-Path $dest) { Remove-Item -Recurse -Force $dest }
-        Move-Item $src.DirectoryName $dest
-        Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue
-        Write-Step "installed BeDD into $dest"
+        try {
+            $had = if (Test-Path $dest) { "replacing $dest (v$(Get-BeDDVersion $dest): incomplete or not the wanted release)" } else { "no BeDD in $dest yet" }
+            Write-Step "$had; downloading BeDD from $url"
+            $zip = Join-Path $tmp 'bedd.zip'
+            Invoke-WebRequest -Uri $url -OutFile $zip -UseBasicParsing
+            $got = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+            if ($sha -and $got -ne $sha.ToLowerInvariant()) { throw "the BeDD zip from $url has SHA-256 $got, expected $sha" }
+            Expand-Archive $zip -DestinationPath (Join-Path $tmp 'x')
+            $src = Get-ChildItem (Join-Path $tmp 'x') -Recurse -Filter 'harness-shim.ps1' | Select-Object -First 1
+            if (-not $src) { throw "the BeDD release has no harness-shim.ps1 ($url)" }
+            $missing = @(Get-BeDDMissingFiles $src.DirectoryName)
+            if ($missing.Count -gt 0) { throw "the BeDD release lacks $($missing -join ', ') ($url)" }
+            @{ url = $url; sha256 = $got; version = (Get-BeDDVersion $src.DirectoryName); installed = (Get-Date -Format o) } |
+                ConvertTo-Json | Set-Content -Encoding utf8 (Join-Path $src.DirectoryName 'gf-bedd.json')
+            if (Test-Path $dest) { Remove-Item -Recurse -Force $dest }
+            Move-Item $src.DirectoryName $dest
+            Write-Step "installed BeDD v$(Get-BeDDVersion $dest) into $dest"
+        } finally { Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue }
         return $dest
     } finally { Exit-FileLock $lock }
 }
-$script:BeDDDir = if ($env:BEDD_DIR) { $env:BEDD_DIR }
-    elseif (Test-Path (Join-Path $env:USERPROFILE 'Desktop\BeDD\bin\BeDD\harness-shim.ps1')) { Join-Path $env:USERPROFILE 'Desktop\BeDD\bin\BeDD' }
-    else { Join-Path $env:LOCALAPPDATA 'gf-e2e\BeDD' }
+
+# Which BeDD this run uses: {Dir, Source, Version} (Source: 'BEDD_DIR', 'dev' or 'release'). Only
+# picks; Initialize-BeDD installs the release copy when it is the pick.
+function Resolve-BeDD {
+    if ($env:BEDD_DIR) { $dir = $env:BEDD_DIR; $source = 'BEDD_DIR' }
+    elseif ($env:GF_E2E_BEDD_DEV -in @('1', 'true', 'yes')) { $dir = $script:BeDDDevDir; $source = 'dev' }
+    else { $dir = $script:BeDDReleaseDir; $source = 'release' }
+    [pscustomobject]@{ Dir = $dir; Source = $source; Version = (Get-BeDDVersion $dir) }
+}
+
+# Picks the BeDD of the run (installing the release copy when that is the pick), checks that it is
+# complete, sets $script:BeDDDir / $script:BeDD and logs which one it is. Headless runs (run.ps1).
+function Initialize-BeDD {
+    $b = Resolve-BeDD
+    if ($b.Source -eq 'release') { $b.Dir = Install-BeDDRelease; $b.Version = Get-BeDDVersion $b.Dir }
+    $missing = @(Get-BeDDMissingFiles $b.Dir)
+    if ($missing.Count -gt 0) {
+        $how = switch ($b.Source) { 'BEDD_DIR' { '$env:BEDD_DIR' } 'dev' { '$env:GF_E2E_BEDD_DEV (the local development build)' } default { 'the release copy' } }
+        throw "BeDD is not usable: $($b.Dir) (from $how) lacks $($missing -join ', '). Unset `$env:BEDD_DIR / `$env:GF_E2E_BEDD_DEV to use the pinned release, or pass -Foreground to use the real mouse and keyboard."
+    }
+    $script:BeDDDir = $b.Dir
+    $script:BeDD = $b
+    Write-Step "BeDD v$($b.Version) from $($b.Dir) ($($b.Source))"
+    return $b
+}
+
+# A BeDD that cannot hook this game: LeviLamina's "FTL ... Couldn't find: <symbol>" followed by
+# "FTL ... In module: BeDD" while loading it, or BeDD's own "... could not be hooked" errors.
+# Returns the reason ($null: none).
+function Get-BeDDLoadFailure {
+    $lines = @(Get-LeviLog)
+    $hits = [System.Collections.Generic.List[string]]::new()
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        if ($lines[$i] -match 'FTL\]\[LeviLamina\] In module: BeDD\s*$' -and $i -gt 0 -and $lines[$i - 1] -match 'FTL\]\[LeviLamina\] (.+)$') { $hits.Add($Matches[1].Trim()) }
+        elseif ($lines[$i] -match 'ERR\]\[BeDD\] (.*could not be hooked.*)$') { $hits.Add($Matches[1].Trim()) }
+    }
+    if ($hits.Count -eq 0) { return $null }
+    return (@($hits | Select-Object -Unique) -join '; ')
+}
+
+# Throws (and sets $script:BeDDBroken) when the BeDD of this run failed to hook the game.
+function Assert-BeDDLoaded {
+    if (-not $script:Headless -or -not $script:BeDD) { return }
+    $why = Get-BeDDLoadFailure
+    if (-not $why) { return }
+    $b = $script:BeDD
+    $script:BeDDBroken = "BeDD v$($b.Version) from $($b.Dir) ($($b.Source)) does not fit this game ($script:VersionName): $why"
+    throw $script:BeDDBroken
+}
+$script:BeDD = $null
+$script:BeDDBroken = $null
+$script:BeDDDir = (Resolve-BeDD).Dir
 
 # Game instances ("slots"). Slot 1 is the LeviLauncher instance itself; its lock is shared with
 # BEI's and BeetrootSkin's harnesses on purpose (they drive the same instance). Slots 2..N are
@@ -1626,9 +1723,14 @@ function Wait-GameReady([int]$TimeoutSeconds = $script:EnableTimeoutSec, [switch
     try { Set-GameWindowSize }
     catch {
         # BeDD (a mod too) never answered: a game that is still running is stuck while loading
+        # (a BeDD that could not hook this game: say so instead of the pipe's error)
+        Assert-BeDDLoaded
         if (-not (Get-WatchdogFired) -and "$_" -match 'did not answer within' -and (Get-GameProcess)) { Stop-HungGame "the game still running but BeDD's pipe never answered while loading ($($_.Exception.Message))" }
         throw
     }
+    # BeDD answered, so it was loaded: a hook it could not install ("Couldn't find: ...") shows by
+    # now. Such a game exits once the player spawns: stop here with the reason.
+    Assert-BeDDLoaded
     if ($WithoutMod) {
         # With no mods at all LeviLamina logs "0 mod(s) loaded" and never "enabled"; that early line
         # is sometimes missed after a game restart, so a running game counts as ready after 90 s.

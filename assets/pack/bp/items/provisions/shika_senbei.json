@@ -1,0 +1,36 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:shika_senbei",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_item_shika_senbei"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "item.twilightforest:shika_senbei.name"
+      },
+      "minecraft:tags": {
+        "tags": [
+          "twilightforest:deer_tempt_items"
+        ]
+      },
+      "minecraft:food": {
+        "nutrition": 4,
+        "saturation_modifier": 1.0,
+        "can_always_eat": false
+      },
+      "minecraft:use_modifiers": {
+        "use_duration": 1.6,
+        "movement_modifier": 0.2
+      },
+      "minecraft:use_animation": "eat"
+    }
+  }
+}
