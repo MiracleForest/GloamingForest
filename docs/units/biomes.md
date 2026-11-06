@@ -82,9 +82,21 @@ are TF's white `#FFFFFF` and the glacier's its colour-map colour. Vanilla client
 seasons look there (they cannot be told otherwise: the foliage colour is the only data and it is
 read as a map place).
 
-Water: `BiomeColorSampling::getWaterColor` answers TF's water colour (`water_color` of TF's biome
-JSON) for TF's biomes with the mod; vanilla clients get it from the client biome files and the
-server's biome definitions.
+Water: TF's water colours (`water_color` of TF's biome JSON) are given to the game in every place
+U1 can reach: the client biome files (`minecraft:water_appearance`, now at the pack's `biomes/` root:
+the files under `biomes/biomes/` were not read by the client), the server's biomes
+(`Biome::mMapWaterColor`) and with them the biome definitions sent to clients (the cached
+`BiomeDefinitionListPacket`s are patched too when they exist), and with the mod
+`BiomeColorSampling::getWaterColor`. Bedrock 1.26.51 still draws the Twilight Forest's water in one
+colour. Evidence (client e2e, local and remote-vanilla): the client level's own biomes carry TF's
+colours (`client biome twilightforest:fire_swamp: map water #A66C2C2C`, the vanilla swampland
+`#A5617B64` the same way), the hooked lookup answers them, and still the five test pools (white
+concrete basins, 5x5x3 water, photographed from straight above) measure the same `#436168` in the
+forest, swamp, fire swamp, spooky forest and dense forest. The water mesh's colour comes from a
+place none of these reach (no MCAPI water policy or water render attribute is exposed in the
+26.51.7 headers: `WaterTessellationPolicy`, `WaterRenderAttributes` and `BiomeTintCache` are
+empty declarations). Closest workaround in place: every data path carries TF's colour, so the water
+follows as soon as the engine reads one of them; the scenario measures the pools and logs a warning.
 
 ## Spawn costs
 

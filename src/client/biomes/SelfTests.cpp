@@ -13,7 +13,11 @@
 #include <optional>
 #include <string>
 
+#include "mc/client/player/LocalPlayer.h"
 #include "mc/world/level/BlockPos.h"
+#include "mc/world/level/Level.h"
+#include "mc/world/level/biome/registry/BiomeRegistry.h"
+#include "client/Client.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/biome/Biome.h"
 #include "mc/world/level/biome/biome_color_sampling/BiomeColorSampling.h"
@@ -161,6 +165,21 @@ GF_REGISTER_SELFTEST("biomes.grass_tint", [](Context& ctx) -> ll::coro::CoroTask
         ctx.info(std::format("{}: the server biome's map water colour #{:08X}", biome, static_cast<unsigned>(static_cast<int>(b.mMapWaterColor))));
     }
     ctx.check(gf::biomes::ext::waterColoursApplied() > 0, "the water colour hook answered TF's water colours");
+    // the client level's own biomes: which environment attributes the client biome files gave them
+    // (a TF biome against a vanilla one), and the water colour the client was sent
+    if (auto* player = client::currentPlayer()) {
+        auto& reg = player->getLevel().getBiomeRegistry();
+        for (char const* id : {"twilightforest:fire_swamp", "twilightforest:forest", "minecraft:swampland", "minecraft:plains"}) {
+            auto const* b = reg.lookupByName(id);
+            if (!b) {
+                ctx.info(std::format("client biome {}: not in the client's registry", id));
+                continue;
+            }
+            std::string keys;
+            for (auto const& [k, v] : *b->mEnvironmentAttributes) keys += (keys.empty() ? "" : ",") + k;
+            ctx.info(std::format("client biome {}: map water #{:08X}, attributes [{}]", id, static_cast<unsigned>(static_cast<int>(b->mMapWaterColor)), keys));
+        }
+    }
     // the client draws the world: the vanilla tint hook applied the registry to vanilla blocks
     // (the client may not have drawn a TF chunk yet: the e2e scenario checks the hook's log lines)
     ctx.info(std::format("the vanilla tint hook applied {} tints so far", gf::biomes::ext::vanillaTintsApplied()));
