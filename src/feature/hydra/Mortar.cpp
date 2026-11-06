@@ -269,7 +269,13 @@ gf::combat::Verdict onIncoming(gf::combat::DamageInfo& d) {
     Actor* projectile = direct && direct != &d.victim && !fe::asMob(*direct) ? direct : (causing && !fe::asMob(*causing) ? causing : nullptr);
     if (projectile && projectile != &d.victim && projectile->getTypeName() != kMortar && fe::isProjectileDamage(d.type)
         && !projectileReachesJavaBox(d.victim, *projectile)) {
-        log().info("hydra: mortar missed by {} (outside the Java projectile box)", projectile->getTypeName());
+        auto const& pp = projectile->getPosition();
+        auto const& pd = projectile->getPosDelta();
+        auto        pl = projectile->getViewVector(1.0F);
+        auto const& mb = d.victim.getAABB();
+        log().info("hydra: mortar missed by {} (outside the Java projectile box; at {:.2f} {:.2f} {:.2f}, motion {:.3f} {:.3f} {:.3f}, look {:.2f} {:.2f} {:.2f}, "
+                   "mortar box {:.2f} {:.2f} {:.2f})",
+                   projectile->getTypeName(), pp.x, pp.y, pp.z, pd.x, pd.y, pd.z, pl.x, pl.y, pl.z, mb.min.x, mb.min.y, mb.min.z);
         return gf::combat::Verdict::Cancel;
     }
     // Explosion#getIndirectSourceEntity: an exploding mortar stands for its owner
