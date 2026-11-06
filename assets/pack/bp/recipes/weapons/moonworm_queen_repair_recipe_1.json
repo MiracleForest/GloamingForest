@@ -1,0 +1,27 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "twilightforest:moonworm_queen_repair_recipe_1"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "ingredients": [
+      {
+        "item": "twilightforest:moonworm_queen"
+      },
+      {
+        "item": "twilightforest:torchberries"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "twilightforest:moonworm_queen"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:moonworm_queen"
+    }
+  }
+}

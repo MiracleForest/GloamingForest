@@ -1,0 +1,22 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:chain_block",
+      "materials": {
+        "default": "entity_alphatest",
+        "foil": "entity_alphatest_glint"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/block_and_chain",
+        "glint": "textures/misc/enchanted_item_glint"
+      },
+      "geometry": {
+        "default": "geometry.twilightforest.chain_block"
+      },
+      "render_controllers": [
+        "controller.render.twilightforest.chain_block"
+      ]
+    }
+  }
+}

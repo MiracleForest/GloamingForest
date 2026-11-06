@@ -1,0 +1,41 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:ore_magnet",
+      "menu_category": {
+        "category": "equipment"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_item_ore_magnet"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "item.twilightforest:ore_magnet.name"
+      },
+      "minecraft:max_stack_size": 1,
+      "minecraft:durability": {
+        "max_durability": 64
+      },
+      "minecraft:tags": {
+        "tags": [
+          "alexscaves:ferromagnetic_items"
+        ]
+      },
+      "minecraft:allow_off_hand": true,
+      "minecraft:food": {
+        "nutrition": 0,
+        "saturation_modifier": 0,
+        "can_always_eat": true
+      },
+      "minecraft:use_modifiers": {
+        "use_duration": 3600,
+        "movement_modifier": 0.2
+      },
+      "minecraft:use_animation": "bow"
+    }
+  }
+}
