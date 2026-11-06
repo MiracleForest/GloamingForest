@@ -1,0 +1,17 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "gloamingforest:camp/deco/lumber3",
+  "size": [2, 2, 3],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"minecraft:air"},
+    {"Name":"twilightforest:twilight_oak_log","Properties":{"axis":"y"}}
+  ],
+  "blocks": [
+    [1, 2], [2, 1], [1, 1], [2, 2], [1, 4], [2, 1], [1, 1]
+  ],
+  "jigsaw": [
+    {"pos":[0,0,0],"front":"north","top":"up","pool":"minecraft:empty","name":"gloamingforest:camp/deco","target":""}
+  ]
+}

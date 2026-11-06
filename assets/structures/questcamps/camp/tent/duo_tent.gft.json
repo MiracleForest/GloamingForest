@@ -1,0 +1,31 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "gloamingforest:camp/tent/duo_tent",
+  "size": [7, 5, 7],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"minecraft:air"},
+    {"Name":"minecraft:light_gray_wool"},
+    {"Name":"minecraft:red_bed","Properties":{"facing":"south","occupied":"false","part":"foot"}},
+    {"Name":"minecraft:red_bed","Properties":{"facing":"south","occupied":"false","part":"head"}},
+    {"Name":"minecraft:chest","Properties":{"facing":"north","type":"single","waterlogged":"false"}}
+  ],
+  "blocks": [
+    [2, 1], [1, 5], [2, 2], [1, 5], [2, 2], [1, 5], [2, 2], [3, 1], [1, 3], [3, 1], [2, 2], [4, 1], [1, 3], [4, 1], [2, 2], [1, 2],
+    [5, 1], [1, 2], [2, 8], [1, 1], [2, 1], [1, 3], [2, 1], [1, 2], [2, 1], [1, 3], [2, 1], [1, 2], [2, 1], [1, 3], [2, 1], [1, 2],
+    [2, 1], [1, 3], [2, 1], [1, 2], [2, 1], [1, 3], [2, 1], [1, 2], [2, 1], [1, 3], [2, 1], [1, 2], [2, 5], [1, 3], [2, 1], [1, 1],
+    [2, 1], [1, 4], [2, 1], [1, 1], [2, 1], [1, 4], [2, 1], [1, 1], [2, 1], [1, 4], [2, 1], [1, 1], [2, 1], [1, 4], [2, 1], [1, 1],
+    [2, 1], [1, 4], [2, 1], [1, 1], [2, 1], [1, 4], [2, 3], [1, 5], [2, 1], [1, 6], [2, 1], [1, 6], [2, 1], [1, 6], [2, 1], [1, 6],
+    [2, 1], [1, 6], [2, 1], [1, 6], [2, 1], [1, 52]
+  ],
+  "markers": [
+    {"pos":[3,0,5],"marker":"loot","data":{"table":"twilightforest:camp_tent"}},
+    {"pos":[2,0,5],"marker":"data","data":{"metadata":"tent_pot@north"}},
+    {"pos":[4,0,5],"marker":"data","data":{"metadata":"camp_armor_rack@north"}},
+    {"pos":[3,1,4],"marker":"data","data":{"metadata":"painting@north"}}
+  ],
+  "jigsaw": [
+    {"pos":[3,0,0],"front":"north","top":"up","pool":"minecraft:empty","name":"gloamingforest:camp/tent","target":""}
+  ]
+}

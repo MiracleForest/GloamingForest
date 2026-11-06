@@ -1,0 +1,22 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "gloamingforest:camp/path/j_path",
+  "size": [5, 3, 6],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"minecraft:dirt"},
+    {"Name":"minecraft:coarse_dirt"},
+    {"Name":"minecraft:dirt_path"}
+  ],
+  "blocks": [
+    [1, 2], [0, 3], [1, 2], [0, 3], [1, 2], [0, 3], [1, 2], [0, 3], [1, 10], [2, 1], [3, 1], [0, 3], [3, 1], [2, 1], [0, 3], [3, 2],
+    [0, 3], [3, 2], [0, 3], [3, 4], [2, 2], [3, 4], [0, 30]
+  ],
+  "jigsaw": [
+    {"pos":[0,2,0],"front":"north","top":"up","pool":"minecraft:empty","name":"gloamingforest:camp/path","target":""},
+    {"pos":[4,2,4],"front":"east","top":"up","pool":"gloamingforest:camp/path","name":"gloamingforest:camp/exit","target":"gloamingforest:camp/path"},
+    {"pos":[0,2,2],"front":"west","top":"up","pool":"gloamingforest:camp/deco","name":"gloamingforest:camp/exit","target":"gloamingforest:camp/deco"},
+    {"pos":[1,2,5],"front":"south","top":"up","pool":"gloamingforest:camp/deco","name":"gloamingforest:camp/exit","target":"gloamingforest:camp/deco"}
+  ]
+}
