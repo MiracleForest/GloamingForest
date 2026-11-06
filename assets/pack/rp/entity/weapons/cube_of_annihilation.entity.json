@@ -1,0 +1,30 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:cube_of_annihilation",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/cubeofannihilation"
+      },
+      "geometry": {
+        "default": "geometry.twilightforest.cube_of_annihilation"
+      },
+      "render_controllers": [
+        "controller.render.default"
+      ],
+      "animations": {
+        "spin": "animation.twilightforest.weapons.cube_spin",
+        "wobble": "animation.twilightforest.cube_of_annihilation.base"
+      },
+      "scripts": {
+        "animate": [
+          "spin",
+          "wobble"
+        ]
+      }
+    }
+  }
+}

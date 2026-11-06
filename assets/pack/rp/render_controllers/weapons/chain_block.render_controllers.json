@@ -1,0 +1,17 @@
+{
+  "format_version": "1.10.0",
+  "render_controllers": {
+    "controller.render.twilightforest.chain_block": {
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "query.property('twilightforest:foil') ? Material.foil : Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default",
+        "Texture.glint"
+      ]
+    }
+  }
+}

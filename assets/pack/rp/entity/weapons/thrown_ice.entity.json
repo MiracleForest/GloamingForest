@@ -1,0 +1,20 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:thrown_ice",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/blocks/ice_packed"
+      },
+      "geometry": {
+        "default": "geometry.twilightforest.thrown_ice"
+      },
+      "render_controllers": [
+        "controller.render.default"
+      ]
+    }
+  }
+}
