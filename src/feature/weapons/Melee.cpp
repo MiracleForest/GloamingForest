@@ -106,7 +106,7 @@ gf::combat::Verdict blockAndParry(gf::combat::DamageInfo& d) {
     auto& player = static_cast<Player&>(d.victim);
     int   ticks  = 0;
     if (!isBlocking(player, &ticks)) return gf::combat::Verdict::Pass;
-    auto [causing, direct] = world::causingAndDirect(d.attacker, d.direct);
+    auto [causing, direct] = causingAndDirect(d.attacker, d.direct);
     Actor* source          = direct ? direct : causing;
     if (!source) return gf::combat::Verdict::Pass;
     // parrying: a projectile within the window
