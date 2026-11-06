@@ -1,0 +1,21 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:huge_water_lily",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_block_huge_water_lily"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "tile.twilightforest:huge_water_lily.name"
+      }
+    }
+  }
+}
