@@ -237,11 +237,13 @@ TEST(DarkTowerAntibuilder, NonRevertibleChangesAreAbsorbed) {
     EXPECT_TRUE(s.slowScan);
 }
 
-TEST(DarkTowerUrGhast, PhaseTogglesAfterTenThenEighteen) {
-    UrGhastPhase p;
-    EXPECT_FALSE(p.afterHurt(6, true, false, false));
+TEST(DarkTowerUrGhast, PhaseTogglesAfterEighteen) {
+    UrGhastPhase p; // the constructor's setInTantrum(false) resets the threshold to 18
+    EXPECT_FLOAT_EQ(p.damageUntilNextPhase, 18.0f);
+    EXPECT_FALSE(p.afterHurt(10, true, false, false));
     EXPECT_FALSE(p.afterHurt(6, false, false, false)) << "i-frame top-ups do not count";
-    EXPECT_TRUE(p.afterHurt(4, true, false, false));
+    EXPECT_FALSE(p.afterHurt(7, true, false, false));
+    EXPECT_TRUE(p.afterHurt(1, true, false, false));
     EXPECT_TRUE(p.tantrum);
     EXPECT_FLOAT_EQ(p.damageUntilNextPhase, 18.0f);
     EXPECT_FLOAT_EQ(p.incoming(20.0f), 2.0f);

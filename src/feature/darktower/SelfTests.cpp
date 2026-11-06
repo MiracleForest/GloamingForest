@@ -398,7 +398,8 @@ GF_REGISTER_SELFTEST("darktower.ghast_trap_fight", [](Context& ctx) -> ll::coro:
     ctx.check(!devices::ghastTrapIndexed(trap.dim, bp(trap)), "the removed trap left the POI index");
 });
 
-// Ur-Ghast phases: 10 damage starts a tantrum, which divides damage by 10; 18 more ends it
+// Ur-Ghast phases: 18 damage starts a tantrum (the constructor's setInTantrum(false) resets TF's field
+// initializer of 10 to 18), which divides damage by 10; 18 more ends it
 GF_REGISTER_SELFTEST("darktower.urghast_phases", [](Context& ctx) -> ll::coro::CoroTask<> {
     DifficultyScope easy;
     GriefScope noGrief;
@@ -419,9 +420,13 @@ GF_REGISTER_SELFTEST("darktower.urghast_phases", [](Context& ctx) -> ll::coro::C
     };
     co_await ctx.ticks(2);
     ctx.check(!ghasts::inTantrum(alive()), "it starts calm");
+    ctx.check(ghasts::damageUntilNextPhase(alive()) == 18.0f, "the first tantrum is 18 damage away");
     combat::hurt(alive(), 11.0f, "minecraft:player_attack", &ctx.player());
     co_await ctx.ticks(12);
-    ctx.check(ghasts::inTantrum(alive()), "10 damage started the tantrum");
+    ctx.check(!ghasts::inTantrum(alive()), "11 damage is not enough yet");
+    combat::hurt(alive(), 8.0f, "minecraft:player_attack", &ctx.player());
+    co_await ctx.ticks(12);
+    ctx.check(ghasts::inTantrum(alive()), "18 damage started the tantrum");
     int h0 = alive().getHealth();
     combat::hurt(alive(), 30.0f, "minecraft:player_attack", &ctx.player());
     co_await ctx.ticks(12);

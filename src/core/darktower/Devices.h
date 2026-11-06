@@ -154,7 +154,9 @@ std::vector<AntiRevert> tickAntibuilder(
 // ---- Ur-Ghast phases (UrGhast#hurt) ---------------------------------------------------------
 
 struct UrGhastPhase {
-    float damageUntilNextPhase = 10.0f;
+    /// UrGhast's field initializer says 10, but the constructor's setInTantrum(false) (and every load's
+    /// readAdditionalSaveData) calls resetDamageUntilNextPhase at once: the first tantrum comes after 18.
+    float damageUntilNextPhase = 18.0f;
     bool  tantrum = false;
 
     /// The damage that reaches super.hurt (divided by 10 in tantrum).

@@ -14,7 +14,11 @@
 //   (uid, tantrum; every 10 ticks for each Ur-Ghast within 160 blocks): redstone dust half the time,
 //   and while it is in a tantrum and not dying one boss tear a tick and TFWeatherRenderer's
 //   urGhastAlive (the rain fades in by 0.1 a tick up to 1 and out by 0.02: the client dimension's rain
-//   level is raised to at least that, which draws the game's own rain).
+//   level is raised to at least that, which draws the game's own rain). F12's sky provider has no
+//   rain-level input (its weather hook only draws), so the level is written here (a deviation from
+//   spec section 14, docs/units/darktower.md). U15 (atmosphere), which draws the Twilight Forest
+//   weather, never writes the level: it reads it and adds its Ur-Ghast splashes only where its own
+//   urGhastRain (from "atmosphere.ur_ghast", which the server also sends) exceeds it, so the two agree.
 // - GhastTearParticle: the tear is the resource pack effect twilightforest:boss_tear (its look and
 //   the shatter burst); its physics are followed here as Particle#tick does (gravity 0.6, friction
 //   0.98, lifetime 60 + rand(40)) so that on landing it plays entity.twilightforest.tear.break half
@@ -112,8 +116,7 @@ struct State {
     bool                                    controlling = false;
     float                                   vanillaRain = 0.0f; ///< the dimension's own level, followed while raised
     Weather const*                          raised      = nullptr; ///< the weather whose level is raised
-    bool                                    loggedRain  = false;
-    bool                                    loggedTears = false;
+        bool                                    loggedTears = false;
     ll::event::ListenerPtr                  listener;
 };
 State& st() {
@@ -195,6 +198,7 @@ void tickRain(Dimension& dim, bool alive) {
             s.controlling = true;
             s.raised      = w;
             s.vanillaRain = level;
+            log().info("darktower: client Ur-Ghast tantrum rain"); // once each time it starts
         } else {
             // Weather::tick moves the level towards its target by 0.01 a tick
             s.vanillaRain = s.vanillaRain < target ? std::min(target, s.vanillaRain + 0.01f) : std::max(target, s.vanillaRain - 0.01f);
@@ -202,10 +206,7 @@ void tickRain(Dimension& dim, bool alive) {
         float v = std::max(s.vanillaRain, s.urGhastRain);
         old     = level;
         level   = v;
-        if (!s.loggedRain) {
-            s.loggedRain = true;
-            log().info("darktower: client Ur-Ghast tantrum rain");
-        }
+
     } else if (s.controlling) {
         s.controlling = false;
         old = level = s.vanillaRain;

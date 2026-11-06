@@ -145,6 +145,14 @@ bool blocksMotion(BlockSource& region, BlockPos const& pos) {
     return (sx + sy + sz) / 3.0f >= 0.7291666f || sy >= 1.0f;
 }
 
+bool hasCollision(BlockSource& region, BlockPos const& pos) {
+    Block const& b = region.getBlock(pos);
+    if (b.isAir()) return false;
+    std::vector<AABB> boxes;
+    b.getBlockType().addCollisionShapes(b, region, pos, nullptr, boxes, {});
+    return !boxes.empty();
+}
+
 bool unbreakable(Block const& block) { return block.getBlockType().getDestroySpeed() < 0.0f; }
 
 bool loaded(BlockSource& region, BlockPos const& pos, int radius) { return region.hasChunksAt(pos, radius, false); }

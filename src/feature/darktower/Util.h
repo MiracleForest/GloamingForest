@@ -86,6 +86,8 @@ void destroy(BlockSource& region, BlockPos const& pos, bool drops);
 void breakEffect(BlockSource& region, BlockPos const& pos, Block const& block);
 [[nodiscard]] bool isAir(BlockSource& region, BlockPos const& pos);
 [[nodiscard]] bool blocksMotion(BlockSource& region, BlockPos const& pos);
+/// The block has a non-empty collision shape (Java: !getCollisionShape(level, pos).isEmpty()).
+[[nodiscard]] bool hasCollision(BlockSource& region, BlockPos const& pos);
 [[nodiscard]] bool unbreakable(Block const& block);
 [[nodiscard]] bool loaded(BlockSource& region, BlockPos const& pos, int radius = 0);
 /// Java's hasNeighborSignal.

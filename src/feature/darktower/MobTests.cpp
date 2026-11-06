@@ -8,6 +8,7 @@
 #include <cmath>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "ll/api/coro/CoroTask.h"
 
@@ -72,6 +73,12 @@ std::int64_t sReflectWatch = 0;
 float        sReflectLethal = -1.0f;
 std::int64_t sGuardWatch = 0;
 float        sGuardLethal = -1.0f;
+
+/// The hit came from a fireball (direct or attacker: F10 reports either order).
+bool firedBy(combat::DamageInfo const& d) {
+    auto fb = [](Actor* a) { return a && typeOf(*a) == "minecraft:fireball"; };
+    return fb(d.direct) || fb(d.attacker);
+}
 
 /// mobGriefing on for a test, the previous value restored afterwards.
 struct GriefingOn {
@@ -149,6 +156,53 @@ GF_REGISTER_SELFTEST("darktower.urghast_fireball", [](Context& ctx) -> ll::coro:
     co_return; // the flat area is restored afterwards (the wall and any fire)
 });
 
+// AbstractHurtingProjectile's flight: launched at 0.1 blocks a tick, then (speed + 0.1) * 0.95 per tick
+// (terminal 1.9); Bedrock's own fireball would keep one speed. The per-tick displacement follows Java's
+// curve (an engine that moves before or after the unit's tick may shift it by one tick).
+GF_REGISTER_SELFTEST("darktower.fireball_flight", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto box = co_await ctx.flatArea(2640, 48, 40);
+    (void)box;
+    auto* region = ctx.region();
+    ctx.require(region != nullptr, "region");
+    auto  base  = ctx.testPos(2645, 2).offset(0, 12, 0);
+    auto* owner = spawnMob(*region, id::Ghastling, Vec3{base.x + 0.5f, float(base.y + 8), base.z + 0.5f});
+    ctx.require(owner != nullptr, "an owner for the fireballs");
+    auto ownerId = uidOf(*owner);
+    std::vector<float> java{0.1f};
+    for (int i = 0; i < 16; i++) java.push_back((java.back() + 0.1f) * 0.95f);
+    for (bool vanilla : {false, true}) {
+        auto* o = static_cast<Mob*>(actorById(ownerId));
+        ctx.require(o != nullptr, "the owner is there");
+        Vec3  from{base.x + 0.5f, base.y + 0.5f, base.z + 0.5f};
+        auto* fb = vanilla ? ghasts::shootLargeFireball(*o, from, Vec3{1.0f, 0.0f, 0.0f}) : ghasts::shootUrGhastFireball(*o, from, Vec3{1.0f, 0.0f, 0.0f});
+        ctx.require(fb != nullptr, "the fireball spawned");
+        auto               fbId = uidOf(*fb);
+        std::vector<float> xs{fb->getFeetPos().x};
+        for (int i = 0; i < 12; i++) {
+            co_await ctx.ticks(1);
+            auto* f = actorById(fbId);
+            if (!f) break;
+            xs.push_back(f->getFeetPos().x);
+        }
+        ctx.require(xs.size() >= 12, "the fireball flew 11 ticks");
+        std::string seen;
+        for (std::size_t k = 1; k < xs.size(); k++) seen += std::to_string(xs[k] - xs[k - 1]).substr(0, 5) + " ";
+        bool match = false;
+        for (int off : {-1, 0, 1}) {
+            bool ok = true;
+            for (std::size_t k = 3; k < xs.size(); k++) {
+                int j = static_cast<int>(k) - 1 + off;
+                if (j < 0 || j >= static_cast<int>(java.size()) || std::abs((xs[k] - xs[k - 1]) - java[j]) > 0.03f) ok = false;
+            }
+            match = match || ok;
+        }
+        ctx.check(match, std::string(vanilla ? "the ghastguard's" : "the Ur-Ghast's") + " fireball accelerates as Java's (moves " + seen + ")");
+        if (auto* f = actorById(fbId)) f->remove();
+    }
+    if (auto* o = actorById(ownerId)) o->remove();
+    co_return;
+});
+
 // A fireball a player sent back (its owner is now the player) hits the Ur-Ghast: 16 fireball damage
 // (UrGhastFireball#onHitEntity), let through isInvulnerableTo as a player-reflected large fireball
 GF_REGISTER_SELFTEST("darktower.reflected_fireball", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -171,13 +225,15 @@ GF_REGISTER_SELFTEST("darktower.reflected_fireball", [](Context& ctx) -> ll::cor
     {
         // the amount the game's hurt gets (after every incoming handler), and the lethal hit survived
         combat::onIncoming(combat::priority::Lowest - 100, [](combat::DamageInfo& d) {
-            if (sReflectWatch != 0 && uidOf(d.victim) == sReflectWatch) sReflectLethal = std::max(sReflectLethal, d.amount);
+            // only the fireball's own hit (its explosion has no source entity)
+            if (sReflectWatch != 0 && uidOf(d.victim) == sReflectWatch && firedBy(d)) sReflectLethal = std::max(sReflectLethal, d.amount);
             return combat::Verdict::Pass;
         });
         death::onLethal(100000, [](Actor& victim, combat::DamageInfo const&) { return sReflectWatch != 0 && uidOf(victim) == sReflectWatch; });
     }
     sReflectWatch = urId;
-    // UrGhast#hurt divides by 10 in a tantrum, then Ghast#hurt deals 1000 to a reflected fireball
+    // UrGhast is a BaseTFBoss, not a Ghast: the reflected fireball deals its own 16, which
+    // UrGhast#hurt divides by 10 in a tantrum (no Ghast#hurt 1000 rule)
     for (bool tantrum : {false, true}) {
         auto* u = static_cast<Mob*>(actorById(urId));
         ctx.require(u != nullptr, "the Ur-Ghast is there");
@@ -190,8 +246,9 @@ GF_REGISTER_SELFTEST("darktower.reflected_fireball", [](Context& ctx) -> ll::cor
         auto fbId = uidOf(*fb);
         for (int i = 0; i < 40 && actorById(fbId); i++) co_await ctx.ticks(1);
         ctx.check(actorById(fbId) == nullptr, "the fireball hit");
-        ctx.check(sReflectLethal >= 999.0f, std::string("the reflected fireball dealt Ghast#hurt's 1000") + (tantrum ? " in a tantrum" : "") +
-                                                " (lethal amount " + std::to_string(sReflectLethal) + ")");
+        float want = tantrum ? 1.6f : 16.0f;
+        ctx.check(std::abs(sReflectLethal - want) < 0.01f, std::string("the reflected fireball dealt ") + std::to_string(want) + (tantrum ? " in a tantrum" : "") +
+                                                                " (amount " + std::to_string(sReflectLethal) + ")");
         co_await ctx.ticks(12); // past the hurt cooldown
     }
     sReflectWatch = 0;
@@ -199,8 +256,9 @@ GF_REGISTER_SELFTEST("darktower.reflected_fireball", [](Context& ctx) -> ll::cor
     co_await ctx.ticks(1);
 });
 
-// A carminite ghastguard's vanilla LargeFireball a player sent back into the Ur-Ghast: Ghast#hurt's
-// 1000 too (Bedrock's fire immunity would refuse the engine's fire impact)
+// A carminite ghastguard's vanilla LargeFireball a player sent back into the Ur-Ghast:
+// LargeFireball#onHitEntity's 6 (UrGhast is no Ghast; Bedrock's fire immunity would refuse the
+// engine's fire impact, so the hit goes in as a projectile)
 GF_REGISTER_SELFTEST("darktower.reflected_ghastguard_fireball", [](Context& ctx) -> ll::coro::CoroTask<> {
     EasyDifficulty easy;
     auto box = co_await ctx.flatArea(2640, 48, 40);
@@ -222,7 +280,7 @@ GF_REGISTER_SELFTEST("darktower.reflected_ghastguard_fireball", [](Context& ctx)
     if (!std::exchange(sHooked, true))
     {
         combat::onIncoming(combat::priority::Lowest - 100, [](combat::DamageInfo& d) {
-            if (sGuardWatch != 0 && uidOf(d.victim) == sGuardWatch) sGuardLethal = std::max(sGuardLethal, d.amount);
+            if (sGuardWatch != 0 && uidOf(d.victim) == sGuardWatch && firedBy(d)) sGuardLethal = std::max(sGuardLethal, d.amount);
             return combat::Verdict::Pass;
         });
         death::onLethal(100000, [](Actor& victim, combat::DamageInfo const&) { return sGuardWatch != 0 && uidOf(victim) == sGuardWatch; });
@@ -235,7 +293,7 @@ GF_REGISTER_SELFTEST("darktower.reflected_ghastguard_fireball", [](Context& ctx)
     auto fbId = uidOf(*fb);
     for (int i = 0; i < 40 && actorById(fbId); i++) co_await ctx.ticks(1);
     ctx.check(actorById(fbId) == nullptr, "the fireball hit");
-    ctx.check(sGuardLethal >= 999.0f, "the reflected ghastguard fireball dealt 1000 (lethal amount " + std::to_string(sGuardLethal) + ")");
+    ctx.check(std::abs(sGuardLethal - 6.0f) < 0.01f, "the reflected ghastguard fireball dealt 6 (amount " + std::to_string(sGuardLethal) + ")");
     sGuardWatch = 0;
     if (auto* g = actorById(guardId)) g->remove();
     if (auto* again = actorById(urId)) again->remove();

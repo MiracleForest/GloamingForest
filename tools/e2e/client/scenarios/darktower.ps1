@@ -12,16 +12,27 @@
 #                       eyes open while it charges and fires (urghast_attack)
 #   tower_outside       a dark tower placed with /tf place, seen from outside
 #   tower_inside        the first main tower's ground floor
+#   closeup_debris      active reactor debris (an active reactor places it) and closeup_trap: an
+#                       active ghast trap, each from two blocks away
 #   urghast_tantrum     in the Twilight Forest, an Ur-Ghast in a tantrum: boss tears falling under it and
 #                       the tantrum rain the client mod fades in (TFWeatherRenderer.urGhastAlive)
+# Modes: local runs the selftests on the integrated server first; remote-mod and remote-vanilla join
+# the BDS host and take the same shots. A companion (local, remote-mod) draws the tears and the rain
+# itself from "darktower.urghast"; a vanilla client gets the tears as server-side particles and must
+# never apply the companion rain.
 # Screenshots: out/darktower/*.png
 Save-Screenshot 'hud' | Out-Null
-if ($script:Mode -eq 'local') {
+$remote = $script:Mode -ne 'local'
+if ($remote) {
+    Wait-LogLine '\[host\].*GloamingForest world ready' 120 | Out-Null
+    if ($script:Mode -eq 'remote-mod') { Wait-LogLine '\[host\].*companion joined' 60 | Out-Null }
+} else {
     Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
     $r = Invoke-SelfTest 'darktower.*' -TimeoutSeconds 1200
     if ($r.Fail -gt 0) { throw "$($r.Fail) darktower selftest(s) failed" }
-    if ($r.Pass -lt 19) { throw "expected 19 darktower selftests to pass, got $($r.Pass)" }
-
+    if ($r.Pass -lt 20) { throw "expected 20 darktower selftests to pass, got $($r.Pass)" }
+}
+if ($true) {
     Invoke-Chat '/gamemode creative'
     Invoke-Chat '/difficulty easy'
     Invoke-Chat '/gamerule dofiretick false'
@@ -57,6 +68,20 @@ if ($script:Mode -eq 'local') {
         Save-Screenshot "blocks_$n" | Out-Null
         $n++
     }
+    Invoke-Chat '/fill 596 -60 600 612 -50 612 air'
+
+    # ---- close-ups: active reactor debris (placed by an active reactor) and an active ghast trap ----
+    Invoke-Chat '/setblock 604 -60 606 twilightforest:reactor_debris'
+    Invoke-Chat '/setblock 606 -60 606 twilightforest:reactor_debris'
+    Invoke-Teleport '/tp @s 605 -60 608.5 180 25'
+    Start-Sleep -Seconds 3
+    Save-Screenshot 'closeup_debris' | Out-Null
+    Invoke-Chat '/fill 596 -60 600 612 -50 612 air'
+    Invoke-Chat '/setblock 604 -60 606 twilightforest:ghast_trap ["twilightforest:active"=true]'
+    Invoke-Chat '/setblock 606 -60 606 twilightforest:ghast_trap'
+    Invoke-Teleport '/tp @s 605 -60 608.5 180 25'
+    Start-Sleep -Seconds 3
+    Save-Screenshot 'closeup_trap' | Out-Null
     Invoke-Chat '/fill 596 -60 600 612 -50 612 air'
 
     # ---- items in the hotbar (the HUD shows their icons) ----
@@ -111,7 +136,7 @@ if ($script:Mode -eq 'local') {
     Save-Screenshot 'tower_inside' | Out-Null
 
     # ---- the Ur-Ghast's tantrum in the Twilight Forest: tears and the client's rain ----
-    $mark = Get-Date
+    $mark = Get-LogMark
     Invoke-Chat '/tf tp'
     Wait-LogLine 'dimension: .* travelled from minecraft:overworld to twilightforest:twilight_forest' 60 -Since $mark | Out-Null
     Start-Sleep -Seconds 4
@@ -120,14 +145,19 @@ if ($script:Mode -eq 'local') {
     Invoke-Chat '/tp @s ~ ~ ~ 0 -20'
     Invoke-Chat '/summon twilightforest:ur_ghast ~ ~12 ~26'
     Start-Sleep -Seconds 2
-    Invoke-Chat '/damage @e[type=twilightforest:ur_ghast,c=1] 12 entity_attack'
+    # 18 damage before the first tantrum (the constructor's setInTantrum(false) resets it to 18)
+    Invoke-Chat '/damage @e[type=twilightforest:ur_ghast,c=1] 20 entity_attack'
     Wait-LogLine 'darktower: the Ur-Ghast throws a tantrum' 20 -Since $mark | Out-Null
-    Wait-LogLine 'darktower: client Ur-Ghast tantrum rain' 20 -Since $mark | Out-Null
+    if ($script:Mode -eq 'remote-vanilla') {
+        Start-Sleep -Seconds 4
+        if (Get-LeviLog -Since $mark | Select-String -Pattern '^(?!\[host\]).*darktower: client Ur-Ghast tantrum rain' -Quiet) { throw 'the vanilla client applied the companion rain' }
+    } else {
+        $clientLine = if ($remote) { '^(?!\[host\]).*' } else { '' }
+        Wait-LogLine "${clientLine}darktower: client Ur-Ghast tantrum rain" 20 -Since $mark | Out-Null
+    }
     Start-Sleep -Seconds 3
     Save-Screenshot 'urghast_tantrum' | Out-Null
     Invoke-Chat '/kill @e[type=twilightforest:ur_ghast]'
     Invoke-Chat '/kill @e[type=twilightforest:carminite_ghastling]'
-} else {
-    Wait-LogLine '\[host\].*GloamingForest world ready' 120 | Out-Null
 }
 Save-Screenshot 'selftest' | Out-Null

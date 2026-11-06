@@ -70,6 +70,7 @@ void golemTick(Actor& self) {
 
 struct Borer {
     int lookForFriends = 0; ///< SummonBorersGoal
+    int tickCount      = 0; ///< Mob#serverAiStep's goal cadence
 };
 std::unordered_map<std::int64_t, Borer>& borers() {
     static std::unordered_map<std::int64_t, Borer> m;
@@ -109,7 +110,7 @@ void hideTick(Mob& self) {
     if (auto nav = self.getEntityContext().tryGetComponent<NavigationComponent>(); nav && nav->mPath.get() != nullptr) return;
     if (!mobGriefing()) return;
     auto& r = random();
-    if (r.nextInt(10) != 0) return; // reducedTickDelay(10)
+    if (r.nextInt(10) != 0) return; // canUse's 1 in 10, asked on the goal selector's full ticks only
     static constexpr core::darktower::Facing kDirs[] = {core::darktower::Facing::Down, core::darktower::Facing::Up, core::darktower::Facing::North,
                                                          core::darktower::Facing::South, core::darktower::Facing::West, core::darktower::Facing::East};
     auto  dir    = kDirs[r.nextInt(6)];
@@ -128,8 +129,13 @@ void borerTick(Actor& self) {
     auto* m = asMob(self);
     if (!m) return;
     auto& b = borers()[uidOf(self)];
-    summonTick(self, b);
-    hideTick(*m);
+    // Mob#serverAiStep runs the goal selector in full every other tick (tickRunningGoals(false) in
+    // between skips goals without requiresUpdateEveryTick, which neither borer goal overrides): the
+    // summon countdown of 20 lasts 40 ticks and the merge's 1 in 10 is asked every 2nd tick
+    if (++b.tickCount <= 1 || b.tickCount % 2 == 0) {
+        summonTick(self, b);
+        hideTick(*m);
+    }
     // the body follows the head every tick
     m->setYBodyRotation(self.getRotation().y);
 }

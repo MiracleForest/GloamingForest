@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <cmath>
 #include <numbers>
+#include <optional>
 #include <unordered_map>
 
 #include "mc/deps/core/math/Vec2.h"
@@ -94,7 +95,12 @@ struct UrState {
     bool solid         = false; ///< Java's noPhysics cleared
     bool syncedTantrum = false; ///< the tantrum flag the companions were told last
     std::int64_t lastHurtTick = -100;
+    int          unseenTicks  = 0; ///< TargetGoal#unseenTicks
 };
+
+/// Mob#serverAiStep: the selectors run in full on the first two ticks and then every other tick
+/// ((tickCount + id) % 2 == 0; the phase is per entity here). 	ickCount counts from 1.
+bool goalTick(int tickCount) { return tickCount <= 1 || tickCount % 2 == 0; }
 
 /// DATA_TANTRUM for the companions' client effects (UrGhast#aiStep's dust and boss tears,
 /// TFWeatherRenderer.urGhastAlive): "darktower.urghast" {uid, on}, a heartbeat every 10 ticks for each
@@ -105,10 +111,54 @@ struct UrState {
 constexpr char kTantrumChannel[] = "darktower.urghast";
 constexpr double kTantrumTrackingRange = 80.0 * 16.0;
 
+/// U15 (atmosphere) draws the Twilight Forest weather (F12's sky provider) and raises its Ur-Ghast
+/// rain splashes from "atmosphere.ur_ghast" {"active": bool}, which it wants on change (its unit
+/// header). Per companion: the Ur-Ghasts in a tantrum it tracks; true when the first one starts, false
+/// when the last one ends, dies or goes out of its view. Strings only (rule R2); a client without U15
+/// ignores the channel.
+constexpr char kAtmosphereChannel[] = "atmosphere.ur_ghast";
+
+std::unordered_map<std::int64_t, std::vector<std::int64_t>>& atmosphereActive() {
+    static std::unordered_map<std::int64_t, std::vector<std::int64_t>> m; // player uid -> Ur-Ghast uids
+    return m;
+}
+
+void tellAtmosphere(std::int64_t playerUid, bool active) {
+    auto* a = actorById(playerUid);
+    if (a && a->isPlayer()) net::send(static_cast<Player&>(*a), kAtmosphereChannel, Json{{"active", active}});
+}
+
+/// seen: the companions that track this Ur-Ghast now (with its flag on).
+void syncAtmosphere(std::int64_t ghast, bool on, std::vector<std::int64_t> const& seen) {
+    auto& all = atmosphereActive();
+    for (auto it = all.begin(); it != all.end();) {
+        auto& ghasts = it->second;
+        bool  had    = std::find(ghasts.begin(), ghasts.end(), ghast) != ghasts.end();
+        bool  want   = on && std::find(seen.begin(), seen.end(), it->first) != seen.end();
+        if (had && !want) {
+            std::erase(ghasts, ghast);
+            if (ghasts.empty()) {
+                tellAtmosphere(it->first, false);
+                it = all.erase(it);
+                continue;
+            }
+        }
+        ++it;
+    }
+    if (!on) return;
+    for (auto player : seen) {
+        auto& ghasts = all[player];
+        if (std::find(ghasts.begin(), ghasts.end(), ghast) != ghasts.end()) continue;
+        ghasts.push_back(ghast);
+        if (ghasts.size() == 1) tellAtmosphere(player, true);
+    }
+}
+
 void sendTantrum(Actor& self, bool on) {
     auto& region = self.getDimensionBlockSource();
     Json  msg{{"uid", uidOf(self)}, {"on", on}};
     auto  at = self.getFeetPos();
+    std::vector<std::int64_t> seen;
     for (auto* p : playersNear(dimOf(region), at, kTantrumTrackingRange, true)) {
         if (!net::isCompanion(*p)) continue;
         double range = std::min(kTantrumTrackingRange, std::max(1.0, double(static_cast<unsigned>(p->mChunkRadius))) * 16.0);
@@ -116,7 +166,9 @@ void sendTantrum(Actor& self, bool on) {
         double dx = pp.x - at.x, dz = pp.z - at.z;
         if (std::max(std::abs(dx), std::abs(dz)) > range) continue; // the chunk square the player sees
         net::send(*p, kTantrumChannel, msg);
+        seen.push_back(uidOf(*p));
     }
+    syncAtmosphere(uidOf(self), on, seen);
 }
 
 std::unordered_map<std::int64_t, UrState>& states() {
@@ -272,6 +324,11 @@ void lookAtPitch(Mob& m, Actor& t, float maxStep) {
 }
 
 /// The Ur-Ghast fireballs in flight (by unique id): the shooter, and Projectile#leftOwner.
+/// AbstractHurtingProjectile: assignDirectionalMovement(movement, accelerationPower = 0.1) launches
+/// at 0.1 blocks a tick; Bedrock's minecraft:fireball keeps its speed (inertia 1, no acceleration),
+/// so the flight is driven here every tick.
+constexpr float kLaunchSpeed = 0.1f;
+
 struct UrFireball {
     std::int64_t shooter = 0;
     bool         leftOwner = false;
@@ -285,6 +342,11 @@ struct UrFireball {
     int  dim     = 0; ///< the dimension (an unloaded fireball's chunk is looked up there)
     int  absent  = 0; ///< ticks its actor has been missing
     int  missing = 0; ///< of those, ticks in a row with its chunk loaded
+    /// AbstractHurtingProjectile's flight: the speed of the next move (0.1 at launch, then
+    /// (speed + accelerationPower 0.1) * inertia 0.95 per tick, terminal 1.9; 1 after a player's
+    /// AIM_DEFLECT) along dir, the direction last set (a turn the engine made is a deflection)
+    float speed = kLaunchSpeed;
+    Vec3  dir{};
 };
 
 constexpr char kFireballsKey[] = "gf:darktower:fireballs";
@@ -324,9 +386,11 @@ Actor* fireball(Mob& m, Vec3 const& at, Vec3 const& dir) {
     auto* fb = l->addEntity(m.getDimensionBlockSource(), std::move(owned));
     if (!fb) return nullptr;
     if (auto pc = fb->getEntityContext().tryGetComponent<ProjectileComponent>())
-        pc->shoot(*fb, Vec3{float(dir.x / len), float(dir.y / len), float(dir.z / len)}, 1.0f, 0.0f, Vec3{0, 0, 0}, nullptr);
-    fireballs()[uidOf(*fb)] = UrFireball{uidOf(m), false, Vec3{float(dir.x / len), float(dir.y / len), float(dir.z / len)}, at, true};
-    fireballs()[uidOf(*fb)].dim = dimOf(m.getDimensionBlockSource());
+        pc->shoot(*fb, Vec3{float(dir.x / len), float(dir.y / len), float(dir.z / len)}, kLaunchSpeed, 0.0f, Vec3{0, 0, 0}, nullptr);
+    auto& st = fireballs()[uidOf(*fb)] = UrFireball{uidOf(m), false, Vec3{float(dir.x / len), float(dir.y / len), float(dir.z / len)}, at, true};
+    st.dim = dimOf(m.getDimensionBlockSource());
+    st.dir = st.velocity;
+    st.velocity = Vec3{st.dir.x * kLaunchSpeed, st.dir.y * kLaunchSpeed, st.dir.z * kLaunchSpeed};
     return fb;
 }
 
@@ -341,10 +405,12 @@ Actor* largeFireball(Mob& m, Vec3 const& at, Vec3 const& dir) {
     auto* fb = l->addEntity(m.getDimensionBlockSource(), std::move(owned));
     if (!fb) return nullptr;
     if (auto pc = fb->getEntityContext().tryGetComponent<ProjectileComponent>())
-        pc->shoot(*fb, Vec3{float(dir.x / len), float(dir.y / len), float(dir.z / len)}, 1.0f, 0.0f, Vec3{0, 0, 0}, nullptr);
+        pc->shoot(*fb, Vec3{float(dir.x / len), float(dir.y / len), float(dir.z / len)}, kLaunchSpeed, 0.0f, Vec3{0, 0, 0}, nullptr);
     UrFireball state{uidOf(m), false, Vec3{float(dir.x / len), float(dir.y / len), float(dir.z / len)}, at, true};
     state.vanilla       = true;
     state.dim           = dimOf(m.getDimensionBlockSource());
+    state.dir           = state.velocity;
+    state.velocity      = Vec3{state.dir.x * kLaunchSpeed, state.dir.y * kLaunchSpeed, state.dir.z * kLaunchSpeed};
     fireballs()[uidOf(*fb)] = state;
     return fb;
 }
@@ -361,10 +427,37 @@ Actor* largeFireball(Mob& m, Vec3 const& at, Vec3 const& dir) {
 /// explodes where Java's next tick would, at the end of this tick's motion.
 ///
 /// A ghastguard's vanilla LargeFireball (state.vanilla) is only taken over when a player sent it back
-/// and it hits a darktower ghast (Ghast#hurt: the reflected fireball deals 1000; Bedrock's
+/// and it hits a darktower ghast (on a carminite ghast Ghast#hurt makes it 1000; Bedrock's
 /// minecraft:fire_immune would refuse its fire impact): LargeFireball#onHitEntity's 6 damage, then
 /// its explosion (power 1, fire and block damage when mob griefing allows it,
 /// ExplosionInteraction.MOB).
+/// AbstractHurtingProjectile#tick's motion update: the fireball moves by its delta, then the delta
+/// becomes (delta + normalize(delta) * 0.1) * inertia (0.95, 0.8 in water). Sets this tick's delta
+/// along the current direction; a direction the engine changed (Bedrock's reflect_on_hurt, Java's
+/// ProjectileDeflection.AIM_DEFLECT to the player's look) restarts at speed 1 (onDeflection: the
+/// acceleration power back to 0.1). Returns the delta.
+Vec3 flightStep(Actor& fb, UrFireball& state, Vec3 const& engine) {
+    double el = std::sqrt(engine.x * engine.x + engine.y * engine.y + engine.z * engine.z);
+    Vec3   dir = state.dir;
+    double dl  = std::sqrt(dir.x * dir.x + dir.y * dir.y + dir.z * dir.z);
+    if (el > 1e-6) {
+        Vec3 now{float(engine.x / el), float(engine.y / el), float(engine.z / el)};
+        bool turned = dl > 1e-6 && (now.x * dir.x + now.y * dir.y + now.z * dir.z) / dl < 0.98;
+        dir         = now;
+        if (turned) state.speed = 1.0f;
+        else state.speed = (state.speed + 0.1f) * (fb.isInWater() ? 0.8f : 0.95f);
+    } else if (dl > 1e-6) {
+        dir         = Vec3{float(dir.x / dl), float(dir.y / dl), float(dir.z / dl)};
+        state.speed = (state.speed + 0.1f) * (fb.isInWater() ? 0.8f : 0.95f);
+    } else {
+        return engine;
+    }
+    state.dir = dir;
+    Vec3 v{dir.x * state.speed, dir.y * state.speed, dir.z * state.speed};
+    setMotion(fb, v);
+    return v;
+}
+
 void urFireballTick(Actor& fb, UrFireball& state) {
     if (!fb.isAlive()) return;
     auto& region = fb.getDimensionBlockSource();
@@ -376,6 +469,9 @@ void urFireballTick(Actor& fb, UrFireball& state) {
         if (moved.x != 0.0f || moved.y != 0.0f || moved.z != 0.0f) state.velocity = moved;
         v = state.velocity;
     }
+    // Java's accelerating flight (the engine's own fireball keeps a constant speed)
+    v              = flightStep(fb, state, v);
+    state.velocity = v;
     state.last    = p;
     state.hasLast = true;
     int age       = state.age++;
@@ -435,7 +531,7 @@ void urFireballTick(Actor& fb, UrFireball& state) {
         // position after it (where Java's next tick finds the hit)
         Vec3 at = t <= 1.0 ? p : Vec3{float(p.x + v.x), float(p.y + v.y), float(p.z + v.z)};
         if (state.vanilla) {
-            // LargeFireball#onHitEntity: 6 damage (Ghast#hurt turns the reflected hit into 1000)
+            // LargeFireball#onHitEntity: 6 damage (a carminite ghast's Ghast#hurt turns it into 1000)
             combat::hurt(*hit, 6.0f, "minecraft:mob_projectile", owner, &fb);
             if (fb.isAlive()) {
                 region.getLevel().explode(region, nullptr, at, 1.0f, mobGriefing(), mobGriefing(), 3.40282347e38f, false);
@@ -496,7 +592,8 @@ void saveFireballs() {
     Json arr = Json::array();
     for (auto const& [id, f] : fireballs())
         arr.push_back({{"id", id}, {"shooter", f.shooter}, {"left", f.leftOwner}, {"v", {f.velocity.x, f.velocity.y, f.velocity.z}},
-                       {"last", {f.last.x, f.last.y, f.last.z}}, {"hasLast", f.hasLast}, {"vanilla", f.vanilla}, {"age", f.age}, {"dim", f.dim}});
+                       {"last", {f.last.x, f.last.y, f.last.z}}, {"hasLast", f.hasLast}, {"vanilla", f.vanilla}, {"age", f.age}, {"dim", f.dim},
+                       {"speed", f.speed}, {"dir", {f.dir.x, f.dir.y, f.dir.z}}});
     if (arr.empty()) game::db::erase(kFireballsKey);
     else game::db::put(kFireballsKey, arr);
 }
@@ -517,6 +614,9 @@ void loadFireballs() {
             f.vanilla   = e.at("vanilla").get<bool>();
             f.age       = e.at("age").get<int>();
             f.dim       = e.at("dim").get<int>();
+            f.speed     = e.value("speed", 1.9f);
+            if (auto d = e.find("dir"); d != e.end() && d->is_array() && d->size() == 3)
+                f.dir = Vec3{(*d)[0].get<float>(), (*d)[1].get<float>(), (*d)[2].get<float>()};
             fireballs()[e.at("id").get<std::int64_t>()] = f;
         } catch (...) {}
     }
@@ -591,15 +691,28 @@ Player* nearestTargetablePlayer(Mob& m, double range) {
     return nullptr;
 }
 
-/// NearestAttackableTargetGoal<Player>(mustSee): every tick 1 in 10 (reducedTickDelay(10)).
+/// TargetGoal#canContinueToUse (mustSee): the target is dropped when it leaves the follow range, can
+/// no longer be attacked, or was out of sight for more than reducedTickDelay(60) = 30 full goal ticks
+/// (60 game ticks, unseenMemoryTicks). Run on the goal selector's full ticks.
+bool keepTarget(Mob& m, Actor& t, double range, int& unseenTicks) {
+    if (!targetable(t) || distSqr(t, m) > range * range) return false;
+    if (lineOfSight(m, t)) unseenTicks = 0;
+    else if (++unseenTicks > 30) return false;
+    return true;
+}
+
+/// NearestAttackableTargetGoal<Player>(mustSee): on each full goal tick 1 in reducedTickDelay(10) = 5.
 void targetGoal(Mob& m, UrState& s) {
     if (auto* t = targetOf(m)) {
-        if (!targetable(*t) || distSqr(*t, m) > 128.0 * 128.0) m.setTarget(nullptr);
+        if (!keepTarget(m, *t, 128.0, s.unseenTicks)) m.setTarget(nullptr);
         return;
     }
     if (s.phase.tantrum || s.inTrapCounter > 0) return;
-    if (random().nextInt(10) != 0) return;
-    if (auto* p = nearestTargetablePlayer(m, 128.0)) m.setTarget(p);
+    if (random().nextInt(5) != 0) return;
+    if (auto* p = nearestTargetablePlayer(m, 128.0)) {
+        m.setTarget(p);
+        s.unseenTicks = 0; // TargetGoal#start
+    }
 }
 
 void doTantrumDamageEffects(Mob& m) {
@@ -639,11 +752,16 @@ void urTick(Actor& self) {
     auto& region = self.getDimensionBlockSource();
     bool  first  = s.tickCount == 0;
     s.tickCount++;
-    // goals (target selector first, then the goal selector)
-    targetGoal(*m, s);
-    flightGoal(*m, s);
+    // goals (target selector first, then the goal selector). Mob#serverAiStep runs both selectors in
+    // full only every other tick; in between tickRunningGoals(false) ticks just the goals that
+    // override requiresUpdateEveryTick (UrGhastLookGoal), so the attack timer moves every 2 ticks
+    bool full = goalTick(s.tickCount);
+    if (full) {
+        targetGoal(*m, s);
+        flightGoal(*m, s);
+    }
     lookGoal(*m);
-    attackGoal(*m, s);
+    if (full) attackGoal(*m, s);
     // customServerAiStep
     if (s.inTrapCounter > 0) {
         s.inTrapCounter--;
@@ -692,12 +810,60 @@ void urTick(Actor& self) {
     ge::data(self, kData) = {{"inTantrum", s.phase.tantrum}};
 }
 
+/// ServerLevel#findLightningTargetAround: the MOTION_BLOCKING surface at (x, z); the closest lightning
+/// rod within 128 that is the top block of its column wins (its block above); else a random living
+/// entity that sees the sky in the column's box (to the build limit) inflated by 3; else the surface.
+BlockPos lightningTargetAround(BlockSource& region, BlockPos const& at) {
+    BlockPos surface = region.getHeightmapPos(BlockPos{at.x, 0, at.z});
+    // LightningRodBlock POIs (PoiManager#findClosest, radius 128, the rod at WORLD_SURFACE - 1)
+    std::optional<BlockPos> rod;
+    double                  best = 0.0;
+    for (int cx = (surface.x - 128) >> 4; cx <= (surface.x + 128) >> 4; cx++)
+        for (int cz = (surface.z - 128) >> 4; cz <= (surface.z + 128) >> 4; cz++) {
+            if (!loaded(region, BlockPos{cx * 16 + 8, surface.y, cz * 16 + 8})) continue;
+            for (int x = cx * 16; x < cx * 16 + 16; x++)
+                for (int z = cz * 16; z < cz * 16 + 16; z++) {
+                    double dx = x - surface.x, dz = z - surface.z;
+                    if (dx * dx + dz * dz > 128.0 * 128.0) continue;
+                    BlockPos top = region.getHeightmapPos(BlockPos{x, 0, z});
+                    // Bedrock's heightmap skips blocks that let light through: the rod is the block
+                    // at or just under it
+                    for (int y : {top.y, top.y - 1}) {
+                        BlockPos q{x, y, z};
+                        if (idAt(region, q) != "minecraft:lightning_rod" || !isAir(region, BlockPos{x, y + 1, z})) continue;
+                        double dy = y - surface.y, d = dx * dx + dy * dy + dz * dz;
+                        if (!rod || d < best) {
+                            rod  = BlockPos{x, y + 1, z};
+                            best = d;
+                        }
+                    }
+                }
+        }
+    if (rod) return *rod;
+    AABB column{Vec3{float(surface.x - 3), float(surface.y - 3), float(surface.z - 3)},
+                Vec3{float(surface.x + 4), float(region.getMaxHeight() + 4), float(surface.z + 4)}};
+    std::vector<Actor*> living;
+    for (auto* a : actorsIn(region, column)) {
+        if (!a->isAlive() || !asMob(*a)) continue;
+        auto fp = a->getFeetPos();
+        if (region.canSeeSky(BlockPos{int(std::floor(fp.x)), int(std::floor(fp.y)), int(std::floor(fp.z))})) living.push_back(a);
+    }
+    if (!living.empty()) {
+        auto fp = living[random().nextInt(static_cast<int>(living.size()))]->getFeetPos();
+        return BlockPos{int(std::floor(fp.x)), int(std::floor(fp.y)), int(std::floor(fp.z))};
+    }
+    if (surface.y == region.getMinHeight() - 1) surface.y += 2;
+    return surface;
+}
+
 void startTantrum(Mob& m, UrState& s) {
     s.phase.setTantrum(true);
     double ang = random().nextInt(360) * std::numbers::pi / 180.0;
     auto   p   = m.getFeetPos();
-    // Vec3(18, 0, 0).yRot(angle)
-    visualLightning(m, Vec3{float(p.x + 18.0 * std::cos(ang)), p.y, float(p.z - 18.0 * std::sin(ang))});
+    // findLightningTargetAround(containing(position + Vec3(18, 0, 0).yRot(angle))), at its bottom centre
+    BlockPos aim{int(std::floor(p.x + 18.0 * std::cos(ang))), int(std::floor(p.y)), int(std::floor(p.z - 18.0 * std::sin(ang)))};
+    BlockPos hit = lightningTargetAround(m.getDimensionBlockSource(), aim);
+    visualLightning(m, Vec3{hit.x + 0.5f, float(hit.y), hit.z + 0.5f});
     spawnGhastsAtTraps(m);
     gf::log().info("darktower: the Ur-Ghast throws a tantrum");
 }
@@ -735,6 +901,8 @@ void spawnMinionGhastsAt(Mob& boss, int x, int y, int z) {
 // ---- carminite ghastguard / ghastling AI -------------------------------------------------------------
 
 struct GhastState {
+    int  tickCount   = 0;
+    int  unseenTicks = 0; ///< TargetGoal#unseenTicks
     int  attackTimer = 0, prevAttackTimer = 0;
     bool attackRunning = false;
     int  floatDuration = 0;
@@ -832,14 +1000,18 @@ void randomFlyGoal(Mob& m, GhastState& g) {
     g.hasWanted = true;
 }
 
-/// NearestAttackableTargetGoal<Player>(mustSee): a player within the follow range in sight.
-void ghastTargetGoal(Mob& m) {
+/// NearestAttackableTargetGoal<Player>(mustSee): a player within the follow range in sight (1 in 5 on
+/// each full goal tick), kept while TargetGoal#canContinueToUse holds.
+void ghastTargetGoal(Mob& m, GhastState& g) {
     if (auto* t = targetOf(m)) {
-        if (!targetable(*t) || distSqr(*t, m) > followRange(m) * followRange(m)) m.setTarget(nullptr);
+        if (!keepTarget(m, *t, followRange(m), g.unseenTicks)) m.setTarget(nullptr);
         return;
     }
-    if (random().nextInt(10) != 0) return;
-    if (auto* p = nearestTargetablePlayer(m, followRange(m))) m.setTarget(p);
+    if (random().nextInt(5) != 0) return;
+    if (auto* p = nearestTargetablePlayer(m, followRange(m))) {
+        m.setTarget(p);
+        g.unseenTicks = 0;
+    }
 }
 
 /// GhastguardAttackGoal#spitFireball.
@@ -904,11 +1076,15 @@ void ghastTick(Actor& self) {
     auto* m = asMob(self);
     if (!m || !self.isAlive()) return;
     auto& g = ghastStates()[uidOf(self)];
-    // the target selector, then the goals (flight, look, attack)
-    ghastTargetGoal(*m);
-    randomFlyGoal(*m, g);
+    // the target selector, then the goals (flight, look, attack): GhastguardAttackGoal, the fly goal
+    // and the target goal run on the goal selector's full ticks only (every other tick, as the Ur-Ghast)
+    bool full = goalTick(++g.tickCount);
+    if (full) {
+        ghastTargetGoal(*m, g);
+        randomFlyGoal(*m, g);
+    }
     lookGoal(*m);
-    ghastAttackGoal(*m, g);
+    if (full) ghastAttackGoal(*m, g);
     // CarminiteGhastguard#customServerAiStep: the attack timer for the renderer's squash
     ge::setProperty(self, "twilightforest:attack_timer", std::clamp(g.attackTimer, -40, 20));
     // ATTACK_STATUS: 1 while it has a target it would attack (the renderer's open eyes)
@@ -1014,7 +1190,12 @@ void install() {
                                    Vec3    c{pos.x + 0.5f, pos.y + 0.5f, pos.z + 0.5f};
                                    Player* closest = nearestPlayer(dimOf(region), c, 9.0);
                                    if (!closest || closest->getFeetPos().y <= pos.y - 4) return nullptr;
-                                   return spawnMob(region, id::UrGhast, Vec3{pos.x + 0.5f, float(pos.y), pos.z + 0.5f});
+                                   // BossSpawnerBlockEntity#spawnMyBoss: at the block below when its
+                                   // collision shape is empty, bottom centre, random yaw
+                                   BlockPos at = pos;
+                                   if (!hasCollision(region, BlockPos{pos.x, pos.y - 1, pos.z}))
+                                       at = BlockPos{pos.x, pos.y - 1, pos.z};
+                                   return spawnMob(region, id::UrGhast, Vec3{at.x + 0.5f, float(at.y), at.z + 0.5f}, random().nextFloat() * 360.0f);
                                }});
     gf::boss::ext::setLifecycle(id::UrGhast, {
         .tickDeath =
@@ -1064,7 +1245,8 @@ void install() {
                     self.executeEvent("solid", params);
                 }
                 auto& d = ge::data(self, kData);
-                if (d.is_object() && d.value("inTantrum", false)) stateOf(self).phase.setTantrum(true);
+                // readAdditionalSaveData: setInTantrum(saved) also resets damageUntilNextPhase to 18
+                stateOf(self).phase.setTantrum(d.is_object() && d.value("inTantrum", false));
             },
         .tick = urTick,
         .hurt =
@@ -1087,10 +1269,20 @@ void install() {
     // isInvulnerableTo: in-wall and fire damage, unless a player-reflected large fireball
     combat::onIncoming(combat::priority::High, [](combat::DamageInfo& d) {
         if (!isUrGhast(d.victim)) return combat::Verdict::Pass;
-        bool reflected = reflectedFireball(d);
-        if (reflected) return combat::Verdict::Pass;
         static const std::vector<std::string> kFire = {"minecraft:in_fire", "minecraft:on_fire", "minecraft:lava", "minecraft:hot_floor", "minecraft:fireball",
                                                         "minecraft:unattributed_fireball", "minecraft:campfire"};
+        if (reflectedFireball(d)) {
+            // let through with its own amount (UrGhast is a BaseTFBoss, not a Ghast: no 1000 rule);
+            // Bedrock's minecraft:fire_immune refuses a fire cause outright, so a fire-typed reflected
+            // hit goes in again as a projectile hit of the same amount
+            if (std::find(kFire.begin(), kFire.end(), d.type) != kFire.end()) {
+                Actor* player   = d.attacker && d.attacker->isPlayer() ? d.attacker : d.direct;
+                Actor* fireball = player == d.attacker ? d.direct : d.attacker;
+                combat::hurt(d.victim, d.amount, "minecraft:mob_projectile", player, fireball);
+                return combat::Verdict::Cancel;
+            }
+            return combat::Verdict::Pass;
+        }
         if (d.type == "minecraft:in_wall" || std::find(kFire.begin(), kFire.end(), d.type) != kFire.end()) return combat::Verdict::Cancel;
         return combat::Verdict::Pass;
     });
@@ -1112,14 +1304,25 @@ void install() {
     });
 
     runtime::onEveryTick(tickFireballs);
+    // an Ur-Ghast gone with its chunk (or a player who left) no longer keeps the atmosphere's rain up
+    runtime::onEveryTick([] {
+        if (now() % 40 != 0 || atmosphereActive().empty()) return;
+        std::vector<std::int64_t> gone;
+        for (auto const& [player, ghasts] : atmosphereActive())
+            for (auto g : ghasts)
+                if (!actorById(g) && std::find(gone.begin(), gone.end(), g) == gone.end()) gone.push_back(g);
+        for (auto g : gone) syncAtmosphere(g, false, {});
+        std::erase_if(atmosphereActive(), [](auto const& e) { return actorById(e.first) == nullptr; });
+    });
 
-    // ---- carminite ghastguard / ghastling / Ur-Ghast ---------------------------------------------
-    // Ghast#hurt (kept by CarminiteGhastguard and so by UrGhast, whose hurt calls super.hurt): a large
-    // fireball a player sent back deals 1000 (isReflectedFireball: direct entity a LargeFireball,
-    // causing entity a player)
+    // ---- carminite ghastguard / ghastling ----------------------------------------------------------
+    // Ghast#hurt (CarminiteGhastguard extends Ghast, CarminiteGhastling extends it): a large fireball
+    // a player sent back deals 1000 (isReflectedFireball: direct entity a LargeFireball, causing entity
+    // a player). Not the Ur-Ghast: UrGhast extends BaseTFBoss (a Monster), so a reflected fireball deals
+    // its own damage there (UrGhastFireball 16, LargeFireball 6), divided by 10 in a tantrum.
     combat::onIncoming(combat::priority::High, [](combat::DamageInfo& d) {
         auto t = typeOf(d.victim);
-        if (t != id::Ghastguard && t != id::Ghastling && t != id::UrGhast) return combat::Verdict::Pass;
+        if (t != id::Ghastguard && t != id::Ghastling) return combat::Verdict::Pass;
         if (!reflectedFireball(d)) return combat::Verdict::Pass;
         // Bedrock's minecraft:fire_immune refuses a fire cause outright: the reflected hit goes in again
         // as a projectile hit (Java: Ghast#isInvulnerableTo lets a reflected fireball through)
@@ -1130,12 +1333,6 @@ void install() {
             return combat::Verdict::Cancel;
         }
         d.amount = 1000.0f;
-        return combat::Verdict::Pass;
-    });
-    // UrGhast#hurt divides by 10 in a tantrum (its Behaviour::hurt, at Normal) before super.hurt, and
-    // Ghast#hurt then replaces the amount of a reflected fireball with 1000: set it again afterwards
-    combat::onIncoming(combat::priority::Low, [](combat::DamageInfo& d) {
-        if (isUrGhast(d.victim) && reflectedFireball(d)) d.amount = 1000.0f;
         return combat::Verdict::Pass;
     });
     // IsMinionCondition (inverse) of entities/carminite_ghastling: a minion ghastling drops nothing
@@ -1154,6 +1351,7 @@ void install() {
         game::db::onWorldClosed([] {
             states().clear();
             ghastStates().clear();
+            atmosphereActive().clear();
             fireballs().clear();
         });
     }
