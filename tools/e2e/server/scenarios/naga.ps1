@@ -11,14 +11,14 @@
 # 124 ticks after the last pop), damage through a direct entity outside the home is refused, the
 # shield cases of doHurtTarget (daze; the 200-tick cooldown that keeps the shield down),
 # EntityUtil#canDestroyBlock (containers, canEntityDestroy, vanishing locks) and a Naga that comes
-# back without its state.
+# back without its state, and a player inside a segment is never pushed (no motion packet), only hit.
 Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
 Wait-LogLine 'naga: registered the Naga, its spawner and boss lifecycle' 30 | Out-Null
 
 $mark = Get-LogMark
 $r = Invoke-SelfTest 'naga.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) naga selftest(s) failed" }
-if ($r.Pass -lt 15) { throw "expected at least 15 naga selftests to pass, got $($r.Pass)" }
+if ($r.Pass -lt 16) { throw "expected at least 16 naga selftests to pass, got $($r.Pass)" }
 $states = Get-ServerLog -Since $mark | Select-String -Pattern 'naga\.state_machine: states: (.*)' | Select-Object -Last 1
 if ($states) { Write-Step "movement pattern: $($states.Matches[0].Groups[1].Value)" }
 $hash = Get-ServerLog -Since $mark | Select-String -Pattern 'courtyard volume hash (\S+)' | Select-Object -Last 1

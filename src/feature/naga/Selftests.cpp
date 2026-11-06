@@ -29,6 +29,7 @@
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
+#include "mc/world/level/GameType.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/Spawner.h"
 #include "mc/world/level/dimension/DimensionType.h"
@@ -125,16 +126,12 @@ struct NagaScope {
     }
 };
 
-/// A real (not simulated) player is in the level: a client looks at the display tests. They only
-/// exist for the client screenshots, so the server's naga.* and full runs skip them.
-bool clientWatching() {
-    bool found = false;
-    if (auto level = ll::service::getLevel())
-        level->forEachPlayer(std::function<bool(Player&)>([&](Player& p) {
-            found = found || !p.isSimulated();
-            return !found;
-        }));
-    return found;
+/// The display tests only exist for the client screenshots: they run when the client scenario
+/// opted in right before them with `scoreboard objectives add gf_naga_display dummy` (the test
+/// consumes the objective), so the naga.* and full runs skip them whoever is online.
+bool displayRequested(int dim) {
+    auto r = gf::selftest::runServerCommand("scoreboard objectives remove gf_naga_display", dim);
+    return r.ok && r.successCount > 0;
 }
 
 int activeSegments(NagaState const& s) {
@@ -333,6 +330,13 @@ GF_REGISTER_SELFTEST("naga.state_machine", [](Context& ctx) -> ll::coro::CoroTas
 // NagaSegment#hurt: 2/3 of a hit on a segment reaches the head.
 GF_REGISTER_SELFTEST("naga.home_invulnerable", [](Context& ctx) -> ll::coro::CoroTask<> {
     DifficultyScope easy(Difficulty::Easy);
+    // DamageTypeTags.IS_EXPLOSION: vanilla's members and TF's lich_bomb; a wither skull or a
+    // fireball is a projectile, not an explosion (it hurts the Naga)
+    ctx.check(isExplosionDamage("minecraft:explosion") && isExplosionDamage("minecraft:player_explosion") && isExplosionDamage("minecraft:fireworks") &&
+                  isExplosionDamage("minecraft:bad_respawn_point") && isExplosionDamage("twilightforest:lich_bomb"),
+              "the is_explosion damage types");
+    ctx.check(!isExplosionDamage("minecraft:wither_skull") && !isExplosionDamage("minecraft:fireball") && !isExplosionDamage("minecraft:arrow"),
+              "wither skulls, fireballs and arrows are not explosions");
     auto            box  = co_await ctx.flatArea(2030, 12);
     auto            at   = ctx.testPos(2035, 2);
     auto&           sp   = ctx.spawnPlayer("naga_home");
@@ -419,6 +423,88 @@ GF_REGISTER_SELFTEST("naga.home_direct", [](Context& ctx) -> ll::coro::CoroTask<
     (void)box;
 });
 
+// NagaSegment#collideWithEntity on a player: Entity#push(Entity) only changes the server's copy of
+// a ServerPlayer's motion (no hurtMarked), so the player is never moved by the body: no motion
+// packet and no velocity while it stands inside a segment; only the 2-damage mob_attack contact
+// hits reach it (with their normal knockback).
+GF_REGISTER_SELFTEST("naga.segment_contact", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope easy(Difficulty::Easy);
+    auto            box  = co_await ctx.flatArea(2088, 12);
+    auto            at   = ctx.testPos(2090, 2);
+    NagaScope       n;
+    auto*           naga = spawnNaga(at);
+    ctx.require(naga != nullptr, "the Naga spawns");
+    n.uid = naga->getOrCreateUniqueID().rawID;
+    ge::setHome(*naga, at, kHomeRadius);
+    seedNagaForTest(*naga, 2088);
+    auto hold = [&]() -> Mob* {
+        auto* m = mobById(n.uid);
+        if (!m) return nullptr;
+        if (auto* s = stateOf(*m)) {
+            s->state        = MovementState::Circle;
+            s->stateCounter = 1000;
+        }
+        m->setTarget(nullptr);
+        auto p = m->getFeetPos();
+        if (std::abs(p.x - (at.x + 0.5f)) > 0.3f || std::abs(p.z - (at.z + 0.5f)) > 0.3f) m->teleportTo(Vec3{at.x + 0.5f, float(at.y), at.z + 0.5f}, true, 0, 0, false);
+        return m;
+    };
+    for (int t = 0; t < 30; t++) {
+        hold();
+        co_await ctx.ticks(1);
+    }
+    naga = hold();
+    ctx.require(naga != nullptr, "the Naga is there");
+    auto* s = stateOf(*naga);
+    ctx.require(s && s->segments[5].active && !s->dazed, "segment 5 is active, the Naga is not dazed");
+    // creative (never the Naga's target, so no doHurtTarget knockback) and protected (no contact
+    // knockback): the player stands still in segment 5, which still collides with it
+    auto& sp   = ctx.spawnPlayer("naga_contact");
+    auto  spId = sp.getOrCreateUniqueID().rawID;
+    sp.setPlayerGameType(GameType::Creative);
+    Vec3 inside = s->segments[5].pos;
+    sp.teleport(inside, DimensionType(at.dim));
+    int    motions0   = playerMotionCountForTest();
+    bool   overlapped = false;
+    double drift      = 0.0;
+    {
+        ProtectScope protect(spId);
+        co_await ctx.ticks(2);
+        Vec3 start{};
+        for (int t = 0; t < 12; t++) {
+            hold();
+            co_await ctx.ticks(1);
+            auto* p = byId(spId);
+            naga    = mobById(n.uid);
+            ctx.require(p && naga, "the player and the Naga are there");
+            auto  pos = p->getFeetPos();
+            if (t == 0) start = pos;
+            drift = std::max(drift, std::sqrt(double(pos.x - start.x) * (pos.x - start.x) + double(pos.z - start.z) * (pos.z - start.z)));
+            auto const& seg = stateOf(*naga)->segments[5].pos;
+            overlapped = overlapped || (std::abs(pos.x - seg.x) < 1.3f && std::abs(pos.z - seg.z) < 1.3f && pos.y < seg.y + 2.0f && pos.y + 1.8f > seg.y);
+        }
+    }
+    ctx.check(overlapped, "the player stood inside segment 5");
+    ctx.check(playerMotionCountForTest() == motions0, "no motion packet to the player from the body (" + std::to_string(playerMotionCountForTest() - motions0) + ")");
+    ctx.check(drift < 0.05, "the player was not pushed (moved " + std::to_string(drift) + ")");
+    // survival and unprotected: the contact hits land (their knockback is the damage's own)
+    float health0 = 0;
+    if (auto* p = byId(spId); p && p->isPlayer()) {
+        static_cast<Player*>(p)->setPlayerGameType(GameType::Survival);
+        health0 = static_cast<float>(p->getHealth());
+    }
+    bool hit = false;
+    for (int t = 0; t < 20 && !hit; t++) {
+        auto* m = hold();
+        if (auto* p = byId(spId); p && m) {
+            if (t == 0) p->teleport(stateOf(*m)->segments[5].pos, DimensionType(at.dim));
+            hit = p->getHealth() < health0;
+        }
+        co_await ctx.ticks(1);
+    }
+    ctx.check(hit, "the segment's contact hit hurts the player");
+    (void)box;
+});
 // Naga#doHurtTarget against a raised shield: in CHARGE the shield takes 5 damage and the Naga is
 // dazed (DAZE); in STUNLESS_CHARGE the shield takes 10, the player stops using it and its cooldown
 // (ItemCooldowns#addCooldown, 200 ticks) keeps it down, and the Naga goes back to CIRCLE.
@@ -799,12 +885,12 @@ void faceCamera(Mob& m) {
 }
 } // namespace
 
-// The Naga next to the camera for the client screenshots (skipped without a client): 10 s as it is (12 segments, nagahead),
+// The Naga next to the camera for the client screenshots (skipped unless the client scenario asks for it): 10 s as it is (12 segments, nagahead),
 // 8 s charging (nagahead_charging) and 8 s dazed (nagahead_dazed, the head lowered, crit sparkles).
 // It is held in place (no target, put back every tick) and removed at the end.
 GF_REGISTER_SELFTEST("naga.display", [](Context& ctx) -> ll::coro::CoroTask<> {
-    if (!clientWatching()) {
-        ctx.info("no client connected: the display is skipped");
+    if (!displayRequested(ctx.dimension())) {
+        ctx.info("not requested by the client scenario (scoreboard objective gf_naga_display): the display is skipped");
         co_return;
     }
     DifficultyScope easy(Difficulty::Easy);
@@ -921,6 +1007,18 @@ constexpr char kSiteArea[] = "gf_naga_courtyard";
 struct SiteArea {
     int                       dim = 0;
     std::vector<Block const*> blocks;
+    /// The site's tiles saved with their block entities (chest contents, signs, banners) through
+    /// `structure save` in memory (48 x 30 x 48 each, under Bedrock's 64-wide structure limit);
+    /// put back with `structure load` after the block restore.
+    std::vector<std::string>  tiles;
+    static constexpr int      kTile = 48;
+    static std::string tileName(int tx, int tz) { return "gf_naga_site_" + std::to_string(tx) + "_" + std::to_string(tz); }
+    static std::string tileFrom(int tx, int tz) {
+        return std::to_string(kSiteMinX + tx * kTile) + " " + std::to_string(kSiteFloor) + " " + std::to_string(kSiteMinZ + tz * kTile);
+    }
+    static std::string tileTo(int tx, int tz) {
+        return std::to_string(kSiteMinX + tx * kTile + kTile - 1) + " " + std::to_string(kSiteTop) + " " + std::to_string(kSiteMinZ + tz * kTile + kTile - 1);
+    }
     template <class Fn>
     static void forEach(Fn&& fn) {
         for (int y = kSiteFloor; y <= kSiteTop; ++y)
@@ -935,6 +1033,15 @@ struct SiteArea {
                 if (want && region->hasChunksAt(p, 0, false) && &region->getBlock(p) != want) game::setBlock(*region, p, *want);
             });
         }
+        // the block entities' data: the saved tiles over the restored blocks (blocks only)
+        for (int tx = 0; tx < kSiteSize / kTile; ++tx)
+            for (int tz = 0; tz < kSiteSize / kTile; ++tz) {
+                auto name = tileName(tx, tz);
+                if (std::find(tiles.begin(), tiles.end(), name) == tiles.end()) continue;
+                auto r = gf::selftest::runServerCommand("structure load " + name + " " + tileFrom(tx, tz) + " 0_degrees none false true", dim);
+                if (!r) gf::log().warn("naga: the courtyard site tile {} was not restored: {}", name, r.messages);
+                (void)gf::selftest::runServerCommand("structure delete " + name, dim);
+            }
         // removed, not killed: a death would place the boss death chest after the restore
         if (auto level = ll::service::getLevel())
             for (auto* a : level->getRuntimeActorList()) {
@@ -974,6 +1081,17 @@ ll::coro::CoroTask<> prepareSite(Context& ctx, SiteArea& site) {
     site.blocks.clear();
     site.blocks.reserve(static_cast<std::size_t>(kSiteSize) * kSiteSize * (kSiteTop - kSiteFloor + 1));
     SiteArea::forEach([&](BlockPos const& p) { site.blocks.push_back(region->hasChunksAt(p, 0, false) ? &region->getBlock(p) : nullptr); });
+    site.tiles.clear();
+    for (int tx = 0; tx < kSiteSize / SiteArea::kTile; ++tx)
+        for (int tz = 0; tz < kSiteSize / SiteArea::kTile; ++tz) {
+            auto name = SiteArea::tileName(tx, tz);
+            (void)gf::selftest::runServerCommand("structure delete " + name, dim); // a crashed run's
+            auto saved = gf::selftest::runServerCommand("structure save " + name + " " + SiteArea::tileFrom(tx, tz) + " " + SiteArea::tileTo(tx, tz) +
+                                                            " false memory true",
+                                                        dim);
+            ctx.require(saved.ok, "the courtyard site tile " + name + " is saved with its block entities (" + saved.messages + ")");
+            site.tiles.push_back(name);
+        }
     for (int x = kSiteMinX; x < kSiteMinX + kSiteSize; ++x)
         for (int z = kSiteMinZ; z < kSiteMinZ + kSiteSize; ++z)
             for (int y = kSiteFloor; y <= kSiteTop; ++y) {
@@ -1041,10 +1159,10 @@ GF_REGISTER_SELFTEST("naga.courtyard_layout", [](Context& ctx) -> ll::coro::Coro
 });
 
 // The seeded courtyard of naga.courtyard_layout, built at the same site for the client
-// screenshots, held for 30 s and then restored (skipped without a client).
+// screenshots, held for 30 s and then restored (skipped unless the client scenario asks for it).
 GF_REGISTER_SELFTEST("naga.display_courtyard", [](Context& ctx) -> ll::coro::CoroTask<> {
-    if (!clientWatching()) {
-        ctx.info("no client connected: the display is skipped");
+    if (!displayRequested(ctx.dimension())) {
+        ctx.info("not requested by the client scenario (scoreboard objective gf_naga_display): the display is skipped");
         co_return;
     }
     SiteArea site{ctx.dimension()};

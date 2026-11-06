@@ -18,10 +18,13 @@ $hostLine = if ($remote) { '\[host\].*' } else { '' }
 if (-not $remote) {
     $r = Invoke-SelfTest 'naga.*'
     if ($r.Fail -gt 0) { throw "$($r.Fail) naga selftest(s) failed" }
-    if ($r.Pass -lt 15) { throw "expected at least 15 naga selftests to pass, got $($r.Pass)" }
+    if ($r.Pass -lt 16) { throw "expected at least 16 naga selftests to pass, got $($r.Pass)" }
 }
 
 Invoke-Chat '/gamemode creative'
+# the display tests run only on request (they consume the objective): naga.* and full skip them
+$optIn = 'scoreboard objectives add gf_naga_display dummy'
+if ($remote) { Send-HostConsole $optIn } else { Invoke-Chat "/$optIn" }
 $mark = Get-LogMark
 $command = Format-SelfTestCommand 'naga.display'
 if ($remote) { Send-HostConsole $command } else { Send-SelfTestCommand $command }
@@ -52,6 +55,7 @@ if (-not (Register-SelfTestResult $r)) { throw 'naga.display failed' }
 Invoke-Chat "/setblock $platform air"
 
 if (-not $remote) {
+    Invoke-Chat "/$optIn"
     $mark = Get-LogMark
     Send-SelfTestCommand (Format-SelfTestCommand 'naga.display_courtyard')
     $at = Wait-LogLine 'naga\.display_courtyard: courtyard at (-?\d+) (-?\d+) (-?\d+)' 120 -Since $mark

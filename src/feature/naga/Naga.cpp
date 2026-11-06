@@ -55,6 +55,7 @@
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/actor/provider/ActorCollision.h"
 #include "mc/world/attribute/AttributeInstance.h"
+#include "mc/world/attribute/AttributeInstanceConstRef.h"
 #include "mc/world/attribute/AttributeInstanceRef.h"
 #include "mc/world/attribute/AttributeModifier.h"
 #include "mc/world/attribute/AttributeModifierOperation.h"
@@ -182,9 +183,12 @@ double distSqr(Vec3 const& a, Vec3 const& b) {
     return dx * dx + dy * dy + dz * dz;
 }
 
+int gPlayerMotions = 0;
+
 /// Entity#setDeltaMovement (players get a SetActorMotionPacket through gf::movement).
 void setMotion(Actor& a, Vec3 const& v) {
     if (a.isPlayer()) {
+        ++gPlayerMotions;
         gf::movement::applyMotion(static_cast<Player&>(a), v);
         return;
     }
@@ -459,7 +463,9 @@ void navTick(Mob& m, NagaState& s) {
     auto        p    = m.getFeetPos();
     while (path->mIndex < path->mNodes->size()) {
         auto const& node = (*path->mNodes)[path->mIndex].pos.get();
-        double      nx = node.x + 0.5, nz = node.z + 0.5; // Path#getNextEntityPos (width > 1: bottom center)
+        // Path#getNextEntityPos -> getEntityPosAtNode: node + (int)(bbWidth + 1) * 0.5 = 1.5 for the
+        // 2-wide Naga
+        double      nx = node.x + 1.5, nz = node.z + 1.5;
         double      dx = nx - p.x, dz = nz - p.z;
         if (dx * dx + dz * dz >= d * d) break;
         path->mIndex = path->mIndex + 1;
@@ -570,14 +576,28 @@ void setSegmentsPerHealth(Mob& naga, NagaState& s) {
     if (oldSegments != newSegments) applySpeedBoost(naga, newSegments);
 }
 
-/// Entity#isInWall of a 2 x 2 segment: its eye (1.7 up) inside a suffocating block.
-bool segmentInWall(BlockSource& region, Vec3 const& pos) {
-    float    eye = 2.0F * 0.85F;
-    BlockPos p{static_cast<int>(std::floor(pos.x)), static_cast<int>(std::floor(pos.y + eye)), static_cast<int>(std::floor(pos.z))};
-    if (!hasCollision(region, p)) return false;
-    Block const& block = region.getBlock(p);
-    AABB         b     = block.getBlockType().getCollisionShape(block, region, p, nullptr);
-    return b.max.y - b.min.y >= 0.99f;
+/// Entity#isInWall of a segment (2 x 2 when active, 0 x 0 when not): any block touched by the box
+/// 0.8 * width wide and 1e-6 high around the eye (0.85 * height up) that is suffocating
+/// (BlockBehaviour#isSuffocating: blocks motion with a full-block collision shape) and whose
+/// collision shape meets the box.
+bool segmentInWall(BlockSource& region, Vec3 const& pos, bool active) {
+    double size = active ? 2.0 : 0.0;
+    double eyeY = pos.y + size * 0.85;
+    double half = size * 0.8 / 2.0;
+    double minX = pos.x - half, maxX = pos.x + half, minY = eyeY - 5.0E-7, maxY = eyeY + 5.0E-7, minZ = pos.z - half, maxZ = pos.z + half;
+    for (int x = int(std::floor(minX)); x <= int(std::floor(maxX)); ++x)
+        for (int y = int(std::floor(minY)); y <= int(std::floor(maxY)); ++y)
+            for (int z = int(std::floor(minZ)); z <= int(std::floor(maxZ)); ++z) {
+                BlockPos p{x, y, z};
+                if (!hasCollision(region, p)) continue;
+                Block const& block = region.getBlock(p);
+                AABB         b     = block.getBlockType().getCollisionShape(block, region, p, nullptr);
+                bool full = b.max.x - b.min.x >= 0.999f && b.max.y - b.min.y >= 0.999f && b.max.z - b.min.z >= 0.999f;
+                if (!full) continue;
+                // Shapes.joinIsNotEmpty(shape.move(pos), box, AND): the full cube overlaps the box
+                if (b.min.x < maxX && b.max.x > minX && b.min.y < maxY && b.max.y > minY && b.min.z < maxZ && b.max.z > minZ) return true;
+            }
+    return false;
 }
 
 /// NagaSegment#tick: the self-destruct countdown and the contact with other entities.
@@ -605,11 +625,14 @@ void tickSegment(Mob& naga, NagaState& s, int i) {
                 // Bedrock's minecraft:pushable is_pushable (absent on items, XP orbs, arrows, falling
                 // blocks and armor stands, false on the Naga and the parts)
                 if (!isPushable(*e)) continue;
-                // Entity#push(Entity): apart along the larger horizontal axis
+                // Entity#push(Entity): apart along the larger horizontal axis. On a ServerPlayer it
+                // only changes the server's copy of deltaMovement (Entity#push(double...) does not set
+                // hurtMarked), so nothing reaches the player's client and the player walks through
+                // the body, knocked back only by the mob_attack hits below: no motion for players.
                 auto   ep = e->getFeetPos();
                 double dx = ep.x - seg.pos.x, dz = ep.z - seg.pos.z;
                 double m  = std::max(std::abs(dx), std::abs(dz));
-                if (m >= 0.01) {
+                if (!e->isPlayer() && m >= 0.01) {
                     m = std::sqrt(m);
                     dx /= m, dz /= m;
                     double inv = std::min(1.0, 1.0 / m);
@@ -661,7 +684,7 @@ void moveSegments(Mob& naga, NagaState& s) {
 
         double idealX  = -std::sin(angle) * straightenForce;
         double idealZ  = std::cos(angle) * straightenForce;
-        double groundY = segmentInWall(region, seg.pos) ? follow.y + 2.0F : follow.y;
+        double groundY = segmentInWall(region, seg.pos, seg.active) ? follow.y + 2.0F : follow.y;
         double idealY  = (groundY - follow.y) * straightenForce;
 
         double dx = seg.pos.x - follow.x, dy = seg.pos.y - follow.y, dz = seg.pos.z - follow.z;
@@ -1041,6 +1064,52 @@ std::optional<BlockPos> directionWithinRadians(core::jrand::RandomSource& r, int
     return BlockPos{int(std::floor(d3)), i, int(std::floor(d4))};
 }
 
+/// WalkNodeEvaluator#getPathTypeFromState, reduced to the classes whose default malus matters here.
+enum class PathClass { Open, Blocked, Water, Lava, DamageFire, DamageOther, PowderSnow, Honey };
+PathClass pathClassAt(BlockSource& region, BlockPos const& pos) {
+    for (Block const* b : {&region.getBlock(pos), &region.getLiquidBlock(pos)}) {
+        auto const& id = b->getTypeName();
+        if (id == "minecraft:water" || id == "minecraft:flowing_water") return PathClass::Water;
+        if (id == "minecraft:lava" || id == "minecraft:flowing_lava") return PathClass::Lava;
+    }
+    auto const& id = region.getBlock(pos).getTypeName();
+    // isBurningBlock: fire, soul fire, magma, lit campfires (Bedrock: extinguished false)
+    if (id == "minecraft:fire" || id == "minecraft:soul_fire" || id == "minecraft:magma") return PathClass::DamageFire;
+    if (id == "minecraft:campfire" || id == "minecraft:soul_campfire") {
+        auto states = game::statesOf(region.getBlock(pos));
+        auto it     = states.find("extinguished");
+        if (it == states.end() || (it->second != "true" && it->second != "1")) return PathClass::DamageFire;
+    }
+    if (id == "minecraft:cactus" || id == "minecraft:sweet_berry_bush") return PathClass::DamageOther;
+    if (id == "minecraft:powder_snow") return PathClass::PowderSnow;
+    if (id == "minecraft:honey_block") return PathClass::Honey;
+    return hasCollision(region, pos) ? PathClass::Blocked : PathClass::Open;
+}
+
+/// GoalUtils#hasMalus for the Naga (no malus overrides): the default malus of
+/// WalkNodeEvaluator#getPathTypeStatic at `pos` is not 0. Blocked (-1), water (8), lava (-1),
+/// powder snow (-1), damaging blocks; over magma / campfire / cactus / berry bush (DAMAGE_*) or
+/// honey (STICKY_HONEY 8); and, for a walkable node, checkNeighbourBlocks: fire or lava beside it
+/// (DANGER_FIRE 8), cactus / berry bush (DANGER_OTHER 8) or water (WATER_BORDER 8).
+bool hasMalus(BlockSource& region, BlockPos const& pos) {
+    auto here = pathClassAt(region, pos);
+    if (here != PathClass::Open) return true;
+    if (pos.y >= region.getMinHeight() + 1) {
+        auto below = pathClassAt(region, BlockPos{pos.x, pos.y - 1, pos.z});
+        if (below == PathClass::Open || below == PathClass::Water || below == PathClass::Lava) return false; // OPEN: no neighbour check
+        if (below == PathClass::PowderSnow) return false; // DANGER_POWDER_SNOW: malus 0
+        if (below != PathClass::Blocked) return true;     // DAMAGE_FIRE, DAMAGE_OTHER, STICKY_HONEY
+    }
+    for (int dx = -1; dx <= 1; ++dx)
+        for (int dy = -1; dy <= 1; ++dy)
+            for (int dz = -1; dz <= 1; ++dz) {
+                if (dx == 0 && dz == 0) continue;
+                auto c = pathClassAt(region, BlockPos{pos.x + dx, pos.y + dy, pos.z + dz});
+                if (c == PathClass::DamageFire || c == PathClass::Lava || c == PathClass::DamageOther || c == PathClass::Water) return true;
+            }
+    return false;
+}
+
 /// RandomPos#generateRandomPos over DefaultRandomPos's checks: the candidate with the best
 /// walk target value of 10 (Naga#getWalkTargetValue: 0 at home, Float.MIN_VALUE outside).
 template <class Dir>
@@ -1054,11 +1123,11 @@ std::optional<Vec3> randomPos(Mob& naga, NagaState& s, Dir&& direction) {
         if (!dir) continue;
         BlockPos pos{origin.x + dir->x, origin.y + dir->y, origin.z + dir->z};
         if (pos.y < region.getMinHeight() || pos.y >= region.getMaxHeight()) continue; // isOutsideLimits
-        // RandomPos#moveUpOutOfSolid
-        int guard = 0;
-        while (hasCollision(region, pos) && pos.y < region.getMaxHeight() - 1 && guard++ < 16) pos.y++;
-        // GoalUtils#isNotStable: nothing solid below
+        // DefaultRandomPos#generateRandomPosTowardDirection: GoalUtils#isNotStable (nothing solid
+        // below) and GoalUtils#hasMalus reject the candidate (no RandomPos#moveUpOutOfSolid here,
+        // that is LandRandomPos)
         if (!hasCollision(region, BlockPos{pos.x, pos.y - 1, pos.z})) continue;
+        if (hasMalus(region, pos)) continue;
         auto h = validHome(naga);
         bool in = !h || (std::abs(h->pos.x - pos.x) <= kXzHomeBounds && std::abs(h->pos.y - pos.y) <= kYHomeBounds && std::abs(h->pos.z - pos.z) <= kXzHomeBounds);
         float value = in ? 0.0F : std::numeric_limits<float>::min();
@@ -1265,14 +1334,17 @@ void customServerAiStep(Mob& naga, NagaState& s) {
 }
 
 /// LivingEntity#getFrictionInfluencedSpeed(blockFriction) of the Naga: on the ground getSpeed()
-/// (Mob#setSpeed by the MoveControl: the path's speed modifier times the movement speed with the
-/// segment boost; 0 before the first path) * 0.216 / friction^3 (1 on blocks of friction 0.6), in
+/// (Mob#setSpeed by the MoveControl: the path's speed modifier times the movement speed
+/// attribute; 0 before the first path) * 0.216 / friction^3 (1 on blocks of friction 0.6), in
 /// the air Mob#getFlyingSpeed 0.02. The friction is the block's 0.500001 under the feet
 /// (Entity#getBlockPosBelowThatAffectsMyMovement).
 float slitherSpeed(Mob& naga, NagaState& s) {
     if (!naga.isOnGround()) return 0.02F;
-    double boost = s.currentSegmentCount > 0 ? double(static_cast<float>(kMaxSegments) / s.currentSegmentCount * 0.02F) : 0.0;
-    float  speed = s.navSpeed * static_cast<float>(kDefaultSpeed + boost);
+    // Mob#getSpeed = the path's speed modifier * the MOVEMENT_SPEED attribute's value (the segment
+    // boost, Speed / Slowness and any other modifier included)
+    auto  attr  = naga.getAttribute(SharedAttributes::MOVEMENT_SPEED());
+    float value = attr.mPtr ? attr.mPtr->mCurrentValue : static_cast<float>(kDefaultSpeed);
+    float speed = s.navSpeed * value;
     auto   p     = naga.getFeetPos();
     BlockPos below{int(std::floor(p.x)), int(std::floor(p.y - 0.500001)), int(std::floor(p.z))};
     float  f = blockFriction(naga.getDimensionBlockSource().getBlock(below));
@@ -1319,10 +1391,13 @@ void tickEffects(Mob& naga, NagaState& s) {
 
 // ---- damage ----------------------------------------------------------------------------------------
 
+/// DamageTypeTags.IS_EXPLOSION: the imported tag holds only TF's additions (lich_bomb), so the
+/// vanilla 1.21.1 members (data/minecraft/tags/damage_type/is_explosion.json: fireworks, explosion,
+/// player_explosion, bad_respawn_point) are listed here; fireball and wither_skull are not members.
 bool isExplosion(std::string const& type) {
     if (gf::tags::has(gf::tags::Registry::DamageType, "minecraft:is_explosion", type)) return true;
-    return type == "minecraft:explosion" || type == "minecraft:player_explosion" || type == "minecraft:fireworks" || type == "minecraft:fireball" ||
-           type == "minecraft:wither_skull" || type == "minecraft:bad_respawn_point";
+    return type == "minecraft:explosion" || type == "minecraft:player_explosion" || type == "minecraft:fireworks" ||
+           type == "minecraft:bad_respawn_point";
 }
 
 /// Naga#isInvulnerableTo + NagaSegment#hurt (2/3 of the damage to the head, nothing through a
@@ -1583,6 +1658,10 @@ bool shieldInOffhand(Player const& player) {
     if (!game::items::isEmpty(active)) return game::items::idOf(active) == game::items::idOf(offhand);
     return game::items::idOf(offhand) == "minecraft:shield";
 }
+
+int playerMotionCountForTest() { return gPlayerMotions; }
+
+bool isExplosionDamage(std::string const& type) { return isExplosion(type); }
 
 /// Naga#doHurtTarget.
 bool nagaHurtTarget(Mob& naga, Actor& toAttack) {

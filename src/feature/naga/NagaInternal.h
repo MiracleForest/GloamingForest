@@ -109,6 +109,11 @@ bool nagaHurtTarget(Mob& naga, Actor& target);
 [[nodiscard]] int segmentsFor(float health, float healthPerSegment);
 /// BlockBehaviour#getFriction (Java's values: 0.6 by default, ice 0.98, slime 0.8).
 [[nodiscard]] float blockFriction(Block const& block);
+/// How many times the Naga code set a player's velocity (setMotion: a motion packet), for the selftest
+/// that segments never push players.
+[[nodiscard]] int playerMotionCountForTest();
+/// Naga#isInvulnerableTo's DamageTypeTags.IS_EXPLOSION (selftests).
+[[nodiscard]] bool isExplosionDamage(std::string const& type);
 /// EntityUtil#canDestroyBlock for the Naga (selftests).
 [[nodiscard]] bool nagaCanDestroyBlock(BlockSource& region, BlockPos const& pos);
 
