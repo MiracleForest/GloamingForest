@@ -13,6 +13,7 @@
 // Bedrock's inventory has no secondary-click-on-item interaction, so sneak-using the goggles opens a
 // form that stores the held off-hand item / a hotbar item, takes stored items out and cycles the map
 // (docs/units/tgear.md).
+#include <functional>
 #include <memory>
 #include <optional>
 #include <random>
@@ -24,6 +25,11 @@
 #include "mc/world/containers/managers/models/ContainerManagerModel.h"
 #include "mc/world/containers/models/ContainerModel.h"
 #include "mc/world/Container.h"
+#include "mc/world/containers/ContainerEnumName.h"
+#include "mc/world/containers/FullContainerName.h"
+#include "mc/world/inventory/network/ContainerScreenContext.h"
+#include "mc/world/inventory/simulation/ContainerValidatorFactory.h"
+#include "mc/world/inventory/simulation/validation/ContainerValidationBase.h"
 #include "mc/world/actor/player/Inventory.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/Item.h"
@@ -82,11 +88,20 @@ bool displayInsert(ItemStack& goggles, ItemStack& source, ItemStack& replaced) {
     return true;
 }
 
-bool displayRemoveFirst(ItemStack& goggles, ItemStack& out) {
+bool displayRemoveFirst(ItemStack& goggles, ItemStack& out, std::function<bool(ItemStack const&)> const& mayPlace) {
     auto d = displayOf(goggles);
     if (!d) return false;
     auto contents = contentsOf(*d);
-    int  slot     = core::tgear::removeFirstFree(contents);
+    std::function<bool(core::tgear::DisplayItem const&)> accepts;
+    if (mayPlace) {
+        // the DisplayItem order is the stored order (contentsOf), so the index finds the stack
+        accepts = [&](core::tgear::DisplayItem const& item) {
+            for (int i = 0; i < core::tgear::kDisplaySlots; ++i)
+                if (&contents.items[i] == &item) return !d->items[i].is_null() && mayPlace(items::fromJson(d->items[i]));
+            return false;
+        };
+    }
+    int slot = core::tgear::removeFirstFree(contents, accepts);
     if (slot < 0) return false;
     out              = items::fromJson(d->items[slot]);
     d->items[slot]   = nullptr;
@@ -253,7 +268,38 @@ void setSlot(Player& p, SlotRef const& r, ItemStack const& s) {
 }
 constexpr int kCursorSlot = 0; // PlayerUIContainer: the cursor
 
+/// Slot#mayPlace of the clicked slot: the game's own container validation of that slot (the armour slots
+/// take only their wearable, the off-hand only off-hand items, a furnace result nothing, ...); the
+/// player's inventory takes anything.
+bool mayPlaceIn(Player& player, SlotRef const& r, ItemStack const& item) {
+    if (r.kind == SlotRef::Inventory) return true;
+    auto const& manager = player.mContainerManager.get();
+    if (!manager) return false; // no screen: nothing to validate the slot with
+    FullContainerName name{};
+    int               slot = r.index;
+    switch (r.kind) {
+    case SlotRef::Armor: name.mName = ContainerEnumName::ArmorContainer; break;
+    case SlotRef::Offhand: name.mName = ContainerEnumName::OffhandContainer; break;
+    default:
+        name = *r.model->mFullContainerName;
+        slot = r.index + r.model->_getContainerOffset();
+        break;
+    }
+    try {
+        auto const& context   = *manager->mScreenContext;
+        auto        validator = ContainerValidatorFactory::createContainerValidator(name, context, ContainerValidationCaller::Server);
+        return validator && validator->isItemAllowedInSlot(context, slot, item, 1, false);
+    } catch (...) {
+        return false;
+    }
+}
+
 } // namespace
+
+bool displaySlotMayPlace(Player& player, std::string const& collection, int index, ItemStack const& item) {
+    auto ref = slotRefOf(player, collection, index);
+    return ref && mayPlaceIn(player, *ref, item);
+}
 
 bool displaySlotClick(Player& player, std::string const& collection, int index) {
     auto ref = slotRefOf(player, collection, index);
@@ -288,8 +334,9 @@ bool displaySlotClick(Player& player, std::string const& collection, int index) 
         // overrideStackedOnOther: the goggles on the cursor, an empty slot gets the first stored item,
         // else the slot's item goes in
         if (items::isEmpty(slot)) {
+            // removeFirstFree(slot): only what the slot may hold
             ItemStack out;
-            if (displayRemoveFirst(cursor, out)) {
+            if (displayRemoveFirst(cursor, out, [&](ItemStack const& s) { return mayPlaceIn(player, *ref, s); })) {
                 slot = out;
                 playRemove(player);
                 changed = true;

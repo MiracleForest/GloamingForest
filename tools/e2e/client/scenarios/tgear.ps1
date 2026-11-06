@@ -2,7 +2,8 @@
 #
 # tgear.real_arm dresses the player (goggles with the item display holding a map, a compass, a clock and
 # a moon dial, and red thread vision; a vest with gloves and haste; the wings with swap_hotbar; boots;
-# a broken second vest in the hotbar) and fills the hotbar with stone, torches and red thread. Then:
+# a broken second vest in the hotbar) and fills the hotbar with stone, torches, red thread stacks of 32,
+# 1, 4 and 16 (the size models) and goggles with three modifiers (the overlays). Then:
 # 1. the item display HUD (map with its background and decorations, compass position at the feet, clock
 #    with its time.png icon, moon dial with moon.png): out/tgear/hud-item-display.png; the inventory with
 #    the worn gear (gloves on the vest's arms, the belt on the wings) and the item icons (modifier
@@ -61,9 +62,14 @@ if ($script:Mode -ne 'remote-vanilla') {
 Start-Sleep -Seconds 10
 Save-Screenshot 'hud-item-display' | Out-Null
 
+$iconMark = Get-LogMark
 Open-Inventory
 Save-Screenshot 'inventory' | Out-Null
 Close-Screen
+if ($script:Mode -ne 'remote-vanilla') {
+    # TravellersGearItemModel / the red thread's size models: the slot icons drawn with their layers
+    try { Wait-LogLine 'tgear: icon of twilightforest:' 5 -Since $iconMark | Out-Null } catch { throw 'no slot icon was drawn with its layers (the broken vest, the modifier overlays, the red thread spool)' }
+}
 
 if ($script:Mode -ne 'remote-vanilla') {
     # 2. zoom: hold Z while the screenshot is taken
@@ -109,6 +115,10 @@ Invoke-Chat '/setblock 41 -60 42 twilightforest:red_thread ["twilightforest:down
 Invoke-Chat '/setblock 42 -60 42 twilightforest:red_thread ["twilightforest:down"=true]'
 Invoke-Chat '/setblock 43 -60 42 twilightforest:red_thread ["twilightforest:down"=true,"twilightforest:east"=true]'
 Invoke-Chat '/setblock 43 -59 42 twilightforest:red_thread ["twilightforest:east"=true]'
+# a thread along the inside of the stone wall at z 44 (north faces), turning onto the floor
+Invoke-Chat '/setblock 40 -59 43 twilightforest:red_thread ["twilightforest:south"=true]'
+Invoke-Chat '/setblock 41 -59 43 twilightforest:red_thread ["twilightforest:south"=true]'
+Invoke-Chat '/setblock 41 -60 43 twilightforest:red_thread ["twilightforest:south"=true,"twilightforest:down"=true]'
 Invoke-Teleport '/tp @s 41.5 -60 39.5 0 25'
 Invoke-Chat '/replaceitem entity @s slot.weapon.mainhand 0 twilightforest:red_thread 32'
 Start-Sleep -Seconds 2

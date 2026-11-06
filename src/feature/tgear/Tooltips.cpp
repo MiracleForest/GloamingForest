@@ -8,9 +8,10 @@
 //
 // The gear's hover text as lore (feature/item/Item.h: server-written, in the holder's language):
 // "Ability: <name>" (gold, gray name) per ability, "- <name>" (gray) per insertable modifier, "- Empty"
-// (dark gray) up to the slot count, the gloves' "Cosmetic", the broken mark and "Hold Shift for info".
-// Bedrock lore cannot follow Shift: the client mod adds the description lines while Shift is held
-// (client/tgear). The belt's / goggles' stored items (TF's tooltip images) are listed as lines.
+// (dark gray) up to the slot count, the gloves' "Cosmetic"; the broken mark is part of the name.
+// Bedrock lore cannot follow Shift, so a vanilla viewer always gets the description lines under each
+// modifier (TF's tooltip with Shift held) and no "Hold Shift for info"; the client mod draws TF's own
+// Shift behaviour (client/tgear). The belt's / goggles' stored items (TF's tooltip images) are lines.
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/ItemStack.h"
 
@@ -45,7 +46,12 @@ void gearLines(ItemStack const& stack, std::vector<std::string>& lines, Player c
     for (auto const& id : abilities)
         lines.push_back("§6" + core::formatMessageArgs(t(viewer, "travellers_gear.ability", "Ability: %s"), "§7" + modifierName(id, locale) + "§6"));
     auto inserted = insertableModifiers(stack);
-    for (auto const& id : inserted) lines.push_back("§f- §7" + modifierName(id, locale));
+    // lore cannot follow Shift: a vanilla viewer always gets the descriptions (TF's Shift-held tooltip)
+    auto tr = [&](std::string const& key, std::string const& fallback) { return t(viewer, key, fallback); };
+    for (auto const& id : inserted) {
+        lines.push_back("§f- §7" + modifierName(id, locale));
+        for (auto const& line : modifierDescription(id, tr)) lines.push_back("§f§l" + t(viewer, "travellers_gear.info_indent", "  ⤷ ") + "§r§f" + line);
+    }
     int slots = modifierSlots(items::idOf(stack));
     for (int i = static_cast<int>(inserted.size()); i < slots; ++i) lines.push_back("§f- §8" + t(viewer, "travellers_gear.modifier.empty", "Empty"));
     if (items::idOf(stack) == ids::kGloves) lines.push_back("§7" + t(viewer, "item.twilightforest.travellers_gloves.desc", "Cosmetic"));
@@ -59,12 +65,6 @@ void gearLines(ItemStack const& stack, std::vector<std::string>& lines, Player c
         for (int i = 0; i < core::tgear::kDisplaySlots; ++i)
             if (!d->items[i].is_null()) lines.push_back("§7  " + items::displayName(items::fromJson(d->items[i])) + (i == d->chosenMapSlot ? " §e*" : ""));
     }
-    bool described = false;
-    for (auto const& list : {abilities, inserted})
-        for (auto const& id : list)
-            if (auto m = modifier(id); m && m->hasDescription) described = true;
-    if (described)
-        lines.push_back("§f" + core::formatMessageArgs(t(viewer, "travellers_gear.shift_info", "Hold %s for info"), "§eShift§f"));
 }
 
 class TgearTooltips {

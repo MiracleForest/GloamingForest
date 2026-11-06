@@ -87,6 +87,12 @@ GF_REGISTER_SELFTEST("tgear.items", [](Context& ctx) {
     ctx.check(tg::hasModifier(make(tg::ids::kGoggles), tg::ids::kZoom), "goggles have the zoom ability");
     ctx.check(tg::hasModifier(make(tg::ids::kBelt), tg::ids::kSwapHotbarAbility) && tg::hasContainer(make(tg::ids::kBelt)), "the belt swaps the hotbar and has a container");
     ctx.check(tg::insertableModifiers(make(tg::ids::kGoggles)).empty(), "fresh goggles have no insertable modifier");
+    // the description components' arguments: side_step's {keybind: key.left} / {keybind: key.right}
+    auto side = tg::modifierDescription("twilightforest:side_step", [](std::string const& key, std::string const& fallback) {
+        return std::string(gf::translate(key, fallback, "en_US"));
+    });
+    ctx.check(side.size() == 1 && side[0].find("%s") == std::string::npos && side[0].find("A or D") != std::string::npos,
+              "side_step's description names the left / right keys (" + (side.empty() ? std::string("none") : side[0]) + ")");
 });
 
 GF_REGISTER_SELFTEST("tgear.modifier_recipes", [](Context& ctx) {
@@ -208,6 +214,9 @@ GF_REGISTER_SELFTEST("tgear.command", [](Context& ctx) {
     // through the command line: the console is no player
     auto c = gf::selftest::runServerCommand("tf travellers_gear add_modifier twilightforest:haste");
     ctx.check(!c.ok, "the console cannot run it: " + c.messages);
+    // a word that is no registry key reaches the command: TF's invalid_modifier, not a parse error
+    auto bad = gf::selftest::runServerCommand("tf travellers_gear add_modifier twilightforest:nope");
+    ctx.check(!bad.ok && bad.messages.find("not a valid") != std::string::npos, "an unknown key is not a modifier: " + bad.messages);
 });
 
 GF_REGISTER_SELFTEST("tgear.tick_modifiers", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -466,6 +475,42 @@ GF_REGISTER_SELFTEST("tgear.zoom_channel", [](Context& ctx) {
     clearArmor(p);
 });
 
+GF_REGISTER_SELFTEST("tgear.worn_model", [](Context& ctx) {
+    // ArmorRender / getArmorTexture / renderGlovesInFirstPerson: the wearer's synced state
+    auto& p = ctx.player();
+    clearArmor(p);
+    gf::net::setTestCompanion(p, true);
+    auto vest = make(tg::ids::kVest);
+    tg::setGloves(vest, true);
+    p.setArmor(Slot::Torso, vest);
+    auto wings = make(tg::ids::kWings);
+    tg::addModifier(wings, tg::ids::kSwapHotbar);
+    p.setArmor(Slot::Legs, wings);
+    p.setArmor(Slot::Head, make(tg::ids::kGoggles));
+    tg::refreshWornModel(p);
+    int s = tg::wornModelState(p);
+    ctx.check((s & tg::kWornGloves) && (s & tg::kWornBelt) && (s & tg::kWornFirstPersonGloves) && !(s & tg::kWornZoom),
+              "a vest with gloves and swap-hotbar wings show the gloves and the belt (" + std::to_string(s) + ")");
+    ctx.check(((s & tg::kWornSlim) != 0) == tg::hasSlimArms(p), "the slim bit follows the skin");
+    gf::net::injectFromClient(p, "tgear.goggles_zoom", {{"zoom", true}});
+    ctx.check((tg::wornModelState(p) & tg::kWornZoom) != 0, "zooming shows the goggles' down texture");
+    gf::net::injectFromClient(p, "tgear.goggles_zoom", {{"zoom", false}});
+    gf::net::injectFromClient(p, "tgear.glove_overlay", {{"on", false}});
+    ctx.check((tg::wornModelState(p) & (tg::kWornZoom | tg::kWornFirstPersonGloves)) == 0, "zoom out, and the first-person overlay follows the client's config");
+    gf::net::injectFromClient(p, "tgear.glove_overlay", {{"on", true}});
+    p.setArmor(Slot::Torso, make(tg::ids::kVest));
+    p.setArmor(Slot::Legs, make(tg::ids::kWings));
+    tg::refreshWornModel(p);
+    s = tg::wornModelState(p);
+    ctx.check(!(s & tg::kWornGloves) && !(s & tg::kWornBelt), "a plain vest and plain wings show neither (" + std::to_string(s) + ")");
+    p.setArmor(Slot::Legs, make(tg::ids::kBelt));
+    tg::refreshWornModel(p);
+    ctx.check((tg::wornModelState(p) & tg::kWornBelt) != 0, "the belt shows the belt");
+    gf::net::setTestCompanion(p, false);
+    clearArmor(p);
+    tg::refreshWornModel(p);
+});
+
 GF_REGISTER_SELFTEST("tgear.red_thread", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto box = co_await ctx.flatArea(1150, 5);
     (void)box;
@@ -686,6 +731,18 @@ GF_REGISTER_SELFTEST("tgear.display_click", [](Context& ctx) {
     gf::net::injectFromClient(p, "tgear.display_click", {{"collection", "inventory_items"}, {"index", 13}});
     auto dd = tg::displayOf(ui.getItem(0));
     ctx.check(dd && !dd->items[4].is_null() && items::isEmpty(inv.getItem(13)), "a clock clicked with the goggles goes in");
+    // removeFirstFree(slot): an empty armour slot never receives a stored item it cannot hold
+    auto const helmet = p.getArmor(SharedTypes::Legacy::ArmorSlot::Head);
+    p.setArmor(SharedTypes::Legacy::ArmorSlot::Head, ItemStack::EMPTY_ITEM());
+    gf::net::injectFromClient(p, "tgear.display_click", {{"collection", "armor_items"}, {"index", 0}});
+    auto d3 = tg::displayOf(ui.getItem(0));
+    ctx.check(items::isEmpty(p.getArmor(SharedTypes::Legacy::ArmorSlot::Head)) && d3 && !d3->items[4].is_null(),
+              "an empty armour slot does not receive the stored clock");
+    ctx.check(!tg::displaySlotMayPlace(p, "armor_items", 0, make("minecraft:filled_map")), "an armour slot does not take a map");
+    ctx.check(tg::displaySlotMayPlace(p, "inventory_items", 12, make("minecraft:filled_map")), "an inventory slot takes it");
+    ItemStack held2 = ui.getItem(0), out2;
+    ctx.check(!tg::displayRemoveFirst(held2, out2, [](ItemStack const&) { return false; }), "nothing is removed when the slot takes nothing");
+    p.setArmor(SharedTypes::Legacy::ArmorSlot::Head, helmet);
     gf::net::setTestCompanion(p, false);
     ui.setItem(0, ItemStack::EMPTY_ITEM());
     for (int i : {5, 12, 13}) inv.setItem(i, ItemStack::EMPTY_ITEM());
@@ -735,5 +792,6 @@ GF_REGISTER_SELFTEST("tgear.grindstone_anvil", [](Context& ctx) {
     auto belt = make(tg::ids::kBelt);
     tg::setContainer(belt, stored);
     ctx.check(tg::storageRefuses(belt), "a belt with its storage cannot go into a shulker box or a bundle");
-    ctx.check(!tg::storageRefuses(wings) && !tg::storageRefuses(make("minecraft:stone")), "wings and other items can");
+    ctx.check(tg::storageRefuses(wings), "wings with the swap_hotbar storage cannot either (TravellersArmorBeltItem)");
+    ctx.check(!tg::storageRefuses(make(tg::ids::kWings)) && !tg::storageRefuses(make("minecraft:stone")), "plain wings and other items can");
 });

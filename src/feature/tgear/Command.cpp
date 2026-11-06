@@ -80,8 +80,7 @@ void broadcastToOps(Player* source, std::string const& message) {
 
 GF_REGISTER_SUBCOMMAND([](ll::command::CommandHandle& cmd) {
     namespace tg = gf::feature::tgear;
-    // the registry keys as suggestions (ResourceKeyArgument); a key that is not in the list fails the
-    // parse like a malformed ResourceLocation
+    // the registry keys as suggestions (ResourceKeyArgument)
     {
         std::vector<std::string> keys;
         for (auto const& m : tg::allModifiers()) keys.push_back(m.id);
@@ -89,20 +88,31 @@ GF_REGISTER_SUBCOMMAND([](ll::command::CommandHandle& cmd) {
         auto  name      = ll::command::enum_name_v<ll::command::SoftEnum<tg::TravellersModifierKey>>;
         if (!registrar.tryRegisterSoftEnum(name, keys)) registrar.setSoftEnumValues(name, keys);
     }
+    // TF: requires(permission 2); /twilightforest itself is open to everyone (center, info)
+    auto run = [](bool add, CommandOrigin const& origin, CommandOutput& output, std::string const& typed) {
+        if (!gf::commands::isAdmin(origin)) return output.error("You need operator permission.");
+        auto* player = gf::commands::playerOf(origin);
+        auto  r      = tg::runCommand(player, add, typed);
+        if (!r.ok) return output.error(r.message);
+        output.success(r.message);
+        // CommandSourceStack#sendSuccess(..., true): the other operators see "[<name>: <message>]"
+        tg::broadcastToOps(player, r.message);
+    };
     for (bool add : {true, false}) {
+        // the registry keys (suggested), then any other word, which TF reports as not a modifier
         cmd.overload<tg::TravellersGearParams>()
             .text("travellers_gear")
             .text(add ? "add_modifier" : "remove_modifier")
             .required("modifier")
-            .execute([add](CommandOrigin const& origin, CommandOutput& output, tg::TravellersGearParams const& p) {
-                // TF: requires(permission 2); /twilightforest itself is open to everyone (center, info)
-                if (!gf::commands::isAdmin(origin)) return output.error("You need operator permission.");
-                auto* player = gf::commands::playerOf(origin);
-                auto  r      = tg::runCommand(player, add, std::string(p.modifier));
-                if (!r.ok) return output.error(r.message);
-                output.success(r.message);
-                // CommandSourceStack#sendSuccess(..., true): the other operators see "[<name>: <message>]"
-                tg::broadcastToOps(player, r.message);
+            .execute([add, run](CommandOrigin const& origin, CommandOutput& output, tg::TravellersGearParams const& p) {
+                run(add, origin, output, std::string(p.modifier));
+            });
+        cmd.overload<tg::TravellersGearAnyParams>()
+            .text("travellers_gear")
+            .text(add ? "add_modifier" : "remove_modifier")
+            .required("modifier")
+            .execute([add, run](CommandOrigin const& origin, CommandOutput& output, tg::TravellersGearAnyParams const& p) {
+                run(add, origin, output, p.modifier);
             });
     }
 });

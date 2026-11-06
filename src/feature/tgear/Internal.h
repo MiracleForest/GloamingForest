@@ -2,6 +2,8 @@
 // U11's internal interfaces between its server files (and its selftests). Not a contract.
 #pragma once
 
+#include <functional>
+
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -30,6 +32,22 @@ void                                   registerRecipes();
 /// Fires twilightforest:add_modifier for the crafted marks in the player's inventory.
 void fireCraftedTriggers(Player& player);
 
+// ---- WornModel.cpp ---------------------------------------------------------------------------------
+/// The bits of a player's worn-model state (its synced mark variant, read by attachables as
+/// q.mark_variant).
+inline constexpr int kWornGloves = 1, kWornSlim = 2, kWornBelt = 4, kWornZoom = 8, kWornFirstPersonGloves = 16;
+/// ArmorRender#isModelSlim: the player's skin has slim arms.
+[[nodiscard]] bool hasSlimArms(Player const& player);
+/// The worn-model bits of `player` (gloves, slim, belt, zoom, first-person glove overlay).
+[[nodiscard]] int wornModelBits(Player const& player, bool zooming);
+/// The state the player carries now (its mark variant).
+[[nodiscard]] int wornModelState(Player const& player);
+/// Writes the bits into the player's mark variant when they changed (synced to every viewer).
+void refreshWornModel(Player& player);
+/// The client mod's firstPersonGloveOverlay of `player` ("tgear.glove_overlay").
+void setFirstPersonGloveOverlay(Player& player, bool on);
+void forgetWornModel(Player const& player);
+
 // ---- Belt.cpp ----------------------------------------------------------------------------------------
 /// TravellersArmorBeltItem#travellersTrySwapHotbar (+ the client's hasSwapHotbar check); true when
 /// anything changed.
@@ -42,8 +60,12 @@ bool cycleMapSlot(Player& player);
 /// Bundle-like insert of `source` (one item) into the goggles stack; `source` keeps the rest, the
 /// replaced stored item (if any) goes to `replaced`. False when refused.
 bool displayInsert(ItemStack& goggles, ItemStack& source, ItemStack& replaced);
-/// Removes the first stored item into `out`; false when the display is empty.
-bool displayRemoveFirst(ItemStack& goggles, ItemStack& out);
+/// Mutable#removeFirstFree(slot): removes the first stored item that `mayPlace` accepts (any item when
+/// it is empty) into `out`; false when none.
+bool displayRemoveFirst(ItemStack& goggles, ItemStack& out, std::function<bool(ItemStack const&)> const& mayPlace = {});
+/// The slot predicate of a secondary click (Slot#mayPlace) of the player's collection / index (the
+/// selftests).
+[[nodiscard]] bool displaySlotMayPlace(Player& player, std::string const& collection, int index, ItemStack const& item);
 /// The sound event of the last map cycle (selftests).
 [[nodiscard]] std::string lastCycleSound();
 /// Ticks the active map of worn goggles (GogglesItem#inventoryTick).

@@ -71,6 +71,7 @@ void loadLocked(Registry& r) {
         }
         m.ability        = m.type == "twilightforest:builtin" || doc.value("builtin_modifier", false);
         m.hasDescription = doc.contains("description") && doc["description"].is_array() && !doc["description"].empty();
+        if (m.hasDescription) m.description = doc["description"];
         r.entries[m.id]  = std::move(m);
     }
     r.loaded = true;
@@ -360,6 +361,41 @@ std::string defaultKeyName(std::string const& keyName) {
     if (keyName == "key.twilightforest.zoom") return "Z";
     if (keyName == "key.twilightforest.red_thread_vision") return std::string(translate("key.keyboard.unknown", "Not Bound"));
     return "Nonexistent key";
+}
+
+std::string keybindName(std::string const& key) {
+    if (key.rfind("key.twilightforest.", 0) == 0) return defaultKeyName(key);
+    // Java's default bindings (KeyMapping's InputConstants names)
+    static std::map<std::string, std::string> const kDefaults{
+        {"key.left", "A"},          {"key.right", "D"},       {"key.forward", "W"},         {"key.back", "S"},
+        {"key.jump", "Space"},      {"key.sneak", "Left Shift"}, {"key.sprint", "Left Control"}, {"key.use", "Right Button"},
+        {"key.attack", "Left Button"}, {"key.inventory", "E"}, {"key.drop", "Q"},           {"key.swapOffhand", "F"},
+    };
+    if (auto it = kDefaults.find(key); it != kDefaults.end()) return it->second;
+    return key;
+}
+
+std::vector<std::string> modifierDescription(std::string const& rawId, TranslateFn const& tr, std::string (*keyName)(std::string const&)) {
+    std::vector<std::string> lines;
+    auto                     m = modifier(rawId);
+    if (!m || !m->description.is_array()) return lines;
+    auto keyOf = [&](std::string const& k) { return keyName ? keyName(k) : keybindName(k); };
+    std::function<std::string(Json const&)> render = [&](Json const& c) -> std::string {
+        if (c.is_string()) return c.get<std::string>();
+        if (!c.is_object()) return {};
+        if (auto it = c.find("text"); it != c.end() && it->is_string()) return it->get<std::string>();
+        if (auto it = c.find("keybind"); it != c.end() && it->is_string()) return keyOf(it->get<std::string>());
+        if (auto it = c.find("translate"); it != c.end() && it->is_string()) {
+            std::vector<std::string> args;
+            if (auto w = c.find("with"); w != c.end() && w->is_array())
+                for (auto const& a : *w) args.push_back(render(a));
+            auto fallback = c.value("fallback", it->get<std::string>());
+            return core::formatMessage(tr(it->get<std::string>(), fallback), args);
+        }
+        return {};
+    };
+    for (auto const& c : m->description) lines.push_back(render(c));
+    return lines;
 }
 
 std::string modifierName(std::string const& rawId, std::string const& locale, std::string (*keyName)(std::string const&)) {

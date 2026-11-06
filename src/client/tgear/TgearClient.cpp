@@ -26,11 +26,16 @@
 #include <array>
 #include <atomic>
 #include <cmath>
+#include <fstream>
+#include <filesystem>
+#include <ctime>
 #include <mutex>
 #include <optional>
 #include <unordered_map>
 #include <variant>
 #include <vector>
+
+#include "glm/gtc/matrix_transform.hpp"
 
 #include "mc/client/game/ClientInstance.h"
 #include "mc/client/game/IClientInstance.h"
@@ -86,6 +91,7 @@
 #include "core/tgear/Logic.h"
 #include "feature/dimension/World.h"
 #include "feature/ext/tgear/ClientHooks.h"
+#include "feature/ext/tgear/IconHooks.h"
 #include "feature/ext/ui/Client.h"
 #include "feature/net/Net.h"
 #include "feature/tgear/Config.h"
@@ -95,6 +101,7 @@
 #include "mod/Config.h"
 #include "mod/I18n.h"
 #include "mod/Log.h"
+#include "mod/Main.h"
 #include "mod/Module.h"
 
 extern "C" __declspec(dllimport) short __stdcall GetAsyncKeyState(int vKey);
@@ -168,6 +175,9 @@ void tickZoom(Player& player) {
     ext::tgear::client::setTurnScale(zoom ? zoomTurnScale(z) : 1.f);
     if (zoom == st().zooming.load()) return;
     st().zooming = zoom;
+    // player.playSound: the zooming player hears it at once, nobody else
+    if (auto* c = currentClient())
+        c->playUI(zoom ? "item.twilightforest.travellers_goggles.zoom_in" : "item.twilightforest.travellers_goggles.zoom_out", 1.f, 1.f);
     float fov    = baseFov() * z;
     feature::net::client::send("tgear.goggles_zoom", {{"zoom", zoom}, {"fov", fov}});
     log().info("tgear: zoom {} (fov x{} = {})", zoom ? "in" : "out", zoom ? z : 1.f, zoom ? fov : 0.f);
@@ -179,6 +189,20 @@ bool holdingThread(Player const& player) {
 void tickThreads(Player& player) {
     bool vision      = st().threadVision.load() && tg::isActive(player, tg::ids::kRedThreadVision);
     st().showThreads = holdingThread(player) || vision;
+}
+
+// ---- worn models ------------------------------------------------------------------------------------------
+
+/// renderGlovesInFirstPerson reads the client's firstPersonGloveOverlay: the server keeps it in the
+/// player's worn-model state (feature/tgear/WornModel.cpp), so it is sent on a change and every
+/// 10 seconds (a new world, a server that restarted).
+void tickGloveOverlay() {
+    static int  last  = -1;
+    static long ticks = 0;
+    bool        on    = gf::config::get<tg::TgearConfig>().firstPersonGloveOverlay;
+    if (static_cast<int>(on) == last && ++ticks % 200 != 0) return;
+    last = static_cast<int>(on);
+    feature::net::client::send("tgear.glove_overlay", {{"on", on}});
 }
 
 // ---- stealth (TravellersClientEvents#handleStealth) -------------------------------------------------------
@@ -252,9 +276,18 @@ std::int64_t dayTime(Player const& player) {
     return player.getLevel().getTime();
 }
 
-/// Level#getMoonPhase: dimensionType.moonPhase(dayTime) = (dayTime / 24000 % 8 + 8) % 8, with the
-/// fixed time of the Twilight Forest (always 0, Full Moon).
-int moonPhase(Player const& player) { return static_cast<int>((dayTime(player) / 24000 % 8 + 8) % 8); }
+/// Level#getMoonPhase: dimensionType.moonPhase(getDayTime()) = (dayTime / 24000 % 8 + 8) % 8 over the
+/// level's own day time: the dimension type's fixed_time only changes timeOfDay (ClockDisplay applies
+/// it, MoonDialDisplay does not), so the Twilight Forest follows the day count like the overworld.
+int moonPhase(Player const& player) { return core::tgear::moonPhaseOf(player.getLevel().getTime()); }
+
+/// MoonDialItem#getMoonPhase outside a natural dimension: "unknown_fools" on April 1st (local date).
+bool aprilFools() {
+    std::time_t now = std::time(nullptr);
+    std::tm     local{};
+    localtime_s(&local, &now);
+    return local.tm_mon == 3 && local.tm_mday == 1;
+}
 
 bool use24Hours() {
     auto const& cfg = gf::config::get<tg::TgearConfig>().itemDisplay;
@@ -297,6 +330,14 @@ void drawMap(screen::Canvas& c, float x0, float y0, float scale, std::int64_t ma
         float cx = mx + (static_cast<float>(d.x) / 2.f + 64.f) * unit, cz = my + (static_cast<float>(d.z) / 2.f + 64.f) * unit;
         auto  size = ui::textureSize(icon->texture);
         float tw   = size ? static_cast<float>(size->first) : 16.f, th = size ? static_cast<float>(size->second) : 16.f;
+        // MapRenderer: mulPose(ZP.rotationDegrees(rot * 360 / 16)) about the icon's centre
+        auto& world = c.context().mScreenContext.camera.worldMatrixStack.get();
+        auto  ref   = world.push(false);
+        auto& m     = ref.mat->_m.get();
+        glm::vec3 centre{c.originX() + cx, c.originY() + cz, 0.f};
+        m = glm::translate(m, centre);
+        m = glm::rotate(m, glm::radians(static_cast<float>(d.rotation) * 360.f / 16.f), glm::vec3{0.f, 0.f, 1.f});
+        m = glm::translate(m, -centre);
         ui::blit(c, icon->texture, {cx - 4 * unit, cz - 4 * unit, 8 * unit, 8 * unit}, icon->u0 * tw, icon->v0 * th, (icon->u1 - icon->u0) * tw, (icon->v1 - icon->v0) * th, tw, th);
     }
 }
@@ -368,7 +409,8 @@ void drawWidgets(screen::Canvas& canvas) {
             break;
         case core::tgear::DisplayType::MoonDial:
             w.text  = natural(dim) ? ctr("item.twilightforest.moon_dial.phase_" + std::to_string(moonPhase(*player)), "")
-                                   : ctr("item.twilightforest.moon_dial.phase_unknown", "Moon phase indeterminate");
+                                   : aprilFools() ? ctr("item.twilightforest.moon_dial.phase_unknown_fools", "Moon phase indeterminate")
+                                                  : ctr("item.twilightforest.moon_dial.phase_unknown", "Moon phase indeterminate");
             w.width = canvas.textWidth(w.text) + 10;
             break;
         default: continue;
@@ -469,38 +511,53 @@ Vec3 placeOnFace(int face, Vec3 const& m) {
     return Vec3{xyz.x + x2, xyz.y + y2, xyz.z + z1};
 }
 
-using TextureVariant = std::variant<std::monostate, mce::TexturePtr, mce::ClientTexture, mce::ServerTexture>;
+/// TF's red_thread.png (32 x 32, ARGB per texel), read from the resource pack's tf-derived texel table
+/// (textures/twilightforest/entity/tgear/tf-derived/red_thread_texels.json): the connections are drawn
+/// texel by texel as coloured quads (the colour materials draw vertex colours; the textured immediate
+/// path sampled grey on 1.26.51, docs/units/tgear.md).
+struct ThreadTexels {
+    int                        width = 0, height = 0;
+    std::vector<std::uint32_t> argb;
+    [[nodiscard]] std::uint32_t at(int x, int y) const { return x >= 0 && y >= 0 && x < width && y < height ? argb[y * width + x] : 0; }
+};
 
-/// The moving-block renderer: its alpha-test material (entityCutout) and the terrain atlas, which holds
-/// textures/twilightforest/entity/red_thread (terrain_texture.d/tgear.json: "tf_tgear_red_thread"), so
-/// the texture is always loaded (round 2: a texture of its own drew black).
-MovingBlockActorRenderer* movingRenderer(render::RenderContext& ctx) {
-    if (!ctx.actors) return nullptr;
-    BlockActorRenderDispatcher& dispatcher = ctx.actors->mBlockEntityRenderDispatcher;
-    return static_cast<MovingBlockActorRenderer*>(dispatcher.mRenderers->operator[](BlockActorRendererId::MovingBlock).get());
+ThreadTexels const* threadTexels() {
+    static std::once_flag once;
+    static ThreadTexels   texels;
+    std::call_once(once, [] {
+        std::error_code ec;
+        auto            packs = gf::Mod::getInstance().getSelf().getModDir() / "resource_packs";
+        for (auto it = std::filesystem::recursive_directory_iterator(packs, ec); !ec && it != std::filesystem::recursive_directory_iterator(); it.increment(ec)) {
+            if (it->path().filename() != "red_thread_texels.json") continue;
+            std::ifstream in(it->path());
+            auto          j = nlohmann::json::parse(in, nullptr, false);
+            if (j.is_discarded()) continue;
+            texels.width  = j.value("width", 0);
+            texels.height = j.value("height", 0);
+            auto hex      = j.value("argb", std::string());
+            if (texels.width <= 0 || texels.height <= 0 || hex.size() != static_cast<std::size_t>(texels.width * texels.height * 8)) {
+                texels.width = texels.height = 0;
+                continue;
+            }
+            texels.argb.resize(static_cast<std::size_t>(texels.width * texels.height));
+            for (std::size_t i = 0; i < texels.argb.size(); ++i) texels.argb[i] = static_cast<std::uint32_t>(std::stoul(hex.substr(i * 8, 8), nullptr, 16));
+            break;
+        }
+        if (texels.argb.empty()) log().warn("tgear: red_thread_texels.json not found in the resource packs: no red thread connections");
+    });
+    return texels.argb.empty() ? nullptr : &texels;
 }
 
-/// The red thread's rectangle in the terrain atlas (u0, v0, u1, v1).
-std::optional<std::array<float, 4>> threadAtlasUv() {
-    static std::optional<std::array<float, 4>> uv;
-    if (uv) return uv;
-    auto const& t = BlockGraphics::getTextureUVCoordinateSet("tf_tgear_red_thread", 0, 0);
-    if (t._u0 == t._u1 || t._v0 == t._v1) return std::nullopt;
-    uv = std::array<float, 4>{t._u0, t._v0, t._u1, t._v1};
-    return uv;
+/// A material of the switchable group, kept for the process (as F12's Lines: "wireframe" draws vertex
+/// colours depth tested, "ui_fill_gradient" without a depth test).
+mce::MaterialPtr const* colourMaterial(bool throughWalls) {
+    static mce::MaterialPtr* tested = nullptr;
+    static mce::MaterialPtr* always = nullptr;
+    auto*& slot = throughWalls ? always : tested;
+    if (!slot) slot = new mce::MaterialPtr(mce::RenderMaterialGroup::switchable(), HashedString(throughWalls ? "ui_fill_gradient" : "wireframe"));
+    return slot->mRenderMaterialInfoPtr.get() ? slot : nullptr;
 }
 
-/// The GLOW render type: depth test "always", full bright, the red_thread texture with cutout. Bedrock has
-/// no world cutout material without a depth test: the UI textured material (no depth test, unlit: the
-/// texture times the vertex colour times the screen's shader colour, set to white for the draw).
-mce::MaterialPtr const* glowMaterial() {
-    static mce::MaterialPtr* m = nullptr;
-    if (m) return m->mRenderMaterialInfoPtr.get() ? m : nullptr;
-    m = new mce::MaterialPtr(mce::RenderMaterialGroup::common(), HashedString("ui_textured"));
-    if (!m->mRenderMaterialInfoPtr.get()) m = new mce::MaterialPtr(mce::RenderMaterialGroup::switchable(), HashedString("ui_textured"));
-    if (!m->mRenderMaterialInfoPtr.get()) log().warn("tgear: no ui_textured material: red thread glow drawn depth tested");
-    return m->mRenderMaterialInfoPtr.get() ? m : nullptr;
-}
 bool threadFace(BlockSource& region, BlockPos const& p, int face) {
     auto const& b = region.getBlock(p);
     return game::blockId(b) == tg::ids::kRedThread && game::intState(b, kFaceStates[face]).value_or(0) != 0;
@@ -513,89 +570,79 @@ std::atomic<std::uint64_t> gThreadQuads{0};
 /// RedThreadRenderer#render: per face of the block, the centre piece and the connections towards the
 /// directions off the face's axis: to another face of the same block, to the same face of the next
 /// thread, or round the corner to the thread on the face's side (unless a sturdy block is in the way).
-/// Normally the block's own geometry draws the centre pieces (vanilla clients too) and the connections
-/// are drawn here with the cutout material at the block's light; while the threads glow everything is
-/// drawn here, full bright and through walls.
+/// The block's own geometry draws the centre pieces and the same-block connections (bone visibility by
+/// the face states, vanilla clients too); the next-thread and corner connections are drawn here at the
+/// block's light, depth tested. While the threads glow (red thread held, or red thread vision on: the
+/// GLOW render type, full bright, depth "always") everything is drawn here, through walls.
 void drawThread(render::RenderContext& ctx, BlockPos const& pos, Block const& block, float) {
     auto* player = currentPlayer();
     if (!player) return;
-    bool  glow   = st().showThreads.load();
-    auto& region = player->getDimensionBlockSource();
-    auto* moving = movingRenderer(ctx);
-    auto  atlas  = threadAtlasUv();
-    if (!moving || !atlas) return;
-    mce::MaterialPtr const* material = glow ? glowMaterial() : nullptr;
-    bool                    lit      = !material;
-    if (!material) material = &moving->mBlockMaterials[static_cast<int>(BlockRenderLayer::RenderlayerAlphatest)].get();
+    auto const* texels = threadTexels();
+    if (!texels) return;
+    bool  glow     = st().showThreads.load();
+    auto& region   = player->getDimensionBlockSource();
+    auto* material = colourMaterial(glow);
+    if (!material) return;
+    // Java's packedLight: the block's own light (the dimension's brightness ramp at the block, sky
+    // darkening included), or full bright for the glow
+    float light = glow ? 1.f : std::clamp(region.getBrightness(pos), 0.05f, 1.f);
+    float sx = static_cast<float>(texels->width) / 16.f, sy = static_cast<float>(texels->height) / 16.f; // texels per model uv unit
     auto&         tess  = ctx.screen.tessellator;
     bool          begun = false;
     std::uint64_t quads = 0;
-    auto [au0, av0, au1, av1] = *atlas;
-    // Java's packedLight: the block's own light, or full bright (15728880) for the glow
-    Vec2 lightUv{1.f, 1.f};
-    if (!glow) {
-        auto light = region.getBrightnessPair(pos);
-        lightUv    = Vec2{static_cast<float>(static_cast<unsigned char>(light.block->mValue)) / 15.f, static_cast<float>(static_cast<unsigned char>(light.sky->mValue)) / 15.f};
-    }
-    auto quad = [&](int face, PartBox const& b) {
-        if (!begun) {
-            tess.begin(Tessellator::DebugContextCallback{}, mce::PrimitiveMode::QuadList, 0, false);
-            begun = true;
-        }
-        tess.color(1.f, 1.f, 1.f, 1.f);
+    auto part = [&](int face, PartBox const& b) {
         float y = 0.2f / 16.f;
-        Vec3  c[4] = {placeOnFace(face, {b.x0 / 16.f, y, b.z0 / 16.f}), placeOnFace(face, {b.x1 / 16.f, y, b.z0 / 16.f}),
-                      placeOnFace(face, {b.x1 / 16.f, y, b.z1 / 16.f}), placeOnFace(face, {b.x0 / 16.f, y, b.z1 / 16.f})};
-        auto  at = [&](float u, float v) { return Vec2{au0 + (au1 - au0) * u / 16.f, av0 + (av1 - av0) * v / 16.f}; };
-        Vec2  t[4] = {at(b.u0, b.v0), at(b.u1, b.v0), at(b.u1, b.v1), at(b.u0, b.v1)};
-        for (auto& v : c) v = Vec3{pos.x + v.x - ctx.camera.x, pos.y + v.y - ctx.camera.y, pos.z + v.z - ctx.camera.z};
-        // every vertex carries its colour, its atlas UV and the lightmap UV (UV1: block / sky light; the
-        // block materials sample the lightmap with it, a vertex without one reads the darkest texel:
-        // round 2 / 3 drew the connections black); both windings, the cutout material culls
-        auto vertex = [&](int i) {
-            tess.color(1.f, 1.f, 1.f, 1.f);
-            tess.mNextUV[0] = std::optional<glm::vec2>(glm::vec2{t[i].x, t[i].y});
-            tess.tex2(lightUv);
-            tess.vertex(c[i].x, c[i].y, c[i].z);
-        };
-        for (int i : {0, 1, 2, 3}) vertex(i);
-        for (int i : {3, 2, 1, 0}) vertex(i);
-        ++quads;
+        float du = b.u1 - b.u0, dv = b.v1 - b.v0;
+        int   tx0 = static_cast<int>(std::floor(std::min(b.u0, b.u1) * sx)), tx1 = static_cast<int>(std::ceil(std::max(b.u0, b.u1) * sx));
+        int   ty0 = static_cast<int>(std::floor(std::min(b.v0, b.v1) * sy)), ty1 = static_cast<int>(std::ceil(std::max(b.v0, b.v1) * sy));
+        for (int ty = ty0; ty < ty1; ++ty) {
+            for (int tx = tx0; tx < tx1; ++tx) {
+                std::uint32_t c = texels->at(tx, ty);
+                if ((c >> 24) == 0) continue; // the cutout
+                if (!begun) {
+                    tess.begin(Tessellator::DebugContextCallback{}, mce::PrimitiveMode::QuadList, 0, false);
+                    begun = true;
+                }
+                // the texel's rectangle on the part (u runs along x, v along z, as the model's UP face)
+                float ua = static_cast<float>(tx) / sx, ub = static_cast<float>(tx + 1) / sx;
+                float va = static_cast<float>(ty) / sy, vb = static_cast<float>(ty + 1) / sy;
+                float xa = b.x0 + (ua - b.u0) / du * (b.x1 - b.x0), xb = b.x0 + (ub - b.u0) / du * (b.x1 - b.x0);
+                float za = b.z0 + (va - b.v0) / dv * (b.z1 - b.z0), zb = b.z0 + (vb - b.v0) / dv * (b.z1 - b.z0);
+                Vec3  q[4] = {placeOnFace(face, {xa / 16.f, y, za / 16.f}), placeOnFace(face, {xb / 16.f, y, za / 16.f}),
+                              placeOnFace(face, {xb / 16.f, y, zb / 16.f}), placeOnFace(face, {xa / 16.f, y, zb / 16.f})};
+                for (auto& v : q) v = Vec3{pos.x + v.x - ctx.camera.x, pos.y + v.y - ctx.camera.y, pos.z + v.z - ctx.camera.z};
+                float r = static_cast<float>((c >> 16) & 0xFF) / 255.f * light, g = static_cast<float>((c >> 8) & 0xFF) / 255.f * light,
+                      bl = static_cast<float>(c & 0xFF) / 255.f * light;
+                tess.color(r, g, bl, 1.f);
+                // both windings: seen from either side, as Java's no-cull cutout
+                for (int i : {0, 1, 2, 3}) tess.vertex(q[i].x, q[i].y, q[i].z);
+                for (int i : {3, 2, 1, 0}) tess.vertex(q[i].x, q[i].y, q[i].z);
+                ++quads;
+            }
+        }
     };
     for (int f = 0; f < 6; ++f) {
         if (game::intState(block, kFaceStates[f]).value_or(0) == 0) continue;
-        if (glow) quad(f, kParts[Center]);
+        if (glow) part(f, kParts[Center]);
         for (int d = 0; d < 6; ++d) {
             if (d / 2 == f / 2) continue;
-            bool flag = game::intState(block, kFaceStates[d]).value_or(0) != 0;
+            bool same = game::intState(block, kFaceStates[d]).value_or(0) != 0;
+            bool flag = same;
             if (!flag) flag = threadFace(region, rel(pos, d), f);
             if (!flag) {
                 auto side    = rel(pos, d);
                 bool blocked = region.getBlock(side).canProvideFullSupport(static_cast<uchar>(d ^ 1));
                 flag         = !blocked && threadFace(region, rel(side, f), d ^ 1);
             }
-            if (flag) quad(f, kParts[partFor(f, d)]);
+            // the same-block connections are the block geometry's (bone visibility) unless glowing
+            if (flag && (glow || !same)) part(f, kParts[partFor(f, d)]);
         }
     }
     if (!begun) return;
-    TextureVariant variant{moving->mAtlasTexture.get()};
-    if (lit) {
-        // the block's light (Java's packedLight of the block entity), as the moving block draws
-        render::setupLight(ctx, Vec3{pos.x + .5f, pos.y + .5f, pos.z + .5f}, false);
-        MeshHelpers::renderMeshImmediately(ctx.screen, tess, *material, variant, OffscreenCaptureDescription{});
-    } else {
-        // full bright: the texture as it is (white shader colour), put back afterwards
-        ShaderColor& color = ctx.screen.currentShaderColor;
-        ShaderColor  saved = color;
-        color.color        = mce::Color{1.f, 1.f, 1.f, 1.f};
-        color.dirty        = true;
-        MeshHelpers::renderMeshImmediately(ctx.screen, tess, *material, variant, OffscreenCaptureDescription{});
-        color       = saved;
-        color.dirty = true;
-    }
-    if (gThreadQuads.fetch_add(quads) == 0) log().info("tgear: red thread drawn ({} quads, {})", quads, glow ? "glow" : "cutout");
+    MeshHelpers::renderMeshImmediately(ctx.screen, tess, *material, OffscreenCaptureDescription{});
+    if (gThreadQuads.fetch_add(quads) == 0) log().info("tgear: red thread drawn ({} texel quads, {})", quads, glow ? "glow" : "lit");
 }
-// ---- item icons (TravellersGearItemModel) -----------------------------------------------------------------
+// ---- item icons (TravellersGearItemModel, the red thread's "size" property) ------------------------------
 
 /// The modifier_directory of a gear item ("" for the belt and the gloves: no overlays).
 std::string modifierDirectory(std::string const& id) {
@@ -606,30 +653,32 @@ std::string modifierDirectory(std::string const& id) {
     return "";
 }
 
-/// The broken base texture (the model's "broken" material), then one overlay per insertable modifier and
-/// the gloves overlay, from the broken directory while broken. Drawn over the slot's item icon.
-void drawGearIcon(render::RenderContext& ctx, ItemStack const& stack, render::ItemContext) {
-    if (!ctx.ui) return;
+/// TravellersGearItemModel in GUI slots: the "broken" base texture while broken, then one layer per
+/// insertable modifier (from broken_modifier_directory while broken; a modifier without a texture is
+/// skipped, as the missing sprite is) and the gloves layer of a vest with gloves (item atlas entries of
+/// item_texture.d/tgear.json, drawn through ext/tgear's icon layers).
+std::optional<ext::tgear::client::IconLayers> gearIcon(ItemStack const& stack) {
     auto id  = items::idOf(stack);
     auto dir = modifierDirectory(id);
-    if (dir.empty()) return;
-    bool                     broken = tg::isBroken(stack);
-    std::vector<std::string> layers;
-    if (broken) layers.push_back("textures/twilightforest/item/" + id.substr(id.find(':') + 1) + "_broken");
-    std::string base = "textures/twilightforest/item/travellers_modifiers/" + dir + (broken ? "/broken/" : "/");
-    for (auto const& m : tg::insertableModifiers(stack)) layers.push_back(base + m.substr(m.find(':') + 1));
-    if (id == tg::ids::kVest && tg::hasGloves(stack)) layers.push_back(base + "gloves");
-    if (layers.empty()) return;
-    // the slot's absolute position (UIControl::mCachedPosition): no translation of another control
-    auto& world = ctx.screen.camera.worldMatrixStack.get();
-    auto  ref   = world.push(false);
-    auto& m     = ref.mat->_m.get();
-    m[3][0] = m[3][1] = m[3][2] = 0.f;
-    screen::Canvas canvas(*ctx.ui);
-    int            drawn = 0;
-    for (auto const& t : layers) drawn += ui::blit(canvas, t, {ctx.guiX, ctx.guiY, ctx.guiSize, ctx.guiSize}, 0, 0, 16, 16, 16, 16) ? 1 : 0;
-    static std::atomic<int> logged{0};
-    if (drawn > 0 && logged.fetch_add(1) < 3) log().info("tgear: gear icon {} drawn at ({}, {}) size {}: {} of {} layers", id, ctx.guiX, ctx.guiY, ctx.guiSize, drawn, layers.size());
+    if (dir.empty()) return std::nullopt;
+    bool                          broken = tg::isBroken(stack);
+    ext::tgear::client::IconLayers layers;
+    if (broken) layers.base = "tf_tgear_" + dir + "_broken";
+    std::string prefix = "tf_tgear_mod_" + dir + (broken ? "_broken_" : "_");
+    for (auto const& m : tg::insertableModifiers(stack)) layers.overlays.push_back(prefix + m.substr(m.find(':') + 1));
+    if (id == tg::ids::kVest && tg::hasGloves(stack)) layers.overlays.push_back(prefix + "gloves");
+    if (layers.base.empty() && layers.overlays.empty()) return std::nullopt;
+    return layers;
+}
+
+/// ClientRegistrationEvents: the red thread item's twilightforest:size property (count >= 32: 1, >= 16:
+/// 0.5, >= 4: 0.25) picks red_thread_bundle_2 / _1 / _0.
+std::optional<ext::tgear::client::IconLayers> threadIcon(ItemStack const& stack) {
+    int n = items::countOf(stack);
+    if (n >= 32) return ext::tgear::client::IconLayers{.base = "tf_tgear_red_thread_bundle_2"};
+    if (n >= 16) return ext::tgear::client::IconLayers{.base = "tf_tgear_red_thread_bundle_1"};
+    if (n >= 4) return ext::tgear::client::IconLayers{.base = "tf_tgear_red_thread_bundle_0"};
+    return std::nullopt;
 }
 
 // ---- tooltip (TravellersArmorItem#appendHoverText) ----------------------------------------------------------
@@ -648,11 +697,9 @@ void describe(ItemStack const& stack, std::vector<std::string>& lines) {
     for (auto const& id : inserted) {
         lines.push_back("§f- §7" + tg::modifierName(id, locale));
         if (!shift) continue;
-        auto m = tg::modifier(id);
-        if (!m || !m->hasDescription) continue;
-        auto colon = id.find(':');
-        auto key   = "travellers_gear.modifier." + id.substr(0, colon) + "." + id.substr(colon + 1) + ".description";
-        lines.push_back("§f§l" + ctr("travellers_gear.info_indent", "  ⤷ ") + "§r§f" + ctr(key, ""));
+        // every description component with its arguments (side_step: the left / right keybinds)
+        auto description = tg::modifierDescription(id, [](std::string const& key, std::string const& fallback) { return ctr(key, fallback); });
+        for (auto const& line : description) lines.push_back("§f§l" + ctr("travellers_gear.info_indent", "  ⤷ ") + "§r§f" + line);
     }
     int slots = tg::modifierSlots(items::idOf(stack));
     for (int i = static_cast<int>(inserted.size()); i < slots; ++i) lines.push_back("§f- §8" + ctr("travellers_gear.modifier.empty", "Empty"));
@@ -699,6 +746,7 @@ public:
     void load() { registerKeys(); }
     void install() {
         ext::tgear::client::installHooks();
+        ext::tgear::client::installIconHooks();
         static bool once = false;
         if (once) return;
         once = true;
@@ -707,6 +755,7 @@ public:
                 tickZoom(*p);
                 tickThreads(*p);
                 tickStealth(*p);
+                tickGloveOverlay();
             }
         });
         hud::addLayer("tgear.item_display", 100, drawHud);
@@ -714,8 +763,9 @@ public:
         render::registerBlockRenderer(tg::ids::kRedThread, drawThread, render::Flags{.throughWalls = true});
         for (auto const* id : tg::kGearItems) {
             tooltip::add(id, describe);
-            render::registerItemRenderer(id, drawGearIcon, render::Gui);
+            ext::tgear::client::setIconLayers(id, gearIcon);
         }
+        ext::tgear::client::setIconLayers(tg::ids::kRedThread, threadIcon);
         // GogglesZoomPacket for the trackers (the goggles' "down" texture)
         feature::net::client::on("tgear.goggles_zoom", [](nlohmann::json const& msg) {
             std::lock_guard lock(st().mutex);
@@ -727,7 +777,10 @@ public:
             log().info("tgear: red thread vision {}", st().threadVision.load() ? "on" : "off");
         });
     }
-    void uninstall() { ext::tgear::client::uninstallHooks(); }
+    void uninstall() {
+        ext::tgear::client::uninstallIconHooks();
+        ext::tgear::client::uninstallHooks();
+    }
 };
 
 } // namespace

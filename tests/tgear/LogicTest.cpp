@@ -107,6 +107,14 @@ TEST(TgearHud, Clock) {
     EXPECT_EQ(moonIconUv(5), (std::array<int, 2>{8, 8}));
 }
 
+TEST(TgearHud, MoonPhaseFollowsTheDayCount) {
+    // the level's day time, never the Twilight Forest's fixed_time 13000: day 3 is phase 3
+    EXPECT_EQ(moonPhaseOf(0), 0);
+    EXPECT_EQ(moonPhaseOf(3 * 24000 + 13000), 3);
+    EXPECT_EQ(moonPhaseOf(9 * 24000), 1);
+    EXPECT_EQ(moonPhaseOf(-24000), 7);
+}
+
 TEST(TgearTooltip, Interpolate) {
     auto name = [](std::string const& k) { return k == "key.twilightforest.swap_hotbar" ? std::string("V") : std::string("Nonexistent key"); };
     EXPECT_EQ(interpolate("Swap Hotbar (keybind: ${tfkeybinds/key.twilightforest.swap_hotbar})", name), "Swap Hotbar (keybind: V)");

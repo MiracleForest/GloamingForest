@@ -333,14 +333,20 @@ void sendZoomFov(Player& player, bool zoom, float fov) {
 void applyZoom(Player& player, bool zoom, float fov) {
     sendZoomFov(player, zoom, fov > 0 ? fov : 70.f * static_cast<float>(numberOf(ids::kZoom, 0.3)));
     log().info("tgear: {} zoom {} (fov {})", player.getRealName(), zoom ? "in" : "out", zoom ? fov : 0.f);
-    // the client plays the sound to itself (player.playSound), the server to the others around
-    fx::sound(player.getDimension(), zoom ? "item.twilightforest.travellers_goggles.zoom_in" : "item.twilightforest.travellers_goggles.zoom_out", feetOf(player), 1.f, 1.f);
-    // the trackers (the goggles' "down" texture)
+    // TravellersClientEvents#updateZoomState: the zooming client plays the zoom sound to itself at once
+    // (LocalPlayer#playSound: nobody else hears it), so the server plays none.
+    // GogglesZoomPacket: the attachment is synced to the players tracking this one (the goggles' "down"
+    // texture: the worn-model state on the wearer, refreshed at once, and the companions in range)
+    refreshWornModel(player);
     auto level = ll::service::getLevel();
     if (!level) return;
     auto uid = uidOf(player);
+    auto dim = player.getDimensionId();
+    auto at  = player.getPosition();
     level->forEachPlayer([&](Player& other) {
-        if (&other != &player && !other.isClientSide()) net::send(other, "tgear.goggles_zoom", {{"player", uid}, {"zoom", zoom}});
+        if (&other == &player || other.isClientSide() || other.getDimensionId() != dim) return true;
+        float range = static_cast<float>(std::max(4u, static_cast<unsigned>(other.mChunkRadius)) * 16u);
+        if (other.getPosition().distanceToSqr(at) <= range * range) net::send(other, "tgear.goggles_zoom", {{"player", uid}, {"zoom", zoom}});
         return true;
     });
 }
@@ -366,6 +372,8 @@ void tickPlayer(Player& player, std::int64_t now) {
     tickDisplayMap(player);
     applyEfficientEater(player);
     clearZoomIfInactive(player);
+    // the worn models' state (gloves, slim arms, belt, zoom) for every viewer
+    refreshWornModel(player);
     // the broken names, once a second per player (staggered)
     if ((now + uidOf(player)) % 20 == 0) refreshBrokenNames(player);
 }
@@ -880,6 +888,8 @@ public:
             net::on("tgear.goggles_zoom", [](Player& p, Json const& msg) { setZoom(p, msg.value("zoom", false), msg.value("fov", 0.f)); });
             net::on("tgear.display_click", [](Player& p, Json const& msg) { displaySlotClick(p, msg.value("collection", std::string()), msg.value("index", -1)); });
             net::on("tgear.thread_vision_toggle", [](Player& p, Json const&) { toggleRedThreadVision(p); });
+            // the client mod's firstPersonGloveOverlay (renderGlovesInFirstPerson reads the client config)
+            net::on("tgear.glove_overlay", [](Player& p, Json const& msg) { setFirstPersonGloveOverlay(p, msg.value("on", true)); });
             net::onCompanionJoined([](Player& p) { sendVision(p); });
             blockevents::onNeighborChanged(ids::kRedThread, [](BlockSource& region, BlockPos const& pos, BlockPos const&) { updateRedThread(region, pos); });
             registerInteractions();
@@ -898,6 +908,7 @@ public:
             state().lastArmorDamage.erase(uidOf(ev.self()));
             state().exhaustionBase.erase(uidOf(ev.self()));
             state().standFlags.erase(uidOf(ev.self()));
+            forgetWornModel(ev.self());
         });
         // TravellersGearEvents#cancelPhantomSpawns (PlayerSpawnPhantomsEvent DENY): Bedrock spawns the
         // phantoms of an insomniac player around it; a natural phantom spawn whose nearest player wears
@@ -964,7 +975,9 @@ private:
             if (!faces) return ia::Result::Consume;
             if (auto const* b = game::blockWithStates(ids::kRedThread, *faces)) {
                 game::setBlock(*region, pos, *b);
-                fx::sound(c.player.getDimension(), "minecraft:block.wool.place", Vec3{pos.x + .5f, pos.y + .5f, pos.z + .5f}, 1.f, 0.8f);
+                // BlockItem#place: SoundType.STONE (RedThreadBlock's Properties.of()) at (volume + 1) / 2, pitch * 0.8;
+                // Bedrock's stone place sound is "dig.stone" (sounds.json block_sounds.stone.place)
+                fx::sound(c.player.getDimension(), "dig.stone", Vec3{pos.x + .5f, pos.y + .5f, pos.z + .5f}, 1.f, 0.8f);
                 if (!c.player.isCreative()) {
                     auto& hand = ia::mutableItem(c.item);
                     auto  rest = items::withCount(hand, items::countOf(hand) - 1);

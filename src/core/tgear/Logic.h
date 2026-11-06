@@ -108,6 +108,9 @@ inline constexpr std::int64_t kAutoRepairQuietTicks = 10 * 20;
 /// ClockDisplay#getFrameForTime: 0 sunrise (0..500, 22000..), 1 day (501..12499), 2 sunset
 /// (12500..13999), 3 night (14000..21999); the icon is (frame % 2 * 8, frame / 2 % 2 * 8) of time.png.
 [[nodiscard]] int clockFrame(std::int64_t dayTime);
+/// DimensionType#moonPhase(dayTime) = (dayTime / 24000 % 8 + 8) % 8 (the level's day time, never the
+/// dimension's fixed_time: day 3 in the Twilight Forest is phase 3).
+[[nodiscard]] inline int moonPhaseOf(std::int64_t dayTime) { return static_cast<int>((dayTime / 24000 % 8 + 8) % 8); }
 /// MoonDialDisplay's icon of moon phase k: (k % 4 * 8, k / 4 % 2 * 8) of moon.png (32 x 16).
 [[nodiscard]] std::array<int, 2> moonIconUv(int phase);
 

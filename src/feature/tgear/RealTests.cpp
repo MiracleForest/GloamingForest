@@ -93,6 +93,14 @@ GF_REGISTER_SELFTEST("tgear.real_arm", [](Context& ctx) {
         tg::setGloves(broken, true);
         broken.setDamageValue(static_cast<short>(tg::maxDamageOf(broken) - 1));
         inv.setItem(3, broken);
+        // the red thread's size models (count 1 / 4 / 16 next to the 32 above: red_thread, bundle_0..2)
+        inv.setItem(4, make(tg::ids::kRedThread, 1));
+        inv.setItem(5, make(tg::ids::kRedThread, 4));
+        inv.setItem(6, make(tg::ids::kRedThread, 16));
+        // a whole piece with three modifier overlays
+        auto goggles2 = make(tg::ids::kGoggles);
+        for (auto const* m : {tg::ids::kItemDisplay, tg::ids::kAllNight, tg::ids::kAutoRepair}) tg::addModifier(goggles2, m);
+        inv.setItem(7, goggles2);
         p.sendInventory(false);
         gf::log().info("tgear: armed {}", p.getRealName());
     });

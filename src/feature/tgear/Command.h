@@ -17,4 +17,10 @@ struct TravellersGearParams {
     ll::command::SoftEnum<TravellersModifierKey> modifier;
 };
 
+/// Any other word: TF's "%s is not a valid Traveller's Gear Modifier" (the soft enum's parse would reject
+/// it before the command runs).
+struct TravellersGearAnyParams {
+    std::string modifier;
+};
+
 } // namespace gf::feature::tgear

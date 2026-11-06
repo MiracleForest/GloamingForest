@@ -101,11 +101,17 @@ bool anvilRefuses(ItemStack const& input, ItemStack const& material, bool creati
     return false;
 }
 
-bool storageRefuses(ItemStack const& item) { return !items::isEmpty(item) && items::idOf(item) == ids::kBelt && hasContainer(item); }
+/// TravellersArmorBeltItem#canFitInsideContainerItems = !stack.has(CONTAINER): the class of both the belt and
+/// the wings, so a belt or wings that carry the swap_hotbar container are refused.
+bool storageRefuses(ItemStack const& item) {
+    if (items::isEmpty(item)) return false;
+    auto id = items::idOf(item);
+    return (id == ids::kBelt || id == ids::kWings) && hasContainer(item);
+}
 
 void registerMachines() {
-    // TravellersArmorBeltItem#canFitInsideContainerItems(stack): a belt with its container never goes
-    // into a shulker box or a bundle
+    // TravellersArmorBeltItem#canFitInsideContainerItems(stack): a belt or wings with a container never
+    // go into a shulker box or a bundle
     gf::ext::tgear::onStorageRefuse([](ItemStackBase const& item) { return storageRefuses(static_cast<ItemStack const&>(item)); });
     gf::ext::tgear::onGrindResult([](ItemStack const& top, ItemStack const& bottom) { return grindstoneResult(top, bottom); });
     gf::ext::tgear::onGrindTaken([](Player& player, ItemStack const& top, ItemStack const& bottom) {

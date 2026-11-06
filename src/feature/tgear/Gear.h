@@ -22,6 +22,7 @@
 #pragma once
 
 #include <array>
+#include <functional>
 #include <optional>
 #include <string>
 #include <vector>
@@ -73,6 +74,7 @@ struct ModifierInfo {
     Json        value;     ///< the component's default value (null for unit / builtin)
     bool        ability        = false; ///< builtin, or attribute with builtin_modifier
     bool        hasDescription = false;
+    Json        description;  ///< the "description" array of text components (TravellersModifier#getDescription)
 };
 
 /// Every registry entry (TF's 24, data-driven), sorted by id as Java's registry lists them.
@@ -155,5 +157,13 @@ void setGloves(ItemStack& stack, bool gloves);
 /// TravellersModifiersManager#getModifierTooltipComponent: the modifier's name in `locale` ("" =
 /// the server's) with ${tfkeybinds/...} replaced by `keyName`.
 [[nodiscard]] std::string modifierName(std::string const& id, std::string const& locale = {}, std::string (*keyName)(std::string const&) = nullptr);
+/// Translates a key (with its English fallback) for a description line.
+using TranslateFn = std::function<std::string(std::string const& key, std::string const& fallback)>;
+/// The display name of a keybind component's key ("key.left" -> "A"): Java's default bindings, TF's
+/// own keys by defaultKeyName.
+[[nodiscard]] std::string keybindName(std::string const& key);
+/// TravellersModifier#getDescription rendered: one line per description component (a "translate" with its
+/// "with" arguments: keybind, translate and text components; a "text"), through `tr`.
+[[nodiscard]] std::vector<std::string> modifierDescription(std::string const& id, TranslateFn const& tr, std::string (*keyName)(std::string const&) = nullptr);
 
 } // namespace gf::feature::tgear
