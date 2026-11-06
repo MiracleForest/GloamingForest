@@ -1,0 +1,323 @@
+[
+  {
+    "id": "twilightforest:blue_castle_door",
+    "family": "connected_texture",
+    "params": {
+      "class": "CastleDoorBlock",
+      "vanillaClass": "Block",
+      "traits": [
+        "connected_texture"
+      ],
+      "states": [
+        "active",
+        "vanish"
+      ],
+      "tags": [
+        "minecraft:is_pickaxe_item_destructible",
+        "minecraft:diamond_tier_destructible"
+      ],
+      "connects_to": [
+        "twilightforest:pink_castle_door",
+        "twilightforest:yellow_castle_door",
+        "twilightforest:blue_castle_door",
+        "twilightforest:violet_castle_door"
+      ]
+    }
+  },
+  {
+    "id": "twilightforest:blue_force_field",
+    "family": "waterloggable",
+    "params": {
+      "class": "ForceFieldBlock",
+      "vanillaClass": "Block",
+      "traits": [
+        "waterloggable"
+      ],
+      "states": [
+        "down",
+        "east",
+        "north",
+        "south",
+        "up",
+        "west"
+      ]
+    }
+  },
+  {
+    "id": "twilightforest:brown_thorns",
+    "family": "pillar",
+    "params": {
+      "class": "RotatedPillarBlock",
+      "vanillaClass": "RotatedPillarBlock",
+      "traits": [
+        "waterloggable"
+      ],
+      "states": [
+        "axis",
+        "down",
+        "east",
+        "north",
+        "south",
+        "up",
+        "west"
+      ],
+      "javaClass": "ThornsBlock",
+      "log": true
+    }
+  },
+  {
+    "id": "twilightforest:burnt_thorns",
+    "family": "pillar",
+    "params": {
+      "class": "RotatedPillarBlock",
+      "vanillaClass": "RotatedPillarBlock",
+      "traits": [
+        "waterloggable"
+      ],
+      "states": [
+        "axis",
+        "down",
+        "east",
+        "north",
+        "south",
+        "up",
+        "west"
+      ],
+      "javaClass": "BurntThornsBlock"
+    }
+  },
+  {
+    "id": "twilightforest:cinder_log",
+    "family": "log",
+    "params": {
+      "class": "RotatedPillarBlock",
+      "states": [
+        "axis"
+      ],
+      "tags": [
+        "minecraft:is_axe_item_destructible"
+      ]
+    }
+  },
+  {
+    "id": "twilightforest:green_force_field",
+    "family": "waterloggable",
+    "params": {
+      "class": "ForceFieldBlock",
+      "vanillaClass": "Block",
+      "traits": [
+        "waterloggable"
+      ],
+      "states": [
+        "down",
+        "east",
+        "north",
+        "south",
+        "up",
+        "west"
+      ]
+    }
+  },
+  {
+    "id": "twilightforest:green_thorns",
+    "family": "pillar",
+    "params": {
+      "class": "RotatedPillarBlock",
+      "vanillaClass": "RotatedPillarBlock",
+      "traits": [
+        "waterloggable"
+      ],
+      "states": [
+        "axis",
+        "down",
+        "east",
+        "north",
+        "south",
+        "up",
+        "west"
+      ],
+      "javaClass": "ThornsBlock",
+      "log": true
+    }
+  },
+  {
+    "id": "twilightforest:orange_force_field",
+    "family": "waterloggable",
+    "params": {
+      "class": "ForceFieldBlock",
+      "vanillaClass": "Block",
+      "traits": [
+        "waterloggable"
+      ],
+      "states": [
+        "down",
+        "east",
+        "north",
+        "south",
+        "up",
+        "west"
+      ]
+    }
+  },
+  {
+    "id": "twilightforest:pink_castle_door",
+    "family": "connected_texture",
+    "params": {
+      "class": "CastleDoorBlock",
+      "vanillaClass": "Block",
+      "traits": [
+        "connected_texture"
+      ],
+      "states": [
+        "active",
+        "vanish"
+      ],
+      "tags": [
+        "minecraft:is_pickaxe_item_destructible",
+        "minecraft:diamond_tier_destructible"
+      ],
+      "connects_to": [
+        "twilightforest:pink_castle_door",
+        "twilightforest:yellow_castle_door",
+        "twilightforest:blue_castle_door",
+        "twilightforest:violet_castle_door"
+      ]
+    }
+  },
+  {
+    "id": "twilightforest:pink_force_field",
+    "family": "waterloggable",
+    "params": {
+      "class": "ForceFieldBlock",
+      "vanillaClass": "Block",
+      "traits": [
+        "waterloggable"
+      ],
+      "states": [
+        "down",
+        "east",
+        "north",
+        "south",
+        "up",
+        "west"
+      ]
+    }
+  },
+  {
+    "id": "twilightforest:potted_dead_thorn",
+    "family": "potted",
+    "params": {
+      "class": "SpecialFlowerPotBlock",
+      "vanillaClass": "FlowerPotBlock",
+      "plant": "twilightforest:burnt_thorns"
+    }
+  },
+  {
+    "id": "twilightforest:potted_green_thorn",
+    "family": "potted",
+    "params": {
+      "class": "SpecialFlowerPotBlock",
+      "vanillaClass": "FlowerPotBlock",
+      "plant": "twilightforest:green_thorns"
+    }
+  },
+  {
+    "id": "twilightforest:potted_thorn",
+    "family": "potted",
+    "params": {
+      "class": "SpecialFlowerPotBlock",
+      "vanillaClass": "FlowerPotBlock",
+      "plant": "twilightforest:brown_thorns"
+    }
+  },
+  {
+    "id": "twilightforest:thorn_leaves",
+    "family": "leaves",
+    "params": {
+      "class": "SpecialStemLeavesBlock",
+      "vanillaClass": "LeavesBlock",
+      "traits": [
+        "waterloggable"
+      ],
+      "states": [
+        "distance",
+        "persistent"
+      ],
+      "tags": [
+        "minecraft:is_hoe_item_destructible",
+        "minecraft:leaves",
+        "minecraft:is_shears_item_destructible",
+        "minecraft:is_sword_item_destructible"
+      ]
+    }
+  },
+  {
+    "id": "twilightforest:violet_castle_door",
+    "family": "connected_texture",
+    "params": {
+      "class": "CastleDoorBlock",
+      "vanillaClass": "Block",
+      "traits": [
+        "connected_texture"
+      ],
+      "states": [
+        "active",
+        "vanish"
+      ],
+      "tags": [
+        "minecraft:is_pickaxe_item_destructible",
+        "minecraft:diamond_tier_destructible"
+      ],
+      "connects_to": [
+        "twilightforest:pink_castle_door",
+        "twilightforest:yellow_castle_door",
+        "twilightforest:blue_castle_door",
+        "twilightforest:violet_castle_door"
+      ]
+    }
+  },
+  {
+    "id": "twilightforest:violet_force_field",
+    "family": "waterloggable",
+    "params": {
+      "class": "ForceFieldBlock",
+      "vanillaClass": "Block",
+      "traits": [
+        "waterloggable"
+      ],
+      "states": [
+        "down",
+        "east",
+        "north",
+        "south",
+        "up",
+        "west"
+      ]
+    }
+  },
+  {
+    "id": "twilightforest:yellow_castle_door",
+    "family": "connected_texture",
+    "params": {
+      "class": "CastleDoorBlock",
+      "vanillaClass": "Block",
+      "traits": [
+        "connected_texture"
+      ],
+      "states": [
+        "active",
+        "vanish"
+      ],
+      "tags": [
+        "minecraft:is_pickaxe_item_destructible",
+        "minecraft:diamond_tier_destructible"
+      ],
+      "connects_to": [
+        "twilightforest:pink_castle_door",
+        "twilightforest:yellow_castle_door",
+        "twilightforest:blue_castle_door",
+        "twilightforest:violet_castle_door"
+      ]
+    }
+  }
+]

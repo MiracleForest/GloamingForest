@@ -1,0 +1,241 @@
+{
+  "format_version": "1.26.50",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:blue_castle_door",
+      "menu_category": {
+        "category": "construction"
+      },
+      "states": {
+        "twilightforest:active": [
+          false,
+          true
+        ],
+        "twilightforest:vanish": [
+          false,
+          true
+        ],
+        "gloamingforest:down": [
+          false,
+          true
+        ],
+        "gloamingforest:up": [
+          false,
+          true
+        ],
+        "gloamingforest:north": [
+          false,
+          true
+        ],
+        "gloamingforest:south": [
+          false,
+          true
+        ],
+        "gloamingforest:west": [
+          false,
+          true
+        ],
+        "gloamingforest:east": [
+          false,
+          true
+        ]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 100
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 500
+      },
+      "minecraft:tags": [
+        "minecraft:is_pickaxe_item_destructible",
+        "minecraft:diamond_tier_destructible"
+      ],
+      "minecraft:geometry": {
+        "identifier": "geometry.gf_finalcastle.castle_door",
+        "bone_visibility": {
+          "base": "true",
+          "down_0_none": "(!q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:east'))",
+          "down_0_cornerless": "(q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:east'))",
+          "down_0_horizontal": "(q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:east'))",
+          "down_0_vertical": "(q.block_state('gloamingforest:east')) && (!q.block_state('gloamingforest:north'))",
+          "down_1_none": "(!q.block_state('gloamingforest:east')) && (!q.block_state('gloamingforest:south'))",
+          "down_1_cornerless": "(q.block_state('gloamingforest:east')) && (q.block_state('gloamingforest:south'))",
+          "down_1_horizontal": "(q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:east'))",
+          "down_1_vertical": "(q.block_state('gloamingforest:east')) && (!q.block_state('gloamingforest:south'))",
+          "down_2_none": "(!q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:west'))",
+          "down_2_cornerless": "(q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:west'))",
+          "down_2_horizontal": "(q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:west'))",
+          "down_2_vertical": "(q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:south'))",
+          "down_3_none": "(!q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:north'))",
+          "down_3_cornerless": "(q.block_state('gloamingforest:west')) && (q.block_state('gloamingforest:north'))",
+          "down_3_horizontal": "(q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:west'))",
+          "down_3_vertical": "(q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:north'))",
+          "up_0_none": "(!q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:east'))",
+          "up_0_cornerless": "(q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:east'))",
+          "up_0_horizontal": "(q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:east'))",
+          "up_0_vertical": "(q.block_state('gloamingforest:east')) && (!q.block_state('gloamingforest:north'))",
+          "up_1_none": "(!q.block_state('gloamingforest:east')) && (!q.block_state('gloamingforest:south'))",
+          "up_1_cornerless": "(q.block_state('gloamingforest:east')) && (q.block_state('gloamingforest:south'))",
+          "up_1_horizontal": "(q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:east'))",
+          "up_1_vertical": "(q.block_state('gloamingforest:east')) && (!q.block_state('gloamingforest:south'))",
+          "up_2_none": "(!q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:west'))",
+          "up_2_cornerless": "(q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:west'))",
+          "up_2_horizontal": "(q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:west'))",
+          "up_2_vertical": "(q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:south'))",
+          "up_3_none": "(!q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:north'))",
+          "up_3_cornerless": "(q.block_state('gloamingforest:west')) && (q.block_state('gloamingforest:north'))",
+          "up_3_horizontal": "(q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:west'))",
+          "up_3_vertical": "(q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:north'))",
+          "north_0_none": "(!q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:east'))",
+          "north_0_cornerless": "(q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:east'))",
+          "north_0_horizontal": "(q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:east'))",
+          "north_0_vertical": "(q.block_state('gloamingforest:east')) && (!q.block_state('gloamingforest:up'))",
+          "north_1_none": "(!q.block_state('gloamingforest:east')) && (!q.block_state('gloamingforest:down'))",
+          "north_1_cornerless": "(q.block_state('gloamingforest:east')) && (q.block_state('gloamingforest:down'))",
+          "north_1_horizontal": "(q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:east'))",
+          "north_1_vertical": "(q.block_state('gloamingforest:east')) && (!q.block_state('gloamingforest:down'))",
+          "north_2_none": "(!q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:west'))",
+          "north_2_cornerless": "(q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:west'))",
+          "north_2_horizontal": "(q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:west'))",
+          "north_2_vertical": "(q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:down'))",
+          "north_3_none": "(!q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:up'))",
+          "north_3_cornerless": "(q.block_state('gloamingforest:west')) && (q.block_state('gloamingforest:up'))",
+          "north_3_horizontal": "(q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:west'))",
+          "north_3_vertical": "(q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:up'))",
+          "south_0_none": "(!q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:east'))",
+          "south_0_cornerless": "(q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:east'))",
+          "south_0_horizontal": "(q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:east'))",
+          "south_0_vertical": "(q.block_state('gloamingforest:east')) && (!q.block_state('gloamingforest:up'))",
+          "south_1_none": "(!q.block_state('gloamingforest:east')) && (!q.block_state('gloamingforest:down'))",
+          "south_1_cornerless": "(q.block_state('gloamingforest:east')) && (q.block_state('gloamingforest:down'))",
+          "south_1_horizontal": "(q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:east'))",
+          "south_1_vertical": "(q.block_state('gloamingforest:east')) && (!q.block_state('gloamingforest:down'))",
+          "south_2_none": "(!q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:west'))",
+          "south_2_cornerless": "(q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:west'))",
+          "south_2_horizontal": "(q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:west'))",
+          "south_2_vertical": "(q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:down'))",
+          "south_3_none": "(!q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:up'))",
+          "south_3_cornerless": "(q.block_state('gloamingforest:west')) && (q.block_state('gloamingforest:up'))",
+          "south_3_horizontal": "(q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:west'))",
+          "south_3_vertical": "(q.block_state('gloamingforest:west')) && (!q.block_state('gloamingforest:up'))",
+          "west_0_none": "(!q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:north'))",
+          "west_0_cornerless": "(q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:north'))",
+          "west_0_horizontal": "(q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:north'))",
+          "west_0_vertical": "(q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:up'))",
+          "west_1_none": "(!q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:down'))",
+          "west_1_cornerless": "(q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:down'))",
+          "west_1_horizontal": "(q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:north'))",
+          "west_1_vertical": "(q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:down'))",
+          "west_2_none": "(!q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:south'))",
+          "west_2_cornerless": "(q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:south'))",
+          "west_2_horizontal": "(q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:south'))",
+          "west_2_vertical": "(q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:down'))",
+          "west_3_none": "(!q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:up'))",
+          "west_3_cornerless": "(q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:up'))",
+          "west_3_horizontal": "(q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:south'))",
+          "west_3_vertical": "(q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:up'))",
+          "east_0_none": "(!q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:north'))",
+          "east_0_cornerless": "(q.block_state('gloamingforest:up')) && (q.block_state('gloamingforest:north'))",
+          "east_0_horizontal": "(q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:north'))",
+          "east_0_vertical": "(q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:up'))",
+          "east_1_none": "(!q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:down'))",
+          "east_1_cornerless": "(q.block_state('gloamingforest:north')) && (q.block_state('gloamingforest:down'))",
+          "east_1_horizontal": "(q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:north'))",
+          "east_1_vertical": "(q.block_state('gloamingforest:north')) && (!q.block_state('gloamingforest:down'))",
+          "east_2_none": "(!q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:south'))",
+          "east_2_cornerless": "(q.block_state('gloamingforest:down')) && (q.block_state('gloamingforest:south'))",
+          "east_2_horizontal": "(q.block_state('gloamingforest:down')) && (!q.block_state('gloamingforest:south'))",
+          "east_2_vertical": "(q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:down'))",
+          "east_3_none": "(!q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:up'))",
+          "east_3_cornerless": "(q.block_state('gloamingforest:south')) && (q.block_state('gloamingforest:up'))",
+          "east_3_horizontal": "(q.block_state('gloamingforest:up')) && (!q.block_state('gloamingforest:south'))",
+          "east_3_vertical": "(q.block_state('gloamingforest:south')) && (!q.block_state('gloamingforest:up'))"
+        }
+      },
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_castle_door",
+          "render_method": "alpha_test"
+        },
+        "overlay": {
+          "texture": "tf_finalcastle_door_overlay_blue",
+          "render_method": "alpha_test",
+          "ambient_occlusion": false,
+          "face_dimming": false
+        },
+        "connected": {
+          "texture": "tf_finalcastle_door_connected_blue",
+          "render_method": "alpha_test",
+          "ambient_occlusion": false,
+          "face_dimming": false
+        }
+      },
+      "minecraft:map_color": "#7f3fb2"
+    },
+    "permutations": [
+      {
+        "condition": "!q.block_state('twilightforest:vanish')",
+        "components": {
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_castle_door",
+              "render_method": "alpha_test"
+            },
+            "overlay": {
+              "texture": "tf_finalcastle_door_overlay_blue",
+              "render_method": "alpha_test",
+              "ambient_occlusion": false,
+              "face_dimming": false
+            },
+            "connected": {
+              "texture": "tf_finalcastle_door_connected_blue",
+              "render_method": "alpha_test",
+              "ambient_occlusion": false,
+              "face_dimming": false
+            }
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:vanish')",
+        "components": {
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_block_castle_door_vanished",
+              "render_method": "alpha_test"
+            },
+            "overlay": {
+              "texture": "tf_finalcastle_door_overlay_blue",
+              "render_method": "alpha_test",
+              "ambient_occlusion": false,
+              "face_dimming": false
+            },
+            "connected": {
+              "texture": "tf_finalcastle_door_connected_blue",
+              "render_method": "alpha_test",
+              "ambient_occlusion": false,
+              "face_dimming": false
+            }
+          },
+          "minecraft:collision_box": false,
+          "minecraft:selection_box": {
+            "origin": [
+              -2,
+              6,
+              -2
+            ],
+            "size": [
+              4,
+              4,
+              4
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

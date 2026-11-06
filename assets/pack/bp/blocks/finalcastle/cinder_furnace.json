@@ -1,0 +1,430 @@
+{
+  "format_version": "1.26.50",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:cinder_furnace",
+      "menu_category": {
+        "category": "none"
+      },
+      "states": {
+        "twilightforest:facing": [
+          "north",
+          "south",
+          "west",
+          "east"
+        ],
+        "twilightforest:lit": [
+          false,
+          true
+        ]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 7
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 35
+      },
+      "minecraft:tags": [
+        "minecraft:is_pickaxe_item_destructible"
+      ],
+      "minecraft:light_emission": 15,
+      "minecraft:map_color": "#8f7748",
+      "minecraft:geometry": "minecraft:geometry.full_block",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_vanilla_block_furnace_front",
+          "render_method": "opaque"
+        },
+        "up": {
+          "texture": "tf_vanilla_block_furnace_top",
+          "render_method": "opaque"
+        },
+        "down": {
+          "texture": "tf_vanilla_block_furnace_top",
+          "render_method": "opaque"
+        },
+        "north": {
+          "texture": "tf_vanilla_block_furnace_front",
+          "render_method": "opaque"
+        },
+        "south": {
+          "texture": "tf_vanilla_block_furnace_side",
+          "render_method": "opaque"
+        },
+        "east": {
+          "texture": "tf_vanilla_block_furnace_side",
+          "render_method": "opaque"
+        },
+        "west": {
+          "texture": "tf_vanilla_block_furnace_side",
+          "render_method": "opaque"
+        }
+      },
+      "minecraft:block_entity": {}
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east' && !q.block_state('twilightforest:lit')",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_furnace_front",
+              "render_method": "opaque"
+            },
+            "up": {
+              "texture": "tf_vanilla_block_furnace_top",
+              "render_method": "opaque"
+            },
+            "down": {
+              "texture": "tf_vanilla_block_furnace_top",
+              "render_method": "opaque"
+            },
+            "north": {
+              "texture": "tf_vanilla_block_furnace_front",
+              "render_method": "opaque"
+            },
+            "south": {
+              "texture": "tf_vanilla_block_furnace_side",
+              "render_method": "opaque"
+            },
+            "east": {
+              "texture": "tf_vanilla_block_furnace_side",
+              "render_method": "opaque"
+            },
+            "west": {
+              "texture": "tf_vanilla_block_furnace_side",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [
+              0,
+              270,
+              0
+            ]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east' && q.block_state('twilightforest:lit')",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_furnace_front_on",
+              "render_method": "opaque"
+            },
+            "up": {
+              "texture": "tf_vanilla_block_furnace_top",
+              "render_method": "opaque"
+            },
+            "down": {
+              "texture": "tf_vanilla_block_furnace_top",
+              "render_method": "opaque"
+            },
+            "north": {
+              "texture": "tf_vanilla_block_furnace_front_on",
+              "render_method": "opaque"
+            },
+            "south": {
+              "texture": "tf_vanilla_block_furnace_side",
+              "render_method": "opaque"
+            },
+            "east": {
+              "texture": "tf_vanilla_block_furnace_side",
+              "render_method": "opaque"
+            },
+            "west": {
+              "texture": "tf_vanilla_block_furnace_side",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [
+              0,
+              270,
+              0
+            ]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north' && !q.block_state('twilightforest:lit')",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_furnace_front",
+              "render_method": "opaque"
+            },
+            "up": {
+              "texture": "tf_vanilla_block_furnace_top",
+              "render_method": "opaque"
+            },
+            "down": {
+              "texture": "tf_vanilla_block_furnace_top",
+              "render_method": "opaque"
+            },
+            "north": {
+              "texture": "tf_vanilla_block_furnace_front",
+              "render_method": "opaque"
+            },
+            "south": {
+              "texture": "tf_vanilla_block_furnace_side",
+              "render_method": "opaque"
+            },
+            "east": {
+              "texture": "tf_vanilla_block_furnace_side",
+              "render_method": "opaque"
+            },
+            "west": {
+              "texture": "tf_vanilla_block_furnace_side",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [
+              0,
+              0,
+              0
+            ]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north' && q.block_state('twilightforest:lit')",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_furnace_front_on",
+              "render_method": "opaque"
+            },
+            "up": {
+              "texture": "tf_vanilla_block_furnace_top",
+              "render_method": "opaque"
+            },
+            "down": {
+              "texture": "tf_vanilla_block_furnace_top",
+              "render_method": "opaque"
+            },
+            "north": {
+              "texture": "tf_vanilla_block_furnace_front_on",
+              "render_method": "opaque"
+            },
+            "south": {
+              "texture": "tf_vanilla_block_furnace_side",
+              "render_method": "opaque"
+            },
+            "east": {
+              "texture": "tf_vanilla_block_furnace_side",
+              "render_method": "opaque"
+            },
+            "west": {
+              "texture": "tf_vanilla_block_furnace_side",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [
+              0,
+              0,
+              0
+            ]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south' && !q.block_state('twilightforest:lit')",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_furnace_front",
+              "render_method": "opaque"
+            },
+            "up": {
+              "texture": "tf_vanilla_block_furnace_top",
+              "render_method": "opaque"
+            },
+            "down": {
+              "texture": "tf_vanilla_block_furnace_top",
+              "render_method": "opaque"
+            },
+            "north": {
+              "texture": "tf_vanilla_block_furnace_front",
+              "render_method": "opaque"
+            },
+            "south": {
+              "texture": "tf_vanilla_block_furnace_side",
+              "render_method": "opaque"
+            },
+            "east": {
+              "texture": "tf_vanilla_block_furnace_side",
+              "render_method": "opaque"
+            },
+            "west": {
+              "texture": "tf_vanilla_block_furnace_side",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [
+              0,
+              180,
+              0
+            ]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south' && q.block_state('twilightforest:lit')",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_furnace_front_on",
+              "render_method": "opaque"
+            },
+            "up": {
+              "texture": "tf_vanilla_block_furnace_top",
+              "render_method": "opaque"
+            },
+            "down": {
+              "texture": "tf_vanilla_block_furnace_top",
+              "render_method": "opaque"
+            },
+            "north": {
+              "texture": "tf_vanilla_block_furnace_front_on",
+              "render_method": "opaque"
+            },
+            "south": {
+              "texture": "tf_vanilla_block_furnace_side",
+              "render_method": "opaque"
+            },
+            "east": {
+              "texture": "tf_vanilla_block_furnace_side",
+              "render_method": "opaque"
+            },
+            "west": {
+              "texture": "tf_vanilla_block_furnace_side",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [
+              0,
+              180,
+              0
+            ]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west' && !q.block_state('twilightforest:lit')",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_furnace_front",
+              "render_method": "opaque"
+            },
+            "up": {
+              "texture": "tf_vanilla_block_furnace_top",
+              "render_method": "opaque"
+            },
+            "down": {
+              "texture": "tf_vanilla_block_furnace_top",
+              "render_method": "opaque"
+            },
+            "north": {
+              "texture": "tf_vanilla_block_furnace_front",
+              "render_method": "opaque"
+            },
+            "south": {
+              "texture": "tf_vanilla_block_furnace_side",
+              "render_method": "opaque"
+            },
+            "east": {
+              "texture": "tf_vanilla_block_furnace_side",
+              "render_method": "opaque"
+            },
+            "west": {
+              "texture": "tf_vanilla_block_furnace_side",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [
+              0,
+              90,
+              0
+            ]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west' && q.block_state('twilightforest:lit')",
+        "components": {
+          "minecraft:geometry": "minecraft:geometry.full_block",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_furnace_front_on",
+              "render_method": "opaque"
+            },
+            "up": {
+              "texture": "tf_vanilla_block_furnace_top",
+              "render_method": "opaque"
+            },
+            "down": {
+              "texture": "tf_vanilla_block_furnace_top",
+              "render_method": "opaque"
+            },
+            "north": {
+              "texture": "tf_vanilla_block_furnace_front_on",
+              "render_method": "opaque"
+            },
+            "south": {
+              "texture": "tf_vanilla_block_furnace_side",
+              "render_method": "opaque"
+            },
+            "east": {
+              "texture": "tf_vanilla_block_furnace_side",
+              "render_method": "opaque"
+            },
+            "west": {
+              "texture": "tf_vanilla_block_furnace_side",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:transformation": {
+            "rotation": [
+              0,
+              90,
+              0
+            ]
+          },
+          "minecraft:collision_box": true,
+          "minecraft:selection_box": true
+        }
+      }
+    ]
+  }
+}

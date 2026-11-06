@@ -1,0 +1,3465 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.gf_finalcastle.castle_door",
+        "texture_width": 16,
+        "texture_height": 16,
+        "visible_bounds_width": 3,
+        "visible_bounds_height": 3,
+        "visible_bounds_offset": [
+          0,
+          0.75,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "base",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8
+              ],
+              "size": [
+                16,
+                16,
+                16
+              ],
+              "uv": {
+                "down": {
+                  "uv": [
+                    16,
+                    16
+                  ],
+                  "uv_size": [
+                    -16,
+                    -16
+                  ]
+                },
+                "up": {
+                  "uv": [
+                    16,
+                    16
+                  ],
+                  "uv_size": [
+                    -16,
+                    -16
+                  ]
+                },
+                "north": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    16,
+                    16
+                  ]
+                },
+                "south": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    16,
+                    16
+                  ]
+                },
+                "west": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    16,
+                    16
+                  ]
+                },
+                "east": {
+                  "uv": [
+                    0,
+                    0
+                  ],
+                  "uv_size": [
+                    16,
+                    16
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "down_0_none",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                -0.01,
+                -8
+              ],
+              "size": [
+                8,
+                0.0,
+                8
+              ],
+              "uv": {
+                "down": {
+                  "uv": [
+                    16.0,
+                    16.0
+                  ],
+                  "uv_size": [
+                    -8.0,
+                    -8.0
+                  ],
+                  "material_instance": "overlay"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "down_0_cornerless",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                -0.01,
+                -8
+              ],
+              "size": [
+                8,
+                0.0,
+                8
+              ],
+              "uv": {
+                "down": {
+                  "uv": [
+                    8.0,
+                    8.0
+                  ],
+                  "uv_size": [
+                    -4.0,
+                    -4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "down_0_horizontal",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                -0.01,
+                -8
+              ],
+              "size": [
+                8,
+                0.0,
+                8
+              ],
+              "uv": {
+                "down": {
+                  "uv": [
+                    16.0,
+                    8.0
+                  ],
+                  "uv_size": [
+                    -4.0,
+                    -4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "down_0_vertical",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                -0.01,
+                -8
+              ],
+              "size": [
+                8,
+                0.0,
+                8
+              ],
+              "uv": {
+                "down": {
+                  "uv": [
+                    8.0,
+                    16.0
+                  ],
+                  "uv_size": [
+                    -4.0,
+                    -4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "down_1_none",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                -0.01,
+                0
+              ],
+              "size": [
+                8,
+                0.0,
+                8
+              ],
+              "uv": {
+                "down": {
+                  "uv": [
+                    16.0,
+                    8.0
+                  ],
+                  "uv_size": [
+                    -8.0,
+                    -8.0
+                  ],
+                  "material_instance": "overlay"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "down_1_cornerless",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                -0.01,
+                0
+              ],
+              "size": [
+                8,
+                0.0,
+                8
+              ],
+              "uv": {
+                "down": {
+                  "uv": [
+                    8.0,
+                    4.0
+                  ],
+                  "uv_size": [
+                    -4.0,
+                    -4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "down_1_horizontal",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                -0.01,
+                0
+              ],
+              "size": [
+                8,
+                0.0,
+                8
+              ],
+              "uv": {
+                "down": {
+                  "uv": [
+                    16.0,
+                    4.0
+                  ],
+                  "uv_size": [
+                    -4.0,
+                    -4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "down_1_vertical",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                -0.01,
+                0
+              ],
+              "size": [
+                8,
+                0.0,
+                8
+              ],
+              "uv": {
+                "down": {
+                  "uv": [
+                    8.0,
+                    12.0
+                  ],
+                  "uv_size": [
+                    -4.0,
+                    -4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "down_2_none",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                -0.01,
+                0
+              ],
+              "size": [
+                8,
+                0.0,
+                8
+              ],
+              "uv": {
+                "down": {
+                  "uv": [
+                    8.0,
+                    8.0
+                  ],
+                  "uv_size": [
+                    -8.0,
+                    -8.0
+                  ],
+                  "material_instance": "overlay"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "down_2_cornerless",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                -0.01,
+                0
+              ],
+              "size": [
+                8,
+                0.0,
+                8
+              ],
+              "uv": {
+                "down": {
+                  "uv": [
+                    4.0,
+                    4.0
+                  ],
+                  "uv_size": [
+                    -4.0,
+                    -4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "down_2_horizontal",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                -0.01,
+                0
+              ],
+              "size": [
+                8,
+                0.0,
+                8
+              ],
+              "uv": {
+                "down": {
+                  "uv": [
+                    12.0,
+                    4.0
+                  ],
+                  "uv_size": [
+                    -4.0,
+                    -4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "down_2_vertical",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                -0.01,
+                0
+              ],
+              "size": [
+                8,
+                0.0,
+                8
+              ],
+              "uv": {
+                "down": {
+                  "uv": [
+                    4.0,
+                    12.0
+                  ],
+                  "uv_size": [
+                    -4.0,
+                    -4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "down_3_none",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                -0.01,
+                -8
+              ],
+              "size": [
+                8,
+                0.0,
+                8
+              ],
+              "uv": {
+                "down": {
+                  "uv": [
+                    8.0,
+                    16.0
+                  ],
+                  "uv_size": [
+                    -8.0,
+                    -8.0
+                  ],
+                  "material_instance": "overlay"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "down_3_cornerless",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                -0.01,
+                -8
+              ],
+              "size": [
+                8,
+                0.0,
+                8
+              ],
+              "uv": {
+                "down": {
+                  "uv": [
+                    4.0,
+                    8.0
+                  ],
+                  "uv_size": [
+                    -4.0,
+                    -4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "down_3_horizontal",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                -0.01,
+                -8
+              ],
+              "size": [
+                8,
+                0.0,
+                8
+              ],
+              "uv": {
+                "down": {
+                  "uv": [
+                    12.0,
+                    8.0
+                  ],
+                  "uv_size": [
+                    -4.0,
+                    -4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "down_3_vertical",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                -0.01,
+                -8
+              ],
+              "size": [
+                8,
+                0.0,
+                8
+              ],
+              "uv": {
+                "down": {
+                  "uv": [
+                    4.0,
+                    16.0
+                  ],
+                  "uv_size": [
+                    -4.0,
+                    -4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "up_0_none",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                16.01,
+                -8
+              ],
+              "size": [
+                8,
+                0.0,
+                8
+              ],
+              "uv": {
+                "up": {
+                  "uv": [
+                    16.0,
+                    8.0
+                  ],
+                  "uv_size": [
+                    -8.0,
+                    -8.0
+                  ],
+                  "material_instance": "overlay"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "up_0_cornerless",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                16.01,
+                -8
+              ],
+              "size": [
+                8,
+                0.0,
+                8
+              ],
+              "uv": {
+                "up": {
+                  "uv": [
+                    8.0,
+                    4.0
+                  ],
+                  "uv_size": [
+                    -4.0,
+                    -4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "up_0_horizontal",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                16.01,
+                -8
+              ],
+              "size": [
+                8,
+                0.0,
+                8
+              ],
+              "uv": {
+                "up": {
+                  "uv": [
+                    16.0,
+                    4.0
+                  ],
+                  "uv_size": [
+                    -4.0,
+                    -4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "up_0_vertical",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                16.01,
+                -8
+              ],
+              "size": [
+                8,
+                0.0,
+                8
+              ],
+              "uv": {
+                "up": {
+                  "uv": [
+                    8.0,
+                    12.0
+                  ],
+                  "uv_size": [
+                    -4.0,
+                    -4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "up_1_none",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                16.01,
+                0
+              ],
+              "size": [
+                8,
+                0.0,
+                8
+              ],
+              "uv": {
+                "up": {
+                  "uv": [
+                    16.0,
+                    16.0
+                  ],
+                  "uv_size": [
+                    -8.0,
+                    -8.0
+                  ],
+                  "material_instance": "overlay"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "up_1_cornerless",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                16.01,
+                0
+              ],
+              "size": [
+                8,
+                0.0,
+                8
+              ],
+              "uv": {
+                "up": {
+                  "uv": [
+                    8.0,
+                    8.0
+                  ],
+                  "uv_size": [
+                    -4.0,
+                    -4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "up_1_horizontal",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                16.01,
+                0
+              ],
+              "size": [
+                8,
+                0.0,
+                8
+              ],
+              "uv": {
+                "up": {
+                  "uv": [
+                    16.0,
+                    8.0
+                  ],
+                  "uv_size": [
+                    -4.0,
+                    -4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "up_1_vertical",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                16.01,
+                0
+              ],
+              "size": [
+                8,
+                0.0,
+                8
+              ],
+              "uv": {
+                "up": {
+                  "uv": [
+                    8.0,
+                    16.0
+                  ],
+                  "uv_size": [
+                    -4.0,
+                    -4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "up_2_none",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                16.01,
+                0
+              ],
+              "size": [
+                8,
+                0.0,
+                8
+              ],
+              "uv": {
+                "up": {
+                  "uv": [
+                    8.0,
+                    16.0
+                  ],
+                  "uv_size": [
+                    -8.0,
+                    -8.0
+                  ],
+                  "material_instance": "overlay"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "up_2_cornerless",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                16.01,
+                0
+              ],
+              "size": [
+                8,
+                0.0,
+                8
+              ],
+              "uv": {
+                "up": {
+                  "uv": [
+                    4.0,
+                    8.0
+                  ],
+                  "uv_size": [
+                    -4.0,
+                    -4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "up_2_horizontal",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                16.01,
+                0
+              ],
+              "size": [
+                8,
+                0.0,
+                8
+              ],
+              "uv": {
+                "up": {
+                  "uv": [
+                    12.0,
+                    8.0
+                  ],
+                  "uv_size": [
+                    -4.0,
+                    -4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "up_2_vertical",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                16.01,
+                0
+              ],
+              "size": [
+                8,
+                0.0,
+                8
+              ],
+              "uv": {
+                "up": {
+                  "uv": [
+                    4.0,
+                    16.0
+                  ],
+                  "uv_size": [
+                    -4.0,
+                    -4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "up_3_none",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                16.01,
+                -8
+              ],
+              "size": [
+                8,
+                0.0,
+                8
+              ],
+              "uv": {
+                "up": {
+                  "uv": [
+                    8.0,
+                    8.0
+                  ],
+                  "uv_size": [
+                    -8.0,
+                    -8.0
+                  ],
+                  "material_instance": "overlay"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "up_3_cornerless",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                16.01,
+                -8
+              ],
+              "size": [
+                8,
+                0.0,
+                8
+              ],
+              "uv": {
+                "up": {
+                  "uv": [
+                    4.0,
+                    4.0
+                  ],
+                  "uv_size": [
+                    -4.0,
+                    -4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "up_3_horizontal",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                16.01,
+                -8
+              ],
+              "size": [
+                8,
+                0.0,
+                8
+              ],
+              "uv": {
+                "up": {
+                  "uv": [
+                    12.0,
+                    4.0
+                  ],
+                  "uv_size": [
+                    -4.0,
+                    -4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "up_3_vertical",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                16.01,
+                -8
+              ],
+              "size": [
+                8,
+                0.0,
+                8
+              ],
+              "uv": {
+                "up": {
+                  "uv": [
+                    4.0,
+                    12.0
+                  ],
+                  "uv_size": [
+                    -4.0,
+                    -4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "north_0_none",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                8,
+                -8.01
+              ],
+              "size": [
+                8,
+                8,
+                0.0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0.0,
+                    0.0
+                  ],
+                  "uv_size": [
+                    8.0,
+                    8.0
+                  ],
+                  "material_instance": "overlay"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "north_0_cornerless",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                8,
+                -8.01
+              ],
+              "size": [
+                8,
+                8,
+                0.0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0.0,
+                    0.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "north_0_horizontal",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                8,
+                -8.01
+              ],
+              "size": [
+                8,
+                8,
+                0.0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    8.0,
+                    0.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "north_0_vertical",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                8,
+                -8.01
+              ],
+              "size": [
+                8,
+                8,
+                0.0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0.0,
+                    8.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "north_1_none",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8.01
+              ],
+              "size": [
+                8,
+                8,
+                0.0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0.0,
+                    8.0
+                  ],
+                  "uv_size": [
+                    8.0,
+                    8.0
+                  ],
+                  "material_instance": "overlay"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "north_1_cornerless",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8.01
+              ],
+              "size": [
+                8,
+                8,
+                0.0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0.0,
+                    4.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "north_1_horizontal",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8.01
+              ],
+              "size": [
+                8,
+                8,
+                0.0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    8.0,
+                    4.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "north_1_vertical",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                0,
+                -8.01
+              ],
+              "size": [
+                8,
+                8,
+                0.0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    0.0,
+                    12.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "north_2_none",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                0,
+                -8.01
+              ],
+              "size": [
+                8,
+                8,
+                0.0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    8.0,
+                    8.0
+                  ],
+                  "uv_size": [
+                    8.0,
+                    8.0
+                  ],
+                  "material_instance": "overlay"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "north_2_cornerless",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                0,
+                -8.01
+              ],
+              "size": [
+                8,
+                8,
+                0.0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    4.0,
+                    4.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "north_2_horizontal",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                0,
+                -8.01
+              ],
+              "size": [
+                8,
+                8,
+                0.0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    12.0,
+                    4.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "north_2_vertical",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                0,
+                -8.01
+              ],
+              "size": [
+                8,
+                8,
+                0.0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    4.0,
+                    12.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "north_3_none",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                8,
+                -8.01
+              ],
+              "size": [
+                8,
+                8,
+                0.0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    8.0,
+                    0.0
+                  ],
+                  "uv_size": [
+                    8.0,
+                    8.0
+                  ],
+                  "material_instance": "overlay"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "north_3_cornerless",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                8,
+                -8.01
+              ],
+              "size": [
+                8,
+                8,
+                0.0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    4.0,
+                    0.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "north_3_horizontal",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                8,
+                -8.01
+              ],
+              "size": [
+                8,
+                8,
+                0.0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    12.0,
+                    0.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "north_3_vertical",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                8,
+                -8.01
+              ],
+              "size": [
+                8,
+                8,
+                0.0
+              ],
+              "uv": {
+                "north": {
+                  "uv": [
+                    4.0,
+                    8.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "south_0_none",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                8,
+                8.010000000000002
+              ],
+              "size": [
+                8,
+                8,
+                0.0
+              ],
+              "uv": {
+                "south": {
+                  "uv": [
+                    8.0,
+                    0.0
+                  ],
+                  "uv_size": [
+                    8.0,
+                    8.0
+                  ],
+                  "material_instance": "overlay"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "south_0_cornerless",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                8,
+                8.010000000000002
+              ],
+              "size": [
+                8,
+                8,
+                0.0
+              ],
+              "uv": {
+                "south": {
+                  "uv": [
+                    4.0,
+                    0.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "south_0_horizontal",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                8,
+                8.010000000000002
+              ],
+              "size": [
+                8,
+                8,
+                0.0
+              ],
+              "uv": {
+                "south": {
+                  "uv": [
+                    12.0,
+                    0.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "south_0_vertical",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                8,
+                8.010000000000002
+              ],
+              "size": [
+                8,
+                8,
+                0.0
+              ],
+              "uv": {
+                "south": {
+                  "uv": [
+                    4.0,
+                    8.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "south_1_none",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                0,
+                8.010000000000002
+              ],
+              "size": [
+                8,
+                8,
+                0.0
+              ],
+              "uv": {
+                "south": {
+                  "uv": [
+                    8.0,
+                    8.0
+                  ],
+                  "uv_size": [
+                    8.0,
+                    8.0
+                  ],
+                  "material_instance": "overlay"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "south_1_cornerless",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                0,
+                8.010000000000002
+              ],
+              "size": [
+                8,
+                8,
+                0.0
+              ],
+              "uv": {
+                "south": {
+                  "uv": [
+                    4.0,
+                    4.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "south_1_horizontal",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                0,
+                8.010000000000002
+              ],
+              "size": [
+                8,
+                8,
+                0.0
+              ],
+              "uv": {
+                "south": {
+                  "uv": [
+                    12.0,
+                    4.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "south_1_vertical",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                0,
+                8.010000000000002
+              ],
+              "size": [
+                8,
+                8,
+                0.0
+              ],
+              "uv": {
+                "south": {
+                  "uv": [
+                    4.0,
+                    12.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "south_2_none",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                0,
+                8.010000000000002
+              ],
+              "size": [
+                8,
+                8,
+                0.0
+              ],
+              "uv": {
+                "south": {
+                  "uv": [
+                    0.0,
+                    8.0
+                  ],
+                  "uv_size": [
+                    8.0,
+                    8.0
+                  ],
+                  "material_instance": "overlay"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "south_2_cornerless",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                0,
+                8.010000000000002
+              ],
+              "size": [
+                8,
+                8,
+                0.0
+              ],
+              "uv": {
+                "south": {
+                  "uv": [
+                    0.0,
+                    4.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "south_2_horizontal",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                0,
+                8.010000000000002
+              ],
+              "size": [
+                8,
+                8,
+                0.0
+              ],
+              "uv": {
+                "south": {
+                  "uv": [
+                    8.0,
+                    4.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "south_2_vertical",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                0,
+                8.010000000000002
+              ],
+              "size": [
+                8,
+                8,
+                0.0
+              ],
+              "uv": {
+                "south": {
+                  "uv": [
+                    0.0,
+                    12.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "south_3_none",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                8,
+                8.010000000000002
+              ],
+              "size": [
+                8,
+                8,
+                0.0
+              ],
+              "uv": {
+                "south": {
+                  "uv": [
+                    0.0,
+                    0.0
+                  ],
+                  "uv_size": [
+                    8.0,
+                    8.0
+                  ],
+                  "material_instance": "overlay"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "south_3_cornerless",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                8,
+                8.010000000000002
+              ],
+              "size": [
+                8,
+                8,
+                0.0
+              ],
+              "uv": {
+                "south": {
+                  "uv": [
+                    0.0,
+                    0.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "south_3_horizontal",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                8,
+                8.010000000000002
+              ],
+              "size": [
+                8,
+                8,
+                0.0
+              ],
+              "uv": {
+                "south": {
+                  "uv": [
+                    8.0,
+                    0.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "south_3_vertical",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                0,
+                8,
+                8.010000000000002
+              ],
+              "size": [
+                8,
+                8,
+                0.0
+              ],
+              "uv": {
+                "south": {
+                  "uv": [
+                    0.0,
+                    8.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "west_0_none",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                8.01,
+                8,
+                -8
+              ],
+              "size": [
+                0.0,
+                8,
+                8
+              ],
+              "uv": {
+                "west": {
+                  "uv": [
+                    0.0,
+                    0.0
+                  ],
+                  "uv_size": [
+                    8.0,
+                    8.0
+                  ],
+                  "material_instance": "overlay"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "west_0_cornerless",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                8.01,
+                8,
+                -8
+              ],
+              "size": [
+                0.0,
+                8,
+                8
+              ],
+              "uv": {
+                "west": {
+                  "uv": [
+                    0.0,
+                    0.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "west_0_horizontal",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                8.01,
+                8,
+                -8
+              ],
+              "size": [
+                0.0,
+                8,
+                8
+              ],
+              "uv": {
+                "west": {
+                  "uv": [
+                    8.0,
+                    0.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "west_0_vertical",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                8.01,
+                8,
+                -8
+              ],
+              "size": [
+                0.0,
+                8,
+                8
+              ],
+              "uv": {
+                "west": {
+                  "uv": [
+                    0.0,
+                    8.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "west_1_none",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                8.01,
+                0,
+                -8
+              ],
+              "size": [
+                0.0,
+                8,
+                8
+              ],
+              "uv": {
+                "west": {
+                  "uv": [
+                    0.0,
+                    8.0
+                  ],
+                  "uv_size": [
+                    8.0,
+                    8.0
+                  ],
+                  "material_instance": "overlay"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "west_1_cornerless",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                8.01,
+                0,
+                -8
+              ],
+              "size": [
+                0.0,
+                8,
+                8
+              ],
+              "uv": {
+                "west": {
+                  "uv": [
+                    0.0,
+                    4.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "west_1_horizontal",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                8.01,
+                0,
+                -8
+              ],
+              "size": [
+                0.0,
+                8,
+                8
+              ],
+              "uv": {
+                "west": {
+                  "uv": [
+                    8.0,
+                    4.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "west_1_vertical",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                8.01,
+                0,
+                -8
+              ],
+              "size": [
+                0.0,
+                8,
+                8
+              ],
+              "uv": {
+                "west": {
+                  "uv": [
+                    0.0,
+                    12.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "west_2_none",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                8.01,
+                0,
+                0
+              ],
+              "size": [
+                0.0,
+                8,
+                8
+              ],
+              "uv": {
+                "west": {
+                  "uv": [
+                    8.0,
+                    8.0
+                  ],
+                  "uv_size": [
+                    8.0,
+                    8.0
+                  ],
+                  "material_instance": "overlay"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "west_2_cornerless",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                8.01,
+                0,
+                0
+              ],
+              "size": [
+                0.0,
+                8,
+                8
+              ],
+              "uv": {
+                "west": {
+                  "uv": [
+                    4.0,
+                    4.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "west_2_horizontal",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                8.01,
+                0,
+                0
+              ],
+              "size": [
+                0.0,
+                8,
+                8
+              ],
+              "uv": {
+                "west": {
+                  "uv": [
+                    12.0,
+                    4.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "west_2_vertical",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                8.01,
+                0,
+                0
+              ],
+              "size": [
+                0.0,
+                8,
+                8
+              ],
+              "uv": {
+                "west": {
+                  "uv": [
+                    4.0,
+                    12.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "west_3_none",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                8.01,
+                8,
+                0
+              ],
+              "size": [
+                0.0,
+                8,
+                8
+              ],
+              "uv": {
+                "west": {
+                  "uv": [
+                    8.0,
+                    0.0
+                  ],
+                  "uv_size": [
+                    8.0,
+                    8.0
+                  ],
+                  "material_instance": "overlay"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "west_3_cornerless",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                8.01,
+                8,
+                0
+              ],
+              "size": [
+                0.0,
+                8,
+                8
+              ],
+              "uv": {
+                "west": {
+                  "uv": [
+                    4.0,
+                    0.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "west_3_horizontal",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                8.01,
+                8,
+                0
+              ],
+              "size": [
+                0.0,
+                8,
+                8
+              ],
+              "uv": {
+                "west": {
+                  "uv": [
+                    12.0,
+                    0.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "west_3_vertical",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                8.01,
+                8,
+                0
+              ],
+              "size": [
+                0.0,
+                8,
+                8
+              ],
+              "uv": {
+                "west": {
+                  "uv": [
+                    4.0,
+                    8.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "east_0_none",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8.010000000000002,
+                8,
+                -8
+              ],
+              "size": [
+                0.0,
+                8,
+                8
+              ],
+              "uv": {
+                "east": {
+                  "uv": [
+                    8.0,
+                    0.0
+                  ],
+                  "uv_size": [
+                    8.0,
+                    8.0
+                  ],
+                  "material_instance": "overlay"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "east_0_cornerless",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8.010000000000002,
+                8,
+                -8
+              ],
+              "size": [
+                0.0,
+                8,
+                8
+              ],
+              "uv": {
+                "east": {
+                  "uv": [
+                    4.0,
+                    0.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "east_0_horizontal",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8.010000000000002,
+                8,
+                -8
+              ],
+              "size": [
+                0.0,
+                8,
+                8
+              ],
+              "uv": {
+                "east": {
+                  "uv": [
+                    12.0,
+                    0.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "east_0_vertical",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8.010000000000002,
+                8,
+                -8
+              ],
+              "size": [
+                0.0,
+                8,
+                8
+              ],
+              "uv": {
+                "east": {
+                  "uv": [
+                    4.0,
+                    8.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "east_1_none",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8.010000000000002,
+                0,
+                -8
+              ],
+              "size": [
+                0.0,
+                8,
+                8
+              ],
+              "uv": {
+                "east": {
+                  "uv": [
+                    8.0,
+                    8.0
+                  ],
+                  "uv_size": [
+                    8.0,
+                    8.0
+                  ],
+                  "material_instance": "overlay"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "east_1_cornerless",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8.010000000000002,
+                0,
+                -8
+              ],
+              "size": [
+                0.0,
+                8,
+                8
+              ],
+              "uv": {
+                "east": {
+                  "uv": [
+                    4.0,
+                    4.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "east_1_horizontal",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8.010000000000002,
+                0,
+                -8
+              ],
+              "size": [
+                0.0,
+                8,
+                8
+              ],
+              "uv": {
+                "east": {
+                  "uv": [
+                    12.0,
+                    4.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "east_1_vertical",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8.010000000000002,
+                0,
+                -8
+              ],
+              "size": [
+                0.0,
+                8,
+                8
+              ],
+              "uv": {
+                "east": {
+                  "uv": [
+                    4.0,
+                    12.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "east_2_none",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8.010000000000002,
+                0,
+                0
+              ],
+              "size": [
+                0.0,
+                8,
+                8
+              ],
+              "uv": {
+                "east": {
+                  "uv": [
+                    0.0,
+                    8.0
+                  ],
+                  "uv_size": [
+                    8.0,
+                    8.0
+                  ],
+                  "material_instance": "overlay"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "east_2_cornerless",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8.010000000000002,
+                0,
+                0
+              ],
+              "size": [
+                0.0,
+                8,
+                8
+              ],
+              "uv": {
+                "east": {
+                  "uv": [
+                    0.0,
+                    4.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "east_2_horizontal",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8.010000000000002,
+                0,
+                0
+              ],
+              "size": [
+                0.0,
+                8,
+                8
+              ],
+              "uv": {
+                "east": {
+                  "uv": [
+                    8.0,
+                    4.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "east_2_vertical",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8.010000000000002,
+                0,
+                0
+              ],
+              "size": [
+                0.0,
+                8,
+                8
+              ],
+              "uv": {
+                "east": {
+                  "uv": [
+                    0.0,
+                    12.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "east_3_none",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8.010000000000002,
+                8,
+                0
+              ],
+              "size": [
+                0.0,
+                8,
+                8
+              ],
+              "uv": {
+                "east": {
+                  "uv": [
+                    0.0,
+                    0.0
+                  ],
+                  "uv_size": [
+                    8.0,
+                    8.0
+                  ],
+                  "material_instance": "overlay"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "east_3_cornerless",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8.010000000000002,
+                8,
+                0
+              ],
+              "size": [
+                0.0,
+                8,
+                8
+              ],
+              "uv": {
+                "east": {
+                  "uv": [
+                    0.0,
+                    0.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "east_3_horizontal",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8.010000000000002,
+                8,
+                0
+              ],
+              "size": [
+                0.0,
+                8,
+                8
+              ],
+              "uv": {
+                "east": {
+                  "uv": [
+                    8.0,
+                    0.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "east_3_vertical",
+          "pivot": [
+            0,
+            0,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8.010000000000002,
+                8,
+                0
+              ],
+              "size": [
+                0.0,
+                8,
+                8
+              ],
+              "uv": {
+                "east": {
+                  "uv": [
+                    0.0,
+                    8.0
+                  ],
+                  "uv_size": [
+                    4.0,
+                    4.0
+                  ],
+                  "material_instance": "connected"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
