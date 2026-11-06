@@ -1,0 +1,16 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "twilightforest:lich_tower/7x7/beard_flat",
+  "size": [9, 1, 9],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"minecraft:stone_brick_slab","Properties":{"type":"top"}}
+  ],
+  "blocks": [
+    [0, 10], [1, 7], [0, 2], [1, 7], [0, 2], [1, 7], [0, 2], [1, 7], [0, 2], [1, 7], [0, 2], [1, 7], [0, 2], [1, 7], [0, 10]
+  ],
+  "jigsaw": [
+    {"pos":[4,0,4],"front":"up","top":"north","pool":"minecraft:empty","name":"gf:lich_tower/beard","target":""}
+  ]
+}
