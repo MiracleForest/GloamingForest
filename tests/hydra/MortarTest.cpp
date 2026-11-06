@@ -59,15 +59,16 @@ TEST(HydraMortar, ProjectileLineOfMotion) {
 
 TEST(HydraMortar, ProjectileLook) {
     // Projectile#updateRotation's mirrored convention: the look is the motion with x and y negated
+    // (within Mth's 65536-entry sin table)
     auto l = projectileLook(V3{3.0, 4.0, 0.0});
-    EXPECT_NEAR(l.x, -0.6, 1e-6);
-    EXPECT_NEAR(l.y, -0.8, 1e-6);
-    EXPECT_NEAR(l.z, 0.0, 1e-6);
+    EXPECT_NEAR(l.x, -0.6, 1e-4);
+    EXPECT_NEAR(l.y, -0.8, 1e-4);
+    EXPECT_NEAR(l.z, 0.0, 1e-4);
     l = projectileLook(V3{0.0, 0.0, 2.0});
-    EXPECT_NEAR(l.z, 1.0, 1e-6);
+    EXPECT_NEAR(l.z, 1.0, 1e-4);
     l = projectileLook(V3{1.0, 0.0, 1.0});
-    EXPECT_NEAR(l.x, -0.70710678, 1e-6);
-    EXPECT_NEAR(l.z, 0.70710678, 1e-6);
+    EXPECT_NEAR(l.x, -0.70710678, 1e-4);
+    EXPECT_NEAR(l.z, 0.70710678, 1e-4);
     l = projectileLook(V3{});
     EXPECT_DOUBLE_EQ(l.x * l.x + l.y * l.y + l.z * l.z, 0.0);
 }
