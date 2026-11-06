@@ -59,10 +59,8 @@ void registerAliasDefinitions() {
     }
 }
 
-/// CampPieces (the pool ids the templates' connectors use).
-[[maybe_unused]] constexpr char const* kPools[] = {"twilightforest:camp/structure_start", "twilightforest:camp/tent",  "twilightforest:camp/rack_path",
-                                                   "twilightforest:camp/main_path",       "twilightforest:camp/path", "twilightforest:camp/deco",
-                                                   "twilightforest:camp/rack"}; // (registered as gloamingforest:camp/...)
+/// CampPieces' pools (twilightforest:camp/structure_start, tent, rack_path, main_path, path, deco,
+/// rack) are registered again as gloamingforest:camp/... (registerAliasDefinitions).
 
 std::pair<int, int> startChunk(gf::landmark::Start const& start) {
     if (start.data.contains("chunk") && start.data["chunk"].is_array() && start.data["chunk"].size() == 2)

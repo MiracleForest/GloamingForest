@@ -115,7 +115,8 @@ void claimHome(Mob& ram) {
         std::lock_guard lock(homesMutex());
         auto&           list = homes();
         for (auto it = list.begin(); it != list.end(); ++it) {
-            if (it->dim != dimOf(ram) || std::abs(it->x - at.x) > 1 || std::abs(it->y - at.y) > 1 || std::abs(it->z - at.z) > 1) continue;
+            // the ram stands on its marker (moveTo(pos): the block's center, yaw 0) when it first ticks
+            if (it->dim != dimOf(ram) || it->x != at.x || it->y != at.y || it->z != at.z) continue;
             home = *it;
             list.erase(it);
             break;
@@ -141,8 +142,7 @@ void playAmbient(Actor& ram) { gf::fx::sound(ram.getDimension(), kAmbient, feet(
 void animateAddColor(Actor& ram, int dye, int iterations) {
     auto     p      = feet(ram);
     unsigned colour = 0xFF000000u | cq::textureDiffuse(dye);
-    auto     pos    = ram.getFeetPos();
-    Vec3     center{std::floor(pos.x) + 0.5F, std::floor(pos.y) + 0.5F, std::floor(pos.z) + 0.5F};
+    Vec3     center{std::floor(p.x) + 0.5F, std::floor(p.y) + 0.5F, std::floor(p.z) + 0.5F};
     if (fe::playersNear(dimOf(ram), center, 64.0).empty()) return;
     auto& r      = fe::randomOf(ram);
     auto  box    = ram.getAABB();
@@ -172,7 +172,6 @@ public:
     bool canUse() override {
         auto* ram = mobOf(mUid);
         if (!ram) return false;
-        auto  p   = feet(*ram);
         auto  box = ram->getAABB();
         AABB  search{Vec3{box.min.x - 16, box.min.y - 16, box.min.z - 16}, Vec3{box.max.x + 16, box.max.y + 16, box.max.z + 16}};
         std::vector<std::pair<double, std::int64_t>> items;
@@ -183,7 +182,6 @@ public:
             if (game::items::isEmpty(stack) || !mobs::hasLineOfSight(*ram, *a) || !isItemTempting(*ram, stack)) continue;
             items.emplace_back(mobs::distanceSqr(*ram, *a), fe::uidOf(*a));
         }
-        (void)p;
         if (items.empty()) return false;
         std::stable_sort(items.begin(), items.end(), [](auto const& a, auto const& b) { return a.first < b.first; });
         mTarget = items.front().second;
@@ -277,7 +275,10 @@ void onSpawn(Actor& self) {
     gf::entity::addGoal(*mob, 2, std::make_shared<EatWoolGoal>(*mob));
     gf::entity::addGoal(*mob, 3, std::make_shared<TemptGoal>(*mob));
     gf::entity::addGoal(*mob, 5, gf::entity::goals::goHome(*mob, 1.25));
-    if (!gf::entity::home(*mob)) claimHome(*mob);
+    // a ram placed by the grove claims its home on its first tick only (a later ram never does)
+    if (!gf::entity::home(*mob) && self.mTickCount <= 5) claimHome(*mob);
+    dividers()[fe::uidOf(self)] = 0; // Java's constructor: a loaded ram starts at 0
+
     publish(self);
 }
 
@@ -406,8 +407,10 @@ void installRam() {
             if (list && list->is_array())
                 for (auto const& e : *list)
                     if (e.is_array() && e.size() == 4) loaded.push_back(core::GlobalPos{e[0].get<int>(), e[1].get<int>(), e[2].get<int>(), e[3].get<int>()});
+            // merged: worldgen may have queued homes before the world was ready
             std::lock_guard lock(homesMutex());
-            homes() = std::move(loaded);
+            for (auto const& h : loaded)
+                if (std::none_of(homes().begin(), homes().end(), [&](core::GlobalPos const& e) { return e == h; })) homes().push_back(h);
         });
         game::db::onWorldSave([] { saveHomes(); });
         game::db::onWorldClosed([] {

@@ -11,6 +11,7 @@
 // item each of the 16 dye colours asks for, and the reward table. A quest that does not name all 16
 // colours is refused (QuestingRamContext#validate) and the fallback (the 16 wools) stays.
 
+#include <memory>
 #include <mutex>
 
 #include "core/questcamps/Questcamps.h"
@@ -37,17 +38,19 @@ std::mutex& questMutex() {
     static std::mutex m;
     return m;
 }
-Quest& current() {
-    static Quest q = fallback();
+/// The current quest, swapped whole on reload (readers keep their snapshot).
+std::shared_ptr<Quest const>& current() {
+    static std::shared_ptr<Quest const> q = std::make_shared<Quest const>(fallback());
     return q;
+}
+std::shared_ptr<Quest const> snapshot() {
+    std::lock_guard lock(questMutex());
+    return current();
 }
 
 } // namespace
 
-Quest quest() {
-    std::lock_guard lock(questMutex());
-    return current();
-}
+Quest quest() { return *snapshot(); }
 
 void reloadQuest() {
     Quest q = fallback();
@@ -60,23 +63,33 @@ void reloadQuest() {
         }
         Quest loaded;
         int   flags = 0;
+        bool bad = false;
         for (auto const& [colour, ingredient] : doc["items"].items()) {
             int id = cq::dyeId(colour);
-            if (id < 0 || ingredient.is_null()) continue;
+            // DyeColor.CODEC / Ingredient.CODEC_NONEMPTY: an unknown colour or an empty ingredient fails the whole quest
+            if (id < 0 || ingredient.is_null() || (ingredient.is_array() && ingredient.empty())) {
+                bad = true;
+                break;
+            }
             loaded.items[static_cast<std::size_t>(id)] = ingredient;
             flags |= 1 << id;
+        }
+        if (bad || !doc.contains("reward") || !doc["reward"].is_string()) {
+            gf::log().warn("questcamps: {} does not decode (colours, ingredients, reward); the fallback quest stays", f.id());
+            break;
         }
         if (cq::countColors(flags) != 16) {
             gf::log().warn("questcamps: Questing Ram quest must contain all 16 dye colors ({}); the fallback quest stays", f.id());
             break;
         }
-        loaded.reward   = doc.value("reward", q.reward);
+        loaded.reward   = doc["reward"].get<std::string>();
         loaded.fromData = true;
         q               = std::move(loaded);
         break;
     }
+    auto next = std::make_shared<Quest const>(std::move(q));
     std::lock_guard lock(questMutex());
-    current() = std::move(q);
+    current() = std::move(next);
 }
 
 bool ingredientMatches(Json const& ingredient, std::string const& itemId) {
@@ -98,9 +111,9 @@ bool ingredientMatches(Json const& ingredient, std::string const& itemId) {
 
 std::vector<int> questColorsOf(std::string const& itemId) {
     std::vector<int> out;
-    auto             q = quest();
+    auto             q = snapshot();
     for (int i = 0; i < 16; ++i)
-        if (ingredientMatches(q.items[static_cast<std::size_t>(i)], itemId)) out.push_back(i);
+        if (ingredientMatches(q->items[static_cast<std::size_t>(i)], itemId)) out.push_back(i);
     return out;
 }
 

@@ -86,8 +86,6 @@ void queueHome(int dim, BlockPos const& pos);
 void installGrove();
 /// QuestGroveStructure#getFirstPiece at generation point (x, y, z).
 [[nodiscard]] std::unique_ptr<structure::Piece> makeGrove(int x, int y, int z);
-/// LandmarkStructure#findGenerationPoint's y for the grove: clamp(top occupied height, sea + 1, sea + 7).
-[[nodiscard]] int groveY(int topOccupied, int seaLevel);
 
 // ---- Camp.cpp ----------------------------------------------------------------------------------------------
 void installCamp();

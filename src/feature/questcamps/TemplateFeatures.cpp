@@ -25,6 +25,7 @@
 #include <functional>
 #include <map>
 #include <mutex>
+#include <utility>
 
 #include "core/questcamps/Questcamps.h"
 #include "feature/ext/questcamps/W0Internals.h"
@@ -147,11 +148,18 @@ std::string dirName(Orientation d) { return st::blocks::directionName(d); }
 // ---- SwizzleConfig ---------------------------------------------------------------------------------------------
 
 /// The members of a twilight:wood_palettes tag ("#twilightforest:common") in file order.
+std::mutex&                                       paletteMutex() {
+    static std::mutex m;
+    return m;
+}
+std::map<std::string, std::vector<std::string>>& paletteCache() {
+    static std::map<std::string, std::vector<std::string>> cache;
+    return cache;
+}
 std::vector<std::string> paletteTag(std::string tag) {
     if (!tag.empty() && tag[0] == '#') tag.erase(0, 1);
-    static std::mutex                                       m;
-    static std::map<std::string, std::vector<std::string>> cache;
-    std::lock_guard                                         lock(m);
+    std::lock_guard lock(paletteMutex());
+    auto&           cache = paletteCache();
     if (auto it = cache.find(tag); it != cache.end()) return it->second;
     std::vector<std::string> out;
     for (auto const& f : data::list("tags/twilight/wood_palettes")) {
@@ -498,6 +506,11 @@ bool placeGraveyard(st::Region& region, BlockPos const& pos, st::RandomSource& r
 
 void installFeatures() {
     namespace ff = gf::features;
+    static bool once = false;
+    if (!std::exchange(once, true)) data::onReload([] {
+            std::lock_guard lock(paletteMutex());
+            paletteCache().clear();
+        });
     ff::registerType("twilightforest:druid_hut", [](ff::FeatureContext const& c) {
         return placeDruidHut(c.region, c.origin, st::ext::worldRandom(c.region), c.config);
     });

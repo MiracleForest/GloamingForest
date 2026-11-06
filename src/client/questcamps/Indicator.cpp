@@ -78,7 +78,8 @@ int questColour(std::string const& itemId) {
 void draw(screen::Canvas& canvas, float) {
     if (!gf::config::get<fq::QuestcampsConfig>().questRamWoolIndicator) return;
     auto* player = currentPlayer();
-    if (!player) return;
+    // TF: not hidden GUI (the HUD layer is not drawn then), first person, not a spectator
+    if (!player || player->isSpectator()) return;
     auto const& stack = player->getSelectedItem();
     if (game::items::isEmpty(stack)) return;
     auto&  hit = player->getLevel().getHitResult();
@@ -106,6 +107,11 @@ public:
             feature::net::client::on(fq::kSyncChannel, [](nlohmann::json const& payload) {
                 std::lock_guard lock(questMutex());
                 syncedQuest() = payload;
+            });
+            // a new connection starts without the last server's quest (until its sync arrives)
+            feature::net::client::onConnected([] {
+                std::lock_guard lock(questMutex());
+                syncedQuest().reset();
             });
             return true;
         }();

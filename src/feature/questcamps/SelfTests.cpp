@@ -315,7 +315,6 @@ GF_REGISTER_SELFTEST("questcamps.grove_layout", [](Context& ctx) -> ll::coro::Co
     ctx.check(piece->typeId == kGrovePiece, "the piece type TFQuest1");
     ctx.check(piece->bbox.minX == gx - 12 && piece->bbox.minZ == gz - 12 && piece->bbox.minY == gy + 2, "the stored box starts at (x - 12, y + 2, z - 12)");
     ctx.check(piece->bbox.maxX - piece->bbox.minX == 26 && piece->bbox.maxZ - piece->bbox.minZ == 26, "the box is 27 x 27");
-    ctx.check(groveY(-30, 0) == 1 && groveY(3, 0) == 3 && groveY(40, 0) == 7, "the generation y clamps to sea level + 1 .. + 7");
     auto homesBefore = pendingHomes();
     {
         st::BlockSourceRegion region(*ctx.region(), BlockPos{gx, gy, gz});
@@ -565,7 +564,7 @@ GF_REGISTER_SELFTEST("questcamps.client_showcase", [](Context& ctx) -> ll::coro:
         (void)placeFancyWell(region, at(2), r, featureConfig("twilightforest:fancy_well"));
         (void)placeGroveRuins(region, at(3), r);
         (void)placeStoneCircle(region, at(4), r);
-        (void)placeGraveyard(region, BlockPos{at(5).x + 8, box.minY, at(5).z + 8}, r);
+        (void)placeGraveyard(region, BlockPos{box.minX + 90, box.minY, box.minZ + 92}, r); // inside the restored area
         ctx.info("features at " + std::to_string(at(0).x) + " " + std::to_string(at(0).z));
     }
     ctx.info("features ready");

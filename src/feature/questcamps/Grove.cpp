@@ -87,8 +87,6 @@ private:
 
 } // namespace
 
-int groveY(int topOccupied, int seaLevel) { return std::clamp(topOccupied, seaLevel + 1, seaLevel + 7); }
-
 std::unique_ptr<st::Piece> makeGrove(int x, int y, int z) {
     // QuestGroveStructure#getFirstPiece: (x - LENGTH / 2 + 1, y + 2, z - LENGTH / 2 + 1)
     return std::make_unique<GrovePiece>(BlockPos{x - kLength / 2 + 1, y + 2, z - kLength / 2 + 1});
