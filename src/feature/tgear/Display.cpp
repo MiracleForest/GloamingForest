@@ -278,7 +278,7 @@ bool mayPlaceIn(Player& player, SlotRef const& r, ItemStack const& item) {
         // no server screen to validate with: the display's items (maps, compasses, clocks, moon dials)
         // are never wearable; the off-hand takes what the item allows there
         if (r.kind != SlotRef::Offhand) return false;
-        auto const* it = item.getItem();
+        auto const* it = item.mItem.get();
         return it && it->mAllowOffhand == Item::OffhandAllowed::Yes;
     }
     FullContainerName name{};
