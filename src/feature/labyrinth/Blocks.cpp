@@ -53,8 +53,8 @@ namespace {
 /// The last vertical movement of each player (position change of the last tick): the speed it
 /// landed with (Bedrock players move on the client; their delta is not the server's).
 struct Fall {
-    double lastY = 0.0;
-    double dy    = 0.0;
+    double lastX = 0.0, lastY = 0.0, lastZ = 0.0;
+    double dx = 0.0, dy = 0.0, dz = 0.0;
     bool   known = false;
 };
 std::unordered_map<std::int64_t, Fall>& falls() {
@@ -111,9 +111,15 @@ void install() {
         if (!level) return;
         level->forEachPlayer(std::function<bool(Player&)>([](Player& p) {
             auto& f = falls()[p.getOrCreateUniqueID().rawID];
-            double y = p.getFeetPos().y;
-            if (f.known) f.dy = y - f.lastY;
-            f.lastY = y;
+            auto pos = p.getFeetPos();
+            if (f.known) {
+                f.dx = pos.x - f.lastX;
+                f.dy = pos.y - f.lastY;
+                f.dz = pos.z - f.lastZ;
+            }
+            f.lastX = pos.x;
+            f.lastY = pos.y;
+            f.lastZ = pos.z;
             f.known = true;
             return true;
         }));
@@ -127,8 +133,9 @@ void install() {
             auto it = falls().find(entity.getOrCreateUniqueID().rawID);
             if (it == falls().end() || it->second.dy > -0.1) return;
             auto& player = static_cast<Player&>(entity);
-            auto  v      = entity.getPosDelta();
-            gf::movement::applyMotion(player, Vec3{v.x, static_cast<float>(bounceSpeed(it->second.dy, true)), v.z});
+            // the horizontal speed the player had (client-side movement: the server's delta is stale)
+            auto const& f = it->second;
+            gf::movement::applyMotion(player, Vec3{static_cast<float>(f.dx), static_cast<float>(bounceSpeed(f.dy, true)), static_cast<float>(f.dz)});
             it->second.dy = 0.0;
             return;
         }

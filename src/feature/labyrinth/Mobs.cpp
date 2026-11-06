@@ -54,6 +54,9 @@
 #include "mc/world/level/Level.h"
 #include "mc/world/level/block/Block.h"
 #include "mc/world/phys/AABB.h"
+#include "mc/world/attribute/AttributeInstance.h"
+#include "mc/world/attribute/AttributeInstanceConstRef.h"
+#include "mc/world/attribute/SharedAttributes.h"
 #include "mc/util/VariantParameterList.h"
 
 #include "core/jrand/JRand.h"
@@ -224,16 +227,25 @@ bool properlyApplyCustomDamageSource(Mob& self, Actor& victim, char const* fling
         if (f1 > 0.0F) {
             gf::fx::sound(self.getDimension(), flingSound, feet(self), 1.0F, 1.0F);
             float yaw = self.getRotation().y * std::numbers::pi_v<float> / 180.0F;
-            // LivingEntity#knockback(f1 * 0.5, sin(yaw), -cos(yaw))
+            // LivingEntity#knockback(f1 * 0.5, sin(yaw), -cos(yaw)): scaled by 1 - knockback resistance
             float strength = f1 * 0.5F;
+            if (auto* vm = fe::asMob(victim)) {
+                auto        ref  = vm->getAttribute(SharedAttributes::KNOCKBACK_RESISTANCE());
+                auto const* inst = static_cast<AttributeInstance const*>(ref.mPtr);
+                if (inst) strength *= 1.0F - std::clamp(inst->mCurrentValue, 0.0F, 1.0F);
+            }
             float dx = std::sin(yaw), dz = -std::cos(yaw);
             float len = std::sqrt(dx * dx + dz * dz);
             auto  v   = victim.getPosDelta();
             Vec3  n{v.x / 2.0F - dx / len * strength, victim.isOnGround() ? std::min(0.4F, v.y / 2.0F + strength) : v.y, v.z / 2.0F - dz / len * strength};
-            fe::setMotion(victim, n);
+            if (strength > 0.0F) fe::setMotion(victim, n);
             auto s = self.getPosDelta();
             fe::setMotion(self, Vec3{s.x * 0.6F, s.y, s.z * 0.6F});
         }
+        // EnchantmentHelper#doPostAttackEffects of the weapon (the engine's hit, which would run them,
+        // was replaced): fire aspect sets the victim on fire for 4 seconds a level
+        int fire = EnchantUtils::getEnchantLevel(Enchant::Type::FireAspect, self.getCarriedItem());
+        if (fire > 0) victim.setOnFire(fire * 4, true);
     }
     return flag;
 }
@@ -313,7 +325,7 @@ public:
     StrollGoal(Mob& mob, double speed) : mUid(fe::uidOf(mob)), mSpeed(speed) { flags = Move; }
     bool canUse() override {
         auto* m = mobOf(mUid);
-        if (!m || fm::target(*m)) return false;
+        if (!m) return false;
         auto& r = fe::randomOf(*m);
         if (r.nextInt(60) != 0) return false;
         auto pos = m->isInWater() ? fm::randomPos(*m, 15, 7) : fm::randomPos(*m, 10, 7);
@@ -345,8 +357,9 @@ public:
     bool canUse() override {
         auto* m = mobOf(mUid);
         if (!m || fe::randomOf(*m).nextFloat() >= 0.02F) return false;
-        Actor* look = fm::target(*m);
-        if (!look) {
+        // LookAtPlayerGoal for Player.class: always the nearest player within 8 (not the target)
+        Actor* look = nullptr;
+        {
             double best = 65.0;
             for (auto* p : fe::playersNear(static_cast<int>(m->getDimensionId()), feet(*m), 8.0)) {
                 if (p->isSpectator()) continue;
@@ -588,6 +601,7 @@ void slimeTick(Actor& a) {
     auto* m = fe::asMob(a);
     if (!m || !m->isAlive()) return;
     if (!gf::entity::data(*m, "labyrinth:size").is_number_integer()) slimeSpawn(a);
+    if (slimes().size() > 1024) std::erase_if(slimes(), [](auto const& e) { return fe::actorById(e.first) == nullptr; });
     auto& st     = slimes()[fe::uidOf(*m)];
     bool  ground = m->isOnGround();
     auto& r      = fe::randomOf(*m);
@@ -622,14 +636,18 @@ void slimeDie(Actor& a, std::string const&, Actor*) {
     if (size <= 1) return;
     int   j = size / 2;
     int   k = 2 + rng().nextInt(3);
+    // Slime#remove: the children half the parent's width apart, with its name (a named mob is persistent on Bedrock)
+    float half    = 0.52F * static_cast<float>(size) / 2.0F;
+    auto  name    = m->getNameTag();
     auto  p = feet(*m);
     auto& region = m->getDimensionBlockSource();
     for (int l = 0; l < k; ++l) {
-        float f1 = (static_cast<float>(l % 2) - 0.5F) * static_cast<float>(size) / 4.0F;
-        float f2 = (static_cast<float>(l / 2) - 0.5F) * static_cast<float>(size) / 4.0F;
-        gf::spawn::spawnMob(region, kMazeSlime, Vec3{p.x + f1, p.y + 0.5F, p.z + f2}, gf::spawn::SpawnReason::Triggered, [j](Actor& child) {
+        float f1 = (static_cast<float>(l % 2) - 0.5F) * half;
+        float f2 = (static_cast<float>(l / 2) - 0.5F) * half;
+        gf::spawn::spawnMob(region, kMazeSlime, Vec3{p.x + f1, p.y + 0.5F, p.z + f2}, gf::spawn::SpawnReason::Triggered, [j, name](Actor& child) {
             if (auto* cm = fe::asMob(child)) {
                 setSlimeSize(*cm, j);
+                if (!name.empty()) cm->setNameTag(name);
                 float yaw = rng().nextFloat() * 360.0F;
                 cm->setYBodyRotation(yaw);
             }
@@ -645,19 +663,28 @@ bool notPeaceful() {
 }
 
 /// Monster#checkMonsterSpawnRules.
+bool spawnerReason(gf::spawn::SpawnReason reason) { return reason == gf::spawn::SpawnReason::Spawner || reason == gf::spawn::SpawnReason::TrialSpawner; }
+
+/// Mob#checkMobSpawnRules: a spawner places anywhere, else the block below must be valid to spawn on
+/// (BlockState#isValidSpawn: not air, leaves, glass, barriers or magma).
+bool checkMobSpawnRules(BlockSource& region, BlockPos const& pos, gf::spawn::SpawnReason reason) {
+    if (spawnerReason(reason)) return true;
+    std::string below = gf::game::blockIdAt(region, BlockPos{pos.x, pos.y - 1, pos.z});
+    return below != "minecraft:air" && below.find("leaves") == std::string::npos && below.find("glass") == std::string::npos && below != "minecraft:barrier" &&
+           below != "minecraft:magma";
+}
+
 bool checkMonsterSpawnRules(BlockSource& region, std::string const&, BlockPos const& pos, gf::spawn::SpawnReason reason, gf::core::jrand::RandomSource& random) {
     if (!notPeaceful()) return false;
-    if (reason == gf::spawn::SpawnReason::Spawner || reason == gf::spawn::SpawnReason::TrialSpawner) return true;
-    return gf::world::ext::isDarkEnoughToSpawn(region, pos, random);
+    // Monster#checkMonsterSpawnRules: isDarkEnoughToSpawn (spawners skip it) and checkMobSpawnRules
+    if (spawnerReason(reason)) return true;
+    return gf::world::ext::isDarkEnoughToSpawn(region, pos, random) && checkMobSpawnRules(region, pos, reason);
 }
 
 /// MazeSlime#getCanSpawnHere: not peaceful, Mob#checkMobSpawnRules and Monster#isDarkEnoughToSpawn.
-bool mazeSlimeSpawnRules(BlockSource& region, std::string const&, BlockPos const& pos, gf::spawn::SpawnReason, gf::core::jrand::RandomSource& random) {
+bool mazeSlimeSpawnRules(BlockSource& region, std::string const&, BlockPos const& pos, gf::spawn::SpawnReason reason, gf::core::jrand::RandomSource& random) {
     if (!notPeaceful()) return false;
-    // Mob#checkMobSpawnRules: the block below must be valid to spawn on (not leaves / magma ...)
-    std::string below = gf::game::blockIdAt(region, BlockPos{pos.x, pos.y - 1, pos.z});
-    if (below == "minecraft:air" || below.find("leaves") != std::string::npos) return false;
-    return gf::world::ext::isDarkEnoughToSpawn(region, pos, random);
+    return checkMobSpawnRules(region, pos, reason) && gf::world::ext::isDarkEnoughToSpawn(region, pos, random);
 }
 
 } // namespace

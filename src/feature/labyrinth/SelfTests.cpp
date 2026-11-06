@@ -170,8 +170,8 @@ void golden(Context& ctx, std::string const& name, std::string const& expected, 
 }
 
 // Recorded from the translation (GloamingForest's own goldens: chunk (3, -2), y 0, seed 20260521).
-constexpr char kLayout[] = "";
-constexpr char kHash[]   = "";
+constexpr char kLayout[] = "TFMMC=2 TFMMCIF=7 TFMMCR=2 TFMMCS=2 TFMMDE=12 TFMMDEC=9 TFMMDEF=6 TFMMDEFL=12 TFMMDEP=14 TFMMDER=14 TFMMDES=6 TFMMDET=11 TFMMDETC=8 TFMMDETrC=6 TFMMES=1 TFMMMR=2 TFMMMound=1 TFMMR=2 TFMMRB=1 TFMMRC=2 TFMMRE=1 TFMMRF=1 TFMMRSC=4 TFMMRV=1 TFMMRuins=1 TFMMUE=1 TFMMaze=2 5,-24,-75,118,12,38";
+constexpr char kHash[]   = "a004339e12d37a67";
 
 struct DifficultyScope {
     Difficulty previous = Difficulty::Peaceful;

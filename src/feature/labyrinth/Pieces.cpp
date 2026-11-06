@@ -38,7 +38,6 @@
 #include <algorithm>
 #include <climits>
 #include <cmath>
-#include <mutex>
 
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/block/Block.h"
@@ -64,7 +63,6 @@ Block const& mazestoneMosaic() { return J("twilightforest:mazestone_mosaic"); }
 Block const& mazestoneBorder() { return J("twilightforest:mazestone_border"); }
 Block const& decorativeMazestone() { return J("twilightforest:decorative_mazestone"); }
 Block const& cutMazestone() { return J("twilightforest:cut_mazestone"); }
-Block const& air() { return ComponentOld::air(); }
 
 /// Direction.Plane.HORIZONTAL.getRandomDirection: {NORTH, EAST, SOUTH, WEST}[nextInt(4)].
 Orientation randomHorizontal(RandomSource& rand) { return static_cast<Orientation>(rand.nextInt(4)); }
@@ -289,16 +287,14 @@ void UpperEntrance::postProcess(Region& world, RandomSource& rand, BlockBox cons
 EntranceShaft::EntranceShaft(int i, RandomSource& rand, int x, int y, int z)
 : ComponentOld(kEntranceShaft, i, BlockBox{x, std::min(y, kSeaLevel), z, x + 6 - 1, std::max(y, kSeaLevel), z + 6 - 1}) {
     setOrientation(randomHorizontal(rand));
+    // postProcess's this.boundingBox.encapsulate(pos.setY(generator.getSeaLevel() - 9)), done once
+    // here: TF grows the shared piece's box in its first postProcess; the start's box (the level 2
+    // maze reaches lower) and the chunks the piece touches are the same either way, and no
+    // generation thread writes the box
+    bbox.minY = std::min(bbox.minY, kSeaLevel - 9);
 }
 
 void EntranceShaft::postProcess(Region& world, RandomSource&, BlockBox const& sbb, BlockPos const&) {
-    // this.boundingBox.encapsulate(pos.setY(generator.getSeaLevel() - 9)): the box grows down once
-    // (the same for every chunk; TF changes the piece's box in place)
-    {
-        static std::mutex mutex;
-        std::lock_guard   lock(mutex);
-        if (bbox.minY > kSeaLevel - 9) bbox.minY = kSeaLevel - 9;
-    }
     int ySpan = bbox.maxY - bbox.minY + 1;
     fill(world, sbb, 0, 0, 0, 5, ySpan, 5, mazestoneBrick(), air(), true);
     fillAir(world, sbb, 1, 0, 1, 4, (kSeaLevel + 11) - bbox.minY, 4);
