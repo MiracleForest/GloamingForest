@@ -15,7 +15,9 @@
 // event: an instance that reached the holder is removed on the next tick), the emperor's cloth
 // tooltip and washing. The mystic crown is a head-slot wearable (BP minecraft:wearable, +2 armour);
 // its scepter and shield bonuses are read where they apply.
+#include <algorithm>
 #include <chrono>
+#include <string>
 #include <ctime>
 
 #include "ll/api/service/Bedrock.h"
@@ -145,3 +147,4 @@ void registerMisc() {
 }
 
 } // namespace gf::feature::artifacts
+

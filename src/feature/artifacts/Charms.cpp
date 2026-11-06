@@ -23,6 +23,7 @@
 // sound at the player (1.5, 1.0); with the "artifacts" key totemCharmAnimation the totem item
 // activation instead (the server's copy of TF's client key decides).
 #include <cmath>
+#include <cstdlib>
 #include <unordered_map>
 
 #include "ll/api/event/EventBus.h"
@@ -32,6 +33,7 @@
 #include "mc/deps/core/math/Vec2.h"
 #include "mc/deps/shared_types/legacy/actor/ArmorSlot.h"
 #include "mc/deps/ecs/gamerefs_entity/EntityContext.h"
+#include "mc/deps/ecs/gamerefs_entity/GameRefsEntity.h"
 #include "mc/network/MinecraftPacketIds.h"
 #include "mc/network/MinecraftPackets.h"
 #include "mc/network/packet/ActorEventPacket.h"
@@ -429,5 +431,7 @@ void registerCharms() {
 }
 
 } // namespace gf::feature::artifacts
+
+
 
 

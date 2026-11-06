@@ -16,6 +16,7 @@
 #include "ll/api/service/Bedrock.h"
 
 #include "mc/world/actor/Actor.h"
+#include "mc/world/actor/player/Player.h"
 #include "mc/world/level/BlockPos.h"
 
 #include "feature/artifacts/Artifacts.h"
@@ -121,3 +122,4 @@ void registerWandBolt() {
 }
 
 } // namespace gf::feature::artifacts
+

@@ -171,7 +171,7 @@ void tickOreMeter(ItemStack& stack, Player& player) {
     int   minY   = region.getMinHeight();
     // the volume: Java's volume is area * getMaxBuildHeight (the top y, 320 in the overworld), walked up from
     // the bottom: TF's scan stops short of the top
-    int maxY = std::max(1, region.getMaxHeight());
+    int maxY = std::max<int>(1, region.getMaxHeight());
     scan.tick(minY, maxY, [&](int x, int y, int z) { return idOfBlock(region.getBlock(BlockPos{x, y, z})); });
     if (!scan.finished()) {
         items::setData(stack, kDataOreLoading, scan.progress);
@@ -261,4 +261,5 @@ void installOreMeterListeners(std::vector<ll::event::ListenerPtr>& out) {
 }
 
 } // namespace gf::feature::artifacts
+
 
