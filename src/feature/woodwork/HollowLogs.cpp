@@ -144,7 +144,7 @@ ia::Result onUseHorizontal(ia::UseOnContext const& c) {
         if (!canChangeVariant(region, pos, variant, axis)) return pass();
         if (repeatedUse(c.player, c.pos, c.firstEvent)) return ia::Result::Consume;
         setState(region, pos, c.block, {{kVariant, "moss"}});
-        blockSound(region, pos, "dig.moss"); // MOSS_CARPET place
+        blockSound(region, pos, "use.moss"); // MOSS_CARPET place (Bedrock's place sounds are use.<type>)
         consumeOne(c.player, c.item);
         log().info("woodwork: {} put moss into {}", c.player.getRealName(), c.blockId);
         return ia::Result::Consume;
@@ -153,7 +153,7 @@ ia::Result onUseHorizontal(ia::UseOnContext const& c) {
         if (variant != "moss") return pass();
         if (repeatedUse(c.player, c.pos, c.firstEvent)) return ia::Result::Consume;
         setState(region, pos, c.block, {{kVariant, "moss_and_grass"}});
-        blockSound(region, pos, "dig.grass"); // GRASS place
+        blockSound(region, pos, "use.grass"); // GRASS place
         consumeOne(c.player, c.item);
         return ia::Result::Consume;
     }
@@ -161,7 +161,7 @@ ia::Result onUseHorizontal(ia::UseOnContext const& c) {
         if (!canChangeVariant(region, pos, variant, axis)) return pass();
         if (repeatedUse(c.player, c.pos, c.firstEvent)) return ia::Result::Consume;
         setState(region, pos, c.block, {{kVariant, "snow"}});
-        blockSound(region, pos, "dig.snow"); // SNOW place
+        blockSound(region, pos, "use.snow"); // SNOW place (fx: block.snow.place -> use.snow)
         consumeOne(c.player, c.item);
         return ia::Result::Consume;
     }
@@ -283,7 +283,7 @@ ia::Result onUseVertical(ia::UseOnContext const& c) {
     // the VINE state has no water (Java's climbable vine is never waterlogged): Bedrock's water
     // layer of the vertical log does not carry over
     else if (vine) clearWater(region, pos);
-    blockSound(region, pos, vine ? "dig.grass" : "dig.wood"); // VINE / LADDER place
+    blockSound(region, pos, vine ? "use.vines" : "use.ladder"); // VINE / LADDER place
     consumeOne(c.player, c.item);
     log().info("woodwork: {} made {} {}", c.player.getRealName(), set->climbable, variant);
     return ia::Result::Consume;

@@ -497,7 +497,8 @@ void installDryingRacks() {
             }
             r::state().live.erase(pos);
             r::track(pos, false);
-            r::notify(pos);
+            // no notify(): the display's own erase listener (DryingRackDisplay.cpp) removes the
+            // display and tells the companions "gone" once
         });
     }
     if (game::db::available()) r::loadIndex();

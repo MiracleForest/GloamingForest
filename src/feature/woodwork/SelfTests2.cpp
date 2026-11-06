@@ -323,7 +323,7 @@ GF_REGISTER_SELFTEST("woodwork.fuel", [](Context& ctx) {
         char const* id;
         int         ticks;
     };
-    for (auto const& f : {Fuel{"twilightforest:canopy_log", 300}, Fuel{"twilightforest:stripped_dark_wood", 300}, Fuel{"twilightforest:twilight_oak_planks", 300},
+    for (auto const& f : {Fuel{"twilightforest:canopy_log", 300}, Fuel{"twilightforest:stripped_canopy_wood", 300}, Fuel{"twilightforest:twilight_oak_planks", 300},
                           Fuel{"twilightforest:mining_slab", 150}, Fuel{"twilightforest:time_stairs", 300}, Fuel{"twilightforest:sorting_fence", 300},
                           Fuel{"twilightforest:transformation_fence_gate", 300}, Fuel{"twilightforest:mangrove_trapdoor", 300},
                           Fuel{"twilightforest:dark_pressure_plate", 300}, Fuel{"twilightforest:canopy_button", 100}, Fuel{"twilightforest:canopy_door", 200},
@@ -334,6 +334,13 @@ GF_REGISTER_SELFTEST("woodwork.fuel", [](Context& ctx) {
         ctx.check(std::abs(b - coal * f.ticks / 1600.0f) < 0.02f * coal, std::string(f.id) + " burns " + std::to_string(f.ticks) + " ticks (" + std::to_string(b) + " / coal " + std::to_string(coal) + ")");
     }
     ctx.check(!gf::woodwork_ext::fuel::burnTicks("twilightforest:canopy_chest"), "a TF chest is no Java fuel (only Blocks.CHEST is)");
+    // #twilightforest:darkwood_logs is not in #minecraft:logs_that_burn: dark logs and wood are no fuel
+    for (auto const* id : {"twilightforest:dark_log", "twilightforest:stripped_dark_log", "twilightforest:dark_wood", "twilightforest:stripped_dark_wood"}) {
+        ctx.check(!gf::woodwork_ext::fuel::burnTicks(id), std::string(id) + " is no Java fuel (not in #minecraft:logs_that_burn)");
+        float b = burn(id);
+        ctx.check(b <= 0.0f, std::string(id) + " does not burn in a furnace (" + std::to_string(b) + ")");
+    }
+    ctx.check(gf::woodwork_ext::fuel::burnTicks("twilightforest:dark_planks") == 300, "dark planks still burn 300 ticks (#minecraft:planks)");
 });
 
 // ---- boats --------------------------------------------------------------------------------------------
@@ -357,6 +364,28 @@ GF_REGISTER_SELFTEST("woodwork.boat_crash", [](Context& ctx) -> ll::coro::CoroTa
     ctx.check(countNear(ctx, c, "twilightforest:canopy_planks") == 3, "3 canopy planks dropped (" + std::to_string(countNear(ctx, c, "twilightforest:canopy_planks")) + ")");
     ctx.check(countNear(ctx, c, "minecraft:stick") == 2, "2 sticks dropped (" + std::to_string(countNear(ctx, c, "minecraft:stick")) + ")");
     ctx.check(countNear(ctx, c, "twilightforest:canopy_boat") == 0, "no boat item");
+    clearItemsNear(ctx, c);
+    // a chest boat breaks the same way and spills its chest (ChestBoat#remove: Containers.dropContents)
+    auto at = std::to_string(c.x) + " " + std::to_string(c.y + 7) + " " + std::to_string(c.z);
+    r       = gf::selftest::runServerCommand("summon twilightforest:chest_boat " + at + " 0 0 twilightforest:time", ctx.dimension());
+    ctx.require(r.ok, "a time chest boat summoned 7 blocks up: " + r.messages);
+    auto sel = "@e[type=twilightforest:chest_boat,x=" + std::to_string(c.x) + ",y=" + std::to_string(c.y + 7) + ",z=" + std::to_string(c.z) + ",r=2,c=1]";
+    r        = gf::selftest::runServerCommand("replaceitem entity " + sel + " slot.inventory 0 minecraft:diamond 5", ctx.dimension());
+    ctx.require(r.ok, "5 diamonds in the chest: " + r.messages);
+    r = gf::selftest::runServerCommand("replaceitem entity " + sel + " slot.inventory 26 minecraft:apple 3", ctx.dimension());
+    ctx.require(r.ok, "3 apples in the last slot: " + r.messages);
+    gone = false;
+    for (int i = 0; i < 80 && !gone; ++i) {
+        co_await ctx.ticks(1);
+        gone = actorsNear(ctx, c, "twilightforest:chest_boat").empty();
+    }
+    ctx.check(gone, "the chest boat broke on landing");
+    co_await ctx.ticks(2);
+    ctx.check(countNear(ctx, c, "minecraft:diamond") == 5, "the chest's 5 diamonds dropped (" + std::to_string(countNear(ctx, c, "minecraft:diamond")) + ")");
+    ctx.check(countNear(ctx, c, "minecraft:apple") == 3, "the chest's 3 apples dropped (" + std::to_string(countNear(ctx, c, "minecraft:apple")) + ")");
+    ctx.check(countNear(ctx, c, "twilightforest:time_planks") == 3, "3 time planks dropped (" + std::to_string(countNear(ctx, c, "twilightforest:time_planks")) + ")");
+    ctx.check(countNear(ctx, c, "minecraft:stick") == 2, "2 sticks dropped");
+    ctx.check(countNear(ctx, c, "twilightforest:time_chest_boat") == 0 && countNear(ctx, c, "minecraft:chest") == 0, "no chest boat item, no chest");
     clearItemsNear(ctx, c);
     // a short drop does not break it
     r = gf::selftest::runServerCommand("summon twilightforest:boat " + std::to_string(c.x) + " " + std::to_string(c.y + 2) + " " + std::to_string(c.z) + " 0 0 twilightforest:mining", ctx.dimension());
@@ -430,6 +459,18 @@ GF_REGISTER_SELFTEST("woodwork.rack_sync", [](Context& ctx) -> ll::coro::CoroTas
                 for (auto const& g : e.payload.value("gone", nlohmann::json::array())) gone |= g == nlohmann::json::array({p.dim, p.x, p.y, p.z});
         ctx.check(gone, "an emptied rack is withdrawn from the client mod");
         ctx.check(actorsNear(ctx, p, "gloamingforest:drying_rack_item", 1.f).empty(), "and its display goes");
+        // a rack removed with its item is withdrawn once (one "gone" message)
+        h->set(p, 0, *gf::game::items::make("minecraft:kelp"));
+        co_await ctx.ticks(2);
+        (void)gf::feature::net::takeTestMessages(ctx.player());
+        ctx.require(ctx.setBlock(p, "minecraft:air"), "the rack removed");
+        co_await ctx.ticks(3);
+        int goneCount = 0;
+        for (auto const& e : gf::feature::net::takeTestMessages(ctx.player()))
+            if (e.channel == "woodwork.rack")
+                for (auto const& g : e.payload.value("gone", nlohmann::json::array())) goneCount += g == nlohmann::json::array({p.dim, p.x, p.y, p.z}) ? 1 : 0;
+        ctx.check(goneCount == 1, "a removed rack is withdrawn once (" + std::to_string(goneCount) + " gone messages)");
+        ctx.check(countNear(ctx, p, "minecraft:kelp") == 1, "and drops its item");
     }
     clearItemsNear(ctx, p);
     ctx.cleanupBlock(p);

@@ -35,6 +35,7 @@
 #include "mc/world/actor/ActorDefinitionIdentifier.h"
 #include "mc/world/actor/ActorDamageSource.h"
 #include "mc/world/level/BlockPos.h"
+#include "mc/world/actor/item/ChestBoat.h"
 #include "mc/world/actor/item/ItemActor.h"
 #include "mc/deps/core/string/HashedString.h"
 #include "mc/world/actor/state/PropertyComponent.h"
@@ -82,6 +83,31 @@ int woodOf(Actor& boat) {
         }
     }
     return std::clamp(wood, 0, static_cast<int>(kTfWoods.size()) - 1);
+}
+
+/// Boat#getStatus == ON_LAND as checkFallDamage asks it: not UNDER_WATER (Boat#isUnderwater: water in
+/// the cells at the top face of the boat's box), not IN_WATER (Boat#checkInWater: water in the cells
+/// of its bottom face whose surface reaches the bottom; a block of water reaches 8/9 of its height
+/// when it is a source with air above, the whole cell otherwise, approximated by 0.9) and on the
+/// ground (getGroundFriction > 0: the game's onGround). Ice counts as land, as in Java.
+bool onLand(Actor& boat) {
+    if (!boat.isOnGround() || boat.isInWater()) return false;
+    auto&       region = boat.getDimensionBlockSource();
+    auto const& bb     = boat.getAABB();
+    int         x0     = static_cast<int>(std::floor(bb.min.x)), x1 = static_cast<int>(std::ceil(bb.max.x));
+    int         z0     = static_cast<int>(std::floor(bb.min.z)), z1 = static_cast<int>(std::ceil(bb.max.z));
+    auto        cells  = [&](float y0, float y1, auto&& hit) {
+        for (int x = x0; x < x1; ++x)
+            for (int y = static_cast<int>(std::floor(y0)); y < static_cast<int>(std::ceil(y1)); ++y)
+                for (int z = z0; z < z1; ++z)
+                    if (waterAt(region, BlockPos{x, y, z}) && hit(y)) return true;
+        return false;
+    };
+    // checkInWater: the surface (y + height) reaches the box's bottom
+    if (cells(bb.min.y, bb.min.y + 0.001f, [&](int y) { return y + 0.9f >= bb.min.y; })) return false;
+    // isUnderwater: water above the box's top
+    if (cells(bb.max.y, bb.max.y + 0.001f, [&](int y) { return y + 0.9f >= bb.max.y; })) return false;
+    return true;
 }
 
 /// Player#blockInteractionRange (Attributes.BLOCK_INTERACTION_RANGE: 4.5, creative 5).
@@ -191,7 +217,7 @@ void checkFallDamage(Actor& boat) {
     }
     auto& region = boat.getDimensionBlockSource();
     if (boat.isOnGround()) {
-        if (dist > 3.0 && !boat.isInWater() && !waterAt(region, BlockPos{static_cast<int>(std::floor(boat.getPosition().x)), static_cast<int>(std::floor(y)), static_cast<int>(std::floor(boat.getPosition().z))})) {
+        if (dist > 3.0 && onLand(boat)) {
             // causeFallDamage(fallDistance, 1.0F, fall): the boat itself is immune, the riders fall
             auto pos = boat.getPosition();
             AABB box{Vec3{pos.x - 3.f, pos.y - 3.f, pos.z - 3.f}, Vec3{pos.x + 3.f, pos.y + 4.f, pos.z + 3.f}};
@@ -216,12 +242,17 @@ void checkFallDamage(Actor& boat) {
             // kill(): gone without the boat item (the game's destroy would drop it); the riders
             // dismount as the boat is removed
             // removed on the next tick: not inside the actor's own tick (Actor::tick)
-            auto id = boat.getOrCreateUniqueID();
-            ia::nextTick([id] {
+            // ChestBoat#remove(KILLED) drops the chest's contents (Containers.dropContents, whatever
+            // doEntityDrops says); Bedrock's remove() would delete them
+            auto id    = boat.getOrCreateUniqueID();
+            bool chest = boat.getTypeName() == kChestBoat;
+            ia::nextTick([id, chest] {
                 auto level = ll::service::getLevel();
                 if (!level) return;
                 if (auto* b = level->fetchEntity(id, false)) {
                     b->removeAllPassengers(true, true);
+                    // runtime identifier minecraft:chest_boat: the actor is the game's ChestBoat
+                    if (chest) static_cast<ChestBoat*>(b)->_dropChestContents(b->getPosition());
                     b->remove();
                 }
             });

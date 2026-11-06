@@ -5,6 +5,10 @@
 // HollowLogItem#getBurnTime (300). Chests and the canopy bookshelf burn in Java only as the vanilla
 // blocks themselves (Blocks.CHEST, TRAPPED_CHEST, BOOKSHELF), not as tag members: TF's do not burn.
 // Only the wood tags (the unit's items): #minecraft:saplings (100) is U3's to apply (rule R7).
+// Logs burn through #minecraft:logs_that_burn (vanilla 1.21.1 buildFuels), not #minecraft:logs:
+// TF's ItemTagGenerator puts every TF log tag into logs_that_burn except #twilightforest:darkwood_logs,
+// so dark logs and dark wood (stripped too) are no fuel in TF 4.8. Dark planks and the rest of the
+// dark set still burn (TF adds nothing to #minecraft:non_flammable_wood, buildFuels' exclusion).
 
 #include <array>
 #include <optional>
@@ -22,7 +26,7 @@ namespace {
 /// Java's vanilla fuel tags in buildFuels order (the first match wins as in Java's map, where no
 /// TF item is in two of them with different values).
 constexpr std::array<std::pair<char const*, int>, 14> kFuelTags{{
-    {"minecraft:logs", 300},
+    {"minecraft:logs_that_burn", 300},
     {"minecraft:planks", 300},
     {"minecraft:wooden_stairs", 300},
     {"minecraft:wooden_slabs", 150},

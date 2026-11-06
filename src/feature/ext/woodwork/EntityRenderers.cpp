@@ -34,25 +34,24 @@ struct Rules {
     std::size_t                                                                next = 1;
 };
 
-std::mutex& mutex() {
-    static std::mutex m;
-    return m;
+/// The rules as an immutable snapshot: the render thread loads it for every entity without a lock;
+/// the writers (main thread, rare) copy, change and publish it under their own mutex.
+struct Store {
+    std::mutex                                writer;
+    std::atomic<std::shared_ptr<Rules const>> rules{std::make_shared<Rules const>()};
+};
+Store& store() {
+    static auto* s = new Store; // kept for the process (render hooks may run during shutdown)
+    return *s;
 }
-/// The rules as an immutable snapshot (the render thread reads it every entity).
-std::shared_ptr<Rules const>& current() {
-    static auto* p = new std::shared_ptr<Rules const>(std::make_shared<Rules const>());
-    return *p;
-}
-std::shared_ptr<Rules const> snap() {
-    std::lock_guard lock(mutex());
-    return current();
-}
+std::shared_ptr<Rules const> snap() { return store().rules.load(std::memory_order_acquire); }
 template <class Fn>
 void update(Fn&& fn) {
-    std::lock_guard lock(mutex());
-    auto            copy = std::make_shared<Rules>(*current());
+    auto&           s = store();
+    std::lock_guard lock(s.writer);
+    auto            copy = std::make_shared<Rules>(*s.rules.load(std::memory_order_acquire));
     fn(*copy);
-    current() = std::move(copy);
+    s.rules.store(std::shared_ptr<Rules const>(std::move(copy)), std::memory_order_release);
 }
 
 std::atomic<std::size_t> gDataDriven{0}, gHidden{0};
