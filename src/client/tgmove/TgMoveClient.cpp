@@ -23,10 +23,13 @@
 // Bedrock's movement is server authoritative: the server applies the same modifiers to its copy
 // of the player and pushes the double jump and the sidestep itself (feature/tgmove); a jump of the
 // client's own would be put back. The wings' animation (TravellersWingsModel) is computed here
-// every frame from the synced wing state and set as Molang variables on the wearer, which
+// every frame from the synced wing state and set as public Molang variables on the wearer, which
 // animation.twilightforest.travellers_wings (assets/pack/rp/animations/tgmove) turns into the wing
-// bases' pose once the wings' attachable (U11 / F2) plays it. Each user-visible action logs one
-// line ("tgmove: ...") that the e2e scenario measures.
+// bases' pose: the client mod adds that animation to the wings' attachable (U11 / F2) as the game
+// reads it (feature/ext/tgmove/PackPatch), with no wings in first person (TF draws no armour
+// there). Vanilla clients read the attachable unchanged: their wings keep the model's rest pose and
+// never read variables they do not have. Each user-visible action logs one line ("tgmove: ...")
+// that the e2e scenario measures.
 
 #ifdef GF_CLIENT
 
@@ -34,10 +37,12 @@
 #include <atomic>
 #include <cmath>
 #include <map>
+#include <mutex>
 #include <optional>
 #include <random>
 #include <set>
 #include <string>
+#include <vector>
 
 #include "mc/client/player/LocalPlayer.h"
 #include "mc/deps/core/math/Vec2.h"
@@ -45,6 +50,7 @@
 #include "mc/deps/ecs/gamerefs_entity/EntityContext.h"
 #include "mc/deps/shared_types/legacy/actor/ArmorSlot.h"
 #include "mc/deps/vanilla_components/OnGroundFlagComponent.h"
+#include "mc/entity/components/MaxAutoStepComponent.h"
 #include "mc/entity/components/MoveInputComponent.h"
 #include "mc/input/MoveInputState.h"
 #include "mc/util/MolangScriptArg.h"
@@ -74,6 +80,7 @@
 #include "client/render/Render.h"
 #include "client/world/Sky.h"
 #include "core/tgmove/TgMove.h"
+#include "feature/ext/tgmove/PackPatch.h"
 #include "feature/net/Net.h"
 #include "feature/tgmove/TgMove.h"
 #include "game/Blocks.h"
@@ -96,6 +103,7 @@ constexpr double kPi    = 3.14159265358979323846;
 constexpr double kToDeg = 180.0 / kPi;
 constexpr char   kStraightName[] = "twilightforest:travellers_gear.boots_straight_ahead";
 constexpr int    kStaleFrames    = 200; ///< a remote entity unseen for this many frames is dropped
+constexpr char   kWingsAnimationKey[] = "tgmove_wings"; ///< the wing animation's short name in the attachable
 
 /// The FOV factor the engine last asked for and what it got (render thread; read by the tick's log).
 std::atomic<float> gFovIn{0}, gFovOut{0};
@@ -147,6 +155,13 @@ struct Local {
     int                   slideTicks = 0;
     float                 lastForward = 0;
     bool                  loggedStraight = false;
+    /// tgmove.honey_jump: the server made the honey jump up; this side adds the same velocity
+    struct Honey {
+        double add   = 0;
+        double lost  = 0;
+        int    ticks = 0;
+    };
+    std::optional<Honey> honey;
 };
 Local& local() {
     static Local l;
@@ -162,6 +177,8 @@ struct Remote {
     std::map<std::int64_t, long long>             seen; ///< the frame each entity was last animated
     long long                                     frame = 0;
     std::mt19937                                  rng{std::random_device{}()};
+    std::mutex                                    wearersMutex;
+    std::set<std::int64_t>                        wearers; ///< entities wearing the wings (scanWearers)
     tg::WingState                         loggedState = tg::WingState::Idle;
     bool                                  loggedAny   = false;
 };
@@ -171,8 +188,16 @@ Remote& remote() {
 }
 
 void resetWorld() {
-    local()  = Local{};
-    remote() = Remote{};
+    local() = Local{};
+    auto& r = remote();
+    std::lock_guard lock(r.wearersMutex);
+    r.wings.clear();
+    r.anim.clear();
+    r.walk.clear();
+    r.seen.clear();
+    r.wearers.clear();
+    r.frame     = 0;
+    r.loggedAny = false;
 }
 
 bool connected() { return net::client::connected(); }
@@ -356,10 +381,14 @@ void tick(movement::MoveState& s) {
         // handleAgileRanger: drawing a projectile weapon, the input x 5 (cancelling Java's 0.2 use
         // slowdown); where Bedrock's input carries its slowdown the velocity makes up the rest
         if (act(Mod::AgileRanger) && p->getItemUseDuration() > 0 && p->getVehicle() == nullptr && feature::tgmove::agileRangerItem(p->getCarriedItem())) {
-            tf = feature::tgmove::agileRangerInput(tf);
+            // the slowdown of this use as the input shows it (each item has its own)
+            Vec2 const raw  = in->mRawInputState->mAnalogMoveVector;
+            double     slow = feature::tgmove::itemUseSlowdownOf(move, raw);
+            tf              = feature::tgmove::agileRangerInput(tf, slow);
             if (!l.loggedAgileInput && (move.x != 0 || move.y != 0)) {
                 l.loggedAgileInput = true;
-                log().info("tgmove: agile ranger, input length while drawing {:.3f}", std::sqrt(move.x * move.x + move.y * move.y));
+                log().info("tgmove: agile ranger, input length while drawing {:.3f} (raw {:.3f}, use slowdown {:.3f})", std::sqrt(move.x * move.x + move.y * move.y),
+                           std::sqrt(raw.x * raw.x + raw.y * raw.y), slow);
             }
         }
         if (l.gliding && sneak) {
@@ -383,8 +412,9 @@ void tick(movement::MoveState& s) {
                 tg::unsneakImpulse(tf.y, tf.x, true, 1.0f);
             }
         }
-        if (tf.x != engine.x || tf.y != engine.y) s.velocity = s.velocity + feature::tgmove::inputDelta(*p, engine, tf, s.onGround, s.sprinting);
-    }    // ---- agile ranger: the bow's use slowdown x5 (the server's copy does the same) ----
+        if (tf.x != engine.x || tf.y != engine.y) s.velocity = s.velocity + feature::tgmove::inputDelta(*p, engine, tf, s.onGround, s.sprinting, act(Mod::Unrestrained));
+    }
+    // ---- agile ranger: the bow's use slowdown x5 (the server's copy does the same) ----
     (void)feature::tgmove::applyAgileRanger(*p, l.eng.agileBase, l.eng.agileSet);
     {
         auto attr = p->getAttribute(SharedAttributes::MOVEMENT_SPEED());
@@ -402,10 +432,24 @@ void tick(movement::MoveState& s) {
 
     // ---- unrestrained: no block slowdown; friction 0.6, no slime step-on slowdown or walking bounce ----
     feature::tgmove::applyImmunity(*p, l.eng, act(Mod::Unrestrained));
+    // the honey jump's make-up: the server's copy makes it when the server runs the mod (it tells this
+    // side, tgmove.honey_jump), else this side; never both (they would stack through the corrections)
+    l.eng.unrHoneyByServer = connected();
     if (act(Mod::Unrestrained) || l.eng.unrRescale != 1.0) {
         Vec2 move{s.strafe, s.forward};
         if (auto in = ctx.tryGetComponent<MoveInputComponent>()) move = in->mMove;
         s.velocity = feature::tgmove::applyUnrestrained(*p, l.eng, act(Mod::Unrestrained), s.velocity, s.onGround, sneak, &move);
+    }
+    if (l.honey && !act(Mod::Unrestrained)) l.honey.reset(); // the boots came off: nothing to make up
+    if (l.honey) {
+        if (!s.onGround && s.velocity.y > 0) { // the jump is on: the same velocity as the server's, taken off next step
+            s.velocity.y     = static_cast<float>(s.velocity.y + l.honey->add);
+            l.eng.unrJumpLost = l.honey->lost;
+            log().info("tgmove: honey jump made up by the server (vy +{:.3f})", l.honey->add);
+            l.honey.reset();
+        } else if (++l.honey->ticks > 4) {
+            l.honey.reset(); // too late: the server's corrections put the jump right
+        }
     }
 
     // ---- measurements (one line per action) ----
@@ -542,25 +586,39 @@ void animate(Actor& a, float partialTicks) {
     }
 }
 
+/// Once per client tick: the entities in the level that wear the wings. A new wearer gets its pose
+/// variables at once, before any frame draws its attachable (the animation reads them through an
+/// arrow, which must never find them missing); the frames then animate the wearers found here.
+void scanWearers() {
+    auto* me = currentPlayer();
+    if (!me) return;
+    auto&                  r = remote();
+    std::set<std::int64_t> found;
+    for (Actor* a : me->getLevel().getRuntimeActorList()) {
+        if (!a || !a->isAlive() || !wearsWings(*a)) continue;
+        auto id = a->getOrCreateUniqueID().rawID;
+        found.insert(id);
+        if (!r.anim.contains(id)) animate(*a, 0.0f);
+    }
+    std::lock_guard lock(r.wearersMutex);
+    r.wearers = std::move(found);
+}
+
 void renderWings(float partialTicks) {
     auto* me = currentPlayer();
     if (!me) return;
     auto& lv = me->getLevel();
     auto& r  = remote();
     ++r.frame;
-    std::set<std::int64_t> done;
-    lv.forEachPlayer([&](Player& q) {
-        if (wearsWings(q)) {
-            animate(q, partialTicks);
-            done.insert(q.getOrCreateUniqueID().rawID);
-        }
-        return true;
-    });
-    // mobs wearing the wings (their state comes from the server too)
-    for (auto const& [id, w] : r.wings) {
-        if (done.contains(id)) continue;
-        if (auto* a = lv.fetchEntity(ActorUniqueID{id}, false); a && !a->isPlayer() && wearsWings(*a)) animate(*a, partialTicks);
+    // every entity wearing the wings (the tick's scan), players and mobs, whether or not a state came
+    // for it yet (IDLE until one does)
+    std::vector<std::int64_t> wearers;
+    {
+        std::lock_guard lock(r.wearersMutex);
+        wearers.assign(r.wearers.begin(), r.wearers.end());
     }
+    for (auto id : wearers)
+        if (auto* a = lv.fetchEntity(ActorUniqueID{id}, false); a && a->isAlive() && wearsWings(*a)) animate(*a, partialTicks);
     // entities gone or out of sight for a while: their state goes (it comes back with the next packet)
     if (r.frame % 100 == 0) {
         std::set<std::int64_t> ids;
@@ -586,12 +644,48 @@ void renderWings(float partialTicks) {
     }
 }
 
+/// The wings' attachable as the client mod reads it: U12's wing animation (TravellersWingsModel,
+/// fed by animate()) and no wings in first person (TF draws no armour there). Returns whether it
+/// changed `doc` (only the wings' attachable, once).
+bool patchWingsAttachable(Json& doc) {
+    auto att = doc.find("minecraft:attachable");
+    if (att == doc.end() || !att->is_object()) return false;
+    auto desc = att->find("description");
+    if (desc == att->end() || !desc->is_object() || desc->value("identifier", std::string()) != "twilightforest:travellers_wings") return false;
+    Json& anims = (*desc)["animations"];
+    if (!anims.is_object()) anims = Json::object();
+    if (anims.contains(kWingsAnimationKey)) return false;
+    anims[kWingsAnimationKey] = "animation.twilightforest.travellers_wings";
+    Json& scripts = (*desc)["scripts"];
+    if (!scripts.is_object()) scripts = Json::object();
+    Json& animate = scripts["animate"];
+    if (!animate.is_array()) animate = Json::array();
+    animate.push_back(kWingsAnimationKey);
+    Json& rcs = (*desc)["render_controllers"];
+    Json  out = Json::array();
+    if (rcs.is_array())
+        for (auto const& rc : rcs) out.push_back(rc.is_string() ? Json{{rc.get<std::string>(), "!c.is_first_person"}} : rc);
+    rcs = std::move(out);
+    return true;
+}
+
+/// Whether the client mod is enabled (the contracts have no unregistration: its handlers check it).
+std::atomic<bool> gEnabled{false};
+
 class TgMoveClientModule {
 public:
+    // the resource packs load before the mod is enabled: the attachable's patch is registered first
+    void load() { registerPatch(); }
     void install() {
+        registerPatch();
+        gEnabled = true;
+        if (mInstalled) return; // the contracts keep the handlers below; they check gEnabled
+        mInstalled = true;
         movement::onLocalTick(0, [](movement::MoveState& s) {
+            if (!gEnabled) return;
             try {
                 tick(s);
+                scanWearers();
             } catch (std::exception const& e) {
                 log().error("tgmove: local tick failed: {}", e.what());
             }
@@ -600,6 +694,7 @@ public:
         camera::addFovModifier([](float fov) {
             gFovIn  = fov;
             gFovOut = fov;
+            if (!gEnabled) return fov;
             auto* p  = currentPlayer();
             if (!p) return fov;
             // only while the synced movement speed carries straight ahead's modifier (PlayerHooks#
@@ -626,6 +721,7 @@ public:
             return fov * k;
         });
         render::onWorld([](render::RenderContext&, float partialTicks) {
+            if (!gEnabled) return;
             try {
                 renderWings(partialTicks);
             } catch (std::exception const& e) {
@@ -644,8 +740,36 @@ public:
         });
         // GradualGlidePacket: the glide itself is in the server's motion of the other player; nothing to keep
         net::client::on("tgmove.gradual_glide", [](Json const&) {});
+        // the server made a honey jump up (unrestrained): this side adds the same on its next step
+        net::client::on("tgmove.honey_jump", [](Json const& msg) {
+            if (!gEnabled) return;
+            local().honey = Local::Honey{msg.value("add", 0.0), msg.value("lost", 0.0), 0};
+        });
     }
-    void uninstall() {}
+    /// Puts back what this side changed on the local player (Depth Strider, slowdown immunity, item
+    /// use slowdown, step height, the honey make-up) and stops the handlers (they check gEnabled).
+    void uninstall() {
+        gEnabled = false;
+        auto& l  = local();
+        if (auto* p = currentPlayer()) {
+            feature::tgmove::applyImmunity(*p, l.eng, false);
+            feature::tgmove::applyDepthStrider(*p, l.eng, false);
+            (void)feature::tgmove::applyAgileRanger(*p, l.eng.agileBase, l.eng.agileSet, true);
+            if (l.stepBase) {
+                if (auto step = p->getEntityContext().tryGetComponent<MaxAutoStepComponent>(); step && step->mValue == l.stepSet) step->mValue = *l.stepBase;
+            }
+        }
+        resetWorld();
+    }
+
+private:
+    static void registerPatch() {
+        static bool done = false;
+        if (done) return;
+        done = true;
+        gf::ext::packpatch::addJsonPatch("travellers_wings.json", [](Json& doc) { return patchWingsAttachable(doc); });
+    }
+    bool mInstalled = false;
 };
 
 } // namespace

@@ -25,8 +25,15 @@
 # remote-mod runs the same against BDS (the companion packets go over the network, the host logs
 # the double jump and the sidestep); remote-vanilla checks the fallback: SPACE in the air makes the
 # server push the double jump (SetActorMotionPacket) and the client stays connected.
+# The wings: with the client mod the wings' attachable plays U12's animation (the pack patch adds it
+# as the game reads the attachable; "pack patch: patched ...travellers_wings.json"), third person
+# screenshots of the IDLE, DOUBLE_JUMP, SIDESTEP and FALL_SLOW poses, and a first person screenshot
+# with no wings in view; remote-vanilla reads the attachable unchanged (no patch line, a clean
+# content log with a wearer in view).
+# The honey jump with unrestrained: 3 jumps, each 2.52 blocks high as TF's (Jump Boost II, no honey
+# jump factor), made up once (by the server copy, which tells the client mod).
 # Screenshots: out/tgmove*/{start,wings-idle,double-jump-1,double-jump-2,double-jump-3,sidestep,
-# glide,water-walk,step-up,bow}.png
+# glide,first-person,water-walk,step-up,bow}.png
 $remote     = $script:Mode -ne 'local'
 $hostPrefix = if ($remote) { '\[host\].*' } else { '' }
 $client     = '^(?!\[host\]).*'
@@ -47,6 +54,12 @@ function Invoke-E2eSelfTest([string]$name) {
 
 Wait-LogLine "${hostPrefix}GloamingForest world ready" 120 | Out-Null
 Save-Screenshot 'start' | Out-Null
+if ($script:Mode -eq 'remote-vanilla') {
+    if (Get-LeviLog | Select-String -Pattern "${client}pack patch: patched" -Quiet) { throw 'a vanilla client patched the wings attachable' }
+} else {
+    # the attachable is read at game start or when the world's packs load
+    Wait-LogLine "${client}pack patch: patched .*travellers_wings\.json" 30 | Out-Null
+}
 
 # the test area: x 298..322, z 296..322 of the flat test world (grass at y -61)
 Invoke-Chat '/gamemode survival'
@@ -104,6 +117,7 @@ function Measure-HoneyJump {
     Start-Sleep -Seconds 1
     Focus-Game
     $mark = Get-LogMark
+    $script:honeyMark = $mark
     Hold-Key $VK_SPACE 80
     $line = Wait-LogLine "${client}tgmove: jump peak ([0-9.]+) blocks from minecraft:honey_block" 10 -Since $mark
     if ($line -notmatch 'peak ([0-9.]+) blocks') { throw "no honey jump in '$line'" }
@@ -161,15 +175,21 @@ try {
 } catch { Add-Failure "no DOUBLE_JUMP wings pose: $_" }
 if ($remote) { Wait-LogLine '\[host\].*tgmove: .* double jumped \(vy' 20 -Since $mark | Out-Null }
 
-# ---- sidestep (A twice within 4 ticks) ----
+# ---- sidestep (A twice within 4 ticks), third person: the wings' SIDESTEP pose ----
 try {
 Invoke-Teleport '/tp @s 300.5 -60 304.5 0 0'
 Start-Sleep -Seconds 3 # more than the 40 tick cooldown since the double jump's test
 Focus-Game
+Hold-Key $VK_F5 60
+Start-Sleep -Milliseconds 400
 $mark = Get-LogMark
-Hold-Key $VK_A 70
-Start-Sleep -Milliseconds 60
-Hold-Key $VK_A 70
+try {
+    Hold-Key $VK_A 70
+    Start-Sleep -Milliseconds 60
+    Hold-Key $VK_A 70
+    Start-Sleep -Milliseconds 100
+    Save-Screenshot 'sidestep' | Out-Null
+} finally { Hold-Key $VK_F5 60; Start-Sleep -Milliseconds 200; Hold-Key $VK_F5 60 }
 $side = Wait-LogLine "${client}tgmove: sidestep (left|right)" 10 -Since $mark
 if ($side -notmatch 'sidestep left') { Add-Failure "A A should sidestep left: '$side'" }
 $moved = Wait-LogLine "${client}tgmove: sidestep moved ([0-9.]+) blocks" 10 -Since $mark
@@ -177,7 +197,9 @@ if ($moved -notmatch 'moved ([0-9.]+) blocks') { throw "no sidestep distance in 
 $d = [double]$Matches[1]
 $results['sidestep distance'] = "$d blocks (TF 1.6 / 0.454 = 3.5)"
 if ($d -lt 2.5 -or $d -gt 6.0) { Add-Failure "sidestep moved $d blocks, TF's push 1.6 gives about 3.5" }
-Save-Screenshot 'sidestep' | Out-Null
+try {
+    Wait-LogLine "${client}tgmove: wings pose sidestep" 5 -Since $mark | Out-Null
+} catch { Add-Failure "no SIDESTEP wings pose: $_" }
 if ($remote) { Wait-LogLine '\[host\].*tgmove: .* sidestepped left' 20 -Since $mark | Out-Null }
 } catch { Add-Failure "sidestep: $_" }
 
@@ -216,6 +238,11 @@ else {
 $si = Get-LeviLog | Select-Object -Skip $mark | Select-String -Pattern "${client}tgmove: gliding with sneak, input length .*" | Select-Object -Last 1
 if ($si) { $results['sneak input'] = $si.Line -replace '.*tgmove: ', '' }
 } catch { Add-Failure "glide: $_" }
+
+# ---- first person: TF draws no armour there, so no wings in view (looking down at the body) ----
+Invoke-Teleport '/tp @s 300.5 -60 302.5 0 70'
+Start-Sleep -Seconds 1
+Save-Screenshot 'first-person' | Out-Null
 
 # ---- water walk (first person: no wings in view) ----
 try {
@@ -261,7 +288,19 @@ try {
     $with.soul     = Measure-Walk 'soul_sand' '/tp @s 299.5 -60 314.5 270 0' 1500
     $with.web      = Measure-Walk 'cobweb' '/tp @s 299.5 -60 318.5 270 0' 1500
     $with.swim     = Measure-Walk 'water' '/tp @s 317.5 -62.5 301.5 0 0' 1500
-    $with.honey    = Measure-HoneyJump
+    # three honey jumps with unrestrained: each at TF's 2.52 blocks (Jump Boost II, no honey factor)
+    $honeyJumps = @()
+    foreach ($n in 1..3) {
+        $honeyJumps += Measure-HoneyJump
+        if ($script:Mode -ne 'remote-vanilla') {
+            $made = @(Get-LeviLog | Select-Object -Skip $script:honeyMark | Select-String -Pattern "${client}tgmove: honey jump made up by the server")
+            if ($made.Count -ne 1) { Add-Failure "honey jump $n made up $($made.Count) times on the client (once expected)" }
+        }
+        Start-Sleep -Milliseconds 500
+    }
+    $with.honey = ($honeyJumps | Measure-Object -Average).Average
+    $results['unrestrained honey jumps'] = ($honeyJumps -join ', ') + ' blocks (TF 2.52)'
+    foreach ($h in $honeyJumps) { if ([Math]::Abs($h - 2.52) -gt 0.15) { Add-Failure "unrestrained honey jump $h blocks, TF's is 2.52" } }
     Invoke-E2eSelfTest 'tgmove.e2e.plain'
     $without.forward = Measure-Walk 'forward' '/tp @s 302.5 -60 296.5 0 0' 1500 -Strafe
     $without.fov     = Wait-LogLine "${client}tgmove: fov forward in ([0-9.]+) out ([0-9.]+)" 10 -Since $script:walkMark

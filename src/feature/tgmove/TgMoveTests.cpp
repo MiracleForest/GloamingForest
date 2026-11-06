@@ -801,24 +801,28 @@ GF_REGISTER_SELFTEST("tgmove.agile_restore", [](Context& ctx) -> ll::coro::CoroT
 });
 
 // leashed_pathfinder_override: Java's PathfinderMob#tickLeash brings a leashed mob within 6 blocks
-// to 2 blocks of its holder unless the override is set. Bedrock's leash pulls a mob beyond the
-// preset's soft distance: 3 unmarked pigs 3.5 blocks from the holder come to it, 3 marked ones
-// (soft distance 6) stay where they are.
+// to 2 blocks of its holder unless the override is set. Bedrock's leashed mobs come to their holder
+// (the leash spring beyond the preset's soft distance, and a path to the holder): 3 unmarked pigs
+// 3.5 blocks from the holder come to it, 3 marked ones (soft distance 6, no path to the holder)
+// stay free. A 7th marked pig that is not leashed when it joins loses the marker
+// (handleLeashPathingOverrides).
 GF_REGISTER_SELFTEST("tgmove.leash", [](Context& ctx) -> ll::coro::CoroTask<> {
     co_await ctx.flatArea(1286, 12);
     auto g = ctx.testPos(1291, 2);
     co_await place(ctx, g);
     auto& region = ctx.player().getDimensionBlockSource();
     std::vector<ActorUniqueID> pigs;
-    for (int i = 0; i < 6; ++i) {
+    for (int i = 0; i < 7; ++i) {
         float  dx = i < 3 ? 4.0f : -3.0f;
-        float  dz = static_cast<float>(i % 3 - 1) * 1.5f;
+        float  dz = i == 6 ? 3.5f : static_cast<float>(i % 3 - 1) * 1.5f;
         Actor* a  = gf::spawn::spawnMob(region, "minecraft:pig", Vec3{g.x + 0.5f + dx, static_cast<float>(g.y), g.z + 0.5f + dz}, gf::spawn::SpawnReason::Command);
         if (!a) continue;
         if (i >= 3) a->addTag(tm::kLeashOverrideTag);
         pigs.push_back(a->getOrCreateUniqueID());
     }
-    ctx.require(pigs.size() == 6, "6 pigs");
+    ctx.require(pigs.size() == 7, "7 pigs");
+    ActorUniqueID loose = pigs.back(); // marked, never leashed
+    pigs.pop_back();
     co_await ctx.ticks(21); // the mob scan sees the marker
     auto& p = ctx.player();
     ctx.require(p.isSimulated(), "a simulated player holds the leads");
@@ -861,6 +865,16 @@ GF_REGISTER_SELFTEST("tgmove.leash", [](Context& ctx) -> ll::coro::CoroTask<> {
                 if (LeashableUtility::getPreset(*a, *leash, &holder).mSoftDistance >= 6.0f) ++freed;
     ctx.check(freed == 3, "the marked pigs' leash pulls only beyond 6 blocks (" + std::to_string(freed) + " of 3)");
     ctx.info("marked " + std::to_string(markedFar) + " / unmarked " + std::to_string(plainFar) + " pigs stayed more than 3 blocks away");
+    // TF: a marked mob within 6 blocks is not pathed to its holder (it may wander there by itself)
+    ctx.check(markedFar >= 2, "the marked pigs are not brought to the holder within 6 blocks (" + std::to_string(markedFar) + " of 3 stayed more than 3 blocks away)");
+    if (auto* a = lv->fetchEntity(loose, false)) {
+        ctx.check(!a->hasTag(tm::kLeashOverrideTag), "the marker is dropped from a mob that is not leashed when it joins");
+        if (auto leash = a->getEntityContext().tryGetComponent<LeashableComponent>())
+            ctx.check(LeashableUtility::getPreset(*a, *leash, nullptr).mSoftDistance < 6.0f, "its own leash presets are back");
+        a->despawn();
+    } else {
+        ctx.fail("the unleashed marked pig is gone");
+    }
     for (auto id : pigs)
         if (auto* a = lv->fetchEntity(id, false)) a->despawn();
 });

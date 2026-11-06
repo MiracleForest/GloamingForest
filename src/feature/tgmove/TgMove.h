@@ -114,12 +114,17 @@ struct PlayerState {
     double                     lastX = 0, lastY = 0, lastZ = 0;
     bool                       hasLast = false;
     float                      lastExhaustion = -1; ///< efficient eater: the exhaustion after the last tick
+    float                      lastSaturation = -1; ///< efficient eater: the saturation after the last tick (a wrap of the exhaustion takes it)
+    float                      lastFood       = -1; ///< efficient eater: the food after the last tick
+    float                      refundDebt     = 0;  ///< efficient eater: refund the exhaustion could not take yet (it wrapped)
     // unrestrained on the ground (BlockHooks): what the engine's last step left to put right
     double                     unrRescale = 1.0;   ///< the friction / slowdown of the last step -> TF's 0.6
     double                     unrVyPre   = 0;     ///< the y velocity the last step started with
     bool                       unrSlime   = false; ///< the last step was on a slime block
     bool                       unrHoney   = false; ///< the last step was on a honey block
     double                     unrJumpLost = 0;    ///< the height a honey jump made up in the last step
+    double                     unrJumpAdded = 0;   ///< the y velocity the last step's honey jump make-up added (server: sent to the companion)
+    bool                       unrHoneyByServer = false; ///< client mod with a server running the mod: the server makes the honey jump up (tgmove.honey_jump)
     double                     unrLastAccelSlow = 1.0; ///< mobs: the engine's acceleration factor of the last step
     double                     unrStepX = 0, unrStepZ = 0; ///< mobs: the last step's velocity (acceleration estimate)
     double                     unrLastDrag = 0;    ///< mobs: the last step's friction x 0.91 x slowdown (0: no ground step)
@@ -198,12 +203,19 @@ bool applyAgileRanger(Player& player, std::optional<float>& base, float& set, bo
 /// any hook, so both simulations add the difference of the accelerations of `tfMove` and
 /// `engineMove` (x strafe, y forward) instead: on the ground speed x the block's friction factor,
 /// in the air the flying speed (0.02, 0.026 sprinting).
-[[nodiscard]] Vec3 inputDelta(Actor& a, Vec2 const& engineMove, Vec2 const& tfMove, bool onGround, bool sprinting);
+/// `unrestrained`: the ground step's friction is TF's 0.6 (applyUnrestrained puts the engine's right),
+/// so the input change accelerates as on a block of friction 0.6.
+[[nodiscard]] Vec3 inputDelta(Actor& a, Vec2 const& engineMove, Vec2 const& tfMove, bool onGround, bool sprinting, bool unrestrained = false);
 /// Bedrock's item use slowdown of the input (measured: a held key's input is 0.122 long while a bow
 /// is drawn; Java's is 0.2, which agile ranger's x5 cancels).
 inline constexpr double kBedrockItemUseSlowdown = 0.122;
-/// handleAgileRanger's input: Bedrock's input without its item use slowdown (at most length 1).
-[[nodiscard]] Vec2 agileRangerInput(Vec2 const& move);
+/// handleAgileRanger's input: Bedrock's input without its item use slowdown `slowdown` (the
+/// slowdown of the current use; at most length 1).
+[[nodiscard]] Vec2 agileRangerInput(Vec2 const& move, double slowdown = kBedrockItemUseSlowdown);
+/// The item use slowdown of the current use as the input shows it: the engine's input `move` over
+/// the raw input `raw` (the keys or the stick, before any slowdown); kBedrockItemUseSlowdown when
+/// the raw input is too short to tell or the ratio is out of range (sneaking, no input).
+[[nodiscard]] double itemUseSlowdownOf(Vec2 const& move, Vec2 const& raw);
 /// The friction the engine gives the block at `pos` (Block friction; 0.6 for most blocks).
 [[nodiscard]] double blockFriction(Block const& block);
 /// The engine's own slowdowns of a ground step on `blockId`, which unrestrained undoes (1 = none):

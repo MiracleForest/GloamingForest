@@ -44,6 +44,8 @@
 #include "mc/entity/components/ItemUseSlowdownModifierComponent.h"
 #include "mc/entity/components_json_legacy/LeashableComponent.h"
 #include "mc/entity/components_json_legacy/LeashablePreset.h"
+#include "mc/entity/components_json_legacy/NavigationComponent.h"
+#include "mc/world/level/pathfinder/Path.h"
 #include "mc/entity/utilities/leashable_utility/LeashableUtility.h"
 #include "mc/world/actor/BuiltInActorComponents.h"
 #include "mc/entity/components/MaxAutoStepComponent.h"
@@ -108,7 +110,12 @@ constexpr unsigned kSlowFallingId  = 27; ///< MobEffectIds::SlowFalling
 constexpr int      kEffectTicks    = 20; ///< our hidden effects last this long, refreshed at half
 constexpr double   kTrackRange     = 64; ///< companions that see a player's wings
 constexpr int      kMobScanPeriod  = 20; ///< ticks between looks for mobs that put Travellers' gear on
-constexpr float    kLeashFreeDistance = 6.0f; ///< PathfinderMob#tickLeash: no stay-close pathing within 6 blocks with the override
+constexpr int      kWingsResyncPeriod  = 20;  ///< ticks between wing state sends to new trackers
+constexpr int      kWingsRefreshPeriod = 200; ///< ticks between wing state sends to every tracker
+constexpr float    kMaxRefundDebt  = 4.0f; ///< efficient eater: at most one wrap of exhaustion owed
+constexpr float    kLeashFreeDistance  = 6.0f; ///< PathfinderMob#tickLeash: no stay-close pathing within 6 blocks with the override
+constexpr double   kLeashHolderPathEnd = 2.5;  ///< a leashed mob's path ending this close to the holder is the stay-close approach (Java stops 2 blocks short)
+constexpr int      kLeashJoinTicks     = 40;   ///< a marked mob this old has joined the world (its leash is on)
 constexpr char     kWings[]        = "twilightforest:travellers_wings";
 constexpr char     kStraightName[] = "twilightforest:travellers_gear.boots_straight_ahead";
 // the slowdowns BlockMovementSlowdownImmunityComponent covers (EntityInsideSystemImpl: cobweb, powder
@@ -120,6 +127,15 @@ struct Store {
     std::unordered_set<std::int64_t>              mobs;    ///< the mob entries of `players`
     std::optional<bool>                           forceValidator;
     std::mt19937                                  rng{std::random_device{}()};
+    /// leashed_pathfinder_override: the marked mobs seen this session and their own leash presets
+    struct Leash {
+        std::vector<LeashablePreset> original;   ///< the presets before ours
+        bool                         applied = false;
+        bool                         decided = false; ///< the join check (handleLeashPathingOverrides) ran
+    };
+    std::unordered_map<std::int64_t, Leash> leash;
+    /// the companions that have the current wing state of each entity (tgmove.wings_state)
+    std::unordered_map<std::int64_t, std::unordered_set<std::int64_t>> wingsSent;
 };
 Store& store() {
     static Store s;
@@ -233,12 +249,14 @@ void broadcastGlide(Player& p, bool gliding) {
 /// Java's exhaustion of a jump (Player#jumpFromGround).
 float jumpExhaustionOf(Player const& p) { return p.isSprinting() ? 0.2f : 0.05f; }
 
-/// Takes `amount` of exhaustion back (efficient eater halves what the game added), never below 0.
-void refundExhaustion(Player& p, float amount) {
+/// Takes `amount` of exhaustion back (efficient eater halves what the game added), never below 0;
+/// returns how much it took (after the exhaustion passed 4 and wrapped there may be less to take).
+float refundExhaustion(Player& p, float amount) {
     float have = 0;
     if (auto ex = p.getAttribute(Player::EXHAUSTION()); ex.mPtr) have = ex.mPtr->mCurrentValue;
     float take = std::min(amount, have);
     if (take > 0) p.causeFoodExhaustion(-take);
+    return std::max(take, 0.0f);
 }
 
 /// The x1.4 movement speed of straight ahead (multiply-total, transient).
@@ -321,10 +339,21 @@ double blockFriction(Block const& block) {
     return f > 0 && f < 1.5f ? static_cast<double>(f) : tg::kUnrestrainedFriction;
 }
 
-Vec2 agileRangerInput(Vec2 const& move) {
+double itemUseSlowdownOf(Vec2 const& move, Vec2 const& raw) {
+    double r2 = static_cast<double>(raw.x) * raw.x + static_cast<double>(raw.y) * raw.y;
+    double m2 = static_cast<double>(move.x) * move.x + static_cast<double>(move.y) * move.y;
+    if (r2 < 0.04 || m2 < 1e-8) return kBedrockItemUseSlowdown;
+    // the raw input is at most length 1 (a diagonal of two keys is normalized after)
+    double k = std::sqrt(m2) / std::min(1.0, std::sqrt(r2));
+    return k > 0.02 && k < 0.95 ? k : kBedrockItemUseSlowdown;
+}
+
+Vec2 agileRangerInput(Vec2 const& move, double slowdown) {
     // Java: the use slowdown 0.2, then x 5 = the input as it was; Bedrock's slowdown is in the input
-    // (measured: 0.122 of a key's 1), so TF's input is the input without it, at most length 1
-    Vec2  tf{static_cast<float>(move.x / kBedrockItemUseSlowdown), static_cast<float>(move.y / kBedrockItemUseSlowdown)};
+    // (measured with a bow: 0.122 of a key's 1; other items have their own), so TF's input is the
+    // input without the current use's slowdown, at most length 1
+    if (slowdown <= 0) slowdown = kBedrockItemUseSlowdown;
+    Vec2  tf{static_cast<float>(move.x / slowdown), static_cast<float>(move.y / slowdown)};
     float l2 = tf.x * tf.x + tf.y * tf.y;
     if (l2 > 1.0f) {
         float l = std::sqrt(l2);
@@ -333,14 +362,16 @@ Vec2 agileRangerInput(Vec2 const& move) {
     return tf;
 }
 
-Vec3 inputDelta(Actor& a, Vec2 const& engineMove, Vec2 const& tfMove, bool onGround, bool sprinting) {
+Vec3 inputDelta(Actor& a, Vec2 const& engineMove, Vec2 const& tfMove, bool onGround, bool sprinting, bool unrestrained) {
     double scale = sprinting ? 0.026 : 0.02; // LivingEntity#getFlyingSpeed of players
     if (onGround) {
         Vec3     feet = a.getFeetPos();
         BlockPos below{static_cast<int>(std::floor(feet.x)), static_cast<int>(std::floor(feet.y - 0.5000001)), static_cast<int>(std::floor(feet.z))};
         float    speed = 0.1f;
         if (auto attr = a.getAttribute(SharedAttributes::MOVEMENT_SPEED()); attr.mPtr) speed = attr.mPtr->mCurrentValue;
-        scale = speed * tg::groundAccelFactor(blockFriction(a.getDimensionBlockSource().getBlock(below)));
+        // unrestrained: TF's step is on friction 0.6 whatever the block (resetBlockFrictionWithUnrestrained)
+        double friction = unrestrained ? tg::kUnrestrainedFriction : blockFriction(a.getDimensionBlockSource().getBlock(below));
+        scale           = speed * tg::groundAccelFactor(friction);
     }
     double yaw = a.getRotation().y;
     auto   e   = tg::inputAcceleration(engineMove.x, engineMove.y, yaw, scale);
@@ -369,8 +400,11 @@ Vec3 applyUnrestrained(Actor& a, PlayerState& st, bool on, Vec3 v, bool onGround
         v.y            = static_cast<float>(v.y - st.unrJumpLost * 0.98);
         st.unrJumpLost = 0;
     }
-    // resetFactorWithUnrestrained (getBlockJumpFactor): the engine's jump off honey was weaker
-    if (on && st.unrHoney && !onGround && v.y > 0 && st.unrVyPre <= 0) {
+    st.unrJumpAdded = 0;
+    // resetFactorWithUnrestrained (getBlockJumpFactor): the engine's jump off honey was weaker. One
+    // side makes it up: the server's copy when the server runs the mod (it tells the client mod with
+    // tgmove.honey_jump; two make-ups would stack through the server's corrections), else the client
+    if (on && st.unrHoney && !st.unrHoneyByServer && !onGround && v.y > 0 && st.unrVyPre <= 0) {
         double power       = tg::jumpPower(effectAmplifier(a, kJumpBoostId));
         double enginePower = v.y / 0.98 + tg::kGravity;
         // only the engine's honey jump (measured: 0.6 of the power on the server copy, 0.74 as the client
@@ -378,8 +412,9 @@ Vec3 applyUnrestrained(Actor& a, PlayerState& st, bool on, Vec3 v, bool onGround
         double ratio       = power > 0 ? enginePower / power : 0;
         auto   j           = ratio > kHoneyJumpFactor - 0.1 && ratio < 0.85 ? tg::unrestrainedJump(v.y, power) : std::nullopt;
         if (j) {
-            v.y            = static_cast<float>(j->vy);
-            st.unrJumpLost = j->lost;
+            st.unrJumpAdded = j->vy - v.y;
+            v.y             = static_cast<float>(j->vy);
+            st.unrJumpLost  = j->lost;
         }
     }
     // stopBouncing: the engine bounced a walk on slime in the last step
@@ -560,6 +595,7 @@ void forget(Actor& entity) {
         store().players.erase(it);
     }
     store().mobs.erase(id);
+    store().wingsSent.erase(id);
 }
 
 float voicePitch() { return static_cast<float>((rand01() - rand01()) * 0.2 + 1.0); }
@@ -610,16 +646,65 @@ std::optional<double> waterSurface(Actor& actor, Vec3 const& feet, double vy) {
 
 // ---- wings ---------------------------------------------------------------------------------------
 
-void syncWings(Actor& entity) {
-    auto& w = stateOf(entity).wings;
-    Json  msg{
+namespace {
+Json wingsMessage(Actor& entity, PlayerState const& st) {
+    auto const& w = st.wings;
+    return Json{
         {"entity", entity.getOrCreateUniqueID().rawID},
         {"state", std::string(tg::wingStateName(w.state))},
         {"left", w.sidestepLeft},
         {"double_jump_timer", w.doubleJumpTimer},
         {"sidestep_timer", w.sidestepTimer},
     };
-    forTrackers(entity, [&](Player& q) { net::send(q, "tgmove.wings_state", msg); });
+}
+
+bool wearsWingsItem(Actor const& a) { return game::items::idOf(armor(a, 2)) == "twilightforest:travellers_wings"; }
+
+/// The wing state (and a player's glide) of every wearer to the companions that came into range,
+/// joined or reloaded the entity since its last change (TravellersWingsStatePacket goes to each
+/// tracking player; Bedrock's tracking has no hook here): every kWingsResyncPeriod ticks to the new
+/// trackers, every kWingsRefreshPeriod ticks to all of them.
+void resyncWings(Level& lv) {
+    long long now = gameTime();
+    if (now % kWingsResyncPeriod != 0) return;
+    auto& s       = store();
+    bool  refresh = now % kWingsRefreshPeriod == 0;
+    std::vector<std::int64_t> ids;
+    for (auto const& [id, st] : s.players) ids.push_back(id);
+    for (auto id : ids) {
+        Actor* e = lv.fetchEntity(ActorUniqueID{id}, false);
+        if (!e || !e->isAlive() || !wearsWingsItem(*e)) {
+            s.wingsSent.erase(id);
+            continue;
+        }
+        auto  it   = s.players.find(id);
+        if (it == s.players.end()) continue;
+        auto& sent = s.wingsSent[id];
+        if (refresh) sent.clear();
+        std::unordered_set<std::int64_t> inRange;
+        Json msg = wingsMessage(*e, it->second);
+        Json glide{{"player", id}, {"gliding", it->second.gliding}};
+        forTrackers(*e, [&](Player& q) {
+            auto qid = q.getOrCreateUniqueID().rawID;
+            inRange.insert(qid);
+            if (sent.contains(qid)) return;
+            net::send(q, "tgmove.wings_state", msg);
+            if (e->isPlayer()) net::send(q, "tgmove.gradual_glide", glide);
+        });
+        sent = std::move(inRange); // a companion that left range gets the state again when it comes back
+    }
+}
+} // namespace
+
+void syncWings(Actor& entity) {
+    auto& st  = stateOf(entity);
+    Json  msg = wingsMessage(entity, st);
+    auto& sent = store().wingsSent[entity.getOrCreateUniqueID().rawID];
+    sent.clear();
+    forTrackers(entity, [&](Player& q) {
+        net::send(q, "tgmove.wings_state", msg);
+        sent.insert(q.getOrCreateUniqueID().rawID);
+    });
 }
 
 // ---- double jump -------------------------------------------------------------------------------
@@ -783,9 +868,11 @@ void flushRefund(Player& p) {
     auto it = store().players.find(p.getOrCreateUniqueID().rawID);
     if (it == store().players.end() || it->second.pendingRefund <= 0 || gameTime() < it->second.pendingRefundAt) return;
     float before = exhaustionOf(p);
-    refundExhaustion(p, it->second.pendingRefund);
+    float taken  = refundExhaustion(p, it->second.pendingRefund);
     // the movement measure of tickPlayer does not see this refund as exhaustion the game took off
     if (it->second.lastExhaustion >= 0) it->second.lastExhaustion -= before - exhaustionOf(p);
+    // the jump's exhaustion wrapped past 4: the rest is taken from the next exhaustion
+    it->second.refundDebt    = std::min(it->second.refundDebt + it->second.pendingRefund - taken, kMaxRefundDebt);
     it->second.pendingRefund = 0;
 }
 
@@ -920,6 +1007,12 @@ void tickPlayer(Player& player) {
             delta = nv;
             setPosDelta(player, delta);
         }
+        // the honey jump this copy made up: the companion's client makes up the same (only this side
+        // detects it, so the two never stack)
+        if (st.unrJumpAdded > 0 && companion) {
+            net::send(player, "tgmove.honey_jump", {{"add", st.unrJumpAdded}, {"lost", st.unrJumpLost}});
+            log().info("tgmove: {} jumped off honey unrestrained (vy +{:.3f})", player.getRealName(), st.unrJumpAdded);
+        }
     }
 
     // the input changes of the companion's client (straight ahead's strafe / 1.4, the glide's
@@ -933,7 +1026,7 @@ void tickPlayer(Player& player) {
         }
         if (has(mask, Mod::AgileRanger) && player.getItemUseDuration() > 0 && player.getVehicle() == nullptr && agileRangerItem(player.getCarriedItem()))
         {
-            tf = agileRangerInput(tf); // handleAgileRanger
+            tf = agileRangerInput(tf, itemUseSlowdownOf(move, in->mRawInputState->mAnalogMoveVector)); // handleAgileRanger
             if (!st.loggedAgile && (move.x != 0 || move.y != 0)) {
                 st.loggedAgile = true;
                 log().info("tgmove: {} agile ranger, server input length while drawing {:.3f}", player.getRealName(), std::sqrt(move.x * move.x + move.y * move.y));
@@ -941,7 +1034,7 @@ void tickPlayer(Player& player) {
         }
         if (st.gliding && player.isSneaking() && !onGround) tg::unsneakImpulse(tf.y, tf.x, false);
         if (tf.x != move.x || tf.y != move.y) {
-            delta = delta + inputDelta(player, move, tf, onGround, player.isSprinting());
+            delta = delta + inputDelta(player, move, tf, onGround, player.isSprinting(), unrestrained);
             setPosDelta(player, delta);
         }
     }
@@ -998,14 +1091,20 @@ void tickPlayer(Player& player) {
                 else if (inWater) e = static_cast<float>(0.01 * horiz); // wading: WALK_ON_WATER, horizontal
                 else if (onGround && player.isSprinting()) e = static_cast<float>(0.1 * horiz);
             }
-            if (float refund = tg::efficientEaterRefund(e, exh - st.lastExhaustion); refund > 0) {
-                refundExhaustion(player, refund);
-                exh = exhaustionOf(player);
-            }
+            // efficientEaterRefund counts a wrap (the exhaustion passed 4, the game took 4 off) as added
+            if (float refund = tg::efficientEaterRefund(e, exh - st.lastExhaustion); refund > 0) st.refundDebt = std::min(st.refundDebt + refund, kMaxRefundDebt);
+        }
+        // the refund owed, as far as the exhaustion has it: after a wrap it is small, and the rest is
+        // taken from the exhaustion of the next ticks (the food lasts as long as TF's on average)
+        if (st.refundDebt > 0) {
+            st.refundDebt -= refundExhaustion(player, st.refundDebt);
+            if (st.refundDebt < 1e-6f) st.refundDebt = 0;
+            exh = exhaustionOf(player);
         }
         st.lastExhaustion = exh;
     } else {
         st.lastExhaustion = -1;
+        st.refundDebt     = 0;
     }
     st.lastX = pos.x, st.lastY = pos.y, st.lastZ = pos.z, st.hasLast = true;
 
@@ -1047,16 +1146,53 @@ namespace {
 /// leaves a marked mob free within 6 blocks of the holder and pulls it beyond. Bedrock's leash pulls
 /// a mob beyond the preset's soft distance (measured by tgmove.leash: unmarked pigs 3.5 blocks away
 /// end up next to the holder): a marked mob's soft (and hard) distance becomes at least 6.
-void applyLeashOverride(Actor& a) {
+void applyLeashOverride(Actor& a, Store::Leash& ls) {
     auto leash = a.getEntityContext().tryGetComponent<LeashableComponent>();
     if (!leash) return;
     auto& presets = leash->mPresets.get();
+    if (!ls.applied) {
+        ls.original = presets;
+        ls.applied  = true;
+    }
     if (presets.empty()) presets.push_back(LeashableUtility::getPreset(a, *leash, nullptr)); // the default, made the mob's own
     for (auto& preset : presets) {
         if (preset.mSoftDistance < kLeashFreeDistance) preset.mSoftDistance = kLeashFreeDistance;
         if (preset.mHardDistance < preset.mSoftDistance) preset.mHardDistance = preset.mSoftDistance;
         if (preset.mMaxDistance < preset.mHardDistance) preset.mMaxDistance = preset.mHardDistance;
     }
+}
+
+/// The marker goes: the mob's own leash presets come back.
+void dropLeashOverride(Actor& a, std::int64_t id) {
+    a.removeTag(kLeashOverrideTag);
+    auto& s = store();
+    if (auto it = s.leash.find(id); it != s.leash.end()) {
+        if (it->second.applied)
+            if (auto leash = a.getEntityContext().tryGetComponent<LeashableComponent>()) leash->mPresets.get() = it->second.original;
+        s.leash.erase(it);
+    }
+}
+
+/// PathfinderMob#closeRangeLeashBehaviour is off for a marked mob (overrideStayCloseToHolder): within
+/// 6 blocks of its holder Java does not path it there. Bedrock's leashed mobs path to their holder
+/// (measured by tgmove.leash: from 3.5 blocks to about 1): a marked mob's path that ends next to its
+/// holder is dropped while the mob is within 6 blocks of it; its other paths (wandering) stay.
+void tickLeashOverride(Level& lv, Actor& a) {
+    if (!a.isLeashed()) return;
+    Actor* holder = lv.fetchEntity(a.getLeashHolder(), false);
+    if (!holder) return;
+    Vec3  h    = holder->getFeetPos();
+    float dist = a.getFeetPos().distanceTo(h);
+    if (dist > kLeashFreeDistance) return; // beyond 6 blocks Java pulls it as any leashed mob
+    auto nav = a.getEntityContext().tryGetComponent<NavigationComponent>();
+    if (!nav) return;
+    std::unique_ptr<Path>& path = nav->mPath;
+    if (!path) return;
+    std::vector<Path::Node> const& nodes = path->mNodes;
+    if (nodes.empty()) return;
+    BlockPos const& end = nodes.back().pos;
+    double dx = end.x + 0.5 - h.x, dz = end.z + 0.5 - h.z;
+    if (std::sqrt(dx * dx + dz * dz) <= kLeashHolderPathEnd) path.reset();
 }
 
 /// A mob wears Travellers' gear where TF's mob modifiers come from (legs or feet).
@@ -1076,14 +1212,42 @@ void tickMobs(Level& lv) {
     if (gameTime() % kMobScanPeriod == 0) {
         for (Actor* a : lv.getRuntimeActorList()) {
             if (!a || a->isPlayer() || !a->hasCategory(ActorCategory::Mob) || !a->isAlive()) continue;
-            // leashed_pathfinder_override: dropped from a mob that can no longer be leashed
-            // (EntityEvents#handleLeashPathingOverrides)
+            // leashed_pathfinder_override: dropped from a mob that cannot be leashed, and from one
+            // that is not leashed when it joins the world (EntityEvents#handleLeashPathingOverrides:
+            // !mayBeLeashed on EntityJoinLevel). A mob counts as joined once it is kLeashJoinTicks old
+            // (whoever marks it leashes it right after spawning it); the check runs once per session.
             if (a->hasTags() && a->hasTag(kLeashOverrideTag)) {
-                if (!a->getEntityContext().hasComponent<LeashableComponent>()) a->removeTag(kLeashOverrideTag);
-                else applyLeashOverride(*a);
+                auto id = a->getOrCreateUniqueID().rawID;
+                if (!a->getEntityContext().hasComponent<LeashableComponent>()) dropLeashOverride(*a, id);
+                else {
+                    auto& ls   = s.leash[id];
+                    bool  drop = false;
+                    if (!ls.decided && a->mTickCount >= kLeashJoinTicks) {
+                        ls.decided = true;
+                        drop       = !a->isLeashed();
+                    }
+                    if (drop) dropLeashOverride(*a, id);
+                    else applyLeashOverride(*a, ls);
+                }
             }
             if (!s.mobs.contains(a->getOrCreateUniqueID().rawID) && wearsTravellers(*a)) (void)stateOf(*a);
         }
+    }
+    // the marked mobs: their stay-close pathing, every tick; gone ones (or unmarked) are forgotten
+    for (auto it = s.leash.begin(); it != s.leash.end();) {
+        Actor* a = lv.fetchEntity(ActorUniqueID{it->first}, false);
+        if (!a || !a->isAlive()) {
+            it = s.leash.erase(it);
+            continue;
+        }
+        if (!a->hasTags() || !a->hasTag(kLeashOverrideTag)) { // someone else took the marker off
+            auto id = it->first;
+            ++it;
+            dropLeashOverride(*a, id);
+            continue;
+        }
+        tickLeashOverride(lv, *a);
+        ++it;
     }
     std::vector<std::int64_t> ids(s.mobs.begin(), s.mobs.end());
     for (auto id : ids) {
@@ -1162,6 +1326,12 @@ public:
                 }
             }
             tickMobs(*lv);
+            resyncWings(*lv);
+        });
+        // a companion that joins gets every wing state in range again (its id may be a returning one)
+        net::onCompanionJoined([](Player& p) {
+            auto id = p.getOrCreateUniqueID().rawID;
+            for (auto& [_, sent] : store().wingsSent) sent.erase(id);
         });
         mDisconnect = bus.emplaceListener<ll::event::PlayerDisconnectEvent>([](ll::event::PlayerDisconnectEvent& ev) { forget(ev.self()); });
         // a respawned player starts afresh
@@ -1230,8 +1400,15 @@ public:
             for (auto id : ids)
                 if (auto* a = lv->fetchEntity(ActorUniqueID{id}, false)) forget(*a);
         }
+        // the marked mobs' own leash presets come back (the marker stays: it is world data)
+        if (auto* lv = level())
+            for (auto const& [id, ls] : store().leash)
+                if (Actor* a = lv->fetchEntity(ActorUniqueID{id}, false); a && ls.applied)
+                    if (auto leash = a->getEntityContext().tryGetComponent<LeashableComponent>()) leash->mPresets.get() = ls.original;
         store().players.clear();
         store().mobs.clear();
+        store().leash.clear();
+        store().wingsSent.clear();
     }
 
 private:
