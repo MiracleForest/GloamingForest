@@ -39,6 +39,7 @@
 #include "feature/tgear/Internal.h"
 #include "game/Blocks.h"
 #include "game/Items.h"
+#include "mod/I18n.h"
 #include "selftest/SelfTest.h"
 
 namespace {

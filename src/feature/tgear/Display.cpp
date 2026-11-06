@@ -274,7 +274,13 @@ constexpr int kCursorSlot = 0; // PlayerUIContainer: the cursor
 bool mayPlaceIn(Player& player, SlotRef const& r, ItemStack const& item) {
     if (r.kind == SlotRef::Inventory) return true;
     auto const& manager = player.mContainerManager.get();
-    if (!manager) return false; // no screen: nothing to validate the slot with
+    if (!manager) {
+        // no server screen to validate with: the display's items (maps, compasses, clocks, moon dials)
+        // are never wearable; the off-hand takes what the item allows there
+        if (r.kind != SlotRef::Offhand) return false;
+        auto const* it = item.getItem();
+        return it && it->mAllowOffhand == Item::OffhandAllowed::Yes;
+    }
     FullContainerName name{};
     int               slot = r.index;
     switch (r.kind) {

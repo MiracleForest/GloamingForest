@@ -522,9 +522,12 @@ struct ThreadTexels {
 };
 
 ThreadTexels const* threadTexels() {
-    static std::once_flag once;
-    static ThreadTexels   texels;
-    std::call_once(once, [] {
+    static ThreadTexels texels;
+    static long         attempts = 0; // render thread only
+    if (!texels.argb.empty()) return &texels;
+    // looked up on the first draw, then again every 600 draws while missing (a pack not readable yet)
+    if (attempts++ % 600 != 0) return nullptr;
+    [] {
         std::error_code ec;
         auto            packs = gf::Mod::getInstance().getSelf().getModDir() / "resource_packs";
         for (auto it = std::filesystem::recursive_directory_iterator(packs, ec); !ec && it != std::filesystem::recursive_directory_iterator(); it.increment(ec)) {
@@ -543,8 +546,8 @@ ThreadTexels const* threadTexels() {
             for (std::size_t i = 0; i < texels.argb.size(); ++i) texels.argb[i] = static_cast<std::uint32_t>(std::stoul(hex.substr(i * 8, 8), nullptr, 16));
             break;
         }
-        if (texels.argb.empty()) log().warn("tgear: red_thread_texels.json not found in the resource packs: no red thread connections");
-    });
+        if (texels.argb.empty() && attempts == 1) log().warn("tgear: red_thread_texels.json not found in the resource packs: no red thread connections");
+    }();
     return texels.argb.empty() ? nullptr : &texels;
 }
 
