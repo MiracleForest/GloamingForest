@@ -1,0 +1,35 @@
+{
+  "format_version": "1.10.0",
+  "render_controllers": {
+    "controller.render.twilightforest.troll_rock": {
+      "arrays": {
+        "textures": {
+          "Array.rock": ["Texture.stone", "Texture.granite", "Texture.diorite", "Texture.andesite", "Texture.tuff", "Texture.deepslate"]
+        }
+      },
+      "geometry": "Geometry.rock",
+      "materials": [{ "*": "Material.default" }],
+      "textures": ["Array.rock[math.max(q.property('twilightforest:rock') - 1, 0)]"]
+    },
+    "controller.render.twilightforest.thrown_block": {
+      "arrays": {
+        "textures": {
+          "Array.block": ["Texture.stone", "Texture.granite", "Texture.diorite", "Texture.andesite", "Texture.tuff", "Texture.deepslate"]
+        }
+      },
+      "geometry": "Geometry.default",
+      "materials": [{ "*": "Material.default" }],
+      "textures": ["Array.block[q.property('twilightforest:block')]"]
+    },
+    "controller.render.twilightforest.falling_ice": {
+      "arrays": {
+        "textures": {
+          "Array.block": ["Texture.packed_ice", "Texture.ice", "Texture.blue_ice", "Texture.frosted_ice"]
+        }
+      },
+      "geometry": "Geometry.default",
+      "materials": [{ "*": "Material.default" }],
+      "textures": ["Array.block[q.property('twilightforest:block')]"]
+    }
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "format_version": "1.26.50",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:trollvidr",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 0
+      },
+      "minecraft:map_color": "#007c00",
+      "minecraft:collision_box": false,
+      "minecraft:geometry": "geometry.tf.minecraft.block.cross",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_trollvidr",
+          "render_method": "alpha_test"
+        },
+        "cross": {
+          "texture": "tf_block_trollvidr",
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:selection_box": {
+        "origin": [
+          -7.2,
+          0,
+          -7.2
+        ],
+        "size": [
+          14.4,
+          16,
+          14.4
+        ]
+      },
+      "minecraft:light_dampening": 0,
+      "minecraft:placement_filter": {
+        "conditions": [
+          {
+            "allowed_faces": [
+              "down"
+            ],
+            "block_filter": [
+              "minecraft:stone",
+              "minecraft:granite",
+              "minecraft:diorite",
+              "minecraft:andesite",
+              "minecraft:tuff",
+              "minecraft:deepslate",
+              "twilightforest:trollvidr",
+              "twilightforest:trollber",
+              "twilightforest:unripe_trollber"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}
