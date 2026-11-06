@@ -14,6 +14,10 @@
 //   biomes.spawn_costs         the spawn costs leave a type out where its charge exceeds its budget
 //   biomes.generated           a freshly generated Twilight Forest chunk stores the source's biomes
 //   biomes.terrain_blend       sampleTerrain through the extension equals the provider's
+//   biomes.survey              (not a check) a place inside each surface biome, for the client scenario
+//   biomes.vanilla_spawns      the vanilla mobs of TF's tables spawn naturally in the Twilight Forest
+//   biomes.water_controls[_restore] (client scenario only, a tagged player) biomes painted into
+//                              another dimension for the water colour controls
 
 #include <algorithm>
 #include <cmath>
@@ -25,11 +29,20 @@
 
 #include "ll/api/service/Bedrock.h"
 
+#include <tuple>
+#include <vector>
+
+#include "mc/world/actor/Actor.h"
+#include "mc/world/actor/player/Player.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
+#include "mc/world/level/ChunkBlockPos.h"
+#include "mc/world/level/ChunkLocalHeight.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/biome/Biome.h"
 #include "mc/world/level/biome/registry/BiomeRegistry.h"
+#include "mc/world/level/chunk/LevelChunk.h"
+#include "mc/world/level/dimension/Dimension.h"
 
 #include "core/biomes/BiomeLayers.h"
 #include "core/biomes/Colors.h"
@@ -37,6 +50,8 @@
 #include "feature/ext/biomes/Biomes.h"
 #include "feature/tags/Tags.h"
 #include "feature/worldgen/Worldgen.h"
+#include "game/Blocks.h"
+#include "mod/Log.h"
 #include "mod/Main.h"
 #include "selftest/SelfTest.h"
 
@@ -446,6 +461,124 @@ GF_REGISTER_SELFTEST("biomes.survey", [](Context& ctx) {
     }
     for (auto const& b : wanted)
         if (!found.contains(b)) ctx.info("survey " + b + " not found within 4096 blocks");
+});
+
+// The vanilla mobs of TF's tables spawn naturally in the Twilight Forest (F5's spawn::spawnMob with
+// SpawnReason::Natural, what its natural spawner calls), the creature and the monster category; the
+// same spawns without U1's pass through Bedrock's own spawn rules are logged for comparison.
+GF_REGISTER_SELFTEST("biomes.vanilla_spawns", [](Context& ctx) -> ll::coro::CoroTask<> {
+    ctx.require(co_await ctx.inTwilight(), "in the Twilight Forest");
+    auto  box    = co_await ctx.flatArea(150, 5);
+    auto* region = ctx.region();
+    ctx.require(region != nullptr, "the Twilight Forest block source");
+    Vec3 at{static_cast<float>(box.minX) + 2.5f, static_cast<float>(box.minY), static_cast<float>(box.minZ) + 2.5f};
+    auto tryOnce = [&](char const* id) {
+        Actor* a  = spawn::spawnMob(*region, id, at, spawn::SpawnReason::Natural);
+        bool   ok = a != nullptr;
+        if (a) a->remove();
+        return ok;
+    };
+    for (char const* id : {"minecraft:chicken", "minecraft:zombie", "minecraft:spider", "minecraft:bat"}) {
+        setVanillaSpawnsForTest(false);
+        bool without = tryOnce(id);
+        setVanillaSpawnsForTest(true);
+        bool with = tryOnce(id);
+        ctx.info(std::format("{}: natural spawn {} with Bedrock's own spawn rules, {} with U1's pass", id, without ? "spawns" : "refused", with ? "spawns" : "refused"));
+        ctx.check(with, std::string(id) + " spawns naturally in the Twilight Forest");
+    }
+    co_await ctx.ticks(1);
+});
+
+// Water colour controls for the client scenario (not checks; no-ops unless a player is tagged
+// gf_biomes_water_controls): 3 x 3 chunks 3000 blocks east of the tagged player are painted with
+// another dimension's biome, chunks the client has never received, and kept loaded by a ticking
+// area until biomes.water_controls_restore. In the Twilight Forest the control is the vanilla
+// minecraft:swampland (its client biome file's green water), in any other dimension TF's fire swamp
+// (its client biome file's red water). The scenario builds a pool there and photographs it: which
+// water a biome gets in which dimension tells the dimension's part from the biome files' part.
+namespace {
+struct PaintedControl {
+    int                                                 dim = 0;
+    std::vector<std::tuple<int, int, Biome const*>>     columns; ///< x, z, original biome
+    bool                                                tickingArea = false;
+};
+PaintedControl& paintedControl() {
+    static PaintedControl p;
+    return p;
+}
+Player* taggedPlayer(char const* tag) {
+    Player* found = nullptr;
+    if (auto level = ll::service::getLevel())
+        level->forEachPlayer([&](Player& p) {
+            if (p.hasTag(tag)) found = &p;
+            return found == nullptr;
+        });
+    return found;
+}
+ChunkBlockPos columnPos(int x, int z, int minY) {
+    return ChunkBlockPos{static_cast<uchar>(x & 15), ChunkLocalHeight{static_cast<short>(0)}, static_cast<uchar>(z & 15)};
+}
+} // namespace
+
+GF_REGISTER_SELFTEST("biomes.water_controls", [](Context& ctx) -> ll::coro::CoroTask<> {
+    Player* shown = taggedPlayer("gf_biomes_water_controls");
+    if (!shown) {
+        ctx.info("no player tagged gf_biomes_water_controls: nothing painted");
+        co_return;
+    }
+    int         dim  = static_cast<int>(shown->getDimensionId());
+    auto        feet = shown->getFeetPos();
+    int         x = static_cast<int>(std::floor(feet.x)) + 3000, y = static_cast<int>(std::floor(feet.y)), z = static_cast<int>(std::floor(feet.z));
+    bool        twilight = dim != 0;
+    std::string biomeId  = twilight ? "minecraft:swampland" : "twilightforest:fire_swamp";
+    ctx.require(co_await ctx.ensureLoaded({dim, x, y, z}), "the chunks 3000 blocks east load on the server");
+    auto* region = gf::game::regionOf(dim);
+    ctx.require(region != nullptr, "the tagged player's region");
+    Biome const* biome = region->getDimension().getBiomeRegistry().lookupByName(biomeId);
+    ctx.require(biome != nullptr, biomeId + " is registered");
+    auto& out = paintedControl();
+    out       = {dim, {}, false};
+    int n     = 0;
+    for (int cx = (x >> 4) - 1; cx <= (x >> 4) + 1; ++cx)
+        for (int cz = (z >> 4) - 1; cz <= (z >> 4) + 1; ++cz) {
+            auto* chunk = region->getChunk(cx, cz);
+            if (!chunk) continue;
+            for (int lx = 0; lx < 16; ++lx)
+                for (int lz = 0; lz < 16; ++lz) {
+                    int bx = cx * 16 + lx, bz = cz * 16 + lz;
+                    out.columns.emplace_back(bx, bz, &region->getBiome(BlockPos{bx, y, bz}));
+                    chunk->_setBiome(*biome, columnPos(bx, bz, region->getMinHeight()), true);
+                    ++n;
+                }
+        }
+    auto r = selftest::runServerCommand(std::format("tickingarea add circle {} {} {} 2 gf_biomes_water_control", x, y, z), dim);
+    out.tickingArea = static_cast<bool>(r);
+    std::string now = idOf(region->getBiome(BlockPos{x, y, z}));
+    ctx.check(now == biomeId, std::format("the server holds {} 3000 blocks east ({})", biomeId, now));
+    gf::log().info("biomes water control: painted {} columns with {} at {} {} in dimension {}", n, biomeId, x, z, dim);
+});
+
+GF_REGISTER_SELFTEST("biomes.water_controls_restore", [](Context& ctx) {
+    auto& p = paintedControl();
+    if (p.tickingArea) {
+        selftest::runServerCommand("tickingarea remove gf_biomes_water_control", p.dim);
+        p.tickingArea = false;
+    }
+    if (p.columns.empty()) {
+        ctx.info("nothing painted");
+        return;
+    }
+    auto* region = gf::game::regionOf(p.dim);
+    ctx.require(region != nullptr, "the painted region");
+    int restored = 0;
+    for (auto const& [x, z, biome] : p.columns) {
+        auto* chunk = region->getChunk(x >> 4, z >> 4);
+        if (!chunk || !biome) continue;
+        chunk->_setBiome(*biome, columnPos(x, z, region->getMinHeight()), true);
+        ++restored;
+    }
+    gf::log().info("biomes water control: restored {} of {} columns", restored, p.columns.size());
+    p.columns.clear();
 });
 
 } // namespace gf::feature::biomes

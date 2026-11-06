@@ -12,8 +12,17 @@
 
 #include "feature/biomes/Biomes.h"
 
+#include <atomic>
 #include <map>
+#include <set>
 
+#include "ll/api/event/EventBus.h"
+#include "ll/api/event/world/SpawnMobEvent.h"
+
+#include "mc/world/actor/ActorDefinitionIdentifier.h"
+#include "mc/world/level/BlockSource.h"
+
+#include "feature/dimension/World.h"
 #include "mod/Log.h"
 
 namespace gf::feature::biomes {
@@ -175,6 +184,47 @@ BiomeSpawns spawnsOf(std::string const& id) {
 void registerSpawns() {
     for (auto const& id : biomeIds()) spawn::setBiomeSpawns(id, spawnsOf(id).table);
     // the spawn costs register on the next server tick (BiomesModule), after every unit's install
+    registerVanillaSpawns();
 }
+
+namespace {
+std::atomic<bool>          gVanillaSpawnsOn{true};
+std::atomic<std::uint64_t> gVanillaSpawnsLetThrough{0};
+
+/// The vanilla mobs of TF's tables (chicken, wolf, enderman, zombie, skeleton, spider, creeper,
+/// slime, witch, bat).
+std::set<std::string> const& vanillaIds() {
+    static auto const ids = [] {
+        std::set<std::string> s;
+        for (auto const& id : biomeIds())
+            for (auto const& [category, list] : spawnsOf(id).table.byCategory)
+                for (auto const& e : list)
+                    if (e.entityId.starts_with("minecraft:")) s.insert(e.entityId);
+        return s;
+    }();
+    return ids;
+}
+} // namespace
+
+void registerVanillaSpawns() {
+    // F5's spawn::spawnMob passes Spawner::spawnMob(..., naturalSpawn = true, ...) for natural and
+    // chunk-generation spawns, and Bedrock then refuses a vanilla mob whose own spawn rules do not
+    // allow it there (their biome filters need vanilla biome tags, which TF's biomes do not have:
+    // with them, Bedrock's own spawner would place vanilla mobs in the Twilight Forest, which TF
+    // does not). F5 has already checked Java's rules for the position, so a natural spawn of a
+    // vanilla mob of TF's tables in the Twilight Forest goes through as a non-natural one.
+    static ll::event::ListenerPtr listener = ll::event::EventBus::getInstance().emplaceListener<ll::event::SpawningMobEvent>([](ll::event::SpawningMobEvent& ev) {
+        if (!gVanillaSpawnsOn.load(std::memory_order_relaxed) || !ev.naturalSpawn()) return;
+        auto twilight = world::twilight();
+        if (!twilight || ev.blockSource().getDimensionId() != *twilight) return;
+        std::string const& id = ev.identifier().mCanonicalName->getString();
+        if (!vanillaIds().contains(id)) return;
+        ev.naturalSpawn() = false;
+        if (gVanillaSpawnsLetThrough.fetch_add(1, std::memory_order_relaxed) == 0)
+            gf::log().info("biomes: the natural spawn of {} in the Twilight Forest goes through without Bedrock's own spawn rules", id);
+    });
+}
+
+void setVanillaSpawnsForTest(bool on) { gVanillaSpawnsOn.store(on, std::memory_order_relaxed); }
 
 } // namespace gf::feature::biomes

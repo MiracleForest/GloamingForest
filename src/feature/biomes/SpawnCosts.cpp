@@ -25,14 +25,19 @@
 // type over budget is the one a pack would have picked at its first position, another type of the
 // list is picked instead (Java picks it and then refuses every member).
 
+#include <atomic>
 #include <memory>
 #include <mutex>
 #include <optional>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
+#include "ll/api/event/EventBus.h"
+#include "ll/api/event/world/ServerLevelTickEvent.h"
+#include "ll/api/event/world/SpawnMobEvent.h"
 #include "ll/api/service/Bedrock.h"
 
 #include "mc/deps/core/math/Vec3.h"
@@ -106,30 +111,36 @@ bool anyCost(std::string const& entity) {
 bool persistent(Actor& a) { return a.getEntityContext().hasComponent<PersistentComponent>() || !a.getNameTag().empty(); }
 
 struct Potential {
-    std::uint64_t                     tick     = ~std::uint64_t(0);
-    std::uint64_t                     world    = ~std::uint64_t(0);
-    std::size_t                       entities = ~std::size_t(0);
-    int                               dim      = -1;
+    std::uint64_t                     tick   = ~std::uint64_t(0);
+    std::uint64_t                     world  = ~std::uint64_t(0);
+    std::uint64_t                     spawns = ~std::uint64_t(0);
+    int                               dim    = -1;
     core::biomes::PotentialCalculator calc;
 };
+
+/// Mobs spawned so far (SpawnedMobEvent): a spawn changes the potential (SpawnState#afterSpawn).
+std::atomic<std::uint64_t> gSpawns{0};
+/// The server thread (the thread of the server level's ticks).
+std::atomic<std::thread::id> gServerThread{};
 
 /// The spawn potential of `region`'s dimension now (NaturalSpawner#createState, kept up to date as
 /// SpawnState#afterSpawn does): every non-persistent mob near a player of the dimension (F5's
 /// spawner counts the mobs of the same boxes) whose type has a cost in the biome at its block adds
-/// its charge there. Rebuilt when the tick changes and whenever the level's entity count changed
-/// since (a mob the spawner added a moment ago counts at once).
+/// its charge there. Rebuilt on every tick (mobs moved, despawned) and after every mob spawn (a mob
+/// the spawner added a moment ago counts at once); a despawn cannot happen inside a spawner pass
+/// (both run on the server thread, the spawner's pass in one go). Server thread only.
 core::biomes::PotentialCalculator const& potentialOf(BlockSource& region) {
     static Potential p;
-    auto             level    = ll::service::getLevel();
-    int              dim      = static_cast<int>(region.getDimensionId());
-    std::uint64_t    tick     = level ? static_cast<std::uint64_t>(level->getCurrentTick().tickID) : 0;
-    std::uint64_t    world    = worldGeneration();
-    std::size_t      entities = level ? level->getEntities().size() : 0;
-    if (p.tick == tick && p.dim == dim && p.world == world && p.entities == entities) return p.calc;
-    p.tick     = tick;
-    p.dim      = dim;
-    p.world    = world;
-    p.entities = entities;
+    auto             level  = ll::service::getLevel();
+    int              dim    = static_cast<int>(region.getDimensionId());
+    std::uint64_t    tick   = level ? static_cast<std::uint64_t>(level->getCurrentTick().tickID) : 0;
+    std::uint64_t    world  = worldGeneration();
+    std::uint64_t    spawns = gSpawns.load(std::memory_order_acquire);
+    if (p.tick == tick && p.dim == dim && p.world == world && p.spawns == spawns) return p.calc;
+    p.tick   = tick;
+    p.dim    = dim;
+    p.world  = world;
+    p.spawns = spawns;
     p.calc.clear();
     if (!level) return p.calc;
     std::vector<Vec3> players;
@@ -168,7 +179,16 @@ void registerSpawnCosts() {
     static bool registered = false;
     if (registered) return;
     registered = true;
+    static ll::event::ListenerPtr spawned = ll::event::EventBus::getInstance().emplaceListener<ll::event::SpawnedMobEvent>([](auto&) {
+        gSpawns.fetch_add(1, std::memory_order_acq_rel);
+    });
+    static ll::event::ListenerPtr ticks = ll::event::EventBus::getInstance().emplaceListener<ll::event::ServerLevelTickEvent>([](auto&) {
+        gServerThread.store(std::this_thread::get_id(), std::memory_order_release);
+    });
     spawn::onSpecialSpawn([](BlockSource& region, BlockPos const& pos, std::string const& category) -> std::optional<std::vector<spawn::SpawnEntry>> {
+        // spawn costs belong to the natural spawner's SpawnState (server thread); chunk-generation
+        // spawns (NaturalSpawner#spawnMobsForChunkGeneration) have none, wherever F5 asks for them
+        if (std::this_thread::get_id() != gServerThread.load(std::memory_order_acquire)) return std::nullopt;
         // SpawnState#canSpawn: getRoughBiome(pos) (the biome source's biome, as F5 reads it)
         std::string biome = worldgen::biomeAt(pos);
         auto        b     = costs().find(biome);

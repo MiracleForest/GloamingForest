@@ -11,17 +11,26 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "core/biomes/BiomeLayers.h"
 #include "core/biomes/SpawnCost.h"
 #include "feature/spawn/Spawn.h"
 
+class Biome;
 class BlockPos;
 
 namespace gf::feature::biomes {
 
 inline constexpr char kUnit[] = "biomes";
+
+/// The namespaced id of `biome` ("minecraft:plains", "twilightforest:swamp"), cached per biome object
+/// on this thread and checked against the biome's name hash on every use (a biome of another world
+/// may reuse the address).
+[[nodiscard]] std::string const& biomeIdOf(Biome const& biome);
+/// Whether `biomeId` is one of TF's 22 biomes.
+[[nodiscard]] bool isTfBiome(std::string_view biomeId);
 
 /// config/biomes.json (rule R13). TF has no biome config key (docs/spec/config.md): these are
 /// GloamingForest's own switches.
@@ -68,6 +77,11 @@ struct BiomeSpawns {
 [[nodiscard]] BiomeSpawns spawnsOf(std::string const& biomeId);
 /// Registers every biome's table and the spawn costs (install).
 void registerSpawns();
+/// Lets F5's natural spawns of the vanilla mobs of TF's tables through Bedrock's own spawn rules in
+/// the Twilight Forest (see Spawns.cpp; called by registerSpawns).
+void registerVanillaSpawns();
+/// Selftests: switches that off (true: on).
+void setVanillaSpawnsForTest(bool on);
 /// Applies the biomes' spawn costs to the natural spawner (spawn::onSpecialSpawn; once).
 void registerSpawnCosts();
 /// The natural spawn list of `category` in `biome` at `pos` under the spawn potential `potential`:

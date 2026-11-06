@@ -10,7 +10,7 @@
 // worldgen pipeline, the biome order FeatureSorter uses, and the biomes' spawn tables.
 //
 // Bedrock: the 22 biomes are behavior pack biomes (assets/pack/bp/biomes/biomes/, climate and map
-// tints) with client biome files (assets/pack/rp/biomes/biomes/: sky, grass, foliage, water, fog
+// tints) with client biome files (assets/pack/rp/biomes/: sky, grass, foliage, water, fog
 // ids of assets/pack/rp/fogs/biomes/); F5's generator writes the zoomed biome of every block, so
 // vanilla clients draw them too. TF's position-dependent colours are drawn by the client mod
 // (src/client/biomes/Tints.cpp).
@@ -77,6 +77,24 @@ std::vector<std::string> const& biomeIds() {
     };
     return ids;
 }
+
+std::string const& biomeIdOf(Biome const& b) {
+    struct Entry {
+        std::uint64_t hash = 0;
+        std::string   id;
+    };
+    thread_local std::unordered_map<Biome const*, Entry> ids;
+    if (ids.size() > 4096) ids.clear(); // biomes of many worlds
+    std::uint64_t hash = b.mHash->getHash();
+    auto [it, fresh]   = ids.try_emplace(&b);
+    if (fresh || it->second.hash != hash) {
+        auto const& name = b.mHash->getString();
+        it->second       = Entry{hash, name.find(':') == std::string::npos ? "minecraft:" + name : name};
+    }
+    return it->second.id;
+}
+
+bool isTfBiome(std::string_view id) { return id.starts_with("twilightforest:") && core::biomes::colors::water(id).has_value(); }
 
 namespace {
 
@@ -157,7 +175,10 @@ static int applyWaterColours() {
         ++n;
     }
     // the biome definitions the server sends joining clients are built once and cached: they get the
-    // same colours (a world whose list was built before this ran would send the old ones)
+    // same colours (a world whose list was built before this ran would send the old ones). This runs
+    // on the server thread (install, db::onWorldReady), the thread that serializes those packets
+    // into each joining client's batch, so no send reads the list while it changes; an entry is
+    // written only when its colour differs (once per world).
     if (auto handler = ll::service::getServerNetworkHandler()) {
         int patched = 0;
         for (auto* cached : {handler->mBiomeDefinitionListWithoutCSCG.get(), handler->mBiomeDefinitionListWithCSCG.get()}) {
@@ -165,7 +186,7 @@ static int applyWaterColours() {
             auto& list = const_cast<BiomeDefinitionListPacket&>(*cached);
             for (auto& [key, data] : *list.mBiomeData) {
                 auto it = byId.find(data.mId->mValue);
-                if (it == byId.end()) continue;
+                if (it == byId.end() || data.mMapWaterColorARGB == it->second) continue;
                 data.mMapWaterColorARGB = it->second;
                 ++patched;
             }

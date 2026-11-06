@@ -7,15 +7,15 @@ Spec: [docs/spec/biomes.md](../spec/biomes.md). What is where:
 | Layer stack, terrain grid, biome source (pure, gtested) | `src/core/biomes/BiomeLayers.{h,cpp}`, `tests/biomes/BiomeLayersTest.cpp` |
 | Biome colours (BiomeColorAlgorithms, FoliageColorHandler, grass modifiers, Java's blend) | `src/core/biomes/Colors.{h,cpp}`, `tests/biomes/ColorsTest.cpp` |
 | Installation into F5 (biome source, main biome, possible biomes), config `biomes` | `src/feature/biomes/Module.cpp` |
-| Spawn tables (BiomeHelper) | `src/feature/biomes/Spawns.cpp` |
+| Spawn tables (BiomeHelper), vanilla mobs of the tables | `src/feature/biomes/Spawns.cpp` |
 | Spawn costs (MobSpawnCost, NaturalSpawner's spawn potential) | `src/core/biomes/SpawnCost.{h,cpp}`, `tests/biomes/SpawnCostTest.cpp`, `src/feature/biomes/SpawnCosts.cpp` |
-| Ambient particles (server stand-in for ClientLevel#animateTick), mood sound | `src/feature/biomes/Ambient.cpp`, `src/core/biomes/Mood.{h,cpp}`, `tests/biomes/MoodTest.cpp` |
+| Ambient particles (ClientLevel#animateTick: client mod, server for vanilla players), mood sound | `src/feature/biomes/Ambient.{h,cpp}`, `src/client/biomes/Ambient.cpp`, `src/core/biomes/Mood.{h,cpp}`, `tests/biomes/MoodTest.cpp` |
 | Client tints on vanilla grass / foliage blocks | `src/client/biomes/Tints.{h,cpp}`, `src/client/biomes/SelfTests.cpp` (`biomes.grass_tint`) |
-| Client colour hooks (grass / foliage policies, leaves without seasons, water colour) | `src/feature/ext/biomes/VanillaTint.cpp` |
+| Client colour hooks (grass / foliage / water policies, leaves without seasons, the fiddlehead's grass tint method) | `src/feature/ext/biomes/VanillaTint.cpp` |
 | Extension for other units (terrain blend, key biome, client colours) | `src/feature/ext/biomes/Biomes.h`, `src/feature/biomes/Ext.cpp` |
 | Behavior pack biomes (climate, map tints) | `assets/pack/bp/biomes/biomes/*.biome.json` |
-| Client biomes (sky, grass, foliage, water, fog ids) and fogs | `assets/pack/rp/biomes/biomes/*.client_biome.json`, `assets/pack/rp/fogs/biomes/*_fog.json` |
-| Selftests, e2e | `src/feature/biomes/SelfTests.cpp` (+ `Golden.inc`, oracle samples), `tools/e2e/{server,client}/scenarios/biomes.ps1` |
+| Client biomes (sky, grass, foliage, water, white ash, fog and water ids), fogs, Vibrant Visuals water | `assets/pack/rp/biomes/*.client_biome.json`, `assets/pack/rp/fogs/biomes/*_fog.json`, `assets/pack/rp/water/biomes/*_water.json` |
+| Selftests, e2e | `src/feature/biomes/SelfTests.cpp` (+ `Golden.inc`, oracle samples), `tools/e2e/{server,client}/scenarios/biomes{,.classic}*.ps1` |
 
 ## Data
 
@@ -104,29 +104,51 @@ follows as soon as the engine reads one of them; the scenario measures the pools
 `spawn::onSpecialSpawn`: in a biome with costs the list asked for a position leaves out the types
 whose charge times the spawn potential there exceeds their energy budget, which is where Java's
 SpawnState#canSpawn refuses a pack member. The potential is built from the non-persistent mobs
-near the dimension's players (the boxes F5's spawner counts) and rebuilt whenever the level's
-entity count changed, so a mob spawned a moment ago counts for the next member (SpawnState#afterSpawn).
+near the dimension's players (the boxes F5's spawner counts), once per tick and again after every
+mob spawn (LeviLamina's `SpawnedMobEvent`), so a mob spawned a moment ago counts for the next member
+(SpawnState#afterSpawn); a despawn cannot fall inside a spawner pass (both run on the server thread,
+the pass in one go). The handler answers on the server thread only: chunk-generation spawns
+(NaturalSpawner#spawnMobsForChunkGeneration) have no SpawnState in Java, so no costs either.
 The handler registers on the first server tick, after every other unit's: F5 takes the first answer,
 so another unit's structure list is used as it is (Java would also apply the biome's costs to it).
-One deviation remains: F5 asks the same question to pick a pack's type and to check each member, so
-when the pack's first position refuses the type Java would have picked, another type of the list is
-picked instead (Java picks it and refuses every member). Fixing it needs F5 to separate the two
-questions or carry the costs in `spawn::Table`.
 
-Vanilla entries of TF's tables (chicken, wolf, enderman, zombie, skeleton, spider, creeper, slime,
-witch, bat) are refused by F5's `spawn::spawnMob` (`Spawner::spawnMob(..., natural = true, ...)`,
-`src/feature/spawn/Spawn.cpp:394-395`): Bedrock then applies the mobs' own spawn rules, whose biome
-filters need vanilla biome tags. U1 does not give TF's biomes those tags (the same tags would let
-Bedrock's own spawn rules place vanilla mobs there, which TF does not) and cannot hook `Spawner::spawnMob` (rule R8).
-F5's fix: pass `natural = false` for natural and chunk-generation spawns, whose Java rules F5 has
-already checked.
+One deviation remains, and it cannot be removed inside U1: F5 asks the same question
+(`detail::spawnListAt(region, pos, category, biome)`, `src/feature/spawn/Spawn.cpp:765` for the pick,
+`:775` for each member's check, identical arguments) to pick a pack's type and to check each member,
+so the handler cannot tell them apart; when the pack's first position refuses the type Java would
+have picked, another type of the list is picked instead (Java picks it, refuses that member and may
+spawn it at the next positions). The only per-member hook of the contract,
+`spawn::ext::registerSpawnBehaviour(entityId, {.checkSpawnRules})`, is keyed by entity id and
+replaces the behaviour the mob's owner registers (U16/U17's kobolds, wolves, ...), so U1 cannot use
+it. F5's fix: pass the question's purpose to `SpecialSpawnFn`, or carry the costs in `spawn::Table`
+and apply them where `filter.test` sits.
+
+## Vanilla mobs of TF's tables
+
+F5's `spawn::spawnMob` passes `Spawner::spawnMob(..., naturalSpawn = true, ...)` for natural and
+chunk-generation spawns (`src/feature/spawn/Spawn.cpp:394-395`), and Bedrock then refuses a vanilla
+mob (chicken, wolf, enderman, zombie, skeleton, spider, creeper, slime, witch, bat) whose own spawn
+rules do not allow it there (their biome filters need vanilla biome tags; giving TF's biomes those
+tags would let Bedrock's own spawner place vanilla mobs in the Twilight Forest, which TF does not).
+`Spawns.cpp` listens to LeviLamina's `SpawningMobEvent` (no hook of U1's own) and turns such a spawn
+of a vanilla mob of TF's tables in the Twilight Forest into a non-natural one: F5 has already checked
+Java's placement, rules and obstruction for the position. `biomes.vanilla_spawns` spawns each kind
+through `spawn::spawnMob(..., SpawnReason::Natural)` with and without it and logs both outcomes.
 
 ## Ambient particles
 
-The server stands in for ClientLevel#animateTick per player; a sample only spawns when its player
-is the nearest Twilight Forest player to it, so players close together do not see their densities
-added. A sample is skipped when its block's collision is the full unit cube.
-
+- White ash (the fire swamp, probability 0.05): Bedrock clients draw white ash themselves for a
+  biome whose client biome file asks for it (`minecraft:precipitation` `white_ash`, what the basalt
+  deltas use: Java's 0.118093334 is Bedrock's 2.0 there), so the fire swamp's file carries
+  0.05 / 0.118093334 * 2.0 = 0.8468. Every client, vanilla included, draws Java's small specks; the
+  server no longer sends a falling-dust stand-in.
+- Wandering fireflies (the forests): the client mod runs ClientLevel#animateTick's ambient part
+  itself (`src/client/biomes/Ambient.cpp`, the sampler of `feature/biomes/Ambient.cpp`: only its
+  own samples, drawn by F12's native factory when one is registered, else as U6's resource pack
+  effect added to the client level). For players without the mod the server runs the same sampler
+  per player and sends each its own samples only (a `SpawnParticleEffectPacket` to that player), so
+  players close together never see each other's samples, as on Java. A sample is skipped when its
+  block's collision is the full unit cube.
 ## Mood sound
 
 TF's mood (`ambient.cave`, tick delay 6000, search extent 8, offset 2.0 in every biome) is played

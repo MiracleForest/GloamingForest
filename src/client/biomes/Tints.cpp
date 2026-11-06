@@ -55,27 +55,13 @@ namespace gf::client::biomes {
 namespace colors = core::biomes::colors;
 using feature::biomes::BiomesConfig;
 
-std::string const& biomeIdOf(Biome const& b) {
-    struct Entry {
-        std::uint64_t hash = 0;
-        std::string   id;
-    };
-    thread_local std::unordered_map<Biome const*, Entry> ids;
-    if (ids.size() > 4096) ids.clear(); // biomes of many worlds
-    std::uint64_t hash = b.mHash->getHash();
-    auto [it, fresh]   = ids.try_emplace(&b);
-    if (fresh || it->second.hash != hash) {
-        auto const& name = b.mHash->getString();
-        it->second       = Entry{hash, name.find(':') == std::string::npos ? "minecraft:" + name : name};
-    }
-    return it->second.id;
-}
+std::string const& biomeIdOf(Biome const& b) { return feature::biomes::biomeIdOf(b); }
 
-bool isTfBiome(std::string_view id) { return id.starts_with("twilightforest:") && colors::water(id).has_value(); }
+bool isTfBiome(std::string_view id) { return feature::biomes::isTfBiome(id); }
 
 namespace {
 
-// The static colours of the client biome files (assets/pack/rp/biomes/biomes/) of the three
+// The static colours of the client biome files (assets/pack/rp/biomes/) of the three
 // position-dependent biomes: the markers of a blend that lies wholly inside one of them, for tints
 // asked without a block source.
 constexpr unsigned kSpookyGrass             = 0xC45123;
@@ -191,6 +177,17 @@ constexpr char const* kFoliageBlocks[] = {
     "minecraft:mangrove_leaves",
     "minecraft:vine",
 };
+// TF's blocks of other units that ColorHandler draws with BiomeColors.getAverageGrassColor (U6's
+// fiddlehead and potted fiddlehead), and the textures of their tinted faces (the cross of the
+// fiddlehead, the plant of the pot: Java's tintindex faces; the pot and its dirt stay untinted).
+constexpr char const* kTfGrassBlocks[] = {
+    "twilightforest:fiddlehead",
+    "twilightforest:potted_fiddlehead",
+};
+constexpr char const* kTfGrassTextures[] = {
+    "tf_block_fiddlehead",
+    "tf_block_potted_fiddlehead",
+};
 
 } // namespace
 
@@ -198,19 +195,53 @@ unsigned grassAt(BlockSource* region, BlockPos const& pos, tint::GameColors cons
 
 unsigned foliageAt(BlockSource* region, BlockPos const& pos, tint::GameColors const& game) { return colourAt(region, pos, game.foliage(), true); }
 
+std::optional<unsigned> waterAt(BlockSource& region, BlockPos const& pos, unsigned game) {
+    if (!enabled()) return std::nullopt;
+    // a water block is asked for each of its vertices: the last answer of this thread is kept
+    struct Last {
+        BlockSource*            region = nullptr;
+        BlockPos                pos{0, 0, 0};
+        unsigned                game = 0;
+        std::optional<unsigned> result;
+        bool                    valid = false;
+        std::uint64_t           world = 0;
+    };
+    thread_local Last last;
+    std::uint64_t     world = feature::biomes::worldGeneration();
+    if (last.valid && last.region == &region && last.pos == pos && last.game == game && last.world == world) return last.result;
+    std::optional<unsigned> result;
+    if (isTfBiome(biomeIdOf(region.getBiome(pos)))) {
+        result = static_cast<unsigned>(colors::blend(pos.x, pos.z, radius(), [&](int x, int z) {
+            auto w = colors::water(biomeIdOf(region.getBiome(BlockPos{x, pos.y, z})));
+            return w ? *w : static_cast<int>(game);
+        }));
+    }
+    last = Last{&region, pos, game, result, true, world};
+    return result;
+}
+
 std::span<char const* const> grassBlocks() { return kGrassBlocks; }
 std::span<char const* const> foliageBlocks() { return kFoliageBlocks; }
+std::span<char const* const> tfGrassBlocks() { return kTfGrassBlocks; }
+std::span<char const* const> tfGrassTextures() { return kTfGrassTextures; }
 
 struct BiomeTintsModule {
     void install() {
-        for (char const* id : kGrassBlocks)
-            tint::registerBlock(id, tint::GameTintFn{[](BlockPos const& p, tint::GameColors const& g) { return grassAt(gf::biomes::ext::tintRegion(), p, g); }});
+        auto grass = tint::GameTintFn{[](BlockPos const& p, tint::GameColors const& g) { return grassAt(gf::biomes::ext::tintRegion(), p, g); }};
+        for (char const* id : kGrassBlocks) tint::registerBlock(id, grass);
+        for (char const* id : kTfGrassBlocks) tint::registerBlock(id, grass);
         for (char const* id : kFoliageBlocks)
             tint::registerBlock(id, tint::GameTintFn{[](BlockPos const& p, tint::GameColors const& g) { return foliageAt(gf::biomes::ext::tintRegion(), p, g); }});
-        log().info("biomes: TF biome colours on {} grass and {} foliage blocks", std::size(kGrassBlocks), std::size(kFoliageBlocks));
+        log().info(
+            "biomes: TF biome colours on {} grass and {} foliage blocks, and {} TF grass-tinted blocks",
+            std::size(kGrassBlocks),
+            std::size(kFoliageBlocks),
+            std::size(kTfGrassBlocks)
+        );
     }
     void uninstall() {
         for (char const* id : kGrassBlocks) tint::unregisterBlock(id);
+        for (char const* id : kTfGrassBlocks) tint::unregisterBlock(id);
         for (char const* id : kFoliageBlocks) tint::unregisterBlock(id);
     }
 };

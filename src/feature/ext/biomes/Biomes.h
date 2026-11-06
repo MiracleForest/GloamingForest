@@ -61,8 +61,12 @@ namespace gf::biomes::ext {
 [[nodiscard]] BlockSource* tintRegion();
 /// How many vanilla block tints the hook applied so far (selftests, e2e).
 [[nodiscard]] std::uint64_t vanillaTintsApplied();
-/// How many water colours of TF's biomes the water colour hook answered so far.
+/// How many water colours of TF's biomes the water colour lookup hook answered so far.
 [[nodiscard]] std::uint64_t waterColoursApplied();
+/// How many water vertices of TF's biomes the water tessellation hook coloured so far.
+[[nodiscard]] std::uint64_t waterDrawn();
+/// How many material instances of TF's grass-tinted plants got the grass tint method.
+[[nodiscard]] std::uint64_t plantTintsGiven();
 /// How many times leaves in TF's biomes were drawn without Bedrock's seasons map so far.
 [[nodiscard]] std::uint64_t seasonsOffApplied();
 

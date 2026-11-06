@@ -4,8 +4,8 @@
 //                      colours of the spooky forest, dark forest centre and enchanted forest, as the
 //                      tints compute them from a world's stored biomes and from F12's registry;
 //                      the forest's colour-map colours, the snowy forest's white leaves (without
-//                      Bedrock's seasons map), TF's water colours through the game's lookup; the
-//                      vanilla tint hook (feature/ext/biomes/VanillaTint.cpp) drew them.
+//                      Bedrock's seasons map), TF's water colours from the game's water policy
+//                      (the drawn water is measured by the client scenario's pool screenshots).
 
 #ifdef GF_CLIENT
 
@@ -14,6 +14,9 @@
 #include <string>
 
 #include "mc/client/player/LocalPlayer.h"
+#include "mc/client/world/level/biome/biome_color_sampling/TessellationPolicy.h"
+#include "mc/deps/core/math/Color.h"
+#include "mc/world/level/block/TintMethod.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/biome/registry/BiomeRegistry.h"
@@ -85,11 +88,9 @@ GF_REGISTER_SELFTEST("biomes.grass_tint", [](Context& ctx) -> ll::coro::CoroTask
         {"twilightforest:enchanted_forest", 0x00FF80, 0x00FF80},
     };
     for (auto const& c : cases) {
+        // every surface biome lies within 4096 blocks of the origin (biomes.survey finds them all)
         auto at = inside(c.biome);
-        if (!at) {
-            ctx.info(std::string(c.biome) + " not found within 4096 blocks for this seed: skipped");
-            continue;
-        }
+        ctx.require(at.has_value(), std::string(c.biome) + " is found within 4096 blocks");
         core::GlobalPos gp{ctx.dimension(), at->x, at->y, at->z};
         ctx.require(co_await ctx.ensureLoaded(gp), std::string(c.biome) + " chunk loaded");
         auto* region = ctx.region();
@@ -125,46 +126,48 @@ GF_REGISTER_SELFTEST("biomes.grass_tint", [](Context& ctx) -> ll::coro::CoroTask
     ctx.check(colors::darkForestCenterFoliage(123.0, -456.0) == 0xE94E14, "the dark forest centre's foliage is #E94E14");
     // a biome without a modifier: its own colour-map colour in every column (not the game's colour)
     std::optional<BlockPos> forestAt = inside("twilightforest:forest");
-    if (forestAt) {
+    ctx.require(forestAt.has_value(), "the forest is found within 4096 blocks");
+    {
         core::GlobalPos gp{ctx.dimension(), forestAt->x, forestAt->y, forestAt->z};
-        if (co_await ctx.ensureLoaded(gp)) {
-            unsigned g = grassAt(ctx.region(), *forestAt, plain), f = foliageAt(ctx.region(), *forestAt, plain);
-            ctx.check(g == 0x8DB870, std::format("the forest's grass is its colour-map colour #8DB870 (#{:06X})", g));
-            ctx.check(f == 0x71A74D, std::format("the forest's foliage is its colour-map colour #71A74D (#{:06X})", f));
-        }
+        ctx.require(co_await ctx.ensureLoaded(gp), "the forest chunk loaded");
+        unsigned g = grassAt(ctx.region(), *forestAt, plain), f = foliageAt(ctx.region(), *forestAt, plain);
+        ctx.check(g == 0x8DB870, std::format("the forest's grass is its colour-map colour #8DB870 (#{:06X})", g));
+        ctx.check(f == 0x71A74D, std::format("the forest's foliage is its colour-map colour #71A74D (#{:06X})", f));
     }
     // the snowy forest: TF's white grass and leaves; the leaves are drawn without Bedrock's seasons
     // map (as in the forest), so the white tint is a colour there
-    if (auto at = inside("twilightforest:snowy_forest")) {
+    {
+        auto at = inside("twilightforest:snowy_forest");
+        ctx.require(at.has_value(), "the snowy forest is found within 4096 blocks");
         core::GlobalPos gp{ctx.dimension(), at->x, at->y, at->z};
-        if (co_await ctx.ensureLoaded(gp)) {
-            auto*    region = ctx.region();
-            unsigned f = foliageAt(region, *at, plain), g = grassAt(region, *at, plain);
-            ctx.check(g == 0xFFFFFF, std::format("the snowy forest's grass is TF's white (#{:06X})", g));
-            ctx.check(f == 0xFFFFFF, std::format("the snowy forest's leaves are TF's white (#{:06X})", f));
-            Block const* leaves = game::blockWith("minecraft:oak_leaves");
-            ctx.require(leaves != nullptr, "oak leaves");
-            ctx.check(!leaves->getBlockType().isSeasonTinted(*leaves, *region, *at), "oak leaves in the snowy forest are not season tinted");
-            if (forestAt) {
-                auto snowy  = static_cast<int>(leaves->getBlockType().getRenderLayer(*leaves, *region, *at));
-                auto forest = static_cast<int>(leaves->getBlockType().getRenderLayer(*leaves, *region, *forestAt));
-                ctx.check(snowy == forest, std::format("oak leaves draw in the forest's render layer in the snowy forest ({} / {})", snowy, forest));
-            }
-        }
+        ctx.require(co_await ctx.ensureLoaded(gp), "the snowy forest chunk loaded");
+        auto*    region = ctx.region();
+        unsigned f = foliageAt(region, *at, plain), g = grassAt(region, *at, plain);
+        ctx.check(g == 0xFFFFFF, std::format("the snowy forest's grass is TF's white (#{:06X})", g));
+        ctx.check(f == 0xFFFFFF, std::format("the snowy forest's leaves are TF's white (#{:06X})", f));
+        Block const* leaves = game::blockWith("minecraft:oak_leaves");
+        ctx.require(leaves != nullptr, "oak leaves");
+        ctx.check(!leaves->getBlockType().isSeasonTinted(*leaves, *region, *at), "oak leaves in the snowy forest are not season tinted");
+        auto snowy  = static_cast<int>(leaves->getBlockType().getRenderLayer(*leaves, *region, *at));
+        auto forest = static_cast<int>(leaves->getBlockType().getRenderLayer(*leaves, *region, *forestAt));
+        ctx.check(snowy == forest, std::format("oak leaves draw in the forest's render layer in the snowy forest ({} / {})", snowy, forest));
     }
-    // TF's water colours (BiomeSpecialEffects#waterColor) through the game's water colour lookup
+    // TF's water colours (BiomeSpecialEffects#waterColor) from the policy the client's water mesh is
+    // tessellated with: the hook sits on the object the game uses. Whether the drawn water shows them
+    // is measured on the screenshots by the client scenario (its pools), not here.
+    Block const* water = game::blockWith("minecraft:water");
+    ctx.require(water != nullptr, "the water block");
     for (char const* biome : {"twilightforest:fire_swamp", "twilightforest:swamp", "twilightforest:spooky_forest", "twilightforest:dense_forest", "twilightforest:forest"}) {
         auto at = inside(biome);
-        if (!at) continue;
+        ctx.require(at.has_value(), std::string(biome) + " is found within 4096 blocks");
         core::GlobalPos gp{ctx.dimension(), at->x, at->y, at->z};
-        if (!co_await ctx.ensureLoaded(gp)) continue;
-        Biome const& b    = ctx.region()->getBiome(*at);
-        unsigned     got  = static_cast<unsigned>(BiomeColorSampling::getWaterColor(b, *at)) & 0xFFFFFF;
-        unsigned     want = static_cast<unsigned>(*colors::water(biome));
-        ctx.check(got == want, std::format("{} water #{:06X} (TF #{:06X})", biome, got, want));
-        ctx.info(std::format("{}: the server biome's map water colour #{:08X}", biome, static_cast<unsigned>(static_cast<int>(b.mMapWaterColor))));
+        ctx.require(co_await ctx.ensureLoaded(gp), std::string(biome) + " chunk loaded");
+        auto&      region = *ctx.region();
+        mce::Color c      = BiomeColorSampling::getTessellationPolicy(TintMethod::Water).get(*water, region, *at, nullptr);
+        unsigned   got    = (static_cast<unsigned>(c.r * 255.f + 0.5f) << 16) | (static_cast<unsigned>(c.g * 255.f + 0.5f) << 8) | static_cast<unsigned>(c.b * 255.f + 0.5f);
+        unsigned   want   = static_cast<unsigned>(*colors::water(biome));
+        ctx.check(got == want, std::format("{}: the water policy gives #{:06X} (TF #{:06X})", biome, got, want));
     }
-    ctx.check(gf::biomes::ext::waterColoursApplied() > 0, "the water colour hook answered TF's water colours");
     // the client level's own biomes: which environment attributes the client biome files gave them
     // (a TF biome against a vanilla one), and the water colour the client was sent
     if (auto* player = client::currentPlayer()) {

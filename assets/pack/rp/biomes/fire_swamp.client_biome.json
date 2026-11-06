@@ -14,11 +14,17 @@
       "minecraft:water_appearance": {
         "surface_color": "#6C2C2C"
       },
+      "minecraft:water_identifier": {
+        "water_identifier": "gloamingforest:fire_swamp_water"
+      },
       "minecraft:grass_appearance": {
         "color": "#572E23"
       },
       "minecraft:foliage_appearance": {
         "color": "#64260F"
+      },
+      "minecraft:precipitation": {
+        "white_ash": 0.8468
       },
       "minecraft:ambient_sounds": {
         "underwater_loop": "ambient.underwater.loop",

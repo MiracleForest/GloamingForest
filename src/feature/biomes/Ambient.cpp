@@ -11,22 +11,23 @@
 // rand(r) - rand(r) around the player's block), a sample whose block has no full collision shape
 // spawning the biome's particle with its probability at a random point of the block.
 //
-// Bedrock clients have no data-driven ambient particle per biome, so the server stands in for the
-// client, per player in the Twilight Forest (as F4 does for the portal's display ticks), and emits
-// through gf::fx (TF's particles by id, owned by U6; white_ash as F10's falling-dust stand-in).
+// Bedrock:
+// - white ash: Bedrock clients draw it themselves for a biome whose client biome file asks for it
+//   (minecraft:precipitation "white_ash", what the basalt deltas use: Java's 0.118093334 there is
+//   Bedrock's 2.0), so the fire swamp's client file carries TF's 0.05 as 0.05 / 0.118093334 * 2.0;
+//   every client, vanilla included, draws Java's small white specks.
+// - fireflies: Bedrock has no data-driven ambient particle per biome. The client mod runs this
+//   animateTick itself (src/client/biomes/Ambient.cpp: only its own samples, drawn locally, as on
+//   Java); for players without it the server stands in, per player in the Twilight Forest, and
+//   sends each of them its own samples only (a SpawnParticleEffectPacket of the resource pack's
+//   effect to that player).
 // A sample first rolls the largest probability of any biome, then the rest of its own: the same
 // distribution with far fewer block and biome lookups.
-// gf::fx shows a particle to every player near it, where Java shows each client only its own
-// samples. So that N players close together do not see N times Java's density, a sample around a
-// player spawns only when that player is the nearest Twilight Forest player to it: every point
-// then gets the particles of one player's animateTick (the nearest one's), which is what each of
-// them sees in Java up to the shape of the falloff between two players.
 //
 // The mood sound (TF's AmbientMoodSettings.LEGACY_CAVE_SETTINGS in every biome: ambient.cave,
 // tick delay 6000, search extent 8, offset 2.0) is played by the server per player as
 // BiomeAmbientSoundsHandler#tick does on Java's client (core/biomes/Mood): Bedrock's client biome
 // mood has none of these settings, so the client biome files carry no mood.
-
 #include <array>
 #include <cmath>
 #include <random>
@@ -42,6 +43,8 @@
 #include "mc/network/MinecraftPacketIds.h"
 #include "mc/network/MinecraftPackets.h"
 #include "mc/network/packet/PlaySoundPacket.h"
+#include "mc/network/packet/SpawnParticleEffectPacket.h"
+#include "mc/network/packet/SpawnParticleEffectPacketPayload.h"
 #include "mc/platform/UUID.h"
 #include "mc/world/phys/AABB.h"
 #include "mc/world/actor/player/Player.h"
@@ -55,9 +58,10 @@
 
 #include "core/biomes/Colors.h"
 #include "core/biomes/Mood.h"
+#include "feature/biomes/Ambient.h"
 #include "feature/biomes/Biomes.h"
 #include "feature/dimension/World.h"
-#include "feature/fx/Fx.h"
+#include "feature/net/Net.h"
 #include "game/Blocks.h"
 #include "mod/Log.h"
 #include "mod/Module.h"
@@ -74,17 +78,17 @@ struct AmbientParticle {
     float       probability;
 };
 
-// TF's biome JSON "effects.particle" (docs/spec/biomes.md section 6)
-constexpr std::array<AmbientParticle, 7> kParticles{{
+// TF's biome JSON "effects.particle" (docs/spec/biomes.md section 6); the fire swamp's white ash is
+// drawn by the clients from its client biome file (see above)
+constexpr std::array<AmbientParticle, 6> kParticles{{
     {"twilightforest:dense_forest", "twilightforest:wandering_firefly", 0.00025f},
     {"twilightforest:dense_mushroom_forest", "twilightforest:wandering_firefly", 0.00025f},
     {"twilightforest:enchanted_forest", "twilightforest:wandering_firefly", 0.00025f},
     {"twilightforest:firefly_forest", "twilightforest:wandering_firefly", 0.001f},
     {"twilightforest:forest", "twilightforest:wandering_firefly", 0.00025f},
     {"twilightforest:mushroom_forest", "twilightforest:wandering_firefly", 0.00025f},
-    {"twilightforest:fire_swamp", "minecraft:white_ash", 0.05f},
 }};
-constexpr float kMaxProbability = 0.05f;
+constexpr float kMaxProbability = 0.001f;
 
 AmbientParticle const* particleOf(std::string const& biome) {
     for (auto const& p : kParticles)
@@ -112,12 +116,32 @@ bool fullCubeCollision(BlockSource& region, BlockPos const& pos, Block const& bl
         && eq(b.max.y, float(pos.y + 1)) && eq(b.max.z, float(pos.z + 1));
 }
 
-std::string biomeIdOf(Biome const& b) {
-    auto const& name = b.mHash->getString();
-    return name.find(':') == std::string::npos ? "minecraft:" + name : name;
+} // namespace
+
+char const* ambientEffectOf(std::string const& particleId) {
+    // U6's resource pack effect of the wandering firefly has the particle's id
+    for (auto const& p : kParticles)
+        if (particleId == p.particle) return p.particle;
+    return nullptr;
 }
 
-} // namespace
+void ambientParticles(BlockSource& region, BlockPos const& at, std::mt19937& random, std::function<void(std::string const&, Vec3 const&)> const& spawn) {
+    std::uniform_real_distribution<float> unit(0.f, 1.f);
+    for (int j = 0; j < 667; ++j) {
+        for (int range : {16, 32}) {
+            if (unit(random) > kMaxProbability) continue;
+            std::uniform_int_distribution<int> axis(0, range - 1);
+            BlockPos pos{at.x + axis(random) - axis(random), at.y + axis(random) - axis(random), at.z + axis(random) - axis(random)};
+            if (pos.y < region.getMinHeight() || pos.y >= region.getMaxHeight()) continue;
+            if (!region.hasChunksAt(pos, 0, false)) continue;
+            Block const& block = region.getBlock(pos);
+            if (fullCubeCollision(region, pos, block)) continue; // !isCollisionShapeFullBlock
+            auto const* p = particleOf(biomeIdOf(region.getBiome(pos)));
+            if (!p || unit(random) * kMaxProbability > p->probability) continue;
+            spawn(p->particle, Vec3{pos.x + unit(random), pos.y + unit(random), pos.z + unit(random)});
+        }
+    }
+}
 
 struct BiomeAmbientModule {
     void install() {
@@ -132,14 +156,13 @@ private:
         if (!twilight || !level) return;
         auto* region = game::regionOf(static_cast<int>(*twilight));
         if (!region) return;
-        mPlayers.clear();
         level->forEachPlayer([&](Player& player) {
             if (player.getDimensionId() != *twilight) return true;
-            mPlayers.push_back(game::blockPosOf(player.getFeetPos()));
             moodTick(*region, player);
+            // the client mod draws its own player's particles (src/client/biomes/Ambient.cpp)
+            if (!player.isSimulatedPlayer() && !net::isCompanion(player)) animateTick(*region, player);
             return true;
         });
-        for (std::size_t i = 0; i < mPlayers.size(); ++i) animateTick(*region, i);
     }
 
     /// BiomeAmbientSoundsHandler#tick's mood part for `player` (TF's mood settings in every TF
@@ -149,7 +172,7 @@ private:
         Vec3 const feet = player.getFeetPos();
         // Entity#getEyeY: the player's eye height (1.62 standing, 1.27 crouching)
         double const eyeY = feet.y + (player.isSneaking() ? 1.27 : 1.62);
-        if (!core::biomes::colors::water(biomeIdOf(region.getBiome(game::blockPosOf(feet)))).has_value()) return; // a TF biome
+        if (!isTfBiome(biomeIdOf(region.getBiome(game::blockPosOf(feet))))) return;
         auto const&                        s = mood::kTwilight;
         std::uniform_int_distribution<int> axis(0, s.blockSearch * 2);
         // Java draws x, y, z in that order
@@ -181,48 +204,27 @@ private:
         }
     }
 
-    /// Whether player `self` is the nearest of mPlayers to `pos` (ties: the first).
-    [[nodiscard]] bool nearest(std::size_t self, BlockPos const& pos) const {
-        auto dist = [&](BlockPos const& p) {
-            long long dx = p.x - pos.x, dy = p.y - pos.y, dz = p.z - pos.z;
-            return dx * dx + dy * dy + dz * dz;
-        };
-        long long mine = dist(mPlayers[self]);
-        for (std::size_t i = 0; i < mPlayers.size(); ++i) {
-            if (i == self) continue;
-            long long d = dist(mPlayers[i]);
-            if (d < mine || (d == mine && i < self)) return false;
-        }
-        return true;
-    }
-
-    /// ClientLevel#animateTick's ambient particle part around player `self`.
-    void animateTick(BlockSource& region, std::size_t self) {
-        BlockPos const                        at = mPlayers[self];
-        std::uniform_real_distribution<float> unit(0.f, 1.f);
-        for (int j = 0; j < 667; ++j) {
-            for (int range : {16, 32}) {
-                if (unit(mRandom) > kMaxProbability) continue;
-                std::uniform_int_distribution<int> axis(0, range - 1);
-                BlockPos pos{at.x + axis(mRandom) - axis(mRandom), at.y + axis(mRandom) - axis(mRandom), at.z + axis(mRandom) - axis(mRandom)};
-                if (pos.y < region.getMinHeight() || pos.y >= region.getMaxHeight()) continue;
-                if (!region.hasChunksAt(pos, 0, false)) continue;
-                Block const& block = region.getBlock(pos);
-                if (fullCubeCollision(region, pos, block)) continue; // !isCollisionShapeFullBlock
-                auto const* p = particleOf(biomeIdOf(region.getBiome(pos)));
-                if (!p || unit(mRandom) * kMaxProbability > p->probability) continue;
-                if (mPlayers.size() > 1 && !nearest(self, pos)) continue;
-                Vec3 spawn{pos.x + unit(mRandom), pos.y + unit(mRandom), pos.z + unit(mRandom)};
-                fx::particle(region.getDimension(), p->particle, spawn);
+    /// ClientLevel#animateTick's ambient particle part for a player without the client mod: its own
+    /// samples, sent to it only.
+    void animateTick(BlockSource& region, Player& player) {
+        auto dimId = static_cast<uchar>(static_cast<int>(player.getDimensionId()));
+        ambientParticles(region, game::blockPosOf(player.getFeetPos()), mRandom, [&](std::string const& particle, Vec3 const& pos) {
+            char const* effect = ambientEffectOf(particle);
+            if (!effect) return;
+            SpawnParticleEffectPacket pkt(SpawnParticleEffectPacketPayload(pos, effect, dimId, std::nullopt));
+            pkt.sendTo(player);
+            if (!mParticleLogged) {
+                mParticleLogged = true;
+                gf::log().info("biomes: ambient particle {} sent to {} at {:.1f} {:.1f} {:.1f}", particle, player.getRealName(), pos.x, pos.y, pos.z);
             }
-        }
+        });
     }
 
-    std::vector<BlockPos>                  mPlayers; ///< feet blocks of the Twilight Forest's players, this tick
     std::unordered_map<std::string, float> mMoodiness; ///< BiomeAmbientSoundsHandler#moodiness per player (UUID)
-    bool                                   mMoodLogged = false;
+    bool                                   mMoodLogged     = false;
+    bool                                   mParticleLogged = false;
     ll::event::ListenerPtr                 mTick;
-    std::mt19937           mRandom{std::random_device{}()};
+    std::mt19937                           mRandom{std::random_device{}()};
 };
 
 } // namespace gf::feature::biomes
