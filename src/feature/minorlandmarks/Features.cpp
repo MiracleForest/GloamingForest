@@ -623,11 +623,7 @@ bool myceliumBlob(FeatureContext const& ctx) {
     int         top   = i + hh;
     int         end   = i - hh - 1;
     int         l     = kit::sampleInt(c["radius"], rand);
-    for (int x = pos.x - l; x <= pos.x + l; x++)
-        for (int z = pos.z - l; z <= pos.z + l; z++) {
-            // BlockPos.betweenClosed iterates x fastest: (x, z) order matters only for the draws
-            (void)0;
-        }
+    // BlockPos.betweenClosed: x fastest, then z (the rule-based provider draws in this order)
     for (int z = pos.z - l; z <= pos.z + l; z++)
         for (int x = pos.x - l; x <= pos.x + l; x++) {
             int i1 = x - pos.x, j1 = z - pos.z;

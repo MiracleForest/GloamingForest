@@ -392,10 +392,11 @@ GF_REGISTER_SELFTEST("minorlandmarks.hollow_tree_layout", [](Context& ctx) {
 });
 
 GF_REGISTER_SELFTEST("minorlandmarks.hollow_tree_sapling", [](Context& ctx) -> ll::coro::CoroTask<> {
-    auto area   = co_await ctx.flatArea(1850, 48, 128);
+    // 96 wide: the crown (radius up to 20) and its branches stay inside the restored volume
+    auto area   = co_await ctx.flatArea(1800, 96, 128);
     auto region = ctx.region();
     ctx.require(region != nullptr, "test region");
-    BlockPos pos{area.minX + 24, area.minY, area.minZ + 24};
+    BlockPos pos{area.minX + 48, area.minY, area.minZ + 48};
     // HollowTreeStructure#generateFromSapling through the landmark contract (U3's sapling grower)
     bool ok = gf::landmark::generateAt(kHollowTree, *region, pos);
     ctx.require(ok, "the hollow tree start was made at the sapling");

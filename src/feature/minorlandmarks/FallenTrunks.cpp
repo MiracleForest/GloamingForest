@@ -15,6 +15,8 @@
 #include "feature/minorlandmarks/Internal.h"
 
 #include <map>
+#include <tuple>
+#include <unordered_set>
 #include <mutex>
 
 #include "mc/world/level/BlockPos.h"
@@ -221,8 +223,6 @@ bool hasInvalidNearbyBiome(std::string const& biomes, int x, int y, int z, int r
     return found;
 }
 
-struct TerraCache {
-    BlockBox                                 box{};
     int                                      length = 0, radius = 0;
     std::int64_t                             seed   = 0;
     cml::Dir                                 dir    = cml::Dir::South;
@@ -252,21 +252,18 @@ std::vector<std::unique_ptr<st::Piece>> fallenTrunkPieces(FallenTrunkConfig cons
 }
 
 double fallenTrunkTerraform(BlockBox const& box, cml::Dir orientation, int length, int radius, std::int64_t holeSeed, int x, int y, int z) {
-    thread_local TerraCache cache;
-    if (!cache.density || !(cache.box.minX == box.minX && cache.box.minY == box.minY && cache.box.minZ == box.minZ && cache.box.maxX == box.maxX
-                            && cache.box.maxY == box.maxY && cache.box.maxZ == box.maxZ)
-        || cache.length != length || cache.radius != radius || cache.seed != holeSeed || cache.dir != orientation) {
+    // a few trunks can reach one chunk: keep their density functions per thread
+    using Key = std::tuple<int, int, int, int, int, int, int, int, std::int64_t, int>;
+    thread_local std::map<Key, std::unique_ptr<cml::TrunkUnderDensity>> cache;
+    Key key{box.minX, box.minY, box.minZ, box.maxX, box.maxY, box.maxZ, length, radius, holeSeed, static_cast<int>(orientation)};
+    auto it = cache.find(key);
+    if (it == cache.end()) {
+        if (cache.size() > 32) cache.clear();
         cml::FallenTrunk piece(box, orientation, length, radius, holeSeed);
-        cache.box     = box;
-        cache.length  = length;
-        cache.radius  = radius;
-        cache.seed    = holeSeed;
-        cache.dir     = orientation;
-        cache.density = std::make_unique<cml::TrunkUnderDensity>(piece, radius == kRadiuses[2], 1, 2);
+        it = cache.emplace(key, std::make_unique<cml::TrunkUnderDensity>(piece, radius == kRadiuses[2], 1, 2)).first;
     }
-    return cache.density->compute(x, y, z);
+    return it->second->compute(x, y, z);
 }
-
 void installFallenTrunks() {
     st::registerPieceType(kTFFallenTrunk, [](Json const& saved) -> std::unique_ptr<st::Piece> { return std::make_unique<FallenTrunkPiece>(saved); });
 

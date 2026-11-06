@@ -24,6 +24,7 @@
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/Mob.h"
 #include "mc/world/actor/player/Player.h"
+#include "mc/world/level/GameType.h"
 #include "mc/world/gamemode/GameMode.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
@@ -86,7 +87,7 @@ bool looksAt(Player& player, BlockPos const& pos) {
     Vec3  dir    = player.getViewVector(1.0F);
     for (float t = 0.0F; t <= 5.0F; t += 0.05F) {
         BlockPos at{static_cast<int>(std::floor(eye.x + dir.x * t)), static_cast<int>(std::floor(eye.y + dir.y * t)), static_cast<int>(std::floor(eye.z + dir.z * t))};
-        if (region.getBlock(at).isAir()) continue;
+        if (region.getBlock(at).isAir() || st::blocks::isLiquid(region.getBlock(at))) continue; // Fluid.NONE
         return at == pos;
     }
     return false;
@@ -152,7 +153,8 @@ void installHedge() {
         });
         // playerDestroy: one more prick
         interactions::onDestroyed({.block = kHedge}, [](interactions::DestroyContext const& c, bool destroyed) {
-            if (destroyed) hurt(c.player);
+            // ServerPlayerGameMode runs playerDestroy only when not in creative
+            if (destroyed && c.player.getPlayerGameType() != GameType::Creative) hurt(c.player);
         });
     }
     s.tick = ll::event::EventBus::getInstance().emplaceListener<ll::event::ServerLevelTickEvent>([](ll::event::ServerLevelTickEvent&) { onTick(); });
