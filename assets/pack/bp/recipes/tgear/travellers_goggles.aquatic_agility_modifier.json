@@ -1,0 +1,39 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:add_modifier_to_travellers_gear/travellers_goggles/aquatic_agility_modifier"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      " b",
+      "gb",
+      "sw"
+    ],
+    "key": {
+      "b": {
+        "item": "minecraft:bamboo"
+      },
+      "g": {
+        "item": "twilightforest:travellers_goggles"
+      },
+      "s": {
+        "item": "minecraft:slime_ball"
+      },
+      "w": {
+        "item": "minecraft:potion",
+        "data": 19
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:travellers_goggles"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:travellers_goggles"
+    }
+  }
+}

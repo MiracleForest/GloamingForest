@@ -1,0 +1,38 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:add_modifier_to_travellers_gear/travellers_wings/agile_ranger_modifier_1"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      "FPF",
+      "HWH"
+    ],
+    "key": {
+      "F": {
+        "item": "twilightforest:raven_feather"
+      },
+      "H": {
+        "item": "minecraft:rabbit_hide"
+      },
+      "P": {
+        "item": "minecraft:potion",
+        "data": 15
+      },
+      "W": {
+        "item": "twilightforest:travellers_wings"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:travellers_wings"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:travellers_wings"
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:add_modifier_to_travellers_gear/travellers_goggles/red_thread_vision_modifier"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      " R ",
+      "RGR"
+    ],
+    "key": {
+      "G": {
+        "item": "twilightforest:travellers_goggles"
+      },
+      "R": {
+        "item": "twilightforest:red_thread"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:travellers_goggles"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:travellers_goggles"
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "twilightforest:add_modifier_to_travellers_gear/travellers_vest/efficient_eater_modifier"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "ingredients": [
+      {
+        "item": "twilightforest:hydra_chop"
+      },
+      {
+        "item": "twilightforest:hydra_chop"
+      },
+      {
+        "item": "twilightforest:hydra_chop"
+      },
+      {
+        "item": "minecraft:bundle"
+      },
+      {
+        "item": "twilightforest:travellers_vest"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "twilightforest:travellers_vest"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:travellers_vest"
+    }
+  }
+}

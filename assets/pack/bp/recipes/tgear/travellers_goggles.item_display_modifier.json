@@ -1,0 +1,35 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "twilightforest:add_modifier_to_travellers_gear/travellers_goggles/item_display_modifier"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "pattern": [
+      "sss",
+      "igi",
+      "sss"
+    ],
+    "key": {
+      "g": {
+        "item": "twilightforest:travellers_goggles"
+      },
+      "i": {
+        "item": "minecraft:frame"
+      },
+      "s": {
+        "item": "minecraft:stick"
+      }
+    },
+    "unlock": [
+      {
+        "item": "twilightforest:travellers_goggles"
+      }
+    ],
+    "result": {
+      "item": "twilightforest:travellers_goggles"
+    }
+  }
+}
