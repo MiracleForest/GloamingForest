@@ -162,6 +162,7 @@ struct Local {
         int    ticks = 0;
     };
     std::optional<Honey> honey;
+    int                  honeyJumpTick = -1; ///< the tick (tickCount) of the last jump off a honey block
 };
 Local& local() {
     static Local l;
@@ -316,6 +317,8 @@ void tick(movement::MoveState& s) {
             l.groundJumpPeak = feet.y;
             l.groundJumpFrom = blockBelow(*p, feet);
         }
+        // a jump off honey: the engine's jump step is this tick's (tgmove.honey_jump counts from it)
+        if (s.onGround) l.honeyJumpTick = blockBelow(*p, feet) == "minecraft:honey_block" ? tickCount : -1;
     }
 
     // ---- sidestep (handleSidestep) ----
@@ -442,14 +445,15 @@ void tick(movement::MoveState& s) {
     }
     if (l.honey && !act(Mod::Unrestrained)) l.honey.reset(); // the boots came off: nothing to make up
     if (l.honey) {
-        int late = l.eng.unrHoneyAge; // steps since this side's own honey jump (-1: it saw none)
+        // the steps this side jumped weakly after its jump step (the jump key's tick) until the word came
+        int late = l.honeyJumpTick >= 0 ? tickCount - l.honeyJumpTick - 1 : -1;
         if (!s.onGround && (late >= 0 || l.honey->ticks >= 1)) {
-            // the server's make-up, plus the steps this side jumped weakly until it heard of it; the
-            // height made up comes off the next step (applyUnrestrained), as on the server
-            auto up           = tg::honeyCatchUp(l.honey->lost, std::max(late, 0));
+            // the server's make-up, plus those steps; the height made up comes off the next step
+            // (applyUnrestrained), as on the server
+            auto up           = tg::honeyCatchUp(l.honey->lost, std::clamp(late, 0, 20));
             s.velocity.y      = static_cast<float>(s.velocity.y + up.add);
             l.eng.unrJumpLost = up.deficit;
-            l.eng.unrHoneyAge = -1;
+            l.honeyJumpTick   = -1;
             log().info("tgmove: honey jump made up by the server (vy +{:.3f}, {} steps late)", up.add, late);
             l.honey.reset();
         } else if (++l.honey->ticks > 4) {

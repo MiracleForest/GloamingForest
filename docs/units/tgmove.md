@@ -109,7 +109,7 @@ so F2's `models.attachables` selftest still sees the generated file.
   a fall still bounces. The honey jump: the engine's weaker jump is made up in the next step (the height it lost is
   added to that step's velocity and taken off the one after). Exactly one simulation detects it: the server's copy
   when the server runs the mod (it sends the velocity it added on `tgmove.honey_jump` and the client mod adds the same
-  on its next airborne step, plus the steps it jumped weakly until the word came: `core::tgmove::honeyCatchUp`, gtested
+  on its next airborne step, plus the steps it jumped weakly since its jump key's tick until the word came: `core::tgmove::honeyCatchUp`, gtested
   for 0 to 4 steps late against the full jump), the client mod alone without one. Both making it up stacked through the server's
   corrections (measured in round 3: 2.52 and 4.06 blocks in two local runs); the client e2e now jumps 3 times and
   wants 2.52 +- 0.15 each, made up once each. Without the input (mobs; simulated players) the input
