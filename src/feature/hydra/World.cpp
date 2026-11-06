@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <map>
 #include <random>
+#include <string_view>
+#include <utility>
 
 #include "ll/api/event/EventBus.h"
 #include "ll/api/event/ListenerBase.h"
@@ -34,6 +36,7 @@
 
 #include "feature/common/Interactions.h"
 #include "feature/ext/entity/EntityExt.h"
+#include "feature/tags/Tags.h"
 
 namespace gf::feature::hydra::world {
 
@@ -75,6 +78,30 @@ Mob* asMob(Actor& actor) { return actor.hasCategory(ActorCategory::Mob) ? static
 std::uint64_t currentTick() {
     auto level = ll::service::getLevel();
     return level ? level->getCurrentServerTick().tickID : 0;
+}
+
+CausingDirect causingAndDirect(Actor* attacker, Actor* direct) {
+    if (attacker && direct && !asMob(*attacker) && asMob(*direct)) std::swap(attacker, direct);
+    return {attacker, direct};
+}
+
+bool isFireDamage(std::string const& type) {
+    // #minecraft:is_fire of 1.21.1
+    static constexpr std::string_view kVanilla[] = {"minecraft:in_fire", "minecraft:campfire", "minecraft:on_fire", "minecraft:lava",
+                                                    "minecraft:hot_floor", "minecraft:unattributed_fireball", "minecraft:fireball"};
+    for (auto v : kVanilla)
+        if (type == v) return true;
+    return gf::tags::has(gf::tags::Registry::DamageType, "minecraft:is_fire", type);
+}
+
+bool isProjectileDamage(std::string const& type) {
+    // #minecraft:is_projectile of 1.21.1 (llama spit is not a member)
+    static constexpr std::string_view kVanilla[] = {"minecraft:arrow", "minecraft:trident", "minecraft:mob_projectile", "minecraft:fireball",
+                                                    "minecraft:unattributed_fireball", "minecraft:wither_skull", "minecraft:thrown",
+                                                    "minecraft:wind_charge"};
+    for (auto v : kVanilla)
+        if (type == v) return true;
+    return gf::tags::has(gf::tags::Registry::DamageType, "minecraft:is_projectile", type);
 }
 
 std::int64_t parentOfPart(Actor const& part) {

@@ -35,3 +35,39 @@ TEST(HydraMortar, SegmentClip) {
     // a zero-length segment
     EXPECT_FALSE(segmentHits(box, V3{2, 0.4, 0}, V3{2, 0.4, 0}));
 }
+TEST(HydraMortar, ProjectileLineOfMotion) {
+    V3 feet{0.0, 64.0, 0.0}; // Java projectile box x, z in [-0.675, 0.675], y in [63.7, 65.05]
+    // a slow snowball aimed dead centre, stopped by the 3.75 pick box 1.9 blocks short of the centre
+    EXPECT_TRUE(projectileReachesJavaBox(feet, V3{-1.9, 64.3, 0.0}, V3{0.4, -0.02, 0.0}, V3{}));
+    // the same with Bedrock's motion zeroed at the impact: the look carries the line
+    EXPECT_TRUE(projectileReachesJavaBox(feet, V3{-1.9, 64.3, 0.0}, V3{}, V3{1.0, 0.0, 0.0}));
+    // reported after its move, already past the centre
+    EXPECT_TRUE(projectileReachesJavaBox(feet, V3{0.9, 64.3, 0.0}, V3{2.5, 0.0, 0.0}, V3{}));
+    // passing 1.4 blocks beside it (inside the pick box, outside Java's box), slow or fast
+    EXPECT_FALSE(projectileReachesJavaBox(feet, V3{-1.5, 64.3, 1.4}, V3{0.3, 0.0, 0.0}, V3{}));
+    EXPECT_FALSE(projectileReachesJavaBox(feet, V3{-1.5, 64.3, 1.4}, V3{3.0, 0.0, 0.0}, V3{}));
+    // a steep fall beside it
+    EXPECT_FALSE(projectileReachesJavaBox(feet, V3{1.2, 65.5, 0.0}, V3{0.0, -1.0, 0.0}, V3{}));
+    EXPECT_TRUE(projectileReachesJavaBox(feet, V3{0.2, 65.5, 0.0}, V3{0.0, -1.0, 0.0}, V3{}));
+    // no motion and no look: only a projectile inside the box counts
+    EXPECT_FALSE(projectileReachesJavaBox(feet, V3{-1.5, 64.3, 0.0}, V3{}, V3{}));
+    EXPECT_TRUE(projectileReachesJavaBox(feet, V3{0.1, 64.3, 0.0}, V3{}, V3{}));
+    auto s = projectilePath(V3{0, 0, 0}, V3{1.0, 0, 0}, V3{});
+    EXPECT_DOUBLE_EQ(s.from.x, -(kMortarPickRadius + kMortarSize + 1.0));
+    EXPECT_DOUBLE_EQ(s.to.x, kMortarPickRadius + kMortarSize + 1.0);
+}
+
+TEST(HydraMortar, ProjectileLook) {
+    // Projectile#updateRotation's mirrored convention: the look is the motion with x and y negated
+    auto l = projectileLook(V3{3.0, 4.0, 0.0});
+    EXPECT_NEAR(l.x, -0.6, 1e-6);
+    EXPECT_NEAR(l.y, -0.8, 1e-6);
+    EXPECT_NEAR(l.z, 0.0, 1e-6);
+    l = projectileLook(V3{0.0, 0.0, 2.0});
+    EXPECT_NEAR(l.z, 1.0, 1e-6);
+    l = projectileLook(V3{1.0, 0.0, 1.0});
+    EXPECT_NEAR(l.x, -0.70710678, 1e-6);
+    EXPECT_NEAR(l.z, 0.70710678, 1e-6);
+    l = projectileLook(V3{});
+    EXPECT_DOUBLE_EQ(l.x * l.x + l.y * l.y + l.z * l.z, 0.0);
+}

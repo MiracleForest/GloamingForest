@@ -8,6 +8,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <string>
 #include <vector>
 
 #include "mc/deps/core/math/Vec3.h"
@@ -38,6 +39,25 @@ using JavaRandom = core::jrand::LegacyRandom;
 [[nodiscard]] Mob* asMob(Actor& actor);
 /// The server tick counter.
 [[nodiscard]] std::uint64_t currentTick();
+
+/// DamageSource#getEntity and #getDirectEntity from a gf::combat::DamageInfo's attacker and direct
+/// pair. F10 (src/feature/combat/Combat.cpp, entitiesOf) reads ActorDamageByChildActorSource with
+/// getEntityUniqueID as the direct entity and getDamagingEntityUniqueID as the attacker, which for a
+/// projectile shot by a mob gives attacker = projectile, direct = shooter: when the attacker is no
+/// mob and the direct entity is one, the two are swapped back. A shooterless projectile stays the
+/// causing entity, as in Java 1.21.1 (AbstractArrow#onHitEntity: arrow(this, owner ?: this)).
+/// The one place both the hydra and its mortar read the pair (routed to F10 for a fix).
+struct CausingDirect {
+    Actor* causing = nullptr;
+    Actor* direct  = nullptr;
+};
+[[nodiscard]] CausingDirect causingAndDirect(Actor* attacker, Actor* direct);
+
+/// Damage type tags of Minecraft 1.21.1 that Bedrock has no data for: vanilla's own members plus
+/// the tag data (TF's members and the units' fragments). Unit-local until F10 / A8 expose vanilla
+/// damage-type tag membership (routed).
+[[nodiscard]] bool isFireDamage(std::string const& type);
+[[nodiscard]] bool isProjectileDamage(std::string const& type);
 
 /// The parent of a part actor (0: not a part, or the parent is gone): F8's ext::parentOf.
 [[nodiscard]] std::int64_t parentOfPart(Actor const& part);

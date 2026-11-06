@@ -220,6 +220,7 @@ bool fireJetFeature(gf::features::FeatureContext const& ctx) {
             for (int gx = -2; gx <= 2; gx++)
                 for (int gz = -2; gz <= 2; gz++) world.setBlock(BlockPos{d.x + gx, d.y - 1, d.z + gz}, *grass, 2);
             // jet
+            noteGeneratedJet(d.x, d.y - 1, d.z);
             world.setBlock(BlockPos{d.x, d.y - 1, d.z}, *state, 2);
             // create reservoir with stone walls
             for (int rx = -2; rx <= 2; rx++) {

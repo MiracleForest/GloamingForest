@@ -99,8 +99,11 @@ struct MortarView {
     std::int64_t owner     = 0;
 };
 [[nodiscard]] std::optional<MortarView> mortarView(Actor& mortar);
-/// HydraMortar#hurt by `attacker` (the reflect), as a player's hit does.
-void reflectMortar(Actor& mortar, Actor& attacker);
+/// HydraMortar#hurt by `attacker` (the reflect), as a player's hit does. `projectile`: the causing
+/// entity is a shooterless projectile, which looks along core::hydra::projectileLook of its motion
+/// (Java's Projectile rotation); anything else looks along its view vector. The owner changes only
+/// for a living attacker.
+void reflectMortar(Actor& mortar, Actor& attacker, bool projectile = false);
 /// Mortars detonated so far (selftests).
 [[nodiscard]] int detonationsForTest();
 
@@ -121,6 +124,9 @@ void neighborChanged(BlockSource& region, BlockPos const& pos);
 [[nodiscard]] bool encasedWatched(core::GlobalPos const& pos);
 /// Whether the smoker at `pos` ticks (its TFSmokerBlockEntity; selftests).
 [[nodiscard]] bool smokerTracked(core::GlobalPos const& pos);
+/// The twilightforest:fire_jet feature (world generation) placed a jet or smoker at block (x, y, z):
+/// its placement is not remembered (the palette scan around the players finds it). Any thread.
+void noteGeneratedJet(int x, int y, int z);
 /// Whether the jet / smoker at `pos` is remembered with the world (gf:hydra:jets; selftests).
 [[nodiscard]] bool jetRemembered(core::GlobalPos const& pos);
 /// Saves the remembered jets and smokers and forgets everything in memory, as a world reload does

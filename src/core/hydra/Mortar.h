@@ -32,4 +32,28 @@ struct Box {
 /// AABB#clip: whether the segment `from` -> `to` meets `box` (a segment starting inside counts).
 [[nodiscard]] bool segmentHits(Box const& box, V3 from, V3 to);
 
+struct Segment {
+    V3 from;
+    V3 to;
+};
+
+/// The line of motion of a projectile that Bedrock reports hitting the mortar at `pos` with motion
+/// `delta` (`facing`: its look, used when the motion is about 0). A Bedrock projectile stops on the
+/// 3.75 pick box, up to about 1.9 blocks before the mortar's centre, and may report its motion
+/// before or after its move (or zeroed): the segment runs along the motion (or the look) far enough
+/// both ways to cross the whole pick box (pick radius + size + one step), so a projectile aimed at
+/// the Java box meets it wherever Bedrock stopped it. Zero motion and zero facing give an empty
+/// segment at `pos`.
+[[nodiscard]] Segment projectilePath(V3 pos, V3 delta, V3 facing);
+
+/// Entity#getLookAngle of a Java projectile moving `motion`: Projectile#updateRotation (and
+/// AbstractArrow#shoot) set yRot = atan2(dx, dz) and xRot = atan2(dy, horizontal) in degrees, the
+/// mirror of a mob's convention, so calculateViewVector gives the unit motion with x and y negated.
+/// Zero motion gives zero.
+[[nodiscard]] V3 projectileLook(V3 motion);
+
+/// Whether a projectile at `pos` moving `delta` (look `facing`) would hit the Java projectile box
+/// (0.3 inflation) of the mortar with feet at `mortarFeet`.
+[[nodiscard]] bool projectileReachesJavaBox(V3 mortarFeet, V3 pos, V3 delta, V3 facing);
+
 } // namespace gf::core::hydra

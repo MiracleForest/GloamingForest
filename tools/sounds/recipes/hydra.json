@@ -1,0 +1,15 @@
+{
+  "about": "U24 hydra: refinements of the baseline (tools/sounds/baseline/hydra.json). Original sound designs. The Hydra is a giant three-headed reptile in a cave lair: the growls are deep, rasping and layered (a lower octave, more grit, the lair's room), the roars swell longer and rumble, the hurt cries rise as a pained hiss over the roar, and the death cry falls for a long time into the lair's echo. The events (ids, subtitles, categories, volumes, pitches, variants) stay TF's.",
+  "files": {
+    "mob/hydra/growl1": {"patch": "creature/growl", "params": {"len": 1.6, "pitch": 46, "size": 0.45, "rasp": 0.5, "rough": 5}, "seed": 2401},
+    "mob/hydra/growl2": {"patch": "creature/growl", "params": {"len": 1.5, "pitch": 49, "size": 0.45, "rasp": 0.55, "rough": 5}, "seed": 2402},
+    "mob/hydra/growl3": {"patch": "creature/growl", "params": {"len": 1.7, "pitch": 43, "size": 0.42, "rasp": 0.45, "rough": 5.5}, "seed": 2403},
+    "mob/hydra/roar1": {"patch": "creature/roar", "params": {"len": 2.6, "pitch": 46, "room": 0.9, "size": 0.42, "rough": 5, "noise": 0.7, "rise": 4}, "seed": 2411},
+    "mob/hydra/roar2": {"patch": "creature/roar", "params": {"len": 2.4, "pitch": 50, "room": 0.9, "size": 0.45, "rough": 5, "noise": 0.65, "rise": 5}, "seed": 2412},
+    "mob/hydra/hurt1": {"patch": "creature/roar", "params": {"len": 0.7, "pitch": 70, "rise": 8, "size": 0.5, "rough": 6, "noise": 0.8, "room": 0.7}, "seed": 2421},
+    "mob/hydra/hurt2": {"patch": "creature/roar", "params": {"len": 0.65, "pitch": 74, "rise": 9, "size": 0.5, "rough": 6, "noise": 0.8, "room": 0.7}, "seed": 2422},
+    "mob/hydra/hurt3": {"patch": "creature/roar", "params": {"len": 0.75, "pitch": 66, "rise": 7, "size": 0.48, "rough": 6, "noise": 0.85, "room": 0.7}, "seed": 2423},
+    "mob/hydra/hurt4": {"patch": "creature/roar", "params": {"len": 0.6, "pitch": 78, "rise": 10, "size": 0.52, "rough": 6, "noise": 0.75, "room": 0.7}, "seed": 2424},
+    "mob/hydra/death": {"patch": "creature/roar", "params": {"len": 3.8, "pitch": 48, "rise": -10, "room": 0.95, "size": 0.42, "rough": 5, "noise": 0.7}, "seed": 2431}
+  }
+}

@@ -240,58 +240,48 @@ ia::Result onAttack(ia::EntityContext const& c) {
     return ia::Result::Consume;
 }
 
-/// Damage type tag minecraft:is_projectile: Minecraft 1.21.1's own members (Bedrock has no data for
-/// them) plus the tag data (TF's projectiles).
-bool isProjectileDamage(std::string const& type) {
-    static constexpr std::string_view kVanilla[] = {"minecraft:arrow", "minecraft:trident", "minecraft:mob_projectile", "minecraft:spit",
-                                                    "minecraft:fireball", "minecraft:unattributed_fireball", "minecraft:wither_skull",
-                                                    "minecraft:thrown", "minecraft:wind_charge"};
-    for (auto v : kVanilla)
-        if (type == v) return true;
-    return gf::tags::has(gf::tags::Registry::DamageType, "minecraft:is_projectile", type);
-}
-
 /// Whether a projectile hit on `mortar` would reach it in Java. The mortar's custom_hit_test is
 /// its pick box (0.75 inflated by getPickRadius 1.5, for the player's crosshair and melee), which
 /// Bedrock projectiles use too; a Java projectile (ProjectileUtil#getEntityHitResult) clips its
-/// path of the tick against the 0.75 box inflated by 0.3 only.
+/// path against the 0.75 box inflated by 0.3 only. Bedrock stops the projectile on the pick box
+/// and may report its motion before or after the move (or zeroed), so its whole line of motion
+/// (or its look) is clipped (core::hydra::projectilePath).
 bool projectileReachesJavaBox(Actor& mortar, Actor& projectile) {
-    namespace ch       = gf::core::hydra;
-    auto const& bb     = mortar.getAABB();
+    namespace ch    = gf::core::hydra;
+    auto const& bb  = mortar.getAABB();
     ch::V3      feet{(bb.min.x + bb.max.x) / 2.0, bb.min.y, (bb.min.z + bb.max.z) / 2.0};
-    auto        box    = ch::mortarBox(feet, ch::kProjectileInflate);
-    auto const& p      = projectile.getPosition();
-    auto const& dp     = projectile.getPosDelta();
-    // the tick's path, whether the projectile already moved (Bedrock reports the hit before or
-    // after its move): from one step back to one step on
-    ch::V3 from{double(p.x) - dp.x, double(p.y) - dp.y, double(p.z) - dp.z};
-    ch::V3 to{double(p.x) + dp.x, double(p.y) + dp.y, double(p.z) + dp.z};
     // (Java's path is the projectile's position, its feet: Entity#position)
-    return ch::segmentHits(box, from, to);
+    auto const& p    = projectile.getPosition();
+    auto const& dp   = projectile.getPosDelta();
+    auto        look = projectile.getViewVector(1.0F);
+    return ch::projectileReachesJavaBox(feet, ch::V3{p.x, p.y, p.z}, ch::V3{dp.x, dp.y, dp.z}, ch::V3{look.x, look.y, look.z});
 }
 
-/// HydraMortar#hurt for everything but a player's melee (onAttack): any damage with a living causing
-/// entity (an arrow's or a snowball's shooter, a mob's hit, an explosion's source) reflects the
-/// mortar along that entity's look; the mortar itself never takes damage.
+/// HydraMortar#hurt for everything but a player's melee (onAttack): any damage with a causing
+/// entity (DamageSource#getEntity: an arrow's or a snowball's shooter, a shooterless arrow or
+/// trident itself, a mob's hit, an explosion's source) reflects the mortar along that entity's
+/// look; the owner changes only for a living one. The mortar itself never takes damage.
 gf::combat::Verdict onIncoming(gf::combat::DamageInfo& d) {
     if (d.victim.getTypeName() != kMortar) return gf::combat::Verdict::Pass;
-    // the causing entity (DamageSource#getEntity) is the living one of the pair: F10 reports a
-    // child source (a projectile and its shooter) with the two swapped
-    Actor* causing = d.attacker;
-    Actor* direct  = d.direct;
-    if (causing && direct && !fe::asMob(*causing) && fe::asMob(*direct)) std::swap(causing, direct);
+    auto [causing, direct] = fe::causingAndDirect(d.attacker, d.direct);
     // a vanilla projectile inside the pick box but outside Java's projectile box missed in Java:
     // no reflection (the Bedrock projectile still stops on the hit test)
     Actor* projectile = direct && direct != &d.victim && !fe::asMob(*direct) ? direct : (causing && !fe::asMob(*causing) ? causing : nullptr);
-    if (projectile && projectile != &d.victim && projectile->getTypeName() != kMortar && isProjectileDamage(d.type)
+    if (projectile && projectile != &d.victim && projectile->getTypeName() != kMortar && fe::isProjectileDamage(d.type)
         && !projectileReachesJavaBox(d.victim, *projectile)) {
         log().info("hydra: mortar missed by {} (outside the Java projectile box)", projectile->getTypeName());
         return gf::combat::Verdict::Cancel;
     }
     // Explosion#getIndirectSourceEntity: an exploding mortar stands for its owner
     if (causing && causing->getTypeName() == kMortar) causing = ownerOf(*causing);
-    // HydraMortar#hurt reflects only with a causing entity (a shooterless arrow has none)
-    if (causing && causing != &d.victim && fe::asMob(*causing)) reflectMortar(d.victim, *causing);
+    // DamageSource#getEntity of a shooterless projectile: an arrow or a trident is its own causing
+    // entity in 1.21.1 (AbstractArrow / ThrownTrident#onHitEntity: arrow(this, owner ?: this)); every
+    // other projectile names its owner only (thrown, fireball, wither skull, wind charge, mob
+    // projectile: null without one), as does any other non-living source (PrimedTnt's indirect
+    // source is its owner)
+    bool selfCaused = causing && causing == projectile && (d.type == "minecraft:arrow" || d.type == "minecraft:trident");
+    if (causing && !fe::asMob(*causing) && !selfCaused) causing = nullptr;
+    if (causing && causing != &d.victim) reflectMortar(d.victim, *causing, selfCaused);
     return gf::combat::Verdict::Cancel;
 }
 
@@ -326,11 +316,18 @@ std::optional<MortarView> mortarView(Actor& mortar) {
     return v;
 }
 
-void reflectMortar(Actor& mortar, Actor& attacker) {
+void reflectMortar(Actor& mortar, Actor& attacker, bool projectile) {
     auto& st = stateOf(mortar);
     if (st.value("detonated", false)) return;
-    // reflect faster and more accurately: shoot(look, 1.5, 0.1)
-    auto           look = attacker.getViewVector(1.0F);
+    // reflect faster and more accurately: shoot(getLookAngle, 1.5, 0.1)
+    Vec3 look = attacker.getViewVector(1.0F);
+    if (projectile) {
+        // a shooterless arrow or trident: its Java rotation follows its motion (mirrored)
+        auto const& dp = attacker.getPosDelta();
+        Vec3        m  = dp.x * dp.x + dp.y * dp.y + dp.z * dp.z > 1.0E-8F ? dp : look;
+        auto        jl = core::hydra::projectileLook(core::hydra::V3{m.x, m.y, m.z});
+        look           = Vec3{static_cast<float>(jl.x), static_cast<float>(jl.y), static_cast<float>(jl.z)};
+    }
     double         len  = std::sqrt(look.x * look.x + look.y * look.y + look.z * look.z);
     if (len < 1.0E-9) return;
     fe::JavaRandom r(fe::freshSeed());

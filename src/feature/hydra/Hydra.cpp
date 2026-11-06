@@ -1169,16 +1169,6 @@ void aiStep(Actor& actor) {
     tickHydra(*mob, *rt);
 }
 
-/// Damage type tag minecraft:is_fire: the tag data (TF's members, the units' fragments) plus
-/// Minecraft 1.21.1's own members, which Bedrock has no data for.
-bool isFireDamage(std::string const& type) {
-    static constexpr std::string_view kVanilla[] = {"minecraft:in_fire", "minecraft:campfire", "minecraft:on_fire", "minecraft:lava",
-                                                    "minecraft:hot_floor", "minecraft:unattributed_fireball", "minecraft:fireball"};
-    for (auto v : kVanilla)
-        if (type == v) return true;
-    return gf::tags::has(gf::tags::Registry::DamageType, "minecraft:is_fire", type);
-}
-
 /// Hydra#attackEntityFromPart, Hydra#hurt and #isInvulnerableTo.
 bool hurt(Actor& self, float& amount, std::string const& type, Actor* attacker) {
     // read once: a later hit never sees this one's direct entity (noteDirect)
@@ -1197,15 +1187,15 @@ bool hurt(Actor& self, float& amount, std::string const& type, Actor* attacker) 
     // a fire-immune boss ignores fire, except its own mortars (Hydra#isInvulnerableTo, checked by
     // super.hurt): the hit is refused below, after the head counted it (attackEntityFromPart calls
     // headCon.addDamage whatever super.hurt returns)
-    bool const fireRefused = type != "twilightforest:hydra_mortar" && isFireDamage(type);
+    bool const fireRefused = type != "twilightforest:hydra_mortar" && fe::isFireDamage(type);
     // explosions reach the parts (NeoForge's Level#getEntities returns PartEntity instances): a
     // player's TNT, a creeper, a reflected mortar; the hydra's own mortars are refused just below
     // (their causing entity is the hydra)
     auto   uid    = fe::uidOf(self);
-    Actor* direct = directId && noteMatches ? fe::actorById(directId) : nullptr;
-    // the causing entity is the living one of the pair (F10 reports a child source, a projectile
-    // and its shooter, with the two swapped when the victim is hit directly)
-    if (attacker && direct && !fe::asMob(*attacker) && fe::asMob(*direct)) std::swap(attacker, direct);
+    // DamageSource#getEntity / #getDirectEntity (world::causingAndDirect undoes F10's swap)
+    auto const pair   = fe::causingAndDirect(attacker, directId && noteMatches ? fe::actorById(directId) : nullptr);
+    attacker          = pair.causing;
+    Actor*     direct = pair.direct;
     // environmental fire (lava, a fire block, burning) never reaches a part in TF: the parts share
     // the hydra's fire-immune type, so Entity#lavaHurt, BaseFireBlock#entityInside and the burning
     // tick skip them; only an entity's fire hit (a fireball) gets to attackEntityFromPart

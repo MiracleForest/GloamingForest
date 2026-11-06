@@ -17,6 +17,7 @@
 #include "mc/deps/core/math/Vec2.h"
 #include "mc/deps/core/string/HashedString.h"
 #include "mc/deps/shared_types/legacy/Difficulty.h"
+#include "mc/legacy/ActorUniqueID.h"
 #include "mc/safety/RedactableString.h"
 #include "mc/server/SimulatedPlayer.h"
 #include "mc/world/actor/Actor.h"
@@ -33,6 +34,7 @@
 
 #include "core/hydra/Head.h"
 #include "core/hydra/Lair.h"
+#include "core/hydra/Mortar.h"
 #include "feature/combat/Combat.h"
 #include "feature/common/Interactions.h"
 #include "feature/entity/Entity.h"
@@ -147,7 +149,7 @@ double dist(Vec3 const& a, Vec3 const& b) { return std::sqrt((a.x - b.x) * (a.x 
 // The lair piece (HydraLairComponent#postProcess, rule R19): stone dome, grass patch, speleothems,
 // the boss spawner at local (27, 3, 27); a golden volume hash of the clipped test volume.
 GF_REGISTER_SELFTEST("hydra.lair_golden", [](Context& ctx) -> ll::coro::CoroTask<> {
-    auto box    = co_await ctx.flatArea(2400, 80, 64); // up to the hill's roof (the stalactites' heightmap)
+    auto box    = co_await ctx.flatArea(2400, Context::kMaxFlatAreaSize, 64); // the whole hill (its sphere mask, radius 39.5) and its roof
     auto region = ctx.region();
     ctx.require(region != nullptr, "test region");
     // a known floor: four layers of dirt at the bottom of the volume, grass on top
@@ -159,7 +161,9 @@ GF_REGISTER_SELFTEST("hydra.lair_golden", [](Context& ctx) -> ll::coro::CoroTask
             for (int y = box.minY; y <= box.minY + 3; ++y) game::setBlock(*region, BlockPos{x, y, z}, y == box.minY + 3 ? *grass : *dirt);
     // the start at the volume's middle; the piece's box starts 4 above the volume's floor (its
     // domes start 4 and 1 below the piece)
-    int  cx = box.minX + 40, cz = box.minZ + 40, cy = box.minY + 4;
+    // the piece box (x - 33 .. x + 35, HollowHill's hillBox) centred in the volume: the piece and
+    // hill centre at (minX + 72, minZ + 72), the hill's sphere mask (radius 39.5) well inside
+    int  cx = box.minX + 71, cz = box.minZ + 71, cy = box.minY + 4;
     // with the terraformer's hill (TF's terrain pass at sea level, translated to cy): the speleothems
     // hang from its ceiling and stand on its floor inside the volume
     auto pieceBox = placeLairForTest(*region, box, cx, cy, cz, 2400, true);
@@ -699,14 +703,28 @@ GF_REGISTER_SELFTEST("hydra.jets_remembered", [](Context& ctx) -> ll::coro::Coro
 });
 
 // A jet or smoker placed in the Twilight Forest is remembered too (not only by the scan around the
-// players), and written to the world DB at the end of its tick, without waiting for an autosave.
+// players), whoever placed it (here a plain smoker and a plain jet set without a player, as
+// /setblock does), and written to the world DB at the end of its tick, without waiting for an
+// autosave. Only the ones the fire_jet feature generates are left to the scan.
 GF_REGISTER_SELFTEST("hydra.jets_remembered_twilight", [](Context& ctx) -> ll::coro::CoroTask<> {
     ctx.require(co_await ctx.inTwilight(), "in the Twilight Forest");
-    auto box = co_await ctx.flatArea(2476, 4, 8);
-    auto esm = ctx.testPos(2477, 2);
+    auto box   = co_await ctx.flatArea(2476, 4, 8);
+    auto esm   = ctx.testPos(2477, 2);
+    auto plain = ctx.testPos(2478, 1);
+    auto jet   = ctx.testPos(2478, 3);
+    auto gen   = ctx.testPos(2479, 2);
     ctx.require(ctx.setBlock(esm, kEncasedSmoker), "an encased smoker");
+    ctx.require(ctx.setBlock(plain, kSmoker), "a plain smoker without a player");
+    ctx.require(ctx.setBlock(jet, kFireJet), "a plain jet without a player");
+    noteGeneratedJet(gen.x, gen.y, gen.z);
+    ctx.require(ctx.setBlock(gen, kFireJet), "a jet the fire_jet feature placed");
     co_await ctx.ticks(2);
     ctx.check(jetRemembered(esm), "remembered with the world");
+    ctx.check(jetRemembered(plain) && jetRemembered(jet), "the plain smoker and jet set without a player are remembered");
+    ctx.check(!jetRemembered(gen), "a generated jet is not (the scan finds it)");
+    ctx.setBlock(plain, "minecraft:air");
+    ctx.setBlock(jet, "minecraft:air");
+    ctx.setBlock(gen, "minecraft:air");
     bool stored = false;
     if (auto j = gf::game::db::get("gf:hydra:jets"); j && j->is_array())
         for (auto const& e : *j)
@@ -880,6 +898,168 @@ GF_REGISTER_SELFTEST("hydra.mortar_projectile_box", [](Context& ctx) -> ll::coro
     (void)box;
 });
 
+namespace {
+
+/// Summons a vanilla projectile `id` at `at` moving `motion` (shooter `owner`, 0: none); nullptr: failed.
+Actor* summonProjectile(BlockSource& region, int dim, std::string const& id, Vec3 const& at, Vec3 const& motion, std::int64_t owner) {
+    char cmd[200];
+    std::snprintf(cmd, sizeof cmd, "summon %s %.3f %.3f %.3f", id.c_str(), at.x, at.y, at.z);
+    (void)gf::selftest::runServerCommand(cmd, dim);
+    Actor* p = nullptr;
+    for (auto* a : fe::actorsIn(region, dim, AABB{Vec3{at.x - 0.6f, at.y - 0.6f, at.z - 0.6f}, Vec3{at.x + 0.6f, at.y + 0.6f, at.z + 0.6f}}))
+        if (a->getTypeName() == id) p = a;
+    if (!p) return nullptr;
+    if (owner) {
+        ActorUniqueID o;
+        o.rawID = owner;
+        p->setOwner(o);
+    }
+    fe::setMotion(*p, motion);
+    return p;
+}
+
+/// Holds mortar `mid` still at `at` (feet) until its fuse changes or `ticks` pass; its fuse then.
+ll::coro::CoroTask<int> holdMortar(std::int64_t mid, Vec3 at, int ticks) {
+    int start = -1;
+    for (int i = 0; i < ticks; ++i) {
+        auto* m = fe::actorById(mid);
+        if (!m) co_return -1;
+        auto mv = mortarView(*m);
+        if (!mv) co_return -1;
+        if (start < 0) start = mv->fuse;
+        if (mv->fuse != start) co_return mv->fuse;
+        m->moveTo(at, Vec2{0, 0});
+        gf::projectile::ext::setVelocity(*m, Vec3{0.0f, 0.0f, 0.0f});
+        co_await Context::ticks(1);
+    }
+    auto* m = fe::actorById(mid);
+    auto  mv = m ? mortarView(*m) : std::nullopt;
+    co_return mv ? mv->fuse : -1;
+}
+
+} // namespace
+
+// HydraMortar#hurt with a shooterless arrow (a dispenser's, a summoned one): in 1.21.1 the arrow is
+// its own causing entity (arrow(this, owner ?: this)), so the mortar is reflected along the arrow's
+// look (Projectile#updateRotation: its motion mirrored in x and y), its fuse grows by 20 and its
+// owner stays the hydra. A shooterless snowball names no causing entity (thrown(this, null)): no
+// reflection.
+GF_REGISTER_SELFTEST("hydra.mortar_shooterless", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope normal(Difficulty::Normal);
+    auto            box  = co_await ctx.flatArea(2420, 48, 32);
+    auto            home = ctx.testPos(2444, 2);
+    auto            uid  = spawnHydra(ctx, home, 2429);
+    ctx.require(uid != 0, "the hydra spawns");
+    ctx.require(co_await ready(uid), "the hydra ticks");
+    auto* h = byId(uid);
+    ctx.require(h != nullptr, "the hydra");
+    auto  v = headView(*h, 0);
+    auto* m = launchMortar(*fe::asMob(*h), 0, v->pos, v->xRot, v->yRot, false);
+    ctx.require(m != nullptr, "a mortar");
+    auto mid    = fe::uidOf(*m);
+    auto region = ctx.region();
+    ctx.require(region != nullptr, "region");
+    Vec3 at{home.x + 0.5f, float(home.y) + 20.0f, home.z + 0.5f};
+    m->moveTo(at, Vec2{0, 0});
+    gf::projectile::ext::setVelocity(*m, Vec3{0.0f, 0.0f, 0.0f});
+    int  fuse0 = mortarView(*m)->fuse;
+    Vec3 motion{1.6f, -0.3f, 1.2f};
+    auto* arrow = summonProjectile(*region, home.dim, "minecraft:arrow", Vec3{at.x, at.y + 0.3f, at.z}, motion, 0);
+    ctx.require(arrow != nullptr, "a shooterless arrow");
+    // F10 reports a shooterless projectile as attacker = direct = the projectile
+    gf::combat::hurt(*m, 2.0F, "minecraft:arrow", arrow, arrow);
+    arrow->remove();
+    auto mv = mortarView(*m);
+    ctx.require(mv.has_value(), "the mortar");
+    ctx.check(mv->fuse == fuse0 + 20, "the fuse grows by 20 (" + std::to_string(mv->fuse) + ")");
+    ctx.check(mv->owner == uid, "the owner stays the hydra");
+    auto vel  = gf::projectile::ext::velocity(*m);
+    auto look = ch::projectileLook(ch::V3{motion.x, motion.y, motion.z});
+    double sp = std::sqrt(double(vel.x) * vel.x + double(vel.y) * vel.y + double(vel.z) * vel.z);
+    double dot = sp > 0 ? (vel.x * look.x + vel.y * look.y + vel.z * look.z) / sp : 0.0;
+    ctx.check(std::abs(sp - 1.5) < 0.05, "reflected at 1.5 (" + std::to_string(sp) + ")");
+    ctx.check(dot > 0.99, "along the arrow's Java look, its motion mirrored in x and y (dot " + std::to_string(dot) + ")");
+    ctx.check(vel.x < 0.0f && vel.y > 0.0f && vel.z > 0.0f, "x and y mirrored");
+    // a shooterless snowball: no causing entity, no reflection
+    m = byId(mid);
+    ctx.require(m != nullptr, "the mortar is still there");
+    m->moveTo(at, Vec2{0, 0});
+    gf::projectile::ext::setVelocity(*m, Vec3{0.0f, 0.0f, 0.0f});
+    int   fuse1 = mortarView(*m)->fuse;
+    auto* ball  = summonProjectile(*region, home.dim, "minecraft:snowball", Vec3{at.x, at.y + 0.3f, at.z}, motion, 0);
+    ctx.require(ball != nullptr, "a shooterless snowball");
+    gf::combat::hurt(*m, 0.0F, "minecraft:thrown", ball, ball);
+    ball->remove();
+    mv = mortarView(*m);
+    ctx.check(mv && mv->fuse == fuse1 && mv->owner == uid, "a shooterless snowball does not reflect it");
+    if (auto* mm = byId(mid)) mm->remove();
+    discard(uid);
+    co_await ctx.ticks(2);
+    (void)box;
+});
+
+// Real flying vanilla projectiles (Bedrock's own hit path, stopped by the 3.75 custom_hit_test): an
+// arrow and a snowball shot by the player at the mortar's centre reflect it (fuse + 20, the player
+// owns it); ones passing 1.4 blocks beside it (inside the pick box, outside Java's 0.3-inflated box)
+// do not.
+GF_REGISTER_SELFTEST("hydra.mortar_real_projectiles", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope normal(Difficulty::Normal);
+    auto            box  = co_await ctx.flatArea(2420, 48, 32);
+    auto            home = ctx.testPos(2444, 2);
+    auto            uid  = spawnHydra(ctx, home, 2430);
+    ctx.require(uid != 0, "the hydra spawns");
+    ctx.require(co_await ready(uid), "the hydra ticks");
+    auto& sp   = ctx.spawnPlayer();
+    auto  spId = sp.getOrCreateUniqueID().rawID;
+    sp.teleport(Vec3{home.x - 10.5f, float(home.y), home.z + 0.5f}, DimensionType(home.dim));
+    co_await ctx.ticks(2);
+    auto region = ctx.region();
+    ctx.require(region != nullptr, "region");
+    struct Shot {
+        char const* id;
+        float       side;
+        bool        reflects;
+    };
+    for (Shot shot : {Shot{"minecraft:arrow", 0.0f, true}, Shot{"minecraft:arrow", 1.4f, false}, Shot{"minecraft:snowball", 0.0f, true},
+                      Shot{"minecraft:snowball", 1.4f, false}}) {
+        auto* h = byId(uid);
+        ctx.require(h != nullptr, "the hydra");
+        auto  v = headView(*h, 0);
+        auto* m = launchMortar(*fe::asMob(*h), 0, v->pos, v->xRot, v->yRot, false);
+        ctx.require(m != nullptr, "a mortar");
+        auto mid = fe::uidOf(*m);
+        Vec3 at{home.x + 0.5f, float(home.y) + 20.0f, home.z + 0.5f};
+        m->moveTo(at, Vec2{0, 0});
+        gf::projectile::ext::setVelocity(*m, Vec3{0.0f, 0.0f, 0.0f});
+        co_await ctx.ticks(1);
+        m = byId(mid);
+        ctx.require(m != nullptr, "the mortar");
+        int   fuse0 = mortarView(*m)->fuse;
+        auto  bb    = m->getAABB();
+        float cx = (bb.min.x + bb.max.x) / 2.0f, cz = (bb.min.z + bb.max.z) / 2.0f;
+        // 6 blocks off along -x, 0.6 above the feet, 2 blocks a tick along +x (gravity ~0.3 over the flight)
+        auto* p = summonProjectile(*region, home.dim, shot.id, Vec3{cx - 6.0f, bb.min.y + 0.6f, cz + shot.side}, Vec3{2.0f, 0.0f, 0.0f}, spId);
+        ctx.require(p != nullptr, std::string{"a flying "} + shot.id);
+        auto pid  = fe::uidOf(*p);
+        int  fuse = co_await holdMortar(mid, at, 12);
+        auto mv   = byId(mid) ? mortarView(*byId(mid)) : std::nullopt;
+        std::string what = std::string{shot.id} + (shot.side == 0.0f ? " at the centre" : " 1.4 blocks beside");
+        if (shot.reflects) {
+            ctx.check(fuse == fuse0 + 20, what + " reflects the mortar (fuse " + std::to_string(fuse) + ")");
+            ctx.check(mv && mv->owner == spId, what + ": the shooter owns it");
+        } else {
+            ctx.check(fuse == fuse0, what + " does not reflect it (fuse " + std::to_string(fuse) + ")");
+            ctx.check(mv && mv->owner == uid, what + ": the hydra still owns it");
+        }
+        if (auto* pp = byId(pid)) pp->remove();
+        if (auto* mm = byId(mid)) mm->remove();
+        co_await ctx.ticks(1);
+    }
+    discard(uid);
+    co_await ctx.ticks(2);
+    (void)box;
+});
+
 // The client e2e's showcase: a hydra in front of the real player (idle heads, then a fire breath and
 // a mortar), the fire jets and smokers beside it. Without a real player (the server runs) it only
 // checks that it can find none.
@@ -986,7 +1166,7 @@ GF_REGISTER_SELFTEST("hydra.client_lair", [](Context& ctx) -> ll::coro::CoroTask
         ctx.info("no real player: nothing to show");
         co_return;
     }
-    auto box    = co_await ctx.flatArea(2400, 80, 64);
+    auto box    = co_await ctx.flatArea(2400, Context::kMaxFlatAreaSize, 64); // the whole hill, as hydra.lair_golden
     auto region = ctx.region();
     ctx.require(region != nullptr, "test region");
     auto const* dirt  = game::blockWith("minecraft:dirt");
@@ -995,7 +1175,9 @@ GF_REGISTER_SELFTEST("hydra.client_lair", [](Context& ctx) -> ll::coro::CoroTask
     for (int x = box.minX; x <= box.maxX; ++x)
         for (int z = box.minZ; z <= box.maxZ; ++z)
             for (int y = box.minY; y <= box.minY + 3; ++y) game::setBlock(*region, BlockPos{x, y, z}, y == box.minY + 3 ? *grass : *dirt);
-    int  cx = box.minX + 40, cz = box.minZ + 40, cy = box.minY + 4;
+    // the piece box (x - 33 .. x + 35, HollowHill's hillBox) centred in the volume: the piece and
+    // hill centre at (minX + 72, minZ + 72), the hill's sphere mask (radius 39.5) well inside
+    int  cx = box.minX + 71, cz = box.minZ + 71, cy = box.minY + 4;
     auto pieceBox = placeLairForTest(*region, box, cx, cy, cz, 2400, true);
     auto hash     = ctx.snapshotVolume(box);
     ctx.check(hash == kLairGolden, "the shown lair is the golden volume " + std::string(kLairGolden) + " (got " + hash + ")");

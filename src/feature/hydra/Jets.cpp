@@ -14,9 +14,9 @@
 // (twilightforest:flame_jet) ticks every popping / flaming jet from a registry of positions, the
 // smokers' TFSmokerBlockEntity (twilightforest:smoker) every smoker near a player. The registry is
 // filled when a jet starts (random tick, redstone) and by a palette scan around the players (a jet
-// still popping or flaming after a reload, smokers placed by world generation); the jets and smokers players place (and every encased one,
-// every one outside the Twilight Forest) are remembered in the world DB (gf:hydra:jets) and come back with
-// their chunk, as Java's block entities do (watches are dropped while the chunk is unloaded). The encased blocks
+// still popping or flaming after a reload, the jets and smokers the fire_jet feature generates);
+// every other placed one (a player's, /setblock's, a structure's) is remembered in the world DB
+// (gf:hydra:jets) and comes back with its chunk, as Java's block entities do (watches are dropped while the chunk is unloaded). The encased blocks
 // read redstone through gf::redstone (custom blocks get no neighbour updates): F11's neighbour
 // changes plus a watch on every encased block the scan or a placement found. TF's client-side
 // effects (particles, the jet's active / start sounds) go out through gf::fx.
@@ -26,8 +26,10 @@
 
 #include <map>
 #include <memory>
+#include <mutex>
 #include <set>
 #include <string_view>
+#include <tuple>
 #include <unordered_set>
 
 #include "ll/api/service/Bedrock.h"
@@ -64,6 +66,9 @@ namespace {
 constexpr int kScanRadius = 32; ///< horizontal blocks around a player the palette scan covers
 constexpr int kScanHeight = 24; ///< blocks above and below
 constexpr int kScanInterval = 20; ///< ticks between two scans
+/// Java's minecraft:large_smoke for the jets (assets/pack/rp/particles/hydra/large_smoke.json; until
+/// F10's fx maps minecraft:large_smoke to a smoke effect).
+constexpr char kLargeSmokeStandIn[] = "gf_hydra:large_smoke";
 
 struct Jet {
     int counter = 0;
@@ -90,6 +95,27 @@ struct JetState {
 JetState& J() {
     static JetState s;
     return s;
+}
+
+/// The positions the twilightforest:fire_jet feature placed a jet or smoker at, until their
+/// placement is seen (world generation may run off the server thread). Bounded: the oldest are
+/// dropped beyond kGeneratedMax (a placement the game never reports).
+struct Generated {
+    std::mutex                                                lock;
+    std::map<std::tuple<int, int, int>, std::uint64_t>        at;
+    std::uint64_t                                             seq = 0;
+};
+constexpr std::uint64_t kGeneratedMax = 4096;
+Generated&              G() {
+    static Generated g;
+    return g;
+}
+
+/// Whether a placement at block (x, y, z) came from the fire_jet feature (consumes the note).
+bool takeGenerated(int x, int y, int z) {
+    auto&            g = G();
+    std::scoped_lock l(g.lock);
+    return g.at.erase({x, y, z}) > 0;
 }
 
 std::string idAt(BlockSource& region, BlockPos const& pos) { return game::blockIdAt(region, pos); }
@@ -259,7 +285,10 @@ bool tickJet(GlobalPos const& gp, Jet& jet) {
         auto& dim = region->getDimension();
         if (jet.counter % 2 == 0) {
             auto at = [&](double dx, double dz) { return Vec3{static_cast<float>(x + dx), static_cast<float>(y + 1.0), static_cast<float>(z + dz)}; };
-            gf::fx::particle(dim, "minecraft:large_smoke", at(0.5, 0.5));
+            // ParticleTypes.LARGE_SMOKE: F10's fx maps minecraft:large_smoke to Bedrock's
+            // large_explosion (a pale explosion puff, routed to F10); the unit's stand-in effect
+            // gf_hydra:large_smoke is Java's SmokeParticle at scale 2.5 (the huge smoke's maths)
+            gf::fx::particle(dim, kLargeSmokeStandIn, at(0.5, 0.5));
             gf::fx::particle(dim, "twilightforest:large_flame", at(0.5, 0.5), Vec3{0.0F, 0.5F, 0.0F});
             gf::fx::particle(dim, "twilightforest:large_flame", at(-0.5, 0.5), Vec3{0.05F, 0.5F, 0.0F});
             gf::fx::particle(dim, "twilightforest:large_flame", at(0.5, -0.5), Vec3{0.0F, 0.5F, 0.05F});
@@ -430,8 +459,8 @@ void onLevelTick() {
         revisit();
     }
     // a placement is written at the end of its tick (not only at the next autosave): the client
-    // leaves a world without a final save of the mod's data (only player placements, encased
-    // blocks and other dimensions are remembered, so this stays rare)
+    // leaves a world without a final save of the mod's data (generated jets are not remembered,
+    // so this stays rare)
     saveKnown();
     for (auto it = s.jets.begin(); it != s.jets.end();) it = tickJet(it->first, it->second) ? std::next(it) : s.jets.erase(it);
     // a smoker ticks while its chunk is loaded (it is forgotten with the chunk; the scan finds it again)
@@ -460,6 +489,14 @@ int smokeParticlesForTest() { return J().smokeParticles; }
 bool encasedWatched(GlobalPos const& pos) { return J().watches.contains(pos); }
 
 bool smokerTracked(GlobalPos const& pos) { return J().smokers.contains(pos); }
+
+void noteGeneratedJet(int x, int y, int z) {
+    auto&            g = G();
+    std::scoped_lock l(g.lock);
+    g.at[{x, y, z}] = ++g.seq;
+    if (g.at.size() > kGeneratedMax)
+        for (auto it = g.at.begin(); it != g.at.end();) it = it->second + kGeneratedMax / 2 < g.seq ? g.at.erase(it) : std::next(it);
+}
 
 bool jetRemembered(GlobalPos const& pos) {
     loadKnown();
@@ -502,15 +539,14 @@ void installJets() {
         for (auto const* id : {kSmoker, kEncasedSmoker})
             gf::blockevents::onPlaced(id, [](BlockSource& region, BlockPos const& pos, Block const&, Actor*) { J().smokers.try_emplace(game::globalPos(region, pos)); });
         // the jets and smokers placed are remembered with the world: their "block entity" comes back
-        // with its chunk however far it is from the players. Every one outside the Twilight Forest
-        // and every encased one (never generated); in the Twilight Forest a plain jet or smoker only
-        // when a player placed it: block changes of any cause reach onPlaced, so the fire swamp's
-        // generated ones would otherwise grow the list with exploration (the palette scan around
-        // the players finds those, as before)
+        // with its chunk however far it is from the players, whoever placed them (a player,
+        // /setblock, /fill, a structure, another unit's code). Only the fire swamp's generated ones
+        // (the twilightforest:fire_jet feature notes them) are not: block changes of any cause reach
+        // onPlaced, so they would grow the list with exploration (the palette scan around the
+        // players finds those)
         for (auto const* id : {kFireJet, kEncasedJet, kSmoker, kEncasedSmoker})
-            gf::blockevents::onPlaced(id, [id](BlockSource& region, BlockPos const& pos, Block const&, Actor* placer) {
-                bool encased = std::string_view(id) == kEncasedJet || std::string_view(id) == kEncasedSmoker;
-                if (encased || placer || !gf::world::isTwilight(region.getDimension())) remember(game::globalPos(region, pos));
+            gf::blockevents::onPlaced(id, [](BlockSource& region, BlockPos const& pos, Block const&, Actor*) {
+                if (!takeGenerated(pos.x, pos.y, pos.z)) remember(game::globalPos(region, pos));
             });
         gf::game::db::onWorldReady([] { loadKnown(); });
         gf::game::db::onWorldSave([] { saveKnown(); });
