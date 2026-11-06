@@ -1,0 +1,24 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "twilightforest:lich_tower/7x7/beard_staggered",
+  "size": [9, 3, 9],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"minecraft:stone_brick_slab","Properties":{"type":"top"}},
+    {"Name":"minecraft:cobblestone"},
+    {"Name":"minecraft:mossy_stone_brick_stairs","Properties":{"facing":"south","half":"top"}},
+    {"Name":"minecraft:mossy_stone_brick_stairs","Properties":{"facing":"north","half":"top"}},
+    {"Name":"minecraft:mossy_stone_brick_stairs","Properties":{"facing":"east","half":"top"}},
+    {"Name":"minecraft:mossy_stone_brick_stairs","Properties":{"facing":"west","half":"top"}}
+  ],
+  "blocks": [
+    [0, 30], [1, 3], [0, 6], [1, 1], [2, 1], [1, 1], [0, 6], [1, 3], [0, 50], [3, 5], [0, 4], [5, 1], [2, 3], [6, 1], [0, 4], [5, 1],
+    [2, 3], [6, 1], [0, 4], [5, 1], [2, 3], [6, 1], [0, 4], [4, 5], [0, 30], [1, 7], [0, 2], [1, 1], [2, 5], [1, 1], [0, 2], [1, 1],
+    [2, 5], [1, 1], [0, 2], [1, 1], [2, 5], [1, 1], [0, 2], [1, 1], [2, 5], [1, 1], [0, 2], [1, 1], [2, 5], [1, 1], [0, 2], [1, 7],
+    [0, 10]
+  ],
+  "jigsaw": [
+    {"pos":[4,2,4],"front":"up","top":"north","pool":"minecraft:empty","name":"gf:lich_tower/beard","target":""}
+  ]
+}

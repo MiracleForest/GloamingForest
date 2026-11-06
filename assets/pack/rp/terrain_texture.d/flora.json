@@ -1,0 +1,11 @@
+{
+  "tf_flora_firefly_model": {
+    "textures": "textures/twilightforest/entity/firefly-tiny"
+  },
+  "tf_flora_cicada_model": {
+    "textures": "textures/twilightforest/entity/cicada-model"
+  },
+  "tf_flora_moonworm_model": {
+    "textures": "textures/twilightforest/entity/moonworm"
+  }
+}
