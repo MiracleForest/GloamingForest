@@ -9,16 +9,11 @@
       }
     },
     "components": {
-      "minecraft:icon": {
-        "textures": {
-          "default": "tf_vanilla_block_birch_log"
-        }
-      },
       "minecraft:display_name": {
         "value": "item.twilightforest:hollow_birch_log.name"
       },
       "minecraft:block_placer": {
-        "block": "twilightforest:hollow_birch_log_vertical"
+        "block": "twilightforest:hollow_birch_log_horizontal"
       },
       "minecraft:fuel": {
         "duration": 15

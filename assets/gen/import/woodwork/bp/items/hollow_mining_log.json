@@ -8,16 +8,11 @@
       }
     },
     "components": {
-      "minecraft:icon": {
-        "textures": {
-          "default": "tf_block_mining_log"
-        }
-      },
       "minecraft:display_name": {
         "value": "item.twilightforest:hollow_mining_log.name"
       },
       "minecraft:block_placer": {
-        "block": "twilightforest:hollow_mining_log_vertical"
+        "block": "twilightforest:hollow_mining_log_horizontal"
       },
       "minecraft:fuel": {
         "duration": 15

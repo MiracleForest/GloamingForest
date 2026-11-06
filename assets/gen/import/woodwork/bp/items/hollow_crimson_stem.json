@@ -9,16 +9,11 @@
       }
     },
     "components": {
-      "minecraft:icon": {
-        "textures": {
-          "default": "tf_vanilla_block_crimson_stem"
-        }
-      },
       "minecraft:display_name": {
         "value": "item.twilightforest:hollow_crimson_stem.name"
       },
       "minecraft:block_placer": {
-        "block": "twilightforest:hollow_crimson_stem_vertical"
+        "block": "twilightforest:hollow_crimson_stem_horizontal"
       },
       "minecraft:fuel": {
         "duration": 15

@@ -10,8 +10,9 @@
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // Hollow logs (18 woods x horizontal, vertical, climbable). The item (HollowLogItem) is a BP block
-// placer of the vertical log; a placement on a side face becomes the horizontal log here
-// (getPlacementState by the clicked face's axis). Java's `waterlogged` / variant `waterlogged` /
+// placer of the horizontal log without an icon, so the game draws that block as the item (TF's item
+// model is block/hollow_<wood>_log_horizontal); the placement here becomes the vertical log on a top
+// or bottom face and the horizontal log along the clicked side face's axis (getPlacementState). Java's `waterlogged` / variant `waterlogged` /
 // `ladder_waterlogged` are Bedrock's water layer (liquid detection); the variants follow it where
 // Java's setWaterlog would change them. Shapes and collisions are the blocks' permutations
 // (tools/import/overrides/woodwork.json); the climbable block is climbable through F11's

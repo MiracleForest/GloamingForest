@@ -30611,7 +30611,7 @@
     "op": "add",
     "path": "/minecraft:item/components/minecraft:block_placer",
     "value": {
-     "block": "twilightforest:hollow_twilight_oak_log_vertical"
+     "block": "twilightforest:hollow_twilight_oak_log_horizontal"
     }
    },
    {
@@ -30620,6 +30620,10 @@
     "value": {
      "duration": 15
     }
+   },
+   {
+    "op": "remove",
+    "path": "/minecraft:item/components/minecraft:icon"
    }
   ],
   "bp/blocks/hollow_canopy_log_horizontal.json": [
@@ -33797,7 +33801,7 @@
     "op": "add",
     "path": "/minecraft:item/components/minecraft:block_placer",
     "value": {
-     "block": "twilightforest:hollow_mangrove_log_vertical"
+     "block": "twilightforest:hollow_mangrove_log_horizontal"
     }
    },
    {
@@ -33806,6 +33810,10 @@
     "value": {
      "duration": 15
     }
+   },
+   {
+    "op": "remove",
+    "path": "/minecraft:item/components/minecraft:icon"
    }
   ],
   "bp/blocks/hollow_dark_log_horizontal.json": [
@@ -35388,7 +35396,7 @@
     "op": "add",
     "path": "/minecraft:item/components/minecraft:block_placer",
     "value": {
-     "block": "twilightforest:hollow_dark_log_vertical"
+     "block": "twilightforest:hollow_dark_log_horizontal"
     }
    },
    {
@@ -35397,6 +35405,10 @@
     "value": {
      "duration": 15
     }
+   },
+   {
+    "op": "remove",
+    "path": "/minecraft:item/components/minecraft:icon"
    }
   ],
   "bp/blocks/hollow_time_log_horizontal.json": [
@@ -36979,7 +36991,7 @@
     "op": "add",
     "path": "/minecraft:item/components/minecraft:block_placer",
     "value": {
-     "block": "twilightforest:hollow_time_log_vertical"
+     "block": "twilightforest:hollow_time_log_horizontal"
     }
    },
    {
@@ -36988,6 +37000,10 @@
     "value": {
      "duration": 15
     }
+   },
+   {
+    "op": "remove",
+    "path": "/minecraft:item/components/minecraft:icon"
    }
   ],
   "bp/blocks/hollow_transformation_log_horizontal.json": [
@@ -38570,7 +38586,7 @@
     "op": "add",
     "path": "/minecraft:item/components/minecraft:block_placer",
     "value": {
-     "block": "twilightforest:hollow_transformation_log_vertical"
+     "block": "twilightforest:hollow_transformation_log_horizontal"
     }
    },
    {
@@ -38579,6 +38595,10 @@
     "value": {
      "duration": 15
     }
+   },
+   {
+    "op": "remove",
+    "path": "/minecraft:item/components/minecraft:icon"
    }
   ],
   "bp/blocks/hollow_mining_log_horizontal.json": [
@@ -40161,7 +40181,7 @@
     "op": "add",
     "path": "/minecraft:item/components/minecraft:block_placer",
     "value": {
-     "block": "twilightforest:hollow_mining_log_vertical"
+     "block": "twilightforest:hollow_mining_log_horizontal"
     }
    },
    {
@@ -40170,6 +40190,10 @@
     "value": {
      "duration": 15
     }
+   },
+   {
+    "op": "remove",
+    "path": "/minecraft:item/components/minecraft:icon"
    }
   ],
   "bp/blocks/hollow_sorting_log_horizontal.json": [
@@ -41752,7 +41776,7 @@
     "op": "add",
     "path": "/minecraft:item/components/minecraft:block_placer",
     "value": {
-     "block": "twilightforest:hollow_sorting_log_vertical"
+     "block": "twilightforest:hollow_sorting_log_horizontal"
     }
    },
    {
@@ -41761,6 +41785,10 @@
     "value": {
      "duration": 15
     }
+   },
+   {
+    "op": "remove",
+    "path": "/minecraft:item/components/minecraft:icon"
    }
   ],
   "bp/blocks/hollow_oak_log_horizontal.json": [
@@ -44946,7 +44974,7 @@
     "op": "add",
     "path": "/minecraft:item/components/minecraft:block_placer",
     "value": {
-     "block": "twilightforest:hollow_spruce_log_vertical"
+     "block": "twilightforest:hollow_spruce_log_horizontal"
     }
    },
    {
@@ -44963,6 +44991,10 @@
      "category": "construction",
      "group": "minecraft:itemGroup.name.wood"
     }
+   },
+   {
+    "op": "remove",
+    "path": "/minecraft:item/components/minecraft:icon"
    }
   ],
   "bp/blocks/hollow_birch_log_horizontal.json": [
@@ -46545,7 +46577,7 @@
     "op": "add",
     "path": "/minecraft:item/components/minecraft:block_placer",
     "value": {
-     "block": "twilightforest:hollow_birch_log_vertical"
+     "block": "twilightforest:hollow_birch_log_horizontal"
     }
    },
    {
@@ -46562,6 +46594,10 @@
      "category": "construction",
      "group": "minecraft:itemGroup.name.wood"
     }
+   },
+   {
+    "op": "remove",
+    "path": "/minecraft:item/components/minecraft:icon"
    }
   ],
   "bp/blocks/hollow_jungle_log_horizontal.json": [
@@ -48144,7 +48180,7 @@
     "op": "add",
     "path": "/minecraft:item/components/minecraft:block_placer",
     "value": {
-     "block": "twilightforest:hollow_jungle_log_vertical"
+     "block": "twilightforest:hollow_jungle_log_horizontal"
     }
    },
    {
@@ -48161,6 +48197,10 @@
      "category": "construction",
      "group": "minecraft:itemGroup.name.wood"
     }
+   },
+   {
+    "op": "remove",
+    "path": "/minecraft:item/components/minecraft:icon"
    }
   ],
   "bp/blocks/hollow_acacia_log_horizontal.json": [
@@ -49743,7 +49783,7 @@
     "op": "add",
     "path": "/minecraft:item/components/minecraft:block_placer",
     "value": {
-     "block": "twilightforest:hollow_acacia_log_vertical"
+     "block": "twilightforest:hollow_acacia_log_horizontal"
     }
    },
    {
@@ -49760,6 +49800,10 @@
      "category": "construction",
      "group": "minecraft:itemGroup.name.wood"
     }
+   },
+   {
+    "op": "remove",
+    "path": "/minecraft:item/components/minecraft:icon"
    }
   ],
   "bp/blocks/hollow_dark_oak_log_horizontal.json": [
@@ -51342,7 +51386,7 @@
     "op": "add",
     "path": "/minecraft:item/components/minecraft:block_placer",
     "value": {
-     "block": "twilightforest:hollow_dark_oak_log_vertical"
+     "block": "twilightforest:hollow_dark_oak_log_horizontal"
     }
    },
    {
@@ -51359,6 +51403,10 @@
      "category": "construction",
      "group": "minecraft:itemGroup.name.wood"
     }
+   },
+   {
+    "op": "remove",
+    "path": "/minecraft:item/components/minecraft:icon"
    }
   ],
   "bp/blocks/hollow_crimson_stem_horizontal.json": [
@@ -52941,7 +52989,7 @@
     "op": "add",
     "path": "/minecraft:item/components/minecraft:block_placer",
     "value": {
-     "block": "twilightforest:hollow_crimson_stem_vertical"
+     "block": "twilightforest:hollow_crimson_stem_horizontal"
     }
    },
    {
@@ -52958,6 +53006,10 @@
      "category": "construction",
      "group": "minecraft:itemGroup.name.wood"
     }
+   },
+   {
+    "op": "remove",
+    "path": "/minecraft:item/components/minecraft:icon"
    }
   ],
   "bp/blocks/hollow_warped_stem_horizontal.json": [
@@ -54540,7 +54592,7 @@
     "op": "add",
     "path": "/minecraft:item/components/minecraft:block_placer",
     "value": {
-     "block": "twilightforest:hollow_warped_stem_vertical"
+     "block": "twilightforest:hollow_warped_stem_horizontal"
     }
    },
    {
@@ -54557,6 +54609,10 @@
      "category": "construction",
      "group": "minecraft:itemGroup.name.wood"
     }
+   },
+   {
+    "op": "remove",
+    "path": "/minecraft:item/components/minecraft:icon"
    }
   ],
   "bp/blocks/hollow_vangrove_log_horizontal.json": [
@@ -56139,7 +56195,7 @@
     "op": "add",
     "path": "/minecraft:item/components/minecraft:block_placer",
     "value": {
-     "block": "twilightforest:hollow_vangrove_log_vertical"
+     "block": "twilightforest:hollow_vangrove_log_horizontal"
     }
    },
    {
@@ -56156,6 +56212,10 @@
      "category": "construction",
      "group": "minecraft:itemGroup.name.wood"
     }
+   },
+   {
+    "op": "remove",
+    "path": "/minecraft:item/components/minecraft:icon"
    }
   ],
   "bp/blocks/hollow_cherry_log_horizontal.json": [
@@ -57738,7 +57798,7 @@
     "op": "add",
     "path": "/minecraft:item/components/minecraft:block_placer",
     "value": {
-     "block": "twilightforest:hollow_cherry_log_vertical"
+     "block": "twilightforest:hollow_cherry_log_horizontal"
     }
    },
    {
@@ -57755,6 +57815,10 @@
      "category": "construction",
      "group": "minecraft:itemGroup.name.wood"
     }
+   },
+   {
+    "op": "remove",
+    "path": "/minecraft:item/components/minecraft:icon"
    }
   ],
   "bp/items/twilight_oak_door.json": [
