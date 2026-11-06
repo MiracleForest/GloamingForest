@@ -28,6 +28,11 @@
 #include "mc/world/level/block/Block.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
+#include "mc/world/level/block/actor/BlockActor.h"
+#include "mc/world/item/SaveContext.h"
+#include "mc/world/item/SaveContextFactory.h"
+#include "mc/dataloadhelper/DefaultDataLoadHelper.h"
+#include "mc/deps/nbt/CompoundTag.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/GameType.h"
 #include "mc/world/level/Level.h"
@@ -216,15 +221,17 @@ GF_REGISTER_SELFTEST("naga.segments", [](Context& ctx) -> ll::coro::CoroTask<> {
     ctx.require(s != nullptr, "the Naga has its state");
     ctx.check(s->currentSegmentCount == 12 && activeSegments(*s) == 12, "12 active segments at full health (" + std::to_string(activeSegments(*s)) + ")");
     // the chain: every segment 2 blocks from its leader, and the part actors where the segments are
-    bool  chain = true;
-    Vec3  lead  = naga->getFeetPos();
+    bool        chain = true;
+    Vec3        lead  = naga->getFeetPos();
+    std::string dists;
     for (int i = 0; i < kMaxSegments; i++) {
         auto const& p  = s->segments[i].pos;
         double      d  = std::sqrt(double(p.x - lead.x) * (p.x - lead.x) + double(p.y - lead.y) * (p.y - lead.y) + double(p.z - lead.z) * (p.z - lead.z));
         chain         &= std::abs(d - 2.0) < 0.6;
+        dists         += (i ? " " : "") + std::to_string(d).substr(0, 4);
         lead           = p;
     }
-    ctx.check(chain, "each segment follows its leader 2 blocks behind");
+    ctx.check(chain, "each segment follows its leader 2 blocks behind (" + dists + ")");
     auto* part = ge::partActor(s->segments[5].part);
     ctx.require(part != nullptr, "segment 5 has its part actor");
     auto pp = part->getFeetPos();
@@ -462,29 +469,32 @@ GF_REGISTER_SELFTEST("naga.segment_contact", [](Context& ctx) -> ll::coro::CoroT
     auto& sp   = ctx.spawnPlayer("naga_contact");
     auto  spId = sp.getOrCreateUniqueID().rawID;
     sp.setPlayerGameType(GameType::Creative);
-    Vec3 inside = s->segments[5].pos;
-    sp.teleport(inside, DimensionType(at.dim));
     int    motions0   = playerMotionCountForTest();
     bool   overlapped = false;
     double drift      = 0.0;
     {
         ProtectScope protect(spId);
-        co_await ctx.ticks(2);
-        Vec3 start{};
+        // every tick the player is put into segment 5 where it is now; over the tick the segment's
+        // contact must not move it
         for (int t = 0; t < 12; t++) {
-            hold();
-            co_await ctx.ticks(1);
+            naga = hold();
             auto* p = byId(spId);
-            naga    = mobById(n.uid);
             ctx.require(p && naga, "the player and the Naga are there");
-            auto  pos = p->getFeetPos();
-            if (t == 0) start = pos;
-            drift = std::max(drift, std::sqrt(double(pos.x - start.x) * (pos.x - start.x) + double(pos.z - start.z) * (pos.z - start.z)));
+            Vec3 target = stateOf(*naga)->segments[5].pos;
+            p->teleport(target, DimensionType(at.dim));
+            co_await ctx.ticks(1);
+            p    = byId(spId);
+            naga = mobById(n.uid);
+            ctx.require(p && naga, "the player and the Naga are there");
+            auto        pos = p->getFeetPos();
             auto const& seg = stateOf(*naga)->segments[5].pos;
+            if (t == 0)
+                ctx.info("player at " + std::to_string(pos.x) + " " + std::to_string(pos.y) + " " + std::to_string(pos.z) + ", segment 5 at " +
+                         std::to_string(seg.x) + " " + std::to_string(seg.y) + " " + std::to_string(seg.z));
+            drift      = std::max(drift, std::sqrt(double(pos.x - target.x) * (pos.x - target.x) + double(pos.z - target.z) * (pos.z - target.z)));
             overlapped = overlapped || (std::abs(pos.x - seg.x) < 1.3f && std::abs(pos.z - seg.z) < 1.3f && pos.y < seg.y + 2.0f && pos.y + 1.8f > seg.y);
         }
-    }
-    ctx.check(overlapped, "the player stood inside segment 5");
+    }    ctx.check(overlapped, "the player stood inside segment 5");
     ctx.check(playerMotionCountForTest() == motions0, "no motion packet to the player from the body (" + std::to_string(playerMotionCountForTest() - motions0) + ")");
     ctx.check(drift < 0.05, "the player was not pushed (moved " + std::to_string(drift) + ")");
     // survival and unprotected: the contact hits land (their knockback is the damage's own)
@@ -1001,24 +1011,21 @@ constexpr int  kSiteTop   = kSiteCy + 24; ///< the cleared air reaches up to her
 constexpr int  kSiteCx = kSiteMinX + 70, kSiteCz = kSiteMinZ + 70;
 constexpr char kSiteArea[] = "gf_naga_courtyard";
 
+/// The game's DefaultDataLoadHelper (no data: only its vtable), for loading saved NBT as is
+/// (as Levitate's schematics do).
+DataLoadHelper& defaultLoadHelper() {
+    static void** helper = DefaultDataLoadHelper::$vftable();
+    return *reinterpret_cast<DataLoadHelper*>(&helper);
+}
 /// The site's original blocks (kSiteFloor..kSiteTop, y, z, x order) and its ticking area: when the
 /// test ends (also when it fails) the blocks are put back, Nagas a spawner may have made there are
 /// removed (not killed: no death chest), then the ticking area.
 struct SiteArea {
     int                       dim = 0;
     std::vector<Block const*> blocks;
-    /// The site's tiles saved with their block entities (chest contents, signs, banners) through
-    /// `structure save` in memory (48 x 30 x 48 each, under Bedrock's 64-wide structure limit);
-    /// put back with `structure load` after the block restore.
-    std::vector<std::string>  tiles;
-    static constexpr int      kTile = 48;
-    static std::string tileName(int tx, int tz) { return "gf_naga_site_" + std::to_string(tx) + "_" + std::to_string(tz); }
-    static std::string tileFrom(int tx, int tz) {
-        return std::to_string(kSiteMinX + tx * kTile) + " " + std::to_string(kSiteFloor) + " " + std::to_string(kSiteMinZ + tz * kTile);
-    }
-    static std::string tileTo(int tx, int tz) {
-        return std::to_string(kSiteMinX + tx * kTile + kTile - 1) + " " + std::to_string(kSiteTop) + " " + std::to_string(kSiteMinZ + tz * kTile + kTile - 1);
-    }
+    /// The block entities' data (chest contents, signs, banners, ...) by position, saved before the
+    /// site is cleared and loaded into the restored blocks' new block entities at the end.
+    std::vector<std::pair<BlockPos, std::unique_ptr<CompoundTag>>> blockEntities;
     template <class Fn>
     static void forEach(Fn&& fn) {
         for (int y = kSiteFloor; y <= kSiteTop; ++y)
@@ -1033,15 +1040,21 @@ struct SiteArea {
                 if (want && region->hasChunksAt(p, 0, false) && &region->getBlock(p) != want) game::setBlock(*region, p, *want);
             });
         }
-        // the block entities' data: the saved tiles over the restored blocks (blocks only)
-        for (int tx = 0; tx < kSiteSize / kTile; ++tx)
-            for (int tz = 0; tz < kSiteSize / kTile; ++tz) {
-                auto name = tileName(tx, tz);
-                if (std::find(tiles.begin(), tiles.end(), name) == tiles.end()) continue;
-                auto r = gf::selftest::runServerCommand("structure load " + name + " " + tileFrom(tx, tz) + " 0_degrees none false true", dim);
-                if (!r) gf::log().warn("naga: the courtyard site tile {} was not restored: {}", name, r.messages);
-                (void)gf::selftest::runServerCommand("structure delete " + name, dim);
+        // the block entities' data over the restored blocks
+        if (auto* region = game::regionOf(dim); region && !blockEntities.empty()) {
+            if (auto level = ll::service::getLevel()) {
+                for (auto& [pos, tag] : blockEntities) {
+                    if (!region->hasChunksAt(pos, 0, false)) continue;
+                    auto* be = region->getBlockEntity(pos);
+                    if (!be) {
+                        gf::log().warn("naga: no block entity to restore at {} {} {}", pos.x, pos.y, pos.z);
+                        continue;
+                    }
+                    be->load(*level, *tag, defaultLoadHelper());
+                    be->refresh(*region);
+                }
             }
+        }
         // removed, not killed: a death would place the boss death chest after the restore
         if (auto level = ll::service::getLevel())
             for (auto* a : level->getRuntimeActorList()) {
@@ -1081,18 +1094,16 @@ ll::coro::CoroTask<> prepareSite(Context& ctx, SiteArea& site) {
     site.blocks.clear();
     site.blocks.reserve(static_cast<std::size_t>(kSiteSize) * kSiteSize * (kSiteTop - kSiteFloor + 1));
     SiteArea::forEach([&](BlockPos const& p) { site.blocks.push_back(region->hasChunksAt(p, 0, false) ? &region->getBlock(p) : nullptr); });
-    site.tiles.clear();
-    for (int tx = 0; tx < kSiteSize / SiteArea::kTile; ++tx)
-        for (int tz = 0; tz < kSiteSize / SiteArea::kTile; ++tz) {
-            auto name = SiteArea::tileName(tx, tz);
-            (void)gf::selftest::runServerCommand("structure delete " + name, dim); // a crashed run's
-            auto saved = gf::selftest::runServerCommand("structure save " + name + " " + SiteArea::tileFrom(tx, tz) + " " + SiteArea::tileTo(tx, tz) +
-                                                            " false memory true",
-                                                        dim);
-            ctx.require(saved.ok, "the courtyard site tile " + name + " is saved with its block entities (" + saved.messages + ")");
-            site.tiles.push_back(name);
-        }
-    for (int x = kSiteMinX; x < kSiteMinX + kSiteSize; ++x)
+    site.blockEntities.clear();
+    auto saveCtx = SaveContextFactory::createCloneSaveContext();
+    SiteArea::forEach([&](BlockPos const& p) {
+        if (!region->hasChunksAt(p, 0, false)) return;
+        auto* be = region->getBlockEntity(p);
+        if (!be) return;
+        auto tag = std::make_unique<CompoundTag>();
+        if (be->save(*tag, *saveCtx)) site.blockEntities.emplace_back(p, std::move(tag));
+    });
+    if (!site.blockEntities.empty()) ctx.info("the courtyard site holds " + std::to_string(site.blockEntities.size()) + " block entities (saved)");    for (int x = kSiteMinX; x < kSiteMinX + kSiteSize; ++x)
         for (int z = kSiteMinZ; z < kSiteMinZ + kSiteSize; ++z)
             for (int y = kSiteFloor; y <= kSiteTop; ++y) {
                 BlockPos     p{x, y, z};
