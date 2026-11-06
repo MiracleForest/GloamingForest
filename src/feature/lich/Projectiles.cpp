@@ -75,6 +75,10 @@ struct Blast {
     std::uint64_t tick;
     std::int64_t  owner;
 };
+std::unordered_set<std::int64_t>& explodingBombs() {
+    static std::unordered_set<std::int64_t> s;
+    return s;
+}
 std::vector<Blast>& recentBlasts() {
     static std::vector<Blast> b;
     return b;
@@ -224,8 +228,8 @@ void explodeBomb(Actor& bomb) {
     auto level = ll::service::getLevel();
     if (!level) return;
     // once: the explosion's own damage reaches the bomb again (and is ignored there)
-    static std::unordered_set<std::int64_t> exploding;
-    auto uid = uidOf(bomb);
+    auto& exploding = explodingBombs();
+    auto  uid       = uidOf(bomb);
     if (!exploding.insert(uid).second) return;
     auto pos = bomb.getPosition();
     // EntityEvents#lichBombsDontBlowUpItems (Detonate: getAffectedEntities().removeIf(ItemEntity)):
@@ -277,6 +281,7 @@ void registerProjectiles() {
     game::db::onWorldClosed([] {
         owners().clear();
         recentBlasts().clear();
+        explodingBombs().clear();
     });
     gp::registerType(kLichBolt, {
         .gravity     = 0.001F,

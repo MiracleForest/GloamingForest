@@ -38,8 +38,6 @@ struct PieceBox {
 /// `regionAt` gives for a chunk centre (no queued edits).
 void placeForTest(std::function<std::unique_ptr<gf::worldgen::Region>(BlockPos const&)> const& regionAt, core::BlockBox const& clip, std::int64_t seed);
 void forgetTestPieces();
-/// The yard's view of column (x, z): its heights and the lowest blocks (selftest diagnostics).
-[[nodiscard]] std::string yardProbe(gf::worldgen::Region const& region, int x, int z);
 /// LichPerimeterFence#generatePerimeter on the last test layout's front fence toward two grounded
 /// trims `lateral` blocks to the sides of its tower base (the wing trims U22's rooms bring): the
 /// side fences, their turns and the outer_fence_1..7 steps. The new pieces join the test layout;

@@ -4,8 +4,7 @@
     "description": {
       "identifier": "twilightforest:lich_minion",
       "materials": {
-        "default": "zombie",
-        "tinted": "entity_alphatest_change_color"
+        "default": "zombie"
       },
       "textures": {
         "default": "textures/entity/zombie/zombie"

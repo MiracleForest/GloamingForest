@@ -2336,21 +2336,6 @@ void placeForTest(std::function<std::unique_ptr<Region>(BlockPos const&)> const&
 
 void forgetTestPieces() { testPieces().clear(); }
 
-std::string yardProbe(Region const& region, int x, int z) {
-    std::string out;
-    for (auto type : {gf::worldgen::Heightmap::MotionBlockingNoLeaves, gf::worldgen::Heightmap::WorldSurfaceWg, gf::worldgen::Heightmap::OceanFloorWg}) {
-        int h = surfaceHeight(region, type, x, z);
-        out += " h" + std::to_string(static_cast<int>(type)) + "=" + std::to_string(h);
-    }
-    for (int y = region.minY(); y < region.minY() + 8; ++y) {
-        auto const& b = region.getBlock(BlockPos{x, y, z});
-        auto const& m = b.getMaterial();
-        out += " | " + std::to_string(y) + " " + game::blockId(b) + " dirt=" + (isDirt(game::blockId(b)) ? "1" : "0") + " liq=" + (m.mLiquid ? "1" : "0") + " bm=" + (m.mBlocksMotion ? "1" : "0")
-             + " solid=" + (m.mSolid ? "1" : "0") + " air=" + (b.isAir() ? "1" : "0");
-    }
-    return out;
-}
-
 std::vector<PieceBox> perimeterForTest(int lateral, std::int64_t seed) {
     std::vector<PieceBox> out;
     PerimeterFence*       front = nullptr;

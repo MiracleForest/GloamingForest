@@ -110,17 +110,17 @@
       "geometry": "Geometry.default",
       "materials": [
         {
-          "*": "Material.tinted"
+          "*": "Material.default"
         }
       ],
       "textures": [
         "Texture.default"
       ],
-      "color": {
-        "r": "query.property('twilightforest:strong') ? 0.25 : 0.5",
-        "g": "1.0",
-        "b": "query.property('twilightforest:strong') ? 0.25 : 0.5",
-        "a": "1.0"
+      "overlay_color": {
+        "r": "0.0",
+        "g": "0.5",
+        "b": "0.0",
+        "a": "query.property('twilightforest:strong') ? 0.75 : 0.5"
       }
     }
   }

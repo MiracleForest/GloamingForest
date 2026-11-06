@@ -52,9 +52,12 @@ What the unit implements, how it maps TF 4.8 onto Bedrock, and what is still mis
   list: for the bomb's `Level::explode` call every item in reach gets a health it cannot lose (`ItemActor#_hurt`
   removes an item at 0 whatever path the damage takes), its knockback is undone afterwards, and the damage pipeline
   cancels the bomb's damage to items; an item the engine removed all the same is put back as it was.
-- `LichMinionModel#renderToBuffer`'s tint (red and blue x0.5, x0.25 while the minion has Strength) is the render
-  controller's `color` on the `entity_alphatest_change_color` material; the server mirrors `hasEffect(DAMAGE_BOOST)`
-  into the `twilightforest:strong` property.
+- `LichMinionModel#renderToBuffer` multiplies the model's red and blue by 0.5 (0.25 while the minion has Strength).
+  Bedrock's render controllers have no colour multiplier for an opaque entity material (`color` on the
+  `entity_alphatest_change_color` material left the minion untinted in the client screenshots), so the minion's render
+  controller blends an `overlay_color` of (0, 0.5, 0) at 0.5 (0.75 with Strength): red and blue are scaled exactly as in TF,
+  green is pulled toward 0.5 instead of kept. The server mirrors `hasEffect(DAMAGE_BOOST)` into the
+  `twilightforest:strong` property.
 - The yard pieces (`LichYardBox`, `LichYardLights`, `LichYardGrave`) read `WorldGenLevel#getHeight` from the blocks of
   the column (the heightmap rules of each type), not from the region's `height()`: F6's loaded-chunk adapter
   (`landmark::generateAt`, `/tf place`) answers `BlockSource#getAboveTopSolidBlock`, through which the yard turned

@@ -748,7 +748,6 @@ GF_REGISTER_SELFTEST("lich.tower_yard_loaded", [](Context& ctx) -> ll::coro::Cor
     gf::structure::BlockSourceRegion blocks(*source, BlockPos{gx, 0, gz});
     ctx.info("heights at the ground (grass at " + std::to_string(area.minY - 1) + "): getAboveTopSolidBlock " + std::to_string(probe.height(gf::worldgen::Heightmap::MotionBlockingNoLeaves, gx, gz))
              + ", the blocks " + std::to_string(blocks.height(gf::worldgen::Heightmap::MotionBlockingNoLeaves, gx, gz)));
-    ctx.info("yard probe:" + tower::yardProbe(probe, gx, gz));
     // 1. the tower and its yard through the loaded-chunk adapter
     for (auto const& p : tower::layoutForTest(at, kGoldenSeed))
         if (p.typeId == "twilightforest:TFLTPath" || p.typeId == "twilightforest:TFLTLight" || p.typeId == "twilightforest:TFLTTFoy")
@@ -990,7 +989,10 @@ GF_REGISTER_SELFTEST("lich.client_showcase", [](Context& ctx) -> ll::coro::CoroT
             shown.push_back(uidOf(*clone));
         }
     }
-    // two minions: plain (LichMinionModel: red and blue x0.5) and with Strength (x0.25)
+    // two minions: plain (LichMinionModel: red and blue x0.5) and with Strength (x0.25); rain keeps
+    // these Zombies from burning in the noon sun, so their tint shows
+    (void)gf::selftest::runServerCommand("weather rain", dim);
+// two minions: plain (LichMinionModel: red and blue x0.5) and with Strength (x0.25)
     std::int64_t lichId = shown.empty() ? 0 : shown.front();
     for (int strong = 0; strong < 2; ++strong)
         if (Mob* minion = spawnMob(*region, kMinion, ahead(7, 3 + 1.5 * strong))) {
@@ -1002,11 +1004,11 @@ GF_REGISTER_SELFTEST("lich.client_showcase", [](Context& ctx) -> ll::coro::CoroT
             shown.push_back(uidOf(*minion));
         }
     // a zombie trap: a zombie tied to an iron post by a lead
-    BlockPos trapPost = game::blockPosOf(ahead(5, 4.5));
+    BlockPos trapPost = game::blockPosOf(ahead(4, -5));
     std::int64_t trapped = 0;
     if (auto const* post = game::blockWith("twilightforest:wrought_iron_fence")) {
         game::setBlock(*region, trapPost, *post);
-        Vec3 beside = ahead(6, 4.5);
+        Vec3 beside = ahead(5, -6);
         if (Mob* z = edits::tieZombie(*region, trapPost, Vec3{beside.x, float(trapPost.y), beside.z})) trapped = uidOf(*z);
     }
     // the lectern facing the player, the tome on it
@@ -1035,6 +1037,7 @@ GF_REGISTER_SELFTEST("lich.client_showcase", [](Context& ctx) -> ll::coro::CoroT
     if (!real) co_return;
     region = &real->getDimensionBlockSource();
     if (trapped) removeById(trapped);
+    (void)gf::selftest::runServerCommand("weather clear", dim);
     for (auto* a : actorsIn(*region, dim, AABB{Vec3{trapPost.x - 2.0f, trapPost.y - 2.0f, trapPost.z - 2.0f}, Vec3{trapPost.x + 3.0f, trapPost.y + 3.0f, trapPost.z + 3.0f}}))
         if (a && a->getTypeName() == "minecraft:leash_knot") a->remove();
     if (auto const* air = game::blockWith("minecraft:air")) {
@@ -1114,13 +1117,33 @@ GF_REGISTER_SELFTEST("lich.client_showcase", [](Context& ctx) -> ll::coro::CoroT
     if (start)
         for (auto const& p : gf::landmark::ext::startPieces(*start))
             if (p.type == "twilightforest:TFLTTFoy") foyerC = Vec3{(p.box.minX + p.box.maxX) / 2.0f, float(p.box.minY), (p.box.minZ + p.box.maxZ) / 2.0f};
+    // what the yard turned on the ground around the tower (the landmark pipeline's placement)
+    {
+        real = realPlayer();
+        if (!real) co_return;
+        region = &real->getDimensionBlockSource();
+        int    paths = 0, dirt = 0;
+        double sx = 0, sz = 0;
+        for (int x = at.x - 64; x <= at.x + 64; ++x)
+            for (int z = at.z - 64; z <= at.z + 64; ++z) {
+                auto id = game::blockIdAt(*region, BlockPos{x, at.y, z});
+                bool path = id == "minecraft:grass_path" || id == "minecraft:dirt_path";
+                bool mot  = id == "minecraft:coarse_dirt" || id == "minecraft:dirt_with_roots";
+                paths += path, dirt += mot;
+                if (path) sx += x, sz += z;
+            }
+        log().info("lich.client_showcase: the yard turned {} path and {} coarse / rooted dirt blocks", paths, dirt);
+        ctx.check(paths > 0 && dirt > 0, "the generated tower has its yard (" + std::to_string(paths) + " path, " + std::to_string(dirt) + " dirt)");
+        if (paths > 0) foyerC = Vec3{float(sx / paths), float(at.y + 1), float(sz / paths)}; // look at the first path
+    }
     Vec3  outward{foyerC.x - towerAt.x, 0.0f, foyerC.z - towerAt.z};
     float olen = std::sqrt(outward.x * outward.x + outward.z * outward.z);
     if (olen < 1.0f) {
         outward = Vec3{float(-fx), 0.0f, float(-fz)};
         olen    = 1.0f;
     }
-    Vec3 yardView{foyerC.x + outward.x / olen * 40.0f, foyerC.y + 22.0f, foyerC.z + outward.z / olen * 40.0f};
+    // above the yard, a little outward of it, looking down at the first path and the dirt
+    Vec3 yardView{foyerC.x + outward.x / olen * 14.0f, foyerC.y + 26.0f, foyerC.z + outward.z / olen * 14.0f};
     co_await holdView(ctx, yardView, foyerC, 20 * 4);
     log().info("lich.client_showcase: stage tower_yard");
     co_await holdView(ctx, yardView, foyerC, 20 * 5);
