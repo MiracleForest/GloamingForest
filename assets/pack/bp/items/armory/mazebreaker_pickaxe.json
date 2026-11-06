@@ -1,0 +1,183 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:mazebreaker_pickaxe",
+      "menu_category": {
+        "category": "equipment"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_item_mazebreaker_pickaxe"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "item.twilightforest:mazebreaker_pickaxe.name"
+      },
+      "minecraft:max_stack_size": 1,
+      "minecraft:durability": {
+        "max_durability": 1561
+      },
+      "minecraft:hand_equipped": true,
+      "minecraft:damage": {
+        "value": 4
+      },
+      "minecraft:digger": {
+        "use_efficiency": true,
+        "destroy_speeds": [
+          {
+            "block": "twilightforest:mazestone",
+            "speed": 128
+          },
+          {
+            "block": "twilightforest:mazestone_brick",
+            "speed": 128
+          },
+          {
+            "block": "twilightforest:cracked_mazestone",
+            "speed": 128
+          },
+          {
+            "block": "twilightforest:mossy_mazestone",
+            "speed": 128
+          },
+          {
+            "block": "twilightforest:cut_mazestone",
+            "speed": 128
+          },
+          {
+            "block": "twilightforest:decorative_mazestone",
+            "speed": 128
+          },
+          {
+            "block": "twilightforest:mazestone_mosaic",
+            "speed": 128
+          },
+          {
+            "block": "twilightforest:mazestone_border",
+            "speed": 128
+          },
+          {
+            "block": "twilightforest:castle_brick",
+            "speed": 128
+          },
+          {
+            "block": "twilightforest:worn_castle_brick",
+            "speed": 128
+          },
+          {
+            "block": "twilightforest:cracked_castle_brick",
+            "speed": 128
+          },
+          {
+            "block": "twilightforest:mossy_castle_brick",
+            "speed": 128
+          },
+          {
+            "block": "twilightforest:castle_roof_tile",
+            "speed": 128
+          },
+          {
+            "block": "twilightforest:thick_castle_brick",
+            "speed": 128
+          },
+          {
+            "block": "twilightforest:bold_castle_brick_tile",
+            "speed": 128
+          },
+          {
+            "block": "twilightforest:bold_castle_brick_pillar",
+            "speed": 128
+          },
+          {
+            "block": "twilightforest:encased_castle_brick_tile",
+            "speed": 128
+          },
+          {
+            "block": "twilightforest:encased_castle_brick_pillar",
+            "speed": 128
+          },
+          {
+            "block": "twilightforest:castle_brick_stairs",
+            "speed": 128
+          },
+          {
+            "block": "twilightforest:worn_castle_brick_stairs",
+            "speed": 128
+          },
+          {
+            "block": "twilightforest:cracked_castle_brick_stairs",
+            "speed": 128
+          },
+          {
+            "block": "twilightforest:mossy_castle_brick_stairs",
+            "speed": 128
+          },
+          {
+            "block": "twilightforest:encased_castle_brick_stairs",
+            "speed": 128
+          },
+          {
+            "block": "twilightforest:bold_castle_brick_stairs",
+            "speed": 128
+          },
+          {
+            "block": "twilightforest:pink_castle_rune_brick",
+            "speed": 128
+          },
+          {
+            "block": "twilightforest:yellow_castle_rune_brick",
+            "speed": 128
+          },
+          {
+            "block": "twilightforest:blue_castle_rune_brick",
+            "speed": 128
+          },
+          {
+            "block": "twilightforest:violet_castle_rune_brick",
+            "speed": 128
+          },
+          {
+            "block": "twilightforest:pink_castle_door",
+            "speed": 128
+          },
+          {
+            "block": "twilightforest:yellow_castle_door",
+            "speed": 128
+          },
+          {
+            "block": "twilightforest:blue_castle_door",
+            "speed": 128
+          },
+          {
+            "block": "twilightforest:violet_castle_door",
+            "speed": 128
+          },
+          {
+            "block": {
+              "tags": "q.any_tag('minecraft:is_pickaxe_item_destructible') && !q.any_tag('minecraft:netherite_tier_destructible')"
+            },
+            "speed": 8
+          }
+        ]
+      },
+      "minecraft:enchantable": {
+        "slot": "pickaxe",
+        "value": 10
+      },
+      "minecraft:rarity": {
+        "value": "rare"
+      },
+      "minecraft:tags": {
+        "tags": [
+          "minecraft:is_pickaxe",
+          "minecraft:is_tool",
+          "minecraft:diamond_tier",
+          "alexscaves:ferromagnetic_items"
+        ]
+      }
+    }
+  }
+}

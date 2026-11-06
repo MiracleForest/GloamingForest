@@ -75,8 +75,14 @@ leaves a marker that the remote `smoke` runs check.
 - **Server:** [lip](https://github.com/LiteLDev/lip) on `PATH`; the first run installs BDS +
   LeviLamina into `%LOCALAPPDATA%\lv-e2e\bds-base` if Levitate's harness has not already.
 - **Client:** the LeviLauncher instance `%APPDATA%\levilauncher.exe\versions\1.26.51.01` was started
-  and signed in once. BeDD: `$env:BEDD_DIR`, a local build in `%USERPROFILE%\Desktop\BeDD\bin\BeDD`,
-  or the latest release, which the harness downloads once into `%LOCALAPPDATA%\gf-e2e\BeDD`.
+  and signed in once. BeDD, in this order: `$env:BEDD_DIR` (any BeDD bin folder); the local development
+  build `%USERPROFILE%\Desktop\BeDD\bin\BeDD` only with `$env:GF_E2E_BEDD_DEV=1`; else the pinned release
+  (v0.3.1, SHA-256 checked), which the harness downloads once into `%LOCALAPPDATA%\gf-e2e\BeDD` and
+  re-downloads when that copy is incomplete or another version (`$env:GF_BEDD_URL` + optional
+  `$env:GF_BEDD_SHA256` install another zip there). Leave both variables unset for acceptance runs. Every
+  run prints `BeDD v<version> from <dir> (<source>)` at the start and `input: BeDD ...` at the end. A BeDD
+  that cannot hook the game (`FTL ... Couldn't find: ...` + `In module: BeDD`) stops the run as soon as the
+  game has loaded; one that was not the release copy is retried once with it (docs/spec/e2e.md, BeDD).
 
 ## What a run does
 

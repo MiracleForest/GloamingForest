@@ -1,0 +1,34 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:dwarf_rabbit",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "brown": "textures/twilightforest/entity/bunnybrown",
+        "dutch": "textures/twilightforest/entity/bunnydutch",
+        "white": "textures/twilightforest/entity/bunnywhite"
+      },
+      "geometry": {
+        "default": "geometry.twilightforest.bunny"
+      },
+      "animations": {
+        "setup": "animation.twilightforest.bunny.base"
+      },
+      "scripts": {
+        "animate": [
+          "setup"
+        ]
+      },
+      "render_controllers": [
+        "controller.render.twilightforest.dwarf_rabbit"
+      ],
+      "spawn_egg": {
+        "base_color": "#fefeee",
+        "overlay_color": "#ccaa99"
+      }
+    }
+  }
+}

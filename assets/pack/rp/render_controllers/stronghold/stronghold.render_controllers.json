@@ -1,0 +1,123 @@
+{
+  "format_version": "1.8.0",
+  "render_controllers": {
+    "controller.render.twilightforest.knight_phantom": {
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ],
+      "is_hurt_color": {
+        "r": 1.0,
+        "g": 0.0,
+        "b": 0.0,
+        "a": 0.5
+      }
+    },
+    "controller.render.twilightforest.lower_goblin_knight": {
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ],
+      "part_visibility": [
+        {
+          "*": true
+        },
+        {
+          "tunic": "q.property('twilightforest:armor')"
+        }
+      ]
+    },
+    "controller.render.twilightforest.upper_goblin_knight": {
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ],
+      "part_visibility": [
+        {
+          "*": true
+        },
+        {
+          "breastplate": "q.property('twilightforest:armor')"
+        },
+        {
+          "shield": "q.property('twilightforest:shield')"
+        }
+      ]
+    },
+    "controller.render.twilightforest.blockchain_goblin": {
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ]
+    },
+    "controller.render.twilightforest.blockchain_goblin_ball": {
+      "geometry": "Geometry.ball",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.ball"
+      ]
+    },
+    "controller.render.twilightforest.helmet_crab": {
+      "arrays": {
+        "textures": {
+          "Array.skins": [
+            "Texture.default",
+            "Texture.blue"
+          ]
+        }
+      },
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Array.skins[q.property('twilightforest:blue') ? 1 : 0]"
+      ]
+    },
+    "controller.render.twilightforest.thrown_wep": {
+      "arrays": {
+        "textures": {
+          "Array.items": [
+            "Texture.axe",
+            "Texture.pickaxe"
+          ]
+        }
+      },
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Array.items[q.property('twilightforest:pickaxe') ? 1 : 0]"
+      ]
+    }
+  }
+}

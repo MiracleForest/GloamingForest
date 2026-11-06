@@ -1,0 +1,40 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:penguin",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/penguin"
+      },
+      "geometry": {
+        "default": "geometry.twilightforest.penguin"
+      },
+      "animations": {
+        "setup": "animation.twilightforest.penguin.setup"
+      },
+      "scripts": {
+        "animate": [
+          "setup"
+        ],
+        "pre_animation": [
+          "v.dt = math.clamp(q.delta_time * 20, 0, 4);",
+          "v.flap_intensity = math.clamp((v.flap_intensity ?? 0) + (q.is_on_ground ? -0.3 : 1.2) * v.dt, 0, 1);",
+          "v.flap_speed = (!q.is_on_ground && (v.flap_speed ?? 1) < 1) ? 1 : (v.flap_speed ?? 1);",
+          "v.flap_speed = v.flap_speed * math.pow(0.9, v.dt);",
+          "v.flap_length = math.mod((v.flap_length ?? 0) + v.flap_speed * 2 * v.dt, 6.2831853);",
+          "v.bob = (math.sin(v.flap_length * 57.29578) + 1) * v.flap_intensity;"
+        ]
+      },
+      "render_controllers": [
+        "controller.render.default"
+      ],
+      "spawn_egg": {
+        "base_color": "#12151b",
+        "overlay_color": "#f9edd2"
+      }
+    }
+  }
+}
