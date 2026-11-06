@@ -1,0 +1,83 @@
+{
+  "format_version": "1.10.0",
+  "animation_controllers": {
+    "controller.animation.twilightforest.snow_queen.phase": {
+      "initial_state": "default",
+      "states": {
+        "default": {
+          "transitions": [
+            {
+              "beam": "q.property('twilightforest:phase') == 2"
+            }
+          ]
+        },
+        "beam": {
+          "animations": [
+            {
+              "beam_arms": "q.property('twilightforest:beam')"
+            },
+            {
+              "arms_up": "!q.property('twilightforest:beam')"
+            }
+          ],
+          "transitions": [
+            {
+              "default": "q.property('twilightforest:phase') != 2"
+            }
+          ]
+        }
+      }
+    },
+    "controller.animation.twilightforest.ice_mob.snow": {
+      "initial_state": "default",
+      "states": {
+        "default": {
+          "particle_effects": [
+            {
+              "effect": "snow_aura"
+            }
+          ],
+          "transitions": [
+            {
+              "dead": "!q.is_alive"
+            }
+          ]
+        },
+        "dead": {}
+      }
+    },
+    "controller.animation.twilightforest.unstable_ice_core.snow": {
+      "initial_state": "default",
+      "states": {
+        "default": {
+          "particle_effects": [
+            {
+              "effect": "snow_aura"
+            }
+          ],
+          "transitions": [
+            {
+              "dead": "!q.is_alive || q.property('twilightforest:dying') > 0"
+            }
+          ]
+        },
+        "dead": {}
+      }
+    },
+    "controller.animation.twilightforest.snow_queen.effects": {
+      "initial_state": "default",
+      "states": {
+        "default": {
+          "animations": [
+            {
+              "ice_beam": "q.property('twilightforest:beam')"
+            },
+            {
+              "drop_warning": "q.property('twilightforest:phase') == 1"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

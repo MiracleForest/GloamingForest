@@ -10,12 +10,24 @@
         "default": "textures/twilightforest/entity/icecrystal"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.ice_crystal"
+        "default": "geometry.twilightforest.ice_crystal"
+      },
+      "scripts": {
+        "animate": ["base", "spikes", "bob_render", "snow_aura"]
+      },
+      "animations": {
+        "base": "animation.twilightforest.ice_crystal.base",
+        "spikes": "animation.twilightforest.ice_crystal.spikes",
+        "bob_render": "animation.twilightforest.ice_crystal.bob",
+        "snow_aura": "controller.animation.twilightforest.ice_mob.snow"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {
         "base_color": "#dce9fe",
         "overlay_color": "#adcafb"
+      },
+      "particle_effects": {
+        "snow_aura": "gloamingforest:aurora_snow_core"
       }
     }
   }
