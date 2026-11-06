@@ -44,6 +44,7 @@
 #include "feature/giants/Giants.h"
 #include "feature/net/Net.h"
 #include "game/Blocks.h"
+#include "game/WorldDb.h"
 #include "mod/Log.h"
 
 namespace gf::feature::giants {
@@ -204,38 +205,10 @@ void steppedOn(BlockSource& region, BlockPos const& pos, Actor& entity) {
 
 // ---- vanilla clients' weather under clouds -----------------------------------------------------------
 
-struct Column {
-    BlockPos      cloud;
-    int           stopY = 0;
-    Precipitation p     = Precipitation::None;
-};
 /// Per vanilla player: the raining clouds near it (CloudEvents' list, collected every 10 ticks).
-std::unordered_map<std::int64_t, std::vector<Column>>& columns() {
-    static std::unordered_map<std::int64_t, std::vector<Column>> m;
+std::unordered_map<std::int64_t, std::vector<PrecipitationColumn>>& columns() {
+    static std::unordered_map<std::int64_t, std::vector<PrecipitationColumn>> m;
     return m;
-}
-
-/// CloudEvents#collectPrecipitationColumns around `at` (radius 8 for the server's fallback).
-std::vector<Column> collect(BlockSource& region, BlockPos const& at, int distance) {
-    std::vector<Column> out;
-    constexpr int       r = 8;
-    for (int dx = -r; dx <= r; ++dx)
-        for (int dz = -r; dz <= r; ++dz) {
-            for (int y = at.y - r; y < at.y + distance + r; ++y) {
-                BlockPos p{at.x + dx, y, at.z + dz};
-                if (y < region.getMinHeight() || y >= region.getMaxHeight() || !region.hasChunksAt(p, 0, false)) continue;
-                auto bid = game::blockId(region.getBlock(p));
-                if (!isCloud(bid)) continue;
-                auto prec = cloudPrecipitation(region, p, bid);
-                if (prec == Precipitation::None) continue;
-                BlockPos below{p.x, p.y - 1, p.z};
-                if (motionBlockingOpaque(region, below)) continue;
-                int stop = cg::precipitationStopY(p.y, distance, [&](int yy) { return motionBlockingOpaque(region, BlockPos{p.x, yy, p.z}); });
-                out.push_back({p, stop, prec});
-                break; // the lowest raining cloud of the column
-            }
-        }
-    return out;
 }
 
 void vanillaWeatherTick() {
@@ -252,7 +225,7 @@ void vanillaWeatherTick() {
         auto& region = p.getDimensionBlockSource();
         auto  at     = game::blockPosOf(p.getFeetPos());
         auto& cols   = columns()[uid];
-        if (ticks % 10 == 0) cols = collect(region, at, distance);
+        if (ticks % 10 == 0) cols = collectPrecipitationColumns(region, at, distance, 8);
         if (cols.empty()) return true;
         auto& r = random();
         // a few drops a tick (TF draws sheets; the splashes are up to 100 a tick within 10 blocks)
@@ -263,9 +236,7 @@ void vanillaWeatherTick() {
             char const* streak = c.p == Precipitation::Snow ? "gf:giants_cloud_snow" : "gf:giants_cloud_rain";
             gf::fx::giants_ext::vanillaParticleTo(p, streak, Vec3{x, static_cast<float>(c.cloud.y), z}, Vec3{0.0f, fall, 0.0f});
             if (c.p == Precipitation::Rain && i == 0) {
-                BlockPos below{c.cloud.x, c.stopY - 1, c.cloud.z};
-                auto     bid = game::blockId(region.getBlock(below));
-                bool hot = bid == "minecraft:lava" || bid == "minecraft:magma" || bid == "minecraft:campfire" || bid == "minecraft:soul_campfire";
+                bool hot = smokesInRain(region, BlockPos{c.cloud.x, c.stopY - 1, c.cloud.z});
                 gf::fx::giants_ext::vanillaParticleTo(p, hot ? "minecraft:smoke" : "minecraft:rain", Vec3{x, static_cast<float>(c.stopY), z});
             }
         }
@@ -275,6 +246,37 @@ void vanillaWeatherTick() {
 }
 
 } // namespace
+
+std::vector<PrecipitationColumn> collectPrecipitationColumns(BlockSource& region, BlockPos const& at, int distance, int r) {
+    std::vector<PrecipitationColumn> out;
+    for (int dx = -r; dx <= r; ++dx)
+        for (int dz = -r; dz <= r; ++dz) {
+            for (int y = at.y - r; y < at.y + distance + r; ++y) {
+                BlockPos p{at.x + dx, y, at.z + dz};
+                if (y < region.getMinHeight() || y >= region.getMaxHeight() || !region.hasChunksAt(p, 0, false)) continue;
+                auto const& b = region.getBlock(p);
+                if (b.isAir()) continue;
+                auto const& bid = b.getTypeName(); // no copy: most blocks are not clouds
+                if (!isCloud(bid)) continue;
+                auto prec = cloudPrecipitation(region, p, bid);
+                if (prec == Precipitation::None) continue;
+                if (motionBlockingOpaque(region, BlockPos{p.x, p.y - 1, p.z})) continue;
+                int stop = cg::precipitationStopY(p.y, distance, [&](int yy) { return motionBlockingOpaque(region, BlockPos{p.x, yy, p.z}); });
+                out.push_back({p, stop, prec});
+                break; // the lowest raining cloud of the column
+            }
+        }
+    return out;
+}
+
+bool smokesInRain(BlockSource& region, BlockPos const& pos) {
+    auto const& b   = region.getBlock(pos);
+    auto const& bid = b.getTypeName();
+    if (bid == "minecraft:lava" || bid == "minecraft:flowing_lava" || bid == "minecraft:magma") return true;
+    auto const& liquid = region.getLiquidBlock(pos).getTypeName();
+    if (liquid == "minecraft:lava" || liquid == "minecraft:flowing_lava") return true;
+    return (bid == "minecraft:campfire" || bid == "minecraft:soul_campfire") && game::statesOf(b)["extinguished"] != "true";
+}
 
 bool motionBlockingOpaque(BlockSource& region, BlockPos const& pos) {
     auto const& b = region.getBlock(pos);
@@ -357,7 +359,15 @@ void installClouds() {
     fe::onLevelTick([] {
         vanillaWeatherTick();
         auto now = fe::currentTick();
-        if (now % 200 == 0) std::erase_if(standing(), [now](auto const& e) { return now - e.second > 200; });
+        if (now % 200 == 0) {
+            std::erase_if(standing(), [now](auto const& e) { return now - e.second > 200; });
+            lastFall().clear(); // a fall nobody landed from (a death on the cloud, a despawn)
+        }
+    });
+    game::db::onWorldClosed([] {
+        standing().clear();
+        lastFall().clear();
+        columns().clear();
     });
 }
 

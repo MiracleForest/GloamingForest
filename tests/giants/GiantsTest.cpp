@@ -51,7 +51,7 @@ TEST(GiantsMth, SinTable) {
     EXPECT_NEAR(mthCos(0.0F), 1.0F, 1e-6F);
     EXPECT_NEAR(mthSin(-1.5707964F), -1.0F, 1e-4F);
     // the table quantisation: Mth.sin(x) == SIN[(int)(x * 10430.378F) & 65535]
-    EXPECT_EQ(mthSin(0.0001F), mthSin(0.00005F));
+    EXPECT_EQ(mthSin(0.00005F), 0.0F); // index (int)(0.52) = 0
 }
 
 TEST(GiantsBeanstalk, RumblesThenGrowsToMaxY) {

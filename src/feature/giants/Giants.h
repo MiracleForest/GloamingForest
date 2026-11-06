@@ -16,6 +16,8 @@
 #include <string>
 #include <vector>
 
+#include "mc/world/level/BlockPos.h"
+
 #include "core/GlobalPos.h"
 #include "core/giants/Giants.h"
 #include "core/jrand/JRand.h"
@@ -101,6 +103,17 @@ void cloudRandomTick(BlockSource& region, BlockPos const& pos, std::string const
 [[nodiscard]] int commonPrecipitationDistance();
 /// Heightmap.Types.MOTION_BLOCKING's isOpaque of the block at `pos`.
 [[nodiscard]] bool motionBlockingOpaque(BlockSource& region, BlockPos const& pos);
+/// One column of CloudEvents' precipitation list: the lowest raining cloud and the stop height.
+struct PrecipitationColumn {
+    BlockPos      cloud;
+    int           stopY = 0;
+    Precipitation p     = Precipitation::None;
+};
+/// CloudEvents: the clouds within `radius` columns of `at` (y from at.y - radius to at.y + distance
+/// + radius - 1) that rain or snow and have a non-opaque block below, with their stop heights.
+[[nodiscard]] std::vector<PrecipitationColumn> collectPrecipitationColumns(BlockSource& region, BlockPos const& at, int distance, int radius);
+/// The rain splash is smoke there (lava, magma, a lit campfire).
+[[nodiscard]] bool smokesInRain(BlockSource& region, BlockPos const& pos);
 /// CloudBlock#fallOn: fall damage on a cloud is 10 %.
 [[nodiscard]] float cloudFallDamage(float amount);
 

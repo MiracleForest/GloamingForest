@@ -143,39 +143,67 @@ void rumbleDust(BlockSource& region, BlockPos const& pos) {
     }
 }
 
-/// ClientGameEvents#isBeanstalkRumbling: companions within 16 blocks shake (giants.rumble).
+/// ClientGameEvents#isBeanstalkRumbling: companions within 16 blocks shake (giants.rumble), asked
+/// again every 10 ticks while the grower rumbles (ticker < 110).
 void sendRumble(BlockSource& region, BlockPos const& pos, int ticksLeft) {
     Vec3 c{static_cast<float>(pos.x) + .5f, static_cast<float>(pos.y), static_cast<float>(pos.z) + .5f};
-    for (auto* p : fe::playersNear(static_cast<int>(region.getDimensionId()), c, 32.0)) {
+    for (auto* p : fe::playersNear(static_cast<int>(region.getDimensionId()), c, 16.0)) {
         if (!net::isCompanion(*p)) continue;
         net::send(*p, "giants.rumble", {{"pos", {pos.x, pos.y, pos.z}}, {"ticks", ticksLeft}});
     }
 }
 
+/// The growers' states while they are driven (written to BlockData when a layer grows, every 20
+/// ticks and before saves).
+std::map<core::GlobalPos, cg::BeanstalkState>& cache() {
+    static std::map<core::GlobalPos, cg::BeanstalkState> m;
+    return m;
+}
+
+/// The spiral reaches about 17 blocks sideways: the grower waits until that area is loaded (an
+/// unloaded column would count as a blocked one).
+constexpr int kReach = 24;
+
 void tickGrower(core::GlobalPos const& gp, std::vector<core::GlobalPos>& done) {
     auto* region = game::regionOf(gp.dim);
     if (!region) return;
     BlockPos pos = game::blockPos(gp);
-    if (!region->hasChunksAt(pos, 0, false)) return; // unloaded: resumes when it loads again
+    if (!region->hasChunksAt(pos, kReach, false)) return; // unloaded: resumes when it loads again
     if (game::blockId(region->getBlock(pos)) != id::BeanstalkGrower) {
+        cache().erase(gp);
         done.push_back(gp);
         return;
     }
-    auto const* saved = blockdata::get(*region, pos, kGrowerKey);
-    auto        state = saved ? cg::BeanstalkState::fromJson(*saved) : cg::BeanstalkState{};
-    LiveWorld   world(*region);
-    auto        step = cg::tickBeanstalk(state, world, random(), pos.x, pos.y, pos.z);
+    auto it = cache().find(gp);
+    if (it == cache().end()) {
+        auto const* saved = blockdata::get(*region, pos, kGrowerKey);
+        it                = cache().emplace(gp, saved ? cg::BeanstalkState::fromJson(*saved) : cg::BeanstalkState{}).first;
+    }
+    auto&     state = it->second;
+    LiveWorld world(*region);
+    auto      step = cg::tickBeanstalk(state, world, random(), pos.x, pos.y, pos.z);
     if (state.ticker < 100) rumbleDust(*region, pos);
-    if (state.ticker == 1) sendRumble(*region, pos, 110);
+    if (cg::isRumbling(state) && state.ticker % 10 == 1) sendRumble(*region, pos, std::min(10, 110 - state.ticker));
     if (step == cg::Step::Finished) {
         // level.setBlockAndUpdate(pos, HUGE_STALK); level.removeBlockEntity(pos)
+        gf::log().info("giants: beanstalk at {} {} {} finished at layer {} (max y {})", pos.x, pos.y, pos.z, state.layer, state.maxY);
+        cache().erase(it);
         blockdata::set(*region, pos, kGrowerKey, nullptr);
         if (auto const* b = defaultBlock(id::HugeStalk)) game::setBlock(*region, pos, *b);
-        gf::log().info("giants: beanstalk at {} {} {} finished at layer {} (max y {})", pos.x, pos.y, pos.z, state.layer, state.maxY);
         done.push_back(gp);
         return;
     }
-    blockdata::set(*region, pos, kGrowerKey, state.toJson());
+    if (step == cg::Step::Grew || state.ticker % 20 == 0) blockdata::set(*region, pos, kGrowerKey, state.toJson());
+}
+
+void flushGrowers() {
+    for (auto const& [gp, state] : cache()) {
+        auto* region = game::regionOf(gp.dim);
+        if (!region) continue;
+        BlockPos pos = game::blockPos(gp);
+        if (region->hasChunksAt(pos, 0, false) && game::blockId(region->getBlock(pos)) == id::BeanstalkGrower)
+            blockdata::set(*region, pos, kGrowerKey, state.toJson());
+    }
 }
 
 // ---- uberous soil ------------------------------------------------------------------------------------
@@ -295,6 +323,7 @@ bool useMagicBeans(Player& player, ItemStack& stack, BlockSource& region, BlockP
 void startGrower(BlockSource& region, BlockPos const& pos) {
     if (auto const* b = defaultBlock(id::BeanstalkGrower)) game::setBlock(region, pos, *b);
     blockdata::set(region, pos, kGrowerKey, cg::BeanstalkState{}.toJson());
+    cache().erase(game::globalPos(region, pos));
     growerSet().insert(game::globalPos(region, pos));
     growersDirty() = true;
 }
@@ -453,8 +482,14 @@ void installBeanstalk() {
         if (growersDirty()) saveGrowers();
     });
     game::db::onWorldReady([] { loadGrowers(); });
-    game::db::onWorldSave([] { saveGrowers(); });
-    game::db::onWorldClosed([] { growerSet().clear(); });
+    game::db::onWorldSave([] {
+        flushGrowers();
+        saveGrowers();
+    });
+    game::db::onWorldClosed([] {
+        growerSet().clear();
+        cache().clear();
+    });
 }
 
 } // namespace gf::feature::giants

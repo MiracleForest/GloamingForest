@@ -62,14 +62,8 @@ namespace cg = gf::core::giants;
 
 namespace {
 
-struct Column {
-    BlockPos               cloud;
-    int                    stopY = 0;
-    fg::Precipitation      p     = fg::Precipitation::None;
-};
-
 struct State {
-    std::vector<Column>    columns;
+    std::vector<fg::PrecipitationColumn> columns;
     int                    ticks         = 0;
     int                    rainSoundTime = 0;
     ll::event::ListenerPtr listener;
@@ -96,26 +90,6 @@ gf::fx::MolangMap& molang() {
 
 int clientDistance() { return cg::clientPrecipitationDistance(fg::config().clientCloudBlockPrecipitationDistance, fg::commonPrecipitationDistance()); }
 
-/// CloudEvents: the columns within `r` of the camera (y from camY - r to camY + distance + r - 1).
-std::vector<Column> collect(BlockSource& region, BlockPos const& at, int distance, int r) {
-    std::vector<Column> out;
-    for (int dx = -r; dx <= r; ++dx)
-        for (int dz = -r; dz <= r; ++dz)
-            for (int y = at.y - r; y < at.y + distance + r; ++y) {
-                BlockPos p{at.x + dx, y, at.z + dz};
-                if (y < region.getMinHeight() || y >= region.getMaxHeight() || !region.hasChunksAt(p, 0, false)) continue;
-                auto bid = game::blockId(region.getBlock(p));
-                if (!fg::isCloud(bid)) continue;
-                auto prec = fg::cloudPrecipitation(region, p, bid);
-                if (prec == fg::Precipitation::None) continue;
-                if (fg::motionBlockingOpaque(region, BlockPos{p.x, p.y - 1, p.z})) continue;
-                int stop = cg::precipitationStopY(p.y, distance, [&](int yy) { return fg::motionBlockingOpaque(region, BlockPos{p.x, yy, p.z}); });
-                out.push_back({p, stop, prec});
-                break;
-            }
-    return out;
-}
-
 void weatherTick(LocalPlayer& p) {
     auto& s        = st();
     int   distance = clientDistance();
@@ -125,7 +99,8 @@ void weatherTick(LocalPlayer& p) {
     }
     auto& region = p.getDimensionBlockSource();
     auto  at     = game::blockPosOf(p.getPosition());
-    if (s.ticks % 10 == 0) s.columns = collect(region, at, distance, 10);
+    // CloudEvents: r = 10 columns with fancy graphics (the radius TF uses by default)
+    if (s.ticks % 10 == 0) s.columns = fg::collectPrecipitationColumns(region, at, distance, 10);
     if (s.columns.empty()) return;
     auto& level = p.getLevel();
     // the sheets: a few drops per column and tick
@@ -144,9 +119,7 @@ void weatherTick(LocalPlayer& p) {
         if (c.p != fg::Precipitation::Rain) continue;
         if (std::abs(c.cloud.x - at.x) > 10 || std::abs(c.cloud.z - at.z) > 10) continue;
         BlockPos below{c.cloud.x, c.stopY - 1, c.cloud.z};
-        auto     bid = game::blockId(region.getBlock(below));
-        bool     hot = bid == "minecraft:lava" || bid == "minecraft:flowing_lava" || bid == "minecraft:magma"
-               || ((bid == "minecraft:campfire" || bid == "minecraft:soul_campfire") && game::statesOf(region.getBlock(below))["extinguished"] != "true");
+        bool     hot = fg::smokesInRain(region, below);
         Vec3 where{below.x + randf(), static_cast<float>(c.stopY), below.z + randf()};
         level.addParticle(hot ? ParticleType::Smoke : ParticleType::RainSplash, where, Vec3{}, 0, nullptr, false);
         splash = below;

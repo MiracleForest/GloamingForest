@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <map>
 #include <optional>
+#include <set>
 #include <unordered_map>
 
 #include "ll/api/service/Bedrock.h"
@@ -32,6 +33,7 @@
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
+#include "mc/world/level/Spawner.h"
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/BlockType.h"
 
@@ -63,24 +65,18 @@ bool& selfDestructing() {
     return b;
 }
 
+/// Placements refused by getStateForPlacement (their removal is no giant block breaking).
+std::set<core::GlobalPos>& reverted() {
+    static std::set<core::GlobalPos> s;
+    return s;
+}
+
 template <class Fn>
 void forCell(BlockPos const& pos, Fn&& fn) {
     auto o = cg::cellOrigin(pos.x, pos.y, pos.z);
     for (int x = 0; x < 4; ++x)
         for (int y = 0; y < 4; ++y)
             for (int z = 0; z < 4; ++z) fn(BlockPos{o[0] + x, o[1] + y, o[2] + z});
-}
-
-BlockPos offsetByFace(BlockPos const& p, int face) {
-    switch (face) {
-    case 0: return {p.x, p.y - 1, p.z};
-    case 1: return {p.x, p.y + 1, p.z};
-    case 2: return {p.x, p.y, p.z - 1};
-    case 3: return {p.x, p.y, p.z + 1};
-    case 4: return {p.x - 1, p.y, p.z};
-    case 5: return {p.x + 1, p.y, p.z};
-    default: return p;
-    }
 }
 
 /// GiantBlock#setGiantBlockToAir: the cell's other blocks of the type go, without drops.
@@ -193,6 +189,7 @@ Block const* giantBlockAt(std::string const& blockId, int x, int y, int z) {
 void fillGiantCell(BlockSource& region, BlockPos const& pos, std::string const& blockId) {
     forCell(pos, [&](BlockPos const& p) {
         if (p.y < region.getMinHeight() || p.y >= region.getMaxHeight() || !region.hasChunksAt(p, 0, false)) return;
+        if (!(p == pos) && !game::replaceable(region, p) && game::blockId(region.getBlock(p)) != blockId) return; // never overwrites
         if (auto const* b = giantBlockAt(blockId, p.x, p.y, p.z)) game::setBlock(region, p, *b);
     });
 }
@@ -230,33 +227,34 @@ float giantPickDestroySpeed(std::string const& blockId, float base) {
 void installGiantBlocks() {
     for (char const* g : kGiantBlocks) {
         std::string gid = g;
-        // GiantBlock#getStateForPlacement: every block of the cell must be replaceable
-        ia::onUseOn({.item = gid}, [](ia::UseOnContext const& c) {
+        // GiantBlock#getStateForPlacement (every other block of the cell must be replaceable, else
+        // no placement: the block is taken back) and #setPlacedBy (the server fills the cell). The
+        // block's own use runs before (a click on a chest opens it), as in Java.
+        ia::onPlace({.block = gid}, [gid](ia::PlaceContext const& c) {
             auto* region = game::regionOf(c.pos.dim);
-            if (!region) return ia::Result::Pass;
-            BlockPos clicked = game::blockPos(c.pos);
-            BlockPos at      = game::replaceable(*region, clicked) ? clicked : offsetByFace(clicked, c.face);
-            bool     free    = true;
+            if (!region) return;
+            BlockPos at   = game::blockPos(c.pos);
+            bool     free = true;
             forCell(at, [&](BlockPos const& p) {
-                if (!free) return;
+                if (!free || p == at) return;
                 if (p.y < region->getMinHeight() || p.y >= region->getMaxHeight() || !region->hasChunksAt(p, 0, false) || !game::replaceable(*region, p)) free = false;
             });
-            return free ? ia::Result::Pass : ia::Result::Deny;
-        }, ia::priority::Low);
-        // GiantBlock#setPlacedBy: the server fills the cell (next tick, R16)
-        ia::onPlace({.block = gid}, [gid](ia::PlaceContext const& c) {
-            auto pos = c.pos;
-            ia::nextTick([pos, gid] {
-                auto* region = game::regionOf(pos.dim);
-                if (!region) return;
-                BlockPos at = game::blockPos(pos);
-                if (game::blockId(region->getBlock(at)) != gid) return;
-                fillGiantCell(*region, at, gid);
-                gf::log().info("giants: {} placed, cell at {} {} {} filled", gid, at.x & ~3, at.y & ~3, at.z & ~3);
-            });
+            if (!free) {
+                reverted().insert(c.pos);
+                game::clearBlock(*region, at);
+                if (!c.player.isCreative()) {
+                    if (auto back = game::items::make(gid, 1); back && !c.player.add(*back))
+                        region->getLevel().getSpawner().spawnItem(*region, *back, nullptr, c.player.getPosition(), 0);
+                    c.player.sendInventory(false);
+                }
+                return;
+            }
+            fillGiantCell(*region, at, gid);
+            gf::log().info("giants: {} placed, cell at {} {} {} filled", gid, at.x & ~3, at.y & ~3, at.z & ~3);
         });
         // GiantBlock#onRemove: an incomplete cell goes completely, without drops
         gf::blockevents::onRemoved(gid, [gid](BlockSource& region, BlockPos const& pos, Block const&) {
+            if (reverted().erase(game::globalPos(region, pos)) > 0) return; // a refused placement
             if (selfDestructing() || giantCellFilled(region, pos, gid)) return;
             destroyCell(region, pos, gid);
         });
