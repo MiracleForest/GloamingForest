@@ -68,7 +68,8 @@ TEST(HostilesMobs, ProjectileBoxes) {
     for (char const* name : {"nature_bolt", "slime_blob"}) {
         SCOPED_TRACE(name);
         auto const& row = golden.at("entities").at(std::string("twilightforest:") + name);
-        auto const& c   = bpOf(name).at("minecraft:entity").at("components");
+        auto const  bp  = bpOf(name);
+        auto const& c   = bp.at("minecraft:entity").at("components");
         EXPECT_NEAR(c.at("minecraft:collision_box").at("width").get<double>(), row.at("width").get<double>(), 1e-6);
         EXPECT_NEAR(c.at("minecraft:collision_box").at("height").get<double>(), row.at("height").get<double>(), 1e-6);
     }
@@ -76,7 +77,8 @@ TEST(HostilesMobs, ProjectileBoxes) {
 
 // SkeletonDruid's baby: half the size, +50 % speed, x 2.5 experience (int)
 TEST(HostilesMobs, BabyDruid) {
-    auto const& groups = bpOf("skeleton_druid").at("minecraft:entity").at("component_groups");
+    auto const  bp     = bpOf("skeleton_druid");
+    auto const& groups = bp.at("minecraft:entity").at("component_groups");
     auto const& baby   = groups.at("gf:baby");
     EXPECT_NEAR(baby.at("minecraft:collision_box").at("width").get<double>(), 0.3, 1e-6);
     EXPECT_NEAR(baby.at("minecraft:collision_box").at("height").get<double>(), 0.995, 1e-6);

@@ -160,7 +160,7 @@ public:
             double d2 = tp.z - p.z;
             yaw       = -static_cast<float>(std::atan2(d1, d2)) * (180.0F / std::numbers::pi_v<float>);
         }
-        m->setRotationWrapped(Vec2{m->getRotation().x, yaw});
+        const_cast<Vec2&>(m->getRotation()) = Vec2{m->getRotation().x, yaw};
         m->setYBodyRotation(yaw);
     }
 

@@ -28,6 +28,8 @@
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/ActorCategory.h"
 #include "mc/world/actor/ActorDefinitionIdentifier.h"
+#include "mc/deps/ecs/gamerefs_entity/EntityContext.h"
+#include "mc/deps/ecs/gamerefs_entity/GameRefsEntity.h"
 #include "mc/world/actor/ActorFactory.h"
 #include "mc/world/actor/Mob.h"
 #include "mc/world/actor/player/Player.h"
@@ -302,7 +304,7 @@ void setPropertyCached(Actor& actor, std::string const& name, ge::PropertyValue 
 
 Mob* spawnMob(BlockSource& region, std::string const& id, Vec3 const& pos, gf::spawn::SpawnReason reason, float yaw) {
     Actor* a = gf::spawn::spawnMob(region, id, pos, reason, [yaw](Actor& actor) {
-        if (yaw != 0.0f) actor.setRotationWrapped(Vec2{0.0f, yaw});
+        if (yaw != 0.0f) const_cast<Vec2&>(actor.getRotation()) = Vec2{0.0f, yaw};
     });
     return a ? fe::asMob(*a) : nullptr;
 }

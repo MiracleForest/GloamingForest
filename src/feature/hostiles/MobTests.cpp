@@ -126,7 +126,7 @@ bool near(float a, float b, float eps = 0.011f) { return std::abs(a - b) < eps; 
 Mob* spawn(Context& ctx, char const* type, Vec3 const& at) {
     auto* region = ctx.region();
     ctx.require(region != nullptr, "region");
-    auto* m = spawnMob(*region, type, at, gf::spawn::SpawnReason::Command);
+    auto* m = hostiles::spawnMob(*region, type, at, gf::spawn::SpawnReason::Command);
     ctx.require(m != nullptr, std::string("spawned ") + type);
     return m;
 }
@@ -340,7 +340,7 @@ GF_REGISTER_SELFTEST("hostiles.redcap_tnt", [](Context& ctx) -> ll::coro::CoroTa
     SurvivalScope survival(ctx);
     // the player looks away (+z) from the sapper standing 3 blocks behind it (-z)
     ctx.player().teleportTo(center(at), true, 0, 1, false);
-    ctx.player().setRotationWrapped(Vec2{0.0f, 0.0f});
+    const_cast<Vec2&>(ctx.player().getRotation()) = Vec2{0.0f, 0.0f};
     auto* sapper = spawn(ctx, id::RedcapSapper, center(at.offset(0, 0, -3)));
     auto  sid    = uidOf(*sapper);
     co_await ctx.ticks(2);
@@ -363,7 +363,7 @@ GF_REGISTER_SELFTEST("hostiles.redcap_tnt", [](Context& ctx) -> ll::coro::CoroTa
         auto* s = mobById(sid);
         ctx.require(s != nullptr, "the sapper is there");
         if (!targetOf(*s)) s->setTarget(&ctx.player());
-        ctx.player().setRotationWrapped(Vec2{0.0f, 0.0f});
+        const_cast<Vec2&>(ctx.player().getRotation()) = Vec2{0.0f, 0.0f};
         ctx.player().heal(20);
         if (redcaps::tntLeft(*s) < before) planted = true;
         removePrimed();
