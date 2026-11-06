@@ -102,8 +102,8 @@ void bighornDrops(Actor& dead, std::vector<ItemStack>& drops, gf::loot::LootCont
 bool animalTakesFood(Actor& animal) {
     if (animal.isBaby()) return true;
     if (animal.isInLove()) return false;
-    auto const* b = animal.getEntityContext().tryGetComponent<BreedableComponent>();
-    return b && b->mBreedCooldown <= 0;
+    auto b = animal.getEntityContext().tryGetComponent<BreedableComponent>();
+    return b && static_cast<int>(b->mBreedCooldown) <= 0;
 }
 
 ia::Result deerSenbei(ia::EntityContext const& c) {
