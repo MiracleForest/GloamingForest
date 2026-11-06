@@ -1,0 +1,26 @@
+{
+  "entity_sounds": {
+    "entities": {
+      "twilightforest:minotaur": {
+        "volume": 1.0,
+        "pitch": [0.5, 0.9],
+        "events": {
+          "ambient": "entity.twilightforest.minotaur.ambient",
+          "hurt": "entity.twilightforest.minotaur.hurt",
+          "death": "entity.twilightforest.minotaur.death",
+          "step": { "sound": "entity.twilightforest.minotaur.step", "volume": 0.15, "pitch": 0.8 }
+        }
+      },
+      "twilightforest:minoshroom": {
+        "volume": 1.0,
+        "pitch": [0.5, 0.9],
+        "events": {
+          "ambient": "entity.twilightforest.minoshroom.ambient",
+          "hurt": "entity.twilightforest.minoshroom.hurt",
+          "death": "entity.twilightforest.minoshroom.death",
+          "step": { "sound": "entity.twilightforest.minoshroom.step", "volume": 0.15, "pitch": 0.8 }
+        }
+      }
+    }
+  }
+}
