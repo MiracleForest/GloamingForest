@@ -249,10 +249,19 @@ bool ingredientMatches(std::vector<IngredientAlt> const& alts, ItemStack const& 
 }
 
 std::vector<ScepterRepair> scepterRepairs() {
-    std::vector<ScepterRepair> out;
-    for (auto const* r : rc::ofType(kScepterRepairType))
-        if (auto p = parseRepair(r->id, r->data)) out.push_back(*p);
-    return out;
+    // parsed once per set of loaded recipes (a reload changes the recipe pointers)
+    static std::mutex                       mutex;
+    static std::vector<rc::CraftingRecipe const*> seen;
+    static std::vector<ScepterRepair>        cache;
+    auto                                     now = rc::ofType(kScepterRepairType);
+    std::lock_guard                          lock(mutex);
+    if (now != seen) {
+        seen = now;
+        cache.clear();
+        for (auto const* r : now)
+            if (auto p = parseRepair(r->id, r->data)) cache.push_back(*p);
+    }
+    return cache;
 }
 
 namespace test {
@@ -346,3 +355,4 @@ void registerRecipes() {
 }
 
 } // namespace gf::feature::artifacts
+

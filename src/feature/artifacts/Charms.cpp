@@ -25,6 +25,8 @@
 #include <cmath>
 #include <unordered_map>
 
+#include "ll/api/event/EventBus.h"
+#include "ll/api/event/player/PlayerJoinEvent.h"
 #include "ll/api/service/Bedrock.h"
 
 #include "mc/deps/core/math/Vec2.h"
@@ -364,6 +366,31 @@ void spawnCharm(Player& player, std::string const& charmId, std::string const& s
     gf::entity::setProperty(*e, "twilightforest:charm", charmIndex(charmId));
 }
 
+/// A kept record whose stacks all still sit in their slots is a stale copy (the server stopped after
+/// the death wrote it and before the player was saved without the stacks): returning it would
+/// duplicate them (F10's guard for its own record).
+void dropStaleRecord(Player& player) {
+    auto doc = game::db::get(keptKey(player));
+    if (!doc || !doc->is_object()) return;
+    auto list = doc->value("items", Json::array());
+    if (list.empty()) return;
+    for (auto const& e : list) {
+        auto r = slotOf(e.value("slot", std::string{}));
+        auto s = items::fromJson(e.value("item", Json{}));
+        if (!r || items::isEmpty(s)) return;
+        auto const& cur = stackAt(player, *r);
+        if (!items::sameItemSameData(cur, s) || items::countOf(cur) != items::countOf(s)) return;
+    }
+    game::db::erase(keptKey(player));
+    log().warn("artifacts: ignored the kept items of {}: they are still in the inventory", player.getRealName());
+}
+
+void installCharmListeners(std::vector<ll::event::ListenerPtr>& out) {
+    out.push_back(ll::event::EventBus::getInstance().emplaceListener<ll::event::PlayerJoinEvent>([](ll::event::PlayerJoinEvent& ev) {
+        if (!ev.self().isClientSide()) dropStaleRecord(ev.self());
+    }));
+}
+
 namespace test {
 void keep(Player& player) { keepWithCharms(player); }
 void stock(Player& player, std::vector<ItemStack>& drops) { stockCasket(player, drops); }
@@ -402,4 +429,5 @@ void registerCharms() {
 }
 
 } // namespace gf::feature::artifacts
+
 

@@ -42,7 +42,7 @@ totem activation event goes to the player instead. The sound plays to the player
 Players keep their shields in `gf:artifacts:shields:<uuid>`, other entities in their entity data.
 The invulnerability frames of the shield breaks are U9's own 20-tick counter (damage is cancelled, so
 the game's frames never start). Companions draw TF's HUD from `artifacts.shields`; vanilla players see
-the count on the action bar while it changes. `/twilightforest shield <target> set|add <amount> [<temp>]`
+the count on the action bar while it changes. A mob's shields are read again when it is hit or commanded after a world reload; until then its temporary shields do not count down. A player's shields are lost on death (TF's attachment is not copied on death). `/twilightforest shield <target> set|add <amount> [<temp>]`
 takes an entity selector (exactly one entity). `twilightforest:give_3_shields` is the Bedrock function
 `twilightforest/give_3_shields` (`execute as @p run scriptevent twilightforest:give_3_shields`, answered
 by `src/feature/ext/artifacts/Give3Shields.cpp`).
@@ -75,3 +75,4 @@ Vanilla players get "Loading..." on the action bar and the results as chat lines
 - The mystic crown's inventory icon is the crown splinter's (TF draws a 3D model).
 - The pocket watch's Mining Fatigue immunity removes an instance on the next tick (no
   "effect applicable" event).
+

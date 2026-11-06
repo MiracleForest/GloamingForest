@@ -43,6 +43,9 @@ public:
                                    kTwilightScepter, kZombieScepter})
                 if (std::string_view(id) != kCharmEffect) gf::item::ext::setRarity(id, gf::item::ext::Rarity::Uncommon);
         }
+        installShieldListeners(mListeners);
+        installOreMeterListeners(mListeners);
+        installCharmListeners(mListeners);
         mTick = ll::event::EventBus::getInstance().emplaceListener<ll::event::ServerLevelTickEvent>([this](ll::event::ServerLevelTickEvent&) {
             if (++mTicks % 200 == 0) pruneRandoms();
         });
@@ -50,10 +53,13 @@ public:
     void uninstall() {
         if (mTick) ll::event::EventBus::getInstance().removeListener(mTick);
         mTick = nullptr;
+        for (auto& l : mListeners) ll::event::EventBus::getInstance().removeListener(l);
+        mListeners.clear();
     }
 
 private:
-    ll::event::ListenerPtr mTick;
+    ll::event::ListenerPtr              mTick;
+    std::vector<ll::event::ListenerPtr> mListeners;
     std::uint64_t          mTicks = 0;
 };
 
@@ -62,3 +68,4 @@ private:
 } // namespace gf::feature::artifacts
 
 GF_REGISTER_MODULE(gf::feature::artifacts::ArtifactsModule);
+

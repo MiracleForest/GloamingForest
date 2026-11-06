@@ -9,6 +9,8 @@
 #include <string>
 #include <vector>
 
+#include "ll/api/event/ListenerBase.h"
+
 #include "nlohmann/json.hpp"
 
 #include "mc/deps/core/math/Vec3.h"
@@ -174,6 +176,8 @@ void addShields(Actor& actor, int amount, bool temp);
 /// Breaks one shield (FortificationShieldAttachment#breakShield).
 void breakShield(Actor& actor, bool expired);
 void registerShields();
+/// The shields' tick and join listeners (removed by the module's uninstall).
+void installShieldListeners(std::vector<ll::event::ListenerPtr>& out);
 
 // ---- charms and the casket (Charms.cpp, Casket.cpp) -------------------------------------------------------
 
@@ -214,6 +218,10 @@ void tickOreMeter(ItemStack& stack, Player& player);
 /// Starts a scan (OreMeterItem#beginScanning).
 void beginOreScan(Player& player, ItemStack& stack);
 void registerOreMeter();
+/// The ore meter's swing listener (the wipe).
+void installOreMeterListeners(std::vector<ll::event::ListenerPtr>& out);
+/// The charms' join listener (stale kept records).
+void installCharmListeners(std::vector<ll::event::ListenerPtr>& out);
 /// The Bedrock natural dimension test of the moon dial.
 [[nodiscard]] std::string moonPhaseKeyFor(Actor const* viewer);
 void registerMisc();
@@ -251,3 +259,4 @@ void returnStored(Player& player);
 } // namespace test
 
 } // namespace gf::feature::artifacts
+

@@ -39,6 +39,8 @@
 #include "mc/world/effect/MobEffectInstance.h"
 #include "mc/world/item/Item.h"
 #include "mc/world/item/ItemStack.h"
+#include "mc/world/item/enchanting/Enchant.h"
+#include "mc/world/item/enchanting/EnchantUtils.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
@@ -188,6 +190,14 @@ int charges(ItemStack const& stack) { return std::max(0, maxDamage(stack) - stac
 
 void hurtButDontBreak(ItemStack& stack, int amount) {
     if (!stack.isDamageableItem()) return;
+    // EnchantmentHelper#processDurabilityChange: Unbreaking spares each point with chance level / (level + 1)
+    if (int lvl = EnchantUtils::getEnchantLevel(Enchant::Type::Unbreaking, stack); lvl > 0) {
+        int kept = 0;
+        for (int i = 0; i < amount; ++i)
+            if (levelRandom().nextInt(lvl + 1) > 0) ++kept;
+        amount -= kept;
+        if (amount <= 0) return;
+    }
     int dmg = std::min(maxDamage(stack), stack.getDamageValue() + amount);
     stack.setDamageValue(static_cast<short>(dmg));
 }
@@ -501,4 +511,5 @@ void registerScepters() {
 }
 
 } // namespace gf::feature::artifacts
+
 

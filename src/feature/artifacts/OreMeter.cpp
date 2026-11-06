@@ -249,13 +249,16 @@ void registerOreMeter() {
     });
     // WipeOreMeterPacket (a companion's left click at nothing) and the swing at nothing of any client
     net::on(kChanWipeOre, [](Player& player, Json const&) { wipeHeld(player); });
-    static ll::event::ListenerPtr swing;
-    swing = ll::event::EventBus::getInstance().emplaceListener<ll::event::PlayerSwingEvent>([](ll::event::PlayerSwingEvent& ev) {
+}
+
+void installOreMeterListeners(std::vector<ll::event::ListenerPtr>& out) {
+    out.push_back(ll::event::EventBus::getInstance().emplaceListener<ll::event::PlayerSwingEvent>([](ll::event::PlayerSwingEvent& ev) {
         auto& p = ev.self();
         if (p.isClientSide() || !holding(p, kOreMeter)) return;
         if (looksAtBlock(p, false) || lookTarget(p, p.isCreative() ? 5.0 : 3.0)) return; // Java's LeftClickEmpty only
         wipeHeld(p);
-    });
+    }));
 }
 
 } // namespace gf::feature::artifacts
+

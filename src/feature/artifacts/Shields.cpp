@@ -167,6 +167,12 @@ void tickAll() {
     for (auto it = m.begin(); it != m.end();) {
         auto* a = actorById(it->first);
         if (!a || !a->isAlive()) {
+            // FORTIFICATION_SHIELDS is not copied on death: a dead player's shields are gone
+            if (a && it->second.player) {
+                game::db::erase(dbKey(static_cast<Player&>(*a)));
+                it->second.shields = {};
+                syncTo(static_cast<Player&>(*a), it->second);
+            }
             it = m.erase(it); // persisted already; read again when seen
             continue;
         }
@@ -234,21 +240,23 @@ void registerShields() {
         }
         return gf::combat::Verdict::Cancel;
     });
-    static ll::event::ListenerPtr tick, join;
-    tick = ll::event::EventBus::getInstance().emplaceListener<ll::event::ServerLevelTickEvent>([](auto&) { tickAll(); });
-    join = ll::event::EventBus::getInstance().emplaceListener<ll::event::PlayerJoinEvent>([](ll::event::PlayerJoinEvent& ev) {
-        auto& p = ev.self();
-        if (p.isClientSide()) return;
-        auto& e    = entryOf(p);
-        e.lastSent = -1;
-        if (e.shields.left() > 0) syncTo(p, e);
-    });
     net::onCompanionJoined([](Player& p) {
         auto& e    = entryOf(p);
         e.lastSent = -1;
         syncTo(p, e);
     });
     game::db::onWorldClosed([] { entries().clear(); });
+}
+
+void installShieldListeners(std::vector<ll::event::ListenerPtr>& out) {
+    out.push_back(ll::event::EventBus::getInstance().emplaceListener<ll::event::ServerLevelTickEvent>([](auto&) { tickAll(); }));
+    out.push_back(ll::event::EventBus::getInstance().emplaceListener<ll::event::PlayerJoinEvent>([](ll::event::PlayerJoinEvent& ev) {
+        auto& p = ev.self();
+        if (p.isClientSide()) return;
+        auto& e    = entryOf(p);
+        e.lastSent = -1;
+        if (e.shields.left() > 0) syncTo(p, e);
+    }));
 }
 
 } // namespace gf::feature::artifacts
@@ -285,4 +293,6 @@ GF_REGISTER_SUBCOMMAND([](ll::command::CommandHandle& cmd) {
             .execute([add, run](CommandOrigin const& o, CommandOutput& out, ar::ShieldTempParams const& p) { run(o, out, p.target, p.amount, p.temp, add); });
     }
 });
+
+
 

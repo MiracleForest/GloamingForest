@@ -24,6 +24,7 @@
 //   - lava and water around it turn a lava / water log into obsidian, basalt or stone (fizz).
 // Owner and name live in the block data ("artifacts"); the damage is the block state.
 #include <cmath>
+#include <map>
 
 #include "ll/api/service/Bedrock.h"
 
@@ -100,6 +101,11 @@ bool doTileDrops(Level& level) {
     GameRuleId id;
     id.mValue = static_cast<int>(GameRules::GameRulesIndex::DoTileDrops);
     return level.getGameRules().getBool(id, true);
+}
+
+std::map<core::GlobalPos, std::string>& pendingName() {
+    static std::map<core::GlobalPos, std::string> m;
+    return m;
 }
 
 bool isOperator(Player& p) { return p.getCommandPermissionLevel() >= CommandPermissionLevel::GameDirectors; }
@@ -188,15 +194,18 @@ bool placeCasket(Player& player, std::vector<ItemStack> const& contents, int dam
     std::string id = roll.skullChest ? kSkullChest : kCasket;
     Json states{{kFacing, facing}, {kLogged, fluidLog(region, pos)}};
     if (!roll.skullChest) states[kDamage] = roll.damage;
-    Block const* block = game::blockWithStates(id, states);
-    if (roll.skullChest && (!block || !gf::inventory::find(region, pos).has_value())) {
-        // U22's skull chest is not there (yet): the casket stays at damage 2
-        block = game::blockWithStates(kCasket, Json{{kFacing, facing}, {kLogged, fluidLog(region, pos)}, {kDamage, 2}});
-        id    = kCasket;
+    std::string  logged = fluidLog(region, pos);
+    Block const* block  = game::blockWithStates(id, states);
+    bool         placed = block && game::setBlock(region, pos, *block);
+    if (roll.skullChest && (!placed || !gf::inventory::find(region, pos).has_value())) {
+        // U22's skull chest is not a container (yet): the casket stays at damage 2
+        block  = game::blockWithStates(kCasket, Json{{kFacing, facing}, {kLogged, logged}, {kDamage, 2}});
+        id     = kCasket;
+        placed = block && game::setBlock(region, pos, *block);
     } else if (roll.skullChest) {
         log().debug("artifacts: {}'s casket damage value was too high, placing a skull chest instead", player.getRealName());
     }
-    if (!block || !game::setBlock(region, pos, *block)) {
+    if (!placed) {
         log().error("artifacts: could not place a keepsake casket at {} {} {}", pos.x, pos.y, pos.z);
         return false;
     }
@@ -268,19 +277,27 @@ void registerCasket() {
                 return ia::Result::Deny;
             }
         }
-        if (!c.player.isCreative() && doTileDrops(c.player.getLevel())) {
-            int dmg = damageOf(c.block);
-            if (auto s = items::make(kCasket)) {
-                if (dmg > 0) items::setData(*s, kDataCasketDamage, dmg);
-                if (info && !info->name.empty()) s->setCustomName(Bedrock::Safety::RedactableString(info->name));
-                spawnAt(*region, pos, *s);
-            }
-            auto log = stateText(c.block, kLogged);
-            if (log == "obsidian" || log == "stone" || log == "basalt")
-                if (auto s = items::make("minecraft:" + log)) spawnAt(*region, pos, *s);
-        }
+        // remembered for the drop once the block is really gone (onDestroyed)
+        pendingName()[c.pos] = info ? info->name : std::string();
         return ia::Result::Pass;
     }, ia::priority::High);
+    ia::onDestroyed({.block = kCasket}, [](ia::DestroyContext const& c, bool destroyed) {
+        auto it   = pendingName().find(c.pos);
+        auto name = it != pendingName().end() ? it->second : std::string();
+        if (it != pendingName().end()) pendingName().erase(it);
+        auto* region = game::regionOf(c.pos.dim);
+        if (!destroyed || !region || c.player.isCreative() || !doTileDrops(c.player.getLevel())) return;
+        BlockPos pos = game::blockPos(c.pos);
+        int      dmg = damageOf(c.block);
+        if (auto s = items::make(kCasket)) {
+            if (dmg > 0) items::setData(*s, kDataCasketDamage, dmg);
+            if (!name.empty()) s->setCustomName(Bedrock::Safety::RedactableString(name));
+            spawnAt(*region, pos, *s);
+        }
+        auto log = stateText(c.block, kLogged);
+        if (log == "obsidian" || log == "stone" || log == "basalt")
+            if (auto s = items::make("minecraft:" + log)) spawnAt(*region, pos, *s);
+    });
     // KeepsakeCasketBlock#setPlacedBy / SkullChestBlock#getStateForPlacement
     ia::onPlace({.block = kCasket}, [](ia::PlaceContext const& c) {
         auto* region = game::regionOf(c.pos.dim);
@@ -305,3 +322,4 @@ void registerCasket() {
 }
 
 } // namespace gf::feature::artifacts
+
