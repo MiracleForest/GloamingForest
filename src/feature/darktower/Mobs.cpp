@@ -132,7 +132,7 @@ void borerTick(Actor& self) {
     // Mob#serverAiStep runs the goal selector in full every other tick (tickRunningGoals(false) in
     // between skips goals without requiresUpdateEveryTick, which neither borer goal overrides): the
     // summon countdown of 20 lasts 40 ticks and the merge's 1 in 10 is asked every 2nd tick
-    if (++b.tickCount <= 1 || b.tickCount % 2 == 0) {
+    if (goalTick(++b.tickCount)) {
         summonTick(self, b);
         hideTick(*m);
     }

@@ -98,10 +98,6 @@ struct UrState {
     int          unseenTicks  = 0; ///< TargetGoal#unseenTicks
 };
 
-/// Mob#serverAiStep: the selectors run in full on the first two ticks and then every other tick
-/// ((tickCount + id) % 2 == 0; the phase is per entity here). 	ickCount counts from 1.
-bool goalTick(int tickCount) { return tickCount <= 1 || tickCount % 2 == 0; }
-
 /// DATA_TANTRUM for the companions' client effects (UrGhast#aiStep's dust and boss tears,
 /// TFWeatherRenderer.urGhastAlive): "darktower.urghast" {uid, on}, a heartbeat every 10 ticks for each
 /// Ur-Ghast to the companions tracking it (one that comes near later learns it; the client forgets an
@@ -347,6 +343,8 @@ struct UrFireball {
     /// AIM_DEFLECT) along dir, the direction last set (a turn the engine made is a deflection)
     float speed = kLaunchSpeed;
     Vec3  dir{};
+    std::int64_t lastReflector = -1; ///< ProjectileComponent::mLastReflectActor last tick
+    int          lastImmunity  = 0;  ///< ProjectileComponent::mReflectImmunityTicks last tick
 };
 
 constexpr char kFireballsKey[] = "gf:darktower:fireballs";
@@ -442,7 +440,16 @@ Vec3 flightStep(Actor& fb, UrFireball& state, Vec3 const& engine) {
     double dl  = std::sqrt(dir.x * dir.x + dir.y * dir.y + dir.z * dir.z);
     if (el > 1e-6) {
         Vec3 now{float(engine.x / el), float(engine.y / el), float(engine.z / el)};
+        // a turn (dot < 0.98), or the engine's reflect even along the old path: a new reflecting actor
+        // or a fresh reflect immunity (ProjectileComponent#_tryReflectOnHurt)
         bool turned = dl > 1e-6 && (now.x * dir.x + now.y * dir.y + now.z * dir.z) / dl < 0.98;
+        if (auto pc = fb.getEntityContext().tryGetComponent<ProjectileComponent>()) {
+            std::int64_t reflector = pc->mLastReflectActor->rawID;
+            int          immunity  = pc->mReflectImmunityTicks;
+            if ((reflector != state.lastReflector && reflector != -1 && reflector != 0) || immunity > state.lastImmunity) turned = true;
+            state.lastReflector = reflector;
+            state.lastImmunity  = immunity;
+        }
         dir         = now;
         if (turned) state.speed = 1.0f;
         else state.speed = (state.speed + 0.1f) * (fb.isInWater() ? 0.8f : 0.95f);
@@ -817,8 +824,12 @@ BlockPos lightningTargetAround(BlockSource& region, BlockPos const& at) {
     BlockPos surface = region.getHeightmapPos(BlockPos{at.x, 0, at.z});
     // LightningRodBlock POIs (PoiManager#findClosest, radius 128, the rod at WORLD_SURFACE - 1)
     std::optional<BlockPos> rod;
-    double                  best = 0.0;
-    for (int cx = (surface.x - 128) >> 4; cx <= (surface.x + 128) >> 4; cx++)
+    double                  best    = 0.0;
+    static BlockType const* rodType = [] {
+        auto b = Block::tryGetFromRegistry("minecraft:lightning_rod");
+        return b ? &b->getBlockType() : nullptr;
+    }();
+    for (int cx = (surface.x - 128) >> 4; rodType && cx <= (surface.x + 128) >> 4; cx++)
         for (int cz = (surface.z - 128) >> 4; cz <= (surface.z + 128) >> 4; cz++) {
             if (!loaded(region, BlockPos{cx * 16 + 8, surface.y, cz * 16 + 8})) continue;
             for (int x = cx * 16; x < cx * 16 + 16; x++)
@@ -830,7 +841,8 @@ BlockPos lightningTargetAround(BlockSource& region, BlockPos const& at) {
                     // at or just under it
                     for (int y : {top.y, top.y - 1}) {
                         BlockPos q{x, y, z};
-                        if (idAt(region, q) != "minecraft:lightning_rod" || !isAir(region, BlockPos{x, y + 1, z})) continue;
+                        // the block type compared by pointer (no id string per column)
+                        if (&region.getBlock(q).getBlockType() != rodType || !isAir(region, BlockPos{x, y + 1, z})) continue;
                         double dy = y - surface.y, d = dx * dx + dy * dy + dz * dz;
                         if (!rod || d < best) {
                             rod  = BlockPos{x, y + 1, z};

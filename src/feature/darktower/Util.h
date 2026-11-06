@@ -139,6 +139,10 @@ void visualLightning(BlockSource& region, Vec3 const& at);
 void visualLightning(Actor& source, Vec3 const& at);
 /// Removes the client-only bolts after their second (runtime tick).
 void tickVisualLightning();
+/// Mob#serverAiStep: the goal and target selectors run in full on the first two ticks and then every
+/// other tick ((tickCount + id) % 2 == 0; the phase is per entity here); in between only goals that
+/// override requiresUpdateEveryTick tick. The argument is the entity's tick count, starting at 1.
+[[nodiscard]] inline bool goalTick(int tickCount) { return tickCount <= 1 || tickCount % 2 == 0; }
 [[nodiscard]] int deathTime(Actor const& actor);
 [[nodiscard]] bool dying(Actor const& actor);
 

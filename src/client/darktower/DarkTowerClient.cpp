@@ -116,7 +116,7 @@ struct State {
     bool                                    controlling = false;
     float                                   vanillaRain = 0.0f; ///< the dimension's own level, followed while raised
     Weather const*                          raised      = nullptr; ///< the weather whose level is raised
-        bool                                    loggedTears = false;
+    bool                                    loggedTears = false;
     ll::event::ListenerPtr                  listener;
 };
 State& st() {
@@ -206,7 +206,6 @@ void tickRain(Dimension& dim, bool alive) {
         float v = std::max(s.vanillaRain, s.urGhastRain);
         old     = level;
         level   = v;
-
     } else if (s.controlling) {
         s.controlling = false;
         old = level = s.vanillaRain;
