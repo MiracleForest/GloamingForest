@@ -1,0 +1,46 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "twilightforest:minoshroom",
+      "is_spawnable": true,
+      "is_summonable": true,
+      "is_experimental": false,
+      "properties": {
+        "twilightforest:charging": { "type": "bool", "default": false, "client_sync": true },
+        "twilightforest:ground_attack": { "type": "bool", "default": false, "client_sync": true },
+        "twilightforest:ground_charge": { "type": "int", "range": [0, 64], "default": 0, "client_sync": true }
+      }
+    },
+    "components": {
+      "minecraft:type_family": { "family": ["twilightforest", "minoshroom", "boss", "monster", "mob"] },
+      "minecraft:collision_box": { "width": 1.49, "height": 2.5 },
+      "minecraft:health": { "value": 120, "max": 120 },
+      "minecraft:attack": { "damage": 2 },
+      "minecraft:movement": { "value": 0.25 },
+      "minecraft:follow_range": { "value": 16, "max": 16 },
+      "minecraft:knockback_resistance": { "value": 0.5 },
+      "minecraft:navigation.walk": { "can_path_over_water": true, "avoid_water": true, "avoid_damage_blocks": true, "can_pass_doors": true },
+      "minecraft:movement.basic": {},
+      "minecraft:jump.static": {},
+      "minecraft:can_climb": {},
+      "minecraft:physics": {},
+      "minecraft:pushable": { "is_pushable": true, "is_pushable_by_piston": true },
+      "minecraft:nameable": {},
+      "minecraft:persistent": {},
+      "minecraft:breathable": { "total_supply": 15, "suffocate_time": 0 },
+      "minecraft:damage_sensor": { "triggers": [ { "cause": "freezing", "deals_damage": "no" } ] },
+      "minecraft:experience_reward": { "on_death": "query.last_hit_by_player ? 100 : 0" },
+      "minecraft:ambient_sound_interval": { "value": 4.0, "range": 4.0, "event_name": "ambient" },
+      "minecraft:equipment": { "slot_drop_chance": [ { "slot": "slot.weapon.mainhand", "drop_chance": 0.0 } ] },
+      "minecraft:behavior.float": { "priority": 0 },
+      "minecraft:behavior.hurt_by_target": { "priority": 1 },
+      "minecraft:behavior.nearest_attackable_target": {
+        "priority": 2,
+        "must_see": false,
+        "reselect_targets": true,
+        "entity_types": [ { "filters": { "test": "is_family", "subject": "other", "value": "player" }, "max_dist": 16 } ]
+      }
+    }
+  }
+}

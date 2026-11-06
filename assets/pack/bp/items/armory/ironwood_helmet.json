@@ -1,0 +1,55 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:ironwood_helmet",
+      "menu_category": {
+        "category": "equipment"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_item_ironwood_helmet"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "item.twilightforest:ironwood_helmet.name"
+      },
+      "minecraft:max_stack_size": 1,
+      "minecraft:durability": {
+        "max_durability": 220
+      },
+      "minecraft:wearable": {
+        "slot": "slot.armor.head",
+        "protection": 2
+      },
+      "minecraft:enchantable": {
+        "slot": "armor_head",
+        "value": 15
+      },
+      "minecraft:repairable": {
+        "repair_items": [
+          {
+            "items": [
+              "twilightforest:ironwood_ingot"
+            ],
+            "repair_amount": "query.max_durability * 0.25"
+          },
+          {
+            "items": [
+              "twilightforest:ironwood_helmet"
+            ],
+            "repair_amount": "context.other->query.remaining_durability + 0.12 * context.other->query.max_durability"
+          }
+        ]
+      },
+      "minecraft:tags": {
+        "tags": [
+          "alexscaves:ferromagnetic_items",
+          "minecraft:is_armor"
+        ]
+      }
+    }
+  }
+}

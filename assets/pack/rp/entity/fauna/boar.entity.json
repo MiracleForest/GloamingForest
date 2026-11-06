@@ -1,0 +1,32 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:boar",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/wildboar"
+      },
+      "geometry": {
+        "default": "geometry.twilightforest.boar"
+      },
+      "animations": {
+        "setup": "animation.twilightforest.fauna.quadruped"
+      },
+      "scripts": {
+        "animate": [
+          "setup"
+        ]
+      },
+      "render_controllers": [
+        "controller.render.default"
+      ],
+      "spawn_egg": {
+        "base_color": "#83653b",
+        "overlay_color": "#ffefca"
+      }
+    }
+  }
+}

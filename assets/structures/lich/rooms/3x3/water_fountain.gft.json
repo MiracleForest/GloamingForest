@@ -1,0 +1,19 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "twilightforest:lich_tower/3x3/water_fountain",
+  "size": [3, 3, 3],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"minecraft:stone_brick_slab","Properties":{"type":"bottom"}},
+    {"Name":"minecraft:chiseled_stone_bricks"},
+    {"Name":"minecraft:stone_brick_wall"},
+    {"Name":"minecraft:water"}
+  ],
+  "blocks": [
+    [1, 4], [2, 1], [1, 4], [0, 4], [3, 1], [0, 8], [4, 1], [0, 4]
+  ],
+  "jigsaw": [
+    {"pos":[1,0,1],"front":"down","top":"north","pool":"minecraft:empty","name":"gf:lich_tower/decor","target":""}
+  ]
+}

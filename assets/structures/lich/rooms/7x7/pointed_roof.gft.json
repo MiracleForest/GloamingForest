@@ -1,0 +1,29 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "twilightforest:lich_tower/7x7/pointed_roof",
+  "size": [9, 11, 9],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"twilightforest:canopy_stairs","Properties":{"facing":"south","half":"bottom"}},
+    {"Name":"twilightforest:canopy_stairs","Properties":{"facing":"north","half":"bottom"}},
+    {"Name":"twilightforest:canopy_stairs","Properties":{"facing":"east","half":"bottom"}},
+    {"Name":"twilightforest:canopy_stairs","Properties":{"facing":"west","half":"bottom"}},
+    {"Name":"twilightforest:canopy_planks"},
+    {"Name":"twilightforest:twisted_stone_pillar"},
+    {"Name":"twilightforest:wrought_iron_fence","Properties":{"post":"capped"}}
+  ],
+  "blocks": [
+    [1, 9], [3, 1], [0, 7], [4, 1], [3, 1], [0, 7], [4, 1], [3, 1], [0, 7], [4, 1], [3, 1], [0, 7], [4, 1], [3, 1], [0, 7], [4, 1],
+    [3, 1], [0, 7], [4, 1], [3, 1], [0, 7], [4, 1], [2, 9], [0, 10], [5, 7], [0, 2], [5, 1], [0, 5], [5, 1], [0, 2], [5, 1], [0, 5],
+    [5, 1], [0, 2], [5, 1], [0, 5], [5, 1], [0, 2], [5, 1], [0, 5], [5, 1], [0, 2], [5, 1], [0, 5], [5, 1], [0, 2], [5, 7], [0, 20],
+    [1, 7], [0, 2], [3, 1], [0, 5], [4, 1], [0, 2], [3, 1], [0, 5], [4, 1], [0, 2], [3, 1], [0, 5], [4, 1], [0, 2], [3, 1], [0, 5],
+    [4, 1], [0, 2], [3, 1], [0, 5], [4, 1], [0, 2], [2, 7], [0, 30], [5, 5], [0, 4], [5, 1], [0, 3], [5, 1], [0, 4], [5, 1], [0, 3],
+    [5, 1], [0, 4], [5, 1], [0, 3], [5, 1], [0, 4], [5, 5], [0, 40], [1, 5], [0, 4], [3, 1], [0, 3], [4, 1], [0, 4], [3, 1], [0, 3],
+    [4, 1], [0, 4], [3, 1], [0, 3], [4, 1], [0, 4], [2, 5], [0, 50], [5, 3], [0, 6], [5, 1], [0, 1], [5, 1], [0, 6], [5, 3], [0, 60],
+    [1, 3], [0, 6], [3, 1], [0, 1], [4, 1], [0, 6], [2, 3], [0, 70], [5, 1], [0, 80], [5, 1], [0, 80], [6, 1], [0, 80], [7, 1], [0, 40]
+  ],
+  "jigsaw": [
+    {"pos":[4,0,4],"front":"down","top":"north","pool":"minecraft:empty","name":"gf:lich_tower/roof","target":""}
+  ]
+}

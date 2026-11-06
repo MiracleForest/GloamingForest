@@ -1,0 +1,15 @@
+[
+  {
+    "block": "twilightforest:skull_chest",
+    "rows": 5,
+    "title": "block.twilightforest.skull_chest",
+    "chest": false,
+    "pairs": false,
+    "sounds": {
+      "open": "block.twilightforest.skull_chest.open",
+      "close": "block.twilightforest.skull_chest.close"
+    },
+    "stat": "",
+    "comparator": true
+  }
+]

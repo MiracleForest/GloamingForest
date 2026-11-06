@@ -1,0 +1,1447 @@
+{
+  "patch": {
+    "bp/blocks/iron_oreberry.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/18/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/19/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/20/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/21/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/22/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/23/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/24/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/25/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/26/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/27/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/28/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/29/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/30/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/31/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/32/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/33/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/34/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/35/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      }
+    ],
+    "bp/blocks/gold_oreberry.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/18/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/19/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/20/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/21/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/22/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/23/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/24/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/25/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/26/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/27/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/28/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/29/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/30/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/31/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/32/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/33/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/34/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/35/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      }
+    ],
+    "bp/blocks/copper_oreberry.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/18/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/19/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/20/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/21/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/22/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/23/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/24/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/25/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/26/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/27/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/28/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/29/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/30/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/31/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/32/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/33/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/34/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/35/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      }
+    ],
+    "bp/blocks/essence_oreberry.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/18/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/19/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/20/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/21/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/22/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/23/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/24/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/25/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/26/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/27/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/28/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/29/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/30/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/31/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/32/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/33/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/34/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/35/components/minecraft:collision_box",
+        "value": {
+          "origin": [
+            -7.984,
+            0,
+            -7.984
+          ],
+          "size": [
+            15.968,
+            15.984,
+            15.968
+          ]
+        }
+      }
+    ],
+    "bp/blocks/fiddlehead.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/*/tint_method",
+        "value": "grass"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/cross/tint_method",
+        "value": "grass"
+      }
+    ],
+    "bp/blocks/potted_fiddlehead.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/plant/tint_method",
+        "value": "grass"
+      }
+    ],
+    "bp/blocks/fallen_leaves.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/*/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/all/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/0/components/minecraft:material_instances/*/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/0/components/minecraft:material_instances/all/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/1/components/minecraft:material_instances/*/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/1/components/minecraft:material_instances/all/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/2/components/minecraft:material_instances/*/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/2/components/minecraft:material_instances/all/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/3/components/minecraft:material_instances/*/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/3/components/minecraft:material_instances/all/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/4/components/minecraft:material_instances/*/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/4/components/minecraft:material_instances/all/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/5/components/minecraft:material_instances/*/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/5/components/minecraft:material_instances/all/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/6/components/minecraft:material_instances/*/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/6/components/minecraft:material_instances/all/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/7/components/minecraft:material_instances/*/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/7/components/minecraft:material_instances/all/tint_method",
+        "value": "default_foliage"
+      }
+    ],
+    "bp/blocks/huge_lily_pad.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/*/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:material_instances/texture/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/0/components/minecraft:material_instances/*/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/0/components/minecraft:material_instances/texture/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/1/components/minecraft:material_instances/*/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/1/components/minecraft:material_instances/texture/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/2/components/minecraft:material_instances/*/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/2/components/minecraft:material_instances/texture/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/3/components/minecraft:material_instances/*/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/3/components/minecraft:material_instances/texture/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/4/components/minecraft:material_instances/*/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/4/components/minecraft:material_instances/texture/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/5/components/minecraft:material_instances/*/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/5/components/minecraft:material_instances/texture/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/6/components/minecraft:material_instances/*/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/6/components/minecraft:material_instances/texture/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/7/components/minecraft:material_instances/*/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/7/components/minecraft:material_instances/texture/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/8/components/minecraft:material_instances/*/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/8/components/minecraft:material_instances/texture/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/9/components/minecraft:material_instances/*/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/9/components/minecraft:material_instances/texture/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/10/components/minecraft:material_instances/*/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/10/components/minecraft:material_instances/texture/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/11/components/minecraft:material_instances/*/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/11/components/minecraft:material_instances/texture/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/12/components/minecraft:material_instances/*/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/12/components/minecraft:material_instances/texture/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/13/components/minecraft:material_instances/*/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/13/components/minecraft:material_instances/texture/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/14/components/minecraft:material_instances/*/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/14/components/minecraft:material_instances/texture/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/15/components/minecraft:material_instances/*/tint_method",
+        "value": "default_foliage"
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations/15/components/minecraft:material_instances/texture/tint_method",
+        "value": "default_foliage"
+      }
+    ]
+  }
+}

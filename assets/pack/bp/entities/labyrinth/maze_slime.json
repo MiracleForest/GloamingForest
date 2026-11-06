@@ -1,0 +1,74 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "twilightforest:maze_slime",
+      "is_spawnable": true,
+      "is_summonable": true,
+      "is_experimental": false
+    },
+    "component_groups": {
+      "gf:size_1": {
+        "minecraft:variant": { "value": 1 },
+        "minecraft:collision_box": { "width": 0.52, "height": 0.52 },
+        "minecraft:health": { "value": 3, "max": 3 },
+        "minecraft:movement": { "value": 0.3 },
+        "minecraft:attack": { "damage": 1 },
+        "minecraft:experience_reward": { "on_death": "query.last_hit_by_player ? 4 : 0" }
+      },
+      "gf:size_2": {
+        "minecraft:variant": { "value": 2 },
+        "minecraft:collision_box": { "width": 1.04, "height": 1.04 },
+        "minecraft:health": { "value": 12, "max": 12 },
+        "minecraft:movement": { "value": 0.4 },
+        "minecraft:attack": { "damage": 2 },
+        "minecraft:experience_reward": { "on_death": "query.last_hit_by_player ? 5 : 0" }
+      },
+      "gf:size_4": {
+        "minecraft:variant": { "value": 4 },
+        "minecraft:collision_box": { "width": 2.08, "height": 2.08 },
+        "minecraft:health": { "value": 48, "max": 48 },
+        "minecraft:movement": { "value": 0.6 },
+        "minecraft:attack": { "damage": 4 },
+        "minecraft:experience_reward": { "on_death": "query.last_hit_by_player ? 7 : 0" }
+      }
+    },
+    "components": {
+      "minecraft:type_family": { "family": ["twilightforest", "maze_slime", "monster", "mob"] },
+      "minecraft:collision_box": { "width": 0.52, "height": 0.52 },
+      "minecraft:health": { "value": 3, "max": 3 },
+      "minecraft:attack": { "damage": 1 },
+      "minecraft:variant": { "value": 1 },
+      "minecraft:movement": { "value": 0.3 },
+      "minecraft:follow_range": { "value": 16, "max": 16 },
+      "minecraft:movement.jump": { "jump_delay": [0.5, 1.5] },
+      "minecraft:navigation.walk": { "can_path_over_water": true, "avoid_water": false },
+      "minecraft:jump.static": {},
+      "minecraft:can_climb": {},
+      "minecraft:physics": {},
+      "minecraft:pushable": { "is_pushable": true, "is_pushable_by_piston": true },
+      "minecraft:nameable": {},
+      "minecraft:despawn": { "despawn_from_distance": {} },
+      "minecraft:breathable": { "total_supply": 15, "suffocate_time": 0, "breathes_water": true },
+      "minecraft:damage_sensor": { "triggers": [ { "cause": "fall", "deals_damage": "no" } ] },
+      "minecraft:behavior.slime_float": { "priority": 1, "jump_chance_percentage": 0.8, "speed_multiplier": 1.2 },
+      "minecraft:behavior.slime_attack": { "priority": 3 },
+      "minecraft:behavior.slime_random_direction": { "priority": 4, "add_random_time_range": 3, "turn_range": 360, "min_change_direction_time": 2.0 },
+      "minecraft:behavior.slime_keep_on_jumping": { "priority": 5, "speed_multiplier": 1.0 },
+      "minecraft:behavior.nearest_attackable_target": {
+        "priority": 2,
+        "must_see": true,
+        "reselect_targets": true,
+        "entity_types": [
+          { "filters": { "test": "is_family", "subject": "other", "value": "player" }, "max_dist": 16 },
+          { "filters": { "test": "is_family", "subject": "other", "value": "irongolem" }, "max_dist": 16 }
+        ]
+      }
+    },
+    "events": {
+      "gf:size_1": { "remove": { "component_groups": ["gf:size_2", "gf:size_4"] }, "add": { "component_groups": ["gf:size_1"] } },
+      "gf:size_2": { "remove": { "component_groups": ["gf:size_1", "gf:size_4"] }, "add": { "component_groups": ["gf:size_2"] } },
+      "gf:size_4": { "remove": { "component_groups": ["gf:size_1", "gf:size_2"] }, "add": { "component_groups": ["gf:size_4"] } }
+    }
+  }
+}
