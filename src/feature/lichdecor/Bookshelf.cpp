@@ -121,7 +121,14 @@ void setBook(BlockSource& region, BlockPos const& pos, int slot, ItemStack const
     track(game::globalPos(region, pos));
 }
 
-bool isBook(std::string const& itemId) { return !itemId.empty() && tags::has(tags::Registry::Item, "minecraft:bookshelf_books", itemId); }
+/// #minecraft:bookshelf_books (1.21.1: book, written_book, enchanted_book, writable_book,
+/// knowledge_book); the tag is not imported, so its members are listed as a fallback.
+bool isBook(std::string const& itemId) {
+    if (itemId.empty()) return false;
+    if (tags::has(tags::Registry::Item, "minecraft:bookshelf_books", itemId)) return true;
+    return itemId == "minecraft:book" || itemId == "minecraft:written_book" || itemId == "minecraft:enchanted_book" || itemId == "minecraft:writable_book"
+        || itemId == "minecraft:knowledge_book";
+}
 
 /// ChiseledBookShelfBlock#getHitSlot: the slot under the hit on the front face (nullopt: another face).
 std::optional<int> hitSlot(Block const& block, int face, interactions::Vec const& hit) {

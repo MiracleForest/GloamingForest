@@ -31,6 +31,7 @@
 #include "mc/deps/core/math/Vec3.h"
 #include "mc/server/commands/Command.h"
 #include "mc/server/commands/CommandOrigin.h"
+#include "mc/server/commands/CommandFilePath.h"
 #include "mc/server/commands/CommandOutput.h"
 #include "mc/server/commands/CommandPosition.h"
 #include "mc/world/actor/item/ExperienceOrb.h"
@@ -64,7 +65,7 @@ struct SinisterParticleParams {
     CommandPosition pos;
 };
 struct SinisterLootParams {
-    std::string     loot;
+    CommandFilePath loot; ///< a file path token: Bedrock strings stop at "/" (loot ids have them)
     CommandPosition pos;
 };
 struct SinisterPosParams {
@@ -325,7 +326,7 @@ GF_REGISTER_SUBCOMMAND([](ll::command::CommandHandle& cmd) {
         .execute([](CommandOrigin const& origin, CommandOutput& output, ld::SinisterLootParams const& p, Command const& command) {
             if (!gf::commands::isAdmin(origin)) return output.error("You need operator permission.");
             cl::ArgError err;
-            auto         loot = cl::parseLoot(p.loot, &ld::tableExists, &err);
+            auto         loot = cl::parseLoot(p.loot.mText, &ld::tableExists, &err);
             if (!loot) return output.error(err.text); // Java key err.key; the text is already filled (it may hold SNBT braces)
             BlockPos    pos;
             std::string posError;

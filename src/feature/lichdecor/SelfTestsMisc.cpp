@@ -7,6 +7,8 @@
 #include "ll/api/coro/CoroTask.h"
 #include "ll/api/service/Bedrock.h"
 
+#include "mc/deps/shared_types/legacy/Difficulty.h"
+
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/ItemStack.h"
@@ -32,6 +34,22 @@ namespace {
 
 namespace ia = gf::interactions;
 namespace st = gf::selftest;
+
+/// Easy difficulty while a test runs (the test world is peaceful: no Death Tomes spawn there).
+struct DifficultyScope {
+    SharedTypes::Legacy::Difficulty previous = SharedTypes::Legacy::Difficulty::Peaceful;
+    DifficultyScope() {
+        if (auto level = ll::service::getLevel()) {
+            previous = level->getDifficulty();
+            level->setDifficulty(SharedTypes::Legacy::Difficulty::Easy);
+        }
+    }
+    ~DifficultyScope() {
+        if (auto level = ll::service::getLevel()) level->setDifficulty(previous);
+    }
+    DifficultyScope(DifficultyScope const&)            = delete;
+    DifficultyScope& operator=(DifficultyScope const&) = delete;
+};
 
 std::string coords(core::GlobalPos const& p) { return std::to_string(p.x) + " " + std::to_string(p.y) + " " + std::to_string(p.z); }
 
@@ -146,6 +164,7 @@ ll::coro::CoroTask<> fenceFinial(st::Context& ctx) {
 ll::coro::CoroTask<> bookshelfSpawner(st::Context& ctx) {
     auto pos = ctx.testPos(2262, 2);
     ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
+    DifficultyScope difficulty;
     // a plain shelf takes a book through the front face
     ctx.require(ctx.setBlock(pos, "twilightforest:chiseled_canopy_bookshelf", Json{{"twilightforest:facing", "north"}}), "shelf placed");
     auto r = useOn(ctx, pos, "minecraft:book", 2, {0.9, 0.75, 0.0}, false);
