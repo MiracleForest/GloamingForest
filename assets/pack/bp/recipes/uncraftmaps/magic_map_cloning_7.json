@@ -1,0 +1,43 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shapeless": {
+    "description": {
+      "identifier": "twilightforest:magic_map_cloning_7"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "ingredients": [
+      {
+        "item": "minecraft:filled_map"
+      },
+      {
+        "item": "twilightforest:magic_map"
+      },
+      {
+        "item": "twilightforest:magic_map"
+      },
+      {
+        "item": "twilightforest:magic_map"
+      },
+      {
+        "item": "twilightforest:magic_map"
+      },
+      {
+        "item": "twilightforest:magic_map"
+      },
+      {
+        "item": "twilightforest:magic_map"
+      }
+    ],
+    "unlock": [
+      {
+        "item": "twilightforest:magic_map"
+      }
+    ],
+    "result": {
+      "item": "minecraft:filled_map",
+      "count": 7
+    }
+  }
+}
