@@ -24,6 +24,7 @@ option_end()
 
 add_requires("levilamina 26.51.7", {configs = {target_type = get_config("target_type")}})
 add_requires("levibuildscript")
+includes("tools/xmake/rules/linkrule.lua")
 add_requires("nlohmann_json v3.12.0")
 if has_config("tests") then
     add_requires("gtest")
@@ -66,11 +67,11 @@ target("gf-core")
 -- The mod itself. Every translation unit is linked directly into the DLL (not through a static
 -- library) so that static self-registration objects (GF_REGISTER_*) are never stripped.
 target("GloamingForest")
-    add_rules("@levibuildscript/linkrule")
+    add_rules("gf.linkrule")
     add_rules("@levibuildscript/modpacker")
     set_kind("shared")
-    -- levibuildscript's prelink step gets every object file on one command line (no response
-    -- file), which must stay under Windows' 32767 characters: keep the object paths short.
+    -- Prelink gets the objects through one library (tools/xmake/rules/linkrule.lua); short object
+    -- paths still keep the final link's command line small.
     set_objectdir("$(builddir)/o")
     set_policy("build.intermediate_directory", false)
     gf_common_flags()
