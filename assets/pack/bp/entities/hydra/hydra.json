@@ -1,0 +1,68 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "twilightforest:hydra",
+      "is_spawnable": true,
+      "is_summonable": true,
+      "is_experimental": false,
+      "properties": {
+        "twilightforest:red": {
+          "type": "bool",
+          "default": false,
+          "client_sync": true
+        }
+      }
+    },
+    "components": {
+      "minecraft:type_family": {
+        "family": [
+          "twilightforest",
+          "hydra",
+          "monster",
+          "mob"
+        ]
+      },
+      "minecraft:collision_box": {
+        "width": 2,
+        "height": 3
+      },
+      "minecraft:custom_hit_test": {
+        "hitboxes": [
+          {
+            "width": 0.1,
+            "height": 0.1,
+            "pivot": [0, 1.5, 0]
+          }
+        ]
+      },
+      "minecraft:health": {
+        "value": 360,
+        "max": 360
+      },
+      "minecraft:movement": {
+        "value": 0.28
+      },
+      "minecraft:physics": {},
+      "minecraft:pushable": {
+        "is_pushable": false,
+        "is_pushable_by_piston": false
+      },
+      "minecraft:knockback_resistance": {
+        "value": 1.0
+      },
+      "minecraft:fire_immune": true,
+      "minecraft:breathable": {
+        "breathes_air": true,
+        "breathes_water": true,
+        "breathes_lava": true,
+        "breathes_solids": true
+      },
+      "minecraft:experience_reward": {
+        "on_death": "511"
+      },
+      "minecraft:nameable": {},
+      "minecraft:persistent": {}
+    }
+  }
+}

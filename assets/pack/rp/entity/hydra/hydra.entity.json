@@ -1,0 +1,29 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:hydra",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/hydra4"
+      },
+      "geometry": {
+        "default": "geometry.twilightforest.hydra"
+      },
+      "animations": {
+        "base": "animation.twilightforest.hydra.base"
+      },
+      "scripts": {
+        "animate": ["base"],
+        "should_update_bones_and_effects_offscreen": true
+      },
+      "render_controllers": ["controller.render.twilightforest.hydra"],
+      "spawn_egg": {
+        "base_color": "#142940",
+        "overlay_color": "#29806b"
+      }
+    }
+  }
+}

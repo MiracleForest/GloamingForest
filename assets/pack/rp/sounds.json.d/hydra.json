@@ -1,0 +1,15 @@
+{
+  "entity_sounds": {
+    "entities": {
+      "twilightforest:hydra": {
+        "volume": 2.0,
+        "pitch": [0.8, 1.2],
+        "events": {
+          "ambient": "entity.twilightforest.hydra.growl",
+          "hurt": "entity.twilightforest.hydra.hurt",
+          "death": "entity.twilightforest.hydra.death"
+        }
+      }
+    }
+  }
+}

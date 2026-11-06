@@ -1,0 +1,56 @@
+{
+  "format_version": "1.10.0",
+  "particle_effect": {
+    "description": {
+      "identifier": "twilightforest:huge_smoke",
+      "basic_render_parameters": {
+        "material": "particles_alpha",
+        "texture": "textures/particle/particles"
+      }
+    },
+    "components": {
+      "minecraft:emitter_rate_instant": {
+        "num_particles": 1
+      },
+      "minecraft:emitter_lifetime_once": {
+        "active_time": 0
+      },
+      "minecraft:emitter_shape_point": {
+        "direction": ["v.velocity.x", "v.velocity.y", "v.velocity.z"]
+      },
+      "minecraft:particle_lifetime_expression": {
+        "max_lifetime": "math.max(math.floor(8 / (v.particle_random_1 * 0.8 + 0.2) * 4), 1) / 20"
+      },
+      "minecraft:particle_initial_speed": "math.sqrt(v.velocity.x * v.velocity.x + v.velocity.y * v.velocity.y + v.velocity.z * v.velocity.z) * 20",
+      "minecraft:particle_motion_dynamic": {
+        "linear_acceleration": [0, 1.6, 0],
+        "linear_drag_coefficient": 0.816
+      },
+      "minecraft:particle_motion_collision": {
+        "collision_radius": 0.1
+      },
+      "minecraft:particle_appearance_billboard": {
+        "size": [
+          "0.1 * (v.particle_random_2 * 0.5 + 0.5) * 2 * 0.75 * 4 * math.clamp(v.particle_age / v.particle_lifetime * 32, 0, 1)",
+          "0.1 * (v.particle_random_2 * 0.5 + 0.5) * 2 * 0.75 * 4 * math.clamp(v.particle_age / v.particle_lifetime * 32, 0, 1)"
+        ],
+        "facing_camera_mode": "rotate_xyz",
+        "uv": {
+          "texture_width": 128,
+          "texture_height": 128,
+          "flipbook": {
+            "base_UV": [56, 0],
+            "size_UV": [8, 8],
+            "step_UV": [-8, 0],
+            "max_frame": 8,
+            "stretch_to_lifetime": true,
+            "loop": false
+          }
+        }
+      },
+      "minecraft:particle_appearance_tinting": {
+        "color": ["v.particle_random_3 * 0.3", "v.particle_random_3 * 0.3", "v.particle_random_3 * 0.3", 1.0]
+      }
+    }
+  }
+}
