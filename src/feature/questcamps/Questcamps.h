@@ -108,6 +108,7 @@ struct FeatureReport {
     std::vector<std::string> markers;   ///< handled data marker labels
     std::string              basement;  ///< the druid hut's basement template ("" none)
     int                      graves = 0, wraiths = 0, chests = 0;
+    std::string              failure; ///< why the feature placed nothing ("" when it did)
 };
 [[nodiscard]] FeatureReport& lastFeatureReport();
 

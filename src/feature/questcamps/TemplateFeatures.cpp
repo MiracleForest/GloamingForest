@@ -47,6 +47,8 @@ using st::Rotation;
 
 namespace {
 
+thread_local FeatureReport tReport;
+
 // ---- helpers -------------------------------------------------------------------------------------------------
 
 /// The template standing in for TF's "twilightforest:feature/<path>" (no template definition: the
@@ -99,6 +101,10 @@ bool blockOk(Block const& b) { return st::blocks::blocksMotion(b); }
 /// clearance test (`graveyard`: Math.round and FeatureLogic.isAreaClear; else (int)(mean + 0.5) and
 /// every block canBeReplaced).
 bool offsetToAverageGroundLevel(st::Region& region, BlockPos& start, cq::Vec3i size, bool graveyard) {
+    auto fail = [](std::string why) {
+        tReport.failure = std::move(why);
+        return false;
+    };
     std::vector<int> heights;
     heights.reserve(static_cast<std::size_t>(std::max(0, size.x * size.z)));
     for (int dx = 0; dx < size.x; dx++) {
@@ -107,16 +113,16 @@ bool offsetToAverageGroundLevel(st::Region& region, BlockPos& start, cq::Vec3i s
             int y = region.height(gf::worldgen::Heightmap::MotionBlockingNoLeaves, x, z);
             while (y >= 0) {
                 auto const& b = region.getBlock(BlockPos{x, y, z});
-                if (blockNotOk(b)) return false;
+                if (blockNotOk(b)) return fail("a liquid / bedrock / giant / cloud block at " + std::to_string(x) + " " + std::to_string(y) + " " + std::to_string(z));
                 if (blockOk(b)) break;
                 y--;
             }
-            if (y < 0) return false;
+            if (y < 0) return fail("no ground above y 0 at " + std::to_string(x) + " " + std::to_string(z));
             heights.push_back(y);
         }
     }
     auto ground = cq::averageGround(heights, graveyard);
-    if (!ground) return false;
+    if (!ground) return fail("the ground is too uneven (deviation above 2)");
     start.y = ground->baseY;
     BlockPos min{start.x, start.y + ground->maxY - ground->baseY + 1, start.z};
     BlockPos max{start.x + size.x, start.y + size.y, start.z + size.z};
@@ -125,9 +131,9 @@ bool offsetToAverageGroundLevel(st::Region& region, BlockPos& start, cq::Vec3i s
             for (int z = min.z; z <= max.z; z++) {
                 auto const& b = region.getBlock(BlockPos{x, y, z});
                 if (graveyard) {
-                    if (!st::blocks::canBeReplaced(b) && blockOk(b) && !st::blocks::isLiquid(b)) return false;
+                    if (!st::blocks::canBeReplaced(b) && blockOk(b) && !st::blocks::isLiquid(b)) return fail("not clear: " + st::blocks::id(b) + " at " + std::to_string(x) + " " + std::to_string(y) + " " + std::to_string(z));
                 } else if (!st::blocks::canBeReplaced(b)) {
-                    return false;
+                    return fail("not clear: " + st::blocks::id(b) + " at " + std::to_string(x) + " " + std::to_string(y) + " " + std::to_string(z));
                 }
             }
     return true;
@@ -203,8 +209,6 @@ void buildAddProcessors(std::vector<std::string>& processors, st::RandomSource& 
 }
 
 // ---- TemplateFeature -------------------------------------------------------------------------------------------
-
-thread_local FeatureReport tReport;
 
 struct TemplateFeature {
     std::function<std::string(st::RandomSource&)>                                                               getTemplate;

@@ -159,6 +159,26 @@ Json featureConfig(std::string const& id) {
     return Json::object();
 }
 
+/// The air above a feature test's flat area: TemplateFeature reads the columns' height from the
+/// top of the world, so the Twilight Forest's tall trees above a lower flat area would count.
+constexpr int kTall = 128;
+
+/// Puts the flat area back between two placements: grass at the ground layer, air above.
+void reflatten(Context& ctx, BlockBox const& box) {
+    auto* region = ctx.region();
+    if (!region) return;
+    auto const* grass = game::blockWith("minecraft:grass_block");
+    auto const* air   = game::blockWith("minecraft:air");
+    if (!grass || !air) return;
+    for (int x = box.minX; x <= box.maxX; ++x)
+        for (int z = box.minZ; z <= box.maxZ; ++z)
+            for (int y = box.minY - 1; y <= box.minY + 20; ++y) {
+                BlockPos     p{x, y, z};
+                Block const* want = y == box.minY - 1 ? grass : air;
+                if (&region->getBlock(p) != want) game::setBlock(*region, p, *want);
+            }
+}
+
 /// A chunk whose 16 x 16 columns lie inside the flat area (TemplateFeature snaps into it).
 BlockPos chunkOrigin(BlockBox const& box) {
     int cx = ((box.minX + 20) >> 4) << 4, cz = ((box.minZ + 20) >> 4) << 4;
@@ -423,9 +443,12 @@ GF_REGISTER_SELFTEST("questcamps.template_goldens", [](Context& ctx) -> ll::coro
 });
 
 GF_REGISTER_SELFTEST("questcamps.druid_hut_markers", [](Context& ctx) -> ll::coro::CoroTask<> {
-    auto box    = co_await ctx.flatArea(1920, 48);
+    // TemplateFeature scans the columns down to y 0 (Java's bound): the Twilight Forest's floor
+    ctx.require(co_await ctx.inTwilight(), "the Twilight Forest is available");
+    auto box    = co_await ctx.flatArea(1920, 48, kTall);
     auto origin = chunkOrigin(box);
     BelowGuard guard(ctx, BlockBox{box.minX, box.minY - 16, box.minZ, box.maxX, box.minY - 1, box.maxZ});
+    ctx.info("flat area y " + std::to_string(box.minY) + ", heightmap " + std::to_string(st::BlockSourceRegion(*ctx.region(), origin).height(gf::worldgen::Heightmap::MotionBlockingNoLeaves, origin.x, origin.z)));
     auto       config = featureConfig("twilightforest:druid_hut");
     ctx.check(config.contains("palette_choices") && config.contains("target_palettes"), "the druid hut's SwizzleConfig");
     st::BlockSourceRegion region(*ctx.region(), origin);
@@ -433,8 +456,12 @@ GF_REGISTER_SELFTEST("questcamps.druid_hut_markers", [](Context& ctx) -> ll::cor
     std::set<std::string> huts;
     int   chests = 0;
     for (std::int64_t seed = 1; seed <= 12 && (!basement || huts.size() < 2); ++seed) {
+        reflatten(ctx, box);
         core::jrand::LegacyRandom random(seed);
-        if (!placeDruidHut(region, origin, random, config)) continue;
+        if (!placeDruidHut(region, origin, random, config)) {
+            ctx.info("seed " + std::to_string(seed) + ": " + lastFeatureReport().failure);
+            continue;
+        }
         placed = true;
         auto const& r = lastFeatureReport();
         huts.insert(r.templateId);
@@ -449,34 +476,45 @@ GF_REGISTER_SELFTEST("questcamps.druid_hut_markers", [](Context& ctx) -> ll::cor
 });
 
 GF_REGISTER_SELFTEST("questcamps.wells", [](Context& ctx) -> ll::coro::CoroTask<> {
-    auto box    = co_await ctx.flatArea(1925, 48);
+    // TemplateFeature scans the columns down to y 0 (Java's bound): the Twilight Forest's floor
+    ctx.require(co_await ctx.inTwilight(), "the Twilight Forest is available");
+    auto box    = co_await ctx.flatArea(1925, 48, kTall);
     auto origin = chunkOrigin(box);
     BelowGuard guard(ctx, BlockBox{box.minX, box.minY - 16, box.minZ, box.maxX, box.minY - 1, box.maxZ});
     st::BlockSourceRegion region(*ctx.region(), origin);
     auto simpleConfig = featureConfig("twilightforest:simple_well");
     auto fancyConfig  = featureConfig("twilightforest:fancy_well");
     core::jrand::LegacyRandom r1(5);
-    ctx.check(placeSimpleWell(region, origin, r1, simpleConfig), "a simple well was placed");
+    bool simplePlaced = placeSimpleWell(region, origin, r1, simpleConfig);
+    ctx.check(simplePlaced, "a simple well was placed (" + lastFeatureReport().failure + ")");
     auto simple = lastFeatureReport();
     ctx.check(simple.placementPos.y == box.minY, "the simple well's top sits one above the averaged ground");
     ctx.check(std::count(simple.markers.begin(), simple.markers.end(), "lootS") + std::count(simple.markers.begin(), simple.markers.end(), "lootW") == 2,
               "the bottom's two loot markers were handled");
+    reflatten(ctx, box);
     core::jrand::LegacyRandom r2(6);
-    ctx.check(placeFancyWell(region, origin, r2, fancyConfig), "a fancy well was placed");
+    bool fancyPlaced = placeFancyWell(region, origin, r2, fancyConfig);
+    ctx.check(fancyPlaced, "a fancy well was placed (" + lastFeatureReport().failure + ")");
     auto fancy = lastFeatureReport();
     ctx.check(fancy.chests == 1, "the fancy well's barrel holds fancy_well loot");
     ctx.check(fancy.placementPos.y == box.minY - 1, "the fancy well's top sits on the averaged ground");
 });
 
 GF_REGISTER_SELFTEST("questcamps.graveyard", [](Context& ctx) -> ll::coro::CoroTask<> {
-    auto box = co_await ctx.flatArea(1935, 48);
+    // TemplateFeature scans the columns down to y 0 (Java's bound): the Twilight Forest's floor
+    ctx.require(co_await ctx.inTwilight(), "the Twilight Forest is available");
+    auto box = co_await ctx.flatArea(1935, 48, kTall);
     BelowGuard guard(ctx, BlockBox{box.minX, box.minY - 4, box.minZ, box.maxX, box.minY - 1, box.maxZ});
     st::BlockSourceRegion region(*ctx.region(), BlockPos{box.minX + 24, box.minY, box.minZ + 24});
     BlockPos origin{box.minX + 20, box.minY, box.minZ + 20};
     int      wraiths = 0, graves = 0;
     for (std::int64_t seed = 1; seed <= 6 && wraiths == 0; ++seed) {
+        reflatten(ctx, box);
         core::jrand::LegacyRandom random(seed);
-        if (!placeGraveyard(region, origin, random)) continue;
+        if (!placeGraveyard(region, origin, random)) {
+            ctx.info("seed " + std::to_string(seed) + ": " + lastFeatureReport().failure);
+            continue;
+        }
         auto const& r = lastFeatureReport();
         graves        = r.graves;
         wraiths += r.wraiths;
@@ -490,17 +528,24 @@ GF_REGISTER_SELFTEST("questcamps.graveyard", [](Context& ctx) -> ll::coro::CoroT
 });
 
 GF_REGISTER_SELFTEST("questcamps.ruins", [](Context& ctx) -> ll::coro::CoroTask<> {
-    auto box    = co_await ctx.flatArea(1950, 48);
+    // TemplateFeature scans the columns down to y 0 (Java's bound): the Twilight Forest's floor
+    ctx.require(co_await ctx.inTwilight(), "the Twilight Forest is available");
+    auto box    = co_await ctx.flatArea(1950, 48, kTall);
     auto origin = chunkOrigin(box);
     st::BlockSourceRegion region(*ctx.region(), origin);
     std::set<std::string> seen;
-    for (std::int64_t seed = 1; seed <= 8; ++seed) {
-        core::jrand::LegacyRandom random(seed);
+    // spread seeds (java.util.Random's first draws of small neighbouring seeds are alike)
+    for (std::int64_t seed = 1; seed <= 12 && seen.size() < 2; ++seed) {
+        reflatten(ctx, box);
+        core::jrand::LegacyRandom random(seed * 0x5DEECE66DLL + 977);
         if (placeGroveRuins(region, origin, random)) seen.insert(lastFeatureReport().templateId);
+        else ctx.info("seed " + std::to_string(seed) + ": " + lastFeatureReport().failure);
     }
     ctx.check(seen.size() == 2, "both grove ruins (pillar and arch) were placed");
+    reflatten(ctx, box);
     core::jrand::LegacyRandom random(3);
-    ctx.check(placeStoneCircle(region, origin, random), "a stone circle was placed");
+    bool circle = placeStoneCircle(region, origin, random);
+    ctx.check(circle, "a stone circle was placed (" + lastFeatureReport().failure + ")");
     ctx.check(lastFeatureReport().templateId == "gloamingforest:feature/ruins/stone_circle", "the stone circle template");
 });
 
@@ -521,7 +566,9 @@ GF_REGISTER_SELFTEST("questcamps.client_showcase", [](Context& ctx) -> ll::coro:
         ctx.info("not requested by the client scenario (scoreboard objective gf_questcamps_display): the showcase is skipped");
         co_return;
     }
-    auto box = co_await ctx.flatArea(1900, 120);
+    // TemplateFeature scans the columns down to y 0 (Java's bound): the Twilight Forest's floor
+    ctx.require(co_await ctx.inTwilight(), "the Twilight Forest is available");
+    auto box = co_await ctx.flatArea(1900, 120, kTall);
     BelowGuard guard(ctx, BlockBox{box.minX, box.minY - 16, box.minZ, box.maxX, box.minY - 1, box.maxZ});
     ctx.info("area at " + std::to_string(box.minX) + " " + std::to_string(box.minY) + " " + std::to_string(box.minZ));
     // the ram at (+6, +6) with white, orange, lime, blue and black
