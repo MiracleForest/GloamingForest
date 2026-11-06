@@ -1,0 +1,16 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "gf:lich_tower/foyer_decor",
+  "size": [1, 2, 1],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"minecraft:air"}
+  ],
+  "blocks": [
+    [1, 2]
+  ],
+  "jigsaw": [
+    {"pos":[0,0,0],"front":"north","top":"up","pool":"minecraft:empty","name":"gf:shelf","target":""}
+  ]
+}

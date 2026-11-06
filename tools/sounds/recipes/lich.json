@@ -1,0 +1,18 @@
+{
+  "about": "U21 (lich): refinements of the lich unit's synthesized sounds (original designs; TF's audio is never read). TF's own events keep their variant counts (death_tome.ambient x2, death_tome.hurt x3, lich.shoot x3, lich.pop_mob x3) and the events TF plays from vanilla sounds (the Lich's blaze voice, the endermen teleport, the minions' zombie voice) stay on Bedrock's vanilla sounds as the baseline maps them. The Death Tome rustles like turning pages (soft and slow while idle, torn and short when hurt, a long flurry when it dies); the scepter shot is a rising zap, the pop a falling drain, the minion summon a low rasping growl.",
+  "files": {
+    "mob/tome/idle1": { "patch": "object/rustle", "params": { "density": 120, "f0": 1800, "f1": 9000, "len": 0.55 }, "seed": 2101 },
+    "mob/tome/idle2": { "patch": "object/rustle", "params": { "density": 140, "f0": 1600, "f1": 8500, "len": 0.62 }, "seed": 2102 },
+    "mob/tome/hurt1": { "patch": "object/rustle", "params": { "density": 620, "f0": 1100, "f1": 6500, "len": 0.18 }, "seed": 2111 },
+    "mob/tome/hurt2": { "patch": "object/rustle", "params": { "density": 660, "f0": 1000, "f1": 6200, "len": 0.2 }, "seed": 2112 },
+    "mob/tome/hurt3": { "patch": "object/rustle", "params": { "density": 700, "f0": 900, "f1": 6000, "len": 0.22 }, "seed": 2113 },
+    "mob/tome/death": { "patch": "object/rustle", "params": { "density": 720, "f0": 900, "f1": 8000, "len": 1.1 }, "seed": 2120 },
+    "random/scepter/twilight_use1": { "patch": "magic/zap", "params": { "len": 0.45, "pitch": 640, "sweep": 14 }, "seed": 2131 },
+    "random/scepter/twilight_use2": { "patch": "magic/zap", "params": { "len": 0.45, "pitch": 700, "sweep": 14 }, "seed": 2132 },
+    "random/scepter/twilight_use3": { "patch": "magic/zap", "params": { "len": 0.45, "pitch": 760, "sweep": 14 }, "seed": 2133 },
+    "random/scepter/drain1": { "patch": "magic/drain", "params": { "len": 0.9, "pitch": 270 }, "seed": 2141 },
+    "random/scepter/drain2": { "patch": "magic/drain", "params": { "len": 0.9, "pitch": 300 }, "seed": 2142 },
+    "random/scepter/drain3": { "patch": "magic/drain", "params": { "len": 0.9, "pitch": 330 }, "seed": 2143 },
+    "random/scepter/zombie": { "patch": "creature/growl", "params": { "len": 1.1, "pitch": 90, "size": 0.9 }, "seed": 2150 }
+  }
+}

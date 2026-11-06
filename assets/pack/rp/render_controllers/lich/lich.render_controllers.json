@@ -1,0 +1,127 @@
+{
+  "format_version": "1.10.0",
+  "render_controllers": {
+    "controller.render.twilightforest.lich": {
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ],
+      "part_visibility": [
+        {
+          "*": "variable.death_time <= 115"
+        },
+        {
+          "hat": true
+        }
+      ]
+    },
+    "controller.render.twilightforest.lich_clone": {
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.clone"
+        }
+      ],
+      "textures": [
+        "Texture.clone"
+      ],
+      "part_visibility": [
+        {
+          "*": true
+        },
+        {
+          "cloak": false
+        },
+        {
+          "collar": false
+        }
+      ]
+    },
+    "controller.render.twilightforest.lich_clone_eyes": {
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.eyes"
+        }
+      ],
+      "textures": [
+        "Texture.eyes"
+      ],
+      "ignore_lighting": true,
+      "part_visibility": [
+        {
+          "*": true
+        },
+        {
+          "cloak": false
+        },
+        {
+          "collar": false
+        }
+      ]
+    },
+    "controller.render.twilightforest.death_tome": {
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ],
+      "part_visibility": [
+        {
+          "*": true
+        },
+        {
+          "loose_page_*": "!query.property('gf:on_lectern')"
+        }
+      ]
+    },
+    "controller.render.twilightforest.rising_zombie": {
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ],
+      "part_visibility": [
+        {
+          "*": true
+        },
+        {
+          "rightLeg": "query.property('twilightforest:rising_ticks') > 40"
+        },
+        {
+          "leftLeg": "query.property('twilightforest:rising_ticks') > 40"
+        }
+      ]
+    },
+    "controller.render.twilightforest.lich_minion": {
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ],
+      "overlay_color": {
+        "r": "0.0",
+        "g": "0.5",
+        "b": "0.0",
+        "a": "query.property('twilightforest:strong') ? 0.75 : 0.5"
+      }
+    }
+  }
+}

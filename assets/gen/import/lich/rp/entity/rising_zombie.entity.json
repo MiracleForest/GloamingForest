@@ -4,15 +4,31 @@
     "description": {
       "identifier": "twilightforest:rising_zombie",
       "materials": {
-        "default": "entity_alphatest"
+        "default": "zombie"
       },
       "textures": {
-        "default": "textures/misc/missing_texture"
+        "default": "textures/entity/zombie/zombie"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.rising_zombie"
+        "default": "geometry.twilightforest.rising_zombie"
       },
-      "render_controllers": ["controller.render.default"]
+      "scripts": {
+        "pre_animation": [
+          "variable.rise_t = query.property('twilightforest:rising_ticks');",
+          "variable.rise_a = (80 - math.min(80, variable.rise_t)) / 80;",
+          "variable.rise_b = (40 - math.min(40, math.max(0, variable.rise_t - 80))) / 40;",
+          "variable.rise_angle = 120 * variable.rise_a - 30 * variable.rise_b;",
+          "variable.rise_drop = 16 * (variable.rise_a + variable.rise_b);"
+        ],
+        "animate": ["humanoid_base_pose", "zombie_arms", "base", "rise"]
+      },
+      "animations": {
+        "humanoid_base_pose": "animation.humanoid.base_pose",
+        "zombie_arms": "animation.zombie.attack_bare_hand",
+        "base": "animation.twilightforest.rising_zombie.base",
+        "rise": "animation.twilightforest.rising_zombie.rise"
+      },
+      "render_controllers": ["controller.render.twilightforest.rising_zombie"]
     }
   }
 }

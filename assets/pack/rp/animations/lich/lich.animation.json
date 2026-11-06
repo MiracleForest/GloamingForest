@@ -1,0 +1,337 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.twilightforest.lich.legs": {
+      "loop": true,
+      "bones": {
+        "rightLeg": {
+          "rotation": [
+            "math.cos(query.modified_distance_moved * 38.17) * variable.limb * 80.2141",
+            0,
+            0
+          ]
+        },
+        "leftLeg": {
+          "rotation": [
+            "-math.cos(query.modified_distance_moved * 38.17) * variable.limb * 80.2141",
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "animation.twilightforest.lich.death": {
+      "loop": true,
+      "bones": {
+        "head": {
+          "position": [
+            "variable.death_time > 0 && variable.death_time <= 115 ? math.sin(variable.death_time * variable.death_time * 57.2958) * 0.16 : 0",
+            "variable.death_time > 115 ? -28.8 * math.pow(math.min((variable.death_time - 115) / 16, 1), 3) : 0",
+            "variable.death_time > 0 && variable.death_time <= 115 ? math.cos(variable.death_time * variable.death_time * 57.2958) * 0.16 : 0"
+          ]
+        },
+        "body": {
+          "position": [
+            "variable.death_time > 0 && variable.death_time <= 115 ? math.sin(variable.death_time * variable.death_time * 57.2958) * 0.16 : 0",
+            "variable.death_time > 115 ? -28.8 * math.pow(math.min((variable.death_time - 115) / 16, 1), 3) : 0",
+            "variable.death_time > 0 && variable.death_time <= 115 ? math.cos(variable.death_time * variable.death_time * 57.2958) * 0.16 : 0"
+          ]
+        },
+        "rightArm": {
+          "position": [
+            "variable.death_time > 0 && variable.death_time <= 115 ? math.sin(variable.death_time * variable.death_time * 57.2958) * 0.16 : 0",
+            "variable.death_time > 115 ? -28.8 * math.pow(math.min((variable.death_time - 115) / 16, 1), 3) : 0",
+            "variable.death_time > 0 && variable.death_time <= 115 ? math.cos(variable.death_time * variable.death_time * 57.2958) * 0.16 : 0"
+          ]
+        },
+        "leftArm": {
+          "position": [
+            "variable.death_time > 0 && variable.death_time <= 115 ? math.sin(variable.death_time * variable.death_time * 57.2958) * 0.16 : 0",
+            "variable.death_time > 115 ? -28.8 * math.pow(math.min((variable.death_time - 115) / 16, 1), 3) : 0",
+            "variable.death_time > 0 && variable.death_time <= 115 ? math.cos(variable.death_time * variable.death_time * 57.2958) * 0.16 : 0"
+          ]
+        },
+        "rightLeg": {
+          "position": [
+            "variable.death_time > 0 && variable.death_time <= 115 ? math.sin(variable.death_time * variable.death_time * 57.2958) * 0.16 : 0",
+            "variable.death_time > 115 ? -28.8 * math.pow(math.min((variable.death_time - 115) / 16, 1), 3) : 0",
+            "variable.death_time > 0 && variable.death_time <= 115 ? math.cos(variable.death_time * variable.death_time * 57.2958) * 0.16 : 0"
+          ]
+        },
+        "leftLeg": {
+          "position": [
+            "variable.death_time > 0 && variable.death_time <= 115 ? math.sin(variable.death_time * variable.death_time * 57.2958) * 0.16 : 0",
+            "variable.death_time > 115 ? -28.8 * math.pow(math.min((variable.death_time - 115) / 16, 1), 3) : 0",
+            "variable.death_time > 0 && variable.death_time <= 115 ? math.cos(variable.death_time * variable.death_time * 57.2958) * 0.16 : 0"
+          ]
+        },
+        "collar": {
+          "position": [
+            "variable.death_time > 0 && variable.death_time <= 115 ? math.sin(variable.death_time * variable.death_time * 57.2958) * 0.16 : 0",
+            "variable.death_time > 115 ? -28.8 * math.pow(math.min((variable.death_time - 115) / 16, 1), 3) : 0",
+            "variable.death_time > 0 && variable.death_time <= 115 ? math.cos(variable.death_time * variable.death_time * 57.2958) * 0.16 : 0"
+          ]
+        },
+        "cloak": {
+          "position": [
+            "variable.death_time > 0 && variable.death_time <= 115 ? math.sin(variable.death_time * variable.death_time * 57.2958) * 0.16 : 0",
+            "variable.death_time > 115 ? -28.8 * math.pow(math.min((variable.death_time - 115) / 16, 1), 3) : 0",
+            "variable.death_time > 0 && variable.death_time <= 115 ? math.cos(variable.death_time * variable.death_time * 57.2958) * 0.16 : 0"
+          ]
+        }
+      }
+    },
+    "animation.twilightforest.death_tome.lectern": {
+      "loop": true,
+      "bones": {
+        "book": {
+          "rotation": [
+            0,
+            0,
+            -67.5
+          ],
+          "position": [
+            1.75,
+            -22.4,
+            0
+          ]
+        },
+        "cover_left": {
+          "rotation": [
+            0,
+            -85.9437,
+            0
+          ]
+        },
+        "cover_right": {
+          "rotation": [
+            0,
+            265.9437,
+            0
+          ]
+        },
+        "pages_left": {
+          "rotation": [
+            0,
+            -85.9437,
+            0
+          ],
+          "position": [
+            0.9975,
+            0,
+            0
+          ]
+        },
+        "pages_right": {
+          "rotation": [
+            0,
+            85.9437,
+            0
+          ],
+          "position": [
+            0.9975,
+            0,
+            0
+          ]
+        },
+        "paper_storm": {
+          "rotation": [
+            0,
+            "query.life_time * 20 + 90",
+            50
+          ]
+        },
+        "flipping_page_left": {
+          "position": [
+            0.9975,
+            0,
+            0
+          ]
+        },
+        "flipping_page_right": {
+          "position": [
+            0.9975,
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "animation.twilightforest.rising_zombie.rise": {
+      "loop": true,
+      "bones": {
+        "head": {
+          "rotation": [
+            "variable.rise_angle",
+            0,
+            0
+          ],
+          "position": [
+            0,
+            "(24 - 16) * (math.cos(variable.rise_angle) - 1) - variable.rise_drop",
+            "-(24 - 16) * math.sin(variable.rise_angle)"
+          ]
+        },
+        "body": {
+          "rotation": [
+            "variable.rise_angle",
+            0,
+            0
+          ],
+          "position": [
+            0,
+            "(24 - 16) * (math.cos(variable.rise_angle) - 1) - variable.rise_drop",
+            "-(24 - 16) * math.sin(variable.rise_angle)"
+          ]
+        },
+        "rightArm": {
+          "rotation": [
+            "variable.rise_angle",
+            0,
+            0
+          ],
+          "position": [
+            0,
+            "(22 - 16) * (math.cos(variable.rise_angle) - 1) - variable.rise_drop",
+            "-(22 - 16) * math.sin(variable.rise_angle)"
+          ]
+        },
+        "leftArm": {
+          "rotation": [
+            "variable.rise_angle",
+            0,
+            0
+          ],
+          "position": [
+            0,
+            "(22 - 16) * (math.cos(variable.rise_angle) - 1) - variable.rise_drop",
+            "-(22 - 16) * math.sin(variable.rise_angle)"
+          ]
+        },
+        "rightLeg": {
+          "rotation": [
+            "variable.rise_angle",
+            0,
+            0
+          ],
+          "position": [
+            0,
+            "(12 - 16) * (math.cos(variable.rise_angle) - 1) - variable.rise_drop",
+            "-(12 - 16) * math.sin(variable.rise_angle)"
+          ]
+        },
+        "leftLeg": {
+          "rotation": [
+            "variable.rise_angle",
+            0,
+            0
+          ],
+          "position": [
+            0,
+            "(12 - 16) * (math.cos(variable.rise_angle) - 1) - variable.rise_drop",
+            "-(12 - 16) * math.sin(variable.rise_angle)"
+          ]
+        }
+      }
+    },
+    "animation.twilightforest.lich.arms": {
+      "loop": true,
+      "bones": {
+        "leftArm": {
+          "rotation": [
+            "variable.phase == 3 ? (math.cos(query.modified_distance_moved * 38.17) * variable.limb - (math.sin(query.life_time * 20 * 0.067 * 57.2958) * 0.05) - 0.3927) * 57.2958 : (variable.dying ? 0 : (-3.141593 - (math.sin(variable.attack_time * 180) * 1.2 - math.sin((1 - (1 - variable.attack_time) * (1 - variable.attack_time)) * 180) * 0.4) - math.sin(query.life_time * 20 * 0.167 * 57.2958) * 0.15) * 57.2958)",
+            "variable.phase == 3 || variable.dying ? 0 : (0.1 - math.sin(variable.attack_time * 180) * 0.6) * 57.2958",
+            "variable.phase == 3 ? -(math.cos(query.life_time * 20 * 0.09 * 57.2958) * 0.05 + 0.05) * 57.2958 : (variable.dying ? -(math.cos(query.life_time * 20 * 0.09 * 57.2958) * 0.05 + 0.05) * 57.2958 : (0.5 - (math.cos(query.life_time * 20 * 0.26 * 57.2958) * 0.15 + 0.05)) * 57.2958)"
+          ]
+        },
+        "rightArm": {
+          "rotation": [
+            "variable.phase == 3 ? (variable.has_item ? (math.cos(query.modified_distance_moved * 38.17 + 180) * variable.limb * 0.5 - 0.314159) : math.cos(query.modified_distance_moved * 38.17 + 180) * variable.limb) * 57.2958 + (math.sin(query.life_time * 20 * 0.067 * 57.2958) * 0.05) * 57.2958 - math.cos(query.modified_distance_moved * 38.17 + 180) * variable.limb * 0.75 * 57.2958 - 67.5 : (variable.has_item ? (-1.570796 - (math.sin(variable.attack_time * 180) * 1.2 - math.sin((1 - (1 - variable.attack_time) * (1 - variable.attack_time)) * 180) * 0.4) + math.sin(query.life_time * 20 * 0.167 * 57.2958) * 0.15) * 57.2958 : 0)",
+            "variable.phase == 3 || !variable.has_item ? 0 : -(0.1 - math.sin(variable.attack_time * 180) * 0.6) * 57.2958",
+            "variable.phase != 3 && variable.has_item ? (math.cos(query.life_time * 20 * 0.26 * 57.2958) * 0.15 + 0.05) * 57.2958 : (math.cos(query.life_time * 20 * 0.09 * 57.2958) * 0.05 + 0.05) * 57.2958"
+          ]
+        }
+      }
+    },
+    "animation.twilightforest.lich.shake": {
+      "loop": true,
+      "bones": {
+        "head": {
+          "rotation": [
+            0,
+            "variable.death_time > 0 && variable.death_time <= 115 ? math.cos(query.life_time * 20 * 3.25 * 57.2958) * 1.256637 : 0",
+            0
+          ]
+        },
+        "body": {
+          "rotation": [
+            0,
+            "variable.death_time > 0 && variable.death_time <= 115 ? math.cos(query.life_time * 20 * 3.25 * 57.2958) * 1.256637 : 0",
+            0
+          ]
+        },
+        "rightArm": {
+          "rotation": [
+            0,
+            "variable.death_time > 0 && variable.death_time <= 115 ? math.cos(query.life_time * 20 * 3.25 * 57.2958) * 1.256637 : 0",
+            0
+          ]
+        },
+        "leftArm": {
+          "rotation": [
+            0,
+            "variable.death_time > 0 && variable.death_time <= 115 ? math.cos(query.life_time * 20 * 3.25 * 57.2958) * 1.256637 : 0",
+            0
+          ]
+        },
+        "rightLeg": {
+          "rotation": [
+            0,
+            "variable.death_time > 0 && variable.death_time <= 115 ? math.cos(query.life_time * 20 * 3.25 * 57.2958) * 1.256637 : 0",
+            0
+          ]
+        },
+        "leftLeg": {
+          "rotation": [
+            0,
+            "variable.death_time > 0 && variable.death_time <= 115 ? math.cos(query.life_time * 20 * 3.25 * 57.2958) * 1.256637 : 0",
+            0
+          ]
+        },
+        "collar": {
+          "rotation": [
+            0,
+            "variable.death_time > 0 && variable.death_time <= 115 ? math.cos(query.life_time * 20 * 3.25 * 57.2958) * 1.256637 : 0",
+            0
+          ]
+        },
+        "cloak": {
+          "rotation": [
+            0,
+            "variable.death_time > 0 && variable.death_time <= 115 ? math.cos(query.life_time * 20 * 3.25 * 57.2958) * 1.256637 : 0",
+            0
+          ]
+        }
+      }
+    },
+    "animation.twilightforest.death_tome.flip": {
+      "loop": true,
+      "bones": {
+        "flipping_page_right": {
+          "rotation": [
+            0,
+            "(variable.open_angle - variable.open_angle * 2 * variable.flip_right) * 57.2958",
+            0
+          ]
+        },
+        "flipping_page_left": {
+          "rotation": [
+            0,
+            "(variable.open_angle - variable.open_angle * 2 * variable.flip_left) * 57.2958",
+            0
+          ]
+        }
+      }
+    }
+  }
+}

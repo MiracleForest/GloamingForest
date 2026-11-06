@@ -1,0 +1,17 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "twilightforest:lich_tower/wall_bars",
+  "size": [3, 3, 1],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"minecraft:stone_bricks"},
+    {"Name":"minecraft:iron_bars"}
+  ],
+  "blocks": [
+    [1, 4], [2, 1], [1, 1], [2, 3]
+  ],
+  "jigsaw": [
+    {"pos":[1,1,0],"front":"north","top":"up","pool":"minecraft:empty","name":"gf:lich_tower/bridge","target":""}
+  ]
+}

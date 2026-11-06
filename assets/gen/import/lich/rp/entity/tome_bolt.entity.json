@@ -4,15 +4,21 @@
     "description": {
       "identifier": "twilightforest:tome_bolt",
       "materials": {
-        "default": "entity_alphatest"
+        "default": "snowball"
       },
       "textures": {
-        "default": "textures/misc/missing_texture"
+        "default": "textures/items/paper"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.tome_bolt"
+        "default": "geometry.item_sprite"
       },
-      "render_controllers": ["controller.render.default"]
+      "render_controllers": ["controller.render.item_sprite"],
+      "animations": {
+        "flying": "animation.actor.billboard"
+      },
+      "scripts": {
+        "animate": ["flying"]
+      }
     }
   }
 }

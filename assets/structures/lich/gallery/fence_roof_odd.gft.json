@@ -1,0 +1,19 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "twilightforest:lich_tower/gallery/fence_roof_odd",
+  "size": [9, 4, 13],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"minecraft:stone_bricks"},
+    {"Name":"twilightforest:canopy_fence"},
+    {"Name":"minecraft:air"}
+  ],
+  "blocks": [
+    [1, 117], [2, 10], [3, 7], [2, 2], [3, 7], [2, 2], [3, 7], [2, 2], [3, 7], [2, 2], [3, 7], [2, 2], [3, 7], [2, 2], [3, 7], [2, 2],
+    [3, 7], [2, 2], [3, 7], [2, 2], [3, 7], [2, 2], [3, 7], [2, 10], [0, 234]
+  ],
+  "jigsaw": [
+    {"pos":[4,0,6],"front":"down","top":"north","pool":"minecraft:empty","name":"gf:lich_tower/roof","target":""}
+  ]
+}

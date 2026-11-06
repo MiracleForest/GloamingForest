@@ -1,0 +1,17 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "twilightforest:lich_tower/bridge_spawner_zig",
+  "size": [10, 3, 3],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"twilightforest:canopy_planks"},
+    {"Name":"minecraft:spawner"}
+  ],
+  "blocks": [
+    [0, 2], [1, 2], [0, 2], [1, 2], [0, 2], [1, 2], [0, 2], [1, 2], [0, 2], [1, 2], [0, 24], [2, 1], [0, 45]
+  ],
+  "jigsaw": [
+    {"pos":[5,0,1],"front":"up","top":"east","pool":"minecraft:empty","name":"gf:mob_bridge","target":""}
+  ]
+}

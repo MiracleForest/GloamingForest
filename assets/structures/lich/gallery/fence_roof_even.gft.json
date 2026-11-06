@@ -1,0 +1,19 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "twilightforest:lich_tower/gallery/fence_roof_even",
+  "size": [10, 4, 13],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"minecraft:stone_bricks"},
+    {"Name":"twilightforest:canopy_fence"},
+    {"Name":"minecraft:air"}
+  ],
+  "blocks": [
+    [1, 130], [2, 11], [3, 8], [2, 2], [3, 8], [2, 2], [3, 8], [2, 2], [3, 8], [2, 2], [3, 8], [2, 2], [3, 8], [2, 2], [3, 8], [2, 2],
+    [3, 8], [2, 2], [3, 8], [2, 2], [3, 8], [2, 2], [3, 8], [2, 11], [0, 260]
+  ],
+  "jigsaw": [
+    {"pos":[4,0,6],"front":"down","top":"north","pool":"minecraft:empty","name":"gf:lich_tower/roof","target":""}
+  ]
+}
