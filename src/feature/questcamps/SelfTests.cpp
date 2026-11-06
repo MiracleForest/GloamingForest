@@ -159,6 +159,15 @@ Json featureConfig(std::string const& id) {
     return Json::object();
 }
 
+/// Context::inTwilight, tried up to three times (a long full run sometimes misses the first try).
+ll::coro::CoroTask<bool> enterTwilight(Context& ctx) {
+    for (int i = 0; i < 3; ++i) {
+        if (co_await ctx.inTwilight()) co_return true;
+        co_await ctx.ticks(40);
+    }
+    co_return false;
+}
+
 /// The air above a feature test's flat area: TemplateFeature reads the columns' height from the
 /// top of the world, so the Twilight Forest's tall trees above a lower flat area would count.
 constexpr int kTall = 128;
@@ -444,7 +453,7 @@ GF_REGISTER_SELFTEST("questcamps.template_goldens", [](Context& ctx) -> ll::coro
 
 GF_REGISTER_SELFTEST("questcamps.druid_hut_markers", [](Context& ctx) -> ll::coro::CoroTask<> {
     // TemplateFeature scans the columns down to y 0 (Java's bound): the Twilight Forest's floor
-    ctx.require(co_await ctx.inTwilight(), "the Twilight Forest is available");
+    ctx.require(co_await enterTwilight(ctx), "the Twilight Forest is available");
     auto box    = co_await ctx.flatArea(1920, 48, kTall);
     auto origin = chunkOrigin(box);
     BelowGuard guard(ctx, BlockBox{box.minX, box.minY - 16, box.minZ, box.maxX, box.minY - 1, box.maxZ});
@@ -477,7 +486,7 @@ GF_REGISTER_SELFTEST("questcamps.druid_hut_markers", [](Context& ctx) -> ll::cor
 
 GF_REGISTER_SELFTEST("questcamps.wells", [](Context& ctx) -> ll::coro::CoroTask<> {
     // TemplateFeature scans the columns down to y 0 (Java's bound): the Twilight Forest's floor
-    ctx.require(co_await ctx.inTwilight(), "the Twilight Forest is available");
+    ctx.require(co_await enterTwilight(ctx), "the Twilight Forest is available");
     auto box    = co_await ctx.flatArea(1925, 48, kTall);
     auto origin = chunkOrigin(box);
     BelowGuard guard(ctx, BlockBox{box.minX, box.minY - 16, box.minZ, box.maxX, box.minY - 1, box.maxZ});
@@ -502,7 +511,7 @@ GF_REGISTER_SELFTEST("questcamps.wells", [](Context& ctx) -> ll::coro::CoroTask<
 
 GF_REGISTER_SELFTEST("questcamps.graveyard", [](Context& ctx) -> ll::coro::CoroTask<> {
     // TemplateFeature scans the columns down to y 0 (Java's bound): the Twilight Forest's floor
-    ctx.require(co_await ctx.inTwilight(), "the Twilight Forest is available");
+    ctx.require(co_await enterTwilight(ctx), "the Twilight Forest is available");
     auto box = co_await ctx.flatArea(1935, 48, kTall);
     BelowGuard guard(ctx, BlockBox{box.minX, box.minY - 4, box.minZ, box.maxX, box.minY - 1, box.maxZ});
     st::BlockSourceRegion region(*ctx.region(), BlockPos{box.minX + 24, box.minY, box.minZ + 24});
@@ -529,7 +538,7 @@ GF_REGISTER_SELFTEST("questcamps.graveyard", [](Context& ctx) -> ll::coro::CoroT
 
 GF_REGISTER_SELFTEST("questcamps.ruins", [](Context& ctx) -> ll::coro::CoroTask<> {
     // TemplateFeature scans the columns down to y 0 (Java's bound): the Twilight Forest's floor
-    ctx.require(co_await ctx.inTwilight(), "the Twilight Forest is available");
+    ctx.require(co_await enterTwilight(ctx), "the Twilight Forest is available");
     auto box    = co_await ctx.flatArea(1950, 48, kTall);
     auto origin = chunkOrigin(box);
     st::BlockSourceRegion region(*ctx.region(), origin);
@@ -567,7 +576,7 @@ GF_REGISTER_SELFTEST("questcamps.client_showcase", [](Context& ctx) -> ll::coro:
         co_return;
     }
     // TemplateFeature scans the columns down to y 0 (Java's bound): the Twilight Forest's floor
-    ctx.require(co_await ctx.inTwilight(), "the Twilight Forest is available");
+    ctx.require(co_await enterTwilight(ctx), "the Twilight Forest is available");
     auto box = co_await ctx.flatArea(1900, 120, kTall);
     BelowGuard guard(ctx, BlockBox{box.minX, box.minY - 16, box.minZ, box.maxX, box.minY - 1, box.maxZ});
     ctx.info("area at " + std::to_string(box.minX) + " " + std::to_string(box.minY) + " " + std::to_string(box.minZ));
