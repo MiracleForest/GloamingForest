@@ -26,7 +26,7 @@
         "base": "animation.twilightforest.unstable_ice_core.base",
         "spikes": "animation.twilightforest.unstable_ice_core.spikes",
         "swell": "animation.twilightforest.unstable_ice_core.swell",
-        "snow_aura": "controller.animation.twilightforest.ice_mob.snow"
+        "snow_aura": "controller.animation.twilightforest.unstable_ice_core.snow"
       },
       "render_controllers": ["controller.render.twilightforest.unstable_ice_core"],
       "spawn_egg": {

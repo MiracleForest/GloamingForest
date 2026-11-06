@@ -7,9 +7,11 @@
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // The client mod's aurora colours (U28): ColorHandler's per-position aurora block colour and the
-// pale colour of the aurora pillar, slab and auroralized glass, through F12's tint registry (the
-// blocks' materials carry a tint method so the chunk builder asks for it). Vanilla clients see the
-// tint method's biome colour instead. The block items' colours (ColorHandler#registerItemColors:
+// pale colour of the aurora pillar, slab and auroralized glass, through F12's tint registry. The
+// blocks' definitions name baked textures without a tint method (vanilla clients draw TF's texture
+// times its item colour); the client mod swaps them for the untinted textures with a tint method
+// when it resolves the materials (feature/ext/aurora/MaterialSwap), so the chunk builder asks F12's
+// tint for the per-position colour. The block items' colours (ColorHandler#registerItemColors:
 // the colour without a level, hue 0.45 and its pale form) need no client code: the blocks'
 // minecraft:item_visual draws them with pre-tinted textures, the same on every client.
 //
@@ -20,6 +22,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <string>
 
 #include "mc/client/player/LocalPlayer.h"
 #include "mc/world/gamemode/GameMode.h"
@@ -32,6 +35,7 @@
 #include "client/input/Input.h"
 #include "client/render/Render.h"
 #include "core/aurora/AuroraColor.h"
+#include "feature/ext/aurora/MaterialSwap.h"
 #include "feature/progression/Progression.h"
 #include "game/Blocks.h"
 #include "mod/Log.h"
@@ -83,6 +87,11 @@ public:
         if (registered) return;
         registered = true;
         namespace ca = core::aurora;
+        // the blocks' definitions name baked textures (TF's texture times its item colour: what vanilla
+        // clients draw); the client mod draws the untinted textures with the per-position colour below
+        namespace mat = gf::feature::ext::aurora::materials;
+        for (int n = 0; n < 16; n++) mat::swapTexture("tf_aurora_baked_aurora_block_" + std::to_string(n), "tf_block_aurora_block_" + std::to_string(n));
+        for (char const* t : {"aurora_pillar", "aurora_pillar_top", "aurora_slab_side"}) mat::swapTexture(std::string("tf_aurora_baked_") + t, std::string("tf_block_") + t);
         tint::registerBlock("twilightforest:aurora_block", [](BlockPos const& p) { return ca::auroraBlockColor(p.x, p.y, p.z); });
         for (char const* id : {"twilightforest:aurora_pillar", "twilightforest:aurora_slab", "twilightforest:auroralized_glass"})
             tint::registerBlock(id, [](BlockPos const& p) { return ca::auroraPaleColor(ca::auroraBlockColor(p.x, p.y, p.z)); });

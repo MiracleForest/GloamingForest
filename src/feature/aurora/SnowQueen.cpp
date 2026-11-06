@@ -165,33 +165,56 @@ void mobLookAt(Mob& m, Actor& t, float maxY, float maxX) {
     rc.mRot           = Vec2{wrapDegrees(rotlerp(rot.x, pitch, maxX)), wrapDegrees(rotlerp(rot.y, yaw, maxY))};
 }
 
-/// SnowQueen#countMyMinions: ice crystals in the queen's 1 x 1 x 1 box inflated by 32 / 16 / 32.
+/// SnowQueen#countMyMinions: ice crystals in the queen's 1 x 1 x 1 box inflated by 32 / 16 / 32
+/// (getEntitiesOfClass: a dead crystal counts until it is removed, 20 ticks after its death).
 int countMyMinions(Actor& self) {
     auto p   = feet(self);
     AABB box{Vec3{p.x - 32, p.y - 16, p.z - 32}, Vec3{p.x + 1 + 32, p.y + 1 + 16, p.z + 1 + 32}};
     int  n   = 0;
     for (auto* a : fe::actorsIn(self.getDimensionBlockSource(), static_cast<int>(self.getDimensionId()), box))
-        if (a->isAlive() && a->getTypeName() == kIceCrystal) n++;
+        if (a->getTypeName() == kIceCrystal) n++;
     return n;
 }
 
-/// LivingEntity#randomTeleport(x, y, z, true) (no liquid / collision checks of entities).
+/// Whether any block's collision shape intersects `box` (Level#noCollision's block part).
+bool boxCollides(BlockSource& region, AABB const& box) {
+    for (int x = static_cast<int>(std::floor(box.min.x)); x <= static_cast<int>(std::floor(box.max.x)); x++)
+        for (int y = static_cast<int>(std::floor(box.min.y)) - 1; y <= static_cast<int>(std::floor(box.max.y)); y++)
+            for (int z = static_cast<int>(std::floor(box.min.z)); z <= static_cast<int>(std::floor(box.max.z)); z++) {
+                BlockPos     pos{x, y, z};
+                Block const& block = region.getBlock(pos);
+                if (block.isAir()) continue;
+                AABB s = block.getBlockType().getCollisionShape(block, region, pos, nullptr);
+                if (s.max.x - s.min.x <= 0.0F || s.max.y - s.min.y <= 0.0F || s.max.z - s.min.z <= 0.0F) continue;
+                if (s.min.x < box.max.x && s.max.x > box.min.x && s.min.y < box.max.y && s.max.y > box.min.y && s.min.z < box.max.z && s.max.z > box.min.z)
+                    return true;
+            }
+    return false;
+}
+
+/// LivingEntity#randomTeleport(x, y, z, true): down (whole blocks, the fraction kept) until the
+/// block below blocks motion, then only where the entity's box has no block collision and no liquid.
 bool randomTeleport(Actor& actor, double x, double y, double z) {
     auto&    region = actor.getDimensionBlockSource();
     BlockPos pos{static_cast<int>(std::floor(x)), static_cast<int>(std::floor(y)), static_cast<int>(std::floor(z))};
     if (!region.hasChunksAt(pos, 0, false)) return false;
-    bool ground = false;
-    while (pos.y > region.getMinHeight()) {
+    bool   ground = false;
+    double ty     = y;
+    while (!ground && pos.y > region.getMinHeight()) {
         BlockPos below{pos.x, pos.y - 1, pos.z};
-        if (!region.getBlock(below).isAir()) {
-            ground = true;
-            break;
+        if (gf::structure::blocks::blocksMotion(region.getBlock(below))) ground = true;
+        else {
+            ty -= 1.0;
+            pos = below;
         }
-        --pos.y;
     }
     if (!ground) return false;
-    if (!region.getBlock(pos).isAir() || !region.getBlock(BlockPos{pos.x, pos.y + 1, pos.z}).isAir()) return false;
-    actor.teleportTo(Vec3{static_cast<float>(x), static_cast<float>(pos.y), static_cast<float>(z)}, true, 0, 1, false);
+    AABB const  own = actor.getAABB();
+    float const hw = (own.max.x - own.min.x) / 2.0F, h = own.max.y - own.min.y;
+    AABB const  box{Vec3{static_cast<float>(x) - hw, static_cast<float>(ty), static_cast<float>(z) - hw},
+                   Vec3{static_cast<float>(x) + hw, static_cast<float>(ty) + h, static_cast<float>(z) + hw}};
+    if (boxCollides(region, box) || region.containsAnyLiquid(box)) return false;
+    actor.teleportTo(Vec3{static_cast<float>(x), static_cast<float>(ty), static_cast<float>(z)}, true, 0, 1, false);
     return true;
 }
 
@@ -439,17 +462,7 @@ protected:
         AABB  box{Vec3{static_cast<float>(hx - radius), static_cast<float>(hy), static_cast<float>(hz - radius)},
                  Vec3{static_cast<float>(hx + radius), static_cast<float>(hy + kHeight), static_cast<float>(hz + radius)}};
         auto& region = m.getDimensionBlockSource();
-        for (int x = static_cast<int>(std::floor(box.min.x)); x <= static_cast<int>(std::floor(box.max.x)); x++)
-            for (int y = static_cast<int>(std::floor(box.min.y)) - 1; y <= static_cast<int>(std::floor(box.max.y)); y++)
-                for (int z = static_cast<int>(std::floor(box.min.z)); z <= static_cast<int>(std::floor(box.max.z)); z++) {
-                    BlockPos     pos{x, y, z};
-                    Block const& block = region.getBlock(pos);
-                    if (block.isAir()) continue;
-                    AABB s = block.getBlockType().getCollisionShape(block, region, pos, nullptr);
-                    if (s.max.x - s.min.x <= 0.0F || s.max.y - s.min.y <= 0.0F || s.max.z - s.min.z <= 0.0F) continue;
-                    if (s.min.x < box.max.x && s.max.x > box.min.x && s.min.y < box.max.y && s.max.y > box.min.y && s.min.z < box.max.z && s.max.z > box.min.z)
-                        return true;
-                }
+        if (boxCollides(region, box)) return true;
         // Entity#blocksBuilding: living things (not the queen, her shields or the dead)
         for (auto* e : fe::actorsIn(region, static_cast<int>(m.getDimensionId()), box)) {
             if (!e || e == &m || !e->isAlive() || gf::entity::ext::parentOf(*e) == &m) continue;
@@ -508,7 +521,11 @@ public:
             makeNewHoverSpot(*t);
         }
         pushTowardsSpot(*m, 0.05);
-        if (t) mobs::lookAt(*m, *t, 30.0F, 30.0F);
+        // attacker.lookAt (body yaw and pitch) and the look control
+        if (t) {
+            mobLookAt(*m, *t, 30.0F, 30.0F);
+            mobs::lookAt(*m, *t, 30.0F, 30.0F);
+        }
     }
 
 private:
@@ -555,7 +572,10 @@ public:
         else mSeekTimer++;
         if (mHoverTimer < mMaxHoverTime) {
             pushTowardsSpot(*m, 0.05);
-            if (auto* t = target()) mobs::lookAt(*m, *t, 30.0F, 30.0F);
+            if (auto* t = target()) {
+                mobLookAt(*m, *t, 30.0F, 30.0F);
+                mobs::lookAt(*m, *t, 30.0F, 30.0F);
+            }
         } else {
             // drop!
             mDropTimer++;
@@ -924,9 +944,9 @@ void installSnowQueen() {
                 }
                 return hitting;
             };
-            // the shooter's arrows; when none is known as theirs (an owner the engine left unset), any arrow
-            Actor* hitting = pick(true);
-            if (!hitting) hitting = pick(false);
+            // the shooter's arrows; any arrow only when the damage names no entity at all (another
+            // shooter's piercing arrow nearby must not turn this blocked hit into a pass-through)
+            Actor* hitting = attackerId != 0 || directId != 0 ? pick(true) : pick(false);
             gf::log().debug("aurora: shield hit by {} (attacker {}, direct {}): arrow {} pierce {}", d.type, attackerId, directId,
                             hitting ? uidOf(*hitting) : 0, hitting ? pierceLevel(*hitting) : 0);
             if (hitting && pierceLevel(*hitting) > 0) projectile = hitting;

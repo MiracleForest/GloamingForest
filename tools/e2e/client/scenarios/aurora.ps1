@@ -4,10 +4,13 @@
 #                   on vanilla clients), its bridge and the Snow Queen's tower
 #   palace-wing-floor, palace-boss-room   inside a wing (floor decorators, chests) and the queen's room
 #   blocks          aurora block (TF's animated variants), pillar, slab and auroralized glass
-#   beacon-beam     a beacon's beam through auroralized glass (the glass's aurora colour)
+#   beacon-beam     a beacon's beam through auroralized glass (white up to the glass, then the glass's
+#                   aurora colour), next to a vanilla beacon under red stained glass
 #   block-items     the four block items (TF's item colours)
 #   snow-queen, snow-guardian, ice-cores, ice-crystal   the mobs (the queen with her ice shields)
+#   ice-core-dying-1..3  the dying unstable ice core (swell and white flash)
 #   mushroom-tower  the mushroom tower
+#   reload-blocks   (local) the blocks again after Save & Quit and back in (a second world)
 # Out: out/aurora[-<mode>]/*.png - open each one and compare it with TF's textures and models.
 if ($script:Mode -eq 'local') { Wait-LogLine 'GloamingForest world ready' 120 | Out-Null }
 else { Wait-LogLine '\[host\].*GloamingForest world ready' 120 | Out-Null }
@@ -73,12 +76,20 @@ $beaconMark = Get-LogMark
 Invoke-Chat "/fill $($cx - 1) $($by) $($bz + 4) $($cx + 1) $($by) $($bz + 6) iron_block"
 Invoke-Chat "/setblock $cx $($by + 1) $($bz + 5) beacon"
 Invoke-Chat "/setblock $cx $($by + 3) $($bz + 5) twilightforest:auroralized_glass"
-Invoke-Teleport "/tp @s $($cx + 8) $($by + 6) $($bz + 5) facing $cx $($by + 8) $($bz + 5)"
+# next to it a vanilla beacon under red stained glass (the engine's own beam: the reference for the
+# white section below the glass)
+Invoke-Chat "/fill $($cx - 1) $($by) $($bz + 8) $($cx + 1) $($by) $($bz + 10) iron_block"
+Invoke-Chat "/setblock $cx $($by + 1) $($bz + 9) beacon"
+Invoke-Chat "/setblock $cx $($by + 3) $($bz + 9) red_stained_glass"
+Invoke-Teleport "/tp @s $($cx + 10) $($by + 4) $($bz + 7) facing $cx $($by + 5) $($bz + 7)"
 Start-Sleep -Seconds 6
 Save-Screenshot 'beacon-beam' | Out-Null
-# the client-only beam hook (BDS never computes beam sections): the client mod recoloured this beam
+# the client-only beam hook (BDS never computes beam sections): the client mod recoloured this beam,
+# white from the beacon up to the glass as Java (the engine's sections count the beacon block)
 if ($script:Mode -ne 'remote-vanilla') {
-    Wait-LogLine "^(?!\[host\]).*aurora: beacon beam at $cx $($by + 1) $($bz + 5) coloured" 20 -Since $beaconMark | Out-Null
+    $beam = Wait-LogLine "^(?!\[host\]).*aurora: beacon beam at $cx $($by + 1) $($bz + 5) coloured" 20 -Since $beaconMark
+    Write-Host "[aurora] $beam"
+    try { Write-Host "[aurora] $(Wait-LogLine "^(?!\[host\]).*aurora: vanilla beacon beam at $cx $($by + 1) $($bz + 9)" 10 -Since $beaconMark)" } catch { Write-Host "[aurora] no vanilla beam sections logged ($_)" }
 }
 # the block items in the hotbar (ColorHandler's item colours: hue 0.45, the pale colour)
 Invoke-Chat '/clear @s'
@@ -133,6 +144,22 @@ Show-Mob 'twilightforest:snow_guardian' 'snow-guardian' 0 3 2.5
 Show-Mob 'twilightforest:stable_ice_core' 'ice-core-stable'
 Show-Mob 'twilightforest:unstable_ice_core' 'ice-core-unstable'
 Show-Mob 'twilightforest:ice_crystal' 'ice-crystal'
+# the dying unstable ice core (UnstableIceCoreRenderer): swollen 1.4 x 1.1 with the sin(t x 100)
+# wobble, flashing white every other 2 ticks, for 60 ticks before it explodes
+Invoke-Chat '/gamerule mobgriefing false'
+$dx = 4400; $dz = 4400; $dy = -60
+Invoke-Teleport "/tp @s $($dx + 4) $($dy) $($dz + 0.5) facing $($dx + 0.5) $($dy + 1) $($dz + 0.5)"
+Start-Sleep -Seconds 2
+Invoke-Chat "/summon twilightforest:unstable_ice_core $($dx + 0.5) $($dy) $($dz + 0.5) facing @p"
+Start-Sleep -Seconds 1
+$dyingMark = Get-LogMark
+Invoke-Chat '/damage @e[type=twilightforest:unstable_ice_core] 100'
+Wait-LogLine 'aurora: unstable ice core dying' 10 -Since $dyingMark | Out-Null
+Start-Sleep -Milliseconds 400
+foreach ($k in 1..3) { Save-Screenshot "ice-core-dying-$k" | Out-Null; Start-Sleep -Milliseconds 130 }
+Start-Sleep -Seconds 3
+Invoke-Chat '/kill @e[type=twilightforest:unstable_ice_core]'
+Invoke-Chat '/gamerule mobgriefing true'
 
 # ---- the mushroom tower -------------------------------------------------------------------------
 $tx = 4600; $tz = 4600; $ty = -60
@@ -147,4 +174,33 @@ Save-Screenshot 'mushroom-tower' | Out-Null
 
 if ($script:Mode -ne 'remote-vanilla') {
     Wait-LogLine '^(?!\[host\]).*aurora: aurora block colours registered' 5 | Out-Null
+    # the client mod draws the untinted textures with the per-position colour (vanilla clients: the
+    # baked textures of the block definitions)
+    Wait-LogLine '^(?!\[host\]).*aurora: client materials swapped to the per-position tint' 5 | Out-Null
+}
+
+# ---- a second world in the same game session (local) -------------------------------------------
+# The block registry is the new world's: the aurora block's variants (and F7's block of it) resolve
+# again, so placed and /setblock aurora blocks still get their position's variant.
+if ($script:Mode -eq 'local') {
+    Focus-Game
+    try { Invoke-BeDDAction pause | Out-Null } catch { Press-Key ESC }
+    Start-Sleep -Seconds 2
+    # Save & Quit: the fourth button of the pause menu's left column (as the item scenario)
+    Move-Mouse 0.293 0.667 -Relative
+    Start-Sleep -Milliseconds 300
+    Click 0.293 0.667 -Relative
+    Start-Sleep -Seconds 15
+    $mark = Get-LogMark
+    Focus-Game
+    Click 0.173 0.43 -Relative
+    Wait-LogLine 'Player Spawned' 90 -Since $mark | Out-Null
+    Wait-LogLine 'GloamingForest world ready' 60 -Since $mark | Out-Null
+    Start-Sleep -Seconds 3
+    Wait-HudReady
+    $r = Invoke-SelfTest 'aurora.aurora_block_variant'
+    if ($r.Fail -gt 0) { throw 'aurora.aurora_block_variant failed in the reopened world' }
+    Invoke-Teleport "/tp @s $($bx + 3) $($by + 2) $($bz - 4) facing $($bx + 3) $($by + 1) $bz"
+    Start-Sleep -Seconds 4
+    Save-Screenshot 'reload-blocks' | Out-Null
 }

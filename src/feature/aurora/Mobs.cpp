@@ -136,11 +136,18 @@ void baseIceMobTick(Actor& self, std::string const& type) {
     auto v = self.getPosDelta();
     if (!self.isOnGround() && v.y < 0.0f) fe::setMotion(self, Vec3{v.x, v.y * 0.6f, v.z});
     bool melts = meltsSnow(self);
-    if (melts) {
+    // the melting particles of TF's snow particle loop: 3 spots a tick around the eyes, each a cloud
+    // (1 in 4) and a falling water drop (1 in 2); not while dying (!isDeadOrDying, the unstable core's
+    // 60 ticks included). Sent through fx (the vanilla particles a client draws): TF spawns them on
+    // the client, the server's draws give the same rate.
+    bool dying = type == kUnstableIceCore && gf::entity::data(self, "aurora:dying").is_number_integer();
+    if (melts && !dying) {
         auto p = feet(self);
-        Vec3 at{p.x, p.y + eyeHeightOf(type), p.z};
-        if (rng().nextInt(4) == 0) gf::fx::particle(self.getDimension(), "minecraft:cloud", at, Vec3{0, 0.1f, 0});
-        if (rng().nextBoolean()) gf::fx::particle(self.getDimension(), "minecraft:falling_water", at);
+        for (int i = 0; i < 3; i++) {
+            Vec3 at{p.x + rr() * 0.3f, p.y + eyeHeightOf(type) + rr() * 0.5f, p.z + rr() * 0.3f};
+            if (rng().nextInt(4) == 0) gf::fx::particle(self.getDimension(), "minecraft:cloud", at, Vec3{0, 0.1f, 0});
+            if (rng().nextBoolean()) gf::fx::particle(self.getDimension(), "minecraft:falling_water", at);
+        }
     }
     if (melts && self.mTickCount % 20 == 0) {
         // BURN!!!

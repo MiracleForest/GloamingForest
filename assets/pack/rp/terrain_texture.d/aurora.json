@@ -84,5 +84,77 @@
         "tint_color": "#73e6c3"
       }
     ]
+  },
+  "tf_aurora_baked_aurora_block_0": {
+    "textures": "textures/blocks/aurora/tf-derived/aurora_block_baked_0"
+  },
+  "tf_aurora_baked_aurora_block_1": {
+    "textures": "textures/blocks/aurora/tf-derived/aurora_block_baked_1"
+  },
+  "tf_aurora_baked_aurora_block_2": {
+    "textures": "textures/blocks/aurora/tf-derived/aurora_block_baked_2"
+  },
+  "tf_aurora_baked_aurora_block_3": {
+    "textures": "textures/blocks/aurora/tf-derived/aurora_block_baked_3"
+  },
+  "tf_aurora_baked_aurora_block_4": {
+    "textures": "textures/blocks/aurora/tf-derived/aurora_block_baked_4"
+  },
+  "tf_aurora_baked_aurora_block_5": {
+    "textures": "textures/blocks/aurora/tf-derived/aurora_block_baked_5"
+  },
+  "tf_aurora_baked_aurora_block_6": {
+    "textures": "textures/blocks/aurora/tf-derived/aurora_block_baked_6"
+  },
+  "tf_aurora_baked_aurora_block_7": {
+    "textures": "textures/blocks/aurora/tf-derived/aurora_block_baked_7"
+  },
+  "tf_aurora_baked_aurora_block_8": {
+    "textures": "textures/blocks/aurora/tf-derived/aurora_block_baked_8"
+  },
+  "tf_aurora_baked_aurora_block_9": {
+    "textures": "textures/blocks/aurora/tf-derived/aurora_block_baked_9"
+  },
+  "tf_aurora_baked_aurora_block_10": {
+    "textures": "textures/blocks/aurora/tf-derived/aurora_block_baked_10"
+  },
+  "tf_aurora_baked_aurora_block_11": {
+    "textures": "textures/blocks/aurora/tf-derived/aurora_block_baked_11"
+  },
+  "tf_aurora_baked_aurora_block_12": {
+    "textures": "textures/blocks/aurora/tf-derived/aurora_block_baked_12"
+  },
+  "tf_aurora_baked_aurora_block_13": {
+    "textures": "textures/blocks/aurora/tf-derived/aurora_block_baked_13"
+  },
+  "tf_aurora_baked_aurora_block_14": {
+    "textures": "textures/blocks/aurora/tf-derived/aurora_block_baked_14"
+  },
+  "tf_aurora_baked_aurora_block_15": {
+    "textures": "textures/blocks/aurora/tf-derived/aurora_block_baked_15"
+  },
+  "tf_aurora_baked_aurora_pillar": {
+    "textures": [
+      {
+        "path": "textures/twilightforest/block/aurora_pillar",
+        "tint_color": "#73e6c3"
+      }
+    ]
+  },
+  "tf_aurora_baked_aurora_pillar_top": {
+    "textures": [
+      {
+        "path": "textures/twilightforest/block/aurora_pillar_top",
+        "tint_color": "#73e6c3"
+      }
+    ]
+  },
+  "tf_aurora_baked_aurora_slab_side": {
+    "textures": [
+      {
+        "path": "textures/twilightforest/block/aurora_slab_side",
+        "tint_color": "#73e6c3"
+      }
+    ]
   }
 }

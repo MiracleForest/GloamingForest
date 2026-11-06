@@ -93,10 +93,15 @@ void recolour(BeaconBlockActor& beacon, BlockSource& region) {
     for (auto const& s : sections) total += s.mHeight;
     if (total <= 0 || multipliers().empty()) return;
     BlockPos const base = beacon.getPosition();
-    // the colour multiplier of each block of the beam (nullopt: none)
-    std::vector<std::optional<unsigned>> colours(static_cast<std::size_t>(total));
+    // Bedrock's sections start at the beacon block itself (its beam is drawn from there): an
+    // unobstructed beam's sections add up to one block more than the blocks above the beacon. That
+    // lead block belongs to the first (beacon's own) section, as Java's beam starts white there.
+    int const above = region.getMaxHeight() - 1 - base.y;
+    int const lead  = std::clamp(total - above, 0, 1);
+    // the colour multiplier of each block of the beam above the beacon (nullopt: none)
+    std::vector<std::optional<unsigned>> colours(static_cast<std::size_t>(total - lead));
     bool                                 custom = false;
-    for (int i = 0; i < total; i++) {
+    for (int i = 0; i < total - lead; i++) {
         BlockPos pos{base.x, base.y + 1 + i, base.z};
         if (pos.y >= region.getMaxHeight()) break;
         std::string id = gf::game::blockId(region.getBlock(pos));
@@ -107,9 +112,24 @@ void recolour(BeaconBlockActor& beacon, BlockSource& region) {
             colours[static_cast<std::size_t>(i)] = g->second;
         }
     }
-    if (!custom) return;
+    std::int64_t const key = (static_cast<std::int64_t>(base.x) & 0x3FFFFFF) << 38 | (static_cast<std::int64_t>(base.z) & 0x3FFFFFF) << 12 |
+                             (static_cast<std::int64_t>(base.y) & 0xFFF);
+    if (!custom) {
+        // the engine's own sections of a vanilla stained glass beam (once per beacon): the reference
+        // the client scenario compares the rebuilt sections with
+        bool glass = std::any_of(colours.begin(), colours.end(), [](auto const& c) { return c.has_value(); });
+        if (glass && logged().insert(key).second) {
+            std::string engine;
+            for (auto const& s : sections) engine += std::to_string(s.mHeight) + "x" + std::to_string(rgbOf(s.mColor.get())) + " ";
+            gf::log().info("aurora: vanilla beacon beam at {} {} {}: engine sections {}, total {}, above {}", base.x, base.y, base.z, engine, total, above);
+        }
+        return;
+    }
     unsigned beaconRgb = sections.empty() ? 0xFFFFFFU : rgbOf(sections.front().mColor.get());
     auto     rebuilt   = gf::core::aurora::beaconSections(colours, beaconRgb);
+    if (!rebuilt.empty()) rebuilt.front().height += lead;
+    std::string engine;
+    for (auto const& s : sections) engine += std::to_string(s.mHeight) + "x" + std::to_string(rgbOf(s.mColor.get())) + " ";
     sections.clear();
     for (auto const& s : rebuilt) {
         if (s.height <= 0) continue;
@@ -120,10 +140,10 @@ void recolour(BeaconBlockActor& beacon, BlockSource& region) {
         sections.push_back(out);
     }
     // one line per beacon position (the client scenario waits for it next to its beam screenshot)
-    std::int64_t key = (static_cast<std::int64_t>(base.x) & 0x3FFFFFF) << 38 | (static_cast<std::int64_t>(base.z) & 0x3FFFFFF) << 12 |
-                       (static_cast<std::int64_t>(base.y) & 0xFFF);
+
     if (rebuilt.size() >= 2 && logged().insert(key).second)
-        gf::log().info("aurora: beacon beam at {} {} {} coloured {:06X}", base.x, base.y, base.z, rebuilt[1].rgb);
+        gf::log().info("aurora: beacon beam at {} {} {} coloured {:06X} (white {} block(s) from the beacon; engine sections {}, total {}, above {})", base.x,
+                       base.y, base.z, rebuilt[1].rgb, rebuilt[0].height, engine, total, above);
 }
 
 } // namespace

@@ -36,8 +36,32 @@
             {
               "effect": "snow_aura"
             }
+          ],
+          "transitions": [
+            {
+              "dead": "!q.is_alive"
+            }
           ]
-        }
+        },
+        "dead": {}
+      }
+    },
+    "controller.animation.twilightforest.unstable_ice_core.snow": {
+      "initial_state": "default",
+      "states": {
+        "default": {
+          "particle_effects": [
+            {
+              "effect": "snow_aura"
+            }
+          ],
+          "transitions": [
+            {
+              "dead": "!q.is_alive || q.property('twilightforest:dying') > 0"
+            }
+          ]
+        },
+        "dead": {}
       }
     },
     "controller.animation.twilightforest.snow_queen.effects": {

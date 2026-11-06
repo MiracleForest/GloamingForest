@@ -828,7 +828,11 @@ void IceTowerStairs::postProcess(Region& region, RandomSource&, BlockBox const& 
         }
     }
     placeBlock(region, *deco->blockState, 0, stairsLength - 1, stairsLength, sbb);
-    applyAuroraVariants(region, bbox, sbb);
+    // the lowest steps lie below the piece's box (y = stairsLength - x - 1 down to stairsLength - size;
+    // placeBlock only asks the chunk's box): scan down to them too
+    BlockBox steps = bbox;
+    steps.minY -= size + 1;
+    applyAuroraVariants(region, steps, sbb);
 }
 
 void IceTowerStairs::placeStairs(Region& region, BlockBox const& sbb, int x, int y, int z) {

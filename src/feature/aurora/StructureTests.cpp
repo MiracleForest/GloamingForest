@@ -13,6 +13,7 @@
 
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
+#include "mc/world/level/block/BrightnessPair.h"
 #include "mc/world/level/block/Block.h"
 
 #include "core/GlobalPos.h"
@@ -272,6 +273,30 @@ GF_REGISTER_SELFTEST("aurora.boss_wing_in_world", [](Context& ctx) -> ll::coro::
             }
     ctx.check(auroraBlocks > 300 && variants > auroraBlocks / 4, "aurora block walls with TF's texture variants: " + std::to_string(auroraBlocks) + " / " + std::to_string(variants));
     ctx.check(packedIce > 50, "packed ice floors and stairs: " + std::to_string(packedIce));
+    // decorateTopFloor's ceiling: 1 in 10 cells of the 13 x 13 inside glowstone (where the cell is
+    // 1 or 2 thick), which lights the queen's room (y 34 .. 39 at x / z 1 .. 13)
+    int glowstone = 0;
+    for (int x = 1; x <= 13; x++)
+        for (int z = 1; z <= 13; z++)
+            for (int y = 38; y <= 39; y++) {
+                auto p = wing.getWorldPos(x, y, z);
+                if (game::blockIdAt(*ctx.region(), p) == "minecraft:glowstone") glowstone++;
+            }
+    ctx.check(glowstone > 0, "glowstone in the boss room's ceiling: " + std::to_string(glowstone));
+    co_await ctx.ticks(10);
+    {
+        // the block light the glowstone gives the room (Bedrock relights placed blocks)
+        int best = 0;
+        for (int x = 2; x <= 12; x++)
+            for (int z = 2; z <= 12; z++) {
+                auto p = wing.getWorldPos(x, 36, z);
+                best   = std::max(best, static_cast<int>(ctx.region()->getBrightnessPair(p).block.get().mValue));
+            }
+        auto at    = wing.getWorldPos(7, 36, 7);
+        int  there = ctx.region()->getBrightnessPair(at).block.get().mValue;
+        ctx.check(glowstone == 0 || best >= 10, "the room is lit by the ceiling: block light up to " + std::to_string(best) + ", " + std::to_string(there) +
+                                                    " above the spawner");
+    }
     core::BlockBox vol{wing.bbox.minX, wing.bbox.minY, wing.bbox.minZ, wing.bbox.maxX, wing.bbox.maxY, wing.bbox.maxZ};
     golden(ctx, "boss_wing_in_world", kBossWingWorldHash, ctx.snapshotVolume(vol));
     // the spawner would wake the queen for the test player: nothing is left behind

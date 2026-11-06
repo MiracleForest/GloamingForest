@@ -49,26 +49,38 @@ namespace {
 constexpr char kAuroraBlock[] = "twilightforest:aurora_block";
 constexpr char kVariant[]     = "gloamingforest:variant";
 
+/// The block pointers of the current world. Pack blocks are registered per world (the client opens
+/// many worlds in one process): reset when a world closes, resolved again on first use.
+struct BlockCache {
+    std::array<Block const*, 16> variants{};
+    bool                         resolved = false;
+    Block const*                 java     = nullptr; ///< F7's block of the aurora block (structures)
+};
+BlockCache& cache() {
+    static BlockCache c;
+    return c;
+}
+
 /// The 16 permutations (resolved once the block registry exists).
 std::array<Block const*, 16> const& variants() {
-    static std::array<Block const*, 16> v{};
-    static bool                         resolved = false;
-    if (!resolved) {
+    auto& c = cache();
+    if (!c.resolved) {
         bool all = true;
         for (int i = 0; i < 16; i++) {
-            v[static_cast<std::size_t>(i)] = gf::game::blockWith(kAuroraBlock, {{kVariant, i}});
-            all                            = all && v[static_cast<std::size_t>(i)] != nullptr;
+            c.variants[static_cast<std::size_t>(i)] = gf::game::blockWith(kAuroraBlock, {{kVariant, i}});
+            all                                     = all && c.variants[static_cast<std::size_t>(i)] != nullptr;
         }
-        resolved = all;
+        c.resolved = all;
     }
-    return v;
+    return c.variants;
 }
 
 /// Whether `block` is an aurora block that still has the default variant.
 bool isPlainAuroraBlock(Block const& block) {
     // pointers only: the scan of a piece's box asks this of every block
-    static Block const* const java = &structure::blocks::java(kAuroraBlock);
-    return &block == variants()[0] || &block == java;
+    auto& c = cache();
+    if (!c.java) c.java = structure::blocks::fromJava(kAuroraBlock); // nullptr until the block resolves (never air)
+    return (variants()[0] && &block == variants()[0]) || (c.java && &block == c.java);
 }
 
 // ---- AuroraBrickBlock#getDestroyProgress ------------------------------------------------------------
@@ -212,7 +224,10 @@ void installAuroraBlocks() {
     // AuroralizedGlassBlock#getBeaconColorMultiplier: the aurora colour of its position
     gf::feature::ext::aurora::beacon::registerColorMultiplier("twilightforest:auroralized_glass",
                                                              [](BlockPos const& p) { return core::aurora::auroraBlockColor(p.x, p.y, p.z); });
-    gf::game::db::onWorldClosed([] { mining().clear(); });
+    gf::game::db::onWorldClosed([] {
+        mining().clear();
+        cache() = BlockCache{};
+    });
 }
 
 } // namespace gf::feature::aurora
