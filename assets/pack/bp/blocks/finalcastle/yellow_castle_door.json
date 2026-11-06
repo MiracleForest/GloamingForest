@@ -96,15 +96,11 @@
         },
         "overlay": {
           "texture": "tf_finalcastle_door_overlay_yellow",
-          "render_method": "alpha_test",
-          "ambient_occlusion": false,
-          "face_dimming": false
+          "render_method": "alpha_test"
         },
         "connected": {
           "texture": "tf_finalcastle_door_connected_yellow",
-          "render_method": "alpha_test",
-          "ambient_occlusion": false,
-          "face_dimming": false
+          "render_method": "alpha_test"
         }
       },
       "minecraft:map_color": "#e5e533"
@@ -792,15 +788,11 @@
             },
             "overlay": {
               "texture": "tf_finalcastle_door_overlay_yellow",
-              "render_method": "alpha_test",
-              "ambient_occlusion": false,
-              "face_dimming": false
+              "render_method": "alpha_test"
             },
             "connected": {
               "texture": "tf_finalcastle_door_connected_yellow",
-              "render_method": "alpha_test",
-              "ambient_occlusion": false,
-              "face_dimming": false
+              "render_method": "alpha_test"
             }
           },
           "minecraft:collision_box": true,
@@ -817,15 +809,11 @@
             },
             "overlay": {
               "texture": "tf_finalcastle_door_overlay_yellow",
-              "render_method": "alpha_test",
-              "ambient_occlusion": false,
-              "face_dimming": false
+              "render_method": "alpha_test"
             },
             "connected": {
               "texture": "tf_finalcastle_door_connected_yellow",
-              "render_method": "alpha_test",
-              "ambient_occlusion": false,
-              "face_dimming": false
+              "render_method": "alpha_test"
             }
           },
           "minecraft:collision_box": false,
