@@ -164,7 +164,8 @@ bool isMinotaurAxe(std::string const& id) { return id == ids::kGoldMinotaurAxe |
 
 combat::Verdict onIncoming(combat::DamageInfo& d) {
     // fieryToolSetFire: the causing entity holds a fiery sword / pickaxe in its main hand
-    if (d.attacker && asMob(*d.attacker) && isFieryTool(idOf(d.attacker->getCarriedItem())) && !d.victim.isFireImmune())
+    if (d.attacker && asMob(*d.attacker) && isFieryTool(idOf(d.attacker->getCarriedItem())) && !d.victim.isFireImmune()
+        && !d.victim.isOnFire()) // igniteForTicks never shortens a longer fire
         d.victim.setOnFire(ca::kFieryToolSeconds, true);
     // doKnightmetalToolLogic, addExtraAxeChargingDamage: the direct entity's main hand
     if (d.direct && asMob(*d.direct)) {
@@ -227,12 +228,14 @@ void chill(Mob& victim, int duration, int amplifier, bool shouldHit) {
 }
 
 void onDealt(combat::DamageInfo const& d) {
-    if (!d.attacker || d.amount <= 0) return;
+    // Java: getOriginalDamage() > 0; the handlers only hear about damage that applied (the health
+    // Bedrock keeps as an integer may not have dropped for a small hit)
+    if (!d.attacker) return;
     int fiery = countPieces(d.victim, "fiery");
     int yeti  = countPieces(d.victim, "yeti");
     if (fiery > 0) {
         auto r = ca::fireReact(fiery, fireRoll());
-        if (r.ignite && !d.attacker->isFireImmune()) d.attacker->setOnFire(r.seconds, true);
+        if (r.ignite && !d.attacker->isFireImmune() && !d.attacker->isOnFire()) d.attacker->setOnFire(r.seconds, true);
     }
     if (auto* target = asMob(*d.attacker)) {
         auto c = ca::chillAura(yeti);

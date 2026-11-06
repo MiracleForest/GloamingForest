@@ -298,9 +298,21 @@ GF_REGISTER_SELFTEST("armory.knightmetal", [](Context& ctx) -> ll::coro::CoroTas
     auto [b3, a3] = co_await hit(spId, half);
     ctx.check(std::abs(a3 - b3 - 1.f) < 0.01f, "knightmetal pickaxe vs two pieces: +1 (" + fmt(b3) + " -> " + fmt(a3) + ")");
     if (auto* m = mobById(half)) m->remove();
-    // the axe: +2 against no armour, nothing against armour
+    // a zombie without pieces still has its natural armour (2): the sword's +2 without cover
+    if (auto* p = simById(spId)) p->setCarriedItem(make(ids::kKnightmetalSword));
+    auto natural = zombieWith(0);
+    co_await ctx.ticks(12);
+    auto [b0, a0] = co_await hit(spId, natural);
+    ctx.check(std::abs(a0 - b0 - 2.f) < 0.01f, "knightmetal sword vs natural armour only: +2 (" + fmt(b0) + " -> " + fmt(a0) + ")");
+    if (auto* m = mobById(natural)) m->remove();
+    // the axe: +2 against no armour (a cow), nothing against armour
     if (auto* p = simById(spId)) p->setCarriedItem(make(ids::kKnightmetalAxe));
-    auto bare = zombieWith(0);
+    std::int64_t bare = 0;
+    if (auto* cow = spawnAt(core::GlobalPos{at.dim, at.x + 2, at.y, at.z}, "minecraft:cow")) {
+        bare = uidOf(*cow);
+        rm.uids.push_back(bare);
+    }
+    ctx.require(bare != 0, "a cow");
     co_await ctx.ticks(12);
     auto [b4, a4] = co_await hit(spId, bare);
     ctx.check(std::abs(a4 - b4 - 2.f) < 0.01f, "knightmetal axe vs no armour: +2 (" + fmt(b4) + " -> " + fmt(a4) + ")");
@@ -341,14 +353,15 @@ GF_REGISTER_SELFTEST("armory.fiery_tools", [](Context& ctx) -> ll::coro::CoroTas
     auto&  sp   = fighter(ctx, at, "armory_fiery", ids::kFierySword);
     auto   spId = uidOf(sp);
     Remove rm;
-    auto*  cow = spawnAt(core::GlobalPos{at.dim, at.x + 2, at.y, at.z}, "minecraft:cow");
-    ctx.require(cow != nullptr, "a cow");
+    // an iron golem (a cow would die of the 8 damage and the fire before the second look)
+    auto*  cow = spawnAt(core::GlobalPos{at.dim, at.x + 2, at.y, at.z}, "minecraft:iron_golem");
+    ctx.require(cow != nullptr, "an iron golem");
     auto cowId = uidOf(*cow);
     rm.uids.push_back(cowId);
     co_await ctx.ticks(12);
     (void)co_await hit(spId, cowId);
     auto* c = mobById(cowId);
-    ctx.require(c != nullptr, "the cow survives the hit");
+    ctx.require(c != nullptr, "the golem survives the hit");
     ctx.check(c->isOnFire(), "the fiery sword sets it on fire");
     co_await ctx.ticks(60);
     c = mobById(cowId);
@@ -457,6 +470,7 @@ GF_REGISTER_SELFTEST("armory.mazebreaker", [](Context& ctx) -> ll::coro::CoroTas
 // ---- set reactions, toughness ----------------------------------------------------------------------------
 
 GF_REGISTER_SELFTEST("armory.set_reactions", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope normal(Difficulty::Normal); // peaceful: mobs do not hurt players
     struct RollReset {
         ~RollReset() { setFireReactRollForTest(std::nullopt); }
     } reset;
@@ -474,7 +488,7 @@ GF_REGISTER_SELFTEST("armory.set_reactions", [](Context& ctx) -> ll::coro::CoroT
     auto hurtBy = [&](std::int64_t attacker) {
         auto* p = simById(spId);
         auto* a = actorById(attacker);
-        if (p && a) combat::hurt(*p, 1.f, "minecraft:mob_attack", a, a);
+        if (p && a) combat::hurt(*p, 4.f, "minecraft:mob_attack", a, a);
     };
     // fiery: 2 pieces -> fireLevel 10; roll 9 < 10 ignites for 5 s, roll 10 does not
     sp.setArmor(Slot::Head, make("twilightforest:fiery_helmet"));
@@ -517,6 +531,7 @@ GF_REGISTER_SELFTEST("armory.set_reactions", [](Context& ctx) -> ll::coro::CoroT
 });
 
 GF_REGISTER_SELFTEST("armory.toughness", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope normal(Difficulty::Normal); // peaceful: mobs do not hurt players
     auto  box  = co_await ctx.flatArea(770, 5);
     auto  at   = core::GlobalPos{ctx.dimension(), box.minX + 1, box.minY + 1, box.minZ + 2};
     auto& sp   = fighter(ctx, at, "armory_tough", "");
@@ -531,11 +546,18 @@ GF_REGISTER_SELFTEST("armory.toughness", [](Context& ctx) -> ll::coro::CoroTask<
     co_await ctx.ticks(2);
     auto* p = simById(spId);
     ctx.require(p != nullptr, "the wearer");
+    Remove rm;
+    auto*  cow = spawnAt(core::GlobalPos{at.dim, at.x + 2, at.y, at.z}, "minecraft:cow");
+    ctx.require(cow != nullptr, "a cow");
+    rm.uids.push_back(uidOf(*cow));
     float before = static_cast<float>(p->getHealth());
-    combat::hurt(*p, 10.f, "minecraft:generic_kill", nullptr, nullptr); // armour applies to neither? info only
+    combat::hurt(*p, 10.f, "minecraft:mob_attack", cow, cow);
     p = simById(spId);
-    ctx.info("health after 10 generic damage: " + fmt(static_cast<float>(p ? p->getHealth() : -1)) + " (from " + fmt(before) + ")");
-    ctx.info("Java: 10 damage on armour 20 / toughness 12 -> " + fmt(ca::damageAfterAbsorb(10.f, 20.f, 12.f)) + ", without toughness " + fmt(ca::damageAfterAbsorb(10.f, 20.f, 0.f)));
+    ctx.require(p != nullptr, "the wearer survives");
+    float lost = before - static_cast<float>(p->getHealth());
+    float java = ca::damageAfterAbsorb(10.f, 20.f, 12.f), plain = ca::damageAfterAbsorb(10.f, 20.f, 0.f);
+    ctx.info("10 mob damage on full yeti: " + fmt(lost) + " health lost (Java " + fmt(java) + ", without toughness " + fmt(plain) + ")");
+    ctx.check(lost < plain - 0.5f, "toughness absorbs more than armour alone: " + fmt(lost));
 });
 
 // ---- phantom armour, arctic dye -------------------------------------------------------------------------

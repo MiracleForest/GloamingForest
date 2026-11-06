@@ -163,7 +163,8 @@ TEST(ArmoryTrims, MaterialsAndColours) {
     EXPECT_EQ(trimMaterials().size(), 6u);
     EXPECT_EQ(nearestChatColor(0x9A0000), '4');
     EXPECT_EQ(nearestChatColor(0xFFB53C), '6');
-    EXPECT_EQ(nearestChatColor(0x245712), '2');
+    EXPECT_EQ(nearestChatColor(0x10A010), '2');
+    EXPECT_EQ(nearestChatColor(0x245712), '8') << "naga scale's dark green is nearest dark gray";
     EXPECT_EQ(nearestChatColor(0xFFFFFF), 'f');
     EXPECT_EQ(nearestChatColor(0x000000), '0');
 }
