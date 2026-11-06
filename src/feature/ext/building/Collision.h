@@ -24,6 +24,7 @@
 
 class Block;
 class BlockPos;
+class BlockType;
 
 namespace gf::building::ext {
 
@@ -37,11 +38,14 @@ using Box = std::array<float, 6>;
 using CollisionProvider =
     std::function<void(Block const& block, BlockPos const& pos, std::optional<CollisionEntity> entity, std::vector<Box>& out)>;
 
-/// Registers the entity-dependent collision of a block id (one provider per id; later wins).
+/// Registers the entity-dependent collision of a block id (one provider per id: the first
+/// registration stays, so a game thread never sees a provider change under it).
 void registerCollision(std::string const& blockId, CollisionProvider provider);
-/// Resolves the registered ids to block types (call when a world is ready: the client builds its
-/// block registry per world).
-void refreshCollisionTypes();
+/// Resolves the registered ids to block types (call whenever the block registry may have been
+/// rebuilt: a local world, a remote world joined by the client mod). True when the types changed.
+bool refreshCollisionTypes();
+/// The provider of a block type (null: none).
+[[nodiscard]] CollisionProvider const* providerOf(BlockType const* type);
 void installCollision();
 void uninstallCollision();
 

@@ -14,6 +14,7 @@
 class Actor;
 class BannerPattern;
 class Block;
+class BlockType;
 class BlockPos;
 class BlockSource;
 class ItemStack;
@@ -100,7 +101,12 @@ inline constexpr float kFieryDamage             = 1.0f; ///< FieryBlock#stepOn
 inline constexpr float kArcticFurFallMultiplier = 0.1f; ///< ArcticFurBlock#fallOn
 [[nodiscard]] float arcticFurFallDamage(float amount);
 [[nodiscard]] bool  fieryHurts(Actor& entity);
-/// The block type properties of the fiery block (InfiniBurn), knightmetal block (CausesDamage) and\n/// rope (Scaffolding); applied when a world is ready.\nvoid applyBlockProperties();
+/// The block type properties of the fiery block (InfiniBurn) and the rope (Scaffolding). Returns
+/// the rope's block type (null: not in the registry).
+BlockType const* applyBlockProperties();
+/// Re-applies the block properties and re-resolves the entity-dependent collision types for the
+/// current block registry (BDS at install; the client mod for every world, local or remote).
+void refreshBlockTypes(char const* why);
 void installStorage();
 
 } // namespace gf::feature::building

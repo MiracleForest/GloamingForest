@@ -151,6 +151,11 @@ def trophy_bones(base, yaw):
         if gi == 0:
             width, height = desc["texture_width"], desc["texture_height"]
         for b in geo["bones"]:
+            # the ur-ghast's tentacles wave (TrophyBlockEntity#tick, TrophyRenderer): the client mod
+            # draws them animated (src/client/building/TrophyItems.cpp, a block renderer); the block
+            # geometry keeps the head only
+            if base.startswith("ur_ghast") and b["name"].startswith("tentacle"):
+                continue
             nb = {"name": "%s_%d" % (b["name"], gi), "pivot": b.get("pivot", [0, 0, 0])}
             if "parent" in b:
                 nb["parent"] = "%s_%d" % (b["parent"], gi)

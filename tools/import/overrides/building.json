@@ -28,11 +28,6 @@
         "value": false
       },
       {
-        "op": "replace",
-        "path": "/minecraft:block/components/minecraft:material_instances/over/render_method",
-        "value": "alpha_test_single_sided"
-      },
-      {
         "op": "add",
         "path": "/minecraft:block/components/minecraft:material_instances/over/ambient_occlusion",
         "value": 0

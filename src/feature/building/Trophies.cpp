@@ -304,14 +304,34 @@ bool dispenseOnHead(BlockSource& region, BlockPos const& dispenser, int facing, 
 } // namespace
 
 void installTrophies() {
-    // the redstone contract drops its watches with the world: forget them too, and take them up
-    // again from the world's list when it is loaded
-    game::db::onWorldSave([] { saveWatches(); });
-    game::db::onWorldClosed([] {
-        watches().clear();
-        gWatchesDirty = false;
-    });
-    game::db::onWorldReady([] { loadWatches(); });
+    // registered once per process: the lifecycle listeners and block events have no removal, so a
+    // re-install (uninstall, install) must not add them again; the interaction handlers (removed in
+    // uninstall) are added on every install
+    static bool once = false;
+    if (!once) {
+        once = true;
+        // the redstone contract drops its watches with the world: forget them too, and take them up
+        // again from the world's list when it is loaded
+        game::db::onWorldSave([] { saveWatches(); });
+        game::db::onWorldClosed([] {
+            watches().clear();
+            gWatchesDirty = false;
+        });
+        game::db::onWorldReady([] { loadWatches(); });
+        for (auto const& boss : trophyBosses()) {
+            std::string floor = std::string(kNs) + boss + "_trophy";
+            std::string wall  = std::string(kNs) + boss + "_wall_trophy";
+            for (auto const& id : {floor, wall}) {
+                blockevents::onNeighborChanged(id, [](BlockSource& region, BlockPos const& pos, BlockPos const&) {
+                    updatePowered(region, pos, hasNeighborSignal(region, pos));
+                    watch(region, pos);
+                });
+                blockevents::onPlaced(id, [](BlockSource& region, BlockPos const& pos, Block const&, Actor*) { watch(region, pos); });
+                blockevents::onRemoved(id, [](BlockSource& region, BlockPos const& pos, Block const&) { unwatch(region, pos); });
+            }
+            item::registerDispense(floor, dispenseOnHead);
+        }
+    }
     if (game::db::available()) loadWatches(); // BDS: the world was ready before the mod was enabled
     for (auto const& boss : trophyBosses()) {
         std::string floor = std::string(kNs) + boss + "_trophy";
@@ -331,14 +351,7 @@ void installTrophies() {
                 createTrophyParticles(*region, pos, c.blockId);
                 return ia::Result::Consume;
             }));
-            blockevents::onNeighborChanged(id, [](BlockSource& region, BlockPos const& pos, BlockPos const&) {
-                updatePowered(region, pos, hasNeighborSignal(region, pos));
-                watch(region, pos);
-            });
-            blockevents::onPlaced(id, [](BlockSource& region, BlockPos const& pos, Block const&, Actor*) { watch(region, pos); });
-            blockevents::onRemoved(id, [](BlockSource& region, BlockPos const& pos, Block const&) { unwatch(region, pos); });
         }
-        item::registerDispense(floor, dispenseOnHead);
     }
 }
 

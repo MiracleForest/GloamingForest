@@ -6,7 +6,10 @@
 #include <cmath>
 #include <thread>
 #include <map>
+#include <memory>
 #include <mutex>
+#include <utility>
+#include <vector>
 
 #include "ll/api/event/EventBus.h"
 #include "ll/api/event/world/ServerLevelTickEvent.h"
@@ -35,14 +38,18 @@ namespace gf::building::ext {
 
 namespace {
 
-constexpr std::size_t kSlots = 8;
+/// One resolved (block type, provider) pair. Snapshots are immutable once published and never freed
+/// (a few per world join), so a game thread that loaded one can use it without a lock while the
+/// next one is built; providers live in map nodes that are never reassigned or erased.
+struct Snapshot {
+    std::vector<std::pair<BlockType const*, CollisionProvider const*>> entries;
+};
 
 struct Registry {
-    std::mutex                                     mutex;
-    std::map<std::string, CollisionProvider>       byId;
-    std::array<std::atomic<BlockType const*>, kSlots> types{};
-    std::array<CollisionProvider const*, kSlots>   providers{};
-    std::atomic<std::size_t>                       count{0};
+    std::mutex                                   mutex;
+    std::map<std::string, CollisionProvider>     byId;
+    std::vector<std::unique_ptr<Snapshot const>> retired;
+    std::atomic<Snapshot const*>                 current{nullptr};
 };
 
 Registry& reg() {
@@ -50,41 +57,38 @@ Registry& reg() {
     return r;
 }
 
+} // namespace
+
 CollisionProvider const* providerOf(BlockType const* type) {
-    auto& r = reg();
-    auto  n = r.count.load(std::memory_order_acquire);
-    for (std::size_t i = 0; i < n; ++i)
-        if (r.types[i].load(std::memory_order_relaxed) == type) return r.providers[i];
+    auto const* s = reg().current.load(std::memory_order_acquire);
+    if (!s) return nullptr;
+    for (auto const& [t, p] : s->entries)
+        if (t == type) return p;
     return nullptr;
 }
-
-} // namespace
 
 void registerCollision(std::string const& blockId, CollisionProvider provider) {
     {
         std::lock_guard lock(reg().mutex);
-        reg().byId[blockId] = std::move(provider);
+        // one provider per id, set once: a game thread may be calling it through a snapshot
+        if (!reg().byId.try_emplace(blockId, std::move(provider)).second) return;
     }
     refreshCollisionTypes();
 }
 
-void refreshCollisionTypes() {
+bool refreshCollisionTypes() {
     auto&           r = reg();
     std::lock_guard lock(r.mutex);
-    r.count.store(0, std::memory_order_release);
-    std::size_t n = 0;
+    auto            next = std::make_unique<Snapshot>();
     for (auto const& [id, fn] : r.byId) {
-        if (n == kSlots) {
-            log().warn("building: more than {} entity-dependent collision blocks, {} skipped", kSlots, id);
-            continue;
-        }
         auto type = BlockType::tryGetFromRegistry(HashedString(id));
-        if (!type) continue;
-        r.types[n].store(&*type, std::memory_order_relaxed);
-        r.providers[n] = &fn;
-        ++n;
+        if (type) next->entries.emplace_back(&*type, &fn);
     }
-    r.count.store(n, std::memory_order_release);
+    auto const* old = r.current.load(std::memory_order_acquire);
+    if (old && old->entries == next->entries) return false;
+    r.current.store(next.get(), std::memory_order_release);
+    r.retired.push_back(std::move(next));
+    return true;
 }
 
 } // namespace gf::building::ext
@@ -151,6 +155,12 @@ LL_TYPE_INSTANCE_HOOK(
 ) {
     auto const* provider = bx::providerOf(this);
     if (!provider || !*provider) return origin(block, region, pos, intersectTestBox, inoutBoxes, entity);
+    // the rest of the chain (F11's FamiliesCollisionHook, the game) still runs for this block; its
+    // static boxes are replaced by the provider's
+    {
+        std::vector<AABB> chained;
+        origin(block, region, pos, intersectTestBox, chained, entity);
+    }
     std::optional<bx::CollisionEntity> e;
     if (entity) {
         // Java isDescending: a player holding sneak. Bedrock's canDescendThroughBlock follows the

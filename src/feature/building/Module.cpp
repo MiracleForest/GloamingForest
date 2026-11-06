@@ -2,15 +2,36 @@
 
 #include "feature/building/Building.h"
 
+#include <cstdint>
+
+#include "mc/deps/core/string/HashedString.h"
+#include "mc/world/level/block/BlockProperty.h"
+#include "mc/world/level/block/BlockType.h"
+
 #include "feature/ext/building/Collision.h"
 #include "game/WorldDb.h"
 #include "mod/Config.h"
 #include "mod/Log.h"
 #include "mod/Module.h"
 
+#ifdef GF_CLIENT
+#include "client/input/Input.h"
+#include "feature/net/Net.h"
+#endif
+
 GF_REGISTER_CONFIG("building", gf::feature::building::BuildingConfig);
 
 namespace gf::feature::building {
+
+void refreshBlockTypes(char const* why) {
+    auto const* rope    = applyBlockProperties();
+    bool        changed = ::gf::building::ext::refreshCollisionTypes();
+    if (!changed) return;
+    bool scaffolding = rope && (static_cast<std::uint64_t>(rope->mProperties) & static_cast<std::uint64_t>(BlockProperty::Scaffolding)) != 0;
+    bool provider    = rope && ::gf::building::ext::providerOf(rope) != nullptr;
+    // e2e (server and client remote-mod): the rope's type of this registry has both
+    log().info("building: block types refreshed ({}): rope scaffolding {}, rope collision provider {}", why, scaffolding, provider);
+}
 
 namespace {
 
@@ -36,14 +57,34 @@ struct BuildingModule {
         installNagastone();
         installRope();
         installStorage();
-        // the rope's entity-dependent collision (contract extension, feature/ext/building/Collision.h);
-        // the client builds its block registry per world
+        // the block properties (fiery InfiniBurn, rope Scaffolding) and the rope's entity-dependent
+        // collision (contract extension, feature/ext/building/Collision.h) live on the block types of
+        // the current registry. The BDS builds it once; the client builds it for every world: a local
+        // world (onWorldReady) and a remote one, which never fires onWorldReady (WorldDb.h): the
+        // companion handshake, and for any server (a vanilla one too) the local player's ticks, which
+        // look the rope up once a second and refresh when its type is a new one.
         static bool registered = false;
         if (!registered) {
             registered = true;
-            game::db::onWorldReady([] { ::gf::building::ext::refreshCollisionTypes(); });
+            game::db::onWorldReady([] { refreshBlockTypes("world ready"); });
+#ifdef GF_CLIENT
+            net::client::onConnected([] { refreshBlockTypes("companion connected"); });
+            gf::client::movement::onLocalTick(-1000, [](gf::client::movement::MoveState&) {
+                static std::uint32_t   tick = 0;
+                static BlockType const* last = nullptr;
+                if (tick++ % 20 != 0) return;
+                auto type = BlockType::tryGetFromRegistry(HashedString("twilightforest:rope"));
+                BlockType const* now = type ? &*type : nullptr;
+                // a new registry may reuse the old type's address: its missing Scaffolding bit
+                // tells it apart
+                bool bare = now && (static_cast<std::uint64_t>(now->mProperties) & static_cast<std::uint64_t>(BlockProperty::Scaffolding)) == 0;
+                if (now == last && !bare) return;
+                last = now;
+                if (now) refreshBlockTypes("client registry");
+            });
+#endif
         }
-        ::gf::building::ext::refreshCollisionTypes();
+        refreshBlockTypes("install");
         ::gf::building::ext::installCollision();
         log().info("building: installed");
     }

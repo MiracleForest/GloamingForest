@@ -72,19 +72,19 @@ bool fieryHurts(Actor& entity) {
     return game::items::idOf(entity.getArmor(SharedTypes::Legacy::ArmorSlot::Feet)) != "twilightforest:fiery_boots";
 }
 
-void applyBlockProperties() {
-    auto add = [](char const* id, BlockProperty p) {
+BlockType const* applyBlockProperties() {
+    auto add = [](char const* id, BlockProperty p) -> BlockType const* {
         auto type = BlockType::tryGetFromRegistry(HashedString(id));
-        if (!type) return false;
+        if (!type) return nullptr;
         auto& t       = const_cast<BlockType&>(*type);
         t.mProperties = static_cast<BlockProperty>(static_cast<std::uint64_t>(t.mProperties) | static_cast<std::uint64_t>(p));
-        return true;
+        return &t;
     };
     // FieryBlock#isFireSource(UP): fire on top never burns out (FireBlock#tick skips the age and
     // rain checks). Bedrock's fire asks the block below for BlockProperty::InfiniBurn (netherrack,
     // magma), so the fiery block's type carries it: the game's own fire tick keeps that fire, and
     // any other way of putting it out (a hit, water, a potion, a command) still works.
-    bool fiery = add(kFiery, BlockProperty::InfiniBurn);
+    auto const* fiery = add(kFiery, BlockProperty::InfiniBurn);
     // KnightmetalBlock#getBlockPathType DAMAGE_OTHER is not set: Bedrock's walk evaluator avoids
     // magma but neither CausesDamage on the block type (tried) nor a replaced dealsContactDamage
     // (never asked during pathfinding) makes it avoid a custom block (building.knightmetal_path).
@@ -92,15 +92,14 @@ void applyBlockProperties() {
     // LivingEntity#handleOnClimbable holds a sneaking player only on non-scaffolding climbables);
     // Bedrock's climb movement does the same for BlockProperty::Scaffolding types. The rope is
     // already climbable (F11's climbable family).
-    bool rope = add("twilightforest:rope", BlockProperty::Scaffolding);
-    log().info("building: block properties (fiery infiniburn {}, rope scaffolding {})", fiery, rope);
+    auto const* rope = add("twilightforest:rope", BlockProperty::Scaffolding);
+    log().debug("building: block properties (fiery infiniburn {}, rope scaffolding {})", fiery != nullptr, rope != nullptr);
+    return rope;
 }
 
 void installStorage() {
     if (gInstalled) return;
     gInstalled = true;
-    game::db::onWorldReady([] { applyBlockProperties(); });
-    if (game::db::available()) applyBlockProperties();
     // TFBlocks: the fiery block's item is rarity UNCOMMON (and fireResistant: its BP item's
     // minecraft:fire_resistant); the client mod colours its name
     item::ext::setRarity(kFiery, item::ext::Rarity::Uncommon);

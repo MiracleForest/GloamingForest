@@ -9,7 +9,6 @@
 #include "ll/api/memory/Hook.h"
 
 #include "mc/deps/shared_types/legacy/ContainerType.h"
-#include "mc/world/actor/player/PlayerUISlot.h"
 #include "mc/world/inventory/network/ContainerScreenContext.h"
 #include "mc/world/inventory/simulation/validation/LoomMaterialContainerValidation.h"
 #include "mc/world/item/ItemStackBase.h"
@@ -78,11 +77,12 @@ LL_TYPE_INSTANCE_HOOK(
     bool                          flag
 ) {
     // BannerPatternItem in LoomMenu's pattern slot: the registered items too, on a loom screen and
-    // in the material container's own slot (PlayerUISlot::LoomMaterial, the container's offset)
+    // in the material container's own slot. `slot` is in the screen's slot space (the logged check
+    // shows slot 11 for the pattern slot), where the container's one slot sits at its offset
     if (!item.isNull() && bx::isPatternItem(item.getTypeName())) {
         bool loom   = screenContext.mScreenContainerType == SharedTypes::Legacy::ContainerType::Loom;
         int  offset = this->getContainerOffset(screenContext);
-        bool own    = slot == offset || slot == static_cast<int>(PlayerUISlot::LoomMaterial);
+        bool own    = slot == offset;
         static std::atomic<bool> logged{false};
         if (!logged.exchange(true))
             gf::log().info("building: loom pattern slot check (screen {}, slot {}, offset {})", static_cast<int>(screenContext.mScreenContainerType), slot, offset);

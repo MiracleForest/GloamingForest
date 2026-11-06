@@ -8,6 +8,8 @@
 #   out/building/nagastone.png       nagastone, pillars, etched, stairs, spiral, twisted pillar, rope, iron ladders
 #   out/building/blocks.png          castle, rune, maze, under, tower, dead rock and storage blocks
 #   out/building/stairs.png          encased / bold castle brick stairs, mossy / cracked nagastone stairs
+#   out/building/ur_ghast-a.png, ur_ghast-b.png, ur_ghast-wall.png   the placed ur-ghast trophies close
+#                                    up (client mod: the tentacles wave between a and b)
 #   out/building/hotbar.png          the nine trophy items in the hotbar
 #   out/building/patterns-hotbar.png the nine banner pattern items in the hotbar
 #   out/building/held-first-person.png, held-third-person.png, worn.png   a trophy held and worn
@@ -66,6 +68,30 @@ foreach ($s in $shots) {
     Start-Sleep -Seconds 3
     Save-Screenshot $s.name | Out-Null
     Write-Step "building: $($s.name)"
+}
+
+# the placed ur-ghast trophies close up, twice 1.5 s apart: with the client mod the tentacles wave
+# (TrophyRenderer with the block entity's animation progress; a block renderer draws them), the
+# block geometry has the head only (what a vanilla client sees)
+Invoke-Teleport '/tp @s 26.5 -59.2 22.6 180 30'
+Start-Sleep -Seconds 3
+Save-Screenshot 'ur_ghast-a' | Out-Null
+Start-Sleep -Milliseconds 1500
+Save-Screenshot 'ur_ghast-b' | Out-Null
+Invoke-Teleport '/tp @s 26.5 -58.6 43.4 180 20'
+Start-Sleep -Seconds 3
+Save-Screenshot 'ur_ghast-wall' | Out-Null
+if ($script:Mode -ne 'remote-vanilla') {
+    $anim = Wait-LogLine '^(?!.*\[host\]).*building: ur-ghast trophy animation ready \((\d+) bones, (\d+) drawn\)' 30
+    if (-not $anim -or $anim -notmatch 'ready \((\d+) bones, (\d+) drawn\)' -or [int]$Matches[2] -lt 37) { throw "the ur-ghast trophy animation did not load its geometry: $anim" }
+    Write-Step "building: $($anim -replace '^.*building: ', '')"
+}
+# the client mod's rope (Scaffolding and the tightrope collision provider) on the block types of the
+# world it joined: remote-mod has no onWorldReady on the client
+if ($script:Mode -ne 'remote-vanilla') {
+    $rope = Wait-LogLine '^(?!.*\[host\]).*building: block types refreshed \(.*\): rope scaffolding (true|false), rope collision provider (true|false)' 30
+    if ($rope -notmatch 'rope scaffolding true, rope collision provider true') { throw "the client's rope type is not set up: $rope" }
+    Write-Step "building: client $($rope -replace '^.*building: ', '')"
 }
 
 # the trophy items in the hotbar (client mod: the head turns over the trophy backdrop)

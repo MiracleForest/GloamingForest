@@ -601,6 +601,39 @@ GF_REGISTER_SELFTEST("building.storage_blocks", [](Context& ctx) -> ll::coro::Co
     sim(ctx).teleport(Vec3{p.x + 0.5f, float(p.y), p.z + 3.5f}, sim(ctx).getDimensionId());
 });
 
+// ArcticFurBlock#fallOn (causeFallDamage with multiplier 0.1) in game: the same 8-block fall onto
+// stone and onto arctic fur, through Bedrock's own fall damage and combat::onIncoming.
+GF_REGISTER_SELFTEST("building.arctic_fur_fall", [](Context& ctx) -> ll::coro::CoroTask<> {
+    using namespace gf::feature::building;
+    auto p = ctx.testPos(598, 0);
+    ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
+    constexpr int kHeight = 8;
+    auto drop = [&](std::string const& id, int dz) -> ll::coro::CoroTask<float> {
+        auto ground = at(p, 0, 1, dz);
+        ctx.setBlock(ground, id);
+        for (int y = 1; y <= kHeight + 2; ++y) ctx.setBlock(at(p, 0, 1 + y, dz), "minecraft:air");
+        auto& sp = sim(ctx);
+        sp.setArmor(SharedTypes::Legacy::ArmorSlot::Feet, ItemStack::EMPTY_ITEM());
+        // out of the hurt cooldown, with health to spare
+        co_await ctx.ticks(25);
+        sim(ctx).teleport(Vec3{ground.x + 0.5f, float(ground.y + 1 + kHeight), ground.z + 0.5f}, sim(ctx).getDimensionId());
+        co_await ctx.ticks(1);
+        float before = sim(ctx).getHealth();
+        for (int t = 0; t < 60 && !(sim(ctx).isOnGround() && t > 2); ++t) co_await ctx.ticks(1);
+        co_await ctx.ticks(3);
+        float lost = before - sim(ctx).getHealth();
+        ctx.info(id + ": " + std::to_string(kHeight) + "-block fall, " + std::to_string(lost) + " damage (health " + std::to_string(before) + ")");
+        ctx.setBlock(ground, "minecraft:air");
+        co_return lost;
+    };
+    float fur   = co_await drop("twilightforest:arctic_fur_block", 1);
+    float stone = co_await drop("minecraft:stone", 3);
+    ctx.check(stone >= 4.0f, "the 8-block fall hurts on stone (" + std::to_string(stone) + ")");
+    ctx.check(fur > 0 && std::abs(fur - std::ceil(stone * kArcticFurFallMultiplier - 1e-4f)) < 0.01f,
+              "arctic fur: a tenth of the stone fall's damage, rounded up (" + std::to_string(fur) + " vs " + std::to_string(stone) + ")");
+    sim(ctx).teleport(Vec3{p.x + 0.5f, float(p.y + 1), p.z + 4.5f}, sim(ctx).getDimensionId());
+});
+
 // ---- recipes ------------------------------------------------------------------------------------
 
 GF_REGISTER_SELFTEST("building.recipes", [](Context& ctx) {

@@ -197,10 +197,17 @@ GF_REGISTER_SELFTEST("building.knightmetal_path", [](Context& ctx) -> ll::coro::
             ctx.info(std::string(id) + " properties 0x" + fmt::format("{:x}", static_cast<std::uint64_t>(bl->getBlockType().mProperties)));
     int magma       = co_await walk("minecraft:magma");
     int knightmetal = co_await walk("twilightforest:knightmetal_block");
-    // Bedrock limit (PR #63): the walk evaluator avoids magma but not a custom block, whatever its
-    // CausesDamage property; knightmetal's DAMAGE_OTHER is kept as evidence, not as a pass condition
+    // Known deviation (PR #63, not ported): KnightmetalBlock#getBlockPathType DAMAGE_OTHER. Bedrock's
+    // walk evaluator avoids magma but not a custom block, whatever its CausesDamage property; the
+    // node classification is MCNAPI and BlockType::$checkIsPathable / $dealsContactDamage are MCFOLD
+    // (one address shared by many functions), so it cannot be attached to the block type. This test
+    // asserts the documented Bedrock behaviour: magma (the control) is avoided, knightmetal is
+    // walked over. When a later fix makes navigation avoid knightmetal, the second check fails:
+    // turn it into "knightmetal == 0" then.
     ctx.info("navigation over magma " + std::to_string(magma) + " tick(s), over knightmetal " + std::to_string(knightmetal) + " tick(s) (TF: mobs path around both)");
-    if (knightmetal == 0) gf::log().info("building: navigation steps around the knightmetal block");
+    ctx.check(magma == 0, "control: Bedrock's navigation steps around magma (" + std::to_string(magma) + " ticks over it)");
+    ctx.check(knightmetal > 0, "known deviation still as documented: navigation walks over knightmetal (DAMAGE_OTHER not ported); if this fails, knightmetal is avoided now: update the test");
+    gf::log().info("building: KNOWN DEVIATION knightmetal DAMAGE_OTHER path type: navigation walked {} tick(s) over knightmetal, {} over magma", knightmetal, magma);
     sim(ctx).teleport(Vec3{p.x + 0.5f, float(p.y), p.z + 4.5f}, sim(ctx).getDimensionId());
 });
 
