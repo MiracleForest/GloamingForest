@@ -115,20 +115,14 @@ public:
         }, ia::priority::High);
         // playerWillDestroy: the chest (named after the owner) and the logged solid block
         ia::onDestroy({.block = kChest}, [](ia::DestroyContext const& c) {
-            if (c.player.isCreative()) return ia::Result::Pass;
-            auto* region = game::regionOf(c.pos.dim);
-            if (!region) return ia::Result::Pass;
-            BlockPos pos   = game::blockPos(c.pos);
-            Json     owner = ownerOf(*region, pos);
+            if (c.player.isCreative() || !doBlockDrops()) return ia::Result::Pass;
             std::string logged = loggedBlockItem(c.block);
-            ia::nextTick([gp = c.pos, owner, logged] {
+            // the chest has no custom name on Bedrock (TF names only the item entity of a
+            // custom-named chest): the plain item
+            ia::nextTick([gp = c.pos, logged] {
                 auto* r = game::regionOf(gp.dim);
                 if (!r || game::blockIdAt(*r, game::blockPos(gp)) == kChest) return; // not broken
-                if (auto stack = items::make(kChest, 1)) {
-                    if (owner.is_object() && !owner.value("name", std::string()).empty())
-                        stack->setCustomName(Bedrock::Safety::RedactableString(owner.value("name", std::string())));
-                    popResource(*r, game::blockPos(gp), *stack);
-                }
+                if (auto stack = items::make(kChest, 1)) popResource(*r, game::blockPos(gp), *stack);
                 if (!logged.empty())
                     if (auto s = items::make(logged, 1)) popResource(*r, game::blockPos(gp), *s);
             });

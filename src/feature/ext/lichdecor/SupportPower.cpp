@@ -39,8 +39,11 @@ core::GlobalPos keyOf(BlockSource& region, BlockPos const& at) { return core::Gl
 
 BaseCircuitComponent* componentAt(CircuitSystem& system, BlockPos const& pos) {
     auto& all = system.mSceneGraph->mAllComponents;
-    auto  it  = all.find(pos);
-    return it == all.end() ? nullptr : it->second.get();
+    if (auto it = all.find(pos); it != all.end()) return it->second.get();
+    // created this tick: still queued until the graph's next update
+    auto& pending = system.mSceneGraph->mPendingAdds;
+    auto  it      = pending.find(pos);
+    return it == pending.end() ? nullptr : it->second.mRawComponentPtr;
 }
 
 } // namespace

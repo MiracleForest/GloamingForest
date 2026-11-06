@@ -19,6 +19,7 @@
 // position (gf:lichdecor:shelves) so the spawner ticks without scanning chunks.
 
 #include <algorithm>
+#include <map>
 #include <array>
 #include <cmath>
 #include <set>
@@ -219,6 +220,12 @@ bool attemptSpawnTome(BlockSource& region, BlockPos const& pos, int slot, bool f
     return true;
 }
 
+/// The slots of burnt spawner shelves whose burning tome spawned (their books are gone).
+std::map<GlobalPos, std::set<int>>& burnedSlots() {
+    static std::map<GlobalPos, std::set<int>> m;
+    return m;
+}
+
 /// BookshelfSpawner#serverTick.
 void tickShelf(BlockSource& region, int dim, BlockPos const& pos) {
     auto const& block = region.getBlock(pos);
@@ -233,7 +240,17 @@ void tickShelf(BlockSource& region, int dim, BlockPos const& pos) {
         d = sp["delay"].get<int>();
     }
     if (d > 0) {
-        sp["delay"] = d - 1;
+        // the countdown is kept in memory between saves: written back every 20 ticks and at 0
+        static std::map<GlobalPos, int> countdown;
+        GlobalPos gp{dim, pos.x, pos.y, pos.z};
+        auto it = countdown.find(gp);
+        int  left = (it != countdown.end() && it->second <= d) ? it->second - 1 : d - 1;
+        if (left > 0 && left % 20 != 0) {
+            countdown[gp] = left;
+            return;
+        }
+        countdown.erase(gp);
+        sp["delay"] = std::max(left, 0);
     } else {
         std::vector<int> filled;
         for (int i = 0; i < 6; ++i)
@@ -372,8 +389,10 @@ private:
                 // the shelf is gone: spawn in front of where it faced (5 tries each)
                 int    facing = faceOf(state(previous, "facing"));
                 BlockPos front = relative(pos, facing < 2 ? 2 : facing);
-                gf::spawn::spawnMob(region, kTome, Vec3{front.x + 0.5F, (float)front.y, front.z + 0.5F}, gf::spawn::SpawnReason::Spawner,
-                                    [](Actor& a) { a.setOnFire(10, true); });
+                // attemptSpawnTome clears the slot of a tome that spawned: its book does not drop
+                if (gf::spawn::spawnMob(region, kTome, Vec3{front.x + 0.5F, (float)front.y, front.z + 0.5F}, gf::spawn::SpawnReason::Spawner,
+                                        [](Actor& a) { a.setOnFire(10, true); }))
+                    burnedSlots()[game::globalPos(region, pos)].insert(i);
             }
         });
         // contents spill when the shelf goes (Containers.dropContents in onRemove)
@@ -381,13 +400,24 @@ private:
             if (previous != kShelf || !doc.contains(kDataKey)) return;
             auto const& mine = doc[kDataKey];
             if (!mine.is_object() || !mine.contains("books")) return;
-            std::vector<ItemStack> drops;
-            for (auto const& b : mine["books"])
-                if (!b.is_null()) drops.push_back(items::fromJson(b));
+            std::vector<std::pair<int, ItemStack>> drops;
+            int                                    slot = 0;
+            for (auto const& b : mine["books"]) {
+                if (!b.is_null()) drops.emplace_back(slot, items::fromJson(b));
+                ++slot;
+            }
             if (drops.empty()) return;
+            // next tick: the burn handler (onRemoved, end of this tick) has marked the slots whose
+            // tome spawned
             ia::nextTick([gp, drops] {
+                std::set<int> spawned;
+                if (auto it = burnedSlots().find(gp); it != burnedSlots().end()) {
+                    spawned = it->second;
+                    burnedSlots().erase(it);
+                }
                 if (auto* region = game::regionOf(gp.dim))
-                    for (auto const& s : drops) popResource(*region, game::blockPos(gp), s);
+                    for (auto const& [i, s] : drops)
+                        if (!spawned.contains(i)) popResource(*region, game::blockPos(gp), s);
             });
         });
 
@@ -424,6 +454,8 @@ private:
                 return ia::Result::Consume;
             }
             if (boolState(c.block, "spawner")) return ia::Result::Deny;
+            // a sneaking player holding an item skips the block's use (Player#isSecondaryUseActive)
+            if (c.sneaking && !c.itemId.empty()) return ia::Result::Pass;
             auto slot = hitSlot(c.block, c.face, c.hit);
             if (!slot) return ia::Result::Pass;
             if (!c.firstEvent) return ia::Result::Consume;
@@ -438,6 +470,9 @@ private:
                 playAt(*region, pos, enchanted ? "block.chiseled_bookshelf.insert.enchanted" : "block.chiseled_bookshelf.insert", 1.0F, 1.0F);
                 return ia::Result::Consume;
             }
+            // useItemOn: any held item on an occupied slot skips the default interaction; only an
+            // empty hand reaches useWithoutItem#removeBook
+            if (!c.itemId.empty()) return ia::Result::Pass;
             // removeBook: the book goes to the player
             bool enchanted = items::idOf(book) == "minecraft:enchanted_book";
             setBook(*region, pos, *slot, items::empty());

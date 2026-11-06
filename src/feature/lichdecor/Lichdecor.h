@@ -83,6 +83,8 @@ bool setStates(BlockSource& region, BlockPos const& pos, Block const& block, Jso
 // ---- players and items ----------------------------------------------------------------------------
 
 [[nodiscard]] bool creative(Player const& player);
+/// The doTileDrops game rule (Java's doBlockDrops); true without a level.
+[[nodiscard]] bool doBlockDrops();
 /// Inventory.add, else drop at the player (Java's Player#addItem / drop).
 void giveOrDrop(Player& player, ItemStack const& stack);
 /// Shrinks the hand stack by one unless the player is in creative.

@@ -26,6 +26,8 @@
 #include "mc/world/level/Spawner.h"
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/dimension/Dimension.h"
+#include "mc/world/level/storage/GameRuleId.h"
+#include "mc/world/level/storage/GameRules.h"
 
 #include "feature/common/Interactions.h"
 #include "feature/fx/Fx.h"
@@ -161,7 +163,7 @@ std::array<int, 6> nearestLookingDirections(Actor const& actor) {
     float       hx = fx * cp, hz = fz * cp;
     int         dx = east ? 5 : 4, dy = up ? 1 : 0, dz = south ? 3 : 2;
     auto        make = [](int a, int b, int c) { return std::array<int, 6>{a, b, c, oppositeFace(c), oppositeFace(b), oppositeFace(a)}; };
-    if (fx > hz) {
+    if (fx > fz) {
         if (fy > hx) return make(dy, dx, dz);
         return hz > fy ? make(dx, dz, dy) : make(dx, dy, dz);
     }
@@ -170,6 +172,14 @@ std::array<int, 6> nearestLookingDirections(Actor const& actor) {
 }
 
 bool creative(Player const& player) { return player.isCreative(); }
+
+bool doBlockDrops() {
+    auto level = ll::service::getLevel();
+    if (!level) return true;
+    GameRuleId rule;
+    rule.mValue = static_cast<int>(GameRules::GameRulesIndex::DoTileDrops);
+    return level->getGameRules().getBool(rule, true);
+}
 
 void giveOrDrop(Player& player, ItemStack const& stack) {
     if (stack.isNull()) return;

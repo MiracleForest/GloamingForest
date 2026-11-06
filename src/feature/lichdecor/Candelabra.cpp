@@ -255,6 +255,8 @@ ia::Result onUse(ia::UseOnContext const& c) {
     if (!region) return ia::Result::Pass;
     BlockPos     pos = game::blockPos(c.pos);
     Block const& b   = region->getBlock(pos);
+    // a sneaking player holding an item skips the block's use (Player#isSecondaryUseActive)
+    if (c.sneaking && !c.itemId.empty()) return ia::Result::Pass;
     bool candleItem  = tfColorOfCandle(c.itemId) >= 0;
     Lighting l       = lightingAt(b);
     if (candleItem || c.sneaking) {

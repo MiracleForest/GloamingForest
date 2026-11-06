@@ -173,6 +173,9 @@ Actor* spawn(BlockSource& region, BlockPos const& pos, int face, int variant) {
 
 /// MagicPainting#dropItem: the item (its variant kept) unless a creative player broke it.
 void breakPainting(Actor& self, Player* breaker) {
+    // HangingEntity#hurt: !isRemoved() (two hits in one tick break it once)
+    if (self.mRemoved || ge::data(self, "broken").is_boolean()) return;
+    ge::data(self, "broken") = true;
     auto& region = self.getDimensionBlockSource();
     playSound(region, self.getPosition(), "minecraft:entity.painting.break", 1.0F, 1.0F);
     if (!(breaker && breaker->isCreative())) {
@@ -238,9 +241,9 @@ public:
             breakPainting(c.entity, &c.player);
             return ia::Result::Consume;
         });
-        // MagicPaintingItem#useOn
-        ia::onUseOn({.item = kItem}, [](ia::UseOnContext const& c) {
-            if (c.face < 2) return ia::Result::Deny; // mayPlace: not on a vertical face
+        // MagicPaintingItem#useOn (Item#useOn: only after the clicked block's own use passed)
+        ia::onUnusedUseOn({.item = kItem}, [](ia::UseOnContext const& c) {
+            if (c.face < 2) return ia::Result::Pass; // mayPlace: not on a vertical face (FAIL)
             if (!c.firstEvent) return ia::Result::Consume;
             auto* region = game::regionOf(c.pos.dim);
             if (!region) return ia::Result::Pass;

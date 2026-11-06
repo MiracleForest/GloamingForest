@@ -103,7 +103,12 @@ void entityInside(BlockSource& region, BlockPos const&, Actor& entity) {
         if (item.mHealth <= 0) entity.remove();
         return;
     }
-    if (gf::tags::has(gf::tags::Registry::EntityType, "minecraft:undead", type)) return;
+    // #minecraft:undead lists Java's ids: Bedrock's own ids of the same mobs are mapped first
+    std::string javaType = type == "minecraft:zombie_pigman"         ? std::string("minecraft:zombified_piglin")
+                         : type == "minecraft:zombie_villager_v2"    ? std::string("minecraft:zombie_villager")
+                         : type.ends_with("_v2")                     ? type.substr(0, type.size() - 3)
+                                                                     : std::string(type);
+    if (gf::tags::has(gf::tags::Registry::EntityType, "minecraft:undead", type) || gf::tags::has(gf::tags::Registry::EntityType, "minecraft:undead", javaType)) return;
     gf::combat::hurt(entity, 1.0F, kOminousFireDamage);
     (void)region;
 }
@@ -155,6 +160,9 @@ bool onLethal(Actor& victim, gf::combat::DamageInfo const& d) {
     }
     if (!map || !map->is_object()) return false;
     auto to = map->value("transform_to", std::string());
+    // the data map holds Java's ids: Bedrock's ids of the same mobs
+    if (to == "minecraft:zombified_piglin") to = "minecraft:zombie_pigman";
+    else if (to == "minecraft:zombie_villager") to = "minecraft:zombie_villager_v2";
     if (!to.empty()) convert(victim, to);
     return false;
 }
