@@ -460,7 +460,9 @@ GF_REGISTER_SELFTEST("woodwork.rack_sync", [](Context& ctx) -> ll::coro::CoroTas
         ctx.check(gone, "an emptied rack is withdrawn from the client mod");
         ctx.check(actorsNear(ctx, p, "gloamingforest:drying_rack_item", 1.f).empty(), "and its display goes");
         // a rack removed with its item is withdrawn once (one "gone" message)
-        h->set(p, 0, *gf::game::items::make("minecraft:kelp"));
+        auto kelpItem = gf::game::items::make("minecraft:kelp");
+        ctx.require(kelpItem.has_value(), "a kelp stack");
+        h->set(p, 0, *kelpItem);
         co_await ctx.ticks(2);
         (void)gf::feature::net::takeTestMessages(ctx.player());
         ctx.player().getInventory().removeAllItems();
@@ -473,10 +475,9 @@ GF_REGISTER_SELFTEST("woodwork.rack_sync", [](Context& ctx) -> ll::coro::CoroTas
                 for (auto const& g : e.payload.value("gone", nlohmann::json::array())) goneCount += g == nlohmann::json::array({p.dim, p.x, p.y, p.z}) ? 1 : 0;
         ctx.check(goneCount == 1, "a removed rack is withdrawn once (" + std::to_string(goneCount) + " gone messages)");
         // on the ground, or already picked up by the test player standing next to the rack
-        auto kelpStack = *gf::game::items::make("minecraft:kelp");
-        int  kelp      = 0;
+        int kelp = 0;
         for (int i = 0; i < 20 && kelp == 0; ++i) {
-            kelp = countNear(ctx, p, "minecraft:kelp") + ctx.player().getInventory().getItemCount(kelpStack);
+            kelp = countNear(ctx, p, "minecraft:kelp") + ctx.player().getInventory().getItemCount(*kelpItem);
             if (kelp == 0) co_await ctx.ticks(1);
         }
         ctx.check(kelp == 1, "and drops its item (" + std::to_string(kelp) + ")");

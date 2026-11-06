@@ -44,6 +44,7 @@
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
+#include "mc/world/level/block/Block.h"
 #include "mc/world/level/ShapeType.h"
 #include "mc/world/level/Spawner.h"
 #include "mc/world/phys/AABB.h"
@@ -54,6 +55,7 @@
 #include "feature/common/Interactions.h"
 #include "feature/ext/woodwork/BoatDrops.h"
 #include "feature/entity/Entity.h"
+#include "game/Blocks.h"
 #include "game/Items.h"
 #include "mod/Log.h"
 
@@ -87,26 +89,38 @@ int woodOf(Actor& boat) {
 
 /// Boat#getStatus == ON_LAND as checkFallDamage asks it: not UNDER_WATER (Boat#isUnderwater: water in
 /// the cells at the top face of the boat's box), not IN_WATER (Boat#checkInWater: water in the cells
-/// of its bottom face whose surface reaches the bottom; a block of water reaches 8/9 of its height
-/// when it is a source with air above, the whole cell otherwise, approximated by 0.9) and on the
-/// ground (getGroundFriction > 0: the game's onGround). Ice counts as land, as in Java.
+/// of its bottom face whose surface reaches the bottom) and on the ground (getGroundFriction > 0:
+/// the game's onGround). Ice counts as land, as in Java.
 bool onLand(Actor& boat) {
     if (!boat.isOnGround() || boat.isInWater()) return false;
     auto&       region = boat.getDimensionBlockSource();
     auto const& bb     = boat.getAABB();
     int         x0     = static_cast<int>(std::floor(bb.min.x)), x1 = static_cast<int>(std::ceil(bb.max.x));
     int         z0     = static_cast<int>(std::floor(bb.min.z)), z1 = static_cast<int>(std::ceil(bb.max.z));
-    auto        cells  = [&](float y0, float y1, auto&& hit) {
+    // FluidState#getHeight: 1 with water above, else the amount / 9 (a source 8, flowing 8 - level;
+    // Bedrock's liquid_depth is the level, 8 and up falling water: full); a waterlogging layer is a source
+    auto height = [&](BlockPos const& pos) -> float {
+        if (!waterAt(region, pos)) return -1.0f;
+        if (waterAt(region, BlockPos{pos.x, pos.y + 1, pos.z})) return 1.0f;
+        auto const& b = region.getBlock(pos);
+        auto        t = b.getTypeName();
+        if (t != "minecraft:water" && t != "minecraft:flowing_water") return 8.0f / 9.0f; // the liquid layer
+        int level = game::intState(b, "liquid_depth").value_or(0);
+        return level >= 8 ? 1.0f : static_cast<float>(8 - level) / 9.0f;
+    };
+    auto cells = [&](float y0, float y1, float reach) {
         for (int x = x0; x < x1; ++x)
             for (int y = static_cast<int>(std::floor(y0)); y < static_cast<int>(std::ceil(y1)); ++y)
-                for (int z = z0; z < z1; ++z)
-                    if (waterAt(region, BlockPos{x, y, z}) && hit(y)) return true;
+                for (int z = z0; z < z1; ++z) {
+                    float h = height(BlockPos{x, y, z});
+                    if (h >= 0.0f && y + h >= reach) return true;
+                }
         return false;
     };
-    // checkInWater: the surface (y + height) reaches the box's bottom
-    if (cells(bb.min.y, bb.min.y + 0.001f, [&](int y) { return y + 0.9f >= bb.min.y; })) return false;
-    // isUnderwater: water above the box's top
-    if (cells(bb.max.y, bb.max.y + 0.001f, [&](int y) { return y + 0.9f >= bb.max.y; })) return false;
+    // checkInWater: a surface (y + height) reaches the box's bottom
+    if (cells(bb.min.y, bb.min.y + 0.001f, bb.min.y)) return false;
+    // isUnderwater: a surface above the box's top
+    if (cells(bb.max.y, bb.max.y + 0.001f, bb.max.y + 0.001f)) return false;
     return true;
 }
 

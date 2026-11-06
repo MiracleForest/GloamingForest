@@ -79,7 +79,10 @@ bool canChangeVariant(BlockSource& region, BlockPos const& pos, std::string cons
 }
 
 /// HorizontalHollowLogBlock.playPlaceSound / playBreakSound: the block's sound, volume (v + 1) / 2,
-/// pitch p * 0.8 (every sound type used here has volume 1 and pitch 1).
+/// pitch p * 0.8 (every sound type used here has volume 1 and pitch 1). The names are Bedrock's
+/// own place sounds of those block sound types (vanilla RP sounds.json, block_sounds.<type>.events.place:
+/// grass and vine -> dig.grass, snow -> dig.snow, ladder -> dig.wood; moss carpet -> dig.moss),
+/// not the use.<type> sounds, which are the item.use.on event.
 void blockSound(BlockSource& region, BlockPos const& pos, char const* bedrockName) { playSound(region, pos, bedrockName, 1.0f, 0.8f); }
 
 void dropAt(BlockSource& region, BlockPos const& pos, char const* itemId) {
@@ -144,7 +147,7 @@ ia::Result onUseHorizontal(ia::UseOnContext const& c) {
         if (!canChangeVariant(region, pos, variant, axis)) return pass();
         if (repeatedUse(c.player, c.pos, c.firstEvent)) return ia::Result::Consume;
         setState(region, pos, c.block, {{kVariant, "moss"}});
-        blockSound(region, pos, "use.moss"); // MOSS_CARPET place (Bedrock's place sounds are use.<type>)
+        blockSound(region, pos, "dig.moss"); // MOSS_CARPET place
         consumeOne(c.player, c.item);
         log().info("woodwork: {} put moss into {}", c.player.getRealName(), c.blockId);
         return ia::Result::Consume;
@@ -153,7 +156,7 @@ ia::Result onUseHorizontal(ia::UseOnContext const& c) {
         if (variant != "moss") return pass();
         if (repeatedUse(c.player, c.pos, c.firstEvent)) return ia::Result::Consume;
         setState(region, pos, c.block, {{kVariant, "moss_and_grass"}});
-        blockSound(region, pos, "use.grass"); // GRASS place
+        blockSound(region, pos, "dig.grass"); // GRASS place
         consumeOne(c.player, c.item);
         return ia::Result::Consume;
     }
@@ -161,7 +164,7 @@ ia::Result onUseHorizontal(ia::UseOnContext const& c) {
         if (!canChangeVariant(region, pos, variant, axis)) return pass();
         if (repeatedUse(c.player, c.pos, c.firstEvent)) return ia::Result::Consume;
         setState(region, pos, c.block, {{kVariant, "snow"}});
-        blockSound(region, pos, "use.snow"); // SNOW place (fx: block.snow.place -> use.snow)
+        blockSound(region, pos, "dig.snow"); // SNOW place
         consumeOne(c.player, c.item);
         return ia::Result::Consume;
     }
@@ -283,7 +286,7 @@ ia::Result onUseVertical(ia::UseOnContext const& c) {
     // the VINE state has no water (Java's climbable vine is never waterlogged): Bedrock's water
     // layer of the vertical log does not carry over
     else if (vine) clearWater(region, pos);
-    blockSound(region, pos, vine ? "use.vines" : "use.ladder"); // VINE / LADDER place
+    blockSound(region, pos, vine ? "dig.grass" : "dig.wood"); // VINE / LADDER place
     consumeOne(c.player, c.item);
     log().info("woodwork: {} made {} {}", c.player.getRealName(), set->climbable, variant);
     return ia::Result::Consume;
