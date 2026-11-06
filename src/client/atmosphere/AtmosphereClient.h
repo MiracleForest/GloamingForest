@@ -31,11 +31,20 @@ struct AtmosphereState {
 void setPreview(nlohmann::json const& msg);
 /// The fog the provider gives in `biome` now (one smoothing step).
 [[nodiscard]] std::optional<sky::FogSpec> fogForTest(std::string const& biome);
+/// The fog the provider gives now, as the game asks for it (nullopt in water, lava or powder snow).
+[[nodiscard]] std::optional<sky::FogSpec> fogNow();
+/// Whether the camera was in water, lava or powder snow at the last client tick (FogType not NONE).
+[[nodiscard]] bool cameraInFluidNow();
 /// Sets TF's sky provider for the Twilight Forest dimension (once it is known).
 void installProvider();
 /// TFConfig#getValidAuroraBiomes now: the config's biomes that parse and that the world knows (as
 /// Bedrock names them: vanilla ones without "minecraft:").
 [[nodiscard]] std::vector<std::string> validAuroraBiomes();
+/// The configured auroraBiomes as written in the client's config.
+[[nodiscard]] std::vector<std::string> auroraBiomesConfigured();
+/// Sets auroraBiomes in the client's own config file (config/atmosphere.json) and applies it now
+/// (the aurora biome list editor); false when the file could not be written.
+bool setAuroraBiomes(std::vector<std::string> const& biomes);
 
 } // namespace gf::client::atmosphere
 

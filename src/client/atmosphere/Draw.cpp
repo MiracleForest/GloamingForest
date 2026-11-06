@@ -12,6 +12,7 @@
 #include "client/atmosphere/Draw.h"
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <mutex>
 #include <unordered_map>
@@ -41,6 +42,11 @@
 #include "mc/deps/minecraft_renderer/resources/OffscreenCaptureDescription.h"
 #include "mc/deps/minecraft_renderer/resources/ServerTexture.h"
 #include "mc/deps/renderer/ShaderColor.h"
+#include "mc/deps/core/container/Blob.h"
+#include "mc/deps/core/file/PathView.h"
+#include "mc/deps/core/image/Image.h"
+#include "mc/deps/core/resource/ResourceLocation.h"
+#include "mc/deps/core_graphics/ImageBuffer.h"
 
 #include "client/Client.h"
 #include "client/render/TexturePath.h"
@@ -70,18 +76,106 @@ mce::MaterialPtr const* particleBlendMaterial() {
     return m.mRenderMaterialInfoPtr.get() ? &m : nullptr;
 }
 
+namespace {
+
+/// The textures of the unit, looked up again for every level (the pack stack of a remote server is
+/// loaded when the player joins: a lookup made before resolves to the missing texture for good)
+/// and whenever the texture group no longer has them loaded (a resource reload).
+struct TextureCache {
+    struct Entry {
+        mce::TexturePtr*                      ptr = nullptr; ///< kept for the process (handed out)
+        unsigned                              generation = 0;
+        std::chrono::steady_clock::time_point checked{};
+    };
+    std::mutex                             mutex;
+    std::unordered_map<std::string, Entry> entries;
+    unsigned                               generation = 1;
+    LevelRenderer*                         renderer   = nullptr;
+};
+TextureCache& textureCache() {
+    static TextureCache c;
+    return c;
+}
+
+constexpr char kWhiteKey[] = "\x01white";
+
+/// A 16 x 16 white RGBA texture uploaded from memory under `location`.
+bool uploadWhite(mce::TextureGroup& group, ResourceLocation const& location, mce::TexturePtr& out) {
+    try {
+        mce::Image image(16, 16, mce::ImageFormat::RGBA8Unorm, mce::ImageUsage::SRGB);
+        image.resizeImageBytesToFitImageDescription();
+        image.mImageBytes.fillBlob(255);
+        cg::ImageBuffer buffer(std::move(image));
+        auto&           texture = group.uploadTexture(location, std::move(buffer));
+        out                     = mce::TexturePtr(texture, location, cg::TextureSetLayerType::Color);
+        return out.mClientTexture.get() != nullptr;
+    } catch (...) {
+        return false;
+    }
+}
+
+} // namespace
+
+void resetTextures() {
+    std::lock_guard lock(textureCache().mutex);
+    ++textureCache().generation;
+}
+
+unsigned textureGeneration() {
+    std::lock_guard lock(textureCache().mutex);
+    return textureCache().generation;
+}
+
 mce::TexturePtr const* texture(std::string const& path) {
-    static std::mutex                                        m;
-    static std::unordered_map<std::string, mce::TexturePtr*> cache; // kept for the process
-    std::lock_guard                                          lock(m);
-    if (auto it = cache.find(path); it != cache.end()) return it->second;
+    auto& tc = textureCache();
+    std::lock_guard lock(tc.mutex);
     auto* c = currentClient();
     if (!c) return nullptr;
+    // another level renderer: another world (or a remote server's pack stack)
+    if (auto* lr = c->getLevelRenderer(); lr != tc.renderer) {
+        tc.renderer = lr;
+        ++tc.generation;
+    }
     auto group = c->getTextureGroup();
     if (!group) return nullptr;
-    auto* t = new mce::TexturePtr(group->getTexture(render::textureLocation(path), false, std::nullopt, cg::TextureSetLayerType::Color));
-    cache.emplace(path, t);
-    return t;
+    bool const white    = path == kWhiteKey;
+    auto const location = white ? ResourceLocation(Core::PathView("gf_atmosphere/white")) : render::textureLocation(path);
+    auto&      e        = tc.entries[path];
+    auto const now      = std::chrono::steady_clock::now();
+    bool       fetch    = !e.ptr || e.generation != tc.generation;
+    // once a second: still loaded? (a resource reload drops what it does not know)
+    if (!fetch && now - e.checked > std::chrono::seconds(1)) {
+        e.checked = now;
+        try {
+            fetch = !group->isLoaded(location, false, cg::TextureSetLayerType::Color);
+        } catch (...) {}
+    }
+    if (!fetch) return e.ptr;
+    if (!e.ptr) e.ptr = new mce::TexturePtr();
+    e.generation = tc.generation;
+    e.checked    = now;
+    if (white) {
+        if (uploadWhite(*group, location, *e.ptr)) return e.ptr;
+        // the pack's own white texture when the upload failed
+        *e.ptr = group->getTexture(render::textureLocation("textures/atmosphere/white"), true, std::nullopt, cg::TextureSetLayerType::Color);
+        return e.ptr;
+    }
+    *e.ptr = group->getTexture(location, e.generation > 1, std::nullopt, cg::TextureSetLayerType::Color);
+    return e.ptr;
+}
+
+mce::TexturePtr const* whiteTexture() { return texture(kWhiteKey); }
+
+mce::MaterialPtr const* materialFor(std::string const& name) {
+    if (name == "@particles_blend") return particleBlendMaterial();
+    if (name == "@particles_opaque" || name == "@particles_alpha") {
+        auto* lr = levelRenderer();
+        if (!lr) return nullptr;
+        auto const& m = name == "@particles_opaque" ? lr->getParticleEngine().opaqueMat.get() : lr->getParticleEngine().alphaTestMat.get();
+        return m.mRenderMaterialInfoPtr.get() ? &m : nullptr;
+    }
+    if (name == "@stars") return starsMaterial();
+    return name.empty() ? nullptr : materialNamed(name.c_str());
 }
 
 mce::MaterialPtr const* materialNamed(char const* name) {

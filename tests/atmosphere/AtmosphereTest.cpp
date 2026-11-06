@@ -373,3 +373,73 @@ TEST(Atmosphere, AuroraMesh) {
     auto above = auroraMesh(-40.0f, 192.0f, 128, 256); // camera above y 256
     EXPECT_NEAR(auroraMeshPoint(above, 128, 64).second, 528.0f, 0.05f);
 }
+
+TEST(Atmosphere, FogColourWeather) {
+    Rgb const fog = rgbOf(0xC0FFD8), sky = rgbOf(0x20224A);
+    float const d = daylight(timeOfDay(kFixedTime));
+    auto clear    = fogColor(fog, sky, d, 12);
+    // FogRenderer#setupColor: rain darkens red / green by half the level and blue by 0.4 of it
+    auto rain = fogColor(fog, sky, d, 12, 1.0f, 0.0f);
+    auto skyR = skyColor(sky, d, 1.0f, 0.0f);
+    float f   = 1.0f - std::pow(0.25f + 0.75f * 12.0f / 32.0f, 0.25f);
+    auto bdf  = brightnessDependentFogColor(fog, d);
+    EXPECT_NEAR(rain.r, (bdf.r + (skyR.r - bdf.r) * f) * 0.5f, 1e-5f);
+    EXPECT_NEAR(rain.b, (bdf.b + (skyR.b - bdf.b) * f) * 0.6f, 1e-5f);
+    // thunder halves everything once more
+    auto storm = fogColor(fog, sky, d, 12, 1.0f, 1.0f);
+    auto skyS  = skyColor(sky, d, 1.0f, 1.0f);
+    EXPECT_NEAR(storm.g, (bdf.g + (skyS.g - bdf.g) * f) * 0.5f * 0.5f, 1e-5f);
+    EXPECT_LT(storm.g, rain.g);
+    EXPECT_LT(rain.g, clear.g);
+    // getSkyColor's rain: towards 0.6 x the luminance by 0.75
+    Rgb   s  = {sky.r * d, sky.g * d, sky.b * d};
+    float lu = (s.r * 0.3f + s.g * 0.59f + s.b * 0.11f) * 0.6f;
+    EXPECT_NEAR(skyR.b, s.b * 0.25f + lu * 0.75f, 1e-6f);
+    // below the floor of the dimension the fog goes black, above one block it is untouched
+    EXPECT_EQ(fogColor(fog, sky, d, 12, 0, 0, -3.0), (Rgb{0, 0, 0}));
+    auto half = fogColor(fog, sky, d, 12, 0, 0, 0.5);
+    EXPECT_NEAR(half.g, clear.g * 0.25f, 1e-6f);
+    EXPECT_EQ(fogColor(fog, sky, d, 12, 0, 0, 1.0), clear);
+}
+
+TEST(Atmosphere, CubicSampler) {
+    // a uniform field stays itself
+    auto same = gaussianSample(3.3, -1.7, 12.5, [](int, int, int) { return Rgb{0.2f, 0.4f, 0.6f}; });
+    EXPECT_NEAR(same.r, 0.2f, 1e-6f);
+    EXPECT_NEAR(same.b, 0.6f, 1e-6f);
+    // a border between x quart 0 (black) and 1 (white): at x 0 the weights are 1 4 6 4 1 over the
+    // cells -2..2 (0 at 3): white share (4 + 1) / 16
+    auto edge = gaussianSample(0.0, 0.0, 0.0, [](int x, int, int) { return x >= 1 ? Rgb{1, 1, 1} : Rgb{}; });
+    EXPECT_NEAR(edge.r, 5.0f / 16.0f, 1e-6f);
+    // halfway the weights shift by half a kernel step
+    auto mid = gaussianSample(0.5, 0.0, 0.0, [](int x, int, int) { return x >= 1 ? Rgb{1, 1, 1} : Rgb{}; });
+    EXPECT_NEAR(mid.r, 0.5f, 1e-6f);
+    // negative coordinates floor as Mth.floor does
+    auto neg = gaussianSample(-1.0, 0.0, 0.0, [](int x, int, int) { return x >= 0 ? Rgb{1, 1, 1} : Rgb{}; });
+    EXPECT_NEAR(neg.r, 5.0f / 16.0f, 1e-6f);
+}
+
+TEST(Atmosphere, LinearFogValue) {
+    EXPECT_EQ(linearFogValue(10, 20, 100), 0.0f);
+    EXPECT_EQ(linearFogValue(120, 20, 100), 1.0f);
+    EXPECT_NEAR(linearFogValue(60, 20, 100), 0.5f, 1e-6f);
+    EXPECT_NEAR(linearFogValue(40, 20, 100), 0.15625f, 1e-6f); // smoothstep(0.25)
+}
+
+TEST(Atmosphere, VoidPlateFogged) {
+    // 8 fan triangles, each in 16 rings; black at the centre, the fog colour at the rim (512 > 192)
+    auto plate = voidPlateFogged(0.0f, 192.0f, 16);
+    ASSERT_EQ(plate.size(), 8u * 16u);
+    EXPECT_NEAR(plate.front()[0].pos.x, 0.0f, 1e-4f);
+    EXPECT_NEAR(plate.front()[0].pos.y, -4.0f, 1e-6f);
+    // the centre's cylindrical distance is the |y| of the dark buffer (16): smoothstep(16 / 192)
+    EXPECT_NEAR(plate.front()[0].fog, linearFogValue(16.0f, 0.0f, 192.0f), 1e-6f);
+    EXPECT_LT(plate.front()[0].fog, 0.03f);
+    EXPECT_EQ(plate[15][1].fog, 1.0f);
+    float r = std::hypot(plate[15][1].pos.x, plate[15][1].pos.z);
+    EXPECT_NEAR(r, 512.0f, 0.01f);
+    // the rings stay on the fan triangle's edges: the outer corners are the plate's own corners
+    auto quads = voidPlateQuads();
+    EXPECT_NEAR(plate[15][1].pos.x, quads[0][1].x, 1e-3f);
+    EXPECT_NEAR(plate[15][2].pos.z, quads[0][2].z, 1e-3f);
+}

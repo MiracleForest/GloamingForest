@@ -134,7 +134,27 @@ struct Preview {
     float                                                       vvFog      = 0; ///< VV fog thinning (0: the default)
     bool                                                        voidPlate  = false; ///< draw the void plate anyway
     bool                                                        bossFog    = false; ///< a boss bar with world fog
+    // calibration of the e2e scenario: the material (materialFor's names; "+tex": with the white
+    // texture) each part is drawn with instead of the mode's default ("": the default)
+    std::string starsMat, auroraMat, weatherMat, plateMat;
+    float       vvSkyTime  = -1; ///< Vibrant Visuals: the sky object's time of day (< 0: the game's)
+    int         vvStarMesh = -1; ///< Vibrant Visuals: TF's stars in the level renderer's star mesh (-1 default, 0 off, 1 on)
 };
+
+/// A material choice: "name" or "name+tex" (sampled from the white texture).
+struct MaterialChoice {
+    mce::MaterialPtr const* material = nullptr;
+    bool                    textured = false;
+    std::string             name;
+};
+MaterialChoice choose(std::string const& spec) {
+    MaterialChoice c;
+    c.name     = spec;
+    auto plus  = spec.find('+');
+    c.textured = plus != std::string::npos;
+    c.material = materialFor(c.textured ? spec.substr(0, plus) : spec);
+    return c;
+}
 
 /// The aurora mesh the worker computed: camera-relative positions (at `cam`) and colours.
 struct AuroraGrid {
@@ -154,6 +174,16 @@ struct Shared {
     bool        inTwilight = false;
     int         playerDim  = -1;
     bool        bossFog    = false;
+    // the camera of the last frame (render thread) and what it is in (client tick): FogHandler and
+    // TF's fog colour apply only for FogType.NONE
+    std::optional<Vec3> camera;
+    bool                cameraInFluid = false;
+    // FogRenderer#setupColor's inputs (client tick): the biome fog and sky colours blended around
+    // the camera (CubicSampler), the level's rain and thunder, the camera's height above the floor
+    ca::Rgb blendedFog{}, blendedSky{};
+    bool    blendedValid = false;
+    float   rain = 0, thunder = 0;
+    double  aboveFloor = 1.0e9;
     // locked-biome weather: enforcement per column of the (2 * 15 + 1)^2 square around (cx, cz)
     bool                     nearLocked = false;
     int                      cx = 0, cz = 0;
@@ -203,6 +233,7 @@ void logOnce(std::string const& key, std::string const& line) {
 
 struct AtmosphereConfigView {
     std::vector<std::string> auroraBiomes; ///< parsed resource locations, as Bedrock names them
+    std::vector<std::string> raw;          ///< the configured ids as written
     bool                     sky = true, fog = true, weather = true, aurora = true;
 };
 
@@ -216,24 +247,26 @@ UnknownBiomes& unknownBiomes() {
     return u;
 }
 
+/// The client's view of the config section, built from the live struct only on the thread that just
+/// loaded it (install, gf::config::onReload) and read everywhere else (client tick, render thread)
+/// through this snapshot: the live struct is assigned by `/twilightforest reload` and the config
+/// screen on the server thread.
+struct ConfigCache {
+    std::mutex                                  mutex;
+    std::shared_ptr<AtmosphereConfigView const> view;
+};
+ConfigCache& configCache() {
+    static ConfigCache c;
+    return c;
+}
+
 /// TFConfig#getValidAuroraBiomes: the configured ids that parse as resource locations (an invalid
 /// one is warned about once and skipped; so is one that names no biome of the world, once the
-/// world's biomes are known). Parsed again only when the config section changes.
-std::shared_ptr<AtmosphereConfigView const> config() {
-    struct Cache {
-        std::mutex                                  mutex;
-        bool                                        init = false;
-        std::vector<std::string>                    raw;
-        std::array<bool, 4>                         flags{};
-        std::shared_ptr<AtmosphereConfigView const> view;
-    };
-    static Cache cache;
-    auto const&  c = gf::config::get<at::AtmosphereConfig>();
-    std::array<bool, 4> flags{c.sky, c.fog, c.weather, c.aurora};
-    std::lock_guard     lock(cache.mutex);
-    if (cache.init && cache.raw == c.auroraBiomes && cache.flags == flags) return cache.view;
+/// world's biomes are known). Runs after every config load.
+void buildConfigView(at::AtmosphereConfig const& c) {
     auto v = std::make_shared<AtmosphereConfigView>();
     v->sky = c.sky, v->fog = c.fog, v->weather = c.weather, v->aurora = c.aurora;
+    v->raw = c.auroraBiomes;
     for (auto const& id : c.auroraBiomes) {
         auto rl = ca::parseResourceLocation(id);
         if (!rl) {
@@ -242,17 +275,21 @@ std::shared_ptr<AtmosphereConfigView const> config() {
         }
         v->auroraBiomes.push_back(ca::bedrockBiomeName(*rl));
     }
-    cache.init  = true;
-    cache.raw   = c.auroraBiomes;
-    cache.flags = flags;
-    cache.view  = v;
     {
-        std::lock_guard l2(unknownBiomes().mutex);
-        unknownBiomes().checked.clear(); // check the new list against the world's biomes again
+        std::lock_guard lock(configCache().mutex);
+        configCache().view = std::move(v);
     }
-    return cache.view;
+    std::lock_guard l2(unknownBiomes().mutex);
+    unknownBiomes().checked.clear(); // check the new list against the world's biomes again
 }
 
+void refreshConfig() { buildConfigView(gf::config::get<at::AtmosphereConfig>()); }
+
+std::shared_ptr<AtmosphereConfigView const> config() {
+    std::lock_guard lock(configCache().mutex);
+    if (!configCache().view) configCache().view = std::make_shared<AtmosphereConfigView>(AtmosphereConfigView{{"twilightforest:glacier"}});
+    return configCache().view;
+}
 /// The second half of getValidAuroraBiomes: ids the world has no biome of are warned about once and
 /// skipped (TF's own biomes always count, the client may not have their definitions yet).
 void checkAuroraBiomes(Level& level, AtmosphereConfigView const& cfg) {
@@ -322,22 +359,6 @@ std::string lockedEnforcement(std::string const& biome, Preview const& preview) 
     if (!locked) return {};
     auto it = enforcements().find(biome);
     return it == enforcements().end() ? std::string{} : it->second;
-}
-
-/// The white texture the aurora, the world-pass stars and the void plate are drawn with, read from
-/// the mod's own pack folder on the disk: on a remote server the game's pack stack may not resolve
-/// "textures/atmosphere/white" (the remote-mod e2e drew the missing texture: magenta x the vertex
-/// colours, a blue aurora), the file is always there.
-mce::TexturePtr const* whiteTexture() {
-    static std::string const path = [] {
-        std::error_code ec;
-        try {
-            auto f = Mod::getInstance().getSelf().getModDir() / "resource_packs" / "GloamingForest_RP" / "textures" / "atmosphere" / "white.png";
-            if (std::filesystem::exists(f, ec)) return f.string();
-        } catch (...) {}
-        return std::string("textures/atmosphere/white");
-    }();
-    return texture(path);
 }
 
 bool inTwilight(LocalPlayer const& p) { return gDimension.load() >= 0 && static_cast<int>(p.getDimensionId()) == gDimension.load(); }
@@ -423,6 +444,78 @@ bool bossWorldFog(LocalPlayer& p) {
     return false;
 }
 
+// ---- FogType (Camera#getFluidInCamera) and FogRenderer#setupColor's inputs -------------------------------------
+
+enum class FluidKind { None, Water, Lava };
+FluidKind fluidKind(std::string const& id) {
+    if (id == "minecraft:water" || id == "minecraft:flowing_water") return FluidKind::Water;
+    if (id == "minecraft:lava" || id == "minecraft:flowing_lava") return FluidKind::Lava;
+    return FluidKind::None;
+}
+
+/// Camera#getFluidInCamera is not FogType.NONE: the camera below the surface of the water or lava of
+/// its block (FluidState#getHeight), or in powder snow. TF's fog (FogHandler, the fog colour) then
+/// leaves the game's own water / lava / powder snow fog alone.
+bool cameraInFluid(BlockSource& region, Vec3 const& cam) {
+    BlockPos const at = blockPosOf(cam);
+    if (!region.hasChunksAt(at, 0, false)) return false;
+    auto const& block = region.getBlock(at);
+    auto const  id    = game::blockId(block);
+    auto const& liq   = region.getLiquidBlock(at);
+    FluidKind   kind  = fluidKind(id);
+    auto const* fluid = &block;
+    if (kind == FluidKind::None) {
+        kind  = fluidKind(game::blockId(liq));
+        fluid = &liq;
+    }
+    if (kind != FluidKind::None) {
+        BlockPos const above{at.x, at.y + 1, at.z};
+        bool const     same = fluidKind(game::blockId(region.getBlock(above))) == kind || fluidKind(game::blockId(region.getLiquidBlock(above))) == kind;
+        float const    h    = ca::fluidHeight(game::intState(*fluid, "liquid_depth").value_or(0), same);
+        if (cam.y < static_cast<float>(at.y) + h) return true;
+    }
+    return id == "minecraft:powder_snow";
+}
+
+/// The biome fog and sky colours blended over the 6 x 6 x 6 quart cells around the camera
+/// (CubicSampler#gaussianSampleVec3 of FogRenderer#setupColor and ClientLevel#getSkyColor). A biome
+/// that is not TF's takes vanilla Java's default fog (0xC0D8FF) and plains sky (0x78A7FF) colours.
+struct BlendGrid {
+    int                     i = 0, j = 0, k = 0, gen = -1;
+    BlockSource const*      region = nullptr;
+    std::array<ca::Rgb, 216> fog{}, sky{};
+};
+void blendedColours(BlockSource& region, Vec3 const& cam, Preview const& preview, int previewGen, int minY, int maxY, ca::Rgb& fog, ca::Rgb& sky) {
+    static BlendGrid grid; // client thread
+    double const     qx = (cam.x - 2.0) * 0.25, qy = (cam.y - 2.0) * 0.25, qz = (cam.z - 2.0) * 0.25;
+    int const        i = static_cast<int>(std::floor(qx)), j = static_cast<int>(std::floor(qy)), k = static_cast<int>(std::floor(qz));
+    if (grid.gen != previewGen || grid.region != &region || grid.i != i || grid.j != j || grid.k != k) {
+        grid.gen    = previewGen;
+        grid.region = &region;
+        grid.i = i, grid.j = j, grid.k = k;
+        std::unordered_map<std::string, std::pair<ca::Rgb, ca::Rgb>> memo;
+        for (int l = 0; l < 6; ++l)
+            for (int m = 0; m < 6; ++m)
+                for (int n = 0; n < 6; ++n) {
+                    BlockPos    at{(i - 2 + l) * 4, std::clamp((j - 2 + m) * 4, minY, maxY), (k - 2 + n) * 4};
+                    std::string biome = biomeAt(region, at, preview);
+                    auto        it    = memo.find(biome);
+                    if (it == memo.end()) {
+                        auto look = ca::biomeLook(biome);
+                        it        = memo.emplace(biome, look ? std::pair{ca::rgbOf(look->fog), ca::rgbOf(look->sky)} : std::pair{ca::rgbOf(0xC0D8FF), ca::rgbOf(0x78A7FF)}).first;
+                    }
+                    auto const idx = static_cast<std::size_t>((l * 6 + m) * 6 + n);
+                    grid.fog[idx]  = it->second.first;
+                    grid.sky[idx]  = it->second.second;
+                }
+    }
+    auto at = [&](std::array<ca::Rgb, 216> const& g) {
+        return [&g, i, j, k](int x, int y, int z) { return g[static_cast<std::size_t>(((x - i + 2) * 6 + (y - j + 2)) * 6 + (z - k + 2))]; };
+    };
+    fog = ca::gaussianSample(qx, qy, qz, at(grid.fog));
+    sky = ca::gaussianSample(qx, qy, qz, at(grid.sky));
+}
+
 void installProviderFor(int dim);
 void clearProviderFor(int dim);
 
@@ -445,24 +538,39 @@ void clientTick() {
         s.inTwilight = false;
         s.aurora = s.lastAurora = 0;
         s.nearLocked            = false;
+        s.cameraInFluid         = false;
+        s.blendedValid          = false;
         s.urGhastRain           = 0;
         s.playerDim             = -1;
         return;
     }
     auto const cfg = config();
     checkAuroraBiomes(p->getLevel(), *cfg);
-    Preview preview;
-    int     previewGen = 0, scanX = 0, scanZ = 0, scanTick = 0, scanGen = 0, ticks = 0;
+    Preview             preview;
+    std::optional<Vec3> lastCamera;
+    int                 previewGen = 0, scanX = 0, scanZ = 0, scanTick = 0, scanGen = 0, ticks = 0;
     {
         std::lock_guard lock(s.mutex);
         preview    = s.preview;
         previewGen = s.previewGen;
+        lastCamera = s.camera;
         scanX = s.scanX, scanZ = s.scanZ, scanTick = s.scanTick, scanGen = s.scanGen, ticks = s.ticks + 1;
     }
     bool const  twilight = inTwilight(*p);
     auto&       region   = p->getDimensionBlockSource();
     BlockPos    bp       = blockPosOf(p->getPosition());
     std::string camera   = biomeAt(region, bp, preview);
+
+    // FogRenderer's view of the camera: its fluid (FogType), the blended biome colours, the weather
+    // and the height above the floor (the render thread reads them for the fog)
+    Vec3 const  cam      = lastCamera && (lastCamera->x - p->getPosition().x) * (lastCamera->x - p->getPosition().x) + (lastCamera->z - p->getPosition().z) * (lastCamera->z - p->getPosition().z) < 64.0f * 64.0f ? *lastCamera : p->getPosition();
+    bool const  inFluid  = cameraInFluid(region, cam);
+    int const   minY     = p->getDimension().mHeightRange->mMin;
+    int const   maxY     = p->getDimension().mHeightRange->mMax;
+    ca::Rgb     blendFog{}, blendSky{};
+    blendedColours(region, cam, preview, previewGen, minY, maxY - 1, blendFog, blendSky);
+    float rainNow = 0, thunderNow = 0;
+    if (auto* w = p->getDimension().mWeather.get()) rainNow = w->mRainLevel, thunderNow = w->mLightningLevel;
 
     // aurora counter (ClientGameEvents#clientTick): every dimension, by the camera's biome
     bool inAurora = cfg->aurora && auroraBiome(*cfg, camera);
@@ -498,6 +606,13 @@ void clientTick() {
         s.inTwilight = twilight;
         s.playerDim  = static_cast<int>(p->getDimensionId());
         s.lastAurora = s.aurora;
+        s.cameraInFluid = inFluid;
+        s.blendedFog    = blendFog;
+        s.blendedSky    = blendSky;
+        s.blendedValid  = true;
+        s.rain          = rainNow;
+        s.thunder       = thunderNow;
+        s.aboveFloor    = static_cast<double>(cam.y) - minY;
         s.aurora     = ca::tickAurora(s.aurora, inAurora, cfg->auroraBiomes.empty() || !cfg->aurora);
         s.cameraBiome = camera;
         if (!scan) s.nearLocked = false;
@@ -607,9 +722,13 @@ struct SkyMeshes {
     LevelRenderer*                            owner   = nullptr;
     bool                                      swapped = false;
     std::shared_ptr<mce::Mesh>                hidden;
+    std::shared_ptr<mce::Mesh>                tfStars; ///< TF's star field (Vibrant Visuals draws it itself)
     std::shared_ptr<mce::Mesh>                sun, stars;
     std::array<std::shared_ptr<mce::Mesh>, 8> moon;
 };
+Preview                          previewNow();
+std::vector<ColourVertex> const& starVerticesRaw();
+
 SkyMeshes& skyMeshes() {
     static SkyMeshes m;
     return m;
@@ -631,9 +750,18 @@ void hideVanillaSky(ScreenContext& screen) {
         m.swapped = true;
         log().info("atmosphere: sun, moon and vanilla stars hidden in the Twilight Forest");
     }
+    // Vibrant Visuals paints its own sky over the sky pass but draws the level renderer's star mesh
+    // with its own sky material: there the mesh is TF's star field (at full brightness through the
+    // view override); in Classic the stars are drawn by starsFrame
+    std::shared_ptr<mce::Mesh> starsWanted = m.hidden;
+    if (vibrantVisuals() && previewNow().vvStarMesh != 0) {
+        if (!m.tfStars) m.tfStars = buildMesh(screen, starVerticesRaw(), "gf_atmosphere_stars");
+        starsWanted = m.tfStars;
+        logOnce("stars_mesh", "atmosphere: TF stars in the level renderer's star mesh (Vibrant Visuals)");
+    }
     // the game may rebuild them (device lost): put ours back every frame
     if (sun != m.hidden) sun = m.hidden;
-    if (stars != m.hidden) stars = m.hidden;
+    if (stars != starsWanted) stars = starsWanted;
     for (int i = 0; i < 8; ++i)
         if (moons[i] != m.hidden) moons[i] = m.hidden;
 }
@@ -688,11 +816,23 @@ std::optional<ca::FogPlanes> stepFog(std::string const& biome, double y, bool ch
     return s.fogPlanes;
 }
 
-ca::Rgb fogColourOf(std::string const& biome) {
+/// FogRenderer#setupColor's colour in the Twilight Forest: the biome fog colours blended around the
+/// camera (the client tick's CubicSampler; `biome`'s own colours until the first tick, or when a
+/// test asks for one biome), darkened by the level's rain and thunder and near the floor.
+ca::Rgb fogColourOf(std::string const& biome, bool blended = true) {
     auto look = ca::biomeLook(biome);
     if (!look) return {};
-    int chunks = static_cast<int>(renderDistanceBlocks() / 16.0f);
-    return ca::fogColor(ca::rgbOf(look->fog), ca::rgbOf(look->sky), ca::daylight(ca::timeOfDay(ca::kFixedTime)), chunks);
+    int     chunks = static_cast<int>(renderDistanceBlocks() / 16.0f);
+    ca::Rgb fog = ca::rgbOf(look->fog), sky = ca::rgbOf(look->sky);
+    float   rain = 0, thunder = 0;
+    double  above = 1.0e9;
+    {
+        std::lock_guard lock(shared().mutex);
+        auto const&     s = shared();
+        if (blended && s.blendedValid) fog = s.blendedFog, sky = s.blendedSky;
+        rain = s.rain, thunder = s.thunder, above = s.aboveFloor;
+    }
+    return ca::fogColor(fog, sky, ca::daylight(ca::timeOfDay(ca::kFixedTime)), chunks, rain, thunder, above);
 }
 
 Preview previewNow() {
@@ -705,18 +845,31 @@ Preview previewNow() {
 /// fog colour. The planes are stretched by this factor there (the fog colour stays TF's).
 constexpr float kVibrantFogStretch = 3.0f;
 
-std::optional<sky::FogSpec> fogFor(std::string const& playerBiome) {
+/// The provider's fog. TwilightForestRenderInfo#isFoggyAt and FogHandler read the player's feet
+/// (player.position().y, player.blockPosition(); Bedrock's getPosition is the eyes), so the biome
+/// and the height are the feet's. `forcedBiome` (tests) replaces the biome and the blending.
+std::optional<sky::FogSpec> fogAt(std::optional<std::string> const& forcedBiome) {
     auto cfg = config();
     if (!cfg->fog) return std::nullopt;
     auto* p = currentPlayer();
     if (!p) return std::nullopt;
-    auto const  preview = previewNow();
-    std::string biome   = preview.biome ? *preview.biome : playerBiome;
+    auto const preview = previewNow();
+    bool       inFluid = false;
+    {
+        std::lock_guard lock(shared().mutex);
+        inFluid = shared().cameraInFluid;
+    }
+    if (inFluid && !forcedBiome) {
+        logOnce("fog_fluid", "atmosphere: camera in water, lava or powder snow: the game's own fog");
+        return std::nullopt; // FogHandler and setupColor's NONE branch only
+    }
+    auto&          region = p->getDimensionBlockSource();
+    BlockPos const feet   = p->getFeetBlockPos();
+    std::string    biome  = forcedBiome ? *forcedBiome : preview.biome ? *preview.biome : biomeAt(region, feet, preview);
     if (!ca::biomeLook(biome)) return std::nullopt; // not a TF biome: the game's own fog
-    auto const& pos    = p->getPosition();
-    auto        planes = stepFog(biome, pos.y, p->getDimensionBlockSource().hasChunksAt(blockPosOf(pos), 0, false));
+    auto planes = stepFog(biome, p->getFeetPos().y, region.hasChunksAt(feet, 0, false));
     if (!planes) return std::nullopt;
-    auto c = fogColourOf(biome);
+    auto c = fogColourOf(biome, !forcedBiome);
     logOnce("fog:" + biome, fmt::format("atmosphere: fog of {} {:.1f}..{:.1f}", biome, planes->start, planes->end));
     if (vibrantVisuals()) {
         float k = preview.vvFog > 0 ? preview.vvFog : kVibrantFogStretch;
@@ -726,7 +879,22 @@ std::optional<sky::FogSpec> fogFor(std::string const& playerBiome) {
     return sky::FogSpec{{c.r, c.g, c.b}, planes->start, planes->end};
 }
 
-/// The stars (TFSkyRenderer#createStars, rotated as renderSky does at the fixed time), radius 100.
+std::optional<sky::FogSpec> fogFor(std::string const&) { return fogAt(std::nullopt); }
+/// The stars of TFSkyRenderer#createStars (radius 100) before the sky rotation: the level renderer's
+/// own star mesh under Vibrant Visuals (the game rotates it by its time of day).
+std::vector<ColourVertex> const& starVerticesRaw() {
+    static std::vector<ColourVertex> const v = [] {
+        std::vector<ColourVertex> out;
+        for (auto const& q : ca::starQuads()) {
+            for (std::size_t i : {0u, 1u, 2u, 3u}) out.push_back({q[i].x, q[i].y, q[i].z, 1, 1, 1, 1});
+            for (std::size_t i : {3u, 2u, 1u, 0u}) out.push_back({q[i].x, q[i].y, q[i].z, 1, 1, 1, 1});
+        }
+        return out;
+    }();
+    return v;
+}
+
+/// The stars rotated as TFSkyRenderer#renderSky does at the fixed time, radius 100, both windings.
 std::vector<ColourVertex> const& starVertices() {
     static std::vector<ColourVertex> const v = [] {
         std::vector<ColourVertex> out;
@@ -743,17 +911,25 @@ std::vector<ColourVertex> const& starVertices() {
     return v;
 }
 
-/// The void plate (both windings), black, radius 512 at y -4.
-std::vector<ColourVertex> const& voidPlateVertices() {
-    static std::vector<ColourVertex> const v = [] {
-        std::vector<ColourVertex> out;
-        for (auto const& q : ca::voidPlateQuads()) {
-            for (std::size_t i : {0u, 1u, 2u, 3u}) out.push_back({q[i].x, q[i].y, q[i].z, 0, 0, 0, 1});
-            for (std::size_t i : {3u, 2u, 1u, 0u}) out.push_back({q[i].x, q[i].y, q[i].z, 0, 0, 0, 1});
-        }
-        return out;
-    }();
-    return v;
+/// The sky fog planes of FogHandler (FOG_SKY) now: what TF's position shader fogs the void plate with.
+ca::FogPlanes skyFogPlanes() {
+    auto&           s = shared();
+    std::lock_guard lock(s.mutex);
+    if (s.fog.skyLoaded()) return s.fog.skyPlanes();
+    return ca::vanillaFog(true, s.renderDistance, false);
+}
+
+/// The void plate (TFSkyRenderer's dark buffer, black, shader colour 0 0 0 1, no blend) with the sky
+/// fog TF's position shader mixes in (black below, the fog colour towards the horizon), both
+/// windings, radius 512 at y -4.
+std::vector<ColourVertex> voidPlateVertices(ca::Rgb fog, ca::FogPlanes planes) {
+    std::vector<ColourVertex> out;
+    auto                      vtx = [&](ca::FoggedVertex const& v) { return ColourVertex{v.pos.x, v.pos.y, v.pos.z, fog.r * v.fog, fog.g * v.fog, fog.b * v.fog, 1}; };
+    for (auto const& q : ca::voidPlateFogged(planes.start, planes.end, 32)) {
+        for (std::size_t i : {0u, 1u, 2u, 3u}) out.push_back(vtx(q[i]));
+        for (std::size_t i : {3u, 2u, 1u, 0u}) out.push_back(vtx(q[i]));
+    }
+    return out;
 }
 
 std::vector<ColourVertex> scaled(std::vector<ColourVertex> const& in, float k) {
@@ -762,19 +938,50 @@ std::vector<ColourVertex> scaled(std::vector<ColourVertex> const& in, float k) {
     return out;
 }
 
+/// The distance the sky-pass draws are scaled to (the same picture: they are centred on the camera
+/// and drawn without depth). Bedrock fogs the sky pass by distance like the world, TF draws its
+/// stars without fog (FogRenderer.setupNoFog) and the aurora with its own fog rule: a few blocks
+/// keep them inside the nearest fog start of any biome (the dark forests' 0.05 x the render
+/// distance), and outside the camera's near plane.
+float skyRadius(ScreenContext& screen) {
+    float n = screen.camera.mZNear;
+    return std::isfinite(n) && n > 0 ? std::clamp(n * 20.0f, 1.0f, 4.0f) : 2.0f;
+}
+
+/// Draws quads with a material choice (the white texture when it asks for one).
+bool drawWith(ScreenContext& screen, MaterialChoice const& m, std::vector<ColourVertex> const& quads) {
+    if (!m.material) {
+        logOnce("material_missing:" + m.name, "atmosphere: no material " + m.name);
+        return false;
+    }
+    mce::TexturePtr const* tex = nullptr;
+    if (m.textured && !(tex = whiteTexture())) return false;
+    drawSmoothQuads(screen, *m.material, tex, quads);
+    return true;
+}
+
 /// Pushes one quad of four vertices with the preview's winding (0: as given, 1: reversed, 2: both).
 void pushQuad(std::vector<ColourVertex>& out, ColourVertex const& a, ColourVertex const& b, ColourVertex const& c, ColourVertex const& d, int winding) {
     if (winding != 1) out.insert(out.end(), {a, b, c, d});
     if (winding != 0) out.insert(out.end(), {d, c, b, a});
 }
 
+// The materials of each part by graphics mode (the e2e calibration's shots of the candidates are in
+// docs/units/atmosphere.md): Classic draws in the sky pass, Vibrant Visuals in the world pass.
+constexpr char kClassicStars[]  = "@stars";
+constexpr char kClassicPlate[]  = "@particles_blend+tex";
+constexpr char kClassicAurora[] = "@particles_blend+tex";
+constexpr char kVibrantStars[]  = "lightning";
+constexpr char kVibrantPlate[]  = "@particles_blend+tex";
+constexpr char kVibrantAurora[] = "lightning";
+constexpr char kVibrantWeather[] = "glow_sign_text";
+constexpr char kClassicWeather[] = "@particles_blend";
+
 AuroraMode auroraModeFor(Preview const& preview, bool inTwilightSky) {
     if (preview.auroraMode != AuroraMode::Auto) return preview.auroraMode;
     // the sky pass exists only in the TF provider's dimension and only Classic shows it; there the
-    // particle engine's blend material over a white texture blends the vertex colours over the sky
-    // as TF's shader does (SRC_ALPHA, ONE_MINUS_SRC_ALPHA) and is not fogged (the e2e calibration:
-    // ui_fill_gradient draws nothing in the sky pass, the stars material ignores vertex alpha,
-    // wireframe is opaque, the world pass fogs the far cells into the fog colour)
+    // particle engine's blend material over the white texture blends the vertex colours over the
+    // sky as TF's shader does (SRC_ALPHA, ONE_MINUS_SRC_ALPHA)
     return inTwilightSky && !vibrantVisuals() ? AuroraMode::SkyBlend : AuroraMode::WorldBlend;
 }
 StarsMode starsModeFor(Preview const& preview) {
@@ -782,6 +989,21 @@ StarsMode starsModeFor(Preview const& preview) {
     return vibrantVisuals() ? StarsMode::WorldBlend : StarsMode::SkyStars;
 }
 bool skyPass(AuroraMode m) { return m == AuroraMode::SkyUi || m == AuroraMode::SkyStars || m == AuroraMode::SkyBlend; }
+
+/// The aurora's quads, built again only when the mesh, the fade, the scale, the winding or the
+/// material changes (about every 100 ms); one cache per pass (render thread), cleared with the level.
+struct AuroraQuadCache {
+    std::shared_ptr<AuroraGrid const> grid; ///< owned: a freed grid's address can never match again
+    int                               fade = -1, scale = -1, winding = -1, mode = -1;
+    bool                              premultiply = false;
+    std::vector<ColourVertex>         quads;
+};
+std::atomic<bool> gDropAuroraQuads{false}; ///< set when the level is left
+std::array<AuroraQuadCache, 2>& auroraQuadCaches() {
+    static std::array<AuroraQuadCache, 2> c; // sky pass, world pass (render thread)
+    if (gDropAuroraQuads.exchange(false)) c = {};
+    return c;
+}
 
 /// Draws the aurora in the sky pass (`sky`) or the world pass; only the mode's own pass draws.
 void drawAurora(render::RenderContext& ctx, float partial, bool sky) {
@@ -801,24 +1023,19 @@ void drawAurora(render::RenderContext& ctx, float partial, bool sky) {
     if (!grid || (cur == 0 && last == 0)) return;
     AuroraMode const mode = auroraModeFor(preview, twilight && config()->sky);
     if (skyPass(mode) != sky) return;
-    mce::MaterialPtr const* mat = nullptr;
-    mce::TexturePtr const*  tex = nullptr;
-    char const*             name = "";
+    std::string spec;
     switch (mode) {
-    case AuroraMode::SkyUi: mat = materialNamed(name = "ui_fill_gradient"); break;
-    case AuroraMode::SkyStars: mat = starsMaterial(), name = "stars"; break;
-    case AuroraMode::WorldWire: mat = materialNamed(name = "wireframe"); break;
-    case AuroraMode::SkyBlend:
+    case AuroraMode::SkyUi: spec = "ui_fill_gradient"; break;
+    case AuroraMode::SkyStars: spec = "@stars"; break;
+    case AuroraMode::WorldWire: spec = "wireframe"; break;
+    case AuroraMode::SkyBlend: spec = kClassicAurora; break;
     case AuroraMode::WorldBlend:
-    default:
-        mat  = particleBlendMaterial();
-        tex  = whiteTexture();
-        name = "particles blend";
-        if (!tex) return;
-        break;
+    default: spec = vibrantVisuals() ? kVibrantAurora : kClassicAurora; break;
     }
-    if (!mat) {
-        logOnce(std::string("aurora_material:") + name, std::string("atmosphere: no ") + name + " material for the aurora");
+    if (!preview.auroraMat.empty()) spec = preview.auroraMat;
+    MaterialChoice const m = choose(spec);
+    if (!m.material) {
+        logOnce("aurora_material:" + spec, "atmosphere: no " + spec + " material for the aurora");
         return;
     }
     float const mod = ca::auroraAlpha(last, cur, partial);
@@ -826,28 +1043,23 @@ void drawAurora(render::RenderContext& ctx, float partial, bool sky) {
     float const ox = static_cast<float>(grid->camX - ctx.camera.x), oz = static_cast<float>(grid->camZ - ctx.camera.z);
     float const y  = ca::auroraHeight(ctx.camera.y);
     // the sky pass draws without depth: scaled towards the camera (the same picture) to within the
-    // stars' 100 blocks; the world pass draws at the real place unless it is beyond the far plane
+    // sky radius; the world pass draws at the real place unless it is beyond the far plane
     float const maxDist = std::sqrt(grid->mesh.extent * grid->mesh.extent + y * y) + std::hypot(ox, oz);
     float       k       = 1.0f;
-    if (sky) k = 100.0f / std::max(maxDist, 1.0f);
+    if (sky) k = skyRadius(ctx.screen) / std::max(maxDist, 1.0f);
     else if (float far = farPlane(ctx.screen); far > 0) {
         k = std::min(1.0f, 0.9f * far / std::max(maxDist, 1.0f));
         logOnce("aurora_far", fmt::format("atmosphere: world pass far plane {:.0f}, aurora scaled x{:.3f}", far, k));
     }
-    bool const premultiply = mode == AuroraMode::SkyStars; // the stars material ignores vertex alpha
-    // the quads are built again only when the mesh, the fade, the scale or the mode changes (about
-    // every 100 ms); the camera's movement since the mesh was computed is the world matrix's
-    struct Cache {
-        AuroraGrid const*         grid = nullptr;
-        int                       fade = -1, scale = -1, winding = -1, mode = -1;
-        std::vector<ColourVertex> quads;
-    };
-    static Cache cache[2]; // sky pass, world pass (render thread)
-    Cache&      c     = cache[sky ? 0 : 1];
-    int const   fade  = static_cast<int>(std::lround(mod * 240.0f));
-    int const   scale = static_cast<int>(std::lround(k * 4096.0f));
-    if (c.grid != grid.get() || c.fade != fade || c.scale != scale || c.winding != preview.winding || c.mode != static_cast<int>(mode)) {
-        c = Cache{grid.get(), fade, scale, preview.winding, static_cast<int>(mode), {}};
+    // vertex alpha is ignored by the stars material and by additive colour materials without a
+    // texture: the colour is premultiplied by it there (SRC_ALPHA, ONE: the same light added)
+    bool const premultiply = spec == "@stars" || (!m.textured && spec.find("particles") == std::string::npos);
+    AuroraQuadCache& c     = auroraQuadCaches()[sky ? 0 : 1];
+    int const        fade  = static_cast<int>(std::lround(mod * 240.0f));
+    int const        scale = static_cast<int>(std::lround(std::log2(std::max(k, 1e-9f)) * 4096.0f));
+    int const        mkey  = static_cast<int>(std::hash<std::string>{}(spec) & 0x7fffffff);
+    if (c.grid != grid || c.fade != fade || c.scale != scale || c.winding != preview.winding || c.mode != mkey || c.premultiply != premultiply) {
+        c = AuroraQuadCache{grid, fade, scale, preview.winding, mkey, premultiply, {}};
         int const rings = grid->mesh.rings, segs = grid->mesh.segments;
         auto      vtx   = [&](int r, int sIdx) {
             ColourVertex v = grid->vertices[static_cast<std::size_t>(r * segs + (sIdx % segs))];
@@ -870,8 +1082,8 @@ void drawAurora(render::RenderContext& ctx, float partial, bool sky) {
     auto& world  = ctx.screen.camera.worldMatrixStack.get();
     auto  ref    = world.push(false);
     ref.mat->_m.get() = ref.mat->_m.get() * glm::translate(glm::mat4{1.f}, glm::vec3{ox * k, 0.0f, oz * k});
-    drawSmoothQuads(ctx.screen, *mat, tex, c.quads);
-    logOnce("aurora_drawn", fmt::format("atmosphere: aurora drawn ({} quads, alpha {:.2f}, {} pass, {})", c.quads.size() / 4, mod, sky ? "sky" : "world", name));
+    drawWith(ctx.screen, m, c.quads);
+    logOnce("aurora_drawn", fmt::format("atmosphere: aurora drawn ({} quads, alpha {:.2f}, {} pass, {})", c.quads.size() / 4, mod, sky ? "sky" : "world", spec));
 }
 
 /// Publishes the aurora shader's uniforms for the worker (render thread, once per frame).
@@ -912,30 +1124,36 @@ void publishAuroraUniforms(render::RenderContext const& ctx) {
     s.uniformsValid = true;
 }
 
-/// Stars and the void plate in the world pass (Vibrant Visuals: its sky covers the sky pass), at 90 %
-/// of the far plane.
-void drawWorldSky(render::RenderContext& ctx, bool stars, bool voidPlate, StarsMode mode) {
-    float far = farPlane(ctx.screen);
-    float r   = far > 0 ? std::min(0.9f * far, 2000.0f) : 400.0f;
-    if (stars) {
-        if (mode == StarsMode::WorldStars) {
-            if (auto const* mat = starsMaterial()) drawColouredQuads(ctx.screen, *mat, scaled(starVertices(), r / 100.0f));
-        } else if (auto const* mat = particleBlendMaterial(); mat && whiteTexture()) {
-            drawSmoothQuads(ctx.screen, *mat, whiteTexture(), scaled(starVertices(), r / 100.0f));
-        }
-        logOnce("stars_world", fmt::format("atmosphere: TF stars drawn in the world pass (radius {:.0f})", r));
-    }
-    if (voidPlate)
-        if (auto const* mat = particleBlendMaterial(); mat && whiteTexture()) {
-            drawSmoothQuads(ctx.screen, *mat, whiteTexture(), scaled(voidPlateVertices(), r / 512.0f));
-            logOnce("void_plate_world", "atmosphere: void plate drawn in the world pass");
-        }
-}
-
 bool drawsVoidPlate(Preview const& preview) {
     auto* p = currentPlayer();
     if (!p) return false;
     return preview.voidPlate || ca::drawsVoidPlate(p->getPosition().y, p->getDimension().mHeightRange->mMin); // getPosition: the eyes
+}
+
+/// The void plate's quads now: fogged by the sky fog in the frame's fog colour.
+std::vector<ColourVertex> currentVoidPlate() {
+    std::string biome;
+    {
+        std::lock_guard lock(shared().mutex);
+        biome = shared().preview.biome ? *shared().preview.biome : shared().cameraBiome;
+    }
+    return voidPlateVertices(fogColourOf(biome), skyFogPlanes());
+}
+
+/// Stars and the void plate in the world pass (Vibrant Visuals: its sky covers the sky pass), at 90 %
+/// of the far plane.
+void drawWorldSky(render::RenderContext& ctx, bool stars, bool voidPlate, StarsMode mode, Preview const& preview) {
+    float far = farPlane(ctx.screen);
+    float r   = far > 0 ? std::min(0.9f * far, 2000.0f) : 400.0f;
+    if (stars) {
+        std::string spec = !preview.starsMat.empty() ? preview.starsMat : mode == StarsMode::WorldStars ? std::string("@stars") : std::string(kVibrantStars);
+        if (drawWith(ctx.screen, choose(spec), scaled(starVertices(), r / 100.0f)))
+            logOnce("stars_world", fmt::format("atmosphere: TF stars drawn in the world pass (radius {:.0f}, {})", r, spec));
+    }
+    if (voidPlate) {
+        std::string spec = !preview.plateMat.empty() ? preview.plateMat : std::string(kVibrantPlate);
+        if (drawWith(ctx.screen, choose(spec), scaled(currentVoidPlate(), r / 512.0f))) logOnce("void_plate_world", "atmosphere: void plate drawn in the world pass (" + spec + ")");
+    }
 }
 
 bool skyFrame(render::RenderContext& ctx, float) {
@@ -944,32 +1162,39 @@ bool skyFrame(render::RenderContext& ctx, float) {
     return false; // the vanilla sky dome (biome sky colour) stays
 }
 
+/// TFSkyRenderer after the sky dome: the stars without fog at full brightness, then the void plate
+/// opaque over them (the stars below the horizon are hidden), in the sky pass (Classic).
 void starsFrame(render::RenderContext& ctx, float partial) {
     auto       cfg     = config();
     auto const preview = previewNow();
     if (cfg->sky && !vibrantVisuals()) {
-        if (starsModeFor(preview) == StarsMode::SkyStars)
-            if (auto const* mat = starsMaterial()) {
-                drawColouredQuads(ctx.screen, *mat, starVertices());
-                logOnce("stars", fmt::format("atmosphere: TF stars drawn ({} quads)", starVertices().size() / 8));
-            }
-        if (drawsVoidPlate(preview))
-            if (auto const* mat = starsMaterial()) {
-                drawColouredQuads(ctx.screen, *mat, scaled(voidPlateVertices(), 100.0f / 512.0f));
-                logOnce("void_plate", "atmosphere: void plate drawn");
-            }
+        float const radius = skyRadius(ctx.screen);
+        if (starsModeFor(preview) == StarsMode::SkyStars) {
+            std::string spec = !preview.starsMat.empty() ? preview.starsMat : std::string(kClassicStars);
+            if (drawWith(ctx.screen, choose(spec), scaled(starVertices(), radius / 100.0f)))
+                logOnce("stars", fmt::format("atmosphere: TF stars drawn ({} quads, radius {:.1f}, {})", starVertices().size() / 8, radius, spec));
+        }
+        if (drawsVoidPlate(preview)) {
+            std::string spec = !preview.plateMat.empty() ? preview.plateMat : std::string(kClassicPlate);
+            if (drawWith(ctx.screen, choose(spec), scaled(currentVoidPlate(), radius / 512.0f))) logOnce("void_plate", "atmosphere: void plate drawn (" + spec + ")");
+        }
     } else if (cfg->sky) {
-        logOnce("stars", "atmosphere: TF stars drawn (world pass under Vibrant Visuals)");
+        logOnce("stars", "atmosphere: TF stars drawn (the level renderer's star mesh under Vibrant Visuals)");
     }
     if (cfg->aurora) drawAurora(ctx, partial, true);
 }
 
-/// The world pass of every dimension: the aurora's uniforms and its world-pass drawing; in the
-/// Twilight Forest under Vibrant Visuals (or a calibration preview) the stars and the void plate.
+/// The world pass of every dimension: the camera, the aurora's uniforms and its world-pass drawing;
+/// in the Twilight Forest under Vibrant Visuals (or a calibration preview) the stars and the void
+/// plate.
 void worldFrame(render::RenderContext& ctx, float partial) {
     auto* p = currentPlayer();
     if (!p || !inTwilight(*p)) restoreVanillaSky();
     if (!p) return;
+    {
+        std::lock_guard lock(shared().mutex);
+        shared().camera = Vec3{static_cast<float>(ctx.camera.x), static_cast<float>(ctx.camera.y), static_cast<float>(ctx.camera.z)};
+    }
     auto cfg = config();
     if (cfg->aurora) {
         publishAuroraUniforms(ctx);
@@ -978,9 +1203,11 @@ void worldFrame(render::RenderContext& ctx, float partial) {
     if (inTwilight(*p) && cfg->sky) {
         auto const preview = previewNow();
         StarsMode  mode    = starsModeFor(preview);
-        bool const stars   = mode == StarsMode::WorldBlend || mode == StarsMode::WorldStars;
-        bool const plate   = vibrantVisuals() && drawsVoidPlate(preview);
-        if (stars || plate) drawWorldSky(ctx, stars, plate, mode);
+        // Vibrant Visuals draws TF's stars from the level renderer's star mesh (hideVanillaSky); the
+        // world-pass stars are the calibration's (a preview material or stars mode)
+        bool const stars = (mode == StarsMode::WorldBlend || mode == StarsMode::WorldStars) && (!vibrantVisuals() || !preview.starsMat.empty() || preview.starsMode != StarsMode::Auto || preview.vvStarMesh == 0);
+        bool const plate = vibrantVisuals() && drawsVoidPlate(preview);
+        if (stars || plate) drawWorldSky(ctx, stars, plate, mode, preview);
     }
 }
 
@@ -994,6 +1221,7 @@ bool weatherFrame(render::RenderContext& ctx, float partial) {
     int                                                         cx = 0, cz = 0, ticks = 0, winding = 0;
     std::optional<std::vector<std::pair<core::BlockBox, bool>>> boxes;
     bool                                                        previewLocked = false;
+    std::string                                                 weatherMat;
     {
         auto&           s = shared();
         std::lock_guard lock(s.mutex);
@@ -1005,12 +1233,17 @@ bool weatherFrame(render::RenderContext& ctx, float partial) {
         winding       = s.preview.winding;
         boxes         = s.preview.boxes;
         previewLocked = s.preview.locked;
+        weatherMat    = s.preview.weatherMat;
         if (near) enforcement = s.enforcement;
     }
     bool const gameMode = !p->isCreative() && !p->isSpectator();
     if (!previewLocked && !(progression::client::enforced() && gameMode)) return false;
-    auto const* mat = particleBlendMaterial();
-    if (!mat) return false;
+    std::string const spec = !weatherMat.empty() ? weatherMat : vibrantVisuals() ? std::string(kVibrantWeather) : std::string(kClassicWeather);
+    auto const*       mat  = materialFor(spec);
+    if (!mat) {
+        logOnce("weather_material:" + spec, "atmosphere: no material " + spec + " for the weather");
+        return false;
+    }
     int const    range = ca::weatherRange(fancyGraphics());
     double const camX = ctx.camera.x, camY = ctx.camera.y, camZ = ctx.camera.z;
     int const    px = static_cast<int>(std::floor(camX)), py = static_cast<int>(std::floor(camY)), pz = static_cast<int>(std::floor(camZ));
@@ -1054,27 +1287,45 @@ bool weatherFrame(render::RenderContext& ctx, float partial) {
     auto all = boxes ? *boxes : ::gf::landmark::ext::client::structureProtection();
     if (!all.empty()) {
         auto pBox = ca::cameraBox(px, py, pz, range);
-        if (std::any_of(all.begin(), all.end(), [&](auto const& b) { return b.first.intersects(pBox); })) {
-            for (int x = pBox.minX; x <= pBox.maxX; ++x)
-                for (int z = pBox.minZ; z <= pBox.maxZ; ++z)
-                    for (auto const& [lo, hi] : ca::sparkleIntervals(x, z, pBox, all)) {
-                        if (lo >= hi) continue;
-                        ca::ColumnInput in{.x = x, .z = z, .minY = lo, .maxY = hi, .ticks = ticks, .partialTicks = partial, .camX = camX, .camY = camY, .camZ = camZ, .range = range};
-                        if (auto col = ca::sparkleColumn(in)) add(*col);
-                    }
+        // updateRainIntervals: the intervals of every column, computed again only when the camera
+        // box (or the protected boxes) changed (TF's pBoxOld)
+        struct IntervalCache {
+            std::optional<core::BlockBox>                                        box;
+            std::vector<std::pair<core::BlockBox, bool>>                         boxes;
+            std::vector<std::pair<std::pair<int, int>, std::vector<ca::Interval>>> columns;
+        };
+        static IntervalCache cache; // render thread
+        bool const same = cache.box == pBox && cache.boxes == all;
+        if (!same) {
+            cache.box   = pBox;
+            cache.boxes = all;
+            cache.columns.clear();
+            if (std::any_of(all.begin(), all.end(), [&](auto const& b) { return b.first.intersects(pBox); }))
+                for (int x = pBox.minX; x <= pBox.maxX; ++x)
+                    for (int z = pBox.minZ; z <= pBox.maxZ; ++z)
+                        if (auto iv = ca::sparkleIntervals(x, z, pBox, all); !iv.empty()) cache.columns.push_back({{x, z}, std::move(iv)});
         }
+        for (auto const& [xz, intervals] : cache.columns)
+            for (auto const& [lo, hi] : intervals) {
+                if (lo >= hi) continue;
+                ca::ColumnInput in{.x = xz.first, .z = xz.second, .minY = lo, .maxY = hi, .ticks = ticks, .partialTicks = partial, .camX = camX, .camY = camY, .camZ = camZ, .range = range};
+                if (auto col = ca::sparkleColumn(in)) add(*col);
+            }
     }
     if (batches.empty()) return false;
     for (auto const& [effect, cols] : batches) {
         auto const* tex = texture(ca::textureOf(effect));
         if (!tex) continue;
         drawColumns(ctx.screen, *mat, *tex, cols, 1.0f);
-        logOnce(std::string("weather:") + ca::nameOf(effect), fmt::format("atmosphere: {} weather drawn ({} columns, range {})", ca::nameOf(effect), cols.size(), range));
+        logOnce(std::string("weather:") + ca::nameOf(effect), fmt::format("atmosphere: {} weather drawn ({} columns, range {}, {})", ca::nameOf(effect), cols.size(), range, spec));
     }
     return false; // TF renders the normal weather anyway
 }
 
 std::optional<float> cloudsAt() { return ca::kCloudHeight; }
+
+/// Vibrant Visuals' sky time in the Twilight Forest (< 0: the game's, the fixed 13000).
+constexpr float kVibrantSkyTime = -1.0f;
 
 /// The frame's view override in the Twilight Forest: getCloudColor at the fixed time with the level's
 /// rain and thunder, and no sunrise colour (TwilightForestRenderInfo#getSunriseColor is null).
@@ -1086,7 +1337,14 @@ std::optional<vx::ViewOverride> viewOverride() {
     if (auto* w = p->getDimension().mWeather.get()) rain = w->mRainLevel, thunder = w->mLightningLevel;
     auto c = ca::cloudColor(ca::timeOfDay(ca::kFixedTime), rain, thunder);
     logOnce("clouds_colour", fmt::format("atmosphere: clouds {:.2f} {:.2f} {:.2f}, no sunrise colour", c.r, c.g, c.b));
-    return vx::ViewOverride{.cloud = std::array<float, 3>{c.r, c.g, c.b}, .noSunrise = true};
+    vx::ViewOverride o{.cloud = std::array<float, 3>{c.r, c.g, c.b}, .noSunrise = true};
+    o.starBrightness = 1.0f; // TFSkyRenderer: "stars are always bright"
+    if (vibrantVisuals()) {
+        float t = previewNow().vvSkyTime;
+        if (t < 0) t = kVibrantSkyTime;
+        if (t >= 0) o.timeOfDay = t;
+    }
+    return o;
 }
 
 void installProviderFor(int dim) {
@@ -1120,6 +1378,12 @@ void applyPreview(Json const& msg) {
     p.vvFog      = msg.value("vvFog", 0.0f);
     p.voidPlate  = msg.value("voidPlate", false);
     p.bossFog    = msg.value("bossFog", false);
+    p.starsMat   = msg.value("starsMat", std::string{});
+    p.auroraMat  = msg.value("auroraMat", std::string{});
+    p.weatherMat = msg.value("weatherMat", std::string{});
+    p.plateMat   = msg.value("plateMat", std::string{});
+    p.vvSkyTime  = msg.value("vvSkyTime", -1.0f);
+    p.vvStarMesh = msg.value("vvStarMesh", -1);
     if (msg.contains("protected") && msg["protected"].is_array()) {
         std::vector<std::pair<core::BlockBox, bool>> boxes;
         for (auto const& b : msg["protected"])
@@ -1131,7 +1395,7 @@ void applyPreview(Json const& msg) {
         shared().preview = p;
         shared().previewGen++;
     }
-    forgetOnce({"fog:", "fog_vv", "weather:", "aurora_drawn", "aurora_in:", "locked_near", "ur_ghast_rain", "stars", "void_plate", "aurora_far"});
+    forgetOnce({"fog:", "fog_vv", "fog_fluid", "weather:", "aurora_drawn", "aurora_in:", "locked_near", "ur_ghast_rain", "stars", "void_plate", "aurora_far", "material_missing:", "weather_material:", "aurora_material:"});
     log().info("atmosphere: preview {}", msg.dump());
 }
 
@@ -1139,6 +1403,14 @@ class AtmosphereClientModule {
 public:
     void install() {
         shared(); // before the worker (static destruction order)
+        // the config snapshot: now (the configs are loaded) and after every reload (on the thread
+        // that loaded them)
+        refreshConfig();
+        static bool reloadHooked = false;
+        if (!reloadHooked) {
+            reloadHooked = true;
+            gf::config::onReload([] { refreshConfig(); });
+        }
         auto& bus = ll::event::EventBus::getInstance();
         mTick     = bus.emplaceListener<ll::event::ClientLevelTickEvent>([](auto&) {
             try {
@@ -1165,7 +1437,16 @@ public:
                 s.nearLocked    = false;
                 s.bossFog       = false;
                 s.playerDim     = -1;
+                s.camera.reset();
+                s.cameraInFluid = false;
+                s.blendedValid  = false;
+                s.rain = s.thunder = 0;
+                s.aboveFloor       = 1.0e9;
             }
+            // the next level (a remote server's pack stack) looks its textures up again; the aurora
+            // quads of this one go with their grid (the render thread drops them on its next frame)
+            resetTextures();
+            gDropAuroraQuads = true;
             // the next world may number the Twilight Forest differently (a remote server)
             clearProviderFor(gDimension.exchange(-1));
             {
@@ -1217,7 +1498,35 @@ AtmosphereState state() {
 
 void setPreview(Json const& msg) { applyPreview(msg); }
 
-std::optional<sky::FogSpec> fogForTest(std::string const& biome) { return fogFor(biome); }
+std::optional<sky::FogSpec> fogForTest(std::string const& biome) { return fogAt(biome); }
+
+std::optional<sky::FogSpec> fogNow() { return fogAt(std::nullopt); }
+
+bool cameraInFluidNow() {
+    std::lock_guard lock(shared().mutex);
+    return shared().cameraInFluid;
+}
+
+std::vector<std::string> auroraBiomesConfigured() { return config()->raw; }
+
+bool setAuroraBiomes(std::vector<std::string> const& biomes) {
+    // the client's own config file (a client joined to a remote server edits its own copy); the
+    // snapshot is rebuilt from it here, the live struct at the next reload
+    bool written = false;
+    for (auto const& e : gf::config::ConfigRegistry::entries())
+        if (e.section == "atmosphere" && e.write) {
+            nlohmann::ordered_json patch = nlohmann::ordered_json::object();
+            patch["auroraBiomes"]        = biomes;
+            written                      = e.write(patch, gf::config::configDir() / "atmosphere.json");
+        }
+    auto const           cur = config();
+    at::AtmosphereConfig copy{};
+    copy.auroraBiomes = biomes;
+    copy.sky = cur->sky, copy.fog = cur->fog, copy.weather = cur->weather, copy.aurora = cur->aurora;
+    buildConfigView(copy);
+    log().info("atmosphere: aurora biomes set to {} ({})", nlohmann::json(biomes).dump(), written ? "saved" : "not saved");
+    return written;
+}
 
 std::vector<std::string> validAuroraBiomes() {
     auto cfg = config();

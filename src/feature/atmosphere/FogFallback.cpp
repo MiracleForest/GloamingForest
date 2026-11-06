@@ -88,10 +88,10 @@ constexpr char kStale[] = "\x01stale";
 
 std::int64_t keyOf(Player const& player) { return player.getOrCreateUniqueID().rawID; }
 
+/// The biome at the player's feet (TF reads player.blockPosition(); Bedrock's getPosition is the eyes).
 std::string biomeAt(Player& player) {
-    auto const& pos = player.getPosition();
-    BlockPos    bp{static_cast<int>(std::floor(pos.x)), static_cast<int>(std::floor(pos.y)), static_cast<int>(std::floor(pos.z))};
-    auto&       region = player.getDimensionBlockSource();
+    BlockPos bp     = player.getFeetBlockPos();
+    auto&    region = player.getDimensionBlockSource();
     if (!region.hasChunksAt(bp, 0, false)) return {};
     return region.getBiome(bp).mHash->getString();
 }
@@ -121,7 +121,7 @@ bool updateFog(Player& player, std::optional<std::string> const& biomeOverride) 
             if (auto it = fogState().pinned.find(keyOf(player)); it != fogState().pinned.end()) pinned = it->second;
         }
         std::string biome = biomeOverride ? *biomeOverride : pinned ? *pinned : biomeAt(player);
-        stack             = fogStackFor(biome, player.getPosition().y);
+        stack             = fogStackFor(biome, player.getFeetPos().y); // isFoggyAt: player.position(), the feet
     }
     {
         std::lock_guard lock(fogState().mutex);

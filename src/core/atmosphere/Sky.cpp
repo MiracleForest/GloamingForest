@@ -84,14 +84,51 @@ Rgb brightnessDependentFogColor(Rgb fog, float d) {
     return {fog.r * (d * 0.94f + 0.06f), fog.g * (d * 0.94f + 0.06f), fog.b * (d * 0.91f + 0.09f)};
 }
 
-Rgb fogColor(Rgb biomeFog, Rgb biomeSky, float d, int renderDistanceChunks) {
+Rgb skyColor(Rgb biomeSky, float d, float rain, float thunder) {
+    Rgb s{biomeSky.r * d, biomeSky.g * d, biomeSky.b * d};
+    if (rain > 0.0f) {
+        float grey = (s.r * 0.3f + s.g * 0.59f + s.b * 0.11f) * 0.6f;
+        float keep = 1.0f - rain * 0.75f;
+        s          = {s.r * keep + grey * (1.0f - keep), s.g * keep + grey * (1.0f - keep), s.b * keep + grey * (1.0f - keep)};
+    }
+    if (thunder > 0.0f) {
+        float grey = (s.r * 0.3f + s.g * 0.59f + s.b * 0.11f) * 0.2f;
+        float keep = 1.0f - thunder * 0.75f;
+        s          = {s.r * keep + grey * (1.0f - keep), s.g * keep + grey * (1.0f - keep), s.b * keep + grey * (1.0f - keep)};
+    }
+    return s;
+}
+
+Rgb fogColor(Rgb biomeFog, Rgb biomeSky, float d, int renderDistanceChunks, float rain, float thunder, double aboveFloor) {
     // Java's render distance option ends at 32 chunks (Bedrock's goes further)
     float f = 0.25f + 0.75f * static_cast<float>(std::clamp(renderDistanceChunks, 2, 32)) / 32.0f;
     f       = 1.0f - static_cast<float>(std::pow(static_cast<double>(f), 0.25));
-    Rgb sky{biomeSky.r * d, biomeSky.g * d, biomeSky.b * d}; // ClientLevel#getSkyColor (clear weather)
+    Rgb sky = skyColor(biomeSky, d, rain, thunder);
     Rgb fog = brightnessDependentFogColor(biomeFog, d);
     // TF's getSunriseColor is null: no sunrise blend
-    return {fog.r + (sky.r - fog.r) * f, fog.g + (sky.g - fog.g) * f, fog.b + (sky.b - fog.b) * f};
+    Rgb c{fog.r + (sky.r - fog.r) * f, fog.g + (sky.g - fog.g) * f, fog.b + (sky.b - fog.b) * f};
+    if (rain > 0.0f) {
+        float rg = 1.0f - rain * 0.5f, bl = 1.0f - rain * 0.4f;
+        c = {c.r * rg, c.g * rg, c.b * bl};
+    }
+    if (thunder > 0.0f) {
+        float k = 1.0f - thunder * 0.5f;
+        c       = {c.r * k, c.g * k, c.b * k};
+    }
+    // the void darkening (getClearColorScale is 1 outside superflat worlds)
+    if (aboveFloor < 1.0) {
+        float k = static_cast<float>(std::max(aboveFloor, 0.0));
+        k *= k;
+        c = {c.r * k, c.g * k, c.b * k};
+    }
+    return c;
+}
+
+float linearFogValue(float distance, float start, float end) {
+    if (distance <= start) return 0.0f;
+    if (distance >= end) return 1.0f;
+    float t = std::clamp((distance - start) / (end - start), 0.0f, 1.0f);
+    return t * t * (3.0f - 2.0f * t);
 }
 
 bool isSpooky(std::string_view biomeId) { return biomeId == "twilightforest:spooky_forest"; }
@@ -133,6 +170,25 @@ std::vector<std::array<Vec3f, 4>> voidPlateQuads() {
         if (!first) out.push_back({Vec3f{0.0f, y, 0.0f}, prev, p, p});
         prev  = p;
         first = false;
+    }
+    return out;
+}
+
+std::vector<std::array<FoggedVertex, 4>> voidPlateFogged(float fogStart, float fogEnd, int rings) {
+    rings = std::max(rings, 1);
+    std::vector<std::array<FoggedVertex, 4>> out;
+    // the dark buffer's own vertex (y -16; the pose's +12 is not part of fog_distance's Position)
+    auto vertex = [&](Vec3f p) {
+        float dist = std::max(std::hypot(p.x, p.z), 16.0f);
+        return FoggedVertex{p, linearFogValue(dist, fogStart, fogEnd)};
+    };
+    for (auto const& q : voidPlateQuads()) {
+        Vec3f const c = q[0], a = q[1], b = q[2];
+        auto        at = [](Vec3f from, Vec3f to, float t) { return Vec3f{from.x + (to.x - from.x) * t, from.y, from.z + (to.z - from.z) * t}; };
+        for (int i = 0; i < rings; ++i) {
+            float t0 = static_cast<float>(i) / static_cast<float>(rings), t1 = static_cast<float>(i + 1) / static_cast<float>(rings);
+            out.push_back({vertex(at(c, a, t0)), vertex(at(c, a, t1)), vertex(at(c, b, t1)), vertex(at(c, b, t0))});
+        }
     }
     return out;
 }

@@ -62,6 +62,38 @@ GF_REGISTER_SELFTEST("atmosphere.client_fog", [](Context& ctx) {
     ctx.check(forest.has_value(), "the forest has TF's fog colour");
 });
 
+GF_REGISTER_SELFTEST("atmosphere.client_fog_fluid", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // FogHandler and FogRenderer#setupColor's TF colour apply only for FogType.NONE: with the camera
+    // in water or powder snow the game's own fog stays
+    auto s = atc::state();
+    auto* lp = gf::client::currentPlayer();
+    if (!s.inTwilight || !lp) {
+        ctx.info("the local player is not in the Twilight Forest: the fluid fog not checked");
+        co_return;
+    }
+    auto const feet = lp->getFeetBlockPos();
+    int const  dim  = s.dimension;
+    std::string const head = std::to_string(feet.x) + " " + std::to_string(feet.y + 1) + " " + std::to_string(feet.z);
+    std::string const area = std::to_string(feet.x - 6) + " " + std::to_string(feet.y - 1) + " " + std::to_string(feet.z - 6) + " " + std::to_string(feet.x + 6) + " " + std::to_string(feet.y + 2) + " " + std::to_string(feet.z + 6);
+    atc::setPreview({{"biome", "twilightforest:forest"}});
+    co_await clientTicks(ctx, 3);
+    ctx.check(!atc::cameraInFluidNow(), "in the air the camera is in no fluid");
+    ctx.check(atc::fogNow().has_value(), "in the air the forest's fog applies");
+    for (auto const* block : {"water", "powder_snow"}) {
+        (void)gf::selftest::runServerCommand("setblock " + head + " " + block, dim);
+        co_await clientTicks(ctx, 3);
+        bool const in  = atc::cameraInFluidNow();
+        bool const fog = atc::fogNow().has_value();
+        (void)gf::selftest::runServerCommand("fill " + area + " air replace " + block, dim);
+        if (std::string(block) == "water") (void)gf::selftest::runServerCommand("fill " + area + " air replace flowing_water", dim);
+        ctx.check(in, std::string("the camera is in ") + block);
+        ctx.check(!fog, std::string("in ") + block + " the game's own fog stays (no TF fog)");
+        co_await clientTicks(ctx, 3);
+    }
+    ctx.check(!atc::cameraInFluidNow() && atc::fogNow().has_value(), "back in the air TF's fog applies again");
+    atc::setPreview(nlohmann::json::object());
+});
+
 GF_REGISTER_SELFTEST("atmosphere.client_aurora", [](Context& ctx) -> ll::coro::CoroTask<> {
     if (!atc::state().inTwilight) {
         ctx.info("the local player is not in the Twilight Forest: aurora not checked");

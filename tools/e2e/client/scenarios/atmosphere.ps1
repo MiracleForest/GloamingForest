@@ -10,14 +10,17 @@
 #   show:
 #     <mode>-sky-up-noon / -midnight (no sun or moon, TF's stars; the fixed time keeps both alike),
 #     <mode>-sky-horizon (grey clouds, no sunset band), <mode>-fog-forest, <mode>-fog-spooky (the near
-#     fog, smoothed in), <mode>-fog-dark-forest, <mode>-fog-boss (a boss bar's world fog),
+#     fog, smoothed in) and <mode>-fog-spooky-up (the stars unfogged over it), <mode>-fog-dark-forest,
+#     <mode>-fog-boss (a boss bar's world fog),
 #     <mode>-aurora-clear / <mode>-aurora (glacier), <mode>-void-plate, <mode>-weather-clear and
 #     <mode>-weather-blizzard / -mosquitoes / -ashes / -dark-streams / -big-rain (locked biomes),
 #     <mode>-sparkles (protected structure), <mode>-ur-ghast-rain.
-#   Every view is checked against its reviewed signature (Test-AtmosphereSignature: the star count of
-#   the sky, the aurora's coverage and hue, the pink of the clouds, the share of pixels the weather
-#   changes against the clear view): the reviewed screenshots of the PR are the goldens, these are
-#   their measurable parts.
+#   Every view is checked against its reviewed signature in both graphics modes (Test-AtmosphereSignature:
+#   the star count of the sky and over the spooky fog, no stars below the horizon over the void
+#   plate, the aurora's change (green over red, lighter: a glow), no pink sunset band, the share of
+#   pixels the weather changes against the clear view and the blizzard / sparkles lighter than it):
+#   the reviewed screenshots of the PR are the goldens, these are their measurable parts. Then
+#   <mode>-aurora-biomes-editor: TFClientConfig's "Edit Biomes" list editor.
 #   Local mode does it twice: Classic (graphics_mode 1, atmosphere.prelaunch.ps1) and Vibrant
 #   Visuals (graphics_mode 2, after a restart); remote-mod in Classic. GF_ATMOSPHERE_CALIBRATE=1 adds
 #   the shots of every pass / material the client can draw the aurora and the stars with.
@@ -58,14 +61,30 @@ function Get-ColourDistance($a, $b) { [Math]::Round([Math]::Sqrt(($a[0] - $b[0])
 # The measurable parts of a view (the signature), every pixel of the middle (C#: a PowerShell loop
 # is too slow): share of aurora-coloured pixels (green clearly above red), stars (bright pixels
 # brighter than every pixel 3 away: small isolated points), pink cloud pixels.
-if (-not ('GfAtmosphere.Signature' -as [type])) {
+if (-not ('GfAtmosphere.Signature2' -as [type])) {
     Add-Type -TypeDefinition @'
 using System;
 namespace GfAtmosphere {
-public static class Signature {
-    public static double[] Analyze(int[] px, int w, int h) {
+public static class Signature2 {
+    public static double[] Analyze(int[] px, int w, int h) { return AnalyzeRegion(px, w, h, 0.42, 0.92, 0.1, 0.75); }
+    // The mean change (r, g, b) of the pixels that differ by more than 40 between two shots of the
+    // same view, their share, and the mean lightness of those pixels before and after.
+    public static double[] Delta(int[] a, int[] b, int w, int h) {
+        int x0 = (int)(w * 0.42), x1 = (int)(w * 0.92), y0 = (int)(h * 0.1), y1 = (int)(h * 0.75);
+        long n = 0, changed = 0; double dr = 0, dg = 0, db = 0, la = 0, lb = 0;
+        for (int y = y0; y < y1; y++) for (int x = x0; x < x1; x++) {
+            int ca = a[y * w + x], cb = b[y * w + x];
+            int ra = (ca >> 16) & 255, ga = (ca >> 8) & 255, ba = ca & 255, rb = (cb >> 16) & 255, gb = (cb >> 8) & 255, bb = cb & 255;
+            n++;
+            if (Math.Abs(ra - rb) + Math.Abs(ga - gb) + Math.Abs(ba - bb) <= 40) continue;
+            changed++; dr += rb - ra; dg += gb - ga; db += bb - ba; la += ra + ga + ba; lb += rb + gb + bb;
+        }
+        if (changed == 0) return new double[] { 0, 0, 0, 0, 0, 0 };
+        return new double[] { dr / changed, dg / changed, db / changed, (double)changed / n, la / changed / 3, lb / changed / 3 };
+    }
+    public static double[] AnalyzeRegion(int[] px, int w, int h, double fx0, double fx1, double fy0, double fy1) {
         {
-            int x0 = (int)(w * 0.42), x1 = (int)(w * 0.92), y0 = (int)(h * 0.1), y1 = (int)(h * 0.75);
+            int x0 = (int)(w * fx0), x1 = (int)(w * fx1), y0 = (int)(h * fy0), y1 = (int)(h * fy1);
             long n = 0, aurora = 0, pink = 0, stars = 0;
             Func<int, int> lum = c => ((c >> 16) & 255) + ((c >> 8) & 255) + (c & 255);
             for (int y = y0; y < y1; y++) for (int x = x0; x < x1; x++) {
@@ -105,8 +124,20 @@ function Get-AtmosphereBits([string]$path) {
 }
 function Get-AtmosphereSignature([string]$path) {
     $bits = Get-AtmosphereBits $path
-    $a = [GfAtmosphere.Signature]::Analyze($bits.Px, $bits.W, $bits.H)
+    $a = [GfAtmosphere.Signature2]::Analyze($bits.Px, $bits.W, $bits.H)
     [pscustomobject]@{ Aurora = [Math]::Round($a[0], 4); Stars = [int]$a[1]; Pink = [Math]::Round($a[2], 4) }
+}
+# Stars (isolated bright points) in a part of a shot (fractions of the width / height).
+function Get-AtmosphereStarsIn([string]$path, [double]$x0, [double]$x1, [double]$y0, [double]$y1) {
+    $bits = Get-AtmosphereBits $path
+    [int]([GfAtmosphere.Signature2]::AnalyzeRegion($bits.Px, $bits.W, $bits.H, $x0, $x1, $y0, $y1)[1])
+}
+# What changed from shot $a to shot $b: the mean change of the changed pixels (R, G, B), their share
+# and their mean lightness before and after.
+function Get-AtmosphereDelta([string]$a, [string]$b) {
+    $pa = Get-AtmosphereBits $a; $pb = Get-AtmosphereBits $b
+    $d = [GfAtmosphere.Signature2]::Delta($pa.Px, $pb.Px, $pa.W, $pa.H)
+    [pscustomobject]@{ R = [Math]::Round($d[0], 1); G = [Math]::Round($d[1], 1); B = [Math]::Round($d[2], 1); Share = [Math]::Round($d[3], 4); Before = [Math]::Round($d[4], 1); After = [Math]::Round($d[5], 1) }
 }
 # Share of pixels that differ by more than 40 between two shots of the same view.
 function Get-ChangedShare([string]$a, [string]$b) {
@@ -190,14 +221,11 @@ function Invoke-AtmosphereViews([string]$mode) {
     $d = Get-ColourDistance (Get-AtmosphereColour $noon) (Get-AtmosphereColour $midnight)
     Write-Step "$mode sky noon vs midnight: colour distance $d"
     if ($d -gt 25) { throw "the Twilight Forest sky changed with the time of day ($d)" }
-    $sig = Get-AtmosphereSignature $noon
-    if ($vv) { Write-Step "$mode stars in the zenith view: $($sig.Stars) (Vibrant Visuals paints its sky over the sky pass and lights the world pass; recorded)" }
-    else { Test-AtmosphereSignature "$mode stars in the zenith view" $sig.Stars 30 1500 }
+    Test-AtmosphereSignature "$mode stars in the zenith view (noon)" (Get-AtmosphereSignature $noon).Stars 30 1500
+    Test-AtmosphereSignature "$mode stars in the zenith view (midnight)" (Get-AtmosphereSignature $midnight).Stars 30 1500
     Set-View 90 -15
     $horizon = Save-Screenshot "$mode-sky-horizon"
-    $sig = Get-AtmosphereSignature $horizon
-    if ($vv) { Write-Step "$mode pink share of the horizon: $($sig.Pink) (Vibrant Visuals draws its own dusk from the sun at the fixed time 13000; recorded)" }
-    else { Test-AtmosphereSignature "$mode pink (sunset) share of the horizon" $sig.Pink 0 0.01 }
+    Test-AtmosphereSignature "$mode pink (sunset) share of the horizon" (Get-AtmosphereSignature $horizon).Pink 0 0.01
 
     # fog: the forest's, the spooky forest's near fog (smoothed in over seconds), the dark forest
     Set-View 0 0
@@ -205,55 +233,95 @@ function Invoke-AtmosphereViews([string]$mode) {
     $spooky = Show-Atmosphere 'show_spooky' "$mode-fog-spooky" 'atmosphere: fog of twilightforest:spooky_forest' 12
     $d = Get-ColourDistance (Get-AtmosphereColour $forest) (Get-AtmosphereColour $spooky)
     Test-AtmosphereSignature "$mode fog forest vs spooky forest colour distance" $d 4 1000
+    # TF draws its stars without fog (TFSkyRenderer: FogRenderer.setupNoFog): they stay over the
+    # spooky forest's near fog
+    Set-View 0 -50
+    Start-Sleep -Seconds 1
+    $spookyUp = Save-Screenshot "$mode-fog-spooky-up"
+    Test-AtmosphereSignature "$mode stars over the spooky forest's fog" (Get-AtmosphereSignature $spookyUp).Stars 30 1500
+    Set-View 0 0
     Show-Atmosphere 'show_dark_forest' "$mode-fog-dark-forest" 'atmosphere: fog of twilightforest:dark_forest' 4 | Out-Null
     $boss = Show-Atmosphere 'show_boss_fog' "$mode-fog-boss" 'atmosphere: fog of twilightforest:forest' 12
     $d = Get-ColourDistance (Get-AtmosphereColour $forest) (Get-AtmosphereColour $boss)
     Write-Step "$mode fog forest vs boss world fog: colour distance $d"
 
-    # the aurora over the glacier (fades in over 60 ticks), against the same view without it
+    # the aurora over the glacier (fades in over 60 ticks), against the same view without it: TF's
+    # green-cyan glow
     Set-View 0 -50
     $clearUp = Show-Atmosphere 'show_forest' "$mode-aurora-clear" '' 3
     $aurora  = Show-Atmosphere 'show_glacier' "$mode-aurora" 'atmosphere: aurora drawn' 6
-    $a = (Get-AtmosphereSignature $aurora).Aurora - (Get-AtmosphereSignature $clearUp).Aurora
-    if ($vv) { Test-AtmosphereSignature "$mode aurora changed share (world pass, lit by Vibrant Visuals)" (Get-ChangedShare $clearUp $aurora) 0.02 1 }
-    else { Test-AtmosphereSignature "$mode aurora coverage" ([Math]::Round($a, 4)) 0.05 0.6 }
+    $delta   = Get-AtmosphereDelta $clearUp $aurora
+    Write-Step "$mode aurora change: $($delta.R), $($delta.G), $($delta.B) over $($delta.Share) of the view (lightness $($delta.Before) -> $($delta.After))"
+    Test-AtmosphereSignature "$mode aurora changed share" $delta.Share 0.02 1
+    Test-AtmosphereSignature "$mode aurora green gain over red" ([Math]::Round($delta.G - $delta.R, 1)) 10 255
+    Test-AtmosphereSignature "$mode aurora lightness gain (a glow, not a shadow)" ([Math]::Round($delta.After - $delta.Before, 1)) 5 255
+    if (-not $vv) { Test-AtmosphereSignature "$mode aurora coverage" ([Math]::Round((Get-AtmosphereSignature $aurora).Aurora - (Get-AtmosphereSignature $clearUp).Aurora, 4)) 0.05 0.6 }
 
-    # the void plate (below the floor of the dimension; forced) darkens the lower sky
+    # the void plate (below the floor of the dimension; forced): opaque, the stars below the horizon
+    # hidden, black below and the fog colour towards the horizon
     Set-View 0 10
     $noPlate = Show-Atmosphere 'show_forest' "$mode-void-plate-clear" '' 2
     $plate   = Show-Atmosphere 'show_void_plate' "$mode-void-plate" 'atmosphere: void plate drawn' 3
-    Write-Step "$mode void plate: changed share $(Get-ChangedShare $noPlate $plate)"
+    $starsBelow = Get-AtmosphereStarsIn $plate 0.42 0.92 0.45 0.68
+    Write-Step "$mode void plate: changed share $(Get-ChangedShare $noPlate $plate), stars below the horizon $(Get-AtmosphereStarsIn $noPlate 0.42 0.92 0.45 0.68) -> $starsBelow"
+    Test-AtmosphereSignature "$mode stars below the horizon over the void plate" $starsBelow 0 2
 
-    # locked-biome weather, looking along the ground
+    # locked-biome weather, looking along the ground: the effect's texture lights the view
     Set-View 0 5
     $clearGround = Show-Atmosphere 'show_forest' "$mode-weather-clear" '' 3
     foreach ($w in @(@('show_blizzard', 'blizzard'), @('show_mosquitoes', 'mosquito'), @('show_ashes', 'ashes'), @('show_dark_streams', 'dark_stream'), @('show_big_rain', 'big_rain'))) {
         $shot = Show-Atmosphere $w[0] "$mode-weather-$($w[1] -replace '_', '-')" "atmosphere: $($w[1]) weather drawn" 3
         Test-AtmosphereSignature "$mode $($w[1]) weather changed share" (Get-ChangedShare $clearGround $shot) 0.01 1
+        if ($w[1] -eq 'blizzard') {
+            $delta = Get-AtmosphereDelta $clearGround $shot
+            Test-AtmosphereSignature "$mode blizzard flakes brighter than the clear view" ([Math]::Round($delta.After - $delta.Before, 1)) 5 255
+        }
     }
     $shot = Show-Atmosphere 'show_sparkles' "$mode-sparkles" 'atmosphere: sparkles weather drawn' 3
     Test-AtmosphereSignature "$mode sparkles changed share" (Get-ChangedShare $clearGround $shot) 0.002 1
+    $delta = Get-AtmosphereDelta $clearGround $shot
+    Test-AtmosphereSignature "$mode sparkles brighter than the clear view" ([Math]::Round($delta.After - $delta.Before, 1)) 5 255
     # the Ur-Ghast's tantrum: rain splashes and sounds
     Show-Atmosphere 'show_ur_ghast' "$mode-ur-ghast-rain" 'atmosphere: Ur-Ghast rain splashes' 3 | Out-Null
     if ($calibrate) {
-        Set-View 0 -50
-        foreach ($m in 'aurora_world_blend', 'aurora_sky_blend') {
-            $shot = Show-Atmosphere "show_$m" "$mode-cal-$m" 'atmosphere: aurora drawn' 6
-            Write-Step "calibration $mode $m aurora coverage $((Get-AtmosphereSignature $shot).Aurora)"
+        # every candidate material of each part (feature/atmosphere/Selftests.cpp's lists)
+        $cal = [ordered]@{
+            stars   = @(@(0, -50), @('stars', 'lightning', 'particles_blend_tex', 'particles_add_tex', 'glow_sign_text_tex'))
+            aurora  = @(@(0, -50), @('particles_blend_tex', 'lightning', 'particles_add_tex', 'glow_sign_text_tex', 'stars'))
+            weather = @(@(0, 5), @('particles_blend', 'particles_add', 'glow_sign_text', 'sign_text', 'particles_alpha'))
+            plate   = @(@(0, 10), @('particles_blend_tex', 'particles_opaque_tex', 'debug', 'stars'))
         }
-        foreach ($m in 'vv_fog_1', 'vv_fog_24') { Show-Atmosphere "show_$m" "$mode-cal-$m" 'atmosphere: aurora drawn' 6 | Out-Null }
-        Set-View 0 -90
-        foreach ($m in 'stars_world_blend', 'stars_world_stars') {
-            $shot = Show-Atmosphere "show_$m" "$mode-cal-$m" '' 4
-            Write-Step "calibration $mode $m stars $((Get-AtmosphereSignature $shot).Stars)"
+        foreach ($part in $cal.Keys) {
+            Set-View $cal[$part][0][0] $cal[$part][0][1]
+            $base = Show-Atmosphere 'show_forest' "$mode-cal-$part-base" '' 3
+            foreach ($m in $cal[$part][1]) {
+                $shot  = Show-Atmosphere "show_cal_${part}_$m" "$mode-cal-$part-$m" '' 5
+                $sig   = Get-AtmosphereSignature $shot
+                $delta = Get-AtmosphereDelta $base $shot
+                Write-Step "calibration $mode $part $m`: stars $($sig.Stars), change $($delta.R)/$($delta.G)/$($delta.B) over $($delta.Share), lightness $($delta.Before) -> $($delta.After)"
+            }
         }
-        foreach ($w in 'reversed', 'both') {
-            Invoke-AtmosphereTest "atmosphere.show_winding_$w" | Out-Null
-            Set-View 0 -50
-            Show-Atmosphere 'show_glacier' "$mode-cal-aurora-$w" 'atmosphere: aurora drawn' 5 | Out-Null
+        if ($vv) {
+            Set-View 90 -15
+            foreach ($t in 'skytime_3', 'skytime_4', 'skytime_5', 'star_mesh_off') {
+                $shot = Show-Atmosphere "show_cal_$t" "$mode-cal-$t" '' 4
+                Write-Step "calibration $mode $t`: pink $((Get-AtmosphereSignature $shot).Pink), stars $((Get-AtmosphereSignature $shot).Stars)"
+            }
         }
     }
     Invoke-AtmosphereTest 'atmosphere.show_clear' | Out-Null
+}
+
+# The aurora biome list editor (TFClientConfig's "Edit Biomes"), opened by the server for the
+# tagged companion; closed with Esc.
+function Show-AuroraBiomesEditor([string]$mode) {
+    $mark = Get-LogMark
+    Invoke-AtmosphereTest 'atmosphere.show_aurora_biomes_screen' | Out-Null
+    Wait-LogLine 'atmosphere: aurora biome editor opened' 30 -Since $mark | Out-Null
+    Start-Sleep -Seconds 2
+    Save-Screenshot "$mode-aurora-biomes-editor" | Out-Null
+    Press-Key 'ESC'
+    Start-Sleep -Seconds 1
 }
 
 if ($vanilla) {
@@ -286,6 +354,12 @@ if ($vanilla) {
     $d = Get-ColourDistance (Get-AtmosphereColour $clear) (Get-AtmosphereColour $spooky)
     Write-Step "vanilla fog clear vs spooky forest: colour distance $d"
     if ($d -lt 4) { throw "the PlayerFogPacket fog does not show on the vanilla client ($d)" }
+    # the aurora biome editor's form (a vanilla client draws no aurora: it explains the setting)
+    Invoke-AtmosphereTest 'atmosphere.show_aurora_biomes_screen' | Out-Null
+    Start-Sleep -Seconds 3
+    Save-Screenshot 'vanilla-aurora-biomes-form' | Out-Null
+    Press-Key 'ESC'
+    Start-Sleep -Seconds 1
     Invoke-Chat "/tag @s remove $tag"
     return
 }
@@ -297,6 +371,7 @@ Invoke-AtmosphereTest 'atmosphere.*' | Out-Null
 if (-not ($calibrate -and $env:GF_ATMOSPHERE_VV_ONLY -eq '1')) { # (a calibration of Vibrant Visuals alone)
     Invoke-Chat "/tag @s add $tag"
     Invoke-AtmosphereViews 'classic'
+    Show-AuroraBiomesEditor 'classic'
     Invoke-Chat "/tag @s remove $tag"
 }
 

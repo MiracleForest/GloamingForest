@@ -65,10 +65,49 @@ inline constexpr long long kFixedTime = 13000;
 [[nodiscard]] float daylight(float timeOfDay);
 /// TwilightForestRenderInfo#getBrightnessDependentFogColor.
 [[nodiscard]] Rgb brightnessDependentFogColor(Rgb biomeFog, float daylight);
-/// The frame's fog colour as FogRenderer#setupColor makes it in the Twilight Forest: the biome fog
-/// colour through getBrightnessDependentFogColor, pulled towards the sky colour (the biome sky
-/// colour times the daylight) by the render distance (`renderDistanceChunks`), no sunrise colour.
-[[nodiscard]] Rgb fogColor(Rgb biomeFog, Rgb biomeSky, float daylight, int renderDistanceChunks);
+/// ClientLevel#getSkyColor without the lightning flash: the (blended) biome sky colour times the
+/// daylight, greyed by the rain (towards 0.6 x its luminance by rain * 0.75) and the thunder
+/// (towards 0.2 x its luminance by thunder * 0.75).
+[[nodiscard]] Rgb skyColor(Rgb biomeSky, float daylight, float rainLevel, float thunderLevel);
+/// The frame's fog colour as FogRenderer#setupColor makes it in the Twilight Forest (FogType.NONE):
+/// the (blended) biome fog colour through getBrightnessDependentFogColor, pulled towards the sky
+/// colour (skyColor) by the render distance (`renderDistanceChunks`), no sunrise colour; then
+/// darkened by the rain (red and green x (1 - rain * 0.5), blue x (1 - rain * 0.4)) and the thunder
+/// (x (1 - thunder * 0.5)), and towards black when the camera is less than one block above the
+/// dimension's floor (`aboveFloor` = camera y - min build height: x clamp(aboveFloor, 0, 1)^2).
+[[nodiscard]] Rgb fogColor(Rgb biomeFog, Rgb biomeSky, float daylight, int renderDistanceChunks, float rainLevel = 0.0f, float thunderLevel = 0.0f, double aboveFloor = 1.0e9);
+/// CubicSampler#gaussianSampleVec3: the colours `fetch(qx, qy, qz)` of the 6 x 6 x 6 quart cells
+/// around `(x, y, z)` (quart coordinates: (camera - 2) / 4) weighted by the kernel 0 1 4 6 4 1 0,
+/// as FogRenderer#setupColor blends the biome fog colours (and ClientLevel#getSkyColor the sky).
+template <class Fetch>
+[[nodiscard]] Rgb gaussianSample(double x, double y, double z, Fetch&& fetch) {
+    constexpr double kKernel[7] = {0.0, 1.0, 4.0, 6.0, 4.0, 1.0, 0.0};
+    auto const       floorOf    = [](double v) { return static_cast<int>(v < 0 && static_cast<double>(static_cast<int>(v)) != v ? static_cast<int>(v) - 1 : static_cast<int>(v)); };
+    int const        i = floorOf(x), j = floorOf(y), k = floorOf(z);
+    double const     dx = x - i, dy = y - j, dz = z - k;
+    double           total = 0.0, r = 0.0, g = 0.0, b = 0.0;
+    for (int l = 0; l < 6; ++l) {
+        double const wx = kKernel[l + 1] + dx * (kKernel[l] - kKernel[l + 1]);
+        for (int m = 0; m < 6; ++m) {
+            double const wy = kKernel[m + 1] + dy * (kKernel[m] - kKernel[m + 1]);
+            for (int n = 0; n < 6; ++n) {
+                double const wz = kKernel[n + 1] + dz * (kKernel[n] - kKernel[n + 1]);
+                double const w  = wx * wy * wz;
+                if (w == 0.0) continue;
+                Rgb const c = fetch(i - 2 + l, j - 2 + m, k - 2 + n);
+                total += w;
+                r += c.r * w;
+                g += c.g * w;
+                b += c.b * w;
+            }
+        }
+    }
+    if (total <= 0.0) return {};
+    return {static_cast<float>(r / total), static_cast<float>(g / total), static_cast<float>(b / total)};
+}
+/// fog.glsl's linear_fog value (1.21.1): 0 up to `start`, smoothstep(start, end, distance) up to
+/// `end`, 1 beyond (the share of the fog colour mixed in).
+[[nodiscard]] float linearFogValue(float distance, float start, float end);
 /// TwilightForestRenderInfo#isFoggyAt (Java's near fog): the spooky forest at any height, the dark
 /// forest and its center at y <= 20.
 [[nodiscard]] bool isFoggyAt(std::string_view biomeId, double playerY);
@@ -81,6 +120,17 @@ inline constexpr long long kFixedTime = 13000;
 /// a triangle fan around (0, y, 0), y = -4 relative to the camera, radius 512, as quads (the last
 /// corner repeated), corners at -180, -135, ..., 180 degrees.
 [[nodiscard]] std::vector<std::array<Vec3f, 4>> voidPlateQuads();
+/// A vertex of the fogged void plate: its position (camera relative, as voidPlateQuads) and the
+/// share of the sky fog colour TF's position shader mixes into its black (linear_fog of the dark
+/// buffer's own vertex, cylindrical distance: max(length(xz), |y|) at y -16).
+struct FoggedVertex {
+    Vec3f pos;
+    float fog = 0;
+};
+/// The void plate of voidPlateQuads with each fan triangle cut into `rings` rings (quads), every
+/// vertex with its fog value for the sky fog planes `fogStart`..`fogEnd`: drawn opaque, black at
+/// the centre and the fog colour towards the horizon, as Java's dark buffer is.
+[[nodiscard]] std::vector<std::array<FoggedVertex, 4>> voidPlateFogged(float fogStart, float fogEnd, int rings);
 
 /// ResourceLocation#tryParse as TFConfig#getValidAuroraBiomes reads an id: "namespace:path" (or
 /// "path" in "minecraft"), the namespace of [a-z0-9_.-], the path of [a-z0-9_.-/]; nullopt when

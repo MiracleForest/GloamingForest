@@ -1,11 +1,10 @@
 // U15 (atmosphere), client: immediate meshes with the engine's materials (client build only).
 //
 // RenderDragon has no GLSL for mods: TF's sky, weather and aurora shaders become CPU-built meshes
-// drawn with the game's own materials (docs/spec/atmosphere.md section 4):
-// - the stars and the aurora: the level renderer's stars material (vertex colours, additive blend,
-//   no fog: TF's stars draw with SRC_ALPHA, ONE and no fog);
-// - the weather columns: the particle engine's blend material (texture times vertex colour, alpha
-//   blend: TF draws them with the particle shader).
+// drawn with the game's own materials (docs/spec/atmosphere.md section 4, docs/units/atmosphere.md
+// for the material of each part in each graphics mode): vertex-coloured quads (the stars, the void
+// plate, the aurora; textured materials sample a white texture uploaded from memory) and textured
+// weather columns.
 
 #pragma once
 
@@ -38,8 +37,19 @@ struct ColourVertex {
 [[nodiscard]] mce::MaterialPtr const* starsMaterial();
 /// The particle engine's blend material (null when there is none).
 [[nodiscard]] mce::MaterialPtr const* particleBlendMaterial();
-/// A resource pack texture (cached for the process).
+/// A resource pack texture: cached, looked up again for every level renderer (world / server) and
+/// after resetTextures(), and reloaded when the texture group no longer has it loaded.
 [[nodiscard]] mce::TexturePtr const* texture(std::string const& path);
+/// A 16 x 16 white texture uploaded from memory (no resource pack needed; uploaded again the same
+/// way), for the vertex-coloured draws with textured materials.
+[[nodiscard]] mce::TexturePtr const* whiteTexture();
+/// Forgets the looked-up textures (the level was left).
+void resetTextures();
+/// Bumped by resetTextures() and by a new level renderer.
+[[nodiscard]] unsigned textureGeneration();
+/// A material by name: "@particles_blend" / "@particles_opaque" / "@particles_alpha" (the particle
+/// engine's), "@stars" (the level renderer's stars material), else materialNamed(name).
+[[nodiscard]] mce::MaterialPtr const* materialFor(std::string const& name);
 /// A material of the engine by name (the common group, else the switchable one; null when there is
 /// none), cached for the process.
 [[nodiscard]] mce::MaterialPtr const* materialNamed(char const* name);

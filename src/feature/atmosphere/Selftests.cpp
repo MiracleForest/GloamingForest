@@ -10,13 +10,16 @@
 
 #include "ll/api/service/Bedrock.h"
 
+#include "mc/server/SimulatedPlayer.h"
 #include "mc/world/actor/player/Player.h"
+#include "mc/world/level/dimension/DimensionType.h"
 #include "mc/world/level/Level.h"
 
 #include "core/atmosphere/Atmosphere.h"
 #include "feature/atmosphere/Atmosphere.h"
 #include "feature/atmosphere/Internal.h"
 #include "feature/combat/Combat.h"
+#include "feature/common/Screens.h"
 #include "feature/fx/Fx.h"
 #include "feature/net/Net.h"
 #include "mod/Config.h"
@@ -80,7 +83,7 @@ GF_REGISTER_SELFTEST("atmosphere.fog_packet", [](Context& ctx) -> ll::coro::Coro
     auto sent = at::sentFogStack(p);
     ctx.check(sent && *sent == std::vector<std::string>{"twilightforest:spooky_forest"}, "the spooky forest fog was sent");
     ctx.check(!at::updateFog(p, "twilightforest:spooky_forest"), "the same stack is not sent again");
-    double y      = p.getPosition().y;
+    double y      = p.getFeetPos().y;
     auto   expect = at::fogStackFor("twilightforest:dark_forest", y);
     ctx.check(at::updateFog(p, "twilightforest:dark_forest"), "moving to the dark forest sends its fog");
     ctx.check(at::sentFogStack(p) == expect, "dark forest fog at y " + std::to_string(static_cast<int>(y)) + ": " + expect.front());
@@ -88,6 +91,29 @@ GF_REGISTER_SELFTEST("atmosphere.fog_packet", [](Context& ctx) -> ll::coro::Coro
     ctx.check(at::sentFogStack(p) && at::sentFogStack(p)->empty(), "the cleared stack is empty");
     ctx.check(at::fogPacketsSent() - before >= 3, "the PlayerFogPackets went out (other players may get theirs meanwhile)");
     at::forgetFog(p);
+});
+
+GF_REGISTER_SELFTEST("atmosphere.fog_feet", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // TwilightForestRenderInfo#isFoggyAt tests player.position().y > 20: the feet (Bedrock's
+    // getPosition is the eyes, 1.62 higher). Feet at y 19.5 in the dark forest: the near fog.
+    ctx.require(co_await ctx.inTwilight(), "the Twilight Forest is available");
+    auto  at = ctx.testPos(1510, 2);
+    auto& sp = ctx.spawnPlayer();
+    sp.teleport(Vec3{at.x + 0.5f, 19.5f, at.z + 0.5f}, DimensionType(at.dim));
+    double const feet = sp.getFeetPos().y, eyes = sp.getPosition().y;
+    if (std::abs(feet - 19.5) > 0.01) {
+        ctx.info("the simulated player's feet are at y " + std::to_string(feet) + " after the teleport: the feet case is not checked");
+        co_return;
+    }
+    ctx.check(eyes > 20.0, "the eyes are above y 20 (" + std::to_string(eyes) + ")");
+    at::forgetFog(sp);
+    at::updateFog(sp, "twilightforest:dark_forest");
+    auto sent = at::sentFogStack(sp);
+    ctx.check(sent && *sent == std::vector<std::string>{"twilightforest:dark_forest_near"}, "feet at y 19.5 in the dark forest: the near fog (" + (sent && !sent->empty() ? sent->front() : std::string("none")) + ")");
+    at::updateFog(sp, "twilightforest:dark_forest_center");
+    sent = at::sentFogStack(sp);
+    ctx.check(sent && *sent == std::vector<std::string>{"twilightforest:dark_forest_center_near"}, "and in the dark forest center");
+    at::forgetFog(sp);
 });
 
 GF_REGISTER_SELFTEST("atmosphere.acid_rain", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -195,4 +221,62 @@ GF_REGISTER_SELFTEST("atmosphere.show_vanilla_spooky", [](Context& ctx) { pinVan
 GF_REGISTER_SELFTEST("atmosphere.show_vanilla_glacier", [](Context& ctx) { pinVanilla(ctx, "twilightforest:glacier"); });
 GF_REGISTER_SELFTEST("atmosphere.show_vanilla_clear", [](Context& ctx) { pinVanilla(ctx, std::nullopt); });
 
+// The aurora biome list editor ("Edit Biomes") for the tagged players: native for companions, the
+// form for vanilla players.
+GF_REGISTER_SELFTEST("atmosphere.show_aurora_biomes_screen", [](Context& ctx) {
+    int  n     = 0;
+    auto level = ll::service::getLevel();
+    if (level)
+        level->forEachPlayer([&](Player& p) {
+            if (!p.hasTag(at::kShowTag) || p.isSimulatedPlayer()) return true;
+            if (gf::screens::open(p, "atmosphere.aurora_biomes")) ++n;
+            return true;
+        });
+    ctx.info(n ? "aurora biome editor opened for " + std::to_string(n) + " player(s)" : std::string("no player tagged ") + at::kShowTag);
+});
+
+// ---- calibration of the client scenario (GF_ATMOSPHERE_CALIBRATE=1) ------------------------------------------
+// One preview per candidate material of each part ("atmosphere.show_cal_<part>_<material>", the
+// material spelled as materialFor's name with '@' dropped and '+' as '_'): the shots show which
+// material draws TF's look in each graphics mode (docs/units/atmosphere.md). The lists are the
+// scenario's too.
+
+std::string calName(std::string spec) {
+    std::string out;
+    for (char ch : spec) {
+        if (ch == '@') continue;
+        out += ch == '+' ? '_' : ch;
+    }
+    return out;
+}
+
+struct CalibrationTests {
+    CalibrationTests() {
+        struct Part {
+            char const*              part;
+            char const*              key;
+            Json                     base;
+            std::vector<std::string> specs;
+        };
+        std::vector<Part> const parts{
+            {"stars", "starsMat", {{"biome", "twilightforest:spooky_forest"}, {"vvStarMesh", 0}}, {"@stars", "lightning", "@particles_blend+tex", "particles_add+tex", "glow_sign_text+tex"}},
+            {"aurora", "auroraMat", {{"biome", "twilightforest:glacier"}}, {"@particles_blend+tex", "lightning", "particles_add+tex", "glow_sign_text+tex", "@stars"}},
+            {"weather", "weatherMat", {{"biome", "twilightforest:snowy_forest"}, {"locked", true}}, {"@particles_blend", "particles_add", "glow_sign_text", "sign_text", "@particles_alpha"}},
+            {"plate", "plateMat", {{"biome", "twilightforest:forest"}, {"voidPlate", true}}, {"@particles_blend+tex", "@particles_opaque+tex", "debug", "@stars"}},
+        };
+        for (auto const& p : parts)
+            for (auto const& spec : p.specs) {
+                Json msg       = p.base;
+                msg[p.key]     = spec;
+                std::string id = std::string("atmosphere.show_cal_") + p.part + "_" + calName(spec);
+                gf::selftest::detail::TestRegistrar(id, [msg](Context& ctx) { preview(ctx, msg); });
+            }
+        for (float t : {0.3f, 0.4f, 0.5f}) {
+            std::string id = "atmosphere.show_cal_skytime_" + std::to_string(static_cast<int>(std::lround(t * 10)));
+            gf::selftest::detail::TestRegistrar(id, [t](Context& ctx) { preview(ctx, {{"biome", "twilightforest:forest"}, {"vvSkyTime", t}}); });
+        }
+        gf::selftest::detail::TestRegistrar("atmosphere.show_cal_star_mesh_off", [](Context& ctx) { preview(ctx, {{"biome", "twilightforest:forest"}, {"vvStarMesh", 0}}); });
+    }
+};
+CalibrationTests const gCalibrationTests;
 } // namespace

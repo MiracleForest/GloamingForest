@@ -7,7 +7,9 @@
 // null) and its clouds take ClientLevel#getCloudColor. A view override sets, for the frame of a
 // dimension, the colour the clouds are drawn in and hides the sunrise colour band
 // (ViewRenderObject::mCloudState.mCloudColor, mViewData.mSunriseColor, set in
-// LevelRendererCamera::$render before the game draws the frame).
+// LevelRendererCamera::$render before the game draws the frame), and may set the sky object's star
+// brightness (TFSkyRenderer: the stars always at full brightness; Vibrant Visuals draws the level
+// renderer's star mesh with it) and its time of day (Vibrant Visuals' sky, calibration).
 //
 //     gf::feature::ext::atmosphere::client::setViewOverride(tfDim, [] { return ViewOverride{.cloud = rgb, .noSunrise = true}; });
 
@@ -24,6 +26,8 @@ namespace gf::feature::ext::atmosphere::client {
 struct ViewOverride {
     std::optional<std::array<float, 3>> cloud;           ///< the clouds' colour (rgb 0..1); nullopt: the game's
     bool                                noSunrise = false; ///< no sunrise / sunset colour band
+    std::optional<float>                starBrightness;    ///< the sky object's star brightness (SkyRenderObject::mStarBrightness)
+    std::optional<float>                timeOfDay;         ///< the sky object's time of day (SkyRenderObject::mTimeOfDay, mSunAngleOne)
 };
 using ViewFn = std::function<std::optional<ViewOverride>()>;
 /// The override of `dimension` (engine id); replaces the previous one.
