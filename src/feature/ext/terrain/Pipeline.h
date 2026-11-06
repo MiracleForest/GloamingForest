@@ -23,6 +23,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -77,8 +78,8 @@ void generateOnCopyWithNoiseStep(
 /// The liquid (extra) layer of a chunk the game is generating. Empty (false) for a chunk that is no
 /// game chunk (an in-memory test chunk, whose blocks have no liquid layer) and while the subchunk
 /// index order is not known to be the game's: the order (x, z, y) is checked against
-/// LevelChunk::getBlock on every chunk until a chunk with variety settles it for good; a wrong
-/// order logs one warning and the layer stays unread.
+/// LevelChunk::getBlock on every chunk until a chunk with variety agrees (or three disagree: a wrong
+/// order logs one warning and the layer stays unread); the verdict lasts until the world closes.
 class LiquidLayer {
 public:
     LiquidLayer() = default;
@@ -95,6 +96,14 @@ private:
     LevelChunk* mChunk = nullptr;
     int         mMinY = 0, mMaxY = 0;
 };
+
+/// Forgets the subchunk order verdict (the terrain module calls it when a world closes: the client
+/// loads many worlds in one process, and each one checks the order again).
+void resetLiquidLayerOrder();
+
+/// The dimension (engine id) of a chunk the game is generating; nullopt for a chunk that is no game
+/// chunk (an in-memory pass: F5's runInMemory, a test copy of the providers).
+[[nodiscard]] std::optional<int> gameChunkDimension(worldgen::Chunk& chunk);
 
 /// Selftest support: a worldgen::Chunk over a chunk `source` holds loaded (the game's LevelChunk, as
 /// F5's generator wraps it); nullptr when it is not loaded.

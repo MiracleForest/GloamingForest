@@ -2,6 +2,9 @@
 #include "core/terrain/WorldPreset.h"
 
 #include <cstdint>
+#include <algorithm>
+#include <unordered_set>
+#include <vector>
 
 namespace gf::core::terrain {
 
@@ -48,6 +51,35 @@ std::optional<int> chunkVersionKeyDimension(std::string_view key) {
         return dim;
     }
     return std::nullopt;
+}
+
+RingProbe probeRings(std::span<std::array<int, 2> const> centres, int radius, std::function<bool(int, int)> const& saved) {
+    RingProbe                        r;
+    std::unordered_set<std::int64_t> seen;
+    auto                             visit = [&](int x, int z) {
+        auto key = (static_cast<std::int64_t>(x) << 32) | static_cast<std::uint32_t>(z);
+        if (!seen.insert(key).second) return false;
+        ++r.probed;
+        return saved(x, z);
+    };
+    // the same centre twice probes nothing new: skip repeats up front
+    std::vector<std::array<int, 2>> unique;
+    for (auto const& c : centres)
+        if (std::find(unique.begin(), unique.end(), c) == unique.end()) unique.push_back(c);
+    for (int ring = 0; ring <= radius; ++ring)
+        for (auto const& [cx, cz] : unique) {
+            if (ring == 0) {
+                r.found = visit(cx, cz);
+                if (r.found) return r;
+                continue;
+            }
+            // the perimeter: the two rows z = cz -+ ring, then the two columns x = cx -+ ring between them
+            for (int dx = -ring; dx <= ring; ++dx)
+                if ((r.found = visit(cx + dx, cz - ring) || visit(cx + dx, cz + ring))) return r;
+            for (int dz = -ring + 1; dz <= ring - 1; ++dz)
+                if ((r.found = visit(cx - ring, cz + dz) || visit(cx + ring, cz + dz))) return r;
+        }
+    return r;
 }
 
 PresetChoice choosePreset(std::optional<bool> stored, bool savedTwilightChunks, int provisional, bool configured) {

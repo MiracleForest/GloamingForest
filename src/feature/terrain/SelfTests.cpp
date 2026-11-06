@@ -718,7 +718,8 @@ GF_REGISTER_SELFTEST("terrain.timing_world", [](Context& ctx) -> ll::coro::CoroT
         co_return;
     }
     ctx.require(co_await ctx.inTwilight(), "the test moves into the Twilight Forest");
-    std::uint64_t before = chunkTimesRecorded();
+    std::uint64_t before  = chunkTimesRecorded();
+    auto          handoff = handoffCounts();
     // fresh chunks: a place picked by the clock, far from every other test and trip
     auto stamp = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     int  x     = 2000000 + static_cast<int>(stamp % 40000) * 96;
@@ -736,6 +737,20 @@ GF_REGISTER_SELFTEST("terrain.timing_world", [](Context& ctx) -> ll::coro::CoroT
     std::snprintf(buf, sizeof buf, "world chunk p50 %.2f ms, p95 %.2f ms over %zu chunks (budget %.0f ms)", ms[ms.size() / 2], p95, ms.size(), budget);
     ctx.info(buf);
     gf::log().info("terrain: {}", buf);
+    // the grid handoff on the game's chunks: grids taken against chunks read back (another unit's
+    // Stage::Noise or Stage::Surface step turns it off without failing anything else)
+    auto h = handoffCounts();
+    std::snprintf(
+        buf,
+        sizeof buf,
+        "grid handoff on world chunks: %llu taken, %llu read back (%llu with no foreign writer)",
+        static_cast<unsigned long long>(h.taken - handoff.taken),
+        static_cast<unsigned long long>(h.readBack - handoff.readBack),
+        static_cast<unsigned long long>(h.unexplained - handoff.unexplained)
+    );
+    ctx.info(buf);
+    gf::log().info("terrain: {}", buf);
+    ctx.check(h.unexplained == handoff.unexplained, "no world chunk differs from its grid where no foreign writer runs");
     ctx.check(p95 <= budget, "generated chunks' p95 within the budget");
 });
 
@@ -871,10 +886,28 @@ GF_REGISTER_SELFTEST("terrain.handoff_pass", [](Context& ctx) {
     (void)worldgen::ext::runInMemory(s->seed, 40, -40, 2, 2);
     auto after = handoffCounts();
     ctx.info(
-        "global providers: " + std::to_string(after.first - before.first) + " grids taken, "
-        + std::to_string(after.second - before.second) + " read back"
+        "global providers: " + std::to_string(after.taken - before.taken) + " grids taken, "
+        + std::to_string(after.readBack - before.readBack) + " read back ("
+        + std::to_string(after.unexplained - before.unexplained) + " with no foreign writer)"
     );
-    if (!otherWriters) ctx.check(after.first > before.first, "a pass on F5's global providers hands its grids on");
+    // the surface grid's writers: Stage::Surface steps and the blankets F5 runs before ours
+    auto surfaceSteps   = gf::terrain::ext::stageStepIds(worldgen::Stage::Surface);
+    auto blankets       = gf::terrain::ext::blanketIds();
+    bool surfaceWriters = !surfaceSteps.empty() || std::any_of(blankets.begin(), blankets.end(), [](std::string const& id) {
+                              return id < std::string("twilightforest:chunk_blanketing");
+                          });
+    if (!otherWriters) ctx.check(after.taken > before.taken, "a pass on F5's global providers hands its grids on");
+    if (!otherWriters && !surfaceWriters)
+        ctx.check(after.readBack == before.readBack, "no grid is read back while no other unit writes between the stages");
+    if (surfaceWriters) ctx.info("other Stage::Surface steps or earlier blankets: the surface grid is read back by the blanket");
+    if (otherWriters) {
+        std::string ids;
+        for (auto const& id : noiseSteps)
+            if (id != "terrain.pass_probe") ids += (ids.empty() ? "" : ", ") + id;
+        ctx.info("other Stage::Noise steps (" + ids + "): every chunk reads its grid back after them");
+        gf::log().warn("terrain: Stage::Noise steps of other units ({}) turn the noise grid handoff off", ids);
+    }
+    ctx.check(after.unexplained == before.unexplained, "no grid differs from its chunk where no foreign writer runs");
     // a copy with a foreign Stage::Noise writer: air pockets under every column's top stone
     auto const* air   = kit::javaBlock("minecraft:air");
     auto const* stone = kit::javaBlock("minecraft:stone");
@@ -912,7 +945,8 @@ GF_REGISTER_SELFTEST("terrain.handoff_pass", [](Context& ctx) {
         }
     );
     after = handoffCounts();
-    ctx.check(after.second > before.second, "the pass on a copy of the providers reads the chunk back");
+    ctx.check(after.readBack > before.readBack, "the pass on a copy of the providers reads the chunk back");
+    ctx.check(after.unexplained == before.unexplained, "the read-back is the foreign writer's (known), not a mismatch");
 });
 
 // ---- Bedrock's liquid layer -----------------------------------------------------------------------------------
@@ -998,21 +1032,17 @@ GF_REGISTER_SELFTEST("terrain.liquid_layer", [](Context& ctx) -> ll::coro::CoroT
 // ---- the world preset's saved-chunk check ------------------------------------------------------------------
 
 // onWorldReady looks for the Twilight Forest's saved chunks (their version records in the world DB)
-// when a world has no kept preset and the answer matters. The probe looks up keys near the
-// dimension's entrances and never iterates the chunk table here: a version record written for an
-// unused dimension id at a probed position is found, an empty dimension is not, and both stay
-// within the probe's bound.
+// when a world has no kept preset and the answer matters. The probe looks up positions near the
+// dimension's entrances, each once, and never iterates the chunk table here. The test writes no chunk
+// record: the game's version-record lookup runs read-only on a dimension id no world uses, and the
+// probe's search runs against the test's own world-DB key (gf:terrain:selftest_saved_chunk, outside
+// the chunk records), so an interrupted run leaves no chunk behind.
 GF_REGISTER_SELFTEST("terrain.saved_chunks", [](Context& ctx) -> ll::coro::CoroTask<> {
-    constexpr int kDim   = 4321; // no dimension of the game: its chunk records are only this test's
-    constexpr int kBound = 3 * (2 * kSavedChunkProbeRadius + 1) * (2 * kSavedChunkProbeRadius + 1);
-    auto          level  = ll::service::getLevel();
-    ctx.require(level != nullptr, "a level");
-    auto key = core::terrain::chunkVersionKeys(5, -3, kDim)[0];
-    // a record an interrupted earlier run left behind goes first
-    (void)level->getLevelStorage().deleteData(key, DBHelpers::Category::Chunk);
-    co_await ctx.ticks(2);
-    level = ll::service::getLevel();
-    ctx.require(level != nullptr, "a level");
+    constexpr int  kDim   = 4321; // no dimension of the game
+    constexpr int  kBound = 3 * (2 * kSavedChunkProbeRadius + 1) * (2 * kSavedChunkProbeRadius + 1);
+    constexpr char kKey[] = "gf:terrain:selftest_saved_chunk";
+    ctx.require(ll::service::getLevel() != nullptr, "a level");
+    // 1. the game's records: a dimension without chunks has none, and the probe stays bounded
     auto empty = findSavedChunks(kDim, false);
     ctx.require(empty.has_value(), "the world DB is readable");
     ctx.check(!empty->found, "a dimension without chunks has no saved chunk");
@@ -1020,16 +1050,22 @@ GF_REGISTER_SELFTEST("terrain.saved_chunks", [](Context& ctx) -> ll::coro::CoroT
         !empty->scanned && empty->probed > 0 && empty->probed <= static_cast<std::size_t>(kBound),
         "the probe stays bounded (" + std::to_string(empty->probed) + " positions)"
     );
-    (void)level->getLevelStorage().saveData(key, std::string(1, '\x28'), DBHelpers::Category::Chunk);
+    // 2. the search against a position stored in the world DB (the test's own key)
+    game::db::put(kKey, Json{{"x", 5}, {"z", -3}});
     std::optional<SavedChunkProbe> hit;
     for (int i = 0; i < 100 && !(hit && hit->found); ++i) {
-        co_await ctx.ticks(2);
-        hit = findSavedChunks(kDim, false);
+        if (i) co_await ctx.ticks(2);
+        auto record = game::db::get(kKey); // read once per probe, compared per position
+        if (!record || !record->is_object()) continue;
+        int sx = record->value("x", 0), sz = record->value("z", 0);
+        hit    = findSavedChunks(kDim, false, [&](int x, int z) { return x == sx && z == sz; });
     }
-    level = ll::service::getLevel();
-    if (level) (void)level->getLevelStorage().deleteData(key, DBHelpers::Category::Chunk);
+    game::db::erase(kKey);
     ctx.check(hit && hit->found, "a saved chunk five chunks from the origin is found");
-    ctx.check(hit && !hit->scanned && hit->probed <= static_cast<std::size_t>(kBound), "found by key, without a scan");
+    ctx.check(
+        hit && !hit->scanned && hit->probed <= static_cast<std::size_t>(kBound),
+        "found by lookup, without a scan (" + std::to_string(hit ? hit->probed : 0) + " positions)"
+    );
     if (int dim = gf::world::twilight() ? static_cast<int>(*gf::world::twilight()) : -1; dim >= 0) {
         auto tf = findSavedChunks(dim, false);
         ctx.info(std::string("Twilight Forest chunks saved near its entrances: ") + (tf && tf->found ? "yes" : "no"));

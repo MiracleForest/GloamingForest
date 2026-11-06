@@ -7,6 +7,9 @@
 // was generated before the preset was kept stays twilight_noise_gen). Pure: no game headers.
 
 #include <array>
+#include <cstddef>
+#include <functional>
+#include <span>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -22,6 +25,19 @@ namespace gf::core::terrain {
 /// The two version-record keys a saved chunk of dimension `dim` (0: the overworld) at chunk (x, z)
 /// can have (tag 44 "Version", then the legacy 118): the keys chunkVersionKeyDimension accepts.
 [[nodiscard]] std::array<std::string, 2> chunkVersionKeys(int x, int z, int dim);
+
+struct RingProbe {
+    bool        found  = false; ///< `saved` answered true for a position
+    std::size_t probed = 0;     ///< distinct positions `saved` was asked about
+};
+/// Asks `saved` about the chunk positions within `radius` (Chebyshev) of the `centres`, ring by ring
+/// (ring 0 of every centre, then ring 1 of every centre, ...), walking each ring's perimeter only and
+/// each position once even where the centres' squares overlap; stops at the first true.
+[[nodiscard]] RingProbe probeRings(
+    std::span<std::array<int, 2> const> centres,
+    int                                 radius,
+    std::function<bool(int x, int z)> const& saved
+);
 
 enum class PresetSource {
     Stored,      ///< gf:terrain:skylight

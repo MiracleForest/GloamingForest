@@ -3,7 +3,13 @@
 #include <gtest/gtest.h>
 
 #include <cstdint>
+#include <algorithm>
+#include <array>
+#include <cstdlib>
 #include <optional>
+#include <set>
+#include <utility>
+#include <vector>
 #include <string>
 
 #include "core/terrain/WorldPreset.h"
@@ -115,6 +121,38 @@ TEST(TerrainWorldPreset, ANewWorldTakesTheProvisionalThenTheConfig) {
     c = wp::choosePreset(std::nullopt, false, -1, false);
     EXPECT_FALSE(c.skylight);
     EXPECT_EQ(c.source, wp::PresetSource::Config);
+}
+
+TEST(TerrainWorldPreset, RingProbeVisitsEachPositionOnceNearestFirst) {
+    std::array<std::array<int, 2>, 3> centres{{{0, 0}, {0, 0}, {1, 0}}};
+    std::vector<std::pair<int, int>>  order;
+    auto r = wp::probeRings(centres, 4, [&](int x, int z) {
+        order.emplace_back(x, z);
+        return false;
+    });
+    EXPECT_FALSE(r.found);
+    std::set<std::pair<int, int>> distinct(order.begin(), order.end());
+    EXPECT_EQ(distinct.size(), order.size()); // no position twice
+    // the union of two 9 x 9 squares one apart: 9 x 10
+    EXPECT_EQ(r.probed, 90u);
+    EXPECT_EQ(order.size(), 90u);
+    // nearest first: the Chebyshev distance to the nearer centre never decreases by more than a ring
+    int last = 0;
+    for (auto const& [x, z] : order) {
+        int d = std::min(std::max(std::abs(x), std::abs(z)), std::max(std::abs(x - 1), std::abs(z)));
+        EXPECT_LE(d, last + 1);
+        last = std::max(last, d);
+    }
+}
+
+TEST(TerrainWorldPreset, RingProbeStopsAtTheFirstSavedChunk) {
+    std::array<std::array<int, 2>, 1> centre{{{10, -10}}};
+    auto r = wp::probeRings(centre, 16, [](int x, int z) { return x == 13 && z == -8; });
+    EXPECT_TRUE(r.found);
+    EXPECT_LE(r.probed, 7u * 7u); // within ring 3
+    auto none = wp::probeRings(centre, 16, [](int, int) { return false; });
+    EXPECT_FALSE(none.found);
+    EXPECT_EQ(none.probed, 33u * 33u);
 }
 
 } // namespace

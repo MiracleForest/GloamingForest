@@ -16,6 +16,7 @@
 #include "mc/world/level/chunk/LevelChunk.h"
 #include "mc/world/level/chunk/SubChunk.h"
 #include "mc/world/level/chunk/SubChunkStorage.h"
+#include "mc/world/level/dimension/Dimension.h"
 
 #include "feature/ext/worldgen/FeatureKit.h"
 #include "feature/worldgen/Internal.h"
@@ -151,10 +152,19 @@ std::atomic<int>& orderVerdict() { // -1 unknown, 0 wrong, 1 right
     static std::atomic<int> v{-1};
     return v;
 }
+/// Varied chunks whose probes disagreed with LevelChunk::getBlock while the order was unknown.
+std::atomic<int>& orderMismatches() {
+    static std::atomic<int> v{0};
+    return v;
+}
+/// How many varied chunks must disagree before the order counts as wrong: one disagreement can be a
+/// transient (a subchunk storage swapped while it is read); a wrong order disagrees on every chunk.
+constexpr int kMismatchesForWrong = 3;
 
 /// Whether the index order above is the game's: the standard layer read through it equals
-/// LevelChunk::getBlock at a few positions. A chunk with variety settles it for good; a chunk of one
-/// block everywhere proves nothing (its layer stays unread until a varied chunk settles the order).
+/// LevelChunk::getBlock at a few positions. A chunk with variety whose probes all agree settles it
+/// (until the world closes); kMismatchesForWrong varied chunks that disagree settle it as wrong; a
+/// chunk of one block everywhere proves nothing. Until it is settled the layer stays unread.
 bool indexOrderVerified(LevelChunk& lc, int chunkMinY, int chunkMaxY) {
     int v = orderVerdict().load();
     if (v >= 0) return v == 1;
@@ -178,10 +188,16 @@ bool indexOrderVerified(LevelChunk& lc, int chunkMinY, int chunkMaxY) {
     if (!varied || checked == 0)
         return false; // unproven: the layer stays unread in this chunk (one block everywhere carves nothing)
     int expected = -1;
-    if (orderVerdict().compare_exchange_strong(expected, wrong == 0 ? 1 : 0) && wrong)
+    if (wrong == 0) {
+        orderVerdict().compare_exchange_strong(expected, 1);
+        return orderVerdict().load() == 1;
+    }
+    if (orderMismatches().fetch_add(1) + 1 < kMismatchesForWrong) return false; // not yet: maybe a transient
+    if (orderVerdict().compare_exchange_strong(expected, 0))
         gf::log().warn(
-            "terrain: the subchunk block order is not x-z-y ({} of {} probes differ): waterlogged blocks stay unseen "
-            "by the carvers",
+            "terrain: the subchunk block order is not x-z-y ({} varied chunks disagree, the last in {} of {} probes): "
+            "waterlogged blocks stay unseen by the carvers in this world",
+            kMismatchesForWrong,
             wrong,
             checked
         );
@@ -189,6 +205,18 @@ bool indexOrderVerified(LevelChunk& lc, int chunkMinY, int chunkMaxY) {
 }
 
 } // namespace
+
+void resetLiquidLayerOrder() {
+    orderVerdict()    = -1;
+    orderMismatches() = 0;
+}
+
+std::optional<int> gameChunkDimension(worldgen::Chunk& chunk) {
+    auto* adapter =
+        dynamic_cast<worldgen::detail::LevelChunkAdapter*>(&chunk); // a GloamingForest type, not a game type
+    if (!adapter) return std::nullopt;
+    return static_cast<int>(adapter->levelChunk().mDimension.getDimensionId());
+}
 
 LiquidLayer LiquidLayer::of(worldgen::Chunk& chunk) {
     LiquidLayer out;

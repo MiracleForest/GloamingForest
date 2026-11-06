@@ -7,6 +7,7 @@
 
 #include <array>
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
@@ -153,9 +154,14 @@ void clearBeardCache();
 /// The stage before handed this thread's chunk its grid (0: noise, 1: surface) and the chunk still
 /// holds it where the next stage looks: moves it into `out`.
 [[nodiscard]] bool takeHandedGrid(State const& s, worldgen::Chunk& chunk, int stage, Grid& out);
-/// How many grids the stages took from the stage before (first) and how many they read from the chunk
-/// instead because something else could have written it (second), since the module loaded.
-[[nodiscard]] std::pair<std::uint64_t, std::uint64_t> handoffCounts();
+struct HandoffCounts {
+    std::uint64_t taken       = 0; ///< grids the stages took from the stage before
+    std::uint64_t readBack    = 0; ///< chunks read back instead (something else could have written them)
+    std::uint64_t unexplained = 0; ///< of those, read back in a pass with no foreign writer known (the
+                                   ///< chunk differed from the grid anyway)
+};
+/// The grid handoff's counters since the module loaded.
+[[nodiscard]] HandoffCounts handoffCounts();
 
 /// How far (in chunks) findSavedChunks looks around the Twilight Forest's entrances before it scans.
 inline constexpr int kSavedChunkProbeRadius = 16;
@@ -170,6 +176,11 @@ struct SavedChunkProbe {
 /// world spawn's portal destination; only when none is there and `fullScan` iterates every chunk
 /// record (onWorldReady does that once per world, and only when the answer can change the preset).
 [[nodiscard]] std::optional<SavedChunkProbe> findSavedChunks(int dim, bool fullScan);
+/// Whether chunk (x, z) is saved: the world DB's version records, or a selftest's own keys.
+using ChunkLookup = std::function<bool(int x, int z)>;
+/// findSavedChunks with the position lookup given (the full scan still reads the world DB's chunk
+/// table): the selftest probes its own keys, outside the chunk records.
+[[nodiscard]] std::optional<SavedChunkProbe> findSavedChunks(int dim, bool fullScan, ChunkLookup const& lookup);
 
 /// TFCavesCarver#carveBlock (and its postCarveBlock) at one world position of `chunk`, as a tunnel
 /// reaching it would run it (selftests: the fluid tests on Bedrock's liquid layer). True: carved.

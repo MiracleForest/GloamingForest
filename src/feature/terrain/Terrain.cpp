@@ -24,6 +24,7 @@
 #include "feature/terrain/Terrain.h"
 
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <cmath>
@@ -99,20 +100,30 @@ std::atomic<int>& skylightFlag() { // -1 unknown, 0 / 1
     return v;
 }
 
-/// The Twilight Forest chunks this session generated before the world's preset was known: the
-/// saved-chunk check must not take them (saved already, perhaps) for an older world's.
+/// The game chunks of the Twilight Forest this session generated before the world's preset was known
+/// (by dimension and position; in-memory passes are none): the saved-chunk check must not take them
+/// (saved already, perhaps) for an older world's.
 std::mutex& provisionalChunksMutex() {
     static std::mutex m;
     return m;
 }
-std::unordered_set<std::int64_t>& provisionalChunks() {
-    static std::unordered_set<std::int64_t> s;
+struct ProvisionalKey {
+    int  dim = 0, x = 0, z = 0;
+    bool operator==(ProvisionalKey const&) const = default;
+};
+struct ProvisionalKeyHash {
+    std::size_t operator()(ProvisionalKey const& k) const {
+        std::uint64_t h = (static_cast<std::uint64_t>(static_cast<std::uint32_t>(k.x)) << 32) | static_cast<std::uint32_t>(k.z);
+        return std::hash<std::uint64_t>{}(h ^ (static_cast<std::uint64_t>(static_cast<std::uint32_t>(k.dim)) * 0x9E3779B97F4A7C15ULL));
+    }
+};
+std::unordered_set<ProvisionalKey, ProvisionalKeyHash>& provisionalChunks() {
+    static std::unordered_set<ProvisionalKey, ProvisionalKeyHash> s;
     return s;
 }
-std::int64_t chunkKey(int x, int z) { return (static_cast<std::int64_t>(x) << 32) | static_cast<std::uint32_t>(z); }
-bool         isProvisionalChunk(int x, int z) {
+bool isProvisionalChunk(int dim, int x, int z) {
     std::lock_guard lock(provisionalChunksMutex());
-    return provisionalChunks().contains(chunkKey(x, z));
+    return provisionalChunks().contains({dim, x, z});
 }
 
 std::atomic<bool>& installed() {
@@ -237,9 +248,16 @@ std::condition_variable& flagKnown() {
     static std::condition_variable cv;
     return cv;
 }
-/// The preset chunks were generated with before the world's own was known (-1: none).
+/// The preset chunks were generated with before the world's own was known (-1: none). Set only
+/// under flagMutex and while no world is deciding its preset.
 std::atomic<int>& provisionalFlag() {
     static std::atomic<int> v{-1};
+    return v;
+}
+/// onWorldReady is choosing the world's preset (it may scan the world DB for saved chunks): chunks
+/// wait for its answer instead of generating with a guess it could contradict. Guarded by flagMutex.
+bool& deciding() {
+    static bool v = false;
     return v;
 }
 /// The thread that runs the world lifecycle (install on BDS, onWorldReady): it never waits for the
@@ -270,16 +288,24 @@ bool skylightWorld() {
     // stands in the Twilight Forest) waits a little for it, then uses the config's preset and
     // remembers it, so onWorldReady keeps a new world consistent with those chunks.
     if (int p = provisionalFlag().load(); p >= 0) return p == 1; // waited once already
+    std::unique_lock lock(flagMutex());
     if (!onLifecycleThread()) {
-        std::unique_lock lock(flagMutex());
-        flagKnown().wait_for(lock, std::chrono::milliseconds(2000), [] { return skylightFlag().load() >= 0; });
+        auto known = [] { return skylightFlag().load() >= 0; };
+        flagKnown().wait_for(lock, std::chrono::milliseconds(2000), known);
+        // the world is choosing its preset right now (a saved-chunk scan can take a while): its
+        // answer comes, and a guess could contradict it
+        if (!known() && deciding()) flagKnown().wait(lock, [&] { return known() || !deciding(); });
         v = skylightFlag().load();
+        if (v >= 0) return v == 1;
+    } else if (deciding()) {
+        // onWorldReady itself never generates; should it, it keeps the config's (no provisional mark)
+        return config::get<TerrainConfig>().skylight;
     }
-    if (v >= 0) return v == 1;
-    bool sky = config::get<TerrainConfig>().skylight;
-    int  expected = -1;
-    if (provisionalFlag().compare_exchange_strong(expected, sky ? 1 : 0)) gf::log().warn("terrain: a chunk generates before the world's preset is known: {} (config) for now", sky ? "skylight" : "twilight");
-    return provisionalFlag().load() == 1;
+    if (int p = provisionalFlag().load(); p >= 0) return p == 1;
+    bool sky          = config::get<TerrainConfig>().skylight;
+    provisionalFlag() = sky ? 1 : 0;
+    gf::log().warn("terrain: a chunk generates before the world's preset is known: {} (config) for now", sky ? "skylight" : "twilight");
+    return sky;
 }
 
 std::shared_ptr<State const> state() {
@@ -601,10 +627,15 @@ std::atomic<std::uint64_t>& handoffsDropped() {
     static std::atomic<std::uint64_t> v{0};
     return v;
 }
+/// Grids dropped in a pass with no foreign writer known (the chunk differs from the grid anyway).
+std::atomic<std::uint64_t>& handoffsUnexplained() {
+    static std::atomic<std::uint64_t> v{0};
+    return v;
+}
 
 } // namespace
 
-std::pair<std::uint64_t, std::uint64_t> handoffCounts() { return {handoffsTaken().load(), handoffsDropped().load()}; }
+HandoffCounts handoffCounts() { return {handoffsTaken().load(), handoffsDropped().load(), handoffsUnexplained().load()}; }
 
 bool takeHandedGrid(State const& s, worldgen::Chunk& chunk, int stage, Grid& out) {
     if (tHanded.stage != stage || !tHanded.grid || tHanded.chunkX != chunk.chunkX() || tHanded.chunkZ != chunk.chunkZ() || tHanded.generation != s.generation)
@@ -628,6 +659,7 @@ bool takeHandedGrid(State const& s, worldgen::Chunk& chunk, int stage, Grid& out
                 || (top >= chunk.minY() && classify(s, chunk.getBlock(x, top, z)) != classOf(g.get(x, top, z), s))) {
                 tHanded.grid.reset();
                 ++handoffsDropped();
+                ++handoffsUnexplained();
                 return false;
             }
         }
@@ -645,16 +677,19 @@ void terrainProvider(worldgen::Chunk& chunk) {
     StageTimer timer;
     auto       s = state();
     if (!s) return;
-    if (skylightFlag().load() < 0) {
-        std::lock_guard lock(provisionalChunksMutex());
-        provisionalChunks().insert(chunkKey(chunk.chunkX(), chunk.chunkZ()));
+    int dim = twilightDim();
+    if (skylightFlag().load() < 0 && dim >= 0) {
+        // only the game's own Twilight Forest chunks (an in-memory pass is never saved)
+        if (auto d = gf::terrain::ext::gameChunkDimension(chunk); d && *d == dim) {
+            std::lock_guard lock(provisionalChunksMutex());
+            provisionalChunks().insert({dim, chunk.chunkX(), chunk.chunkZ()});
+        }
     }
     ChunkColumns cols(*s, chunk.chunkX(), chunk.chunkZ());
     // the beardifier: Beardifier#forStructuresInChunk (NeoForge: each piece's
     // PieceBeardifierModifier, else its box with the structure's adaptation) plus
     // WorldgenHooks#getCustomDensity (the TF terraformers)
     ExtraDensity extra;
-    int          dim = twilightDim();
     if (dim >= 0) {
         auto rigid = beardRigids(dim, chunk.chunkX(), chunk.chunkZ());
         landmark::ext::ChunkTerraformer t;
@@ -738,31 +773,36 @@ void blanketProvider(worldgen::Chunk& chunk, worldgen::Region&) {
 std::optional<SavedChunkProbe> findSavedChunks(int dim, bool fullScan) {
     auto level = ll::service::getLevel();
     if (!level) return std::nullopt;
-    auto const&     db = level->getLevelStorage();
-    SavedChunkProbe r;
-    auto            saved = [&](int x, int z) {
-        ++r.probed;
-        if (isProvisionalChunk(x, z)) return false; // this session's, not an older world's
+    auto const& db = level->getLevelStorage();
+    return findSavedChunks(dim, fullScan, [&](int x, int z) {
         for (auto const& k : core::terrain::chunkVersionKeys(x, z, dim))
             if (db.hasKey(k, DBHelpers::Category::Chunk)) return true;
         return false;
+    });
+}
+
+std::optional<SavedChunkProbe> findSavedChunks(int dim, bool fullScan, ChunkLookup const& lookup) {
+    auto level = ll::service::getLevel();
+    if (!level) return std::nullopt;
+    auto const&     db = level->getLevelStorage();
+    SavedChunkProbe r;
+    auto            saved = [&](int x, int z) {
+        if (isProvisionalChunk(dim, x, z)) return false; // this session's, not an older world's
+        return lookup(x, z);
     };
     // the chunks a Twilight Forest is entered by first: around its origin, and around where a portal
     // at the world spawn leads (F4: Twilight Forest = overworld / coordinateScale), nearest first
     BlockPos const& spawn         = level->getDefaultSpawn();
     double          toTf          = 1.0 / gf::world::coordinateScale();
-    int const       centres[3][2] = {
-        {0,                                                 0                                                },
+    std::array<std::array<int, 2>, 3> const centres{{
+        {0, 0},
         {static_cast<int>(std::floor(spawn.x * toTf)) >> 4, static_cast<int>(std::floor(spawn.z * toTf)) >> 4},
-        {spawn.x >> 4,                                      spawn.z >> 4                                     },
-    };
-    for (int ring = 0; ring <= kSavedChunkProbeRadius && !r.found; ++ring)
-        for (auto const& c : centres) {
-            for (int dx = -ring; dx <= ring && !r.found; ++dx)
-                for (int dz = -ring; dz <= ring && !r.found; ++dz)
-                    if ((std::abs(dx) == ring || std::abs(dz) == ring) && saved(c[0] + dx, c[1] + dz)) r.found = true;
-            if (r.found) break;
-        }
+        {spawn.x >> 4, spawn.z >> 4},
+    }};
+    // ring by ring around the three, each position once (they overlap near 0, 0 or at scale 1)
+    auto ring = core::terrain::probeRings(centres, kSavedChunkProbeRadius, saved);
+    r.found   = ring.found;
+    r.probed  = ring.probed;
     if (r.found || !fullScan) return r;
     // nothing near the entrances: a world whose players wandered far. Every chunk record has to be
     // looked at (the callback cannot stop the iteration; it only stops counting)
@@ -776,7 +816,7 @@ std::optional<SavedChunkProbe> findSavedChunks(int dim, bool fullScan) {
                     v = (v << 8) | static_cast<unsigned char>(key[at + static_cast<std::size_t>(i)]);
                 return static_cast<int>(static_cast<std::int32_t>(v));
             };
-            if (!isProvisionalChunk(int32At(0), int32At(4))) r.found = true;
+            if (!isProvisionalChunk(dim, int32At(0), int32At(4))) r.found = true;
         }
     });
     return r;
@@ -907,12 +947,27 @@ std::vector<BlockPos> chunkBlanketing(features::PlacementContext const& ctx, Blo
 
 void onWorldReady() {
     noteLifecycleThread();
+    // chunks that ask for the preset from now on wait for this answer (none guesses while it is chosen)
+    int provisional = -1;
+    {
+        std::lock_guard lock(flagMutex());
+        deciding()  = true;
+        provisional = provisionalFlag().load();
+    }
+    struct Decided {
+        ~Decided() {
+            {
+                std::lock_guard lock(flagMutex());
+                deciding() = false;
+            }
+            flagKnown().notify_all();
+        }
+    } decided;
     // TF's preset is chosen when the world is created (the dimension's chunk generator) and kept
     // with it: a stored choice wins; a world whose Twilight Forest already holds saved chunks (an
     // existing world, generated before a preset was kept) stays twilight_noise_gen; a new world
     // takes the one chunks already generated with this session (before the world was ready), else
     // the config's
-    int  provisional = provisionalFlag().load();
     bool                configured  = config::get<TerrainConfig>().skylight;
     auto name        = [](bool s) { return s ? "skylight" : "twilight"; };
     std::optional<bool> stored;
@@ -1008,6 +1063,7 @@ struct TerrainModule {
                 provisionalChunks().clear();
             }
             clearBeardCache();
+            gf::terrain::ext::resetLiquidLayerOrder();
             std::lock_guard lock(stateMutex());
             cachedState().reset();
         });
