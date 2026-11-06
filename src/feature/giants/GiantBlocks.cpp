@@ -12,7 +12,7 @@
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // Giant blocks fill an aligned 4 x 4 x 4 cell. Their texture tiling (GiantBlockModel) is the block
-// states twilightforest:giant_tiled + giant_x / _y / _z (the position in the cell; untiled: the item and a
+// states gf:giant_tiled + giant_x / _y / _z (the position in the cell; untiled: the item and a
 // block nobody fixed yet), whose permutations pick a geometry with that face's 4 x 4 sub-square
 // (assets/pack/rp/models/blocks/giants/giant_cell.geo.json); every client, vanilla included, draws
 // the tiling. Blocks placed by world generation get their state when they are placed (onPlaced) or

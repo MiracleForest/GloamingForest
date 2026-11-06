@@ -89,7 +89,7 @@ Step tickBeanstalk(BeanstalkState& state, BeanstalkWorld& world, jrand::RandomSo
 
 /// The aligned 4 x 4 x 4 cell of a position (GiantBlock#getVolume): its minimum corner.
 [[nodiscard]] inline std::array<int, 3> cellOrigin(int x, int y, int z) { return {x & ~3, y & ~3, z & ~3}; }
-/// The tiling index of a position (the states twilightforest:giant_x / _y / _z): 1 + (x & 3) + 4 (y & 3)
+/// The tiling index of a position (the states gf:giant_x / _y / _z): 1 + (x & 3) + 4 (y & 3)
 /// + 16 (z & 3) (1..64; 0 = an untiled block that shows the whole texture: items, unfixed blocks).
 [[nodiscard]] inline int cellState(int x, int y, int z) { return 1 + (x & 3) + 4 * (y & 3) + 16 * (z & 3); }
 /// The cell-local position (0..3 each) of a tiling index 1..64.

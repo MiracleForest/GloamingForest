@@ -65,12 +65,12 @@ inline constexpr char GiantMiner[]       = "twilightforest:giant_miner";
 inline constexpr char ArmoredGiant[]     = "twilightforest:armored_giant";
 inline constexpr char GiantHouse[]       = "twilightforest:giant_house";
 inline constexpr char CloudPuff[]        = "twilightforest:cloud_puff";
-/// The giant blocks' tiling states (added, rule R1): tiled false = the whole texture (item, a
+/// The giant blocks' tiling states (GloamingForest's own, outside the frozen twilightforest: states): tiled false = the whole texture (item, a
 /// block nobody fixed yet); else the position in the cell (0..3 each).
-inline constexpr char GiantTiled[] = "twilightforest:giant_tiled";
-inline constexpr char GiantX[]     = "twilightforest:giant_x";
-inline constexpr char GiantY[]     = "twilightforest:giant_y";
-inline constexpr char GiantZ[]     = "twilightforest:giant_z";
+inline constexpr char GiantTiled[] = "gf:giant_tiled";
+inline constexpr char GiantX[]     = "gf:giant_x";
+inline constexpr char GiantY[]     = "gf:giant_y";
+inline constexpr char GiantZ[]     = "gf:giant_z";
 } // namespace id
 
 /// The module's random source (Java's level random).
