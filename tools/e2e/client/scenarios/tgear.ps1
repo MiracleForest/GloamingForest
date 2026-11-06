@@ -68,7 +68,7 @@ Save-Screenshot 'inventory' | Out-Null
 Close-Screen
 if ($script:Mode -ne 'remote-vanilla') {
     # TravellersGearItemModel / the red thread's size models: the slot icons drawn with their layers
-    try { Wait-LogLine 'tgear: icon of twilightforest:' 5 -Since $iconMark | Out-Null } catch { throw 'no slot icon was drawn with its layers (the broken vest, the modifier overlays, the red thread spool)' }
+    try { Wait-LogLine 'tgear: icon of twilightforest:\S+ drawn with' 5 -Since $iconMark | Out-Null } catch { throw 'no slot icon was drawn with its layers (the broken vest, the modifier overlays, the red thread spool)' }
 }
 
 if ($script:Mode -ne 'remote-vanilla') {
