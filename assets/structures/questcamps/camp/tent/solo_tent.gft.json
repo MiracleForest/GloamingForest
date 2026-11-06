@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:camp/tent/solo_tent",
+  "id": "gloamingforest:camp/tent/solo_tent",
   "size": [5, 4, 6],
   "palette": [
     {"Name":"minecraft:structure_void"},
@@ -24,6 +24,6 @@
     {"pos":[1,0,1],"marker":"data","data":{"metadata":"twilight_oak_slab@south"}}
   ],
   "jigsaw": [
-    {"pos":[2,0,0],"front":"north","top":"up","pool":"minecraft:empty","name":"twilightforest:camp/tent","target":""}
+    {"pos":[2,0,0],"front":"north","top":"up","pool":"minecraft:empty","name":"gloamingforest:camp/tent","target":""}
   ]
 }

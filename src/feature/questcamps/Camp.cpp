@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <cctype>
 #include <mutex>
+#include <string_view>
 
 #include "feature/ext/landmark/LandmarkExt.h"
 #include "feature/ext/questcamps/W0Internals.h"
@@ -29,12 +30,39 @@ namespace st = gf::structure;
 
 namespace {
 
-constexpr char kStartPool[] = "twilightforest:camp/structure_start";
+constexpr char kStartPool[] = "gloamingforest:camp/structure_start";
+
+/// "twilightforest:camp/<path>" as "gloamingforest:camp/<path>" (other strings unchanged).
+std::string aliased(std::string const& id) {
+    static constexpr std::string_view tf = "twilightforest:camp/";
+    return id.starts_with(tf) ? "gloamingforest:camp/" + id.substr(tf.size()) : id;
+}
+
+/// The camp's templates, pools and connector names are in the gloamingforest namespace (assemble's
+/// dangling-reference check knows no template pool ids): every TF template definition of the camp is
+/// registered again under its alias, with the same pool entries (weights, height adjustment,
+/// processors, marker handlers, terrain adaptation) and its pool aliases renamed alike.
+void registerAliasDefinitions() {
+    for (auto const& [templateId, def] : st::data::loadDir("twilight/template_definition")) {
+        if (!templateId.starts_with("twilightforest:camp/") || !def.is_object()) continue;
+        Json aliasedDef = Json::object();
+        for (auto const& [pool, instance] : def.items()) {
+            Json inst = instance;
+            if (inst.is_object() && inst.contains("pool_aliases") && inst["pool_aliases"].is_object()) {
+                Json renamed = Json::object();
+                for (auto const& [from, to] : inst["pool_aliases"].items()) renamed[aliased(from)] = to.is_string() ? Json(aliased(to.get<std::string>())) : to;
+                inst["pool_aliases"] = renamed;
+            }
+            aliasedDef[aliased(pool)] = inst;
+        }
+        st::pools::addDefinition(aliased(templateId), aliasedDef);
+    }
+}
 
 /// CampPieces (the pool ids the templates' connectors use).
 [[maybe_unused]] constexpr char const* kPools[] = {"twilightforest:camp/structure_start", "twilightforest:camp/tent",  "twilightforest:camp/rack_path",
                                                    "twilightforest:camp/main_path",       "twilightforest:camp/path", "twilightforest:camp/deco",
-                                                   "twilightforest:camp/rack"};
+                                                   "twilightforest:camp/rack"}; // (registered as gloamingforest:camp/...)
 
 std::pair<int, int> startChunk(gf::landmark::Start const& start) {
     if (start.data.contains("chunk") && start.data["chunk"].is_array() && start.data["chunk"].size() == 2)
@@ -102,6 +130,9 @@ double terraform(gf::landmark::Start const& start, int x, int y, int z) {
 
 } // namespace
 
-void installCamp() { gf::landmark::registerGenerator(kCamp, gf::landmark::Generator{.layout = layout, .terraform = terraform}); }
+void installCamp() {
+    registerAliasDefinitions();
+    gf::landmark::registerGenerator(kCamp, gf::landmark::Generator{.layout = layout, .terraform = terraform});
+}
 
 } // namespace gf::feature::questcamps

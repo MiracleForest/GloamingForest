@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:camp/deco/long_drying_rack",
+  "id": "gloamingforest:camp/deco/long_drying_rack",
   "size": [5, 2, 3],
   "palette": [
     {"Name":"minecraft:structure_void"},
@@ -17,6 +17,6 @@
     {"pos":[3,0,1],"marker":"data","data":{"metadata":"birch_drying_rack@north"}}
   ],
   "jigsaw": [
-    {"pos":[2,0,0],"front":"north","top":"up","pool":"minecraft:empty","name":"twilightforest:camp/deco","target":""}
+    {"pos":[2,0,0],"front":"north","top":"up","pool":"minecraft:empty","name":"gloamingforest:camp/deco","target":""}
   ]
 }

@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:camp/deco/pen",
+  "id": "gloamingforest:camp/deco/pen",
   "size": [7, 2, 8],
   "palette": [
     {"Name":"minecraft:structure_void"},
@@ -16,6 +16,6 @@
     [1, 56]
   ],
   "jigsaw": [
-    {"pos":[3,0,0],"front":"north","top":"up","pool":"minecraft:empty","name":"twilightforest:camp/deco","target":""}
+    {"pos":[3,0,0],"front":"north","top":"up","pool":"minecraft:empty","name":"gloamingforest:camp/deco","target":""}
   ]
 }

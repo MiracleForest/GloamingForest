@@ -21,14 +21,17 @@ The grove's ram is spawned through F7's queued template entities; its restrictio
 ## Templates (rule R19)
 
 All 57 are original designs written with the F7 DSL in `tools/structures/questcamps/*.gfs.ps1`.
-TF's feature templates have no template definition: their GloamingForest ids take the
-`gloamingforest:` namespace (`gloamingforest:feature/druid_hut/druid_hut` stands for TF's
-`twilightforest:feature/druid_hut/druid_hut`).
+Their ids take the `gloamingforest:` namespace: TF's feature templates have no template definition,
+and assemble's dangling-reference check knows no template pool ids, so the camp's templates, pools
+and connector names are `gloamingforest:camp/...`. `Camp.cpp` registers every TF definition
+`twilightforest:camp/<path>` (pools `twilightforest:camp/<pool>`) again under the alias (same weights,
+height adjustment, processors, marker handlers and terrain adaptation; pool aliases renamed alike).
+The grove keeps `twilightforest:quest_grove` (a known structure id).
 
 Camp jigsaw convention (`QuestcampsLib.ps1`): layer 0 of starts, tents and decos is the ground air
 level; paths have layer 0 under the surface, layer 1 the surface (the pool's gravity processor) and
-the connectors on layer 2. Seed connectors are named `twilightforest:camp/structure_start` (front
-down, top south), `twilightforest:camp/tent`, `twilightforest:camp/path` and `twilightforest:camp/deco`;
+the connectors on layer 2. Seed connectors are named `gloamingforest:camp/structure_start` (front
+down, top south), `gloamingforest:camp/tent`, `gloamingforest:camp/path` and `gloamingforest:camp/deco`;
 parent connectors target those names. Starts lead to tents, a main path and (two of them) a rack path;
 main paths lead to paths, tents and decos; paths end in decos (racks through `rack_path`'s alias).
 

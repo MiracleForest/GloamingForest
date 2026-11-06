@@ -2,30 +2,35 @@
 # GloamingForest templates, rule R11/R19; TF's .nbt files are never read). Dot-sourced by the
 # *.gfs.ps1 scripts of this folder.
 #
+# Namespaces: assemble's dangling-reference check knows no template pool ids, so the camp's templates,
+# pools and connector names take the gloamingforest namespace; Camp.cpp registers each TF template
+# definition twilightforest:camp/<path> (pools twilightforest:camp/<pool>) again as gloamingforest:camp/<path>
+# (pools gloamingforest:camp/<pool>, same weights and placement).
+#
 # Camp jigsaw convention (docs/units/questcamps.md):
 #   - every template's layer 0 is the "ground air" level (the first layer above the terrain), except
 #     the paths, whose layer 0 is under the surface, layer 1 the path surface and layer 2 the ground
 #     air level (the gravity processor puts layer 1 on the terrain's top block);
 #   - connectors sit on the template's outline at the ground air level, their front pointing out of
 #     the template; a child's seed connector is named after the pool family it fills:
-#       twilightforest:camp/structure_start  the start's seed (front down, layer 0 center)
-#       twilightforest:camp/tent             a tent's entrance
-#       twilightforest:camp/path             a path's (or main path's) entry
-#       twilightforest:camp/deco             a deco's (or rack's) front
+#       gloamingforest:camp/structure_start  the start's seed (front down, layer 0 center)
+#       gloamingforest:camp/tent             a tent's entrance
+#       gloamingforest:camp/path             a path's (or main path's) entry
+#       gloamingforest:camp/deco             a deco's (or rack's) front
 #     and every parent connector targets one of these names.
 
 $script:QcName = @{
-    start = 'twilightforest:camp/structure_start'
-    tent  = 'twilightforest:camp/tent'
-    path  = 'twilightforest:camp/path'
-    deco  = 'twilightforest:camp/deco'
+    start = 'gloamingforest:camp/structure_start'
+    tent  = 'gloamingforest:camp/tent'
+    path  = 'gloamingforest:camp/path'
+    deco  = 'gloamingforest:camp/deco'
 }
 $script:QcPool = @{
-    tent     = 'twilightforest:camp/tent'
-    main     = 'twilightforest:camp/main_path'
-    path     = 'twilightforest:camp/path'
-    rackPath = 'twilightforest:camp/rack_path'
-    deco     = 'twilightforest:camp/deco'
+    tent     = 'gloamingforest:camp/tent'
+    main     = 'gloamingforest:camp/main_path'
+    path     = 'gloamingforest:camp/path'
+    rackPath = 'gloamingforest:camp/rack_path'
+    deco     = 'gloamingforest:camp/deco'
 }
 
 # A connector of a parent leading into pool `$Kind` (tent, main, path, rackPath, deco).
@@ -35,7 +40,7 @@ function Add-QcExit($t, [int]$x, [int]$y, [int]$z, [string]$front, [string]$kind
         'deco' { $script:QcName.deco }
         default { $script:QcName.path }
     }
-    Add-GftJigsaw $t $x $y $z -Front $front -Pool $script:QcPool[$kind] -Name 'twilightforest:camp/exit' -Target $target
+    Add-GftJigsaw $t $x $y $z -Front $front -Pool $script:QcPool[$kind] -Name 'gloamingforest:camp/exit' -Target $target
 }
 
 # The seed connector of a child template (where its parent attaches).

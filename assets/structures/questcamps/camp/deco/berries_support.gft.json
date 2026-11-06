@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "twilightforest:camp/deco/berries_support",
+  "id": "gloamingforest:camp/deco/berries_support",
   "size": [3, 3, 4],
   "palette": [
     {"Name":"minecraft:structure_void"},
@@ -14,6 +14,6 @@
     [1, 12]
   ],
   "jigsaw": [
-    {"pos":[1,0,0],"front":"north","top":"up","pool":"minecraft:empty","name":"twilightforest:camp/deco","target":""}
+    {"pos":[1,0,0],"front":"north","top":"up","pool":"minecraft:empty","name":"gloamingforest:camp/deco","target":""}
   ]
 }

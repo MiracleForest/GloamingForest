@@ -133,14 +133,14 @@ std::string rawHash(Context& ctx, std::string const& id, BlockPos const& origin)
 /// The ids of every U19 template.
 std::vector<std::string> allTemplates() {
     std::vector<std::string> ids = {"twilightforest:quest_grove"};
-    for (char const* s : {"campfire_east", "campfire_south", "campfire_west"}) ids.push_back(std::string("twilightforest:camp/") + s);
-    for (char const* s : {"solo_tent", "duo_tent", "open_tent", "luxury_tent"}) ids.push_back(std::string("twilightforest:camp/tent/") + s);
+    for (char const* s : {"campfire_east", "campfire_south", "campfire_west"}) ids.push_back(std::string("gloamingforest:camp/") + s);
+    for (char const* s : {"solo_tent", "duo_tent", "open_tent", "luxury_tent"}) ids.push_back(std::string("gloamingforest:camp/tent/") + s);
     for (char const* s : {"intersection_left", "intersection_right", "intersection_short", "j_path", "l_path", "path_2x4", "path_3x4", "path_2x6", "path_2x7"})
-        ids.push_back(std::string("twilightforest:camp/path/") + s);
+        ids.push_back(std::string("gloamingforest:camp/path/") + s);
     for (char const* s : {"compost_large", "compost_small", "garden_1x3", "garden_2x4", "garden_straight", "garden_u", "pen", "repair_station", "berries_staked",
                           "berries_support", "berries_trellis", "blackberry_wall", "blueberry_wall", "raspberry_wall", "double_drying_rack", "long_drying_rack",
                           "lumber1", "lumber2", "lumber3"})
-        ids.push_back(std::string("twilightforest:camp/deco/") + s);
+        ids.push_back(std::string("gloamingforest:camp/deco/") + s);
     for (char const* s : {"druid_hut/druid_hut", "druid_hut/druid_sideways", "druid_hut/druid_doubledeck", "druid_hut/basement_study", "druid_hut/basement_study_trap",
                           "druid_hut/basement_shelves", "druid_hut/basement_shelves_trap", "druid_hut/basement_gallery", "druid_hut/basement_gallery_trap",
                           "well/simple_well_top", "well/simple_well_bottom", "well/fancy_well_top", "well/fancy_well_bottom", "graveyard/graveyard",
@@ -353,7 +353,7 @@ GF_REGISTER_SELFTEST("questcamps.camp_assembly", [](Context& ctx) -> ll::coro::C
     st::BlockSourceRegion     region(*ctx.region(), origin);
     core::jrand::LegacyRandom random(424242);
     auto gen    = st::ext::contextOf(region, random, 1919);
-    auto pieces = st::ext::assemble("twilightforest:camp/structure_start", origin, -1, gen);
+    auto pieces = st::ext::assemble("gloamingforest:camp/structure_start", origin, -1, gen);
     ctx.require(!pieces.empty(), "the camp assembled");
     std::map<std::string, int> kinds;
     std::string                layout;
@@ -548,7 +548,7 @@ GF_REGISTER_SELFTEST("questcamps.client_showcase", [](Context& ctx) -> ll::coro:
         st::BlockSourceRegion     region(*ctx.region(), origin);
         core::jrand::LegacyRandom random(424242);
         auto gen    = st::ext::contextOf(region, random, 1919);
-        auto pieces = st::ext::assemble("twilightforest:camp/structure_start", origin, -1, gen);
+        auto pieces = st::ext::assemble("gloamingforest:camp/structure_start", origin, -1, gen);
         core::jrand::LegacyRandom post(7);
         for (auto& p : pieces) p->postProcess(region, post, BlockBox{box.minX, box.minY - 4, box.minZ, box.maxX, box.maxY, box.maxZ}, origin);
     }
