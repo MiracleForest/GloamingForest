@@ -262,8 +262,8 @@ GF_REGISTER_SELFTEST("provisions.experiment_115", [](Context& ctx) -> ll::coro::
     ctx.check(cp::e115Signal({s.bites, s.regenerate}) == 9, "signal 15 - 2 x 3 while regenerating");
     fp::setFoodLevel(player, 20.0f);
 
-    // support: the block below goes, the cake goes
-    ctx.cleanupBlock(below);
+    // support: the block below goes (a neighbour update), the cake goes
+    gf::selftest::runServerCommand("setblock " + std::to_string(below.x) + " " + std::to_string(below.y) + " " + std::to_string(below.z) + " air", below.dim);
     co_await ctx.ticks(4);
     region = ctx.region();
     ctx.require(region != nullptr, "the region");
@@ -311,9 +311,9 @@ GF_REGISTER_SELFTEST("provisions.frosted", [](Context& ctx) -> ll::coro::CoroTas
     if (a) ctx.check(fp::frozenTicks(*a) < frozenNow, "the frozen counter thaws without the effect");
     discard(a);
     // immunity (ApplyFrostedEffect#doChillAuraEffect)
-    auto* stray = pig(ctx, ctx.testPos(1024, 2), "minecraft:stray");
-    ctx.require(stray != nullptr, "a stray");
-    ctx.check(!gf::provisions::ext::doChillAuraEffect(*stray, 100, 0), "strays are freeze immune");
+    auto* stray = pig(ctx, ctx.testPos(1024, 2), "minecraft:polar_bear");
+    ctx.require(stray != nullptr, "a polar bear");
+    ctx.check(!gf::provisions::ext::doChillAuraEffect(*stray, 100, 0), "polar bears are freeze immune (#minecraft:freeze_immune_entity_types)");
     discard(stray);
     auto* p2 = pig(ctx, ctx.testPos(1025, 2));
     ctx.require(p2 != nullptr, "a pig");
@@ -341,7 +341,7 @@ GF_REGISTER_SELFTEST("provisions.enchantments", [](Context& ctx) -> ll::coro::Co
     ctx.check(gf::enchant::level(chest, fp::ids::kFireReact) == 3, "fire react III on a chestplate");
     // fire react: 0.45 per hit at level III
     auto* victim   = pig(ctx, ctx.testPos(1032, 1));
-    auto* attacker = pig(ctx, ctx.testPos(1034, 1), "minecraft:zombie");
+    auto* attacker = pig(ctx, ctx.testPos(1034, 1), "minecraft:cow");
     ctx.require(victim && attacker, "a victim and an attacker");
     victim->setArmor(Slot::Torso, chest);
     int before = fp::counters().fireReacts;
