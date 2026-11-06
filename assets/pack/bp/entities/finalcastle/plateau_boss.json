@@ -1,0 +1,27 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "twilightforest:plateau_boss",
+      "is_spawnable": false,
+      "is_summonable": true,
+      "is_experimental": false
+    },
+    "components": {
+      "minecraft:type_family": { "family": ["twilightforest", "plateau_boss", "monster", "mob"] },
+      "minecraft:collision_box": { "width": 1.0, "height": 1.0 },
+      "minecraft:health": { "value": 20, "max": 20 },
+      "minecraft:movement": { "value": 0.7 },
+      "minecraft:follow_range": { "value": 16, "max": 16 },
+      "minecraft:attack": { "damage": 2 },
+      "minecraft:physics": {},
+      "minecraft:pushable": { "is_pushable": true, "is_pushable_by_piston": true },
+      "minecraft:fire_immune": true,
+      "minecraft:breathable": { "total_supply": 15, "suffocate_time": 0 },
+      "minecraft:experience_reward": { "on_death": "query.last_hit_by_player ? 647 : 0" },
+      "minecraft:nameable": {},
+      "minecraft:persistent": {},
+      "minecraft:conditional_bandwidth_optimization": {}
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:adherent",
+      "materials": { "default": "entity_alphatest" },
+      "textures": { "default": "textures/twilightforest/entity/adherent" },
+      "geometry": { "default": "geometry.twilightforest.adherent" },
+      "render_controllers": ["controller.render.default"],
+      "animations": {
+        "base": "animation.twilightforest.adherent.base",
+        "hover": "animation.twilightforest.adherent.hover"
+      },
+      "scripts": { "animate": ["base", "hover"] }
+    }
+  }
+}
