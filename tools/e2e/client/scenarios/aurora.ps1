@@ -91,11 +91,12 @@ Save-Screenshot 'block-items' | Out-Null
 # the companion's own client-side progress (remote-mod) without the break being rolled back
 $mx = 4300; $mz = 4300; $my = -60
 Invoke-Chat '/clear @s'
-Invoke-Chat "/setblock $mx $($my + 1) $($mz + 2) twilightforest:aurora_block"
+# a hollow 3 x 4 x 3 shell of aurora blocks around the player: the crosshair is on an aurora block
+# (within reach) whichever way the camera points
+Invoke-Chat "/fill $($mx - 1) $my $($mz - 1) $($mx + 1) $($my + 3) $($mz + 1) twilightforest:aurora_block hollow"
 Invoke-SelfTest 'aurora.client_miner' | Out-Null
 Invoke-Chat '/gamemode survival'
-# face the block last (the chat and the selftest command come first)
-Invoke-Teleport "/tp @s $($mx + 0.5) $my $($mz + 0.5) facing $($mx + 0.5) $($my + 1.5) $($mz + 2.5)"
+Invoke-Teleport "/tp @s $($mx + 0.5) $($my + 1) $($mz + 0.5) 0 0"
 Start-Sleep -Seconds 2
 $mineMark = Get-LogMark
 Focus-Game
