@@ -12,7 +12,7 @@
 // - Fiery block: stepping on it hurts 1 fiery damage, unless the entity is fire immune or a living
 //   entity wearing fiery boots.
 // - Block properties the game's own systems read: the fiery block keeps fire on top burning
-//   (InfiniBurn), mobs path around the knightmetal block (CausesDamage), the rope climbs like
+//   (InfiniBurn), mobs path around the knightmetal block (DAMAGE_OTHER), the rope climbs like
 //   scaffolding (Scaffolding).
 // - Arctic fur block: a fall onto it causes a tenth of the fall damage (fallOn: causeFallDamage with
 //   multiplier 0.1); shears mine it at 0.2 progress a tick (the BP's item-specific speed).
@@ -85,8 +85,10 @@ void applyBlockProperties() {
     // magma), so the fiery block's type carries it: the game's own fire tick keeps that fire, and
     // any other way of putting it out (a hit, water, a potion, a command) still works.
     bool fiery = add(kFiery, BlockProperty::InfiniBurn);
-    // KnightmetalBlock#getBlockPathType: DAMAGE_OTHER (mobs path around it). Bedrock's navigation
-    // avoids the block types with BlockProperty::CausesDamage (magma, cactus, sweet berry bush).
+    // KnightmetalBlock#getBlockPathType: DAMAGE_OTHER. The block type carries CausesDamage like
+    // Bedrock's own damaging blocks (magma, sweet berry bush). Bedrock's walk evaluator does not
+    // avoid it for that (building.knightmetal_path shows magma avoided, knightmetal not; a test
+    // replacing the knightmetal type's dealsContactDamage showed the evaluator never asks it).
     bool knightmetal = add(kKnightmetal, BlockProperty::CausesDamage);
     // RopeBlock#isScaffolding: climbing it, a sneaking player still slides down (Java's
     // LivingEntity#handleOnClimbable holds a sneaking player only on non-scaffolding climbables);

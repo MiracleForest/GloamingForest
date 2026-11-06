@@ -13,6 +13,10 @@
 // refuse it (Java's LoomMenu offers only the patterns of #pattern_item/<boss>).
 
 #include <cstdint>
+#include <functional>
+
+#include <fmt/format.h>
+#include <iterator>
 #include <string>
 #include <variant>
 
@@ -22,7 +26,10 @@
 #include "mc/deps/shared_types/legacy/ContainerType.h"
 #include "mc/network/MinecraftPacketIds.h"
 #include "mc/network/MinecraftPackets.h"
+#include "mc/network/packet/cerealize/core/SerializationMode.h"
 #include "mc/network/packet/ItemStackRequestPacket.h"
+#include "mc/network/packet/cerealize/types/item_stack_request_cereal/PlaceActionData.h"
+#include "mc/network/packet/cerealize/types/item_stack_request_cereal/SlotInfoData.h"
 #include "mc/network/packet/item_stack_request_packet_data/RequestData.h"
 #include "mc/scripting/modules/minecraft/ScriptFacing.h"
 #include "mc/legacy/ActorUniqueID.h"
@@ -34,6 +41,7 @@
 #include "mc/world/actor/player/PlayerInventory.h"
 #include "mc/world/actor/player/PlayerUISlot.h"
 #include "mc/world/containers/ContainerEnumName.h"
+#include "mc/world/containers/FullContainerName.h"
 #include "mc/world/gamemode/GameMode.h"
 #include "mc/world/gamemode/InteractionResult.h"
 #include "mc/world/inventory/network/ContainerScreenContext.h"
@@ -59,9 +67,22 @@ using gf::selftest::Context;
 namespace b = gf::feature::building;
 using Facing = ScriptModuleMinecraft::ScriptFacing;
 
-/// The wire format of ItemStackRequestPacket (protocol of 1.21.20 and later).
+/// The bytes of an ItemStackRequestPacket as the game reads them (its default serialization mode,
+/// the cereal schema of ItemStackRequestCereal::RequestData; the game's own writer gives the same
+/// layout): per request the id (varint), the actions (varint count; each its variant index and its
+/// ItemStackRequestActionType, then its fields), the strings to filter and their origin (int32).
+/// A slot is {container (u8), dynamic id (presence byte [+ u32]), slot (u8), net id (int32 LE)}.
+/// For a place all three numbers of the action header are 1, so the order of the variant index
+/// and the type is told apart by the first craft: the test tries both and keeps the one read.
+struct WireFormat {
+    bool indexFirst = true; ///< the action's variant index before its type
+};
+constexpr WireFormat kFormats[]{{true}, {false}};
+
 class RequestWriter {
 public:
+    explicit RequestWriter(WireFormat f) : mFormat(f) {}
+    WireFormat mFormat;
     void u8(std::uint8_t v) { mBytes.push_back(static_cast<char>(v)); }
     void uvarint(std::uint32_t v) {
         while (v >= 0x80) {
@@ -78,32 +99,43 @@ public:
         uvarint(static_cast<std::uint32_t>(s.size()));
         mBytes += s;
     }
-    /// ItemStackRequestSlotInfo: FullContainerName {name, optional dynamic id}, slot, net id
+    /// SlotInfoData: FullContainerName {name, optional dynamic id}, slot, net id (a positive id is
+    /// the item's ItemStackNetId, a negative one the ItemStackRequestId of the request's own output)
     void slot(ContainerEnumName name, int slot, int netId) {
         u8(static_cast<std::uint8_t>(name));
         u8(0); // no dynamic container id
         u8(static_cast<std::uint8_t>(slot));
-        varint(netId);
+        i32(netId);
+    }
+    /// The action's variant index in RequestData::mActions and its ItemStackRequestActionType.
+    void header(int variantIndex, ItemStackRequestActionType type) {
+        if (mFormat.indexFirst) {
+            u8(static_cast<std::uint8_t>(variantIndex));
+            u8(static_cast<std::uint8_t>(type));
+        } else {
+            u8(static_cast<std::uint8_t>(type));
+            u8(static_cast<std::uint8_t>(variantIndex));
+        }
     }
     void take(int count, ContainerEnumName from, int fromSlot, int fromNetId, ContainerEnumName to, int toSlot, int toNetId) {
-        u8(static_cast<std::uint8_t>(ItemStackRequestActionType::Take));
+        header(0, ItemStackRequestActionType::Take);
         u8(static_cast<std::uint8_t>(count));
         slot(from, fromSlot, fromNetId);
         slot(to, toSlot, toNetId);
     }
     void place(int count, ContainerEnumName from, int fromSlot, int fromNetId, ContainerEnumName to, int toSlot, int toNetId) {
-        u8(static_cast<std::uint8_t>(ItemStackRequestActionType::Place));
+        header(1, ItemStackRequestActionType::Place);
         u8(static_cast<std::uint8_t>(count));
         slot(from, fromSlot, fromNetId);
         slot(to, toSlot, toNetId);
     }
     void consume(int count, ContainerEnumName from, int fromSlot, int fromNetId) {
-        u8(static_cast<std::uint8_t>(ItemStackRequestActionType::Consume));
+        header(5, ItemStackRequestActionType::Consume);
         u8(static_cast<std::uint8_t>(count));
         slot(from, fromSlot, fromNetId);
     }
     void craftLoom(std::string const& pattern) {
-        u8(static_cast<std::uint8_t>(ItemStackRequestActionType::CraftLoom));
+        header(15, ItemStackRequestActionType::CraftLoom);
         string(pattern);
         u8(1); // times crafted
     }
@@ -114,7 +146,7 @@ public:
         uvarint(static_cast<std::uint32_t>(count));
         body(*this);
         uvarint(0); // strings to filter
-        i32(0);     // their origin
+        i32(-1);    // their origin (the game's default)
     }
     std::string mBytes;
 };
@@ -125,30 +157,79 @@ int netIdOf(ItemStack const& item) {
     return 0;
 }
 
-/// Reads the client's bytes into an ItemStackRequestPacket and hands the batch to the player's
-/// server-side manager; the error text, or "" when the game took the request.
-std::string sendRequest(Player& player, std::string const& bytes, int requests, std::string const& wantPattern) {
-    auto packet = MinecraftPackets::createPacket(MinecraftPacketIds::ItemStackRequest);
-    if (!packet) return "no ItemStackRequestPacket";
-    auto&                pkt = static_cast<ItemStackRequestPacket&>(*packet);
-    ReadOnlyBinaryStream stream(bytes, true);
-    auto                 read = pkt._read(stream);
-    if (!read) return "the game did not read the request bytes (error " + std::to_string(read.error().code().value()) + ")";
-    auto const& data = pkt.mRequests.get();
-    if (static_cast<int>(data.size()) != requests) return "the game read " + std::to_string(data.size()) + " request(s)";
-    if (!wantPattern.empty()) {
-        bool seen = false;
-        for (auto const& r : data)
-            for (auto const& a : r.mActions.get())
-                if (auto const* loom = std::get_if<ItemStackRequestCereal::CraftLoomActionData>(&a)) seen = seen || *loom->mPatternNameId == wantPattern;
-        if (!seen) return "the read request has no CraftLoom " + wantPattern;
+std::string describeSlot(ItemStackRequestCereal::SlotInfoData const& s) {
+    auto const& name = s.mFullContainerName.get();
+    std::string id   = "?";
+    auto const& v    = s.mNetIdVariant->mVariant.get();
+    if (auto const* n = std::get_if<ItemStackNetId>(&v)) id = "net " + std::to_string(n->mRawId);
+    else if (auto const* r = std::get_if<ItemStackRequestId>(&v)) id = "request " + std::to_string(r->mRawId);
+    return "{" + std::to_string(static_cast<int>(name.mName)) + (name.mDynamicId->has_value() ? "+" + std::to_string(**name.mDynamicId) : std::string()) + " slot "
+         + std::to_string(static_cast<int>(s.mSlot)) + " " + id + "}";
+}
+
+/// The game's own bytes for what it parsed (its serializer: the layout to match).
+std::string writtenBack(ItemStackRequestPacket const& pkt) {
+    BinaryStream out;
+    pkt.write(out);
+    std::string hex;
+    for (unsigned char c : out.mBuffer) hex += fmt::format("{:02x}", c);
+    return hex;
+}
+
+/// What the game parsed of the first action (when a read fails, to find the field it disagrees on).
+std::string describeFirst(ItemStackRequestPacket const& pkt) {
+    if (pkt.mRequests->empty() || pkt.mRequests->front().mActions->empty()) return "";
+    auto const& a = pkt.mRequests->front().mActions->front();
+    if (auto const* p = std::get_if<ItemStackRequestCereal::PlaceActionData>(&a))
+        return " parsed place x" + std::to_string(static_cast<int>(p->mAmount)) + " " + describeSlot(*p->mSource) + " -> " + describeSlot(*p->mDestination);
+    return " parsed action " + std::to_string(a.index());
+}
+
+/// Writes one request batch (`write` adds the requests to a writer) in each wire format until the
+/// game reads it to the last byte (ItemStackRequestPacket::_read), and hands the read batch to the
+/// player's server-side manager as ServerNetworkHandler does; the error text, or "" when the game
+/// took the request.
+std::string sendRequest(Player& player, std::function<void(RequestWriter&)> const& write, int requests, std::string const& wantPattern) {
+    static int  known = -1; // the format that worked before
+    std::string tried;
+    for (int i = -1; i < static_cast<int>(std::size(kFormats)); ++i) {
+        if (i < 0 && known < 0) continue;
+        int           f = i < 0 ? known : i;
+        RequestWriter w(kFormats[f]);
+        write(w);
+        auto packet = MinecraftPackets::createPacket(MinecraftPacketIds::ItemStackRequest);
+        if (!packet) return "no ItemStackRequestPacket";
+        auto& pkt = static_cast<ItemStackRequestPacket&>(*packet);
+        ReadOnlyBinaryStream stream(w.mBytes, true);
+        auto                 read = pkt._read(stream);
+        bool                 ok   = read && !stream.mHasOverflowed && stream.mReadPointer == w.mBytes.size();
+        if (!ok) {
+            std::string hex;
+            for (unsigned char c : w.mBytes) hex += fmt::format("{:02x}", c);
+            tried += " [format " + std::to_string(f) + ": " + (read ? std::string("read") : "error " + std::to_string(read.error().code().value())) + " at byte "
+                   + std::to_string(stream.mReadPointer) + " of " + std::to_string(w.mBytes.size()) + ", read " + std::to_string(pkt.mRequests->size()) + " request(s), "
+                   + (pkt.mRequests->empty() ? std::string("-") : std::to_string(pkt.mRequests->front().mActions->size())) + " action(s): " + hex + describeFirst(pkt) + " written back: " + writtenBack(pkt) + "]";
+            continue;
+        }
+        if (known != f) gf::log().info("building: the loom request test writes ItemStackRequest format {} (variant index first {})", f, kFormats[f].indexFirst);
+        known            = f;
+        auto const& data = pkt.mRequests.get();
+        if (static_cast<int>(data.size()) != requests) return "the game read " + std::to_string(data.size()) + " request(s)";
+        if (!wantPattern.empty()) {
+            bool seen = false;
+            for (auto const& r : data)
+                for (auto const& act : r.mActions.get())
+                    if (auto const* loom = std::get_if<ItemStackRequestCereal::CraftLoomActionData>(&act)) seen = seen || *loom->mPatternNameId == wantPattern;
+            if (!seen) return "the read request has no CraftLoom " + wantPattern;
+        }
+        auto* base = player.mItemStackNetManager.get();
+        if (!base || !base->isEnabled()) return "the player has no item stack net manager";
+        auto batch = pkt.toRequestBatch();
+        if (!batch) return "no request batch";
+        static_cast<ItemStackNetManagerServer*>(base)->handleRequestBatch(*batch, nullptr);
+        return "";
     }
-    auto* base = player.mItemStackNetManager.get();
-    if (!base || !base->isEnabled()) return "the player has no item stack net manager";
-    auto batch = pkt.toRequestBatch();
-    if (!batch) return "no request batch";
-    static_cast<ItemStackNetManagerServer*>(base)->handleRequestBatch(*batch, nullptr);
-    return "";
+    return "the game read no wire format of the request to its end:" + tried;
 }
 
 ItemStack const& uiItem(Player& player, PlayerUISlot slot) { return player.mPlayerUIContainer->getItem(static_cast<int>(slot)); }
@@ -170,8 +251,9 @@ SharedTypes::Legacy::ContainerType screenOf(Player& player) {
     return base ? base->getScreenContext().mScreenContainerType : SharedTypes::Legacy::ContainerType::None;
 }
 
-/// One request: the banner and the dye from hotbar slots 0 and 1 into the loom's input and dye
-/// slots (and, when `withPattern`, TF's pattern item from slot 2 into the pattern slot).
+/// Requests (ids requestId, -2, -4) putting the banner and the dye from hotbar slots 0 and 1 into
+/// the loom's input and dye slots (and, when `withPattern`, TF's pattern item from slot 2 into the
+/// pattern slot).
 std::string placeIntoLoom(Player& player, int requestId, bool withPattern) {
     auto& inv = player.getInventory();
     int   ids[3]{};
@@ -181,30 +263,35 @@ std::string placeIntoLoom(Player& player, int requestId, bool withPattern) {
         if (netIdOf(item) == 0) item.serverInitNetId();
         ids[i] = netIdOf(item);
     }
-    RequestWriter w;
-    w.uvarint(1);
-    w.request(requestId, withPattern ? 3 : 2, [&](RequestWriter& r) {
-        r.place(1, ContainerEnumName::HotbarContainer, 0, ids[0], ContainerEnumName::LoomInputContainer, static_cast<int>(PlayerUISlot::LoomInput), 0);
-        r.place(1, ContainerEnumName::HotbarContainer, 1, ids[1], ContainerEnumName::LoomDyeContainer, static_cast<int>(PlayerUISlot::LoomDye), 0);
-        if (withPattern)
-            r.place(1, ContainerEnumName::HotbarContainer, 2, ids[2], ContainerEnumName::LoomMaterialContainer, static_cast<int>(PlayerUISlot::LoomMaterial), 0);
-    });
-    return sendRequest(player, w.mBytes, 1, "");
+    // one request per item (a client sends one per slot click)
+    auto one = [&](int id, int from, ContainerEnumName to, PlayerUISlot slot) {
+        auto write = [&](RequestWriter& w) {
+            w.uvarint(1);
+            w.request(id, 1, [&](RequestWriter& r) { r.place(1, ContainerEnumName::HotbarContainer, from, ids[from], to, static_cast<int>(slot), 0); });
+        };
+        return sendRequest(player, write, 1, "");
+    };
+    if (auto err = one(requestId, 0, ContainerEnumName::LoomInputContainer, PlayerUISlot::LoomInput); !err.empty()) return "banner: " + err;
+    if (auto err = one(requestId - 2, 1, ContainerEnumName::LoomDyeContainer, PlayerUISlot::LoomDye); !err.empty()) return "dye: " + err;
+    if (!withPattern) return "";
+    if (auto err = one(requestId - 4, 2, ContainerEnumName::LoomMaterialContainer, PlayerUISlot::LoomMaterial); !err.empty()) return "pattern: " + err;
+    return "";
 }
 
 /// One request exactly as a client's loom craft: CraftLoom <pattern>, the banner and the dye
 /// consumed, the created result taken to the cursor. Only the pattern id differs between crafts.
 std::string craftInLoom(Player& player, int requestId, std::string const& pattern) {
     int in = netIdOf(uiItem(player, PlayerUISlot::LoomInput)), dy = netIdOf(uiItem(player, PlayerUISlot::LoomDye));
-    RequestWriter w;
-    w.uvarint(1);
-    w.request(requestId, 4, [&](RequestWriter& r) {
+    auto write = [&](RequestWriter& w) {
+        w.uvarint(1);
+        w.request(requestId, 4, [&](RequestWriter& r) {
         r.craftLoom(pattern);
         r.consume(1, ContainerEnumName::LoomInputContainer, static_cast<int>(PlayerUISlot::LoomInput), in);
         r.consume(1, ContainerEnumName::LoomDyeContainer, static_cast<int>(PlayerUISlot::LoomDye), dy);
         r.take(1, ContainerEnumName::CreatedOutputContainer, static_cast<int>(PlayerUISlot::CreatedItemOutput), requestId, ContainerEnumName::CursorContainer, 0, 0);
-    });
-    return sendRequest(player, w.mBytes, 1, pattern);
+        });
+    };
+    return sendRequest(player, write, 1, pattern);
 }
 
 GF_REGISTER_SELFTEST("building.loom_request", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -286,7 +373,7 @@ GF_REGISTER_SELFTEST("building.loom_request", [](Context& ctx) -> ll::coro::Coro
 
     // the craft: CraftLoom tf_naga, the banner and the dye consumed, the result to the cursor
     {
-        auto err = craftInLoom(ctx.player(), -103, "tf_naga");
+        auto err = craftInLoom(ctx.player(), -107, "tf_naga");
         ctx.require(err.empty(), "the loom request (tf_naga): " + err);
     }
     co_await ctx.ticks(2);
@@ -316,13 +403,13 @@ GF_REGISTER_SELFTEST("building.loom_request", [](Context& ctx) -> ll::coro::Coro
             auto& inv = sp.getInventory();
             inv.setItem(0, *banner);
             inv.setItem(1, *dye);
-            auto err = placeIntoLoom(sp, -105, false);
+            auto err = placeIntoLoom(sp, -109, false);
             ctx.require(err.empty(), "the loom request (second place): " + err);
         }
         co_await ctx.ticks(2);
         ctx.require(gf::game::items::idOf(uiItem(ctx.player(), PlayerUISlot::LoomInput)) == "minecraft:banner", "a second banner is in the loom");
         {
-            auto err = craftInLoom(ctx.player(), -107, "tf_lich");
+            auto err = craftInLoom(ctx.player(), -113, "tf_lich");
             ctx.require(err.empty(), "the loom request (tf_lich): " + err);
         }
         co_await ctx.ticks(2);
