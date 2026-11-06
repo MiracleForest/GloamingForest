@@ -78,7 +78,6 @@ bool glassHit(ItemStack& stack, Actor& target, Actor& attacker) {
     if (unbreaking > 0 && world::random().nextInt(unbreaking + 1) > 0) return false;
     gf::progression::trigger(player, "twilightforest:broke_glass_sword");
     gf::fx::sound(player.getDimension(), "item.twilightforest.glass_sword.break", player.getFeetPos(), 1.0F, 0.5F);
-    gf::stats::award(player, "minecraft:broken");
     stack = ItemStack::EMPTY_ITEM();
     if (game::items::idOf(player.getCarriedItem()) == kGlassSword) player.setCarriedItem(ItemStack::EMPTY_ITEM());
     player.sendInventory(false);
@@ -184,6 +183,10 @@ void registerShield() {
         }
     );
     gf::combat::onIncoming(gf::combat::priority::High + 10, blockAndParry);
+    // the raise time of a sneak-raised shield counts from the tick the sneak started
+    gf::progression::events::onTick([](Player& player) {
+        if (handHolding(player, kShield)) (void)isBlocking(player);
+    });
 }
 
 } // namespace gf::feature::weapons

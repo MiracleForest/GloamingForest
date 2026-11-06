@@ -110,7 +110,6 @@ int crumble(Player& player, ItemStack& stack) {
                 if (!crumbleBlock(player, region, BlockPos{x, y, z})) continue;
                 ++n;
                 gf::stats::award(player, "twilightforest:blocks_crumbled");
-                gf::stats::award(player, "minecraft:used");
                 hurtAndBreak(stack, 1, &player);
                 if (game::items::isEmpty(stack) || stack.getDamageValue() >= max) return n;
             }

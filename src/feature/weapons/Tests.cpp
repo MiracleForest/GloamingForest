@@ -19,6 +19,7 @@
 #include "mc/world/actor/player/Inventory.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/actor/player/PlayerItemInUse.h"
+#include "mc/server/SimulatedPlayer.h"
 #include "mc/world/item/Item.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
@@ -426,19 +427,24 @@ GF_REGISTER_SELFTEST("weapons.chain_and_cube", [](Context& ctx) -> ll::coro::Cor
         }
     auto& p2 = ctx.player();
     p2.getInventory().setItem(slot, *game::items::make(kCube));
-    auto cubeStack = p2.getCarriedItem();
-    int  before    = gAnnihilated;
-    auto cubeId    = throwCube(p2, cubeStack);
-    ctx.require(cubeId != 0, "the cube was thrown");
-    p2.setCarriedItem(cubeStack);
-    // the owner keeps using the cube while it flies
-    auto& inUse              = p2.mItemInUse.get();
-    inUse.mItem.get()        = p2.getCarriedItem();
-    bool  backed             = false;
-    for (int i = 0; i < 120 && !backed; ++i) {
+    int before = gAnnihilated;
+    // the real use: the item's use throws the cube, the BP use component keeps it in use
+    ctx.require(static_cast<SimulatedPlayer&>(p2).simulateUseItemInSlot(slot), "the cube is used");
+    co_await ctx.ticks(1);
+    auto thrown = gf::item::getData(ctx.player().getCarriedItem(), kThrownKey);
+    ctx.require(thrown.is_number_integer(), "the cube was thrown");
+    auto cubeId = thrown.get<std::int64_t>();
+    ctx.check(usedItemId(ctx.player()) == kCube, "the player keeps using the cube (the BP use component): '" + usedItemId(ctx.player()) + "'");
+    bool backed = false;
+    for (int i = 0; i < 240 && !backed; ++i) {
         co_await ctx.ticks(1);
         backed = world::actorById(cubeId) == nullptr;
-        if (i == 60) ctx.player().mItemInUse.get().mItem.get() = ItemStack::EMPTY_ITEM();
+        if (i == 60) ctx.player().stopUsingItem();
+    }
+    if (auto* c = world::actorById(cubeId)) {
+        auto cp = c->getFeetPos();
+        ctx.info("the cube is still at " + std::to_string(cp.x - at.x) + " " + std::to_string(cp.y - at.y) + " " + std::to_string(cp.z - at.z));
+        c->remove();
     }
     ctx.check(gAnnihilated > before, "the cube annihilated " + std::to_string(gAnnihilated - before) + " blocks");
     ctx.check(game::blockIdAt(*ctx.region(), BlockPos{at.x + 8, at.y + 1, at.z}) == "minecraft:obsidian", "obsidian (resistance 1200) stays");
@@ -455,20 +461,22 @@ GF_REGISTER_SELFTEST("weapons.shield_and_fan", [](Context& ctx) -> ll::coro::Cor
     place(ctx, at, Vec3{at.x + 6.5f, at.y + 1.62f, at.z + 0.5f});
     co_await ctx.ticks(2);
     auto& player = ctx.player();
-    player.setOffhandSlot(*game::items::make(kShield));
-    player.setSneaking(true);
+    int sslot = player.getSelectedItemSlot();
+    player.getInventory().setItem(sslot, *game::items::make(kShield));
+    // raise it: the real use (BP use component, BLOCK animation)
+    ctx.require(static_cast<SimulatedPlayer&>(player).simulateUseItemInSlot(sslot), "the shield is used");
     co_await ctx.ticks(6);
-    auto& p = ctx.player();
-    p.setSneaking(true);
-    int ticks = 0;
-    ctx.check(isBlocking(p, &ticks), "sneaking raises the knightmetal shield (" + std::to_string(ticks) + " ticks)");
-    auto* zombie = spawnMob(at, "minecraft:zombie", 3.5f, 0.5f);
-    ctx.require(zombie != nullptr, "a zombie in front");
+    auto& p     = ctx.player();
+    int   ticks = 0;
+    ctx.check(usedItemId(p) == kShield, "the shield is in use: '" + usedItemId(p) + "'");
+    ctx.check(isBlocking(p, &ticks), "the raised knightmetal shield blocks after 5 ticks (" + std::to_string(ticks) + " ticks)");
+    auto* zombie = spawnMob(at, "minecraft:iron_golem", 3.5f, 0.5f);
+    ctx.require(zombie != nullptr, "a golem in front");
     int  blocks = gShieldBlocks;
-    int  dmg0   = p.getOffhandSlot().getDamageValue();
+    int  dmg0   = p.getCarriedItem().getDamageValue();
     bool hurt   = gf::combat::hurt(p, 6.0F, "minecraft:mob_attack", zombie, zombie);
-    ctx.check(!hurt && gShieldBlocks == blocks + 1, "the shield blocked the zombie");
-    ctx.check(p.getOffhandSlot().getDamageValue() - dmg0 == 7, "the shield took 1 + floor(6): " + std::to_string(p.getOffhandSlot().getDamageValue() - dmg0));
+    ctx.check(!hurt && gShieldBlocks == blocks + 1, "the shield blocked the golem");
+    ctx.check(p.getCarriedItem().getDamageValue() - dmg0 == 7, "the shield took 1 + floor(6): " + std::to_string(p.getCarriedItem().getDamageValue() - dmg0));
     // a TF projectile in the parry window
     Actor* shot = gf::projectile::shoot(*zombie, kIceArrow, Vec3{-1, 0, 0}, 1.0F, 0.0F);
     ctx.require(shot != nullptr, "an ice arrow from the zombie");
@@ -479,8 +487,8 @@ GF_REGISTER_SELFTEST("weapons.shield_and_fan", [](Context& ctx) -> ll::coro::Cor
     ctx.check(v.x > 0, "and flies back along the look");
     shot->remove();
     zombie->remove();
-    p.setSneaking(false);
-    p.setOffhandSlot(ItemStack::EMPTY_ITEM());
+    p.stopUsingItem();
+    p.getInventory().setItem(sslot, ItemStack::EMPTY_ITEM());
     // the feather fan flag cancels a fall
     setFanFalling(p, true);
     float hp = static_cast<float>(p.getHealth());

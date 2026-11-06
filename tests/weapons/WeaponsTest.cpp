@@ -74,8 +74,8 @@ TEST(Weapons, BowPower) {
     EXPECT_FLOAT_EQ(bowPower(20), 1.0F);
     EXPECT_FLOAT_EQ(bowPower(100), 1.0F);
     EXPECT_NEAR(bowPower(10), (0.25F + 1.0F) / 3.0F, 1e-6);
-    EXPECT_LT(bowPower(1), 0.1F); // under BowItem's 0.1 threshold: no shot
-    EXPECT_GE(bowPower(2), 0.1F);
+    EXPECT_LT(bowPower(2), 0.1F); // under BowItem's 0.1 threshold: no shot
+    EXPECT_GE(bowPower(3), 0.1F);
 }
 
 TEST(Weapons, SeekerSteerKeepsSpeed) {
