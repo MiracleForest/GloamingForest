@@ -8,11 +8,11 @@
       },
       "states": {
         "twilightforest:facing": [
-          "up",
           "north",
           "south",
           "west",
           "east",
+          "up",
           "down"
         ]
       }
