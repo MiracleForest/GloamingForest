@@ -1,0 +1,43 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "twilightforest:naga",
+      "is_spawnable": true,
+      "is_summonable": true,
+      "is_experimental": false,
+      "properties": {
+        "twilightforest:dazed": { "type": "bool", "default": false, "client_sync": true },
+        "twilightforest:charging": { "type": "bool", "default": false, "client_sync": true },
+        "twilightforest:stunless": { "type": "bool", "default": false, "client_sync": true }
+      }
+    },
+    "components": {
+      "minecraft:type_family": { "family": ["twilightforest", "naga", "monster", "mob"] },
+      "minecraft:collision_box": { "width": 2.0, "height": 3.0 },
+      "minecraft:health": { "value": 120, "max": 120 },
+      "minecraft:attack": { "damage": 5 },
+      "minecraft:movement": { "value": 0.5 },
+      "minecraft:movement.basic": {},
+      "minecraft:jump.static": {},
+      "minecraft:navigation.walk": { "avoid_water": false, "avoid_damage_blocks": true, "can_open_doors": false, "can_pass_doors": true, "can_path_over_water": false },
+      "minecraft:follow_range": { "value": 80, "max": 80 },
+      "minecraft:knockback_resistance": { "value": 0.25 },
+      "minecraft:variable_max_auto_step": { "base_value": 2.0, "jump_prevented_value": 2.0 },
+      "minecraft:physics": {},
+      "minecraft:pushable": { "is_pushable": false, "is_pushable_by_piston": true },
+      "minecraft:fire_immune": true,
+      "minecraft:breathable": { "total_supply": 15 },
+      "minecraft:damage_sensor": {
+        "triggers": [
+          { "cause": "fall", "deals_damage": "no" },
+          { "cause": "freezing", "deals_damage": "no" }
+        ]
+      },
+      "minecraft:experience_reward": { "on_death": "217" },
+      "minecraft:ambient_sound_interval": { "value": 4.0, "range": 4.0, "event_name": "ambient" },
+      "minecraft:nameable": {},
+      "minecraft:persistent": {}
+    }
+  }
+}

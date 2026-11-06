@@ -1,0 +1,16 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "gloamingforest:courtyard/hedge_end_pillar",
+  "size": [5, 4, 5],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"twilightforest:hedge"},
+    {"Name":"twilightforest:nagastone_pillar","Properties":{"axis":"y"}},
+    {"Name":"twilightforest:etched_nagastone","Properties":{"facing":"up"}}
+  ],
+  "blocks": [
+    [0, 5], [1, 4], [0, 1], [1, 2], [2, 1], [1, 1], [0, 1], [1, 4], [0, 11], [1, 4], [0, 1], [1, 2], [3, 1], [1, 1], [0, 1], [1, 4],
+    [0, 11], [1, 4], [0, 1], [1, 2], [2, 1], [1, 1], [0, 1], [1, 4], [0, 18], [2, 1], [0, 12]
+  ]
+}

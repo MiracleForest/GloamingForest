@@ -1,0 +1,18 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "gloamingforest:courtyard/courtyard_wall_corner",
+  "size": [3, 6, 3],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"minecraft:smooth_stone"},
+    {"Name":"minecraft:stone_bricks"},
+    {"Name":"minecraft:stone_brick_slab","Properties":{"type":"bottom","waterlogged":"false"}},
+    {"Name":"twilightforest:nagastone_pillar","Properties":{"axis":"y"}},
+    {"Name":"twilightforest:etched_nagastone","Properties":{"facing":"up"}}
+  ],
+  "blocks": [
+    [1, 9], [2, 4], [4, 1], [2, 8], [4, 1], [2, 8], [4, 1], [2, 8], [4, 1], [2, 5], [3, 1], [2, 1], [3, 1], [5, 1], [3, 1], [2, 1],
+    [3, 1], [2, 1]
+  ]
+}

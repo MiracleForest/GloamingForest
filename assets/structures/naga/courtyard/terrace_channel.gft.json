@@ -1,0 +1,26 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "gloamingforest:courtyard/terrace_channel",
+  "size": [12, 5, 12],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"minecraft:air"},
+    {"Name":"minecraft:stone_bricks"},
+    {"Name":"minecraft:sandstone_slab","Properties":{"type":"double"}},
+    {"Name":"minecraft:sandstone_slab","Properties":{"type":"bottom"}},
+    {"Name":"minecraft:stone_brick_stairs","Properties":{"facing":"south","half":"bottom","shape":"straight","waterlogged":"false"}},
+    {"Name":"minecraft:stone_brick_stairs","Properties":{"facing":"north","half":"bottom","shape":"straight","waterlogged":"false"}},
+    {"Name":"minecraft:stone_brick_stairs","Properties":{"facing":"east","half":"bottom","shape":"straight","waterlogged":"false"}},
+    {"Name":"minecraft:stone_brick_stairs","Properties":{"facing":"west","half":"bottom","shape":"straight","waterlogged":"false"}},
+    {"Name":"minecraft:mossy_stone_bricks"},
+    {"Name":"minecraft:water","Properties":{"level":"0"}},
+    {"Name":"twilightforest:nagastone_pillar","Properties":{"axis":"y"}}
+  ],
+  "blocks": [
+    [2, 29], [10, 2], [2, 1], [9, 1], [2, 5], [9, 1], [2, 2], [10, 2], [2, 9], [9, 1], [10, 2], [2, 7], [10, 8], [2, 4], [10, 8], [2, 7],
+    [10, 2], [2, 2], [9, 1], [2, 5], [9, 1], [2, 1], [10, 2], [2, 10], [10, 2], [9, 1], [2, 45], [5, 2], [2, 20], [11, 1], [2, 4], [11, 1],
+    [2, 16], [7, 1], [2, 8], [8, 1], [2, 2], [7, 1], [2, 8], [8, 1], [2, 16], [11, 1], [2, 4], [11, 1], [2, 20], [6, 2], [2, 17], [3, 144],
+    [4, 1], [1, 10], [4, 1], [1, 120], [4, 1], [1, 10], [4, 1], [1, 144]
+  ]
+}

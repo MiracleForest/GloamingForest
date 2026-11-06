@@ -1,0 +1,13 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "gloamingforest:courtyard/courtyard_wall_padding_decayed",
+  "size": [1, 6, 3],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"twilightforest:mossy_nagastone_pillar","Properties":{"axis":"y"}}
+  ],
+  "blocks": [
+    [0, 3], [1, 12], [0, 3]
+  ]
+}
