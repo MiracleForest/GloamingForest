@@ -290,6 +290,8 @@ void registerRecipes() {
         out.type       = kScepterRepairType;
         out.resultItem = r->scepter;
         out.data       = j;
+        // F9's convention (and the uncrafting table's): the scepter, then its repair ingredients
+        out.ingredients.push_back(rc::Ingredient{{r->scepter}, {}});
         for (auto const& ing : r->ingredients) {
             rc::Ingredient in;
             for (auto const& a : ing) {
@@ -355,4 +357,5 @@ void registerRecipes() {
 }
 
 } // namespace gf::feature::artifacts
+
 
