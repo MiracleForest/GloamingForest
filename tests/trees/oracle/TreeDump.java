@@ -122,6 +122,12 @@ final class TreeDump {
 				}
 				Block b = BuiltInRegistries.BLOCK.get(ResourceLocation.parse(Ctx.getString(s, "id", "")));
 				level.setBlock(p, b.defaultBlockState(), 3);
+				// "mega": a 2x2 of saplings (p, +x, +z, +xz): TreeGrower#growTree's mega branch at p
+				if (s.has("mega") && s.get("mega").getAsBoolean()) {
+					level.setBlock(p.east(), b.defaultBlockState(), 3);
+					level.setBlock(p.south(), b.defaultBlockState(), 3);
+					level.setBlock(p.south().east(), b.defaultBlockState(), 3);
+				}
 				LegacyRandomSource random = new LegacyRandomSource(Ctx.getLong(s, "seed", 0L));
 				for (int step = 0; step < 2; step++) {
 					BlockState st = level.getBlockState(p);

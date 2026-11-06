@@ -66,6 +66,9 @@ enum class Core { Time, Transformation, Mining, Sorting };
 /// One cycle of a core's effect at `pos` (SpecialMagicLogBlock#tick without the reschedule); the
 /// return value counts what it did (blocks ticked, columns transformed, ores moved, items sorted).
 int performCoreEffect(Core core, BlockSource& region, BlockPos const& pos);
+/// Whether the tree of time's cycle works the block at `pos` (TimeLogCoreBlock: BlockState#isRandomlyTicking,
+/// or a block entity with a ticker).
+[[nodiscard]] bool timeCoreWorks(BlockSource& region, BlockPos const& pos);
 /// The action bar text a disabled core shows (misc.twilightforest.core_disabled with the core's name).
 [[nodiscard]] std::string coreDisabledMessage(Player const& player, Core core);
 /// The cores known to tick (selftests).

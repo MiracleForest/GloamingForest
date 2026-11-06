@@ -4,10 +4,11 @@
 //   trees.golden_*                        golden volume hashes of seeded canopy, mega canopy, darkwood
 //                                         and mangrove trees (rule R19 style review once)
 //   trees.sapling_growers                 each tree sapling grows its tree from bone meal (the real click)
-//   trees.mega_2x2                        four canopy saplings grow the mega canopy tree
+//   trees.mega_2x2                        four canopy saplings grow the mega canopy tree on bone meal
+//   trees.mega_2x2_java                   seeded 2x2 canopy and twilight oak (forest / savannah mega oak) vs Java
 //   trees.core_toggle_held_item           a core toggles with a block in hand, nothing is placed
 //   trees.core_disabled_config            a core disabled by config stays off; the message names it
-//   trees.time_core_ticks                 the tree of time ticks a crop
+//   trees.time_core_ticks                 the tree of time ticks a crop; only randomly ticking states count
 //   trees.transformation_core_biome       the heart of transformation turns a column into enchanted forest
 //   trees.mining_core_magnet              the minewood core pulls an ore vein toward it
 //   trees.sorting_core_moves_item         the sortingwood engine moves an item into the chest holding more
@@ -53,6 +54,7 @@
 #include "mc/world/level/chunk/SubChunk.h"
 
 #include "core/jrand/JRand.h"
+#include "feature/ext/trees/ChunkDirty.h"
 #include "feature/ext/trees/HugeMushrooms.h"
 #include "feature/ext/trees/PickBlock.h"
 #include "feature/ext/trees/RandomTicks.h"
@@ -565,23 +567,74 @@ GF_REGISTER_SELFTEST("trees.hollow_oak_sapling", [](Context& ctx) -> ll::coro::C
     else ctx.info("the robust twilight oak sapling grew the hollow tree (now " + ctx.blockAt(p) + ")");
 });
 
+namespace {
+
+/// The 2x2 sapling cases (TreeGrower#growTree's mega branch), each in a 48-block cell of one flat area:
+/// four saplings planted at the cell's centre (p, +x, +z, +xz) and SaplingBlock#advanceTree twice at p
+/// with LegacyRandom(seed). Twilight oak: getConfiguredMegaFeature draws nextFloat() < 0.1 first
+/// (78001: 0.245, the forest mega oak; 83748: 0.016, the savannah mega oak); canopy has no secondary
+/// mega tree (no draw).
+struct MegaCase {
+    char const* name;
+    char const* sapling;
+    std::int64_t seed;
+    char const* expect; ///< a log the tree must have at p
+};
+constexpr MegaCase kMegaCases[] = {
+    {"mega_canopy_sapling", "canopy_sapling", 78000, "twilightforest:canopy_log"},
+    {"mega_twilight_oak_sapling_forest", "twilight_oak_sapling", 78001, "twilightforest:twilight_oak_log"},
+    {"mega_twilight_oak_sapling_savannah", "twilight_oak_sapling", 83748, "twilightforest:twilight_oak_log"},
+};
+
+} // namespace
+
 GF_REGISTER_SELFTEST("trees.mega_2x2", [](Context& ctx) -> ll::coro::CoroTask<> {
-    auto      box = co_await ctx.flatArea(360, 64, 64);
-    GlobalPos p   = game::globalPos(ctx.dimension(), BlockPos{box.minX + 30, box.minY, box.minZ + 30});
-    for (auto [dx, dz] : {std::pair{0, 0}, std::pair{1, 0}, std::pair{0, 1}, std::pair{1, 1}}) ctx.require(ctx.setBlock(p.offset(dx, 0, dz), "twilightforest:canopy_sapling"), "sapling planted");
-    bool grown = false;
-    for (int tries = 0; tries < 40 && !grown; ++tries) {
-        co_await click(ctx, p, "minecraft:bone_meal");
-        grown = ctx.blockAt(p) != "twilightforest:canopy_sapling";
+    // bone meal on a 2x2 of canopy saplings grows the mega canopy tree
+    {
+        auto      box = co_await ctx.flatArea(360, 64, 64);
+        GlobalPos p   = game::globalPos(ctx.dimension(), BlockPos{box.minX + 30, box.minY, box.minZ + 30});
+        for (auto [dx, dz] : {std::pair{0, 0}, std::pair{1, 0}, std::pair{0, 1}, std::pair{1, 1}})
+            ctx.require(ctx.setBlock(p.offset(dx, 0, dz), "twilightforest:canopy_sapling"), "sapling planted");
+        bool grown = false;
+        for (int tries = 0; tries < 40 && !grown; ++tries) {
+            co_await click(ctx, p, "minecraft:bone_meal");
+            grown = ctx.blockAt(p) != "twilightforest:canopy_sapling";
+        }
+        ctx.require(grown, "the 2x2 canopy saplings grew on bone meal");
+        int trunk = 0;
+        for (auto [dx, dz] : {std::pair{0, 0}, std::pair{1, 0}, std::pair{0, 1}, std::pair{1, 1}})
+            for (int y = 0; y < 20; ++y)
+                if (ctx.blockAt(p.offset(dx, y, dz)) == "twilightforest:canopy_log") ++trunk;
+        ctx.check(trunk >= 70, "a 2x2 mega canopy trunk (" + std::to_string(trunk) + " logs in the lowest 20 layers)");
+        if (auto* region = ctx.region()) resetGround(*region, box.minX, box.minZ, box.maxX, box.maxZ, box.minY - 1);
     }
-    ctx.require(grown, "the 2x2 canopy saplings grew");
-    int trunk = 0;
-    for (auto [dx, dz] : {std::pair{0, 0}, std::pair{1, 0}, std::pair{0, 1}, std::pair{1, 1}})
-        for (int y = 0; y < 20; ++y)
-            if (ctx.blockAt(p.offset(dx, y, dz)) == "twilightforest:canopy_log") ++trunk;
-    ctx.check(trunk >= 70, "a 2x2 mega canopy trunk (" + std::to_string(trunk) + " logs in the lowest 20 layers)");
 });
 
+// The 2x2 saplings seeded, block for block against TF 4.8 on Java (the oracle's mega_* sapling cases).
+GF_REGISTER_SELFTEST("trees.mega_2x2_java", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto box = co_await ctx.flatArea(361, 144, 80);
+    for (int i = 0; i < 3; ++i) {
+        auto const& mc   = kMegaCases[i];
+        BlockBox    cell{box.minX + i * 48, box.minY, box.minZ, box.minX + i * 48 + 47, box.maxY, box.minZ + 47};
+        GlobalPos   p    = game::globalPos(ctx.dimension(), BlockPos{cell.minX + 24, box.minY, cell.minZ + 24});
+        std::string id   = std::string("twilightforest:") + mc.sapling;
+        co_await ctx.ensureLoaded(p);
+        auto* region = ctx.region();
+        ctx.require(region != nullptr, "a region");
+        // the flat world's ground under the whole area first (the oracle resets it once per case)
+        if (i == 0) resetGround(*region, box.minX, box.minZ, box.maxX, box.maxZ, box.minY - 1);
+        for (auto [dx, dz] : {std::pair{0, 0}, std::pair{1, 0}, std::pair{0, 1}, std::pair{1, 1}})
+            ctx.require(ctx.setBlock(p.offset(dx, 0, dz), id), id + " planted");
+        ctx.info(std::string(mc.name) + " at " + std::to_string(p.x) + " " + std::to_string(p.y) + " " + std::to_string(p.z) + " (cell " + std::to_string(cell.minX) + " " +
+                 std::to_string(cell.minY) + " " + std::to_string(cell.minZ) + " .. " + std::to_string(cell.maxX) + " " + std::to_string(cell.maxY) + " " + std::to_string(cell.maxZ) + ")");
+        core::jrand::LegacyRandom random(mc.seed);
+        for (int step = 0; step < 2; ++step) gf::feature::families::detail::advanceSaplingWith(*region, bp(p), random);
+        ctx.check(ctx.blockAt(p) == mc.expect, std::string(mc.name) + " grew a 2x2 tree (" + ctx.blockAt(p) + " at the sapling)");
+        ctx.info(std::string(mc.name) + " tree volume hash " + ctx.snapshotVolume(cell));
+        compareWithJava(ctx, mc.name, cell);
+    }
+    if (auto* region = ctx.region()) resetGround(*region, box.minX, box.minZ, box.maxX, box.maxZ, box.minY - 1);
+});
 GF_REGISTER_SELFTEST("trees.leaf_distance_after_growth", [](Context& ctx) -> ll::coro::CoroTask<> {
     // TFTreeFeature#place runs TreeFeature.updateLeaves with the leaves as sources and writes with
     // UPDATE_KNOWN_SHAPE: every leaf with a leaf beside it gets distance 1 and keeps it (no shape
@@ -671,6 +724,25 @@ GF_REGISTER_SELFTEST("trees.time_core_ticks", [](Context& ctx) -> ll::coro::Coro
     }
     ctx.check(ticked > 0, "the core ticked blocks (" + std::to_string(ticked) + ")");
     ctx.check(grown > 0, "the wheat grew to " + std::to_string(grown));
+    // BlockState#isRandomlyTicking: the state decides, not the block type
+    region = ctx.region();
+    ctx.require(region != nullptr, "a region");
+    auto works = [&](char const* id, nlohmann::json const& states) {
+        ctx.require(ctx.setBlock(crop, id, states), std::string(id) + " " + states.dump());
+        return timeCoreWorks(*region, bp(crop));
+    };
+    ctx.check(works("minecraft:wheat", {{"growth", 3}}), "growing wheat ticks");
+    ctx.check(!works("minecraft:wheat", {{"growth", 7}}), "fully grown wheat does not tick (CropBlock: below the maximum age only)");
+    ctx.check(!works("twilightforest:twilight_oak_leaves", {{"twilightforest:persistent", true}, {"twilightforest:distance", 7}}), "persistent leaves do not tick");
+    ctx.check(!works("twilightforest:time_leaves", {{"twilightforest:persistent", false}, {"twilightforest:distance", 1}}),
+              "leaves near a log (distance 1) do not tick (LeavesBlock: distance 7 only)");
+    ctx.check(works("twilightforest:time_leaves", {{"twilightforest:persistent", false}, {"twilightforest:distance", 7}}), "decaying leaves tick");
+    ctx.check(!works("minecraft:oak_leaves", {{"persistent_bit", true}}), "persistent vanilla leaves do not tick");
+    ctx.check(!works("minecraft:cocoa", {{"age", 2}, {"direction", 0}}), "ripe cocoa does not tick");
+    ctx.check(!works("minecraft:nether_wart", {{"age", 3}}), "ripe nether wart does not tick");
+    ctx.check(works("minecraft:nether_wart", {{"age", 1}}), "growing nether wart ticks");
+    ctx.check(!works("minecraft:cave_vines_body_with_berries", nlohmann::json::object()), "a cave vines body never ticks");
+    ctx.cleanupBlock(crop);
 });
 
 GF_REGISTER_SELFTEST("trees.transformation_core_biome", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -714,10 +786,8 @@ GF_REGISTER_SELFTEST("trees.transformation_core_biome", [](Context& ctx) -> ll::
     }
     // the chunk will save (LevelChunk#setUnsaved): its biome data counter was touched this tick (a
     // clean DirtyTicksCounter counts from INT_MIN; a touched one has lastChange == totalTime >= 0)
-    bool dirty = !chunks.empty() && std::all_of(chunks.begin(), chunks.end(), [](LevelChunk* lc) {
-        auto const& c = lc->mFullChunkDirtyTicksCounters[static_cast<int>(LevelChunkDataField::BiomeState)].get();
-        return c.totalTime >= 0 && c.lastChange == c.totalTime && lc->nonActorDataNeedsSaving(0, 0);
-    });
+    bool dirty = !chunks.empty() && std::all_of(chunks.begin(), chunks.end(), [](LevelChunk* lc) { return gf::feature::ext::trees::biomesUnsaved(*lc); });
+
     auto after = chunkResendStats();
     ctx.info("chunk resends: " + std::to_string(after.sent - before.sent) + " sent, " + std::to_string(after.refused - before.refused) +
              " refused (simulated players have no client)");
@@ -1066,6 +1136,17 @@ GF_REGISTER_SELFTEST("trees.hardened_dark_leaves", [](Context& ctx) -> ll::coro:
         if (full == "twilightforest:dark_leaves") ctx.check(list.size() == onDirt.size(), "dark leaves take the biome's monster spawns");
         else ctx.check(list.empty(), "no monster spawns on " + full);
     }
+    // getLightBlock: DarkLeavesBlock 15 (the dark forest's canopy shuts the sky out), LeavesBlock 1,
+    // HardenedDarkLeavesBlock a full opaque block (15)
+    for (auto [id, want] : {std::pair{"twilightforest:dark_leaves", 15}, std::pair{"twilightforest:hardened_dark_leaves", 15},
+                            std::pair{"twilightforest:twilight_oak_leaves", 1}, std::pair{"twilightforest:canopy_leaves", 1}}) {
+        auto const* b = game::blockWith(id);
+        ctx.require(b != nullptr, id);
+        int light = static_cast<int>(b->getBlockType().getLight(*b).mValue);
+        int direct = static_cast<int>(b->mDirectData->mLight->mValue);
+        ctx.check(direct == want, std::string(id) + " dampens light by " + std::to_string(direct) + " (TF getLightBlock " + std::to_string(want) + "; type " +
+                                      std::to_string(light) + ")");
+    }
     ctx.require(ctx.setBlock(leaves, "twilightforest:hardened_dark_leaves"), "hardened dark leaves again");
     // HardenedDarkLeavesBlock#getCloneItemStack: pick block gives dark leaves
     ctx.check(gf::trees_ext::pickItem("twilightforest:hardened_dark_leaves") == "twilightforest:dark_leaves", "pick block gives dark leaves");
@@ -1127,12 +1208,30 @@ constexpr int kProbeTicks = 2400;
 
 } // namespace
 
+/// Whether a real client (not a simulated player) is in the world.
+static bool realPlayerPresent() {
+    auto level = ll::service::getLevel();
+    if (!level) return false;
+    bool found = false;
+    level->forEachPlayer([&](Player& p) {
+        if (!p.isSimulatedPlayer()) found = true;
+        return !found;
+    });
+    return found;
+}
+
 // Client e2e (remote modes: run on the host): a probe the client photographs, the leaves of
-// transformation shedding runes over an active time core ticking wheat. It stands away from every
-// unit's test rows (250 blocks east and 64 north of this unit's row, beyond the time core's reach of
-// any row), and it puts itself back after kProbeTicks whatever runs next, so a 'full' run or a glob
-// matching only the probe leaves nothing behind (R12); trees.zz_showcase_restore takes it down at once.
+// transformation shedding runes over a timewood clock ticking wheat. It stands for a real client
+// only: in a world with no real player (the server 'full' run, a selftest glob on a bare server) it
+// changes nothing. It stands away from every unit's test rows (250 blocks east and 64 north of this
+// unit's row). The clock is placed inactive, so the world never holds an active core outside U3's
+// rows: the probe's own coroutine runs its cycle every 20 ticks (SpecialMagicLogBlock's rate) and puts
+// every block back after kProbeTicks, or at once with trees.zz_showcase_restore.
 GF_REGISTER_SELFTEST("trees.vanilla_probe", [](Context& ctx) -> ll::coro::CoroTask<> {
+    if (!realPlayerPresent()) {
+        ctx.info("skipped: the probe stands only for a real client to photograph (client e2e); no real player is in this world");
+        co_return;
+    }
     showcaseLog().active = true;
     GlobalPos base = ctx.testPos(398, 2).offset(250, 0, -64);
     co_await ctx.ensureLoaded(base);
@@ -1148,13 +1247,19 @@ GF_REGISTER_SELFTEST("trees.vanilla_probe", [](Context& ctx) -> ll::coro::CoroTa
         for (int dz = -1; dz <= 1; ++dz) set(base.offset(dx, 4, dz), "twilightforest:transformation_leaves", {{"twilightforest:persistent", true}});
     set(base.offset(-1, 0, 0), "minecraft:farmland", {{"moisturized_amount", 7}});
     set(base.offset(-1, 1, 0), "minecraft:wheat", {{"growth", 0}});
-    set(base, "twilightforest:time_log_core", {{"twilightforest:axis", "y"}, {"twilightforest:active", true}});
+    set(base, "twilightforest:time_log_core", {{"twilightforest:axis", "y"}, {"twilightforest:active", false}});
     showcaseLog().active = false;
-    ll::coro::keepThis([generation = gRestoreGeneration, level = currentLevel()]() -> ll::coro::CoroTask<> {
-        co_await ll::chrono::ticks(kProbeTicks);
-        if (currentLevel() != level) co_return; // another world (the client): not ours to edit
-        // the blocks in unloaded chunks stay in the log (an unloaded core does not tick) and are put
-        // back on a later try, once a player or a ticking area has their chunks loaded again
+    ll::coro::keepThis([generation = gRestoreGeneration, level = currentLevel(), core = base]() -> ll::coro::CoroTask<> {
+        // the clock's cycles, while the probe stands (the range is the config's, at most 128)
+        for (int t = 0; t < kProbeTicks; t += 20) {
+            co_await ll::chrono::ticks(20);
+            if (currentLevel() != level || generation != gRestoreGeneration) co_return; // another world, or restored
+            auto* r = game::regionOf(core.dim);
+            if (!r || !r->hasChunksAt(bp(core), 0, false) || r->getBlock(bp(core)).getTypeName() != "twilightforest:time_log_core") continue;
+            (void)performCoreEffect(Core::Time, *r, bp(core));
+        }
+        // the blocks in unloaded chunks stay in the log and are put back on a later try, once a
+        // player or a ticking area has their chunks loaded again
         for (std::uint64_t gen = generation; gen == gRestoreGeneration && level && currentLevel() == level;) {
             int n = restoreShowcase(true);
             gen   = gRestoreGeneration;
@@ -1165,7 +1270,6 @@ GF_REGISTER_SELFTEST("trees.vanilla_probe", [](Context& ctx) -> ll::coro::CoroTa
     }).launch(ll::thread::ServerThreadExecutor::getDefault());
     ctx.info("trees probe at " + std::to_string(base.x) + " " + std::to_string(base.y) + " " + std::to_string(base.z));
 });
-
 // Client e2e: puts back every block trees.showcase / trees.vanilla_probe changed (newest first), after
 // the screenshots.
 GF_REGISTER_SELFTEST("trees.zz_showcase_restore", [](Context& ctx) -> ll::coro::CoroTask<> {

@@ -64,8 +64,11 @@
 #include "mc/world/phys/AABB.h"
 
 #include "core/jrand/JRand.h"
+#include "core/jrand/Mth.h"
 #include "core/trees/JavaHashSet.h"
 #include "feature/common/Interactions.h"
+#include "feature/ext/trees/ChunkDirty.h"
+#include "feature/ext/trees/ParticleTo.h"
 #include "feature/ext/trees/RandomTicks.h"
 #include "feature/ext/worldgen/FeatureKit.h"
 #include "feature/families/BlockEvents.h"
@@ -190,8 +193,7 @@ bool vanillaRandomTicking(std::string const& id) {
             "minecraft:cactus", "minecraft:bamboo", "minecraft:kelp", "minecraft:vine", "minecraft:grass_block", "minecraft:mycelium",
             "minecraft:farmland", "minecraft:ice", "minecraft:frosted_ice", "minecraft:snow_layer", "minecraft:lava", "minecraft:flowing_lava",
             "minecraft:cocoa", "minecraft:nether_wart", "minecraft:sweet_berry_bush", "minecraft:chorus_flower", "minecraft:turtle_egg",
-            "minecraft:pointed_dripstone", "minecraft:budding_amethyst", "minecraft:cave_vines", "minecraft:cave_vines_body_with_berries",
-            "minecraft:cave_vines_head_with_berries", "minecraft:twisting_vines", "minecraft:weeping_vines", "minecraft:crimson_nylium",
+            "minecraft:pointed_dripstone", "minecraft:budding_amethyst", "minecraft:cave_vines", "minecraft:cave_vines_head_with_berries", "minecraft:twisting_vines", "minecraft:weeping_vines", "minecraft:crimson_nylium",
             "minecraft:warped_nylium", "minecraft:lit_redstone_ore", "minecraft:lit_deepslate_redstone_ore", "minecraft:oak_leaves",
             "minecraft:spruce_leaves", "minecraft:birch_leaves", "minecraft:jungle_leaves", "minecraft:acacia_leaves", "minecraft:dark_oak_leaves",
             "minecraft:mangrove_leaves", "minecraft:cherry_leaves", "minecraft:azalea_leaves", "minecraft:azalea_leaves_flowered",
@@ -210,6 +212,90 @@ bool vanillaRandomTicking(std::string const& id) {
         return s;
     }();
     return ids.contains(id);
+}
+
+int stateInt(std::map<std::string, std::string> const& states, char const* name, int fallback) {
+    auto it = states.find(name);
+    if (it == states.end()) return fallback;
+    if (it->second == "true") return 1;
+    if (it->second == "false") return 0;
+    try {
+        return std::stoi(it->second);
+    } catch (...) { return fallback; }
+}
+
+/// LeavesBlock#updateDistance's value for a Bedrock vanilla leaf (which keeps no distance state):
+/// the shortest way through leaves to a log (#minecraft:logs: 0), a leaf with a stored distance
+/// (TF's: its value) counting as that value, capped at 7 (LeavesBlock.DECAY_DISTANCE).
+int vanillaLeafDistance(BlockSource& region, BlockPos const& start) {
+    auto isVanillaLeaf = [](Block const& b) { return gf::tags::has(gf::tags::Registry::Block, "minecraft:leaves", b.getTypeName()) && b.getTypeName().starts_with("minecraft:"); };
+    int  best          = 7;
+    std::vector<BlockPos>              frontier{start};
+    std::unordered_set<std::int64_t>   seen{core::mth::blockPosAsLong(start.x, start.y, start.z)};
+    for (int depth = 0; depth < 7 && !frontier.empty() && depth + 1 < best; ++depth) {
+        std::vector<BlockPos> next;
+        for (auto const& p : frontier) {
+            for (Dir d : kAll) {
+                BlockPos n = rel(p, d);
+                if (n.y < region.getMinHeight() || n.y >= region.getMaxHeight() || !region.hasChunksAt(n, 0, false)) continue;
+                Block const& b  = region.getBlock(n);
+                auto const&  id = b.getTypeName();
+                if (gf::tags::has(gf::tags::Registry::Block, "minecraft:logs", id)) {
+                    best = std::min(best, depth + 1);
+                } else if (id.starts_with("twilightforest:")) {
+                    auto st = game::statesOf(b);
+                    if (st.contains("twilightforest:distance")) best = std::min(best, depth + 1 + stateInt(st, "twilightforest:distance", 7));
+                } else if (isVanillaLeaf(b) && seen.insert(core::mth::blockPosAsLong(n.x, n.y, n.z)).second) {
+                    next.push_back(n);
+                }
+            }
+        }
+        frontier = std::move(next);
+    }
+    return std::min(best, 7);
+}
+
+/// Whether the vanilla head of a growing plant (kelp, weeping / twisting / cave vines) is at `pos`:
+/// the next block in its growth direction is not the same plant (GrowingPlantHeadBlock; the body
+/// blocks, GrowingPlantBodyBlock, never tick in Java).
+bool growingHead(BlockSource& region, BlockPos const& pos, std::string const& id, int dy) {
+    BlockPos n = at(pos, 0, dy, 0);
+    if (n.y < region.getMinHeight() || n.y >= region.getMaxHeight()) return true;
+    auto const& other = region.getBlock(n).getTypeName();
+    if (id.starts_with("minecraft:cave_vines")) return !other.starts_with("minecraft:cave_vines");
+    return other != id;
+}
+
+/// BlockState#isRandomlyTicking for a block whose type ticks randomly: the state conditions Java
+/// 1.21.1 puts on top of the type (LeavesBlock: distance 7 and not persistent; CropBlock: below its
+/// maximum age; CocoaBlock, NetherWartBlock, SweetBerryBushBlock, ChorusFlowerBlock,
+/// GrowingPlantHeadBlock: their age caps; BambooStalkBlock: stage 0; PitcherCropBlock: the lower
+/// half below age 4; AttachedStemBlock: never).
+bool stateTicksRandomly(BlockSource& region, BlockPos const& pos, Block const& state) {
+    auto const& id     = state.getTypeName();
+    auto        states = game::statesOf(state);
+    // TF's leaves (every LeavesBlock of TF keeps Java's distance and persistent states)
+    if (states.contains("twilightforest:distance") && states.contains("twilightforest:persistent"))
+        return stateInt(states, "twilightforest:distance", 7) == 7 && stateInt(states, "twilightforest:persistent", 0) == 0;
+    if (!id.starts_with("minecraft:")) return true;
+    if (gf::tags::has(gf::tags::Registry::Block, "minecraft:leaves", id)) {
+        if (stateInt(states, "persistent_bit", 0) != 0) return false;
+        return vanillaLeafDistance(region, pos) >= 7;
+    }
+    if (id == "minecraft:wheat" || id == "minecraft:carrots" || id == "minecraft:potatoes" || id == "minecraft:beetroot") return stateInt(states, "growth", 0) < 7;
+    if (id == "minecraft:pitcher_crop") return stateInt(states, "upper_block_bit", 0) == 0 && stateInt(states, "growth", 0) < 4;
+    if (id == "minecraft:melon_stem" || id == "minecraft:pumpkin_stem") return stateInt(states, "facing_direction", 0) == 0; // attached: AttachedStemBlock
+    if (id == "minecraft:cocoa") return stateInt(states, "age", 0) < 2;
+    if (id == "minecraft:nether_wart") return stateInt(states, "age", 0) < 3;
+    if (id == "minecraft:sweet_berry_bush") return stateInt(states, "growth", 0) < 3;
+    if (id == "minecraft:chorus_flower") return stateInt(states, "age", 0) < 5;
+    if (id == "minecraft:bamboo") return stateInt(states, "age_bit", 0) == 0;
+    if (id == "minecraft:kelp") return stateInt(states, "kelp_age", 0) < 25 && growingHead(region, pos, id, 1);
+    if (id == "minecraft:twisting_vines") return stateInt(states, "twisting_vines_age", 0) < 25 && growingHead(region, pos, id, 1);
+    if (id == "minecraft:weeping_vines") return stateInt(states, "weeping_vines_age", 0) < 25 && growingHead(region, pos, id, -1);
+    if (id == "minecraft:cave_vines" || id == "minecraft:cave_vines_head_with_berries")
+        return stateInt(states, "growing_plant_age", 0) < 25 && growingHead(region, pos, id, -1);
+    return true;
 }
 
 /// Vanilla block entities with a server ticker in Java 1.21.1 (getTicker != null on the server), by
@@ -254,9 +340,11 @@ int timeEffect(BlockSource& region, BlockPos const& pos) {
         if (state.isAir() || gf::tags::has(gf::tags::Registry::Block, "twilightforest:time_core_excluded", state.getTypeName())) continue;
         bool ok = false;
         if (gf::feature::families::detail::randomTicked(state.getBlockType())) {
-            gf::feature::families::detail::randomTickAt(region, dPos);
-            ok = true;
-        } else if (vanillaRandomTicking(state.getTypeName())) {
+            if (stateTicksRandomly(region, dPos, state)) {
+                gf::feature::families::detail::randomTickAt(region, dPos);
+                ok = true;
+            }
+        } else if (vanillaRandomTicking(state.getTypeName()) && stateTicksRandomly(region, dPos, state)) {
             state.randomTick(region, dPos, level.getRandom());
             ok = true;
         }
@@ -289,16 +377,6 @@ Biome const* transformationTarget(BlockSource& region) {
         return registry.lookupByName(id);
     }
     return registry.lookupByName(kEnchanted);
-}
-
-/// LevelChunk#setUnsaved(true) for a biome-only change: the chunk's biome-state counter is touched
-/// as the engine touches its counters on a change (DirtyTicksCounter: the change tick is the
-/// counter's current tick, a clean counter starts counting), so the level storage saves the chunk's
-/// data (Data3D with the biomes) on its next pass. No block is edited.
-void markChunkDirty(LevelChunk& chunk) {
-    auto& counter = chunk.mFullChunkDirtyTicksCounters[static_cast<int>(LevelChunkDataField::BiomeState)].get();
-    if (counter.totalTime < 0) counter.totalTime = 0;
-    counter.lastChange = counter.totalTime;
 }
 
 /// ChunkHolder#broadcastChanges for the biome resend (ChunkMap#resendBiomesForChunks): the chunk goes
@@ -350,7 +428,7 @@ int transformationEffect(BlockSource& region, BlockPos const& pos) {
         for (int lx = qx; lx < qx + 4; ++lx)
             for (int lz = qz; lz < qz + 4; ++lz)
                 chunk->_setBiome(*target, ChunkBlockPos{static_cast<uchar>(lx), ChunkLocalHeight{0}, static_cast<uchar>(lz)}, true);
-        markChunkDirty(*chunk);
+        gf::feature::ext::trees::markBiomesUnsaved(*chunk); // LevelChunk#setUnsaved(true)
         int sent = resendChunk(region, ChunkPos{dPos.x >> 4, dPos.z >> 4});
         Vec3  xyz = center(dPos);
         auto& dim = region.getDimension();
@@ -485,12 +563,20 @@ int doMagnet(BlockSource& region, BlockPos const& usePos, BlockPos const& destPo
         Block const& rs         = region.getBlock(replacePos);
         if (!(safeReplace(rs) || kit::isReplaceable(rs) || rs.isAir())) continue;
         game::setBlock(region, c, *repl);
+        // one ParticlePacket per player within 64 blocks (distanceToSqr < 4096), each with its own
+        // 16 offsets from the level's random, sent to that player only
         Vec3 xyz = center(replacePos);
-        for (int i = 0; i < 16; ++i) {
-            auto& r  = coreRandom();
-            float ox = static_cast<float>((r.nextDouble() - 0.5) * 1.25), oy = static_cast<float>((r.nextDouble() - 0.5) * 1.25), oz = static_cast<float>((r.nextDouble() - 0.5) * 1.25);
-            fx::particle(dim, "twilightforest:log_core_particle", Vec3{xyz.x + ox, xyz.y + oy, xyz.z + oz}, Vec3{0.8f, 0.9f, 0.2f});
-        }
+        dim.forEachPlayer([&](Player& player) {
+            auto const& p  = player.getPosition();
+            double      dx = p.x - xyz.x, dy = p.y - xyz.y, dz = p.z - xyz.z;
+            if (dx * dx + dy * dy + dz * dz >= 4096.0) return true;
+            for (int i = 0; i < 16; ++i) {
+                auto& r  = coreRandom();
+                float ox = static_cast<float>((r.nextDouble() - 0.5) * 1.25), oy = static_cast<float>((r.nextDouble() - 0.5) * 1.25), oz = static_cast<float>((r.nextDouble() - 0.5) * 1.25);
+                fx::ext::particleTo(player, "twilightforest:log_core_particle", Vec3{xyz.x + ox, xyz.y + oy, xyz.z + oz}, Vec3{0.8f, 0.9f, 0.2f});
+            }
+            return true;
+        });
         game::setBlock(region, replacePos, *ore); // set close to ore material
         ++moved;
     }
@@ -854,6 +940,16 @@ int performCoreEffect(Core core, BlockSource& region, BlockPos const& pos) {
         return sortingEffect(region, pos);
     }
     return 0;
+}
+
+bool timeCoreWorks(BlockSource& region, BlockPos const& pos) {
+    Block const& state = region.getBlock(pos);
+    if (state.isAir() || gf::tags::has(gf::tags::Registry::Block, "twilightforest:time_core_excluded", state.getTypeName())) return false;
+    bool const typeTicks = gf::feature::families::detail::randomTicked(state.getBlockType()) || vanillaRandomTicking(state.getTypeName());
+    if (typeTicks && stateTicksRandomly(region, pos, state)) return true;
+    if (vanillaTicker(state.getTypeName()))
+        if (auto* actor = region.getBlockEntity(pos)) return actor->_getTickComponent() != nullptr;
+    return false;
 }
 
 std::size_t activeCoreCount() { return state().due.size(); }

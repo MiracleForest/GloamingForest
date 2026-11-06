@@ -432,14 +432,11 @@ std::int64_t key(BlockPos const& p) { return core::mth::blockPosAsLong(p.x, p.y,
 } // namespace
 
 bool PosSet::add(BlockPos const& p) {
-    auto k  = key(p);
-    auto it = std::lower_bound(mKeys.begin(), mKeys.end(), k);
-    if (it != mKeys.end() && *it == k) return false;
-    mKeys.insert(it, k);
+    if (!mKeys.insert(key(p)).second) return false;
     list.push_back(p);
     return true;
 }
 
-bool PosSet::contains(BlockPos const& p) const { return std::binary_search(mKeys.begin(), mKeys.end(), key(p)); }
+bool PosSet::contains(BlockPos const& p) const { return mKeys.contains(key(p)); }
 
 } // namespace gf::feature::trees

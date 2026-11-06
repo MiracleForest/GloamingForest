@@ -1,5 +1,14 @@
 {
   "patch": {
+    "data/gf/families/trees.json": [
+      {
+        "op": "add",
+        "path": "/2/params/components",
+        "value": {
+          "minecraft:light_dampening": 15
+        }
+      }
+    ],
     "data/twilightforest/worldgen/configured_feature/tree/mangrove_tree.json": [
       {
         "op": "add",

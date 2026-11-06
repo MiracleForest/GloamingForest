@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <functional>
 #include <string_view>
+#include <unordered_set>
 #include <vector>
 
 #include "nlohmann/json.hpp"
@@ -132,7 +133,7 @@ public:
     std::vector<BlockPos> list;
 
 private:
-    std::vector<std::int64_t> mKeys; ///< sorted
+    std::unordered_set<std::int64_t> mKeys; ///< the hash index (O(1) per insert / lookup)
 };
 
 } // namespace gf::feature::trees

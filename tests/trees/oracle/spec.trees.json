@@ -297,6 +297,16 @@
         ]
       },
       {
+        "name": "mega_saplings",
+        "kind": "sapling",
+        "area": [66, -60, -49, 209, 19, 94],
+        "saplings": [
+          {"name": "mega_canopy_sapling", "id": "twilightforest:canopy_sapling", "seed": 78000, "mega": true, "pos": [90, -60, -25], "pedestal": false, "box": [66, -60, -49, 113, 19, -2]},
+          {"name": "mega_twilight_oak_sapling_forest", "id": "twilightforest:twilight_oak_sapling", "seed": 78001, "mega": true, "pos": [138, -60, -25], "pedestal": false, "box": [114, -60, -49, 161, 19, -2]},
+          {"name": "mega_twilight_oak_sapling_savannah", "id": "twilightforest:twilight_oak_sapling", "seed": 83748, "mega": true, "pos": [186, -60, -25], "pedestal": false, "box": [162, -60, -49, 209, 19, -2]}
+        ]
+      },
+      {
         "name": "features_a",
         "kind": "multi",
         "area": [

@@ -13,11 +13,13 @@ Spec: [docs/spec/trees.md](../spec/trees.md). What is where:
 | Leaf runes (server fallback), hardened dark leaves, hollow oak sapling | `src/feature/trees/Leaves.cpp` |
 | Leaf runes drawn by the client mod | `src/client/trees/LeafRunes.cpp` |
 | Pick block on hardened dark leaves | `src/feature/ext/trees/PickBlock.{h,cpp}` (contract extension) |
+| A particle to one player (the mining core's per-player particle packets) | `src/feature/ext/trees/ParticleTo.{h,cpp}` (contract extension of fx) |
+| A chunk's biome-only change marked for saving | `src/feature/ext/trees/ChunkDirty.{h,cpp}` (contract extension of worldgen) |
 | Java HashSet iteration order (TreeFeature#updateLeaves) | `src/core/trees/JavaHashSet.{h,cpp}`, `tests/trees/` |
 | Module and config section `trees` | `src/feature/trees/Module.cpp`, `Trees.h` |
 | Selftests, e2e | `src/feature/trees/SelfTests.cpp`, `tools/e2e/{server,client}/scenarios/trees.ps1` |
 | Pack: hardened dark leaves (foliage tint), particles | `assets/pack/bp/blocks/trees/`, `assets/pack/rp/particles/trees/` |
-| Import overrides (mangrove trunk defaults, leaf mining speeds) | `tools/import/overrides/trees.json` |
+| Import overrides (mangrove trunk defaults, leaf mining speeds, dark leaves' light dampening) | `tools/import/overrides/trees.json` |
 | Core sounds | F3's mapping in `assets/gen/audio/trees/rp/sounds.d/trees.json`: TF's `sounds.json` makes `block.twilightforest.core.time` an event reference to vanilla `block.comparator.click` (`sounds/random/click`) and `core.transformation` one to `block.note_block.harp` (`sounds/note/harp`); `Cores.cpp` plays them at TF's volume / pitch (0.35 / 0.5 and 0.1 / random 0..2). No synth recipe: TF ships no audio for them. |
 
 ## Magic log cores
@@ -28,7 +30,13 @@ clamped to TF's `defineInRange(0, 128)`; a range of 0 disables the core.
 
 - **Time**: 480 random positions per cycle; F11's random tick dispatch for TF blocks, the game's
   `Block::randomTick` for the vanilla blocks that tick randomly in Java 1.21.1 (a list by Bedrock id),
-  the block actor tick for Java's server tickers. The particle sits on the top of the block's outline
+  the block actor tick for Java's server tickers. Like Java's `BlockState#isRandomlyTicking`, the
+  state decides, not only the type: leaves tick only at distance 7 and not persistent (TF's leaves by
+  their `distance` state; Bedrock's vanilla leaves keep none, so their LeavesBlock distance is walked
+  through the leaves to a `#minecraft:logs` block), crops below their maximum age, cocoa / nether wart /
+  sweet berries / chorus flowers below their caps, bamboo at stage 0, the heads of kelp and of
+  weeping / twisting / cave vines below age 25 (their bodies never), attached stems never
+  (`trees.time_core_ticks`). The particle sits on the top of the block's outline
   (Java: the occlusion shape's top; leaves and glass have none).
 - **Transformation**: the enchanted forest is U1's behaviour pack biome
   `twilightforest:enchanted_forest`; without it (U1 not merged) the core warns once and does
@@ -37,12 +45,16 @@ clamped to TF's `defineInRange(0, 128)`; a range of 0 disables the core.
   counter the way the engine touches its dirty counters (`LevelChunk::mFullChunkDirtyTicksCounters`,
   measured: a clean counter counts from INT_MIN, a change sets `lastChange = totalTime`), and resent
   to every player whose view holds it through the player's `NetworkChunkPublisher::_sendQueuedChunk`
-  (a LevelChunkPacket; the client asks for the sub-chunks again). No block is edited.
+  (a LevelChunkPacket; the client asks for the sub-chunks again). No block is edited. The counter
+  touch lives in the `ChunkDirty` extension with its measured semantics: Bedrock exports no setter,
+  touch or dirty mark for a chunk without a block edit.
 - **Mining**: `OreMagnetItem.doMagnet` translated (U8 owns the magnet item). The ore map is
   `ToolEvents#refreshOreMagnetCache`: every `c:ores_in_ground/<g>` tag with a matching
   `c:ore_bearing_ground/<g>` tag (the data's and F9's vanilla bridge), minus
   `#twilightforest:mining_tree_excluded` (coal), plus ancient debris -> netherrack; rebuilt when the
-  data reloads.
+  data reloads. Its particles go as TF sends them: one packet per player within 64 blocks, each with
+  its own 16 offsets drawn from the level's random (`ParticleTo` extension), so the random's
+  consumption follows the number of players nearby as in TF.
 - **Sorting**: NeoForge's item handlers per face: a WorldlyContainer (furnace family, brewing stand,
   shulker box) gets a SidedInvWrapper per face with its slot rules (`getSlotsForFace`,
   `canPlaceItemThroughFace`, `canTakeItemThroughFace`; Bedrock's brewing stand slot order mapped),
@@ -66,6 +78,10 @@ clamped to TF's `defineInRange(0, 128)`; a range of 0 disables the core.
   shape): an empty spawn list there through `gf::spawn::onSpecialSpawn`. Dark leaves
   (DarkLeavesBlock, a full support shape) take the biome's list. `trees.hardened_dark_leaves`
   checks all ten. Pick block on hardened dark leaves gives dark leaves (`PickBlock` extension).
+- Light: dark leaves block 15 levels of light (DarkLeavesBlock#getLightBlock: the Dark Forest
+  canopy shuts the sky out) through a `params.components` patch of their family entry; the other
+  LeavesBlock leaves block 1 (the families kit), hardened dark leaves are a full block (15).
+  `trees.hardened_dark_leaves` checks the four values.
 - Leaf runes: the client mod runs ClientLevel#animateTick's sampling itself; the server does it only
   for players without the client mod and sends each rune to that player alone (at most 16 a tick),
   and only while leaves of transformation are within the samples' reach (a block palette look over
@@ -97,7 +113,7 @@ Java's HashSet order, then sorted by y. `dark_canopy_tree` checks DarkCanopyTree
 height (logs are not free) before the tree interpreter, which replays the two trunk height draws.
 `dark_canopy_tree` and `anywhere_tree` (SnowTreeFeature) then run their own copy of the older
 `TreeFeature.updateLeaves` (distance 1 next to the trunk, five rounds lowering to `l + 1`, not
-bounded by the tree's box): a decorator `gf_trees:known_shape_update_leaves` appended to the
+bounded by the tree's box): a decorator `gf_trees:legacy_update_leaves` appended to the
 interpreter's decorator list runs it last, with the interpreter's trunk set (F5's `minecraft:tree`
 itself writes no leaf distances).
 
@@ -109,7 +125,9 @@ the oracle placed the tree at the same absolute box (the positions follow the wo
 server e2e world's). The dump comes from a `trees` kind of the F13 oracle dumper
 (`tests/trees/oracle/`: the Java source, the spec section and how to run it): each case clears the
 flat area as `flatArea` does, places the configured feature with `LegacyRandomSource(seed)` or plants
-the sapling and calls `SaplingBlock#advanceTree` twice with one, and dumps the box.
+the sapling and calls `SaplingBlock#advanceTree` twice with one, and dumps the box. The `mega_*`
+cases plant a 2x2 of saplings (`trees.mega_2x2_java`): the mega canopy tree and the twilight oak's two
+mega trees (seed 78001 draws 0.245, the forest mega oak; 83748 draws 0.016 < 0.1, the savannah mega oak).
 
 What it showed and what was fixed:
 - F5's `minecraft:tree` writes no leaf distances (Java's `TreeFeature.updateLeaves`): TF's
@@ -141,10 +159,20 @@ brown and red cap blocks (`huge_mushroom_bits` 14) to compare the brown canopy m
 transformation (range 4, the stand-in biome `minecraft:mesa` without U1) every 10 / 20 ticks for a
 minute: the sorting and transformation particles in flight, and the chunk resend reaching the real
 client (`chunk resent to 1 players`, the brown mesa cell on screen). `trees.vanilla_probe` (both
-builds: the remote modes run it on the host) stands 250 blocks east and 64 north of the unit's row and
-puts itself back after 2400 ticks (blocks in unloaded chunks are tried again every 600 ticks), so a
-`full` run or a glob with only the probe leaves nothing behind; `trees.zz_showcase_restore` puts
+builds: the remote modes run it on the host) changes nothing in a world without a real player (the
+server `full` run); for a real client it stands 250 blocks east and 64 north of the unit's row with
+its timewood clock placed inactive (its cycles run from the probe's own coroutine, so no active core
+ever stands outside the unit's rows) and puts itself back after 2400 ticks (blocks in unloaded chunks
+are tried again every 600 ticks); `trees.zz_showcase_restore` puts
 everything (blocks, biomes, the stand-in) back at once.
+
+## Vanilla-client deviations (best effort)
+
+- Leaf runes: TF's ClientLevel#animateTick draws one rune for every sampled leaf of transformation,
+  with no cap. A vanilla client gets the server's samples as packets, at most 16 runes per player per
+  tick, so in a dense transformation tree a vanilla client sees fewer runes than TF shows. With the
+  client mod the runes are drawn on the client, uncapped, as in TF.
+- The magic leaves' colours on vanilla clients (see Known gaps).
 
 ## Known gaps (other units)
 

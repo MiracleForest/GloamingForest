@@ -36,7 +36,10 @@
         "minecraft:leaves",
         "minecraft:is_shears_item_destructible",
         "minecraft:is_sword_item_destructible"
-      ]
+      ],
+      "components": {
+        "minecraft:light_dampening": 15
+      }
     }
   },
   {
