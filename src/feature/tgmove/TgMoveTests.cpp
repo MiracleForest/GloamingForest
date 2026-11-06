@@ -13,7 +13,9 @@
 #include "mc/entity/components/BlockMovementSlowdownImmunityComponent.h"
 #include "mc/entity/components_json_legacy/LeashableComponent.h"
 #include "mc/entity/components_json_legacy/LeashablePreset.h"
+#include "mc/entity/components_json_legacy/NavigationComponent.h"
 #include "mc/entity/utilities/leashable_utility/LeashableUtility.h"
+#include "mc/world/level/pathfinder/Path.h"
 #include "mc/entity/components/ItemUseSlowdownModifierComponent.h"
 #include "mc/entity/components/MaxAutoStepComponent.h"
 #include "mc/entity/components/MoveInputComponent.h"
@@ -845,7 +847,34 @@ GF_REGISTER_SELFTEST("tgmove.leash", [](Context& ctx) -> ll::coro::CoroTask<> {
     for (auto id : pigs)
         if (auto* a = lv->fetchEntity(id, false); a && a->isLeashed()) ++leashed;
     ctx.require(leashed == 6, "the pigs are leashed to the player (" + std::to_string(leashed) + ")");
-    co_await ctx.ticks(100);
+    // what moves the pigs, every tick: a navigation path that ends within 2.5 blocks of the holder
+    // (the stay-close approach; Java's stops 2 blocks short) while within 6 blocks of it. Distances
+    // alone do not tell: pigs also stroll (paths ending anywhere), past the holder too.
+    std::string trace;
+    int         markedToHolder = 0, plainToHolder = 0;
+    for (int t = 0; t < 100; ++t) {
+        co_await ctx.ticks(1);
+        auto& h = ctx.player();
+        for (std::size_t i = 0; i < pigs.size(); ++i)
+            if (auto* a = lv->fetchEntity(pigs[i], false)) {
+                float dist    = a->getFeetPos().distanceTo(h.getFeetPos());
+                float pathEnd = -1;
+                if (auto nav = a->getEntityContext().tryGetComponent<NavigationComponent>()) {
+                    std::unique_ptr<Path> const&   path  = nav->mPath;
+                    std::vector<Path::Node> const* nodes = path ? &static_cast<std::vector<Path::Node> const&>(path->mNodes) : nullptr;
+                    if (nodes && !nodes->empty()) {
+                        BlockPos const e = nodes->back().pos;
+                        pathEnd          = Vec3{e.x + 0.5f, h.getFeetPos().y, e.z + 0.5f}.distanceTo(h.getFeetPos());
+                    }
+                }
+                if (pathEnd >= 0 && pathEnd <= 2.5f && dist <= 6.0f) ++(i >= 3 ? markedToHolder : plainToHolder);
+                if (i >= 3 && t % 10 == 9) trace += num(dist).substr(0, 4) + (pathEnd >= 0 ? "/p" + num(pathEnd).substr(0, 4) : std::string()) + " ";
+            }
+        if (t % 10 == 9) trace += "| ";
+    }
+    ctx.info("marked pigs (distance / path end to the holder) every 10 ticks: " + trace);
+    ctx.info("ticks with a path to the holder: marked " + std::to_string(markedToHolder) + ", unmarked " + std::to_string(plainToHolder));
+    ctx.check(markedToHolder == 0, "no marked pig paths to its holder within 6 blocks (" + std::to_string(markedToHolder) + " pig ticks did)");
     auto&       holder = ctx.player();
     int         markedFar = 0, plainFar = 0;
     std::string dists;
@@ -865,8 +894,8 @@ GF_REGISTER_SELFTEST("tgmove.leash", [](Context& ctx) -> ll::coro::CoroTask<> {
                 if (LeashableUtility::getPreset(*a, *leash, &holder).mSoftDistance >= 6.0f) ++freed;
     ctx.check(freed == 3, "the marked pigs' leash pulls only beyond 6 blocks (" + std::to_string(freed) + " of 3)");
     ctx.info("marked " + std::to_string(markedFar) + " / unmarked " + std::to_string(plainFar) + " pigs stayed more than 3 blocks away");
-    // TF: a marked mob within 6 blocks is not pathed to its holder (it may wander there by itself)
-    ctx.check(markedFar >= 2, "the marked pigs are not brought to the holder within 6 blocks (" + std::to_string(markedFar) + " of 3 stayed more than 3 blocks away)");
+    // TF: a marked mob within 6 blocks is not pathed to its holder; it may wander there by itself, so
+    // the distances are reported, and the paths checked above
     if (auto* a = lv->fetchEntity(loose, false)) {
         ctx.check(!a->hasTag(tm::kLeashOverrideTag), "the marker is dropped from a mob that is not leashed when it joins");
         if (auto leash = a->getEntityContext().tryGetComponent<LeashableComponent>())

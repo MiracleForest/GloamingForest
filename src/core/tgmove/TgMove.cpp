@@ -187,6 +187,20 @@ std::optional<JumpMakeUp> unrestrainedJump(double vyAfterJumpStep, double power,
     return JumpMakeUp{(power - gravity) * 0.98 + lost, lost};
 }
 
+HoneyCatchUp honeyCatchUp(double lost, int stepsLate) {
+    // after the jump step the full jump is `lost` higher and lost x 0.98 faster; each weak step after
+    // it adds the velocity gap, which shrinks by the drag 0.98 (gravity is the same on both)
+    HoneyCatchUp r;
+    double gap = lost * 0.98;
+    r.deficit  = lost;
+    for (int i = 0; i < stepsLate; ++i) {
+        r.deficit += gap;
+        gap *= 0.98;
+    }
+    r.add = gap + r.deficit; // the velocity gap now, plus the height to make up in this step
+    return r;
+}
+
 std::optional<double> slimeBounceStop(double vyBeforeLanding, double vyAfter) {
     // a bounce of the landing (at most as fast as the landing), not a jump off the slime
     if (vyBeforeLanding > kSlimeBounceStop && vyAfter > 0 && vyAfter <= std::max(-vyBeforeLanding, 0.0) + 0.02) return std::max(0.0, vyBeforeLanding);

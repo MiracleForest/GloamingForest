@@ -167,6 +167,16 @@ struct JumpMakeUp {
     double lost = 0;
 };
 [[nodiscard]] std::optional<JumpMakeUp> unrestrainedJump(double vyAfterJumpStep, double power, double gravity = kGravity);
+/// The honey jump made up late (tgmove.honey_jump on the client mod): `lost` is the power the
+/// engine's jump lacked (JumpMakeUp::lost); the client hears of it `stepsLate` steps after the step
+/// the server made it up in. `add` goes on the y velocity now, `deficit` (the height behind the full
+/// jump, made up in this step) comes off the next step's velocity x 0.98. With 0 steps late it is
+/// what unrestrainedJump does (add = lost x 0.98 + lost, deficit = lost).
+struct HoneyCatchUp {
+    double add     = 0;
+    double deficit = 0;
+};
+[[nodiscard]] HoneyCatchUp honeyCatchUp(double lost, int stepsLate);
 /// stopBouncing after the engine's slime landing: the y velocity TF keeps (0 instead of a bounce of
 /// a landing slower than 0.08), or nullopt when the bounce stays.
 [[nodiscard]] std::optional<double> slimeBounceStop(double vyBeforeLanding, double vyAfter);

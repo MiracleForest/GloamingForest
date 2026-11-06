@@ -109,7 +109,8 @@ so F2's `models.attachables` selftest still sees the generated file.
   a fall still bounces. The honey jump: the engine's weaker jump is made up in the next step (the height it lost is
   added to that step's velocity and taken off the one after). Exactly one simulation detects it: the server's copy
   when the server runs the mod (it sends the velocity it added on `tgmove.honey_jump` and the client mod adds the same
-  on its next airborne step), the client mod alone without one. Both making it up stacked through the server's
+  on its next airborne step, plus the steps it jumped weakly until the word came: `core::tgmove::honeyCatchUp`, gtested
+  for 0 to 4 steps late against the full jump), the client mod alone without one. Both making it up stacked through the server's
   corrections (measured in round 3: 2.52 and 4.06 blocks in two local runs); the client e2e now jumps 3 times and
   wants 2.52 +- 0.15 each, made up once each. Without the input (mobs; simulated players) the input
   acceleration is the one the last two engine steps agree on (a push or knockback is not taken for input). A vanilla
@@ -165,7 +166,9 @@ so F2's `models.attachables` selftest still sees the generated file.
   get a soft distance of at least 6 (Java pulls a marked mob only beyond 6 blocks), and while it is within 6 blocks of
   its holder a navigation path of it that ends within 2.5 blocks of the holder is dropped
   (`NavigationComponent::mPath`; Java's `closeRangeLeashBehaviour` paths it to 2 blocks of the holder unless marked);
-  its other paths (wandering) stay. `tgmove.leash` checks that the marked pigs stay away and the unmarked ones come.
+  its other paths (wandering) stay. `tgmove.leash` checks every tick for 100 ticks that no marked pig within 6 blocks
+  has a path to its holder, and reports the unmarked pigs' paths to it and every pig's distance (pigs also stroll,
+  past the holder too, so distances alone do not tell).
   The marker is dropped (and the mob's own presets put back) when the mob cannot be leashed, or is not leashed when it
   joins the world (TF's `handleLeashPathingOverrides` on EntityJoinLevel: `!mayBeLeashed`); a mob counts as joined once
   it is 40 ticks old in this session (whoever marks it leashes it right after spawning it), checked once per session.

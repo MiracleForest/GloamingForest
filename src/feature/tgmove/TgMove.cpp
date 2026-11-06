@@ -401,17 +401,22 @@ Vec3 applyUnrestrained(Actor& a, PlayerState& st, bool on, Vec3 v, bool onGround
         st.unrJumpLost = 0;
     }
     st.unrJumpAdded = 0;
+    if (st.unrHoneyAge >= 0 && ++st.unrHoneyAge > kHoneyAgeMax) st.unrHoneyAge = -1;
     // resetFactorWithUnrestrained (getBlockJumpFactor): the engine's jump off honey was weaker. One
     // side makes it up: the server's copy when the server runs the mod (it tells the client mod with
-    // tgmove.honey_jump; two make-ups would stack through the server's corrections), else the client
-    if (on && st.unrHoney && !st.unrHoneyByServer && !onGround && v.y > 0 && st.unrVyPre <= 0) {
+    // tgmove.honey_jump; two make-ups would stack through the server's corrections), else the client.
+    // The client mod with a server still notes when the jump was (unrHoneyAge), so it can make up the
+    // steps that passed until the server's word came (honeyCatchUp)
+    if (on && st.unrHoney && !onGround && v.y > 0 && st.unrVyPre <= 0) {
         double power       = tg::jumpPower(effectAmplifier(a, kJumpBoostId));
         double enginePower = v.y / 0.98 + tg::kGravity;
         // only the engine's honey jump (measured: 0.6 of the power on the server copy, 0.74 as the client
         // reads its velocity), not a bounce or a push
         double ratio       = power > 0 ? enginePower / power : 0;
         auto   j           = ratio > kHoneyJumpFactor - 0.1 && ratio < 0.85 ? tg::unrestrainedJump(v.y, power) : std::nullopt;
-        if (j) {
+        if (j && st.unrHoneyByServer) {
+            st.unrHoneyAge = 0;
+        } else if (j) {
             st.unrJumpAdded = j->vy - v.y;
             v.y             = static_cast<float>(j->vy);
             st.unrJumpLost  = j->lost;

@@ -371,6 +371,36 @@ TEST(TgMove, UnrestrainedSoulSandAndHoneyJump) {
     EXPECT_FALSE(unrestrainedJump((0.42 - kGravity) * 0.98, 0.42).has_value()); // a full jump
 }
 
+TEST(TgMove, HoneyCatchUpLate) {
+    // the server made the honey jump up; the client hears of it 0..4 steps late and catches up: from
+    // then on it is on the full jump's heights (Jump Boost II power 0.62, the engine's 0.6 of it)
+    double const power = 0.62, engine = 0.62 * 0.6;
+    auto         step  = [](double& y, double& v) {
+        y += v;
+        v = (v - kGravity) * 0.98;
+    };
+    for (int late = 0; late <= 4; ++late) {
+        double fy = 0, fv = power; // TF
+        double cy = 0, cv = engine; // the client: the engine's jump, then the catch-up
+        step(fy, fv);
+        step(cy, cv);
+        for (int i = 0; i < late; ++i) step(fy, fv), step(cy, cv);
+        auto up = honeyCatchUp(power - engine, late);
+        cv += up.add;
+        step(fy, fv);
+        step(cy, cv);
+        cv -= up.deficit * 0.98; // applyUnrestrained's next step
+        for (int i = 0; i < 20; ++i) {
+            EXPECT_NEAR(cy, fy, 1e-9) << "late " << late << " step " << i;
+            step(fy, fv);
+            step(cy, cv);
+        }
+    }
+    auto zero = honeyCatchUp(0.25, 0);
+    EXPECT_NEAR(zero.add, 0.25 * 0.98 + 0.25, 1e-12); // unrestrainedJump's own make-up
+    EXPECT_NEAR(zero.deficit, 0.25, 1e-12);
+}
+
 TEST(TgMove, SlimeBlockUnrestrained) {
     EXPECT_NEAR(slimeStepFactor(0.0, false), 0.4, 1e-12);
     EXPECT_NEAR(slimeStepFactor(0.05, false), 0.41, 1e-12);

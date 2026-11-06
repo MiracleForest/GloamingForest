@@ -442,10 +442,15 @@ void tick(movement::MoveState& s) {
     }
     if (l.honey && !act(Mod::Unrestrained)) l.honey.reset(); // the boots came off: nothing to make up
     if (l.honey) {
-        if (!s.onGround && s.velocity.y > 0) { // the jump is on: the same velocity as the server's, taken off next step
-            s.velocity.y     = static_cast<float>(s.velocity.y + l.honey->add);
-            l.eng.unrJumpLost = l.honey->lost;
-            log().info("tgmove: honey jump made up by the server (vy +{:.3f})", l.honey->add);
+        int late = l.eng.unrHoneyAge; // steps since this side's own honey jump (-1: it saw none)
+        if (!s.onGround && (late >= 0 || l.honey->ticks >= 1)) {
+            // the server's make-up, plus the steps this side jumped weakly until it heard of it; the
+            // height made up comes off the next step (applyUnrestrained), as on the server
+            auto up           = tg::honeyCatchUp(l.honey->lost, std::max(late, 0));
+            s.velocity.y      = static_cast<float>(s.velocity.y + up.add);
+            l.eng.unrJumpLost = up.deficit;
+            l.eng.unrHoneyAge = -1;
+            log().info("tgmove: honey jump made up by the server (vy +{:.3f}, {} steps late)", up.add, late);
             l.honey.reset();
         } else if (++l.honey->ticks > 4) {
             l.honey.reset(); // too late: the server's corrections put the jump right

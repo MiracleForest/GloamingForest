@@ -124,6 +124,7 @@ struct PlayerState {
     bool                       unrHoney   = false; ///< the last step was on a honey block
     double                     unrJumpLost = 0;    ///< the height a honey jump made up in the last step
     double                     unrJumpAdded = 0;   ///< the y velocity the last step's honey jump make-up added (server: sent to the companion)
+    int                        unrHoneyAge = -1;   ///< client mod with a server: steps since its honey jump (-1: none)
     bool                       unrHoneyByServer = false; ///< client mod with a server running the mod: the server makes the honey jump up (tgmove.honey_jump)
     double                     unrLastAccelSlow = 1.0; ///< mobs: the engine's acceleration factor of the last step
     double                     unrStepX = 0, unrStepZ = 0; ///< mobs: the last step's velocity (acceleration estimate)
@@ -231,6 +232,9 @@ struct EngineSlowdown {
 inline constexpr double kSoulSandAccel = 0.544;
 /// Bedrock's honey block jump: 0.6 of the jump power (measured: 0.514 blocks high, 1.252 on grass).
 inline constexpr double kHoneyJumpFactor = 0.6;
+/// The client mod's note of its honey jump lasts this many steps (the server's word comes within them).
+inline constexpr int kHoneyAgeMax = 20;
+
 
 /// A companion's tgmove.double_jump / tgmove.sidestep (PerformDoubleJumpPacket / PerformSidestep-
 /// Packet#handle): performed now, or retried on the next ticks, then a validator strike.
