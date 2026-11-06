@@ -1,0 +1,36 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:pinch_beetle",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/pinchbeetle"
+      },
+      "geometry": {
+        "default": "geometry.twilightforest.pinch_beetle"
+      },
+      "render_controllers": [
+        "controller.render.default"
+      ],
+      "animations": {
+        "base": "animation.twilightforest.pinch_beetle.base",
+        "pincers_open": "animation.twilightforest.pinch_beetle.pincers_open"
+      },
+      "scripts": {
+        "animate": [
+          "base",
+          {
+            "pincers_open": "query.has_rider"
+          }
+        ]
+      },
+      "spawn_egg": {
+        "base_color": "#bc9327",
+        "overlay_color": "#241609"
+      }
+    }
+  }
+}

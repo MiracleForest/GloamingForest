@@ -1,0 +1,37 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:swarm_spider",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/swarmspider"
+      },
+      "geometry": {
+        "default": "geometry.spider.v1.8"
+      },
+      "render_controllers": [
+        "controller.render.default"
+      ],
+      "animations": {
+        "default_leg_pose": "animation.spider.default_leg_pose",
+        "look_at_target": "animation.spider.look_at_target",
+        "walk": "animation.spider.walk"
+      },
+      "scripts": {
+        "scale": "0.5"
+      },
+      "animation_controllers": [
+        {
+          "move": "controller.animation.spider.move"
+        }
+      ],
+      "spawn_egg": {
+        "base_color": "#32022e",
+        "overlay_color": "#17251e"
+      }
+    }
+  }
+}

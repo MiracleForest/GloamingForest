@@ -1,0 +1,39 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:mist_wolf",
+      "materials": {
+        "default": "entity_alphablend"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/mistwolf"
+      },
+      "geometry": {
+        "default": "geometry.wolf"
+      },
+      "render_controllers": [
+        "controller.render.twilightforest.mist_wolf"
+      ],
+      "animations": {
+        "setup": "animation.wolf.setup",
+        "legs": "animation.wolf.leg_default",
+        "look_at": "animation.common.look_at_target",
+        "tail": "animation.twilightforest.hostile_wolf.tail"
+      },
+      "scripts": {
+        "animate": [
+          "setup",
+          "legs",
+          "look_at",
+          "tail"
+        ],
+        "scale": "1.9"
+      },
+      "spawn_egg": {
+        "base_color": "#3a1411",
+        "overlay_color": "#e2c88a"
+      }
+    }
+  }
+}

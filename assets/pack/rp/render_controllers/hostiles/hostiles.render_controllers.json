@@ -1,0 +1,105 @@
+{
+  "format_version": "1.10.0",
+  "render_controllers": {
+    "controller.render.twilightforest.hostile_wolf": {
+      "arrays": {
+        "textures": {
+          "Array.skins": [
+            "Texture.default",
+            "Texture.angry"
+          ]
+        }
+      },
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Array.skins[q.property('twilightforest:aggressive') ? 1 : 0]"
+      ]
+    },
+    "controller.render.twilightforest.mist_wolf": {
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ],
+      "color": {
+        "r": "math.min(1.0, q.property('twilightforest:brightness') / 15.0 * 3.0 + 0.25)",
+        "g": "math.min(1.0, q.property('twilightforest:brightness') / 15.0 * 3.0 + 0.25)",
+        "b": "math.min(1.0, q.property('twilightforest:brightness') / 15.0 * 3.0 + 0.25)",
+        "a": "math.min(1.0, q.property('twilightforest:brightness') / 15.0 * 2.0 + 0.3)"
+      }
+    },
+    "controller.render.twilightforest.wraith": {
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ],
+      "color": {
+        "r": 1.0,
+        "g": 1.0,
+        "b": 1.0,
+        "a": 0.6
+      }
+    },
+    "controller.render.twilightforest.slime_beetle": {
+      "geometry": "Geometry.default",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ],
+      "part_visibility": [
+        {
+          "*": true
+        },
+        {
+          "slime": false
+        }
+      ]
+    },
+    "controller.render.twilightforest.slime_beetle_tail": {
+      "geometry": "Geometry.tail",
+      "materials": [
+        {
+          "*": "Material.tail"
+        }
+      ],
+      "textures": [
+        "Texture.default"
+      ],
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "tail_bottom": true
+        },
+        {
+          "tail_top": true
+        },
+        {
+          "slime_center": true
+        },
+        {
+          "slime": true
+        }
+      ]
+    }
+  }
+}

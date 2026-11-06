@@ -1,0 +1,39 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:hostile_wolf",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/entity/wolf/wolf",
+        "angry": "textures/entity/wolf/wolf_angry"
+      },
+      "geometry": {
+        "default": "geometry.wolf"
+      },
+      "render_controllers": [
+        "controller.render.twilightforest.hostile_wolf"
+      ],
+      "animations": {
+        "setup": "animation.wolf.setup",
+        "legs": "animation.wolf.leg_default",
+        "look_at": "animation.common.look_at_target",
+        "tail": "animation.twilightforest.hostile_wolf.tail"
+      },
+      "scripts": {
+        "animate": [
+          "setup",
+          "legs",
+          "look_at",
+          "tail"
+        ]
+      },
+      "spawn_egg": {
+        "base_color": "#d7d3d3",
+        "overlay_color": "#ab1e14"
+      }
+    }
+  }
+}

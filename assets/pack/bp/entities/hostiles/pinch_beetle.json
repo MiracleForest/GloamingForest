@@ -1,0 +1,169 @@
+{
+  "format_version": "1.21.40",
+  "minecraft:entity": {
+    "description": {
+      "identifier": "twilightforest:pinch_beetle",
+      "is_spawnable": true,
+      "is_summonable": true,
+      "is_experimental": false
+    },
+    "component_groups": {
+      "gf:vanilla_move": {
+        "minecraft:behavior.melee_attack": {
+          "priority": 4,
+          "speed_multiplier": 1.0,
+          "track_target": false
+        },
+        "minecraft:behavior.random_stroll": {
+          "priority": 6,
+          "speed_multiplier": 1.0
+        }
+      },
+      "gf:carrying": {
+        "minecraft:collision_box": {
+          "width": 2.2,
+          "height": 1.6
+        }
+      }
+    },
+    "components": {
+      "minecraft:type_family": {
+        "family": [
+          "twilightforest",
+          "pinch_beetle",
+          "arthropod",
+          "monster",
+          "mob"
+        ]
+      },
+      "minecraft:collision_box": {
+        "width": 1.2,
+        "height": 0.5
+      },
+      "minecraft:health": {
+        "value": 40,
+        "max": 40
+      },
+      "minecraft:movement": {
+        "value": 0.23
+      },
+      "minecraft:follow_range": {
+        "value": 16,
+        "max": 16
+      },
+      "minecraft:physics": {},
+      "minecraft:pushable": {
+        "is_pushable": true,
+        "is_pushable_by_piston": true
+      },
+      "minecraft:breathable": {
+        "total_supply": 15,
+        "suffocate_time": 0
+      },
+      "minecraft:nameable": {},
+      "minecraft:despawn": {
+        "despawn_from_distance": {}
+      },
+      "minecraft:conditional_bandwidth_optimization": {},
+      "minecraft:experience_reward": {
+        "on_death": "query.last_hit_by_player ? 5 : 0"
+      },
+      "minecraft:attack": {
+        "damage": 4
+      },
+      "minecraft:navigation.walk": {
+        "can_path_over_water": false,
+        "avoid_water": true,
+        "avoid_damage_blocks": true
+      },
+      "minecraft:movement.basic": {},
+      "minecraft:jump.static": {},
+      "minecraft:can_climb": {},
+      "minecraft:ambient_sound_interval": {
+        "value": 4.0,
+        "range": 4.0,
+        "event_name": "ambient"
+      },
+      "minecraft:behavior.float": {
+        "priority": 0
+      },
+      "minecraft:behavior.look_at_player": {
+        "priority": 7,
+        "look_distance": 8,
+        "probability": 0.02
+      },
+      "minecraft:behavior.random_look_around": {
+        "priority": 8
+      },
+      "minecraft:behavior.hurt_by_target": {
+        "priority": 1
+      },
+      "minecraft:behavior.nearest_attackable_target": {
+        "priority": 2,
+        "entity_types": [
+          {
+            "filters": {
+              "test": "is_family",
+              "subject": "other",
+              "value": "player"
+            },
+            "max_dist": 16,
+            "must_see": true
+          }
+        ]
+      },
+      "minecraft:rideable": {
+        "seat_count": 1,
+        "family_types": [
+          "player"
+        ],
+        "interact_text": "",
+        "pull_in_entities": false,
+        "seats": {
+          "position": [
+            0.0,
+            0.425,
+            0.75
+          ]
+        }
+      }
+    },
+    "events": {
+      "minecraft:entity_spawned": {
+        "add": {
+          "component_groups": [
+            "gf:vanilla_move"
+          ]
+        }
+      },
+      "gf:vanilla_move_on": {
+        "add": {
+          "component_groups": [
+            "gf:vanilla_move"
+          ]
+        }
+      },
+      "gf:vanilla_move_off": {
+        "remove": {
+          "component_groups": [
+            "gf:vanilla_move"
+          ]
+        }
+      },
+      "gf:carrying_on": {
+        "add": {
+          "component_groups": [
+            "gf:carrying"
+          ]
+        }
+      },
+      "gf:carrying_off": {
+        "remove": {
+          "component_groups": [
+            "gf:carrying"
+          ]
+        }
+      }
+    }
+  }
+}

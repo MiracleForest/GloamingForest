@@ -1,0 +1,36 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:wraith",
+      "materials": {
+        "default": "entity_alphablend"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/ghost"
+      },
+      "geometry": {
+        "default": "geometry.twilightforest.wraith"
+      },
+      "render_controllers": [
+        "controller.render.twilightforest.wraith"
+      ],
+      "animations": {
+        "base": "animation.twilightforest.wraith.base",
+        "look_at_target": "animation.humanoid.look_at_target.default",
+        "legs": "animation.twilightforest.wraith.legs"
+      },
+      "scripts": {
+        "animate": [
+          "base",
+          "look_at_target",
+          "legs"
+        ]
+      },
+      "spawn_egg": {
+        "base_color": "#505050",
+        "overlay_color": "#838383"
+      }
+    }
+  }
+}

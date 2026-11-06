@@ -1,0 +1,35 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:slime_beetle",
+      "materials": {
+        "default": "entity_alphatest",
+        "tail": "entity_alphablend"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/slimebeetle"
+      },
+      "geometry": {
+        "default": "geometry.twilightforest.slime_beetle",
+        "tail": "geometry.twilightforest.slime_beetle_tail"
+      },
+      "render_controllers": [
+        "controller.render.twilightforest.slime_beetle",
+        "controller.render.twilightforest.slime_beetle_tail"
+      ],
+      "animations": {
+        "base": "animation.twilightforest.slime_beetle.base"
+      },
+      "scripts": {
+        "animate": [
+          "base"
+        ]
+      },
+      "spawn_egg": {
+        "base_color": "#0c1606",
+        "overlay_color": "#60a74c"
+      }
+    }
+  }
+}
