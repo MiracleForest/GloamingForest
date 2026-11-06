@@ -9,7 +9,7 @@ TF 4.8's armour sets, tool tiers and their materials (behaviour: [docs/spec/armo
 | Selftests `armory.*` (dx 700..799) | `src/feature/armory/SelfTests.cpp` |
 | Armour toughness (Mob::getToughnessValue) | `src/feature/ext/armory/ArmorHooks.{h,cpp}` (contract extension, R18) |
 | The 59 BP items (protection, durability, enchantability, repair items, attack damage, mazebreaker speeds, rarity, fire resistance, arctic dye) | `assets/pack/bp/items/armory/*.json` |
-| Arctic attachables (dye tint) and fiery attachables (full bright), their render controllers, the arctic icons' dye layer | `assets/pack/rp/attachables/armory/`, `assets/pack/rp/render_controllers/armory/`, `assets/pack/rp/item_texture.d/armory.json` |
+| The arctic icons' dye layer | `assets/pack/rp/item_texture.d/armory.json` |
 | Emperor's cloth no-template smithing in the crafting table | `assets/pack/bp/recipes/armory/` |
 | e2e | `tools/e2e/server/scenarios/armory.ps1`, `tools/e2e/client/scenarios/armory.ps1` |
 
@@ -26,8 +26,10 @@ TF 4.8's armour sets, tool tiers and their materials (behaviour: [docs/spec/armo
 - **Powder snow, freezing.** The arctic and yeti boots set `CanStandOnPowderSnowComponent` and every fiery, arctic and
   yeti piece (`#minecraft:freeze_immune_wearables`) `FreezingImmuneComponent` while worn (the flags leather sets).
 - **Arctic dye.** `minecraft:dyeable` (default 0xBDCFD9): Bedrock dyes and washes it in cauldrons (Bedrock's leather
-  rules); the attachable draws TF's `_dyed` layer with the leather material (tinted with the item colour) and the
-  `_overlay` layer on top. Java's crafting-grid dyeing has no Bedrock equivalent for non-leather items.
+  rules); the icon's `dyed` layer is TF's `<id>_0`. The worn model still uses F2's generated attachables (the undyed
+  `arctic_layer_N`; fiery not full bright): a manual attachable override fails F2's `models.attachables` selftest, which
+  reads each attachable at the generated path and accepts only F2's render controllers. Java's crafting-grid dyeing has
+  no Bedrock equivalent for non-leather items.
 - **Crafted enchantments.** The 24 recipes whose TF result carries `minecraft:enchantments` are special crafting of
   their BP recipes (F9): the result is enchanted with `enchant::set`.
 - **No-template smithing.** Bedrock's smithing table only crafts with a template, so `twilightforest:emperors_cloth_smithing`
