@@ -1,0 +1,387 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.twilightforest.ur_ghast.setup": {
+      "loop": true,
+      "bones": {
+        "body": {
+          "rotation": [
+            "q.target_x_rotation",
+            "q.target_y_rotation",
+            0
+          ]
+        },
+        "tentacle_0": {
+          "rotation": [
+            "(0.2 + math.cos((((q.life_time * 20.0) + 0.0) / 2.0) * 0.3335 * 57.29578) * 0.15) * 57.29578",
+            "0.4 * math.sin((((q.life_time * 20.0) + 0.0) / 2.0) * 0.3 * 57.29578) * 57.29578",
+            0
+          ]
+        },
+        "tentacle_0_extension": {
+          "rotation": [
+            "(0.1 + math.cos((((q.life_time * 20.0) + 0.0) / 2.0) * 0.4445 * 57.29578) * 0.20) * 57.29578",
+            0,
+            0
+          ]
+        },
+        "tentacle_0_extension_2": {
+          "rotation": [
+            "(0.1 + math.cos((((q.life_time * 20.0) + 0.0) / 2.0) * 0.5555 * 57.29578) * 0.25) * 57.29578",
+            0,
+            0
+          ]
+        },
+        "tentacle_0_tip": {
+          "rotation": [
+            "(0.1 + math.cos((((q.life_time * 20.0) + 0.0) / 2.0) * 0.6665 * 57.29578) * 0.30) * 57.29578",
+            0,
+            0
+          ]
+        },
+        "tentacle_1": {
+          "rotation": [
+            "(0.2 + math.cos((((q.life_time * 20.0) + 9.0) / 2.0) * 0.3335 * 57.29578) * 0.15) * 57.29578",
+            "0.4 * math.sin((((q.life_time * 20.0) + 9.0) / 2.0) * 0.3 * 57.29578) * 57.29578",
+            0
+          ]
+        },
+        "tentacle_1_extension": {
+          "rotation": [
+            "(0.1 + math.cos((((q.life_time * 20.0) + 9.0) / 2.0) * 0.4445 * 57.29578) * 0.20) * 57.29578",
+            0,
+            0
+          ]
+        },
+        "tentacle_1_extension_2": {
+          "rotation": [
+            "(0.1 + math.cos((((q.life_time * 20.0) + 9.0) / 2.0) * 0.5555 * 57.29578) * 0.25) * 57.29578",
+            0,
+            0
+          ]
+        },
+        "tentacle_1_tip": {
+          "rotation": [
+            "(0.1 + math.cos((((q.life_time * 20.0) + 9.0) / 2.0) * 0.6665 * 57.29578) * 0.30) * 57.29578",
+            0,
+            0
+          ]
+        },
+        "tentacle_2": {
+          "rotation": [
+            "(0.2 + math.cos((((q.life_time * 20.0) + 18.0) / 2.0) * 0.3335 * 57.29578) * 0.15) * 57.29578",
+            "0.4 * math.sin((((q.life_time * 20.0) + 18.0) / 2.0) * 0.3 * 57.29578) * 57.29578",
+            0
+          ]
+        },
+        "tentacle_2_extension": {
+          "rotation": [
+            "(0.1 + math.cos((((q.life_time * 20.0) + 18.0) / 2.0) * 0.4445 * 57.29578) * 0.20) * 57.29578",
+            0,
+            0
+          ]
+        },
+        "tentacle_2_extension_2": {
+          "rotation": [
+            "(0.1 + math.cos((((q.life_time * 20.0) + 18.0) / 2.0) * 0.5555 * 57.29578) * 0.25) * 57.29578",
+            0,
+            0
+          ]
+        },
+        "tentacle_2_tip": {
+          "rotation": [
+            "(0.1 + math.cos((((q.life_time * 20.0) + 18.0) / 2.0) * 0.6665 * 57.29578) * 0.30) * 57.29578",
+            0,
+            0
+          ]
+        },
+        "tentacle_3": {
+          "rotation": [
+            "(0.2 + math.cos((((q.life_time * 20.0) + 27.0) / 2.0) * 0.3335 * 57.29578) * 0.15) * 57.29578",
+            "0.4 * math.sin((((q.life_time * 20.0) + 27.0) / 2.0) * 0.3 * 57.29578) * 57.29578",
+            0
+          ]
+        },
+        "tentacle_3_extension": {
+          "rotation": [
+            "(0.1 + math.cos((((q.life_time * 20.0) + 27.0) / 2.0) * 0.4445 * 57.29578) * 0.20) * 57.29578",
+            0,
+            0
+          ]
+        },
+        "tentacle_3_extension_2": {
+          "rotation": [
+            "(0.1 + math.cos((((q.life_time * 20.0) + 27.0) / 2.0) * 0.5555 * 57.29578) * 0.25) * 57.29578",
+            0,
+            0
+          ]
+        },
+        "tentacle_3_tip": {
+          "rotation": [
+            "(0.1 + math.cos((((q.life_time * 20.0) + 27.0) / 2.0) * 0.6665 * 57.29578) * 0.30) * 57.29578",
+            0,
+            0
+          ]
+        },
+        "tentacle_4": {
+          "rotation": [
+            "(0.2 + math.cos((((q.life_time * 20.0) + 36.0) / 2.0) * 0.3335 * 57.29578) * 0.15) * 57.29578",
+            "0.4 * math.sin((((q.life_time * 20.0) + 36.0) / 2.0) * 0.3 * 57.29578) * 57.29578",
+            0
+          ]
+        },
+        "tentacle_4_extension": {
+          "rotation": [
+            "(0.1 + math.cos((((q.life_time * 20.0) + 36.0) / 2.0) * 0.4445 * 57.29578) * 0.20) * 57.29578",
+            0,
+            0
+          ]
+        },
+        "tentacle_4_extension_2": {
+          "rotation": [
+            "(0.1 + math.cos((((q.life_time * 20.0) + 36.0) / 2.0) * 0.5555 * 57.29578) * 0.25) * 57.29578",
+            0,
+            0
+          ]
+        },
+        "tentacle_4_tip": {
+          "rotation": [
+            "(0.1 + math.cos((((q.life_time * 20.0) + 36.0) / 2.0) * 0.6665 * 57.29578) * 0.30) * 57.29578",
+            0,
+            0
+          ]
+        },
+        "tentacle_5": {
+          "rotation": [
+            "(0.2 + math.cos((((q.life_time * 20.0) + 45.0) / 2.0) * 0.3335 * 57.29578) * 0.15) * 57.29578",
+            "0.4 * math.sin((((q.life_time * 20.0) + 45.0) / 2.0) * 0.3 * 57.29578) * 57.29578",
+            0
+          ]
+        },
+        "tentacle_5_extension": {
+          "rotation": [
+            "(0.1 + math.cos((((q.life_time * 20.0) + 45.0) / 2.0) * 0.4445 * 57.29578) * 0.20) * 57.29578",
+            0,
+            0
+          ]
+        },
+        "tentacle_5_extension_2": {
+          "rotation": [
+            "(0.1 + math.cos((((q.life_time * 20.0) + 45.0) / 2.0) * 0.5555 * 57.29578) * 0.25) * 57.29578",
+            0,
+            0
+          ]
+        },
+        "tentacle_5_tip": {
+          "rotation": [
+            "(0.1 + math.cos((((q.life_time * 20.0) + 45.0) / 2.0) * 0.6665 * 57.29578) * 0.30) * 57.29578",
+            0,
+            0
+          ]
+        },
+        "tentacle_6": {
+          "rotation": [
+            "(0.2 + math.cos((((q.life_time * 20.0) + 54.0) / 2.0) * 0.3335 * 57.29578) * 0.15) * 57.29578",
+            "0.4 * math.sin((((q.life_time * 20.0) + 54.0) / 2.0) * 0.3 * 57.29578) * 57.29578",
+            0
+          ]
+        },
+        "tentacle_6_extension": {
+          "rotation": [
+            "(0.1 + math.cos((((q.life_time * 20.0) + 54.0) / 2.0) * 0.4445 * 57.29578) * 0.20) * 57.29578",
+            0,
+            0
+          ]
+        },
+        "tentacle_6_extension_2": {
+          "rotation": [
+            "(0.1 + math.cos((((q.life_time * 20.0) + 54.0) / 2.0) * 0.5555 * 57.29578) * 0.25) * 57.29578",
+            0,
+            0
+          ]
+        },
+        "tentacle_6_tip": {
+          "rotation": [
+            "(0.1 + math.cos((((q.life_time * 20.0) + 54.0) / 2.0) * 0.6665 * 57.29578) * 0.30) * 57.29578",
+            0,
+            0
+          ]
+        },
+        "tentacle_7": {
+          "rotation": [
+            "(0.2 + math.cos((((q.life_time * 20.0) + 63.0) / 2.0) * 0.3335 * 57.29578) * 0.15) * 57.29578",
+            "0.4 * math.sin((((q.life_time * 20.0) + 63.0) / 2.0) * 0.3 * 57.29578) * 57.29578",
+            0
+          ]
+        },
+        "tentacle_7_extension": {
+          "rotation": [
+            "(0.1 + math.cos((((q.life_time * 20.0) + 63.0) / 2.0) * 0.4445 * 57.29578) * 0.20) * 57.29578",
+            0,
+            0
+          ]
+        },
+        "tentacle_7_extension_2": {
+          "rotation": [
+            "(0.1 + math.cos((((q.life_time * 20.0) + 63.0) / 2.0) * 0.5555 * 57.29578) * 0.25) * 57.29578",
+            0,
+            0
+          ]
+        },
+        "tentacle_7_tip": {
+          "rotation": [
+            "(0.1 + math.cos((((q.life_time * 20.0) + 63.0) / 2.0) * 0.6665 * 57.29578) * 0.30) * 57.29578",
+            0,
+            0
+          ]
+        },
+        "tentacle_8": {
+          "rotation": [
+            "(0.2 + math.cos((((q.life_time * 20.0) + 72.0) / 2.0) * 0.3335 * 57.29578) * 0.15) * 57.29578",
+            "0.4 * math.sin((((q.life_time * 20.0) + 72.0) / 2.0) * 0.3 * 57.29578) * 57.29578",
+            0
+          ]
+        },
+        "tentacle_8_extension": {
+          "rotation": [
+            "(0.1 + math.cos((((q.life_time * 20.0) + 72.0) / 2.0) * 0.4445 * 57.29578) * 0.20) * 57.29578",
+            0,
+            0
+          ]
+        },
+        "tentacle_8_extension_2": {
+          "rotation": [
+            "(0.1 + math.cos((((q.life_time * 20.0) + 72.0) / 2.0) * 0.5555 * 57.29578) * 0.25) * 57.29578",
+            0,
+            0
+          ]
+        },
+        "tentacle_8_tip": {
+          "rotation": [
+            "(0.1 + math.cos((((q.life_time * 20.0) + 72.0) / 2.0) * 0.6665 * 57.29578) * 0.30) * 57.29578",
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "animation.twilightforest.carminite_ghast.setup": {
+      "loop": true,
+      "bones": {
+        "body": {
+          "rotation": [
+            "q.target_x_rotation",
+            "q.target_y_rotation",
+            0
+          ]
+        },
+        "tentacle_0": {
+          "rotation": [
+            "(0.2 * math.sin((q.life_time * 20.0) * 0.3 * 57.29578 + 0.0 * 57.29578) + 0.4) * 57.29578",
+            0,
+            0
+          ]
+        },
+        "tentacle_1": {
+          "rotation": [
+            "(0.2 * math.sin((q.life_time * 20.0) * 0.3 * 57.29578 + 1.0 * 57.29578) + 0.4) * 57.29578",
+            0,
+            0
+          ]
+        },
+        "tentacle_2": {
+          "rotation": [
+            "(0.2 * math.sin((q.life_time * 20.0) * 0.3 * 57.29578 + 2.0 * 57.29578) + 0.4) * 57.29578",
+            0,
+            0
+          ]
+        },
+        "tentacle_3": {
+          "rotation": [
+            "(0.2 * math.sin((q.life_time * 20.0) * 0.3 * 57.29578 + 3.0 * 57.29578) + 0.4) * 57.29578",
+            0,
+            0
+          ]
+        },
+        "tentacle_4": {
+          "rotation": [
+            "(0.2 * math.sin((q.life_time * 20.0) * 0.3 * 57.29578 + 4.0 * 57.29578) + 0.4) * 57.29578",
+            0,
+            0
+          ]
+        },
+        "tentacle_5": {
+          "rotation": [
+            "(0.2 * math.sin((q.life_time * 20.0) * 0.3 * 57.29578 + 5.0 * 57.29578) + 0.4) * 57.29578",
+            0,
+            0
+          ]
+        },
+        "tentacle_6": {
+          "rotation": [
+            "(0.2 * math.sin((q.life_time * 20.0) * 0.3 * 57.29578 + 6.0 * 57.29578) + 0.4) * 57.29578",
+            0,
+            0
+          ]
+        },
+        "tentacle_7": {
+          "rotation": [
+            "(0.2 * math.sin((q.life_time * 20.0) * 0.3 * 57.29578 + 7.0 * 57.29578) + 0.4) * 57.29578",
+            0,
+            0
+          ]
+        },
+        "tentacle_8": {
+          "rotation": [
+            "(0.2 * math.sin((q.life_time * 20.0) * 0.3 * 57.29578 + 8.0 * 57.29578) + 0.4) * 57.29578",
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "animation.twilightforest.carminite_golem.attack": {
+      "loop": true,
+      "bones": {
+        "right_arm": {
+          "rotation": [
+            "q.property('twilightforest:attack_timer') > 0 ? (-2.0 + 1.5 * (math.abs(math.mod(q.property('twilightforest:attack_timer') - q.frame_alpha, 10.0) - 5.0) - 2.5) / 2.5) * 57.29578 : 0.0",
+            0,
+            0
+          ]
+        },
+        "left_arm": {
+          "rotation": [
+            "q.property('twilightforest:attack_timer') > 0 ? (-2.0 + 1.5 * (math.abs(math.mod(q.property('twilightforest:attack_timer') - q.frame_alpha, 10.0) - 5.0) - 2.5) / 2.5) * 57.29578 : 0.0",
+            0,
+            0
+          ]
+        }
+      }
+    },
+    "animation.twilightforest.carminite_golem.sway": {
+      "loop": true,
+      "bones": {
+        "body": {
+          "rotation": [
+            0,
+            0,
+            "6.5 * (math.abs(math.mod(q.modified_distance_moved * 13.0 / 13.0, 13.0) - 6.5) - 3.25) / 3.25 * math.min(q.modified_move_speed * 4.0, 1.0)"
+          ]
+        }
+      }
+    },
+    "animation.twilightforest.slider.spin": {
+      "loop": true,
+      "bones": {
+        "block": {
+          "rotation": [
+            "q.property('twilightforest:axis') == 1 ? q.life_time * 1200.0 : (q.property('twilightforest:axis') == 2 ? 90.0 : 0.0)",
+            "q.property('twilightforest:axis') == 0 ? q.life_time * 1200.0 : 0.0",
+            "q.property('twilightforest:axis') == 1 ? 90.0 : (q.property('twilightforest:axis') == 2 ? q.life_time * 1200.0 : 0.0)"
+          ]
+        }
+      }
+    }
+  }
+}

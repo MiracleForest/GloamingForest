@@ -1,0 +1,49 @@
+#pragma once
+
+// U26 (darktower): the Ur-Ghast (UrGhast extends BaseTFBoss) and the carminite ghasts, as far as
+// the unit's other parts (ghast trap, reactor, selftests) need them.
+
+#include <vector>
+
+#include "mc/world/level/BlockPos.h"
+
+class Actor;
+class Mob;
+class Vec3;
+
+namespace gf::feature::darktower::ghasts {
+
+/// Java's `instanceof Ghast || instanceof UrGhast` (the ghast trap's pull).
+[[nodiscard]] bool isTrappable(Actor const& actor);
+[[nodiscard]] bool isUrGhast(Actor const& actor);
+
+/// The ghast trap's effect on an Ur-Ghast: setInTantrum(false), setInTrap() (20 ticks), noPhysics.
+void trapUrGhast(Mob& ghast);
+/// Whether the Ur-Ghast collides with blocks (Java's !noPhysics): false until its first flight point
+/// and while a trap pulls it.
+[[nodiscard]] bool solid(Actor& ghast);
+/// Sets Java's noPhysics of the Ur-Ghast (selftests; the flight goal and the trap set it in play).
+void setSolid(Mob& ghast, bool solid);
+/// UrGhast#resetDamageUntilNextPhase.
+void resetPhaseDamage(Mob& ghast);
+
+[[nodiscard]] bool  inTantrum(Actor& ghast);
+void                setTantrum(Mob& ghast, bool tantrum);
+[[nodiscard]] float damageUntilNextPhase(Actor& ghast);
+[[nodiscard]] int   trappedTicks(Actor& ghast);
+[[nodiscard]] std::vector<BlockPos> trapLocations(Actor& ghast);
+/// UrGhast#spawnGhastsAtTraps.
+void spawnGhastsAtTraps(Mob& ghast);
+
+/// CarminiteGhastling#makeBossMinion (wander 0.005, max health 6).
+void makeBossMinion(Mob& ghastling);
+
+/// An Ur-Ghast fireball from owner at t along dir (selftests; UrGhastAttackGoal#spitFireball's shot).
+Actor* shootUrGhastFireball(Mob& owner, Vec3 const& at, Vec3 const& dir);
+/// A carminite ghastguard's vanilla LargeFireball (GhastguardAttackGoal), tracked for its reflected hit.
+Actor* shootLargeFireball(Mob& owner, Vec3 const& at, Vec3 const& dir);
+
+/// Registers the ghasts' behaviours (module install).
+void install();
+
+} // namespace gf::feature::darktower::ghasts

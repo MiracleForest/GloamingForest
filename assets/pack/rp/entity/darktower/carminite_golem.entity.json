@@ -1,0 +1,36 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:carminite_golem",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/carminitegolem"
+      },
+      "geometry": {
+        "default": "geometry.twilightforest.carminite_golem"
+      },
+      "render_controllers": [
+        "controller.render.default"
+      ],
+      "animations": {
+        "base": "animation.twilightforest.carminite_golem.base",
+        "attack": "animation.twilightforest.carminite_golem.attack",
+        "sway": "animation.twilightforest.carminite_golem.sway"
+      },
+      "scripts": {
+        "animate": [
+          "base",
+          "attack",
+          "sway"
+        ]
+      },
+      "spawn_egg": {
+        "base_color": "#6b3d20",
+        "overlay_color": "#e2ddda"
+      }
+    }
+  }
+}

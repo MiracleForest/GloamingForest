@@ -1,0 +1,37 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:ur_ghast",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/towerboss",
+        "openeyes": "textures/twilightforest/entity/towerboss_openeyes",
+        "fire": "textures/twilightforest/entity/towerboss_fire"
+      },
+      "geometry": {
+        "default": "geometry.twilightforest.ur_ghast"
+      },
+      "render_controllers": [
+        "controller.render.twilightforest.ur_ghast"
+      ],
+      "animations": {
+        "setup": "animation.twilightforest.ur_ghast.setup"
+      },
+      "scripts": {
+        "animate": [
+          "setup"
+        ],
+        "scalex": "((24.0 + 1.0 / (1.0 / (math.pow(math.max(q.property('twilightforest:attack_timer') / 20.0, 0.0), 5) * 2.0 + 1.0))) / 2.0)",
+        "scaley": "((24.0 + (1.0 / (math.pow(math.max(q.property('twilightforest:attack_timer') / 20.0, 0.0), 5) * 2.0 + 1.0))) / 2.0)",
+        "scalez": "((24.0 + 1.0 / (1.0 / (math.pow(math.max(q.property('twilightforest:attack_timer') / 20.0, 0.0), 5) * 2.0 + 1.0))) / 2.0)"
+      },
+      "spawn_egg": {
+        "base_color": "#bcbcbc",
+        "overlay_color": "#b77878"
+      }
+    }
+  }
+}
