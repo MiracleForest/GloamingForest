@@ -1,0 +1,18 @@
+{
+  "format_version": "1.21.110",
+  "minecraft:biome": {
+    "description": {
+      "identifier": "twilightforest:clearing"
+    },
+    "components": {
+      "minecraft:climate": {
+        "temperature": 0.8,
+        "downfall": 0.4,
+        "snow_accumulation": [
+          0.0,
+          0.125
+        ]
+      }
+    }
+  }
+}

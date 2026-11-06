@@ -1,0 +1,18 @@
+{
+  "format_version": "1.21.110",
+  "minecraft:biome": {
+    "description": {
+      "identifier": "twilightforest:underground"
+    },
+    "components": {
+      "minecraft:climate": {
+        "temperature": 0.7,
+        "downfall": 0.0001,
+        "snow_accumulation": [
+          0.0,
+          0.125
+        ]
+      }
+    }
+  }
+}

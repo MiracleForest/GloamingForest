@@ -1,0 +1,32 @@
+{
+  "format_version": "1.21.120",
+  "minecraft:client_biome": {
+    "description": {
+      "identifier": "twilightforest:enchanted_forest"
+    },
+    "components": {
+      "minecraft:sky_color": {
+        "sky_color": "#20224A"
+      },
+      "minecraft:fog_appearance": {
+        "fog_identifier": "gloamingforest:enchanted_forest_fog"
+      },
+      "minecraft:water_appearance": {
+        "surface_color": "#3F76E4"
+      },
+      "minecraft:grass_appearance": {
+        "color": "#00FF80"
+      },
+      "minecraft:foliage_appearance": {
+        "color": "#00FF80"
+      },
+      "minecraft:ambient_sounds": {
+        "underwater_loop": "ambient.underwater.loop",
+        "underwater_addition": {
+          "asset": "ambient.underwater.additions",
+          "chance": 0.01
+        }
+      }
+    }
+  }
+}

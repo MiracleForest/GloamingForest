@@ -1,0 +1,25 @@
+{
+  "format_version": "1.21.110",
+  "minecraft:biome": {
+    "description": {
+      "identifier": "twilightforest:enchanted_forest"
+    },
+    "components": {
+      "minecraft:climate": {
+        "temperature": 0.5,
+        "downfall": 0.0,
+        "snow_accumulation": [
+          0.0,
+          0.125
+        ]
+      },
+      "minecraft:map_tints": {
+        "foliage": "#00FF80",
+        "grass": {
+          "type": "tint",
+          "tint": "#00FF80"
+        }
+      }
+    }
+  }
+}

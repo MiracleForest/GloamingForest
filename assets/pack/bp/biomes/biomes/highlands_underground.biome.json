@@ -1,0 +1,18 @@
+{
+  "format_version": "1.21.110",
+  "minecraft:biome": {
+    "description": {
+      "identifier": "twilightforest:highlands_underground"
+    },
+    "components": {
+      "minecraft:climate": {
+        "temperature": 0.35,
+        "downfall": 0.0001,
+        "snow_accumulation": [
+          0.0,
+          0.125
+        ]
+      }
+    }
+  }
+}

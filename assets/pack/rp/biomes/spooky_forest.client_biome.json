@@ -1,0 +1,35 @@
+{
+  "format_version": "1.21.120",
+  "minecraft:client_biome": {
+    "description": {
+      "identifier": "twilightforest:spooky_forest"
+    },
+    "components": {
+      "minecraft:sky_color": {
+        "sky_color": "#20224A"
+      },
+      "minecraft:fog_appearance": {
+        "fog_identifier": "gloamingforest:spooky_forest_fog"
+      },
+      "minecraft:water_appearance": {
+        "surface_color": "#BC8857"
+      },
+      "minecraft:water_identifier": {
+        "water_identifier": "gloamingforest:spooky_forest_water"
+      },
+      "minecraft:grass_appearance": {
+        "color": "#C45123"
+      },
+      "minecraft:foliage_appearance": {
+        "color": "#FF8501"
+      },
+      "minecraft:ambient_sounds": {
+        "underwater_loop": "ambient.underwater.loop",
+        "underwater_addition": {
+          "asset": "ambient.underwater.additions",
+          "chance": 0.01
+        }
+      }
+    }
+  }
+}
