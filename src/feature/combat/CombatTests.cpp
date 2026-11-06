@@ -49,6 +49,10 @@
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
+#include "mc/deps/core/math/Color.h"
+#include "mc/world/level/block/Block.h"
+#include "mc/world/level/block/BlockType.h"
+#include "mc/world/level/dimension/Dimension.h"
 #include "mc/world/level/block/actor/BlockActor.h"
 #include "mc/world/level/block/actor/ChestBlockActor.h"
 #include "mc/world/level/block/actor/RandomizableBlockActorContainerBase.h"
@@ -212,7 +216,8 @@ GF_REGISTER_SELFTEST("combat.fx_effect_variables", [](Context& ctx) -> ll::coro:
         std::uint32_t vars;
     };
     static constexpr Row rows[] = {
-        {"minecraft:portal", "minecraft:portal_directional", fx::kVarDirection},
+        {"minecraft:portal", "gf:portal", fx::kVarDirection},
+        {"minecraft:dust", "gf:dust", fx::kVarColorRgb | fx::kVarDirection | fx::kVarDustDirection | fx::kVarDustLook},
         {"minecraft:enchant", "minecraft:enchanting_table_particle", fx::kVarDirection},
         {"minecraft:splash", "minecraft:water_splash_particle", fx::kVarDirection | fx::kVarSplashDirection},
         {"minecraft:crit", "minecraft:basic_crit_particle", fx::kVarDirection | fx::kVarCritDirection},
@@ -236,11 +241,14 @@ GF_REGISTER_SELFTEST("combat.fx_effect_variables", [](Context& ctx) -> ll::coro:
         std::size_t want = 0;
         for (auto bit : {fx::kVarVelocity, fx::kVarDirection, fx::kVarNoteColor}) want += (r.vars & bit) ? 1 : 0;
         want += (r.vars & (fx::kVarColorRgb | fx::kVarColorRgba)) ? 1 : 0;
+        want += (r.vars & fx::kVarDustLook) ? 2 : 0; // variable.dust_size and variable.dust_ticks
         ctx.check(map.size() == want, std::string(row.id) + ": " + std::to_string(want) + " variable(s) set (got " + std::to_string(map.size()) + ")");
     }
+    // portal and dust: F10's own effects (assets/pack/rp/particles/fx), shipped in the mod's pack
     auto portal = fx::resolveParticle("minecraft:portal");
-    ctx.check(portal.offset.x == 0.f && portal.offset.y == 1.f && portal.offset.z == 0.f, "the portal particle starts one block higher (Java's PortalParticle y path)");
-    for (auto const* id : {"minecraft:item", "minecraft:block", "minecraft:item_slime", "minecraft:item_snowball", "minecraft:dust"}) {
+    ctx.check(portal.offset.x == 0.f && portal.offset.y == 0.f && portal.offset.z == 0.f, "gf:portal follows Java's PortalParticle path from the position itself (no offset)");
+    for (auto const* effect : {"gf:portal", "gf:dust"}) ctx.check(fx::packHasEffect(effect), std::string(effect) + " is in the mod's resource pack");
+    for (auto const* id : {"minecraft:item", "minecraft:block", "minecraft:item_slime", "minecraft:item_snowball"}) {
         auto r = fx::resolveParticle(id);
         ctx.check(r.legacy != 0 && r.effect.empty() && r.shown(), std::string(id) + " is a legacy particle");
     }
@@ -287,17 +295,45 @@ GF_REGISTER_SELFTEST("combat.fx_effect_variables", [](Context& ctx) -> ll::coro:
         ctx.check(std::abs(moving.x - 0.4f) <= 0.0181f && std::abs(moving.z + 0.2f) <= 0.0181f && moving.y >= -0.0081f && moving.y <= 0.0281f,
                   "crit: a moving crit gets 0.4 * its speed plus the scatter");
     }
-    // dust: redstone red as the legacy RedDust, any other DustParticleOptions colour (TrollsteinnBlock's
-    // purple) as falling_dust tinted with it
+    // dust: every DustParticleOptions colour (REDSTONE's red, TrollsteinnBlock's purple) is gf:dust
+    // with variable.color, DustParticleBase's motion, size and lifetime
     {
-        auto dust   = fx::resolveParticle("minecraft:dust");
-        auto red    = fx::dustFor(dust, JsonT::object());
-        auto red2   = fx::dustFor(dust, JsonT{{"color", {1.0, 0.0, 0.0}}, {"scale", 1.0}});
-        auto purple = fx::dustFor(dust, JsonT{{"color", {0.25, 0.0, 0.5}}, {"scale", 1.0}});
-        ctx.check(red.legacy == static_cast<int>(ParticleType::RedDust) && red.effect.empty() && red2.legacy == red.legacy, "dust: redstone red (default or params) is the legacy RedDust");
-        ctx.check(purple.legacy == 0 && purple.effect == "minecraft:falling_dust" && (purple.vars & fx::kVarColorRgb) && purple.color && purple.color->r == 0.25f &&
-                      purple.color->g == 0.f && purple.color->b == 0.5f,
-                  "dust: purple (0.25, 0, 0.5) is falling_dust with variable.color (0.25, 0, 0.5)");
+        auto dust = fx::resolveParticle("minecraft:dust");
+        ctx.check(dust.effect == "gf:dust" && dust.legacy == 0 && dust.color && dust.color->r == 1.f && dust.color->g == 0.f && dust.color->b == 0.f,
+                  "dust: gf:dust, red (DustParticleOptions.REDSTONE) without params");
+        auto purple = fx::colorOf(JsonT{{"color", {0.25, 0.0, 0.5}}, {"scale", 1.0}}, dust.color);
+        ctx.check(purple.r == 0.25f && purple.g == 0.f && purple.b == 0.5f, "dust: params color (0.25, 0, 0.5) is variable.color");
+        ctx.check(fx::dustScale(JsonT::object()) == 1.f && fx::dustScale(JsonT{{"scale", 2.5}}) == 2.5f && fx::dustScale(JsonT{{"scale", 9.0}}) == 4.f &&
+                      fx::dustScale(JsonT{{"scale", 0.0}}) == 0.01f,
+                  "dust: the scale is params scale clamped to 0.01..4 (1 without)");
+        // DustParticleBase: Particle's motion * 0.1: |x|, |z| <= 0.018, y 0.01 - 0.018 .. 0.01 + 0.018,
+        // 0.01 blocks/tick up on average
+        bool            ok = true;
+        float           sumY = 0.f;
+        std::set<float> xs;
+        for (int i = 0; i < 200; ++i) {
+            auto d = fx::dustDirection(rng, Vec3{});
+            ok     = ok && std::abs(d.x) <= 0.0181f && std::abs(d.z) <= 0.0181f && d.y >= -0.0081f && d.y <= 0.0281f;
+            sumY += d.y;
+            xs.insert(d.x);
+        }
+        ctx.check(ok && sumY / 200.f > 0.007f && sumY / 200.f < 0.013f && xs.size() > 190, "dust: a still dust particle drifts up slowly (Particle's motion * 0.1)");
+        // DustParticleBase's size 0.1..0.2 * 0.75 * scale and lifetime max((int)(8 / (0.2..1)) * scale, 1)
+        bool  looks = true;
+        float minTicks = 1e9f, maxTicks = 0.f;
+        for (int i = 0; i < 200; ++i) {
+            auto one = fx::dustLook(rng, 1.f);
+            auto two = fx::dustLook(rng, 2.f);
+            auto dot = fx::dustLook(rng, 0.01f);
+            looks    = looks && one.size >= 0.075f - 1e-6f && one.size <= 0.15f + 1e-6f && two.size >= 0.15f - 1e-6f && two.size <= 0.3f + 1e-6f;
+            looks    = looks && one.ticks >= 8.f && one.ticks <= 40.f && one.ticks == std::floor(one.ticks) && two.ticks >= 16.f && two.ticks <= 80.f && dot.ticks == 1.f;
+            minTicks = std::min(minTicks, one.ticks);
+            maxTicks = std::max(maxTicks, one.ticks);
+        }
+        ctx.check(looks && minTicks <= 10.f && maxTicks >= 20.f, "dust: size and lifetime follow DustParticleBase (scale 1: 8..40 ticks, 0.01: 1 tick)");
+        fx::MolangMap map;
+        fx::fillEffectVariables(map, dust.vars, Vec3{}, Vec3{0.f, 0.01f, 0.f}, *dust.color, fx::dustLook(rng, 2.f));
+        ctx.check(map.size() == 4, "dust: variable.direction, variable.color, variable.dust_size and variable.dust_ticks (got " + std::to_string(map.size()) + ")");
     }
     for (auto const& id : fx::vanillaParticleIds()) ctx.check(fx::resolveParticle(id).shown(), id + " is shown");
     // NoteParticle's colour and the params colour
@@ -340,6 +376,26 @@ GF_REGISTER_SELFTEST("combat.fx_effect_variables", [](Context& ctx) -> ll::coro:
         ctx.check(fx::fallingDustColor("minecraft:pumpkin_stem", stem(7, 0)) == (224 << 16 | 199 << 8 | 28) && fx::fallingDustColor("minecraft:melon_stem", stem(0, 0)) == 0x00FF00 &&
                       fx::fallingDustColor("minecraft:melon_stem", stem(7, 3)) == 14731036,
                   "stems: StemBlock's age colour, the attached stem's colour");
+        // the cauldron: Java's water cauldron (white without a level), the empty / lava / powder snow
+        // cauldrons have no BlockColor (the map colour)
+        auto cauldron = [&](char const* liquid, int fill) {
+            return fx::fallingDustColor(
+                "minecraft:cauldron", [fill](std::string_view s) -> std::optional<int> { return s == "fill_level" ? std::optional<int>(fill) : std::nullopt; },
+                [liquid](std::string_view s) -> std::optional<std::string> { return s == "cauldron_liquid" ? std::optional<std::string>(liquid) : std::nullopt; });
+        };
+        ctx.check(cauldron("water", 6) == -1 && cauldron("water", 1) == -1, "the water cauldron's BlockColor without a level: white");
+        ctx.check(!cauldron("water", 0) && !cauldron("lava", 6) && !cauldron("powder_snow", 3), "the empty, lava and powder snow cauldrons: the map colour");
+        ctx.check(colour("minecraft:anvil") == 0 && colour("minecraft:damaged_anvil") == 0 && colour("minecraft:dragon_egg") == 0,
+                  "anvils and the dragon egg: FallingBlock#getDustColor (black)");
+        // the same through the game's block states
+        auto const* water = gf::game::blockWithStates("minecraft:cauldron", JsonT{{"cauldron_liquid", "water"}, {"fill_level", 6}});
+        auto const* lava  = gf::game::blockWithStates("minecraft:cauldron", JsonT{{"cauldron_liquid", "lava"}, {"fill_level", 6}});
+        ctx.require(water && lava, "the water and lava cauldron states exist");
+        auto w = fx::blockDustColor(*water, nullptr, Vec3{});
+        ctx.check(w.r == 1.f && w.g == 1.f && w.b == 1.f, "a water cauldron block state: falling dust in white");
+        auto              l = fx::blockDustColor(*lava, nullptr, Vec3{});
+        mce::Color const& m = lava->getBlockType().mMapColor;
+        ctx.check(l.r == m.r && l.g == m.g && l.b == m.b && !(l.r == 1.f && l.g == 1.f && l.b == 1.f), "a lava cauldron block state: its map colour");
     }
 
     // the packets: every mapped type reaches the player, with variables or as a legacy particle
@@ -365,10 +421,58 @@ GF_REGISTER_SELFTEST("combat.fx_effect_variables", [](Context& ctx) -> ll::coro:
     auto c3 = fx::counters();
     ctx.check(c3.particlePackets == c2.particlePackets, "an item / block particle without a known item / block is silent");
     fx::particle(dim, "minecraft:dust", at, Vec3{}, 1, JsonT{{"color", {0.25, 0.0, 0.5}}, {"scale", 1.0}});
-    auto c4 = fx::counters();
-    ctx.check(c4.variablePackets >= c3.variablePackets + 1 && c4.legacyPackets == c3.legacyPackets, "purple dust goes as falling_dust with its colour");
     fx::particle(dim, "minecraft:dust", at, Vec3{}, 1, JsonT{{"color", {1.0, 0.0, 0.0}}, {"scale", 1.0}});
-    ctx.check(fx::counters().legacyPackets >= c4.legacyPackets + 1, "red dust goes as the legacy RedDust");
+    auto c4 = fx::counters();
+    ctx.check(c4.variablePackets >= c3.variablePackets + 2 && c4.legacyPackets == c3.legacyPackets, "purple and red dust go as gf:dust with their variables");
+    // falling dust of a water cauldron (white) and of a log state (its map colour at the position)
+    fx::particle(dim, "minecraft:falling_dust", at, Vec3{}, 1, JsonT{{"block", "minecraft:cauldron"}, {"states", {{"cauldron_liquid", "water"}, {"fill_level", 6}}}});
+    fx::particle(dim, "minecraft:falling_dust", at, Vec3{}, 1, JsonT{{"block", "minecraft:oak_log"}, {"states", {{"pillar_axis", "x"}}}});
+    ctx.check(fx::counters().variablePackets >= c4.variablePackets + 2, "falling dust of block states carries variable.color");
+    // colours within 1/255 of Java's 0xRRGGBB
+    auto rgb     = [](int c) { return fx::Rgba{((c >> 16) & 0xFF) / 255.f, ((c >> 8) & 0xFF) / 255.f, (c & 0xFF) / 255.f, 1.f}; };
+    auto sameRgb = [](fx::Rgba const& a, fx::Rgba const& b) {
+        return std::abs(a.r - b.r) <= 1.f / 255.f && std::abs(a.g - b.g) <= 1.f / 255.f && std::abs(a.b - b.b) <= 1.f / 255.f;
+    };
+    if (auto const* logX = gf::game::blockWithStates("minecraft:oak_log", JsonT{{"pillar_axis", "x"}}), *logY = gf::game::blockWithStates("minecraft:oak_log", JsonT{{"pillar_axis", "y"}});
+        logX && logY) {
+        auto& region = dim.getBlockSourceFromMainChunkSource();
+        auto  x      = fx::blockDustColor(*logX, &region, at);
+        auto  y      = fx::blockDustColor(*logY, &region, at);
+        auto  show   = [](fx::Rgba const& c) { return "(" + std::to_string(c.r) + ", " + std::to_string(c.g) + ", " + std::to_string(c.b) + ")"; };
+        // Java's oak log: MapColor WOOD (0x8F7748) on its ends (axis y), PODZOL (0x815631) on its sides
+        ctx.check(!sameRgb(x, y), "the map colour fallback is the block state's (oak log x " + show(x) + " differs from y " + show(y) + ")");
+        ctx.check(sameRgb(x, rgb(0x815631)), "oak log axis x: PODZOL 0x815631 " + show(x));
+        ctx.check(sameRgb(y, rgb(0x8F7748)), "oak log axis y: WOOD 0x8F7748 " + show(y));
+    } else {
+        ctx.fail("the oak log axis states exist");
+    }
+
+    // Java's ids Bedrock folds into one block (paramBlockOf): the cauldrons and the beds
+    {
+        auto& region = dim.getBlockSourceFromMainChunkSource();
+        auto  dust   = [&](JsonT const& params) { return fx::paramDustColor(fx::paramBlockOf(params), &region, at); };
+        auto  water  = dust(JsonT{{"block", "minecraft:water_cauldron"}, {"states", {{"level", "2"}}}});
+        auto  lava   = dust(JsonT{{"block", "minecraft:lava_cauldron"}});
+        auto  snow   = dust(JsonT{{"block", "minecraft:powder_snow_cauldron"}, {"states", {{"level", 3}}}});
+        ctx.check(water && sameRgb(*water, rgb(0xFFFFFF)), "minecraft:water_cauldron: white (its BlockColor without a level)");
+        ctx.check(lava && sameRgb(*lava, rgb(0x707070)), "minecraft:lava_cauldron: the cauldron's map colour, STONE 0x707070");
+        ctx.check(snow && sameRgb(*snow, rgb(0x707070)), "minecraft:powder_snow_cauldron: STONE 0x707070");
+        auto const* waterBlock = fx::paramBlockOf(JsonT{{"block", "minecraft:water_cauldron"}, {"states", {{"level", 2}}}}).block;
+        ctx.check(waterBlock && gf::game::statesOf(*waterBlock)["cauldron_liquid"] == "water" && gf::game::intState(*waterBlock, "fill_level") == 4,
+                  "water_cauldron level 2 is minecraft:cauldron with water at fill_level 4");
+        auto foot = dust(JsonT{{"block", "minecraft:red_bed"}});
+        auto head = dust(JsonT{{"block", "minecraft:red_bed"}, {"states", {{"part", "head"}}}});
+        auto blue = dust(JsonT{{"block", "minecraft:blue_bed"}, {"states", {{"part", "foot"}}}});
+        ctx.check(foot && sameRgb(*foot, rgb(0x993333)), "red bed foot: COLOR_RED 0x993333");
+        ctx.check(head && sameRgb(*head, rgb(0xC7C7C7)), "red bed head: WOOL 0xC7C7C7");
+        ctx.check(blue && sameRgb(*blue, rgb(0x334CB2)), "blue bed foot: COLOR_BLUE 0x334CB2");
+        auto const* bed = fx::paramBlockOf(JsonT{{"block", "minecraft:red_bed"}, {"states", {{"part", "head"}}}}).block;
+        ctx.check(bed && gf::game::blockId(*bed) == "minecraft:bed" && gf::game::intState(*bed, "head_piece_bit").value_or(0) == 1, "a Java bed is minecraft:bed with its part");
+        auto bedrockHead = dust(JsonT{{"block", "minecraft:bed"}, {"states", {{"part", "head"}}}});
+        ctx.check(bedrockHead && sameRgb(*bedrockHead, rgb(0xC7C7C7)), "minecraft:bed with Java's part head: WOOL");
+        ctx.check(fx::paramBlockOf(JsonT{{"block", "minecraft:red_bed"}, {"states", {{"part", 1}}}}).block != nullptr, "a malformed bed part is the foot, not an error");
+        ctx.check(!dust(JsonT{{"block", "minecraft:no_such_block"}}), "an unknown block has no colour");
+    }
 });
 
 // ---- combat --------------------------------------------------------------------------------------

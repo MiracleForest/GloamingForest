@@ -10,7 +10,8 @@
 // getDustColor, else BlockColors#getColor(state, level, pos), which calls the block's BlockColor
 // with a null level and position and tint index 0 (vanilla's BlockColors.createDefault and TF's
 // ColorHandler#registerBlockColors), and falls back to the map colour for a block without one.
-// -1 (a BlockColor that needs a level, or tint index 1) draws the particle white.
+// -1 (a BlockColor that needs a level, or tint index 1) draws the particle white. The map colour
+// (the caller's fallback, Fx.cpp) is the block state's, read at the particle's position.
 
 #include <algorithm>
 #include <array>
@@ -170,11 +171,25 @@ std::unordered_map<std::string, Entry> const& table() {
 
 } // namespace
 
-std::optional<int> fallingDustColor(std::string const& blockId, std::function<std::optional<int>(std::string_view)> const& intState) {
+std::optional<int> fallingDustColor(std::string const& blockId, std::function<std::optional<int>(std::string_view)> const& intState,
+                                    std::function<std::optional<std::string>(std::string_view)> const& stringState) {
     // FallingBlock#getDustColor overrides (ColoredFallingBlock): sand, red sand, gravel
     if (blockId == "minecraft:sand") return 14406560;
     if (blockId == "minecraft:red_sand") return 11098145;
     if (blockId == "minecraft:gravel") return -8356741 & 0xFFFFFF;
+    // FallingBlock#getDustColor itself (-16777216, opaque black): the anvils and the dragon egg
+    // (ConcretePowderBlock returns its map colour: the fallback)
+    if (blockId == "minecraft:anvil" || blockId == "minecraft:chipped_anvil" || blockId == "minecraft:damaged_anvil" || blockId == "minecraft:dragon_egg") return 0x000000;
+    // Bedrock's cauldron is Java's cauldron and its water, lava and powder snow cauldrons in one:
+    // Java's WATER_CAULDRON (cauldron_liquid "water", fill_level 1..6) has the BlockColor
+    // `level != null && pos != null ? BiomeColors.getAverageWaterColor : -1`, white without a level;
+    // the others have none (the map colour)
+    if (blockId == "minecraft:cauldron") {
+        auto liquid = stringState ? stringState("cauldron_liquid") : std::nullopt;
+        int  fill   = intState ? intState("fill_level").value_or(0) : 0;
+        if (liquid.value_or("water") == "water" && fill > 0) return -1;
+        return std::nullopt;
+    }
     auto const& t  = table();
     auto        it = t.find(blockId);
     if (it == t.end()) return std::nullopt; // no BlockColor: the map colour

@@ -24,7 +24,8 @@
 //                               vanilla clients: the game's particle packets)
 //   combat.ui_fx_portal         TF's portal particles (TFPortalBlock#animateTick: minecraft:portal) of a
 //                               3-block row in front of the player for 5 s: they rise from the row and
-//                               fall back onto it as Java's PortalParticle
+//                               fall back onto it as Java's PortalParticle (F10's gf:portal: Java's
+//                               blue-violet)
 //   combat.ui_fx_vanilla        every Java particle type gf::fx maps, in front of the player for 2 s
 //                               (the content log must stay free of particle errors)
 //   combat.ui_fx_legacy         red and purple dust, a block item's item particles, still crits and rising
@@ -540,8 +541,8 @@ GF_REGISTER_SELFTEST("combat.ui_fx_legacy", [](Context& ctx) -> ll::coro::CoroTa
     }
     beginUiTest(*p);
     // 3 blocks ahead, left to right: the Ur-Ghast trophy's red dust (DustParticleOptions.REDSTONE),
-    // TrollsteinnBlock's purple dust (DustParticleOptions (0.25, 0,
-    // 0.5)), the item particles of a block item (twilightforest:twilight_oak_log: a negative item
+    // TrollsteinnBlock's purple dust (DustParticleOptions (0.25, 0, 0.5)), both F10's gf:dust
+    // (Java's DustParticle), the item particles of a block item (twilightforest:twilight_oak_log: a negative item
     // id in the legacy IconCrack data), still crits (Naga's) and poofs rising at 0.1 blocks/tick
     emitEachTick(p->getOrCreateUniqueID().rawID, 60, [](Player& pl) {
         auto view = pl.getViewVector(0.f);
