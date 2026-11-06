@@ -1,0 +1,53 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:giant_pickaxe",
+      "menu_category": {
+        "category": "equipment"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_vanilla_item_stone_pickaxe"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "item.twilightforest:giant_pickaxe.name"
+      },
+      "minecraft:max_stack_size": 1,
+      "minecraft:hand_equipped": true,
+      "minecraft:durability": {
+        "max_durability": 1024
+      },
+      "minecraft:damage": 9,
+      "minecraft:enchantable": {
+        "slot": "pickaxe",
+        "value": 5
+      },
+      "minecraft:repairable": {
+        "repair_items": [
+          {
+            "items": ["twilightforest:giant_cobblestone"],
+            "repair_amount": "context.other->q.remaining_durability + 0.12 * context.other->q.max_durability"
+          }
+        ]
+      },
+      "minecraft:digger": {
+        "use_efficiency": true,
+        "destroy_speeds": [
+          {
+            "block": {
+              "tags": "q.any_tag('minecraft:is_pickaxe_item_destructible') && !q.any_tag('minecraft:iron_tier_destructible', 'minecraft:diamond_tier_destructible', 'minecraft:netherite_tier_destructible')"
+            },
+            "speed": 4
+          }
+        ]
+      },
+      "minecraft:tags": {
+        "tags": ["minecraft:is_pickaxe", "minecraft:is_tool", "minecraft:stone_tier"]
+      }
+    }
+  }
+}
