@@ -15,6 +15,9 @@
             }
           }
         }
+      },
+      {
+        "type": "gf_trees:update_leaves"
       }
     ],
     "dirt_provider": {

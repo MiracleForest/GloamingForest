@@ -12,6 +12,9 @@
       {
         "type": "minecraft:leave_vine",
         "probability": 0.25
+      },
+      {
+        "type": "gf_trees:update_leaves"
       }
     ],
     "dirt_provider": {

@@ -13,7 +13,37 @@
     },
     "components": {
       "minecraft:destructible_by_mining": {
-        "seconds_to_destroy": 2
+        "seconds_to_destroy": 2,
+        "item_specific_speeds": [
+          {
+            "item": "minecraft:shears",
+            "destroy_speed": 0.666667
+          },
+          {
+            "item": "minecraft:wooden_sword",
+            "destroy_speed": 1.333333
+          },
+          {
+            "item": "minecraft:stone_sword",
+            "destroy_speed": 1.333333
+          },
+          {
+            "item": "minecraft:iron_sword",
+            "destroy_speed": 1.333333
+          },
+          {
+            "item": "minecraft:golden_sword",
+            "destroy_speed": 1.333333
+          },
+          {
+            "item": "minecraft:diamond_sword",
+            "destroy_speed": 1.333333
+          },
+          {
+            "item": "minecraft:netherite_sword",
+            "destroy_speed": 1.333333
+          }
+        ]
       },
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 50
@@ -58,6 +88,15 @@
         "west": {
           "texture": "tf_block_darkwood_leaves",
           "render_method": "alpha_test"
+        }
+      },
+      "minecraft:item_visual": {
+        "geometry": "minecraft:geometry.full_block",
+        "material_instances": {
+          "*": {
+            "texture": "tf_trees_dark_leaves_item",
+            "render_method": "alpha_test"
+          }
         }
       }
     }

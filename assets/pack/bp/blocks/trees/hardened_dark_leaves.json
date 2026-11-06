@@ -1,0 +1,72 @@
+{
+  "format_version": "1.26.50",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:hardened_dark_leaves",
+      "menu_category": {
+        "category": "none"
+      }
+    },
+    "components": {
+      "minecraft:light_dampening": 15,
+      "minecraft:item_visual": {
+        "geometry": "minecraft:geometry.full_block",
+        "material_instances": {
+          "*": {
+            "texture": "tf_block_darkwood_leaves",
+            "render_method": "alpha_test"
+          }
+        }
+      },
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 2
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 50
+      },
+      "minecraft:map_color": "#007c00",
+      "minecraft:flammable": {
+        "catch_chance_modifier": 0,
+        "destroy_chance_modifier": 1
+      },
+      "minecraft:geometry": "minecraft:geometry.full_block",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_block_darkwood_leaves",
+          "render_method": "alpha_test",
+          "tint_method": "default_foliage"
+        },
+        "up": {
+          "texture": "tf_block_darkwood_leaves",
+          "render_method": "alpha_test",
+          "tint_method": "default_foliage"
+        },
+        "down": {
+          "texture": "tf_block_darkwood_leaves",
+          "render_method": "alpha_test",
+          "tint_method": "default_foliage"
+        },
+        "north": {
+          "texture": "tf_block_darkwood_leaves",
+          "render_method": "alpha_test",
+          "tint_method": "default_foliage"
+        },
+        "south": {
+          "texture": "tf_block_darkwood_leaves",
+          "render_method": "alpha_test",
+          "tint_method": "default_foliage"
+        },
+        "east": {
+          "texture": "tf_block_darkwood_leaves",
+          "render_method": "alpha_test",
+          "tint_method": "default_foliage"
+        },
+        "west": {
+          "texture": "tf_block_darkwood_leaves",
+          "render_method": "alpha_test",
+          "tint_method": "default_foliage"
+        }
+      }
+    }
+  }
+}

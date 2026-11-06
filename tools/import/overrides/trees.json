@@ -1,0 +1,629 @@
+{
+  "patch": {
+    "data/gf/families/trees.json": [
+      {
+        "op": "add",
+        "path": "/2/params/components",
+        "value": {
+          "minecraft:light_dampening": 15
+        }
+      }
+    ],
+    "data/twilightforest/worldgen/configured_feature/tree/mangrove_tree.json": [
+      {
+        "op": "add",
+        "path": "/config/trunk_placer/base_height",
+        "value": 7
+      },
+      {
+        "op": "add",
+        "path": "/config/trunk_placer/height_rand_a",
+        "value": 4
+      },
+      {
+        "op": "add",
+        "path": "/config/trunk_placer/height_rand_b",
+        "value": 0
+      },
+      {
+        "op": "add",
+        "path": "/config/decorators/-",
+        "value": {
+          "type": "gf_trees:update_leaves"
+        }
+      }
+    ],
+    "bp/blocks/twilight_oak_leaves.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:destructible_by_mining/item_specific_speeds",
+        "value": [
+          {
+            "item": "minecraft:shears",
+            "destroy_speed": 0.066667
+          },
+          {
+            "item": "minecraft:wooden_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:stone_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:iron_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:golden_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:diamond_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:netherite_sword",
+            "destroy_speed": 0.133333
+          }
+        ]
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:item_visual",
+        "value": {
+          "geometry": "minecraft:geometry.full_block",
+          "material_instances": {
+            "*": {
+              "texture": "tf_trees_twilight_oak_leaves_item",
+              "render_method": "alpha_test"
+            }
+          }
+        }
+      }
+    ],
+    "bp/blocks/canopy_leaves.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:destructible_by_mining/item_specific_speeds",
+        "value": [
+          {
+            "item": "minecraft:shears",
+            "destroy_speed": 0.066667
+          },
+          {
+            "item": "minecraft:wooden_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:stone_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:iron_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:golden_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:diamond_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:netherite_sword",
+            "destroy_speed": 0.133333
+          }
+        ]
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:item_visual",
+        "value": {
+          "geometry": "minecraft:geometry.full_block",
+          "material_instances": {
+            "*": {
+              "texture": "tf_trees_canopy_leaves_item",
+              "render_method": "alpha_test"
+            }
+          }
+        }
+      }
+    ],
+    "bp/blocks/mangrove_leaves.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:destructible_by_mining/item_specific_speeds",
+        "value": [
+          {
+            "item": "minecraft:shears",
+            "destroy_speed": 0.066667
+          },
+          {
+            "item": "minecraft:wooden_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:stone_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:iron_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:golden_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:diamond_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:netherite_sword",
+            "destroy_speed": 0.133333
+          }
+        ]
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:item_visual",
+        "value": {
+          "geometry": "minecraft:geometry.full_block",
+          "material_instances": {
+            "*": {
+              "texture": "tf_trees_mangrove_leaves_item",
+              "render_method": "alpha_test"
+            }
+          }
+        }
+      }
+    ],
+    "bp/blocks/rainbow_oak_leaves.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:destructible_by_mining/item_specific_speeds",
+        "value": [
+          {
+            "item": "minecraft:shears",
+            "destroy_speed": 0.066667
+          },
+          {
+            "item": "minecraft:wooden_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:stone_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:iron_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:golden_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:diamond_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:netherite_sword",
+            "destroy_speed": 0.133333
+          }
+        ]
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:item_visual",
+        "value": {
+          "geometry": "minecraft:geometry.full_block",
+          "material_instances": {
+            "*": {
+              "texture": "tf_trees_rainbow_oak_leaves_item",
+              "render_method": "alpha_test"
+            }
+          }
+        }
+      }
+    ],
+    "bp/blocks/time_leaves.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:destructible_by_mining/item_specific_speeds",
+        "value": [
+          {
+            "item": "minecraft:shears",
+            "destroy_speed": 0.066667
+          },
+          {
+            "item": "minecraft:wooden_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:stone_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:iron_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:golden_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:diamond_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:netherite_sword",
+            "destroy_speed": 0.133333
+          }
+        ]
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:item_visual",
+        "value": {
+          "geometry": "geometry.tf.twilightforest.block.time_leaves",
+          "material_instances": {
+            "*": {
+              "texture": "tf_trees_time_leaves_item",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_trees_time_leaves_item",
+              "render_method": "alpha_test"
+            }
+          }
+        }
+      }
+    ],
+    "bp/blocks/transformation_leaves.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:destructible_by_mining/item_specific_speeds",
+        "value": [
+          {
+            "item": "minecraft:shears",
+            "destroy_speed": 0.066667
+          },
+          {
+            "item": "minecraft:wooden_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:stone_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:iron_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:golden_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:diamond_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:netherite_sword",
+            "destroy_speed": 0.133333
+          }
+        ]
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:item_visual",
+        "value": {
+          "geometry": "geometry.tf.twilightforest.block.transformation_leaves",
+          "material_instances": {
+            "*": {
+              "texture": "tf_trees_transformation_leaves_item",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_trees_transformation_leaves_item",
+              "render_method": "alpha_test"
+            }
+          }
+        }
+      }
+    ],
+    "bp/blocks/mining_leaves.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:destructible_by_mining/item_specific_speeds",
+        "value": [
+          {
+            "item": "minecraft:shears",
+            "destroy_speed": 0.066667
+          },
+          {
+            "item": "minecraft:wooden_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:stone_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:iron_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:golden_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:diamond_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:netherite_sword",
+            "destroy_speed": 0.133333
+          }
+        ]
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:item_visual",
+        "value": {
+          "geometry": "geometry.tf.twilightforest.block.mining_leaves",
+          "material_instances": {
+            "*": {
+              "texture": "tf_trees_mining_leaves_item",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_trees_mining_leaves_item",
+              "render_method": "alpha_test"
+            }
+          }
+        }
+      }
+    ],
+    "bp/blocks/sorting_leaves.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:destructible_by_mining/item_specific_speeds",
+        "value": [
+          {
+            "item": "minecraft:shears",
+            "destroy_speed": 0.066667
+          },
+          {
+            "item": "minecraft:wooden_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:stone_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:iron_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:golden_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:diamond_sword",
+            "destroy_speed": 0.133333
+          },
+          {
+            "item": "minecraft:netherite_sword",
+            "destroy_speed": 0.133333
+          }
+        ]
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:item_visual",
+        "value": {
+          "geometry": "geometry.tf.twilightforest.block.sorting_leaves",
+          "material_instances": {
+            "*": {
+              "texture": "tf_trees_sorting_leaves_item",
+              "render_method": "alpha_test"
+            },
+            "all": {
+              "texture": "tf_trees_sorting_leaves_item",
+              "render_method": "alpha_test"
+            }
+          }
+        }
+      }
+    ],
+    "bp/blocks/dark_leaves.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:destructible_by_mining/item_specific_speeds",
+        "value": [
+          {
+            "item": "minecraft:shears",
+            "destroy_speed": 0.666667
+          },
+          {
+            "item": "minecraft:wooden_sword",
+            "destroy_speed": 1.333333
+          },
+          {
+            "item": "minecraft:stone_sword",
+            "destroy_speed": 1.333333
+          },
+          {
+            "item": "minecraft:iron_sword",
+            "destroy_speed": 1.333333
+          },
+          {
+            "item": "minecraft:golden_sword",
+            "destroy_speed": 1.333333
+          },
+          {
+            "item": "minecraft:diamond_sword",
+            "destroy_speed": 1.333333
+          },
+          {
+            "item": "minecraft:netherite_sword",
+            "destroy_speed": 1.333333
+          }
+        ]
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:item_visual",
+        "value": {
+          "geometry": "minecraft:geometry.full_block",
+          "material_instances": {
+            "*": {
+              "texture": "tf_trees_dark_leaves_item",
+              "render_method": "alpha_test"
+            }
+          }
+        }
+      }
+    ],
+    "data/twilightforest/worldgen/configured_feature/tree/canopy_tree.json": [
+      {
+        "op": "add",
+        "path": "/config/decorators/-",
+        "value": {
+          "type": "gf_trees:update_leaves"
+        }
+      }
+    ],
+    "data/twilightforest/worldgen/configured_feature/tree/dead_canopy_tree.json": [
+      {
+        "op": "add",
+        "path": "/config/decorators/-",
+        "value": {
+          "type": "gf_trees:update_leaves"
+        }
+      }
+    ],
+    "data/twilightforest/worldgen/configured_feature/tree/firefly_canopy_tree.json": [
+      {
+        "op": "add",
+        "path": "/config/decorators/-",
+        "value": {
+          "type": "gf_trees:update_leaves"
+        }
+      }
+    ],
+    "data/twilightforest/worldgen/configured_feature/tree/large_rainbow_oak.json": [
+      {
+        "op": "add",
+        "path": "/config/decorators/-",
+        "value": {
+          "type": "gf_trees:update_leaves"
+        }
+      }
+    ],
+    "data/twilightforest/worldgen/configured_feature/tree/large_twilight_oak_tree.json": [
+      {
+        "op": "add",
+        "path": "/config/decorators/-",
+        "value": {
+          "type": "gf_trees:update_leaves"
+        }
+      }
+    ],
+    "data/twilightforest/worldgen/configured_feature/tree/mega_spruce_tree.json": [
+      {
+        "op": "add",
+        "path": "/config/decorators/-",
+        "value": {
+          "type": "gf_trees:update_leaves"
+        }
+      }
+    ],
+    "data/twilightforest/worldgen/configured_feature/tree/oak_bush.json": [
+      {
+        "op": "add",
+        "path": "/config/decorators/-",
+        "value": {
+          "type": "gf_trees:update_leaves"
+        }
+      }
+    ],
+    "data/twilightforest/worldgen/configured_feature/tree/rainbow_oak.json": [
+      {
+        "op": "add",
+        "path": "/config/decorators/-",
+        "value": {
+          "type": "gf_trees:update_leaves"
+        }
+      }
+    ],
+    "data/twilightforest/worldgen/configured_feature/tree/smaller_jungle_tree.json": [
+      {
+        "op": "add",
+        "path": "/config/decorators/-",
+        "value": {
+          "type": "gf_trees:update_leaves"
+        }
+      }
+    ],
+    "data/twilightforest/worldgen/configured_feature/tree/sorting_tree.json": [
+      {
+        "op": "add",
+        "path": "/config/decorators/-",
+        "value": {
+          "type": "gf_trees:update_leaves"
+        }
+      }
+    ],
+    "data/twilightforest/worldgen/configured_feature/tree/swampy_oak_tree.json": [
+      {
+        "op": "add",
+        "path": "/config/decorators/-",
+        "value": {
+          "type": "gf_trees:update_leaves"
+        }
+      }
+    ],
+    "data/twilightforest/worldgen/configured_feature/tree/transformation_tree.json": [
+      {
+        "op": "add",
+        "path": "/config/decorators/-",
+        "value": {
+          "type": "gf_trees:update_leaves"
+        }
+      }
+    ],
+    "data/twilightforest/worldgen/configured_feature/tree/twilight_oak_tree.json": [
+      {
+        "op": "add",
+        "path": "/config/decorators/-",
+        "value": {
+          "type": "gf_trees:update_leaves"
+        }
+      }
+    ],
+    "data/twilightforest/worldgen/configured_feature/tree/vanilla_birch_tree.json": [
+      {
+        "op": "add",
+        "path": "/config/decorators/-",
+        "value": {
+          "type": "gf_trees:update_leaves"
+        }
+      }
+    ],
+    "data/twilightforest/worldgen/configured_feature/tree/vanilla_oak_tree.json": [
+      {
+        "op": "add",
+        "path": "/config/decorators/-",
+        "value": {
+          "type": "gf_trees:update_leaves"
+        }
+      }
+    ]
+  }
+}
