@@ -186,8 +186,7 @@ GF_REGISTER_SELFTEST("provisions.stale_bread", [](Context& ctx) -> ll::coro::Cor
 
 GF_REGISTER_SELFTEST("provisions.experiment_115", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto box = co_await ctx.flatArea(1010, 8);
-    auto floor = box.min.y; // the flat area's floor is solid below testPos' y
-    (void)floor;
+    (void)box;
     auto g = ctx.testPos(1012, 2);
     ctx.require(co_await ctx.ensureLoaded(g), "test area loaded");
     auto* region = ctx.region();

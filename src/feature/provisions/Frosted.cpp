@@ -94,7 +94,7 @@ bool wearsFreezeImmune(Actor& a) {
 void showFrozen(Actor& a, int ticks) {
     float strength = std::min(1.0f, static_cast<float>(ticks) / static_cast<float>(cp::kTicksRequiredToFreeze));
     try {
-        if (auto* fc = a.getEntityContext().tryGetComponent<FreezingComponent>()) fc->mFreezingEffectStrength = strength;
+        if (auto fc = a.getEntityContext().tryGetComponent<FreezingComponent>()) fc->mFreezingEffectStrength = strength;
         auto& wrapper = a.mEntityData.get();
         auto& list    = wrapper.mData->mData.get().mItemsArray.get();
         auto  id      = static_cast<std::size_t>(ActorDataIDs::FreezingEffectStrength);
