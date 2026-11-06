@@ -283,6 +283,11 @@ GF_REGISTER_SELFTEST("aurora.boss_wing_in_world", [](Context& ctx) -> ll::coro::
                 if (game::blockIdAt(*ctx.region(), p) == "minecraft:glowstone") glowstone++;
             }
     ctx.check(glowstone > 0, "glowstone in the boss room's ceiling: " + std::to_string(glowstone));
+    core::BlockBox vol{wing.bbox.minX, wing.bbox.minY, wing.bbox.minZ, wing.bbox.maxX, wing.bbox.maxY, wing.bbox.maxZ};
+    golden(ctx, "boss_wing_in_world", kBossWingWorldHash, ctx.snapshotVolume(vol));
+    // the spawner would wake the queen for the test player: nothing is left behind
+    game::clearBlock(*ctx.region(), spawner);
+    // (after the spawner is gone: the waiting must not wake a queen)
     co_await ctx.ticks(10);
     {
         // the block light the glowstone gives the room (Bedrock relights placed blocks)
@@ -297,10 +302,6 @@ GF_REGISTER_SELFTEST("aurora.boss_wing_in_world", [](Context& ctx) -> ll::coro::
         ctx.check(glowstone == 0 || best >= 10, "the room is lit by the ceiling: block light up to " + std::to_string(best) + ", " + std::to_string(there) +
                                                     " above the spawner");
     }
-    core::BlockBox vol{wing.bbox.minX, wing.bbox.minY, wing.bbox.minZ, wing.bbox.maxX, wing.bbox.maxY, wing.bbox.maxZ};
-    golden(ctx, "boss_wing_in_world", kBossWingWorldHash, ctx.snapshotVolume(vol));
-    // the spawner would wake the queen for the test player: nothing is left behind
-    game::clearBlock(*ctx.region(), spawner);
 });
 GF_REGISTER_SELFTEST("aurora.palace_start", [](Context& ctx) -> ll::coro::CoroTask<> {
     ctx.require(co_await ctx.inTwilight(), "the Twilight Forest is available");

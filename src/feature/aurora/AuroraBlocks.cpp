@@ -17,7 +17,11 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <atomic>
 #include <map>
+#include <memory>
+#include <mutex>
+#include <vector>
 
 #include "ll/api/service/Bedrock.h"
 
@@ -50,39 +54,57 @@ constexpr char kAuroraBlock[] = "twilightforest:aurora_block";
 constexpr char kVariant[]     = "gloamingforest:variant";
 
 /// The block pointers of the current world. Pack blocks are registered per world (the client opens
-/// many worlds in one process): reset when a world closes, resolved again on first use.
+/// many worlds in one process): reset when a world closes, resolved again on first use. Read by
+/// chunk generation threads too: an immutable snapshot published through an atomic pointer.
 struct BlockCache {
     std::array<Block const*, 16> variants{};
-    bool                         resolved = false;
-    Block const*                 java     = nullptr; ///< F7's block of the aurora block (structures)
+    Block const*                 java = nullptr; ///< F7's block of the aurora block (structures)
 };
-BlockCache& cache() {
-    static BlockCache c;
+std::atomic<BlockCache const*>& published() {
+    static std::atomic<BlockCache const*> p{nullptr};
+    return p;
+}
+/// Every snapshot made (kept to the end of the process: a reader may still hold an old one).
+std::vector<std::unique_ptr<BlockCache>>& snapshots() {
+    static std::vector<std::unique_ptr<BlockCache>> v;
+    return v;
+}
+std::mutex& cacheMutex() {
+    static std::mutex m;
+    return m;
+}
+
+BlockCache const* cache() {
+    if (auto const* c = published().load(std::memory_order_acquire)) return c;
+    std::lock_guard lock(cacheMutex());
+    if (auto const* c = published().load(std::memory_order_acquire)) return c;
+    auto next = std::make_unique<BlockCache>();
+    for (int i = 0; i < 16; i++) {
+        next->variants[static_cast<std::size_t>(i)] = gf::game::blockWith(kAuroraBlock, {{kVariant, i}});
+        if (!next->variants[static_cast<std::size_t>(i)]) return nullptr; // the registry is not there yet
+    }
+    next->java = structure::blocks::fromJava(kAuroraBlock); // nullptr when unknown (never air)
+    auto const* c = next.get();
+    snapshots().push_back(std::move(next));
+    published().store(c, std::memory_order_release);
     return c;
 }
 
-/// The 16 permutations (resolved once the block registry exists).
+void resetCache() { published().store(nullptr, std::memory_order_release); }
+
+/// The 16 permutations (all null until the block registry exists).
 std::array<Block const*, 16> const& variants() {
-    auto& c = cache();
-    if (!c.resolved) {
-        bool all = true;
-        for (int i = 0; i < 16; i++) {
-            c.variants[static_cast<std::size_t>(i)] = gf::game::blockWith(kAuroraBlock, {{kVariant, i}});
-            all                                     = all && c.variants[static_cast<std::size_t>(i)] != nullptr;
-        }
-        c.resolved = all;
-    }
-    return c.variants;
+    static std::array<Block const*, 16> const none{};
+    auto const*                               c = cache();
+    return c ? c->variants : none;
 }
 
 /// Whether `block` is an aurora block that still has the default variant.
 bool isPlainAuroraBlock(Block const& block) {
     // pointers only: the scan of a piece's box asks this of every block
-    auto& c = cache();
-    if (!c.java) c.java = structure::blocks::fromJava(kAuroraBlock); // nullptr until the block resolves (never air)
-    return (variants()[0] && &block == variants()[0]) || (c.java && &block == c.java);
+    auto const* c = cache();
+    return c && (&block == c->variants[0] || (c->java && &block == c->java));
 }
-
 // ---- AuroraBrickBlock#getDestroyProgress ------------------------------------------------------------
 
 struct Mining {
@@ -226,7 +248,7 @@ void installAuroraBlocks() {
                                                              [](BlockPos const& p) { return core::aurora::auroraBlockColor(p.x, p.y, p.z); });
     gf::game::db::onWorldClosed([] {
         mining().clear();
-        cache() = BlockCache{};
+        resetCache();
     });
 }
 

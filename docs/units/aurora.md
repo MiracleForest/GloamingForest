@@ -19,7 +19,7 @@ Spec: [docs/spec/aurora.md](../spec/aurora.md). Code: `src/feature/aurora/` (ser
 
 ## Blocks
 
-- The pillar and the slab are F1's skeletons, patched by `tools/import/overrides/aurora.json` (a tint method on
+- The pillar and the slab are F1's skeletons, patched by `tools/import/overrides/aurora.json` (baked textures on
   every material, a `minecraft:item_visual`); the auroralized glass is F11's `connected_texture` family (TF's
   ConnectedTextureModel: the overlay `auroralized_glass`, the connected sheet `_ct`, no base, blend, tint index 0),
   its textures and materials patched into F1's family data. Only the aurora block is a hand-made file
@@ -45,25 +45,33 @@ Spec: [docs/spec/aurora.md](../spec/aurora.md). Code: `src/feature/aurora/` (ser
   150 high, beyond a test row); the Snow Queen's tower is also placed in the world and hashed with
   `snapshotVolume` (`aurora.boss_wing_in_world`). The client scenario screenshots a wing's lowest floor and the
   queen's room of a placed palace.
-- Block colours: with the client mod, TF's exact per-position colour (F12 tint). The colour needs a tint method
-  on the material (F12's tint hook only reaches tinted materials) and the tint method is part of the block
-  definition the server sends to every client, so vanilla clients multiply the texture with the biome's
-  `water` colour. A baked texture for vanilla clients would be multiplied again on top of that; there is no
-  constant tint method, and the block definition (material, texture, tint method) is one for every client, so
-  a baked fallback would also be what companions draw unless the client mod rewrote the block's material
-  instances client side (an F12 renderer extension that does not exist). Closest workaround: the pre-tinted
-  item visuals show TF's colours in the inventory for every client.
-- Auroralized glass beacon colour (`getBeaconColorMultiplier`): Bedrock's beacon takes beam colours only from
+- Block colours: with the client mod, TF's exact per-position colour (F12 tint); vanilla clients draw baked
+  textures (spec section 13). The block definitions (one for every client) name baked textures without a tint
+  method: `tf_aurora_baked_aurora_block_N` (tf-derived copies of TF's strip times the item colour hsvToRGB(0.45)
+  = #00FFB2, animated with variant N's frames) and `tf_aurora_baked_aurora_pillar{,_top}` /
+  `_slab_side` (TF's textures with the pale `tint_color` #73E6C3). The client mod swaps each of them for the
+  untinted texture with the `water` tint method when it resolves the block's materials (contract extension
+  `src/feature/ext/aurora/MaterialSwap.{h,cpp}`, R18, a hook on
+  `ClientBlockPipeline::MaterialRepository::initializeMaterials`; item visuals are never swapped), so the chunk
+  builder asks F12's tint for the per-position colour. For A8 to fold into F12's client.render (a material
+  swap registry next to `tint::registerBlock`). The client scenario waits for `aurora: client materials swapped`
+  (local, remote-mod) and screenshots the blocks in every mode.- Auroralized glass beacon colour (`getBeaconColorMultiplier`): Bedrock's beacon takes beam colours only from
   vanilla stained glass. The contract extension `src/feature/ext/aurora/BeaconColor.{h,cpp}` (R18, for A8 to
-  fold) rebuilds the beam sections after `BeaconBlockActor::generateBeamSections` with Java's rule
-  (`core::aurora::beaconSections`, gtest `AuroraBeacon.Sections`) whenever a registered block is in the beam:
-  the beacon's white, the first colour replacing it, every further change averaged (FastColor's integer
-  average); the auroralized glass registers its aurora colour. Client build only: `generateBeamSections` is
-  declared for `LL_PLAT_C` only in LeviLamina's server headers, because BDS never computes beam sections (the
-  beam is drawn by each client). So the client mod colours the beam in local worlds and on BDS, while vanilla
-  clients draw the engine's own beam. Checked by the client scenario (the `aurora: beacon beam at ... coloured`
-  line and the `beacon-beam` screenshot).
-- The aurora block's 10-tick break with `progress_glacier` (AuroraBrickBlock#getDestroyProgress, both sides in
+  fold into F12's client.render as a beacon colour-multiplier registry: it is a W1 engine hook on
+  `BeaconBlockActor::generateBeamSections`, so no other unit may hook that function) rebuilds the beam sections
+  after the engine's with Java's rule (`core::aurora::beaconSections`, gtest `AuroraBeacon.Sections`) whenever
+  a registered block is in the beam: the beacon's white, the first colour replacing it, every further change
+  averaged (FastColor's integer average); the auroralized glass registers its aurora colour. Bedrock's sections
+  start at the beacon block itself (an unobstructed beam's sections add up to the blocks above the beacon plus
+  one): that block goes to the beacon's white section, so the beam is white from the beacon up to the glass, as
+  Java's. Client build only: `generateBeamSections` is declared for `LL_PLAT_C` only in LeviLamina's server
+  headers, because BDS never computes beam sections (the beam is drawn by each client). Vanilla clients draw the
+  engine's own beam (white through the auroralized glass): Bedrock has no block component for a beacon colour
+  (the 1.26.51 client binary names no `minecraft:*beacon*` component, only the beacon block), and the beam is
+  each client's own computation, so nothing the server sends can colour it; there is no closer workaround than
+  vanilla stained glass, which would change the block. Checked by the client scenario (the `aurora: beacon beam
+  at ... coloured` line with the engine's sections, the vanilla red-glass beacon's sections next to it, and the
+  `beacon-beam` screenshot).- The aurora block's 10-tick break with `progress_glacier` (AuroraBrickBlock#getDestroyProgress, both sides in
   Java): the server turns its own destroy progress into 0.1 a tick (server-authoritative breaking), and the client
   mod does the same to the local player's game mode (`src/client/aurora`), so the crack animation and the client's
   break prediction run at TF's speed. Without server-side progress within 3 ticks (client-authoritative breaking)
@@ -109,7 +117,21 @@ Spec: [docs/spec/aurora.md](../spec/aurora.md). Code: `src/feature/aurora/` (ser
   looping animations started by the synced `twilightforest:beam` / `twilightforest:phase` properties, with
   `pre_effect_script` variables for her look (body yaw, pitch towards her target: getLookAngle) and each
   shield's angle (60 i + tick x 5 from the synced shield anchor); the server sends no particle packets for them.
-  The melting particles are still sent through F10's fx (one burst per event).
+  The melting particles are still sent through F10's fx: TF's 3 spots a tick around the eyes, each a cloud
+  (1 in 4) and a falling water drop (1 in 2), never while dying (the snow aura stops then too: the client
+  controllers leave their emitter state when the mob dies or the unstable core starts dying).
+- The dying unstable ice core (UnstableIceCoreRenderer#scale / getWhiteOverlayProgress): the server syncs
+  deathTime (`twilightforest:dying`) every tick; the client entity scales a root bone (a copy of F2's geometry
+  with one root at the feet, `assets/pack/rp/models/entity/aurora/unstable_ice_core_swell.geo.json`) by
+  1.4 x f2 / 1.1 / f2 with f2 = 1 + sin(t x 100) x t x 0.01 (the bob is the root's translation, before the
+  scale, as Java's), and the render controller's overlay is 75 % white when (t / 2) % 2 == 1.
+- AI state and F8's sweep: F8 drops an actor's state (goals, move control) 200 ticks after it stops resolving
+  (an unloaded chunk). The queen's and the stable core's goals are added whenever F8's state of the actor has
+  none (`nativeGoalsPresent`), and a queen that gets them again restarts in SUMMON with 6 summons, as a new Java
+  entity (`aurora.native_state_reload`).
+- The aurora block's pointers (its 16 variants and F7's block of it) are the current world's: reset when a world
+  closes (the client opens many worlds in one process); the local client scenario reopens the world and runs
+  `aurora.aurora_block_variant` again.
 - Eye height: Bedrock has no eye-height component and puts a mob's eyes at 0.9 x its collision height (1.62,
   2.25); `getEyePos` reads the offsets component's eye offset, which `applyJavaEyeHeight` sets every tick to
   Java's 1.53 (snow guardian, ice crystal), 1.35 (ice cores) and 2.125 (queen); `aurora.mob_attributes` checks
