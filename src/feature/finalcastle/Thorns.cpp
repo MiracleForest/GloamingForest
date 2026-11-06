@@ -57,8 +57,14 @@ bool isProjectile(Actor const& e) { return (static_cast<int>(e.getEntityTypeId()
 /// ThornsBlock#entityInside.
 void thornsHurt(Actor& entity) {
     if (entity.isType(ActorType::ItemEntity)) {
-        auto const& item = static_cast<ItemActor&>(entity).item();
-        if (tags::has(tags::Registry::Item, "twilightforest:immune_to_thorns", game::items::idOf(item))) return;
+        auto& itemActor = static_cast<ItemActor&>(entity);
+        if (tags::has(tags::Registry::Item, "twilightforest:immune_to_thorns", game::items::idOf(itemActor.item()))) return;
+        // ItemEntity#hurt: health (5) -= amount, discarded at 0 (Bedrock's item actor ignores a
+        // damage source of this kind, so its health is taken here as Java does)
+        int& health = itemActor.mHealth;
+        health      = static_cast<int>(static_cast<float>(health) - kThornDamage);
+        if (health <= 0) entity.remove();
+        return;
     }
     combat::hurt(entity, kThornDamage, "twilightforest:thorns");
 }

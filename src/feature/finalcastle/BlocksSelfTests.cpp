@@ -284,11 +284,11 @@ GF_REGISTER_SELFTEST("finalcastle.thorns_damage", [](Context& ctx) -> ll::coro::
     co_await ctx.ticks(10);
     bool pigHit = std::any_of(thornHits().begin(), thornHits().end(), [&](auto const& h) { return h.first == pigId && std::abs(h.second - 4.0f) < 0.01f; });
     ctx.check(pigHit, "the pig took 4 thorns damage");
-    bool roseHit = std::any_of(thornHits().begin(), thornHits().end(), [&](auto const& h) { return h.first == roseId; });
-    bool dirtHit = std::any_of(thornHits().begin(), thornHits().end(), [&](auto const& h) { return h.first == dirtId; });
-    ctx.check(!roseHit, "a thorn rose item is immune to thorns");
-    ctx.info(std::string("dirt item hurt: ") + (dirtHit ? "yes" : "no"));
-    ctx.check(dirtHit, "other items are hurt by thorns");
+    // ItemEntity#hurt: 5 health, so two touches destroy an item that is not immune
+    auto* roseNow = byId(roseId);
+    auto* dirtNow = byId(dirtId);
+    ctx.check(roseNow && roseNow->isAlive(), "a thorn rose item is immune to thorns");
+    ctx.check(!dirtNow || !dirtNow->isAlive(), "other items are destroyed by thorns");
     if (auto* p = byId(pigId)) p->remove();
     if (auto* i = byId(roseId)) i->remove();
     if (auto* i = byId(dirtId)) i->remove();
