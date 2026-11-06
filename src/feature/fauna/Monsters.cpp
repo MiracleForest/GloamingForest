@@ -183,7 +183,12 @@ void koboldTick(Actor& self) {
     if (!kobold) return;
     addKoboldGoals(*kobold);
     bool panic = panicked(self);
-    gf::entity::setProperty(self, "twilightforest:panicked", panic);
+    // the PANICKED flag to the clients, when it changes
+    auto& shown = gf::entity::data(self, "fauna:panicked");
+    if (!shown.is_boolean() || shown.get<bool>() != panic) {
+        shown = panic;
+        gf::entity::setProperty(self, "twilightforest:panicked", panic);
+    }
     if (!self.isAlive()) return;
     auto& r = rng();
     // the sweat drops (client side in TF; sent as particles here)

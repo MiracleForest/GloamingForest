@@ -96,10 +96,12 @@ int countItems(core::GlobalPos const& pos, float r, std::string const& id) {
     return n;
 }
 
-void clearAround(core::GlobalPos const& pos, float r) {
+/// Removes the non-player actors around `pos` within `r` blocks in x, staying in the test row (rule
+/// R12: z from the row's start to + 4; `pos` must be in the row).
+void clearAround(core::GlobalPos const& pos, float r, int rowZ) {
     auto* region = game::regionOf(pos.dim);
     if (!region) return;
-    for (auto* a : fe::actorsIn(*region, pos.dim, AABB{Vec3{pos.x - r, pos.y - r, pos.z - r}, Vec3{pos.x + 1 + r, pos.y + 1 + r, pos.z + 1 + r}}))
+    for (auto* a : fe::actorsIn(*region, pos.dim, AABB{Vec3{pos.x - r, pos.y - 8.0f, float(rowZ)}, Vec3{pos.x + 1 + r, pos.y + 8.0f, float(rowZ + 5)}}))
         if (a && !a->isPlayer()) a->remove();
 }
 
@@ -133,7 +135,9 @@ GF_REGISTER_SELFTEST("fauna.attributes", [](Context& ctx) -> ll::coro::CoroTask<
     std::vector<std::int64_t> spawned;
     int                       i = 0;
     for (auto const& r : rows) {
-        auto* m = spawnAt(at(base, (i++) * 1, 0, i % 2 * 2), r.id);
+        int   dz = (i % 2) * 2;
+        auto* m  = spawnAt(at(base, i, 0, dz), r.id);
+        ++i;
         ctx.require(m != nullptr, std::string("spawned ") + r.id);
         std::string const id = r.id;
         ctx.check(m->getMaxHealth() == r.health, id + " max health " + std::to_string(m->getMaxHealth()));
@@ -153,8 +157,11 @@ GF_REGISTER_SELFTEST("fauna.attributes", [](Context& ctx) -> ll::coro::CoroTask<
         if (!m) continue;
         float eye = m->getEyePos().y - m->getFeetPos().y;
         ctx.check(std::abs(eye - rows[k].eye) < 0.01f, m->getTypeName() + " eye height " + std::to_string(eye));
-        auto const& init = gf::entity::data(*m, "fauna:init");
-        ctx.check(init.is_boolean() && init.get<bool>(), m->getTypeName() + " ran its spawn set-up");
+        // finalizeSpawn equivalents: the bighorn's fleece, the tiny bird's and dwarf rabbit's variants
+        if (m->getTypeName() == kBighorn || m->getTypeName() == kTinyBird || m->getTypeName() == kDwarfRabbit) {
+            auto const& init = gf::entity::data(*m, "fauna:init");
+            ctx.check(init.is_boolean() && init.get<bool>(), m->getTypeName() + " ran its spawn set-up");
+        }
     }
     // the variants and the fleece got their spawn values (variant index in range, saved string)
     if (auto* bird = mobById(spawned[4])) {
@@ -168,7 +175,7 @@ GF_REGISTER_SELFTEST("fauna.attributes", [](Context& ctx) -> ll::coro::CoroTask<
     if (auto* rabbit = mobById(spawned[6])) ctx.check(variantOf(*rabbit) >= 0 && variantOf(*rabbit) < 3, "dwarf rabbit variant");
     for (auto uid : spawned)
         if (auto* a = fe::actorById(uid)) a->remove();
-    clearAround(base, 16);
+    clearAround(at(base, 5, 0, 0), 5, box.minZ);
 });
 
 GF_REGISTER_SELFTEST("fauna.bighorn_shear", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -218,7 +225,7 @@ GF_REGISTER_SELFTEST("fauna.bighorn_shear", [](Context& ctx) -> ll::coro::CoroTa
     ctx.check(sheep && colorOf(*sheep) == 11, "the fleece is blue");
     ctx.check(sheep && !dyeBighorn(*sheep, 11), "the same colour again does nothing");
     if (sheep) sheep->remove();
-    clearAround(pos, 6);
+    clearAround(pos, 3, box.minZ);
 });
 
 GF_REGISTER_SELFTEST("fauna.bighorn_lamb_colour", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -342,7 +349,9 @@ GF_REGISTER_SELFTEST("fauna.kobold_bread", [](Context& ctx) -> ll::coro::CoroTas
     auto t = koboldTimers(*kobold);
     ctx.check(t.eatingTime > 0 && t.eatingTime <= 200 + 600, "the eating time (200 + 0..599 on normal): " + std::to_string(t.eatingTime));
     ctx.check(fe::mobs::target(*kobold) == nullptr, "no target while holding bread");
-    // finish eating
+    // finish eating (the two dropped breads gone first, or it picks one up again)
+    for (auto* it : itemsAround(pos, 4))
+        if (game::items::idOf(it->item()) == "minecraft:bread") it->remove();
     setKoboldTimers(*kobold, {.eatingTime = 2, .lastEatenBread = 5});
     co_await ctx.ticks(5);
     kobold = mobById(uid);
@@ -357,7 +366,7 @@ GF_REGISTER_SELFTEST("fauna.kobold_bread", [](Context& ctx) -> ll::coro::CoroTas
         ctx.check(kobold && game::items::idOf(kobold->getCarriedItem()) == "minecraft:written_book", "the book stays in its hand");
     }
     if (auto* k = mobById(uid)) k->remove();
-    clearAround(pos, 6);
+    clearAround(pos, 3, box.minZ);
 });
 
 GF_REGISTER_SELFTEST("fauna.mosquito_hunger", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -414,8 +423,8 @@ GF_REGISTER_SELFTEST("fauna.deer_senbei", [](Context& ctx) -> ll::coro::CoroTask
 });
 
 GF_REGISTER_SELFTEST("fauna.flying_bird", [](Context& ctx) -> ll::coro::CoroTask<> {
-    auto  box  = co_await ctx.flatArea(1680, 16);
-    auto  pos  = core::GlobalPos{ctx.dimension(), box.minX + 8, box.minY + 1, box.minZ + 2};
+    auto  box  = co_await ctx.flatArea(1680, 10);
+    auto  pos  = core::GlobalPos{ctx.dimension(), box.minX + 5, box.minY + 1, box.minZ + 2};
     auto* bird = spawnAt(pos, kRaven);
     ctx.require(bird != nullptr, "a raven");
     auto uid = uidOf(*bird);
@@ -438,7 +447,7 @@ GF_REGISTER_SELFTEST("fauna.flying_bird", [](Context& ctx) -> ll::coro::CoroTask
     ctx.check(tookOff, "the spooked raven took off");
     ctx.check(landedAgain, "and landed again on solid ground");
     if (auto* b = mobById(uid)) b->remove();
-    clearAround(pos, 16);
+    clearAround(pos, 4, box.minZ);
 });
 
 GF_REGISTER_SELFTEST("fauna.parrot_imitations", [](Context& ctx) {

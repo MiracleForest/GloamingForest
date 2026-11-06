@@ -98,10 +98,6 @@ float brightness(int light) {
 
 // ---- spawn rules -----------------------------------------------------------------------------------------
 
-bool isLeaves(Block const& b) { return kit::isLeaves(b) || kit::hasTag(b, "minecraft:leaves"); }
-bool isLog(Block const& b) { return kit::hasTag(b, "minecraft:logs"); }
-bool isDirt(Block const& b) { return kit::hasTag(b, "minecraft:dirt"); }
-
 /// Animal#checkAnimalSpawnRules: #minecraft:animals_spawnable_on below (grass in 1.21.1) and raw
 /// brightness above 8.
 bool checkAnimalSpawnRules(BlockSource& region, std::string const&, BlockPos const& pos, SpawnReason reason, gf::spawn::RandomSource&) {
@@ -126,30 +122,14 @@ bool checkMonsterSpawnRules(BlockSource& region, std::string const&, BlockPos co
     return gf::world::ext::isDarkEnoughToSpawn(region, pos, random);
 }
 
-/// PathfinderMob#getWalkTargetValue >= 0 (Mob#checkSpawnRules) of the types with their own value.
-std::function<bool(worldgen::Region&, BlockPos const&, SpawnReason)> walkTarget(std::string const& type) {
-    return [type](worldgen::Region& region, BlockPos const& pos, SpawnReason reason) {
-        auto const& below = region.getBlock(BlockPos{pos.x, pos.y - 1, pos.z});
-        if (type == kTinyBird || type == kRaven) {
-            // FlyingBird: leaves 200, logs 15, dirt 9, else light - 0.5
-            if (isLeaves(below) || isLog(below) || isDirt(below)) return true;
-            return rawBrightness(region, pos, reason) - 0.5f >= 0.0f;
-        }
-        if (type == kSquirrel) {
-            if (isLeaves(below) || isLog(below) || isDirt(below)) return true;
-            return rawBrightness(region, pos, reason) - 0.5f >= 0.0f;
-        }
-        if (type == kDwarfRabbit) {
-            // avoid leaves & wood (-1)
-            if (isLeaves(below) || isLog(below)) return false;
-            if (isDirt(below)) return true;
-            return rawBrightness(region, pos, reason) - 0.5f >= 0.0f;
-        }
-        // Bighorn: grass or podzol 10, else LevelReader#getPathfindingCostFromLightLevels (brightness - 0.5)
-        auto id = kit::javaId(below);
-        if (id == "minecraft:grass_block" || id == "minecraft:podzol") return true;
-        return brightness(rawBrightness(region, pos, reason)) - 0.5f >= 0.0f;
-    };
+/// Bighorn#getWalkTargetValue(pos, level) >= 0 (Mob#checkSpawnRules): grass or podzol 10, else
+/// LevelReader#getPathfindingCostFromLightLevels (brightness - 0.5). The flying birds', squirrel's and
+/// dwarf rabbit's overrides are the one-argument getWalkTargetValue(pos), which checkSpawnRules does
+/// not call: they keep Animal's (F5's WalkTarget::Animal).
+bool bighornSpawnRules(worldgen::Region& region, BlockPos const& pos, SpawnReason reason) {
+    auto id = kit::javaId(region.getBlock(BlockPos{pos.x, pos.y - 1, pos.z}));
+    if (id == "minecraft:grass_block" || id == "minecraft:podzol") return true;
+    return brightness(rawBrightness(region, pos, reason)) - 0.5f >= 0.0f;
 }
 
 void registerSpawning() {
@@ -164,7 +144,7 @@ void registerSpawning() {
         b.width      = r.w;
         b.height     = r.h;
         b.walkTarget = sx::WalkTarget::Animal;
-        if (std::string(r.id) != kBoar && std::string(r.id) != kDeer) b.checkSpawnRules = walkTarget(r.id);
+        if (std::string(r.id) == kBighorn) b.checkSpawnRules = bighornSpawnRules;
         sx::registerSpawnBehaviour(r.id, std::move(b));
     }
     gf::spawn::registerPlacement(kPenguin, gf::spawn::PlacementRule::NoRestrictions, checkPenguinSpawn);

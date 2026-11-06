@@ -158,12 +158,6 @@ void birdTick(Actor& self) {
     auto* bird = fe::asMob(self);
     if (!bird || !self.isAlive()) return;
     auto& s = stateOf(self);
-    // Bird#aiStep and FlyingBird#tick (while flying, level out)
-    birdSlowFall(self);
-    if (!s.landed) {
-        auto v = self.getPosDelta();
-        fe::setMotion(self, Vec3{v.x, v.y * 0.6f, v.z});
-    }
     // FlyingBird#customServerAiStep
     if (s.landed) {
         s.flightTime = 0;
@@ -175,6 +169,13 @@ void birdTick(Actor& self) {
             setBirdLanded(self, false, true);
     } else {
         fly(*bird, s);
+    }
+    // Bird#aiStep (after LivingEntity#aiStep: the slow fall) and FlyingBird#tick (after it: while
+    // flying, level out), both on the motion the flight just steered
+    birdSlowFall(self);
+    if (!s.landed) {
+        auto v = self.getPosDelta();
+        fe::setMotion(self, Vec3{v.x, v.y * 0.6f, v.z});
     }
     // TinyBird#getAmbientSound through Mob#baseTick's timer (the BP's ambient is off for the tiny bird)
     if (self.getTypeName() == kTinyBird) {
