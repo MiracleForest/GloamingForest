@@ -1,0 +1,45 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:knight_phantom",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/phantomskeleton"
+      },
+      "geometry": {
+        "default": "geometry.twilightforest.knight_phantom"
+      },
+      "render_controllers": [
+        "controller.render.twilightforest.knight_phantom"
+      ],
+      "animations": {
+        "look_at_target": "animation.humanoid.look_at_target.default",
+        "attack": "animation.humanoid.attack.rotations",
+        "bob": "animation.humanoid.bob",
+        "base": "animation.twilightforest.knight_phantom.base",
+        "charging_fx": "controller.animation.twilightforest.knight_phantom.charging"
+      },
+      "scripts": {
+        "scale": "!q.property('twilightforest:dying_visible') ? 0.0 : (q.property('twilightforest:charging') ? 1.8 : 1.2)",
+        "animate": [
+          "look_at_target",
+          "attack",
+          "bob",
+          "base",
+          "charging_fx"
+        ]
+      },
+      "spawn_egg": {
+        "base_color": "#a6673b",
+        "overlay_color": "#d3e7bc"
+      },
+      "enable_attachables": true,
+      "particle_effects": {
+        "smoke": "minecraft:basic_smoke_particle"
+      }
+    }
+  }
+}

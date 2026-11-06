@@ -1,0 +1,59 @@
+{
+  "entity_sounds": {
+    "entities": {
+      "twilightforest:knight_phantom": {
+        "volume": 1.0,
+        "pitch": [
+          0.8,
+          1.2
+        ],
+        "events": {
+          "ambient": "entity.twilightforest.knight_phantom.ambient",
+          "hurt": "entity.twilightforest.knight_phantom.hurt",
+          "death": "entity.twilightforest.knight_phantom.death"
+        }
+      },
+      "twilightforest:upper_goblin_knight": {
+        "volume": 1.0,
+        "pitch": [
+          0.8,
+          1.2
+        ],
+        "events": {
+          "ambient": "entity.twilightforest.goblin_knight.ambient",
+          "hurt": "entity.twilightforest.goblin_knight.hurt",
+          "death": "entity.twilightforest.goblin_knight.death"
+        }
+      },
+      "twilightforest:blockchain_goblin": {
+        "volume": 1.0,
+        "pitch": [
+          0.8,
+          1.2
+        ],
+        "events": {
+          "ambient": "entity.twilightforest.blockchain_goblin.ambient",
+          "hurt": "entity.twilightforest.blockchain_goblin.hurt",
+          "death": "entity.twilightforest.blockchain_goblin.death"
+        }
+      },
+      "twilightforest:helmet_crab": {
+        "volume": 1.0,
+        "pitch": [
+          0.8,
+          1.2
+        ],
+        "events": {
+          "ambient": "entity.twilightforest.helmet_crab.ambient",
+          "hurt": "entity.twilightforest.helmet_crab.hurt",
+          "death": "entity.twilightforest.helmet_crab.death",
+          "step": {
+            "sound": "entity.twilightforest.helmet_crab.step",
+            "volume": 0.15,
+            "pitch": 1.0
+          }
+        }
+      }
+    }
+  }
+}
