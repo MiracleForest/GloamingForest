@@ -71,6 +71,7 @@
 #include "feature/ext/trees/ChunkDirty.h"
 #include "feature/ext/trees/ParticleTo.h"
 #include "feature/ext/trees/RandomTicks.h"
+#include "feature/ext/trees/TimeCoreTickers.h"
 #include "feature/ext/worldgen/FeatureKit.h"
 #include "feature/families/BlockEvents.h"
 #include "feature/fx/Fx.h"
@@ -308,7 +309,12 @@ bool stateTicksRandomly(BlockSource& region, BlockPos const& pos, Block const& s
 }
 
 /// Vanilla block entities with a server ticker in Java 1.21.1 (getTicker != null on the server), by
-/// Bedrock id.
+/// Bedrock id: furnaces, brewing stand, hopper, campfires, spawners, beacon, conduit, bell, end
+/// gateway, sculk blocks, vault, crafter, beehives, daylight detectors, shulker boxes
+/// (ShulkerBoxBlock#getTicker on both sides), signs and hanging signs (SignBlock /
+/// CeilingHangingSignBlock / WallHangingSignBlock: SignBlockEntity::tick), the moving piston block
+/// (MovingPistonBlock: PistonMovingBlockEntity::tick) and the jukebox (only while it holds a record:
+/// JukeboxBlock#getTicker is null without HAS_RECORD, see vanillaTickerState).
 bool vanillaTicker(std::string const& id) {
     static std::unordered_set<std::string> const ids{
         "minecraft:furnace", "minecraft:lit_furnace", "minecraft:blast_furnace", "minecraft:lit_blast_furnace", "minecraft:smoker",
@@ -316,11 +322,36 @@ bool vanillaTicker(std::string const& id) {
         "minecraft:mob_spawner", "minecraft:beacon", "minecraft:conduit", "minecraft:bell", "minecraft:end_gateway",
         "minecraft:sculk_catalyst", "minecraft:sculk_sensor", "minecraft:calibrated_sculk_sensor", "minecraft:sculk_shrieker",
         "minecraft:trial_spawner", "minecraft:vault", "minecraft:crafter", "minecraft:beehive", "minecraft:bee_nest", "minecraft:jukebox",
-        "minecraft:daylight_detector", "minecraft:daylight_detector_inverted",
+        "minecraft:daylight_detector", "minecraft:daylight_detector_inverted", "minecraft:moving_block",
     };
-    return ids.contains(id);
+    if (ids.contains(id)) return true;
+    if (!id.starts_with("minecraft:")) return false;
+    // every colour of shulker box, every wood's standing / wall / hanging sign
+    return id.ends_with("shulker_box") || id.ends_with("_sign") || id == "minecraft:standing_sign" || id == "minecraft:wall_sign";
 }
 
+/// Whether the block entity of a vanilla ticker block has its ticker in this state (the jukebox only
+/// with a record in it).
+bool vanillaTickerState(std::string const& id, BlockActor& actor) {
+    if (id != "minecraft:jukebox") return true;
+    auto* main = actor._getMainComponent();
+    auto* c    = main ? main->getContainer() : nullptr;
+    return c && !game::items::isEmpty(c->getItem(0));
+}
+
+/// The ticker the time core runs at `dPos` (simulate: only whether there is one): a TF block's
+/// registered ticker (gf::trees_ext::registerTimeCoreTicker), else a vanilla block entity's.
+bool runTicker(BlockSource& region, BlockPos const& dPos, Block const& state, bool simulate) {
+    auto const& id = state.getTypeName();
+    if (auto const* ticker = gf::trees_ext::timeCoreTicker(id)) return (*ticker)(region, dPos, simulate);
+    if (!vanillaTicker(id)) return false;
+    auto* actor = region.getBlockEntity(dPos);
+    if (!actor || !vanillaTickerState(id, *actor)) return false;
+    auto* ticker = actor->_getTickComponent();
+    if (!ticker) return false;
+    if (!simulate) ticker->tick(region);
+    return true;
+}
 /// `state.getOcclusionShape(level, pos).max(Y)` (block-relative; nullopt: an empty shape). In
 /// 1.21.1 BlockBehaviour#getOcclusionShape is `state.getShape(level, pos)` for every block
 /// noOcclusion() included (that flag only empties the cached face occlusion; LeavesBlock overrides
@@ -357,13 +388,7 @@ int timeEffect(BlockSource& region, BlockPos const& pos) {
             state.randomTick(region, dPos, level.getRandom());
             ok = true;
         }
-        if (vanillaTicker(state.getTypeName())) {
-            if (auto* actor = region.getBlockEntity(dPos))
-                if (auto* ticker = actor->_getTickComponent()) {
-                    ticker->tick(region);
-                    ok = true;
-                }
-        }
+        if (runTicker(region, dPos, state, false)) ok = true;
         if (!ok) continue;
         ++worked;
         // the particle at the top of the state's occlusion shape (an empty shape: -infinity, unseen)
@@ -754,6 +779,16 @@ ItemStack extractOne(Slots& h, int slot, bool simulate) {
     return game::items::withCount(s, 1);
 }
 
+/// IItemHandler#insertItem(slot, one, true).isEmpty(). The inventory contract's insert takes no slot
+/// (gf::inventory::Handler::insert(pos, stack, simulate)): a TF container decides the slot itself.
+bool insertFits(Slots& h, int slot, ItemStack const& one) {
+    if (h.insert) return game::items::isEmpty(h.insert(one, true));
+    if (!h.canInsert(slot, one)) return false;
+    ItemStack dest = h.get(slot);
+    if (game::items::isEmpty(dest)) return true;
+    return game::items::sameItemSameData(one, dest) && game::items::countOf(dest) < std::min<int>(dest.getMaxStackSize(), h.limit);
+}
+
 /// IItemHandler#insertItem(slot, one, false) after the simulation said it fits.
 void insertOne(Slots& h, int slot, ItemStack const& one) {
     if (h.insert) {
@@ -833,7 +868,9 @@ int sortingEffect(BlockSource& region, BlockPos const& pos) {
                     }
                     if (first == -1) continue;
                     ItemStack one = extractOne(face, i, false);
-                    if (game::items::isEmpty(one)) continue;
+                    // insertItem(firstProperStack, newStack, true) after the extraction: an item that
+                    // no longer fits there is gone, as in TF (the next output is tried with another)
+                    if (game::items::isEmpty(one) || !insertFits(out, first, one)) continue;
                     insertOne(out, first, one);
                     transferred = true;
                     ++sorted;
@@ -956,9 +993,7 @@ bool timeCoreWorks(BlockSource& region, BlockPos const& pos) {
     if (state.isAir() || gf::tags::has(gf::tags::Registry::Block, "twilightforest:time_core_excluded", state.getTypeName())) return false;
     bool const typeTicks = gf::feature::families::detail::randomTicked(state.getBlockType()) || vanillaRandomTicking(state.getTypeName());
     if (typeTicks && stateTicksRandomly(region, pos, state)) return true;
-    if (vanillaTicker(state.getTypeName()))
-        if (auto* actor = region.getBlockEntity(pos)) return actor->_getTickComponent() != nullptr;
-    return false;
+    return runTicker(region, pos, state, true);
 }
 
 std::size_t activeCoreCount() { return state().due.size(); }

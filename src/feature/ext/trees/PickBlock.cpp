@@ -3,6 +3,7 @@
 // for HardenedDarkLeavesBlock#getCloneItemStack.
 #include "feature/ext/trees/PickBlock.h"
 
+#include <algorithm>
 #include <map>
 #include <mutex>
 
@@ -20,6 +21,7 @@
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/block/Block.h"
 
+#include "feature/enchant/Enchant.h"
 #include "game/Items.h"
 #include "mod/Log.h"
 #include "mod/Module.h"
@@ -56,19 +58,24 @@ bool pickBlock(Player& player, BlockPos const& pos) {
     if (!picked) return true;
     auto&     inv      = player.getInventory();
     int const selected = player.getSelectedItemSlot();
-    // Inventory#getSuitableHotbarSlot: the selected slot when empty, else the next empty one, else
-    // the selected slot
+    // Inventory#getSuitableHotbarSlot: the selected slot or the next empty one; else the selected slot
+    // or the next one without enchantments; else the selected slot
     auto suitable = [&] {
-        if (game::items::isEmpty(inv.getItem(selected))) return selected;
-        for (int k = 1; k < 9; ++k) {
+        for (int k = 0; k < 9; ++k) {
             int i = (selected + k) % 9;
             if (game::items::isEmpty(inv.getItem(i))) return i;
         }
+        for (int k = 0; k < 9; ++k) {
+            int         i = (selected + k) % 9;
+            auto const& s = inv.getItem(i);
+            if (!s.isEnchanted() && gf::enchant::all(s).empty()) return i;
+        }
         return selected;
     };
+    int const size = std::min(36, inv.getContainerSize());
     // Inventory#findSlotMatchingItem
     int found = -1;
-    for (int i = 0; i < 36 && i < inv.getContainerSize(); ++i) {
+    for (int i = 0; i < size; ++i) {
         auto const& s = inv.getItem(i);
         if (!game::items::isEmpty(s) && game::items::sameItemSameData(s, *picked)) {
             found = i;
@@ -86,7 +93,17 @@ bool pickBlock(Player& player, BlockPos const& pos) {
         inv.setItem(found, inHand);
         player.setSelectedSlot(target);
     } else if (player.isCreative()) {
+        // Inventory#setPickedItem: the hotbar's stack moves to the first free slot (getFreeSlot) when
+        // there is one, then the picked item takes its place
         int target = suitable();
+        if (auto const& displaced = inv.getItem(target); !game::items::isEmpty(displaced)) {
+            for (int j = 0; j < size; ++j)
+                if (game::items::isEmpty(inv.getItem(j))) {
+                    ItemStack copy = displaced;
+                    inv.setItem(j, copy);
+                    break;
+                }
+        }
         inv.setItem(target, *picked);
         player.setSelectedSlot(target);
     } else {

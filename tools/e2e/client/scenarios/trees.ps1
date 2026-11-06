@@ -8,7 +8,7 @@
 # clock ticking wheat); the host sends the leaf runes to the vanilla client itself, and the time core's
 # particles come as resource pack effects (the content log must stay clean of Molang errors).
 # Compare with TF's textures (textures/block/*leaves*, *sapling*, *_log_core*) and TF's tree shapes.
-# Screenshots: out/trees*/{tree-<n>-<name>,brown-cap-top,blocks,blocks-close,mushroom-blocks,cores,cores-particles,particles-<n>,runes,leaf-items,leaf-items-hardened,vanilla-probe,selftest}.png
+# Screenshots: out/trees*/{tree-<n>-<name>,brown-cap-top,blocks,blocks-close,mushroom-blocks,cores,cores-particles,particles-<n>,sorting-<n>,transformed-cell,runes,leaf-items,leaf-items-hardened,vanilla-probe,selftest}.png
 Save-Screenshot 'hud' | Out-Null
 if ($script:Mode -eq 'local') {
     Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
@@ -77,9 +77,29 @@ if ($script:Mode -eq 'local') {
     Save-Screenshot 'particles-2' | Out-Null
     Start-Sleep -Milliseconds 300
     Save-Screenshot 'particles-3' | Out-Null
+    # the sortingwood engine moves a stick from the chest beside it to the chest 3 blocks away (out of
+    # its input cube): the green sorting particles fly between them
+    Wait-LogLine 'trees: the sorting core at .* sorted [1-9]\d* items' 60 | Out-Null
+    Invoke-Teleport "/tp @s $($qx - 4.0) $($qy + 3) $($qz + 5) 180 30"
+    Start-Sleep -Seconds 3
+    Save-Screenshot 'sorting-1' | Out-Null
+    Start-Sleep -Milliseconds 250
+    Save-Screenshot 'sorting-2' | Out-Null
+    Start-Sleep -Milliseconds 250
+    Save-Screenshot 'sorting-3' | Out-Null
     Wait-LogLine 'trees: particles probe: [1-9]\d* chunk resends sent to real clients' 60 | Out-Null
+    # one transformed 4x4 cell stays: the resent chunk shows the stand-in biome's brown grass there,
+    # photographed from straight above
+    Wait-LogLine 'trees: particles probe: the transformed cell at (-?\d+) (-?\d+) (-?\d+) stays' 90 | Out-Null
+    $c = Get-LeviLog | Select-String -Pattern 'trees: particles probe: the transformed cell at (-?\d+) (-?\d+) (-?\d+) stays' | Select-Object -Last 1
+    if (-not $c) { throw 'the particles probe kept no transformed cell' }
+    $cx = [int]$c.Matches[0].Groups[1].Value; $cy = [int]$c.Matches[0].Groups[2].Value; $cz = [int]$c.Matches[0].Groups[3].Value
+    Invoke-Teleport "/tp @s $($cx + 0.5) $($cy + 14) $($cz + 0.5) 0 90"
+    Start-Sleep -Seconds 4
+    Save-Screenshot 'transformed-cell' | Out-Null
     # leaves of transformation 4 blocks up shed runes (drawn by the client mod), over an active
     # timewood clock ticking wheat
+    Invoke-Chat '/tag @s add gf_trees_probe'
     $r = Invoke-SelfTest 'trees.vanilla_probe'
     if ($r.Fail -gt 0) { throw 'trees.vanilla_probe failed' }
     $p = Get-LeviLog | Select-String -Pattern 'trees probe at (-?\d+) (-?\d+) (-?\d+)' | Select-Object -Last 1
@@ -109,6 +129,7 @@ if ($script:Mode -eq 'local') {
     if ($r.Fail -gt 0) { throw 'trees.zz_showcase_restore failed' }
 } else {
     Wait-LogLine '\[host\].*GloamingForest world ready' 120 | Out-Null
+    Invoke-Chat '/tag @s add gf_trees_probe'
     $r = Invoke-SelfTest 'trees.vanilla_probe'
     if ($r.Fail -gt 0) { throw 'trees.vanilla_probe failed' }
     $p = Get-LeviLog | Select-String -Pattern 'trees probe at (-?\d+) (-?\d+) (-?\d+)' | Select-Object -Last 1

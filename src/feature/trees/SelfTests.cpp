@@ -34,6 +34,7 @@
 #include "mc/world/Container.h"
 #include "mc/world/actor/player/Inventory.h"
 #include "mc/world/actor/player/Player.h"
+#include "mc/world/level/GameType.h"
 #include "mc/world/gamemode/GameMode.h"
 #include "mc/world/gamemode/InteractionResult.h"
 #include "mc/world/item/HandSlot.h"
@@ -49,6 +50,7 @@
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/actor/BlockActor.h"
 #include "mc/world/level/block/actor/component/IVanillaMainBlockActorComponent.h"
+#include "mc/world/level/block/actor/component/IVanillaTickBlockActorComponent.h"
 #include "mc/world/level/chunk/LevelChunk.h"
 #include "mc/world/level/chunk/LevelChunkDataField.h"
 #include "mc/world/level/chunk/SubChunk.h"
@@ -58,6 +60,8 @@
 #include "feature/ext/trees/HugeMushrooms.h"
 #include "feature/ext/trees/PickBlock.h"
 #include "feature/ext/trees/RandomTicks.h"
+#include "feature/ext/trees/TimeCoreTickers.h"
+#include "feature/enchant/Enchant.h"
 #include "feature/ext/worldgen/FeatureKit.h"
 #include "feature/features/Features.h"
 #include "feature/item/DataFiles.h"
@@ -756,6 +760,60 @@ GF_REGISTER_SELFTEST("trees.time_core_ticks", [](Context& ctx) -> ll::coro::Coro
     (void)ctx.setBlock(probe, "minecraft:air", nlohmann::json::object());
 });
 
+GF_REGISTER_SELFTEST("trees.time_core_block_entity_tickers", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // TimeLogCoreBlock: state.getTicker(...) of ANY block entity, TF's own included: a unit registers
+    // its block's ticker (gf::trees_ext::registerTimeCoreTicker); here the fixture block stands in
+    RangeGuard guard;
+    gf::config::mut<TreesConfig>().timeCoreRange = 1;
+    GlobalPos core = ctx.testPos(378, 2), fixture = core.offset(1, 0, 0), box = core.offset(-1, 0, 0);
+    ctx.require(ctx.setBlock(core, "twilightforest:time_log_core", {{"twilightforest:axis", "y"}}), "a timewood clock");
+    ctx.require(ctx.setBlock(fixture, "gf_test:fixture_block"), "the fixture block");
+    struct Unregister {
+        ~Unregister() { gf::trees_ext::unregisterTimeCoreTicker("gf_test:fixture_block"); }
+    } unregister;
+    int ticks = 0, asked = 0;
+    bool hasTicker = true;
+    gf::trees_ext::registerTimeCoreTicker("gf_test:fixture_block", [&](BlockSource&, BlockPos const&, bool simulate) {
+        if (!hasTicker) return false;
+        if (simulate) ++asked;
+        else ++ticks;
+        return true;
+    });
+    auto* region = ctx.region();
+    ctx.require(region != nullptr, "a region");
+    ctx.check(timeCoreWorks(*region, bp(fixture)), "a block with a registered ticker counts as ticking");
+    int worked = performCoreEffect(Core::Time, *region, bp(core));
+    ctx.check(ticks > 0 && worked >= ticks, "one cycle ran the registered ticker " + std::to_string(ticks) + " times (" + std::to_string(worked) + " hits worked)");
+    ctx.check(asked == 1, "the cycle itself never only asked");
+    hasTicker = false; // Java: getTicker returned null in this state
+    int before = ticks;
+    ctx.check(!timeCoreWorks(*region, bp(fixture)), "no ticker in this state: not ticking");
+    (void)performCoreEffect(Core::Time, *region, bp(core));
+    ctx.check(ticks == before, "a block without a ticker in its state is skipped");
+    // JukeboxBlock#getTicker: null without a record
+    ctx.require(ctx.setBlock(box, "minecraft:jukebox"), "a jukebox");
+    co_await ctx.ticks(1);
+    region = ctx.region();
+    ctx.require(region != nullptr, "a region");
+    ctx.check(!timeCoreWorks(*region, bp(box)), "an empty jukebox does not tick");
+    auto* actor = region->getBlockEntity(bp(box));
+    auto* main  = actor ? actor->_getMainComponent() : nullptr;
+    auto* c     = main ? main->getContainer() : nullptr;
+    ctx.require(c != nullptr, "the jukebox's container");
+    if (auto disc = game::items::make("minecraft:music_disc_13", 1)) c->setItem(0, *disc);
+    ctx.check(timeCoreWorks(*region, bp(box)), "a jukebox with a record ticks");
+    c->setItem(0, ItemStack::EMPTY_ITEM());
+    // signs tick (SignBlockEntity::tick)
+    ctx.require(ctx.setBlock(box, "minecraft:air"), "air");
+    ctx.require(ctx.setBlock(box, "minecraft:standing_sign", {{"ground_sign_direction", 0}}), "a sign");
+    co_await ctx.ticks(1);
+    region = ctx.region();
+    ctx.require(region != nullptr, "a region");
+    auto* sign = region->getBlockEntity(bp(box));
+    ctx.info(std::string("the sign's block entity ") + (sign && sign->_getTickComponent() ? "ticks" : "has no tick component on Bedrock"));
+    ctx.check(!sign || !sign->_getTickComponent() || timeCoreWorks(*region, bp(box)), "a sign with a ticking block entity ticks");
+});
+
 GF_REGISTER_SELFTEST("trees.transformation_core_biome", [](Context& ctx) -> ll::coro::CoroTask<> {
     RangeGuard guard;
     gf::config::mut<TreesConfig>().transformationCoreRange = 3;
@@ -1169,7 +1227,67 @@ GF_REGISTER_SELFTEST("trees.hardened_dark_leaves", [](Context& ctx) -> ll::coro:
     ctx.check(gf::trees_ext::pickBlock(sp, bp(leaves)), "the pick is handled");
     auto const& held = sim(ctx).getSelectedItem();
     ctx.check(game::items::idOf(held) == "twilightforest:dark_leaves" && game::items::countOf(held) == 5, "the dark leaves moved into the hand (" + game::items::idOf(held) + ")");
+    // Inventory#setPickedItem in creative with a full hotbar: getSuitableHotbarSlot skips the enchanted
+    // stacks (from the selected slot on), and the stack there moves to the first free slot
+    {
+        auto& p  = sim(ctx);
+        auto& in = p.getInventory();
+        for (int i = 0; i < in.getContainerSize(); ++i) in.setItem(i, ItemStack::EMPTY_ITEM());
+        for (int i = 0; i < 9; ++i)
+            if (auto st = game::items::make(i == 4 ? "minecraft:dirt" : "minecraft:stick", 1)) {
+                if (i != 4) gf::enchant::set(*st, "minecraft:unbreaking", 1);
+                in.setItem(i, *st);
+            }
+        auto mode = p.getPlayerGameType();
+        p.setPlayerGameType(GameType::Creative);
+        p.setSelectedSlot(2);
+        ctx.check(gf::trees_ext::pickBlock(p, bp(leaves)), "the creative pick is handled");
+        auto& q = sim(ctx);
+        ctx.check(q.getSelectedItemSlot() == 4, "the first hotbar slot without enchantments from the selected one is used (" + std::to_string(q.getSelectedItemSlot()) + ")");
+        ctx.check(game::items::idOf(q.getInventory().getItem(4)) == "twilightforest:dark_leaves", "the picked dark leaves are there");
+        ctx.check(game::items::idOf(q.getInventory().getItem(9)) == "minecraft:dirt", "the displaced dirt moved to the first free slot (" + game::items::idOf(q.getInventory().getItem(9)) + ")");
+        q.setPlayerGameType(mode);
+    }
     for (int i = 0; i < sim(ctx).getInventory().getContainerSize(); ++i) sim(ctx).getInventory().setItem(i, ItemStack::EMPTY_ITEM());
+});
+
+GF_REGISTER_SELFTEST("trees.mangrove_sapling_water", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // MangroveSaplingBlock#getStateForPlacement: waterlogged only in full water (FluidTags.WATER with
+    // amount 8: a source), not in flowing water (amount < 8) nor in air. Placed by the player on dirt.
+    auto box = co_await ctx.flatArea(387, 9, 8);
+    int  y   = box.minY;
+    auto pos = [&](int dx, int dy, int dz) { return game::globalPos(ctx.dimension(), BlockPos{box.minX + dx, y + dy, box.minZ + dz}); };
+    // three cells along x, each sapling cell on dirt; a stone basin around the source cell and around
+    // the two-cell channel (a source feeding the flowing water the second sapling goes into)
+    for (int dx = 0; dx <= 8; ++dx)
+        for (int dz = 0; dz <= 4; ++dz) ctx.require(ctx.setBlock(pos(dx, 0, dz), "minecraft:stone"), "the floor");
+    for (int dx = 0; dx <= 8; ++dx)
+        for (int dz = 0; dz <= 4; ++dz)
+            if (dz == 0 || dz == 4 || dx == 0 || dx == 2 || dx == 6 || dx == 8 || (dx > 2 && dx < 6 && dz != 2)) ctx.require(ctx.setBlock(pos(dx, 1, dz), "minecraft:stone"), "the basin");
+    GlobalPos source = pos(1, 1, 2), flowing = pos(3, 1, 2), feed = pos(4, 1, 2), dry = pos(7, 1, 2);
+    ctx.require(ctx.setBlock(pos(1, 0, 2), "minecraft:dirt") && ctx.setBlock(pos(3, 0, 2), "minecraft:dirt") && ctx.setBlock(pos(7, 0, 2), "minecraft:dirt"), "dirt under the saplings");
+    ctx.require(ctx.setBlock(pos(5, 1, 2), "minecraft:stone"), "the channel's end");
+    ctx.require(ctx.setBlock(source, "minecraft:water"), "a water source");
+    ctx.require(ctx.setBlock(feed, "minecraft:water"), "the channel's source");
+    co_await ctx.ticks(20);
+    auto* region = ctx.region();
+    ctx.require(region != nullptr, "a region");
+    auto depth = [&](GlobalPos const& p) { return game::intState(region->getBlock(bp(p)), "liquid_depth").value_or(-1); };
+    ctx.require(ctx.blockAt(flowing) == "minecraft:flowing_water" || (ctx.blockAt(flowing) == "minecraft:water" && depth(flowing) > 0),
+                "flowing water in the channel (" + ctx.blockAt(flowing) + " depth " + std::to_string(depth(flowing)) + ")");
+    for (GlobalPos const& p : {source, flowing, dry}) co_await click(ctx, p.offset(0, -1, 0), "twilightforest:mangrove_sapling");
+    co_await ctx.ticks(2);
+    region = ctx.region();
+    ctx.require(region != nullptr, "a region");
+    auto wet = [&](GlobalPos const& p) {
+        auto const& extra = region->getExtraBlock(bp(p)).getTypeName();
+        return extra == "minecraft:water" || extra == "minecraft:flowing_water";
+    };
+    for (GlobalPos const& p : {source, flowing, dry}) ctx.check(ctx.blockAt(p) == "twilightforest:mangrove_sapling", "a mangrove sapling was placed (" + ctx.blockAt(p) + ")");
+    ctx.check(wet(source), "the sapling placed into a water source is waterlogged");
+    ctx.check(!wet(flowing), "the sapling placed into flowing water is not");
+    ctx.check(!wet(dry), "the sapling placed in air is not");
+    for (GlobalPos const& p : {source, flowing, dry, feed}) ctx.cleanupBlock(p);
 });
 
 
@@ -1177,6 +1295,18 @@ namespace {
 
 /// Bumped whenever the showcase log is put back (the probe's own timed restore then has nothing to do).
 std::uint64_t gRestoreGeneration = 0;
+
+/// Sends the chunks holding `positions` again to the real clients that view them. A Bedrock client
+/// lights its chunks itself; after the showcase's bulk edits (whole columns cleared, trees placed and
+/// taken down) it kept stale skylight, large dark rectangles on the grass, until it got the chunk again.
+void resendChunksOf(std::vector<std::tuple<int, int, int, int>> const& positions) {
+    std::set<std::tuple<int, int, int>> chunks;
+    for (auto const& [dim, x, y, z] : positions) chunks.emplace(dim, x >> 4, z >> 4);
+    int sent = 0;
+    for (auto const& [dim, cx, cz] : chunks)
+        if (auto* r = game::regionOf(dim); r && r->hasChunksAt(BlockPos{cx * 16, 0, cz * 16}, 0, false)) sent += resendChunkToViewers(*r, ChunkPos{cx, cz});
+    if (sent > 0) gf::log().info("trees: {} edited chunks resent ({} sends) so the clients light them again", chunks.size(), sent);
+}
 
 /// Puts back every block of the showcase log, newest first (positions in unloaded chunks are skipped
 /// when `loadedOnly`); returns how many.
@@ -1187,7 +1317,7 @@ int restoreShowcase(bool loadedOnly) {
     auto undo = std::move(log.undo);
     log.undo.clear();
     for (auto it = undo.rbegin(); it != undo.rend(); ++it) (*it)();
-    std::vector<std::tuple<int, int, int, int>> kept; // not loaded: tried again later
+    std::vector<std::tuple<int, int, int, int>> kept, done; // kept: not loaded, tried again later
     for (auto it = log.order.rbegin(); it != log.order.rend(); ++it) {
         auto [dim, x, y, z] = *it;
         auto*    region     = game::regionOf(dim);
@@ -1197,8 +1327,10 @@ int restoreShowcase(bool loadedOnly) {
             continue;
         }
         game::setBlock(*region, p, *log.originals[*it]);
+        done.push_back(*it);
         ++restored;
     }
+    resendChunksOf(done);
     std::map<std::tuple<int, int, int, int>, Block const*> keptOriginals;
     for (auto const& k : kept) keptOriginals.emplace(k, log.originals[k]);
     log.originals = std::move(keptOriginals);
@@ -1219,13 +1351,18 @@ constexpr int kProbeTicks = 2400;
 
 } // namespace
 
-/// Whether a real client (not a simulated player) is in the world.
-static bool realPlayerPresent() {
+/// The tag the client e2e scenario gives its real player (`/tag @s add gf_trees_probe`) to arm
+/// trees.vanilla_probe: a selftest glob or the server 'full' run never builds the probe, even with a
+/// real player online.
+constexpr char kProbeTag[] = "gf_trees_probe";
+
+/// Whether a real client (not a simulated player) with the probe tag is in the world.
+static bool probeArmed() {
     auto level = ll::service::getLevel();
     if (!level) return false;
     bool found = false;
     level->forEachPlayer([&](Player& p) {
-        if (!p.isSimulatedPlayer()) found = true;
+        if (!p.isSimulatedPlayer() && p.hasTag(kProbeTag)) found = true;
         return !found;
     });
     return found;
@@ -1239,8 +1376,9 @@ static bool realPlayerPresent() {
 // rows: the probe's own coroutine runs its cycle every 20 ticks (SpecialMagicLogBlock's rate) and puts
 // every block back after kProbeTicks, or at once with trees.zz_showcase_restore.
 GF_REGISTER_SELFTEST("trees.vanilla_probe", [](Context& ctx) -> ll::coro::CoroTask<> {
-    if (!realPlayerPresent()) {
-        ctx.info("skipped: the probe stands only for a real client to photograph (client e2e); no real player is in this world");
+    if (!probeArmed()) {
+        ctx.info(std::string("skipped: the probe stands only for a real client to photograph (client e2e: /tag @s add ") + kProbeTag +
+                 " first); no real player with the tag is in this world");
         co_return;
     }
     showcaseLog().active = true;
@@ -1260,6 +1398,7 @@ GF_REGISTER_SELFTEST("trees.vanilla_probe", [](Context& ctx) -> ll::coro::CoroTa
     set(base.offset(-1, 1, 0), "minecraft:wheat", {{"growth", 0}});
     set(base, "twilightforest:time_log_core", {{"twilightforest:axis", "y"}, {"twilightforest:active", false}});
     showcaseLog().active = false;
+    resendChunksOf(showcaseLog().order);
     ll::coro::keepThis([generation = gRestoreGeneration, level = currentLevel(), core = base]() -> ll::coro::CoroTask<> {
         // the clock's cycles, while the probe stands (the range is the config's, at most 128)
         for (int t = 0; t < kProbeTicks; t += 20) {
@@ -1288,6 +1427,10 @@ GF_REGISTER_SELFTEST("trees.zz_showcase_restore", [](Context& ctx) -> ll::coro::
     for (auto const& [dim, x, y, z] : order) co_await ctx.ensureLoaded(GlobalPos{dim, x, y, z});
     int restored = restoreShowcase(false);
     ctx.info("trees showcase restored " + std::to_string(restored) + " blocks");
+    if (auto level = ll::service::getLevel()) level->forEachPlayer([](Player& p) {
+            if (!p.isSimulatedPlayer()) p.removeTag(kProbeTag);
+            return true;
+        });
 });
 } // namespace gf::feature::trees
 
@@ -1372,6 +1515,7 @@ GF_REGISTER_SELFTEST("trees.showcase", [](Context& ctx) -> ll::coro::CoroTask<> 
     }
     ctx.info("trees showcase blocks at " + std::to_string(row.x) + " " + std::to_string(row.y) + " " + std::to_string(row.z));
     showcaseLog().active = false;
+    resendChunksOf(showcaseLog().order);
     ctx.info("trees showcase changed " + std::to_string(showcaseLog().order.size()) + " blocks (trees.zz_showcase_restore puts them back)");
 });
 // Client e2e only (local mode): the sorting and the transformation particles in flight and the
@@ -1383,6 +1527,7 @@ GF_REGISTER_SELFTEST("trees.showcase", [](Context& ctx) -> ll::coro::CoroTask<> 
 // and puts the blocks, biomes and overrides back.
 GF_REGISTER_SELFTEST("trees.particles_probe", [](Context& ctx) -> ll::coro::CoroTask<> {
     constexpr int kParticleTicks = 1200;
+    constexpr int kKeepTick      = 400;
     showcaseLog().active = true;
     GlobalPos base = ctx.testPos(399, 2).offset(250, 0, -96);
     co_await ctx.ensureLoaded(base);
@@ -1403,6 +1548,7 @@ GF_REGISTER_SELFTEST("trees.particles_probe", [](Context& ctx) -> ll::coro::Coro
     set(out, "minecraft:chest", nlohmann::json::object());
     set(trans, "twilightforest:transformation_log_core", {{"twilightforest:axis", "y"}});
     showcaseLog().active = false;
+    resendChunksOf(showcaseLog().order);
     co_await ctx.ticks(2);
     region = ctx.region();
     ctx.require(region != nullptr, "a region");
@@ -1431,7 +1577,8 @@ GF_REGISTER_SELFTEST("trees.particles_probe", [](Context& ctx) -> ll::coro::Coro
         if (standIn) setTransformationTargetForTest("");
     });
     auto before = chunkResendStats();
-    ll::coro::keepThis([generation = gRestoreGeneration, dim, s = bp(sorter), i = bp(in), o = bp(out), t, putBiomesBack, before]() -> ll::coro::CoroTask<> {
+    ll::coro::keepThis([generation = gRestoreGeneration, dim, s = bp(sorter), i = bp(in), o = bp(out), t, putBiomesBack, before, saved]() -> ll::coro::CoroTask<> {
+        bool kept = false; // from kKeepTick on, the last transformed cells stay for the screenshot from above
         for (int tick = 0; tick < kParticleTicks && generation == gRestoreGeneration; tick += 10) {
             auto* r = game::regionOf(dim);
             if (!r || !r->hasChunksAt(s, 0, false) || !r->hasChunksAt(t, 0, false)) {
@@ -1449,11 +1596,21 @@ GF_REGISTER_SELFTEST("trees.particles_probe", [](Context& ctx) -> ll::coro::Coro
                 gf::config::mut<TreesConfig>().sortingCoreRange = 4;
                 performCoreEffect(Core::Sorting, *r, s);
             }
-            if (tick % 20 == 0) {
+            if (tick % 20 == 0 && !kept) {
                 putBiomesBack();
                 RangeGuard guard;
                 gf::config::mut<TreesConfig>().transformationCoreRange = 4;
                 for (int k = 0; k < 8 && performCoreEffect(Core::Transformation, *r, t) == 0; ++k) {}
+                if (tick >= kKeepTick) {
+                    // the cells this cycle turned stay (the undo puts them back): name one for the
+                    // client scenario, which photographs it from above
+                    for (auto const& [xz, b] : *saved)
+                        if (&r->getBiome(BlockPos{xz.first, t.y, xz.second}) != b) {
+                            kept = true;
+                            gf::log().info("trees: particles probe: the transformed cell at {} {} {} stays", (xz.first & ~3) + 2, t.y, (xz.second & ~3) + 2);
+                            break;
+                        }
+                }
             }
             if (tick == 200) {
                 auto now = chunkResendStats();

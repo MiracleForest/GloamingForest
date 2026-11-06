@@ -13,7 +13,11 @@
 // A picked block with a mapping is handled here (the game's own handler is skipped for it): the
 // item is selected when the hotbar holds it, moved into the hotbar from the inventory, or, in
 // creative mode, put into the selected slot when empty, else the next empty hotbar slot, else the
-// selected slot (Inventory#getSuitableHotbarSlot); the client is resynced.
+// first hotbar slot from the selected one without enchantments, else the selected slot
+// (Inventory#getSuitableHotbarSlot), the stack it displaces moving to the first free inventory slot
+// (Inventory#setPickedItem, getFreeSlot); the client is resynced. A8: fold the packet hook into a W0
+// interactions::onPickBlock event (rule R8: one hook per engine event) and keep setPickItem as the
+// registry other units (U4, U5, ...) call for their own getCloneItemStack overrides.
 
 #include <string>
 
