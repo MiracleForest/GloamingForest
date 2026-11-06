@@ -189,7 +189,11 @@ void updateMyNumber(Mob& m, Knight& k) {
         auto& other = stateOf(*knight);
         nums.push_back(other.number);
         if (other.number == 0)
-            if (auto h = ge::home(*knight)) ge::setHome(m, h->pos, kHomeRadius);
+            if (auto h = ge::home(*knight)) {
+                // setRestrictionPoint: the charge position follows the home
+                ge::setHome(m, h->pos, kHomeRadius);
+                k.chargePos = BlockPos{h->pos.x, h->pos.y, h->pos.z};
+            }
     }
     if (nums.empty()) {
         setNumber(m, k, 0);
@@ -553,10 +557,10 @@ void giveKnightLoot(Mob& phantom, std::vector<ItemStack> const& items, std::vect
     for (auto const& itemstack : items) {
         if (!list.empty()) {
             // if there are still more slots to be occupied, occupy them
+            auto buffer = gf::boss::ext::lootBuffer(phantom);
             while (!list.empty()) {
                 int index = list.back();
                 list.pop_back();
-                auto buffer = gf::boss::ext::lootBuffer(phantom);
                 if (index >= 0 && index < static_cast<int>(buffer.size()) && game::items::isEmpty(buffer[static_cast<std::size_t>(index)])) {
                     gf::boss::ext::setLootBufferSlot(phantom, index, itemstack);
                     break;

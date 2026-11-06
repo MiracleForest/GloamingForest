@@ -23,6 +23,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <map>
+#include <tuple>
 
 #include "mc/network/MinecraftPacketIds.h"
 #include "mc/network/MinecraftPackets.h"
@@ -68,7 +70,17 @@ void actionBar(Player& player, std::string const& text) {
     packet->sendTo(player);
 }
 
-bool isActive(Block const& block) { return game::statesOf(block)["twilightforest:active"] == "true" || game::statesOf(block)["twilightforest:active"] == "1"; }
+bool isActive(Block const& block) {
+    auto v = game::statesOf(block)["twilightforest:active"];
+    return v == "true" || v == "1";
+}
+
+/// The tick of the last neighborChanged per pedestal (the placement hook's deferred call is skipped
+/// when F11's neighbour dispatch already ran it for the same change).
+std::map<std::tuple<int, int, int, int>, std::uint64_t>& lastUpdate() {
+    static std::map<std::tuple<int, int, int, int>, std::uint64_t> m;
+    return m;
+}
 
 /// level.getEntitiesOfClass(Player.class, new AABB(pos).inflate(16.0D)).
 std::vector<Player*> playersAround(int dim, BlockPos const& pos) {
@@ -110,6 +122,9 @@ void doPedestalEffect(BlockSource& region, BlockPos const& pos) {
 } // namespace
 
 bool neighborChanged(BlockSource& region, BlockPos const& pos) {
+    int dimId = static_cast<int>(region.getDimensionId());
+    if (lastUpdate().size() > 256) lastUpdate().clear();
+    lastUpdate()[{dimId, pos.x, pos.y, pos.z}] = fe::currentTick();
     Block const& state = region.getBlock(pos);
     if (game::blockId(state) != kPedestal || isActive(state)) return false;
     // isTrophyOnTop
@@ -157,7 +172,10 @@ void install() {
         BlockPos below{pos.x, pos.y - 1, pos.z};
         if (game::blockIdAt(region, below) != kPedestal) return;
         int dim = static_cast<int>(region.getDimensionId());
-        ia::nextTick([dim, below] {
+        auto placedAt = fe::currentTick();
+        ia::nextTick([dim, below, placedAt] {
+            auto it = lastUpdate().find({dim, below.x, below.y, below.z});
+            if (it != lastUpdate().end() && it->second >= placedAt) return; // F11 ran it already
             if (auto* r = game::regionOf(dim)) neighborChanged(*r, below);
         });
     });

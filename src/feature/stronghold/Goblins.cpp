@@ -569,6 +569,7 @@ void install() {
                                                    [](Actor& self) {
                                                        auto* m = fe::asMob(self);
                                                        if (!m) return;
+                                                       chains()[fe::uidOf(self)] = Chain{};
                                                        auto& c = chainOf(self);
                                                        c.block = ge::addPart(*m, "spike_block", {0.75f, 0.75f}, [](Mob& parent) {
                                                            auto ball = ballPosition(parent, chainOf(parent));
