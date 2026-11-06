@@ -114,7 +114,7 @@ void refreshWornModel(Player& player) {
         auto& data    = wrapper.mData->mData.get();
         auto& list    = data.mItemsArray.get();
         auto  id      = static_cast<std::size_t>(ActorDataIDs::MarkVariant);
-        if (id >= list.size() || !list[id] || !list[id]->setData(bits)) {
+        if (id >= list.size() || !list[id] || !list[id]->setData(int{bits})) {
             // every actor defines an int MarkVariant (Actor::_defineEntityData); say so once if not
             static bool warned = false;
             if (!warned) log().warn("tgear: the player has no int MarkVariant data item: the worn-model state is not synced");
