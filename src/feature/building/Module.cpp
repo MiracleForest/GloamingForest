@@ -26,11 +26,11 @@ namespace gf::feature::building {
 void refreshBlockTypes(char const* why) {
     auto const* rope    = applyBlockProperties();
     bool        changed = ::gf::building::ext::refreshCollisionTypes();
-    if (!changed) return;
     bool scaffolding = rope && (static_cast<std::uint64_t>(rope->mProperties) & static_cast<std::uint64_t>(BlockProperty::Scaffolding)) != 0;
     bool provider    = rope && ::gf::building::ext::providerOf(rope) != nullptr;
     // e2e (server and client remote-mod): the rope's type of this registry has both
-    log().info("building: block types refreshed ({}): rope scaffolding {}, rope collision provider {}", why, scaffolding, provider);
+    // one line per world (ready, companion connected) or new client registry, never per tick
+    log().info("building: block types refreshed ({}{}): rope scaffolding {}, rope collision provider {}", why, changed ? ", new types" : "", scaffolding, provider);
 }
 
 namespace {

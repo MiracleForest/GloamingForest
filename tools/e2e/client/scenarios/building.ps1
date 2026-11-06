@@ -153,6 +153,9 @@ Invoke-Chat '/tag @s remove gf_building_banners'
 # the client's request bytes read and validated by the integrated or BDS server)
 Invoke-Chat '/gamemode creative'
 Invoke-Chat '/clear @s'
+# there first: fill and setblock reach only loaded chunks (the banners stood far from here)
+Invoke-Teleport '/tp @s 40.5 -60 150.5 180 35'
+Start-Sleep -Seconds 3
 Invoke-Chat '/fill 38 -60 147 42 -57 153 air'
 Invoke-Chat '/setblock 40 -60 148 loom'
 Invoke-Chat '/give @s banner 1 15'
