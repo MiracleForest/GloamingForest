@@ -1,0 +1,38 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:experiment_115",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_item_experiment_115"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "tile.twilightforest:experiment_115.name"
+      },
+      "minecraft:block_placer": {
+        "block": "twilightforest:experiment_115",
+        "replace_block_item": true,
+        "use_on": [
+          "twilightforest:experiment_115"
+        ]
+      },
+      "minecraft:food": {
+        "nutrition": 4,
+        "saturation_modifier": 0.3,
+        "can_always_eat": false
+      },
+      "minecraft:use_modifiers": {
+        "use_duration": 1.6,
+        "movement_modifier": 0.2
+      },
+      "minecraft:use_animation": "eat"
+    }
+  }
+}

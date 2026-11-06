@@ -118,6 +118,21 @@ server console, in the client log and in a remote client run's `[host]` lines (`
   options between a killed run and the next run gets the killed run's backup value back. Other options a
   killed run's backup holds keep a value that changed since. A scenario that changes another option
   restores it in its `<unit>.restore.ps1` and adds it to `$script:ForcedOptions` (lib.ps1).
+- **BeDD.** Headless runs take BeDD (`lib.ps1` `Resolve-BeDD` / `Initialize-BeDD`) from `$env:BEDD_DIR`; else
+  from the local development build `%USERPROFILE%\Desktop\BeDD\bin\BeDD`, but only with `$env:GF_E2E_BEDD_DEV=1`;
+  else from the pinned release (`$script:BeDDReleaseVersion`, v0.3.1) in `%LOCALAPPDATA%\gf-e2e\BeDD`, downloaded
+  on first use under `bedd-install.lock`, its zip checked against the release's SHA-256, and downloaded again when
+  the copy lacks a file or has another version (`$env:GF_BEDD_URL` + optional `$env:GF_BEDD_SHA256`: another zip,
+  remembered in `gf-bedd.json`). The development build is opt-in because a build that does not fit the game
+  (`FTL [LeviLamina] Couldn't find: bool ClientInstance::$update(bool, bool)` / `In module: BeDD`) loaded, answered
+  its pipe and then made the game exit once the player spawned (exit -2147483645): every client run of a day
+  failed that way. The run prints `BeDD v<version> from <dir> (<source>)` before it starts and `input: BeDD ...`
+  with its result. `Wait-GameReady` checks the session log once BeDD's pipe answers (and when it never does):
+  such an `FTL ... In module: BeDD` line, or a BeDD `... could not be hooked` error, stops the run there with the
+  reason (`Assert-BeDDLoaded`). A BeDD that was not the release copy is then retried once with the release copy
+  (a fresh `run.ps1` process, `$env:GF_E2E_BEDD_RETRY=1`, whose exit code the run returns); a broken release copy
+  fails the run (exit 1, `BeDD: ...`): nothing of the scenario was tested, and a retry would fail the same way.
+  Acceptance runs leave `BEDD_DIR` and `GF_E2E_BEDD_DEV` unset.
 - **Hangs (watchdog).** A BeDD pipe call waits for the game's answer without a timeout of its own. The harness
   wraps every pipe call and window capture (`Invoke-Guarded`): when one takes longer than 120 s plus the waits
   it asked for (`$env:GF_E2E_PIPE_TIMEOUT_SEC` changes the 120), the process tree of the run's game is killed

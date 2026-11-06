@@ -1,0 +1,21 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:fallen_leaves",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_vanilla_block_oak_leaves"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "tile.twilightforest:fallen_leaves.name"
+      }
+    }
+  }
+}

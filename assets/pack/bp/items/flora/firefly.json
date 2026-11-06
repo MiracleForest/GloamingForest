@@ -1,0 +1,30 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:firefly",
+      "menu_category": {
+        "category": "construction"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_flora_item_firefly"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "tile.twilightforest:firefly.name"
+      },
+      "minecraft:block_placer": {
+        "block": "twilightforest:firefly",
+        "replace_block_item": true
+      },
+      "minecraft:wearable": {
+        "slot": "slot.armor.head",
+        "protection": 0
+      },
+      "minecraft:max_stack_size": 64
+    }
+  }
+}

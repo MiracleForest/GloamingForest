@@ -1,0 +1,20 @@
+{
+  "format": "gloamingforest:template",
+  "format_version": 1,
+  "id": "twilightforest:lich_tower/7x7/flat_side_roof",
+  "size": [9, 2, 9],
+  "palette": [
+    {"Name":"minecraft:structure_void"},
+    {"Name":"minecraft:stone_bricks"},
+    {"Name":"minecraft:polished_andesite"},
+    {"Name":"minecraft:stone_brick_wall"}
+  ],
+  "blocks": [
+    [1, 10], [2, 7], [1, 2], [2, 7], [1, 2], [2, 7], [1, 2], [2, 7], [1, 2], [2, 7], [1, 2], [2, 7], [1, 2], [2, 7], [1, 10], [3, 1],
+    [0, 1], [3, 1], [0, 1], [3, 1], [0, 1], [3, 1], [0, 1], [3, 1], [0, 9], [3, 1], [0, 7], [3, 1], [0, 9], [3, 1], [0, 7], [3, 1],
+    [0, 9], [3, 1], [0, 7], [3, 1], [0, 9], [3, 1], [0, 1], [3, 1], [0, 1], [3, 1], [0, 1], [3, 1], [0, 1], [3, 1]
+  ],
+  "jigsaw": [
+    {"pos":[4,0,4],"front":"down","top":"north","pool":"minecraft:empty","name":"gf:lich_tower/roof","target":""}
+  ]
+}

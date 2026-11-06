@@ -1,0 +1,34 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:music_disc_motion",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_item_music_disc_motion"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "item.twilightforest:music_disc_motion.name"
+      },
+      "minecraft:max_stack_size": 1,
+      "minecraft:tags": {
+        "tags": [
+          "c:music_discs"
+        ]
+      },
+      "minecraft:record": {
+        "comparator_signal": 15,
+        "duration": 169
+      },
+      "minecraft:rarity": {
+        "value": "rare"
+      }
+    }
+  }
+}

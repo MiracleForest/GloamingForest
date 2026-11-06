@@ -1,0 +1,121 @@
+{
+  "format_version": "1.21.0",
+  "minecraft:geometry": [
+    {
+      "description": {
+        "identifier": "geometry.twilightforest.lichdecor.skull_chest",
+        "texture_width": 64,
+        "texture_height": 64,
+        "visible_bounds_width": 2,
+        "visible_bounds_height": 2,
+        "visible_bounds_offset": [
+          0,
+          2,
+          0
+        ]
+      },
+      "bones": [
+        {
+          "name": "lid",
+          "pivot": [
+            0,
+            6,
+            6
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -8,
+                4,
+                -7
+              ],
+              "size": [
+                16,
+                10,
+                14
+              ],
+              "uv": [
+                0,
+                0
+              ]
+            }
+          ]
+        },
+        {
+          "name": "base",
+          "pivot": [
+            0,
+            0.01,
+            0
+          ],
+          "cubes": [
+            {
+              "origin": [
+                -7,
+                0.01,
+                -2
+              ],
+              "size": [
+                14,
+                10,
+                8
+              ],
+              "uv": [
+                1,
+                28
+              ]
+            },
+            {
+              "origin": [
+                -7,
+                4.01,
+                -6
+              ],
+              "size": [
+                1,
+                6,
+                4
+              ],
+              "uv": [
+                0,
+                26
+              ]
+            },
+            {
+              "origin": [
+                6,
+                4.01,
+                -6
+              ],
+              "size": [
+                1,
+                6,
+                4
+              ],
+              "uv": [
+                40,
+                26
+              ]
+            },
+            {
+              "origin": [
+                -7,
+                0.01,
+                -6
+              ],
+              "size": [
+                14,
+                4,
+                4
+              ],
+              "uv": [
+                0,
+                56
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

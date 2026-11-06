@@ -1,0 +1,285 @@
+{
+  "format_version": "1.26.50",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:keepsake_casket",
+      "menu_category": {
+        "category": "items"
+      },
+      "states": {
+        "twilightforest:damage": [
+          0,
+          1,
+          2
+        ],
+        "twilightforest:facing": [
+          "north",
+          "south",
+          "west",
+          "east"
+        ],
+        "twilightforest:multilogged": [
+          "air",
+          "water",
+          "lava",
+          "obsidian",
+          "stone",
+          "basalt"
+        ]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 5
+      },
+      "minecraft:destructible_by_explosion": false,
+      "minecraft:tags": [
+        "minecraft:is_pickaxe_item_destructible"
+      ],
+      "minecraft:map_color": "#191919",
+      "minecraft:loot": "loot_tables/artifacts/empty.json",
+      "minecraft:geometry": "geometry.twilightforest.keepsake_casket_block",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_artifacts_casket_0",
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:collision_box": {
+        "origin": [
+          -8,
+          0,
+          -7
+        ],
+        "size": [
+          16,
+          14,
+          14
+        ]
+      },
+      "minecraft:selection_box": {
+        "origin": [
+          -8,
+          0,
+          -7
+        ],
+        "size": [
+          16,
+          16,
+          14
+        ]
+      },
+      "minecraft:light_dampening": 0
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('twilightforest:damage') == 1",
+        "components": {
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_artifacts_casket_1",
+              "render_method": "alpha_test"
+            }
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:damage') == 2",
+        "components": {
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_artifacts_casket_2",
+              "render_method": "alpha_test"
+            }
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south'",
+        "components": {
+          "minecraft:transformation": {
+            "rotation": [
+              0,
+              0,
+              0
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east'",
+        "components": {
+          "minecraft:transformation": {
+            "rotation": [
+              0,
+              90,
+              0
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north'",
+        "components": {
+          "minecraft:transformation": {
+            "rotation": [
+              0,
+              180,
+              0
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west'",
+        "components": {
+          "minecraft:transformation": {
+            "rotation": [
+              0,
+              270,
+              0
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:multilogged') == 'obsidian'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.casket_solid_template",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_obsidian",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_vanilla_block_obsidian",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_vanilla_block_obsidian",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              12,
+              16
+            ]
+          },
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              12,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:multilogged') == 'stone'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.casket_solid_template",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_stone",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_vanilla_block_stone",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_vanilla_block_stone",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              12,
+              16
+            ]
+          },
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              12,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:multilogged') == 'basalt'",
+        "components": {
+          "minecraft:geometry": "geometry.tf.twilightforest.block.casket_solid_template",
+          "minecraft:material_instances": {
+            "*": {
+              "texture": "tf_vanilla_block_basalt_side",
+              "render_method": "opaque"
+            },
+            "side": {
+              "texture": "tf_vanilla_block_basalt_side",
+              "render_method": "opaque"
+            },
+            "top": {
+              "texture": "tf_vanilla_block_basalt_top",
+              "render_method": "opaque"
+            }
+          },
+          "minecraft:collision_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              12,
+              16
+            ]
+          },
+          "minecraft:selection_box": {
+            "origin": [
+              -8,
+              0,
+              -8
+            ],
+            "size": [
+              16,
+              12,
+              16
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:multilogged') == 'lava'",
+        "components": {
+          "minecraft:light_emission": 15
+        }
+      }
+    ]
+  }
+}

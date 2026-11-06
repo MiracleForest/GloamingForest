@@ -1,0 +1,698 @@
+{
+  "format_version": "1.8.0",
+  "render_controllers": {
+    "controller.render.twilightforest.magic_painting.back": {
+      "arrays": {
+        "geometries": {
+          "Array.geo": [
+            "Geometry.castaway_paradise",
+            "Geometry.darkness",
+            "Geometry.lucid_lands",
+            "Geometry.music_in_the_mire",
+            "Geometry.the_hostile_paradise"
+          ]
+        }
+      },
+      "geometry": "Array.geo[math.clamp(q.property('twilightforest:variant'), 0, 4)]",
+      "materials": [
+        {
+          "*": "Material.default"
+        }
+      ],
+      "textures": [
+        "Texture.back"
+      ],
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "back": true
+        }
+      ]
+    },
+    "controller.render.twilightforest.magic_painting.layer_0": {
+      "arrays": {
+        "geometries": {
+          "Array.geo": [
+            "Geometry.castaway_paradise",
+            "Geometry.darkness",
+            "Geometry.lucid_lands",
+            "Geometry.music_in_the_mire",
+            "Geometry.the_hostile_paradise"
+          ]
+        },
+        "textures": {
+          "Array.tex": [
+            "Texture.castaway_paradise_0",
+            "Texture.darkness_0",
+            "Texture.lucid_lands_0",
+            "Texture.music_in_the_mire_0",
+            "Texture.the_hostile_paradise_0"
+          ]
+        }
+      },
+      "geometry": "Array.geo[math.clamp(q.property('twilightforest:variant'), 0, 4)]",
+      "materials": [
+        {
+          "*": "Material.layer"
+        }
+      ],
+      "textures": [
+        "Array.tex[math.clamp(q.property('twilightforest:variant'), 0, 4)]"
+      ],
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "layer_0": "(q.property('twilightforest:variant') == 0) || (q.property('twilightforest:variant') == 1) || (q.property('twilightforest:variant') == 2) || (q.property('twilightforest:variant') == 3) || (q.property('twilightforest:variant') == 4)"
+        }
+      ]
+    },
+    "controller.render.twilightforest.magic_painting.layer_1": {
+      "arrays": {
+        "geometries": {
+          "Array.geo": [
+            "Geometry.castaway_paradise",
+            "Geometry.darkness",
+            "Geometry.lucid_lands",
+            "Geometry.music_in_the_mire",
+            "Geometry.the_hostile_paradise"
+          ]
+        },
+        "textures": {
+          "Array.tex": [
+            "Texture.castaway_paradise_1",
+            "Texture.darkness_1",
+            "Texture.lucid_lands_1",
+            "Texture.music_in_the_mire_1",
+            "Texture.the_hostile_paradise_1"
+          ]
+        }
+      },
+      "geometry": "Array.geo[math.clamp(q.property('twilightforest:variant'), 0, 4)]",
+      "materials": [
+        {
+          "*": "Material.layer"
+        }
+      ],
+      "textures": [
+        "Array.tex[math.clamp(q.property('twilightforest:variant'), 0, 4)]"
+      ],
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "layer_1": "(q.property('twilightforest:variant') == 0) || (q.property('twilightforest:variant') == 1) || (q.property('twilightforest:variant') == 2) || (q.property('twilightforest:variant') == 3) || (q.property('twilightforest:variant') == 4)"
+        }
+      ]
+    },
+    "controller.render.twilightforest.magic_painting.layer_2": {
+      "arrays": {
+        "geometries": {
+          "Array.geo": [
+            "Geometry.castaway_paradise",
+            "Geometry.darkness",
+            "Geometry.lucid_lands",
+            "Geometry.music_in_the_mire",
+            "Geometry.the_hostile_paradise"
+          ]
+        },
+        "textures": {
+          "Array.tex": [
+            "Texture.castaway_paradise_2",
+            "Texture.darkness_2",
+            "Texture.lucid_lands_2",
+            "Texture.music_in_the_mire_2",
+            "Texture.the_hostile_paradise_2"
+          ]
+        }
+      },
+      "geometry": "Array.geo[math.clamp(q.property('twilightforest:variant'), 0, 4)]",
+      "materials": [
+        {
+          "*": "Material.layer"
+        }
+      ],
+      "textures": [
+        "Array.tex[math.clamp(q.property('twilightforest:variant'), 0, 4)]"
+      ],
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "layer_2": "(q.property('twilightforest:variant') == 0) || (q.property('twilightforest:variant') == 1) || (q.property('twilightforest:variant') == 2) || (q.property('twilightforest:variant') == 4)"
+        }
+      ]
+    },
+    "controller.render.twilightforest.magic_painting.layer_3": {
+      "arrays": {
+        "geometries": {
+          "Array.geo": [
+            "Geometry.castaway_paradise",
+            "Geometry.darkness",
+            "Geometry.lucid_lands",
+            "Geometry.music_in_the_mire",
+            "Geometry.the_hostile_paradise"
+          ]
+        },
+        "textures": {
+          "Array.tex": [
+            "Texture.castaway_paradise_3",
+            "Texture.darkness_3",
+            "Texture.lucid_lands_3",
+            "Texture.music_in_the_mire_3",
+            "Texture.the_hostile_paradise_3"
+          ]
+        }
+      },
+      "geometry": "Array.geo[math.clamp(q.property('twilightforest:variant'), 0, 4)]",
+      "materials": [
+        {
+          "*": "Material.layer"
+        }
+      ],
+      "textures": [
+        "Array.tex[math.clamp(q.property('twilightforest:variant'), 0, 4)]"
+      ],
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "layer_3": "(q.property('twilightforest:variant') == 0) || (q.property('twilightforest:variant') == 1) || (q.property('twilightforest:variant') == 2) || (q.property('twilightforest:variant') == 3)"
+        }
+      ]
+    },
+    "controller.render.twilightforest.magic_painting.layer_4": {
+      "arrays": {
+        "geometries": {
+          "Array.geo": [
+            "Geometry.castaway_paradise",
+            "Geometry.darkness",
+            "Geometry.lucid_lands",
+            "Geometry.music_in_the_mire",
+            "Geometry.the_hostile_paradise"
+          ]
+        },
+        "textures": {
+          "Array.tex": [
+            "Texture.castaway_paradise_4",
+            "Texture.darkness_4",
+            "Texture.lucid_lands_4",
+            "Texture.music_in_the_mire_4",
+            "Texture.the_hostile_paradise_4"
+          ]
+        }
+      },
+      "geometry": "Array.geo[math.clamp(q.property('twilightforest:variant'), 0, 4)]",
+      "materials": [
+        {
+          "*": "Material.layer"
+        }
+      ],
+      "textures": [
+        "Array.tex[math.clamp(q.property('twilightforest:variant'), 0, 4)]"
+      ],
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "layer_4": "(q.property('twilightforest:variant') == 0) || (q.property('twilightforest:variant') == 1) || (q.property('twilightforest:variant') == 2) || (q.property('twilightforest:variant') == 4)"
+        }
+      ]
+    },
+    "controller.render.twilightforest.magic_painting.layer_5": {
+      "arrays": {
+        "geometries": {
+          "Array.geo": [
+            "Geometry.castaway_paradise",
+            "Geometry.darkness",
+            "Geometry.lucid_lands",
+            "Geometry.music_in_the_mire",
+            "Geometry.the_hostile_paradise"
+          ]
+        },
+        "textures": {
+          "Array.tex": [
+            "Texture.castaway_paradise_5",
+            "Texture.darkness_5",
+            "Texture.lucid_lands_5",
+            "Texture.music_in_the_mire_5",
+            "Texture.the_hostile_paradise_5"
+          ]
+        }
+      },
+      "geometry": "Array.geo[math.clamp(q.property('twilightforest:variant'), 0, 4)]",
+      "materials": [
+        {
+          "*": "Material.layer"
+        }
+      ],
+      "textures": [
+        "Array.tex[math.clamp(q.property('twilightforest:variant'), 0, 4)]"
+      ],
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "layer_5": "(q.property('twilightforest:variant') == 0) || (q.property('twilightforest:variant') == 3)"
+        }
+      ]
+    },
+    "controller.render.twilightforest.magic_painting.layer_6": {
+      "arrays": {
+        "geometries": {
+          "Array.geo": [
+            "Geometry.castaway_paradise",
+            "Geometry.darkness",
+            "Geometry.lucid_lands",
+            "Geometry.music_in_the_mire",
+            "Geometry.the_hostile_paradise"
+          ]
+        },
+        "textures": {
+          "Array.tex": [
+            "Texture.castaway_paradise_6",
+            "Texture.darkness_6",
+            "Texture.lucid_lands_6",
+            "Texture.music_in_the_mire_6",
+            "Texture.the_hostile_paradise_6"
+          ]
+        }
+      },
+      "geometry": "Array.geo[math.clamp(q.property('twilightforest:variant'), 0, 4)]",
+      "materials": [
+        {
+          "*": "Material.layer"
+        }
+      ],
+      "textures": [
+        "Array.tex[math.clamp(q.property('twilightforest:variant'), 0, 4)]"
+      ],
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "layer_6": "(q.property('twilightforest:variant') == 0) || (q.property('twilightforest:variant') == 1) || (q.property('twilightforest:variant') == 3) || (q.property('twilightforest:variant') == 4)"
+        }
+      ]
+    },
+    "controller.render.twilightforest.magic_painting.layer_7": {
+      "arrays": {
+        "geometries": {
+          "Array.geo": [
+            "Geometry.castaway_paradise",
+            "Geometry.darkness",
+            "Geometry.lucid_lands",
+            "Geometry.music_in_the_mire",
+            "Geometry.the_hostile_paradise"
+          ]
+        },
+        "textures": {
+          "Array.tex": [
+            "Texture.back",
+            "Texture.back",
+            "Texture.lucid_lands_7",
+            "Texture.music_in_the_mire_7",
+            "Texture.the_hostile_paradise_7"
+          ]
+        }
+      },
+      "geometry": "Array.geo[math.clamp(q.property('twilightforest:variant'), 0, 4)]",
+      "materials": [
+        {
+          "*": "Material.layer"
+        }
+      ],
+      "textures": [
+        "Array.tex[math.clamp(q.property('twilightforest:variant'), 0, 4)]"
+      ],
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "layer_7": "false"
+        }
+      ]
+    },
+    "controller.render.twilightforest.magic_painting.layer_8": {
+      "arrays": {
+        "geometries": {
+          "Array.geo": [
+            "Geometry.castaway_paradise",
+            "Geometry.darkness",
+            "Geometry.lucid_lands",
+            "Geometry.music_in_the_mire",
+            "Geometry.the_hostile_paradise"
+          ]
+        },
+        "textures": {
+          "Array.tex": [
+            "Texture.back",
+            "Texture.back",
+            "Texture.lucid_lands_8",
+            "Texture.music_in_the_mire_8",
+            "Texture.the_hostile_paradise_8"
+          ]
+        }
+      },
+      "geometry": "Array.geo[math.clamp(q.property('twilightforest:variant'), 0, 4)]",
+      "materials": [
+        {
+          "*": "Material.layer"
+        }
+      ],
+      "textures": [
+        "Array.tex[math.clamp(q.property('twilightforest:variant'), 0, 4)]"
+      ],
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "layer_8": "(q.property('twilightforest:variant') == 3) || (q.property('twilightforest:variant') == 4)"
+        }
+      ]
+    },
+    "controller.render.twilightforest.magic_painting.layer_9": {
+      "arrays": {
+        "geometries": {
+          "Array.geo": [
+            "Geometry.castaway_paradise",
+            "Geometry.darkness",
+            "Geometry.lucid_lands",
+            "Geometry.music_in_the_mire",
+            "Geometry.the_hostile_paradise"
+          ]
+        },
+        "textures": {
+          "Array.tex": [
+            "Texture.back",
+            "Texture.back",
+            "Texture.lucid_lands_9",
+            "Texture.music_in_the_mire_9",
+            "Texture.the_hostile_paradise_9"
+          ]
+        }
+      },
+      "geometry": "Array.geo[math.clamp(q.property('twilightforest:variant'), 0, 4)]",
+      "materials": [
+        {
+          "*": "Material.layer"
+        }
+      ],
+      "textures": [
+        "Array.tex[math.clamp(q.property('twilightforest:variant'), 0, 4)]"
+      ],
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "layer_9": "(q.property('twilightforest:variant') == 4)"
+        }
+      ]
+    },
+    "controller.render.twilightforest.magic_painting.layer_10": {
+      "arrays": {
+        "geometries": {
+          "Array.geo": [
+            "Geometry.castaway_paradise",
+            "Geometry.darkness",
+            "Geometry.lucid_lands",
+            "Geometry.music_in_the_mire",
+            "Geometry.the_hostile_paradise"
+          ]
+        },
+        "textures": {
+          "Array.tex": [
+            "Texture.back",
+            "Texture.back",
+            "Texture.lucid_lands_10",
+            "Texture.music_in_the_mire_10",
+            "Texture.the_hostile_paradise_10"
+          ]
+        }
+      },
+      "geometry": "Array.geo[math.clamp(q.property('twilightforest:variant'), 0, 4)]",
+      "materials": [
+        {
+          "*": "Material.layer"
+        }
+      ],
+      "textures": [
+        "Array.tex[math.clamp(q.property('twilightforest:variant'), 0, 4)]"
+      ],
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "layer_10": "(q.property('twilightforest:variant') == 3)"
+        }
+      ]
+    },
+    "controller.render.twilightforest.magic_painting.layer_11": {
+      "arrays": {
+        "geometries": {
+          "Array.geo": [
+            "Geometry.castaway_paradise",
+            "Geometry.darkness",
+            "Geometry.lucid_lands",
+            "Geometry.music_in_the_mire",
+            "Geometry.the_hostile_paradise"
+          ]
+        },
+        "textures": {
+          "Array.tex": [
+            "Texture.back",
+            "Texture.back",
+            "Texture.lucid_lands_11",
+            "Texture.back",
+            "Texture.the_hostile_paradise_11"
+          ]
+        }
+      },
+      "geometry": "Array.geo[math.clamp(q.property('twilightforest:variant'), 0, 4)]",
+      "materials": [
+        {
+          "*": "Material.layer"
+        }
+      ],
+      "textures": [
+        "Array.tex[math.clamp(q.property('twilightforest:variant'), 0, 4)]"
+      ],
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "layer_11": "false"
+        }
+      ]
+    },
+    "controller.render.twilightforest.magic_painting.layer_12": {
+      "arrays": {
+        "geometries": {
+          "Array.geo": [
+            "Geometry.castaway_paradise",
+            "Geometry.darkness",
+            "Geometry.lucid_lands",
+            "Geometry.music_in_the_mire",
+            "Geometry.the_hostile_paradise"
+          ]
+        },
+        "textures": {
+          "Array.tex": [
+            "Texture.back",
+            "Texture.back",
+            "Texture.lucid_lands_12",
+            "Texture.back",
+            "Texture.the_hostile_paradise_12"
+          ]
+        }
+      },
+      "geometry": "Array.geo[math.clamp(q.property('twilightforest:variant'), 0, 4)]",
+      "materials": [
+        {
+          "*": "Material.layer"
+        }
+      ],
+      "textures": [
+        "Array.tex[math.clamp(q.property('twilightforest:variant'), 0, 4)]"
+      ],
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "layer_12": "(q.property('twilightforest:variant') == 4)"
+        }
+      ]
+    },
+    "controller.render.twilightforest.magic_painting.layer_13": {
+      "arrays": {
+        "geometries": {
+          "Array.geo": [
+            "Geometry.castaway_paradise",
+            "Geometry.darkness",
+            "Geometry.lucid_lands",
+            "Geometry.music_in_the_mire",
+            "Geometry.the_hostile_paradise"
+          ]
+        },
+        "textures": {
+          "Array.tex": [
+            "Texture.back",
+            "Texture.back",
+            "Texture.lucid_lands_13",
+            "Texture.back",
+            "Texture.back"
+          ]
+        }
+      },
+      "geometry": "Array.geo[math.clamp(q.property('twilightforest:variant'), 0, 4)]",
+      "materials": [
+        {
+          "*": "Material.layer"
+        }
+      ],
+      "textures": [
+        "Array.tex[math.clamp(q.property('twilightforest:variant'), 0, 4)]"
+      ],
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "layer_13": "false"
+        }
+      ]
+    },
+    "controller.render.twilightforest.magic_painting.layer_14": {
+      "arrays": {
+        "geometries": {
+          "Array.geo": [
+            "Geometry.castaway_paradise",
+            "Geometry.darkness",
+            "Geometry.lucid_lands",
+            "Geometry.music_in_the_mire",
+            "Geometry.the_hostile_paradise"
+          ]
+        },
+        "textures": {
+          "Array.tex": [
+            "Texture.back",
+            "Texture.back",
+            "Texture.lucid_lands_14",
+            "Texture.back",
+            "Texture.back"
+          ]
+        }
+      },
+      "geometry": "Array.geo[math.clamp(q.property('twilightforest:variant'), 0, 4)]",
+      "materials": [
+        {
+          "*": "Material.layer"
+        }
+      ],
+      "textures": [
+        "Array.tex[math.clamp(q.property('twilightforest:variant'), 0, 4)]"
+      ],
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "layer_14": "false"
+        }
+      ]
+    },
+    "controller.render.twilightforest.magic_painting.layer_15": {
+      "arrays": {
+        "geometries": {
+          "Array.geo": [
+            "Geometry.castaway_paradise",
+            "Geometry.darkness",
+            "Geometry.lucid_lands",
+            "Geometry.music_in_the_mire",
+            "Geometry.the_hostile_paradise"
+          ]
+        },
+        "textures": {
+          "Array.tex": [
+            "Texture.back",
+            "Texture.back",
+            "Texture.lucid_lands_15",
+            "Texture.back",
+            "Texture.back"
+          ]
+        }
+      },
+      "geometry": "Array.geo[math.clamp(q.property('twilightforest:variant'), 0, 4)]",
+      "materials": [
+        {
+          "*": "Material.layer"
+        }
+      ],
+      "textures": [
+        "Array.tex[math.clamp(q.property('twilightforest:variant'), 0, 4)]"
+      ],
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "layer_15": "false"
+        }
+      ]
+    },
+    "controller.render.twilightforest.magic_painting.layer_16": {
+      "arrays": {
+        "geometries": {
+          "Array.geo": [
+            "Geometry.castaway_paradise",
+            "Geometry.darkness",
+            "Geometry.lucid_lands",
+            "Geometry.music_in_the_mire",
+            "Geometry.the_hostile_paradise"
+          ]
+        },
+        "textures": {
+          "Array.tex": [
+            "Texture.back",
+            "Texture.back",
+            "Texture.lucid_lands_16",
+            "Texture.back",
+            "Texture.back"
+          ]
+        }
+      },
+      "geometry": "Array.geo[math.clamp(q.property('twilightforest:variant'), 0, 4)]",
+      "materials": [
+        {
+          "*": "Material.layer"
+        }
+      ],
+      "textures": [
+        "Array.tex[math.clamp(q.property('twilightforest:variant'), 0, 4)]"
+      ],
+      "part_visibility": [
+        {
+          "*": false
+        },
+        {
+          "layer_16": "(q.property('twilightforest:variant') == 2)"
+        }
+      ]
+    }
+  }
+}

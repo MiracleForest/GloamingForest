@@ -1,0 +1,112 @@
+{
+  "format_version": "1.26.50",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:cicada",
+      "menu_category": {
+        "category": "construction"
+      },
+      "states": {
+        "twilightforest:facing": [
+          "up",
+          "north",
+          "south",
+          "west",
+          "east",
+          "down"
+        ]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 0
+      },
+      "minecraft:collision_box": false,
+      "minecraft:selection_box": {
+        "origin": [
+          -4.8,
+          0,
+          -4.8
+        ],
+        "size": [
+          9.6,
+          2.4,
+          9.6
+        ]
+      },
+      "minecraft:light_dampening": 0,
+      "minecraft:geometry": "geometry.twilightforest.flora.cicada",
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_flora_cicada_model",
+          "render_method": "alpha_test"
+        }
+      }
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'down'",
+        "components": {
+          "minecraft:transformation": {
+            "rotation": [
+              180,
+              0,
+              0
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'north'",
+        "components": {
+          "minecraft:transformation": {
+            "rotation": [
+              -90,
+              0,
+              0
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'south'",
+        "components": {
+          "minecraft:transformation": {
+            "rotation": [
+              90,
+              0,
+              0
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'west'",
+        "components": {
+          "minecraft:transformation": {
+            "rotation": [
+              0,
+              0,
+              90
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:facing') == 'east'",
+        "components": {
+          "minecraft:transformation": {
+            "rotation": [
+              0,
+              0,
+              -90
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

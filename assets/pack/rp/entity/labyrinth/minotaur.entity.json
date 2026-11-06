@@ -1,0 +1,35 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:minotaur",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/minotaur"
+      },
+      "geometry": {
+        "default": "geometry.twilightforest.minotaur.held"
+      },
+      "scripts": {
+        "pre_animation": [
+          "variable.charging = query.property('twilightforest:charging');",
+          "variable.limb = variable.charging ? query.life_time * 24.0 : query.modified_distance_moved;",
+          "variable.amount = variable.charging ? 1.0 : query.modified_move_speed;"
+        ],
+        "animate": ["base", { "attack": "variable.attack_time > 0.0" }]
+      },
+      "animations": {
+        "base": "animation.twilightforest.minotaur.walk",
+        "attack": "animation.humanoid.attack.rotations"
+      },
+      "enable_attachables": true,
+      "render_controllers": ["controller.render.default"],
+      "spawn_egg": {
+        "base_color": "#3f3024",
+        "overlay_color": "#aa7d66"
+      }
+    }
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:client_entity": {
+    "description": {
+      "identifier": "twilightforest:lower_goblin_knight",
+      "materials": {
+        "default": "entity_alphatest"
+      },
+      "textures": {
+        "default": "textures/twilightforest/entity/doublegoblin"
+      },
+      "geometry": {
+        "default": "geometry.twilightforest.lower_goblin_knight"
+      },
+      "render_controllers": [
+        "controller.render.twilightforest.lower_goblin_knight"
+      ],
+      "animations": {
+        "base": "animation.twilightforest.lower_goblin_knight.base",
+        "unridden": "animation.twilightforest.lower_goblin_knight.unridden",
+        "unarmored": "animation.twilightforest.lower_goblin_knight.unarmored"
+      },
+      "scripts": {
+        "animate": [
+          "base",
+          {
+            "unridden": "!q.property('twilightforest:ridden')"
+          },
+          {
+            "unarmored": "!q.property('twilightforest:armor') && !q.property('twilightforest:ridden')"
+          }
+        ]
+      },
+      "spawn_egg": {
+        "base_color": "#566055",
+        "overlay_color": "#d3e7bc"
+      }
+    }
+  }
+}

@@ -1,0 +1,186 @@
+{
+  "format_version": "1.26.50",
+  "minecraft:block": {
+    "description": {
+      "identifier": "twilightforest:ominous_cyan_candle",
+      "menu_category": {
+        "category": "none"
+      },
+      "states": {
+        "twilightforest:candles": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ]
+      }
+    },
+    "components": {
+      "minecraft:destructible_by_mining": {
+        "seconds_to_destroy": 0.1
+      },
+      "minecraft:destructible_by_explosion": {
+        "explosion_resistance": 0.5
+      },
+      "minecraft:map_color": "#4c7f99",
+      "minecraft:geometry": {
+        "identifier": "geometry.twilightforest.lichdecor.ominous_candles",
+        "bone_visibility": {
+          "candles_1": "q.block_state('twilightforest:candles') == 1",
+          "candles_2": "q.block_state('twilightforest:candles') == 2",
+          "candles_3": "q.block_state('twilightforest:candles') == 3",
+          "candles_4": "q.block_state('twilightforest:candles') == 4"
+        }
+      },
+      "minecraft:material_instances": {
+        "*": {
+          "texture": "tf_lichdecor_cyan_candle_lit",
+          "render_method": "alpha_test"
+        },
+        "candle": {
+          "texture": "tf_lichdecor_cyan_candle_lit",
+          "render_method": "alpha_test"
+        }
+      },
+      "minecraft:light_dampening": 0,
+      "minecraft:collision_box": {
+        "origin": [
+          -1,
+          0,
+          -1
+        ],
+        "size": [
+          2,
+          6,
+          2
+        ]
+      },
+      "minecraft:selection_box": {
+        "origin": [
+          -1,
+          0,
+          -1
+        ],
+        "size": [
+          2,
+          6,
+          2
+        ]
+      }
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('twilightforest:candles') == 2",
+        "components": {
+          "minecraft:collision_box": {
+            "origin": [
+              -3,
+              0,
+              -2
+            ],
+            "size": [
+              6,
+              6,
+              3
+            ]
+          },
+          "minecraft:selection_box": {
+            "origin": [
+              -3,
+              0,
+              -2
+            ],
+            "size": [
+              6,
+              6,
+              3
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:candles') == 3",
+        "components": {
+          "minecraft:collision_box": {
+            "origin": [
+              -2,
+              0,
+              -2
+            ],
+            "size": [
+              5,
+              6,
+              5
+            ]
+          },
+          "minecraft:selection_box": {
+            "origin": [
+              -2,
+              0,
+              -2
+            ],
+            "size": [
+              5,
+              6,
+              5
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:candles') == 4",
+        "components": {
+          "minecraft:collision_box": {
+            "origin": [
+              -3,
+              0,
+              -3
+            ],
+            "size": [
+              6,
+              6,
+              5
+            ]
+          },
+          "minecraft:selection_box": {
+            "origin": [
+              -3,
+              0,
+              -3
+            ],
+            "size": [
+              6,
+              6,
+              5
+            ]
+          }
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:candles') == 1",
+        "components": {
+          "minecraft:light_emission": 2
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:candles') == 2",
+        "components": {
+          "minecraft:light_emission": 4
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:candles') == 3",
+        "components": {
+          "minecraft:light_emission": 6
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:candles') == 4",
+        "components": {
+          "minecraft:light_emission": 8
+        }
+      }
+    ]
+  }
+}
