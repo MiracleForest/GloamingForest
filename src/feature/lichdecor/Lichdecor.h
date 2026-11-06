@@ -19,6 +19,8 @@
 
 #include "nlohmann/json.hpp"
 
+#include "mc/deps/core/math/Vec3.h"
+
 #include "core/GlobalPos.h"
 
 class Actor;
@@ -28,7 +30,6 @@ class BlockSource;
 class Dimension;
 class ItemStack;
 class Player;
-class Vec3;
 
 namespace gf::feature::lichdecor {
 
