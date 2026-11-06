@@ -12,8 +12,9 @@
      allowed slot is busy; gives up after -LockTimeoutMinutes with exit code 2. Remote modes
      start the BDS host only after that, so a queued run holds no server slot.
 
-  Input is headless by default: the BeDD mod (https://github.com/LiteLDev/BeDD,
-  %USERPROFILE%\Desktop\BeDD; $env:BEDD_DIR overrides its bin folder) is
+  Input is headless by default: the BeDD mod (https://github.com/LiteLDev/BeDD; $env:BEDD_DIR,
+  else the development build %USERPROFILE%\Desktop\BeDD\bin\BeDD with $env:GF_E2E_BEDD_DEV=1, else
+  the pinned release in %LOCALAPPDATA%\gf-e2e\BeDD, downloaded on first use) is
   deployed with ours and every click, key, text and screenshot goes through its control pipe. The
   game stays in the background and never takes the real mouse, keyboard or foreground, so the PC
   stays usable during a run. -Foreground uses real SendInput as before (slot 1 only).
@@ -91,11 +92,10 @@ $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot/lib.ps1"
 
 if (-not $Foreground) {
+    # $env:BEDD_DIR, the development build with $env:GF_E2E_BEDD_DEV=1, else the pinned release
+    # (installed on first use); logs "BeDD v<version> from <dir> (<source>)" (lib.ps1).
+    $null = Initialize-BeDD
     $shim = Join-Path $script:BeDDDir 'harness-shim.ps1'
-    if (-not (Test-Path $shim) -and -not $env:BEDD_DIR) { $script:BeDDDir = Install-BeDDRelease; $shim = Join-Path $script:BeDDDir 'harness-shim.ps1' }
-    if (-not (Test-Path $shim)) {
-        throw "BeDD is not available ($shim missing). Set `$env:BEDD_DIR to a BeDD build, or pass -Foreground to use the real mouse and keyboard."
-    }
     # Replaces Click/Press-Key/Type-Text/Scroll/Move-Mouse/Focus-Game/Assert-GameForeground/
     # Set-GameWindowSize and routes [BsE2E.Native]::Key/MouseButton/... (used by scenarios)
     # through the mod's pipe.
@@ -343,6 +343,9 @@ try {
             }
             if ($script:NotRunReason -or (Get-WatchdogFired)) {
                 Write-Step "scenario stopped: $_"
+            } elseif ($script:BeDDBroken) {
+                # the harness's input mod, not the scenario (lib.ps1 Assert-BeDDLoaded)
+                $failures.Add("BeDD: $script:BeDDBroken")
             } else {
                 $failures.Add("scenario: $_")
                 Write-Host "[e2e] $($_.ScriptStackTrace)" -ForegroundColor DarkGray
@@ -424,6 +427,34 @@ try {
     Exit-GfSlot $script:ClientPoolSlot
 }
 
+# A BeDD other than the pinned release ($env:BEDD_DIR, or the development build) could not hook this
+# game: run the whole scenario once more with the release copy, in a fresh process (its own slots,
+# locks and output folder; this run released all of them above), and end with its exit code.
+if ($script:BeDDBroken) {
+    Write-Host "[e2e] $script:BeDDBroken" -ForegroundColor Red
+    if ($script:BeDD.Source -ne 'release' -and -not $env:GF_E2E_BEDD_RETRY) {
+        Write-Host "[e2e] retrying '$Scenario' ($Mode) once with the pinned BeDD release ($script:BeDDReleaseDir); unset `$env:BEDD_DIR / `$env:GF_E2E_BEDD_DEV to use it from the start" -ForegroundColor Yellow
+        $childArgs = [System.Collections.Generic.List[string]]::new()
+        foreach ($a in @('-NoProfile', '-File', $PSCommandPath, '-Scenario', $Scenario, '-Mode', $Mode, '-ModDir', $ModDir,
+                '-LockTimeoutMinutes', "$LockTimeoutMinutes", '-SlotWaitMinutes', "$SlotWaitMinutes", '-HostTimeoutMinutes', "$HostTimeoutMinutes")) { $childArgs.Add($a) }
+        foreach ($sw in @('KeepOpen', 'KeepOtherMods', 'HeadlessTrace', 'StrictContentLog')) { if ($PSBoundParameters[$sw]) { $childArgs.Add("-$sw") } }
+        $saved = @{ BEDD_DIR = $env:BEDD_DIR; GF_E2E_BEDD_DEV = $env:GF_E2E_BEDD_DEV; GF_E2E_BEDD_RETRY = $env:GF_E2E_BEDD_RETRY; GF_E2E_CLIENT_SLOTS = $env:GF_E2E_CLIENT_SLOTS }
+        try {
+            Remove-Item Env:BEDD_DIR, Env:GF_E2E_BEDD_DEV -ErrorAction SilentlyContinue
+            $env:GF_E2E_BEDD_RETRY = '1'
+            # (-Slot as the environment list: an int[] does not survive -File)
+            if ($Slot) { $env:GF_E2E_CLIENT_SLOTS = ($Slot -join ',') }
+            & (Get-Process -Id $PID).Path @childArgs
+            $code = $LASTEXITCODE
+        } finally {
+            foreach ($k in $saved.Keys) { if ($null -eq $saved[$k]) { Remove-Item "Env:$k" -ErrorAction SilentlyContinue } else { Set-Item "Env:$k" $saved[$k] } }
+        }
+        Write-Host "[e2e] (the retry with the BeDD release exited $code)"
+        exit $code
+    }
+    Write-Host "[e2e] this BeDD cannot drive this game; the run tested nothing of '$Scenario'. Use the pinned release (unset `$env:BEDD_DIR / `$env:GF_E2E_BEDD_DEV) or a BeDD built for this game version." -ForegroundColor Red
+}
+
 if ($lockTimeout) {
     Write-Host "[e2e] client scenario '$Scenario' NOT RUN (game lock, server slot or output folder not free in time; nothing was tested)" -ForegroundColor Yellow
     Write-Host "[e2e]   $lockTimeout" -ForegroundColor Yellow
@@ -489,6 +520,7 @@ if ($notRun) {
     exit 2
 }
 
+if ($script:BeDD) { Write-Host "[e2e] input: BeDD v$($script:BeDD.Version) from $($script:BeDD.Dir) ($($script:BeDD.Source))" }
 # (listed, never a failure: verbose / info lines; warnings fail only in a strict run)
 foreach ($n in $script:ContentLogNotes) { Write-Host "[e2e] content-log verbose/info: $n" -ForegroundColor DarkCyan }
 foreach ($w in $script:ContentLogWarnings) { Write-Host "[e2e] content-log warning: $w" -ForegroundColor Yellow }
