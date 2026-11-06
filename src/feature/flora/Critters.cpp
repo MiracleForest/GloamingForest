@@ -136,10 +136,10 @@ bool squish(BlockSource& region, BlockPos const& pos, Actor* projectile, Player*
     if (auto level = &region.getLevel()) {
         if (auto dim = level->getDimension(region.getDimensionId()).lock()) {
             auto& random = levelRandom();
-            for (int i = 0; i < 50; ++i) {
-                float x = pos.x + 0.25f + random.nextFloat() * 0.5f, z = pos.z + 0.25f + random.nextFloat() * 0.5f;
-                fx::particle(*dim, "minecraft:block", Vec3{x, pos.y + (wall ? 0.5f : 0.0f), z}, {}, 1, {{"block", "minecraft:slime"}});
-            }
+            (void)random;
+            // x / z at 0.25..0.75 of the block: one call, spread around the centre
+            fx::particle(*dim, "minecraft:block", Vec3{pos.x + .5f, pos.y + (wall ? 0.5f : 0.0f), pos.z + .5f}, {}, 50,
+                         {{"block", "minecraft:slime"}, {"spread", {0.15, 0.0, 0.15}}});
         }
     }
     ++gSquished;
@@ -169,6 +169,7 @@ std::unordered_map<std::int64_t, std::int64_t>& cicadaWearers() {
 /// sound now and then at the wearer, best effort).
 void tickCicadaWearers(Level& level) {
     auto& wearers = cicadaWearers();
+    std::erase_if(wearers, [&](auto const& e) { return level.fetchEntity(ActorUniqueID{e.first}, false) == nullptr; });
     level.forEachPlayer(std::function<bool(Player&)>([&](Player& p) {
         bool wears = game::items::idOf(p.getArmor(SharedTypes::Legacy::ArmorSlot::Head)) == ids::Cicada;
         auto uid   = p.getOrCreateUniqueID().rawID;
@@ -192,11 +193,16 @@ void tickCicadaWearers(Level& level) {
             log().info("flora: {} wears a cicada", p.getRealName());
             return true;
         }
-        if (now() >= it->second && !net::isCompanion(p)) {
-            // vanilla clients: the cicada sound at the wearer (MovingCicadaSoundInstance loops)
-            if (!config().silentCicadas && !config().silentCicadasOnHead) {
-                if (auto dim = level.getDimension(p.getDimensionId()).lock()) fx::sound(*dim, "block.twilightforest.cicada", p.getPosition(), 1.0f, 1.0f);
-            }
+        if (now() >= it->second) {
+            // vanilla clients near the wearer: the cicada sound now and then (companions loop it themselves)
+            Vec3 at = p.getPosition();
+            level.forEachPlayer(std::function<bool(Player&)>([&](Player& other) {
+                if (other.getDimensionId() != p.getDimensionId() || net::isCompanion(other)) return true;
+                Vec3 o = other.getPosition();
+                if ((o.x - at.x) * (o.x - at.x) + (o.y - at.y) * (o.y - at.y) + (o.z - at.z) * (o.z - at.z) <= 16.0 * 16.0)
+                    fx::soundTo(other, "block.twilightforest.cicada", 1.0f, 1.0f);
+                return true;
+            }));
             it->second = now() + 100 + levelRandom().nextInt(100);
         }
         return true;
@@ -209,6 +215,10 @@ void tickCritters(Level& level) { tickCicadaWearers(level); }
 
 void installCritters() {
     using namespace critters;
+    // a companion joining hears the cicadas already worn (CreateMovingCicadaSoundPacket of the trackers)
+    net::onCompanionJoined([](Player& companion) {
+        for (auto const& [uid, next] : cicadaWearers()) net::send(companion, "flora.moving_cicada_sound", {{"entity", uid}});
+    });
     for (auto const* critter : kCritters) {
         std::string id = critter;
         // CritterBlock#getStateForPlacement: the clicked face if it is supported, else the

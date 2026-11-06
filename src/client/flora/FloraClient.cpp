@@ -65,6 +65,7 @@
 #include "client/Client.h"
 #include "client/input/Input.h"
 #include "client/render/Render.h"
+#include "core/flora/FloraMath.h"
 #include "feature/flora/Flora.h"
 #include "feature/fx/FxInternal.h"
 #include "game/Items.h"
@@ -357,7 +358,7 @@ void fallenLeavesSlowdown(LocalPlayer& player, BlockSource const& region, moveme
             }
     if (worst <= 2) return;
     // Entity#makeStuckInBlock: the motion of this tick times (1 - 0.05 * (layers - 2), 1, same)
-    float f = 1.0f - 0.05f * static_cast<float>(worst - 2);
+    auto f = static_cast<float>(core::flora::fallenLeavesFactor(worst));
     move.velocity.x *= f;
     move.velocity.z *= f;
 }
@@ -436,6 +437,7 @@ public:
         net::client::on("flora.mason_jar_item", [](nlohmann::json const& msg) {
             auto const& p = msg.value("pos", nlohmann::json::array());
             if (!p.is_array() || p.size() != 3) return;
+            if (st().jars.size() > 4096) st().jars.clear();
             auto& jar    = st().jars[{p[0].get<int>(), p[1].get<int>(), p[2].get<int>()}];
             jar.item     = msg.value("item", nlohmann::json{});
             jar.rotation = msg.value("rotation", 0);
@@ -444,6 +446,7 @@ public:
         net::client::on("flora.jar_wobble", [](nlohmann::json const& msg) {
             auto const& p = msg.value("pos", nlohmann::json::array());
             if (!p.is_array() || p.size() != 3) return;
+            std::erase_if(st().wobbles, [](auto const& e) { return st().tick - e.second > 40; });
             st().wobbles[{p[0].get<int>(), p[1].get<int>(), p[2].get<int>()}] = st().tick;
         });
     }

@@ -42,9 +42,7 @@
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_flora_moonworm_model",
-          "render_method": "alpha_test",
-          "ambient_occlusion": false,
-          "face_dimming": false
+          "render_method": "alpha_test"
         }
       },
       "minecraft:light_emission": 14

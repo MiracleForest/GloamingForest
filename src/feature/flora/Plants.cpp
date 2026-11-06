@@ -539,8 +539,8 @@ void installPlants() {
     worldgen::addStage(worldgen::Stage::Features, "flora.survival", 1000, [](worldgen::Chunk&, worldgen::Region& region) {
         static std::set<std::string> const kSwept{ids::Mayapple, ids::Fiddlehead, ids::CloverPatch, ids::MossPatch, ids::Mushgloom, ids::FallenLeaves, ids::HugeWaterLily};
         int cx = region.centerChunkX() * 16, cz = region.centerChunkZ() * 16;
-        for (int x = cx - 16; x < cx + 32; ++x)
-            for (int z = cz - 16; z < cz + 32; ++z) {
+        for (int x = cx; x < cx + 16; ++x)
+            for (int z = cz; z < cz + 16; ++z) {
                 if (!region.isInside(x, z)) continue;
                 int top = region.height(worldgen::Heightmap::WorldSurface, x, z);
                 for (int y = std::min(top, region.maxY() - 1); y >= std::max(region.minY(), top - 12); --y) {

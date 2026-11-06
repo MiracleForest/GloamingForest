@@ -179,10 +179,12 @@ bool lavaBlock(Block const& b) {
 } // namespace
 
 bool hasWater(BlockSource& region, BlockPos const& pos) {
+    // Fluids.WATER: a water source (Bedrock liquid_depth 0), in the block or its liquid layer
+    auto source = [](Block const& w) { return waterBlock(w) && intState(w, "liquid_depth", 0) == 0; };
     auto const* b = blockAt(region, pos);
     if (!b) return false;
-    if (waterBlock(*b)) return true;
-    return waterBlock(region.getLiquidBlock(pos));
+    if (source(*b)) return true;
+    return source(region.getLiquidBlock(pos));
 }
 
 bool hasFluid(BlockSource& region, BlockPos const& pos) {

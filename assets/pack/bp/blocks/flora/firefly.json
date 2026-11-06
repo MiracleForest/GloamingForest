@@ -42,9 +42,7 @@
       "minecraft:material_instances": {
         "*": {
           "texture": "tf_flora_firefly_model",
-          "render_method": "blend",
-          "ambient_occlusion": false,
-          "face_dimming": false
+          "render_method": "blend"
         }
       },
       "minecraft:light_emission": 15
