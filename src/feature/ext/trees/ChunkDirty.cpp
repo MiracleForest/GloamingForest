@@ -18,7 +18,7 @@ void markBiomesUnsaved(LevelChunk& chunk) {
 }
 
 bool biomesUnsaved(LevelChunk const& chunk) {
-    auto const& counter = biomeCounter(const_cast<LevelChunk&>(chunk));
+    auto const& counter = chunk.mFullChunkDirtyTicksCounters[static_cast<int>(LevelChunkDataField::BiomeState)].get();
     return counter.totalTime >= 0 && counter.lastChange == counter.totalTime && chunk.nonActorDataNeedsSaving(0, 0);
 }
 

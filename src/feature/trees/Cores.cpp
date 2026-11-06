@@ -25,6 +25,7 @@
 #include <mutex>
 #include <random>
 #include <set>
+#include <unordered_map>
 #include <unordered_set>
 
 #include "ll/api/event/EventBus.h"
@@ -228,7 +229,15 @@ int stateInt(std::map<std::string, std::string> const& states, char const* name,
 /// the shortest way through leaves to a log (#minecraft:logs: 0), a leaf with a stored distance
 /// (TF's: its value) counting as that value, capped at 7 (LeavesBlock.DECAY_DISTANCE).
 int vanillaLeafDistance(BlockSource& region, BlockPos const& start) {
-    auto isVanillaLeaf = [](Block const& b) { return gf::tags::has(gf::tags::Registry::Block, "minecraft:leaves", b.getTypeName()) && b.getTypeName().starts_with("minecraft:"); };
+    // tag membership per block id, cached (the walk asks it for every neighbour)
+    static std::unordered_map<std::string, std::uint8_t> kinds; // 1 leaf, 2 log, 0 neither
+    auto kindOf = [](std::string const& id) {
+        auto it = kinds.find(id);
+        if (it != kinds.end()) return it->second;
+        std::uint8_t k = gf::tags::has(gf::tags::Registry::Block, "minecraft:logs", id) ? 2 : gf::tags::has(gf::tags::Registry::Block, "minecraft:leaves", id) ? 1 : 0;
+        return kinds.emplace(id, k).first->second;
+    };
+    auto isVanillaLeaf = [&](Block const& b) { return b.getTypeName().starts_with("minecraft:") && kindOf(b.getTypeName()) == 1; };
     int  best          = 7;
     std::vector<BlockPos>              frontier{start};
     std::unordered_set<std::int64_t>   seen{core::mth::blockPosAsLong(start.x, start.y, start.z)};
@@ -240,7 +249,7 @@ int vanillaLeafDistance(BlockSource& region, BlockPos const& start) {
                 if (n.y < region.getMinHeight() || n.y >= region.getMaxHeight() || !region.hasChunksAt(n, 0, false)) continue;
                 Block const& b  = region.getBlock(n);
                 auto const&  id = b.getTypeName();
-                if (gf::tags::has(gf::tags::Registry::Block, "minecraft:logs", id)) {
+                if (kindOf(id) == 2) {
                     best = std::min(best, depth + 1);
                 } else if (id.starts_with("twilightforest:")) {
                     auto st = game::statesOf(b);
