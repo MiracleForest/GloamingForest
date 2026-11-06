@@ -1,0 +1,7 @@
+{
+  "patch": {
+    "data/twilightforest/worldgen/configured_feature/legacy_redstone_ore.json": [
+      { "op": "remove", "path": "/config/targets/0/state/Properties" }
+    ]
+  }
+}
