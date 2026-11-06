@@ -1,0 +1,29 @@
+{
+  "format_version": "1.21.60",
+  "minecraft:item": {
+    "description": {
+      "identifier": "twilightforest:fiery_tears",
+      "menu_category": {
+        "category": "items"
+      }
+    },
+    "components": {
+      "minecraft:icon": {
+        "textures": {
+          "default": "tf_item_fiery_tears"
+        }
+      },
+      "minecraft:display_name": {
+        "value": "item.twilightforest:fiery_tears.name"
+      },
+      "minecraft:rarity": {
+        "value": "uncommon"
+      },
+      "minecraft:tags": {
+        "tags": [
+          "twilightforest:fiery_vial"
+        ]
+      }
+    }
+  }
+}
