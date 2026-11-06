@@ -8,6 +8,15 @@ What the unit implements, how it maps TF 4.8 onto Bedrock, and what is still mis
 | Path | What |
 |---|---|
 | `src/feature/lichdecor/Lichdecor.h`, `Common.cpp` | shared helpers (states with the `twilightforest:` prefix, directions, candles, sounds) and the config section `lichdecor` (`disableSkullCandleCreation`) |
+| `src/feature/lichdecor/Lightable.cpp`, `LightablesInternal.h` | `LightableBlock` (firestarter, empty-hand extinguish, burning projectiles), TF's `CandleColors` numbering, the drop stash read by the loot modifiers |
+| `src/feature/lichdecor/Candelabra.cpp` | `twilightforest:candelabra`: placement candidates and the torch-like support test, the three candle slots (BlockData `candles`), redstone -> DIM, scepter / exanimate essence -> OMINOUS, emitter and comparator output, the silk-touch drop with `twilightforest:candelabra_data` |
+| `src/feature/lichdecor/SkullCandles.cpp` | the 12 skull candles: creation from a vanilla head with a vanilla candle (`disableSkullCandleCreation`, stat `twilightforest:skull_candles_made`), adding / removing candles, restoring the head, the six items' placement, the drops (`twilightforest:skull_candles`) |
+| `src/feature/lichdecor/OminousCandles.cpp` | the 17 ominous candles: empty hand -> the unlit vanilla candle, the matching candle adds one |
+| `src/feature/lichdecor/OminousFire.cpp` | `twilightforest:ominous_fire`: survival, entities inside (not undead, never ignited, items destroyed after 5 hits), the nether portal in the Overworld / Nether, the player-break sound, the conversion on death (zombified player, data map `twilightforest:ominous_fire`), `zombifiedPlayerAttacks` |
+| `src/feature/lichdecor/Brazier.cpp` | `twilightforest:brazier`: two-block placement, halves kept together, flint and steel / fire charge cycle, water bucket |
+| `src/feature/ext/lichdecor/SupportPower.*` | contract extension (R18): a directional producer in the circuit graph for the DIM candelabra's strong power into its support |
+| `src/feature/lichdecor/SelfTestsLight.cpp` | selftests of the lightable blocks and the ominous fire (dx 2200..2249) |
+| `assets/pack/{bp,rp}/**/lichdecor/**` | block geometry (skull candles with the vanilla head shapes, ominous candles, candelabra candles, brazier, skull chest), the `dim_flame` / `ominous_flame` particles (vanilla small flame with TF's sprites), the magic painting client entity (one geometry per variant, a plane per layer, variant property `twilightforest:variant`) |
 | `src/feature/lichdecor/SinisterSpawner.cpp` | `/twilightforest sinister_spawner add_particle / remove_particle / set_loot / clear_loot` (`SinisterSpawnerCommand`), the creative trophy / boss spawner use (`SinisterSpawnerBlock#particlesFromItem`), the drops (the stored loot table, 15 + nextInt(15) + nextInt(15) xp) |
 | `src/feature/lichdecor/Bookshelf.cpp` | `twilightforest:chiseled_canopy_bookshelf`: vanilla's chiseled bookshelf (slot by hit position, `#minecraft:bookshelf_books`, comparator = last slot + 1), a `gf::inventory` block (U21's tower fills it), the `BookshelfSpawner` of Death Tomes, the spawn egg conversion, the burning and breaking effects |
 | `src/feature/lichdecor/SkullChest.cpp`, `assets/data/containers/lichdecor.json` | `twilightforest:skull_chest`: F10's declared 45-slot container (5 rows) plus the owner lock, the block-filled refusal, the named drop and the logged block, lava + water -> obsidian |
@@ -40,6 +49,22 @@ What the unit implements, how it maps TF 4.8 onto Bedrock, and what is still mis
 - The wrought iron fence computes all four sides on every neighbour change (Java updates the changed side; with
   consistent neighbours the result is the same). A lead on a post moves the mobs leashed to the player to a
   `minecraft:leash_knot` on the post.
+
+- `<loot>` of `set_loot` is a file-path token (Bedrock's string arguments stop at `/`, which every loot id has).
+- The candelabra has no `waterlogged` state on Bedrock: water in the block's liquid layer counts as waterlogged
+  for `canBeLit`.
+- Bedrock heads carry no player profile: a player skull candle has no owner to keep.
+- The selftests raise the difficulty to Easy while they spawn hostile mobs (the test world is peaceful).
+
+## Not done yet
+
+- The DIM candelabra's strong power reaches `gf::redstone::power()` / `signalFrom()` of the support, but the circuit
+  producer of `SupportPower` does not yet light vanilla mechanisms beside the support (`lichdecor.candelabra_signal`
+  logs the lamp instead of checking it).
+- Client-mod renderers (`src/client/lichdecor`): the animated flames and smoke (`animateTick`), the brazier's fire,
+  the ominous candles' bobbing flames, the skull chest lid, the magic painting parallax / opacity layers, the candle
+  colours of skull candles and candelabras (block data, not states: the pack shows the plain candle).
+- The keepsake-casket style multilogging of arbitrary blocks in the skull chest; the bookshelf's real igniter.
 
 ## Not ported
 
