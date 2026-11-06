@@ -1099,25 +1099,18 @@ GF_REGISTER_SELFTEST("lich.client_showcase", [](Context& ctx) -> ll::coro::CoroT
     Vec3 towerAt   = ahead(110, 0);
     Vec3 viewpoint = ahead(10, 0, 50.0f);
     Vec3 aim{towerAt.x, towerAt.y + 40.0f, towerAt.z};
-    co_await holdView(ctx, viewpoint, aim, 20 * 6); // the chunks around the tower load
+    // the chunks of the whole tower and yard load around the player first (F6 places into loaded
+    // chunks only; a chunk generated before stays without its part)
+    co_await holdView(ctx, Vec3{towerAt.x, towerAt.y + 30.0f, towerAt.z}, Vec3{towerAt.x + 1.0f, towerAt.y, towerAt.z}, 20 * 8);
     real = realPlayer(); // never kept across ticks (R16)
     if (!real) co_return;
     region      = &real->getDimensionBlockSource();
     BlockPos at = BlockPos{int(std::floor(towerAt.x)), int(std::floor(f.y)) - 1, int(std::floor(towerAt.z))};
     bool placed = gf::landmark::generateAt(kTowerKey, *region, at);
     log().info("lich.client_showcase: tower {} at {} {} {}", placed ? "placed" : "not placed", at.x, at.y, at.z);
-    co_await holdView(ctx, viewpoint, aim, 20 * 8);
-    log().info("lich.client_showcase: stage tower_far");
-    co_await holdView(ctx, viewpoint, aim, 20 * 5);
-    // the yard: from above, outside the foyer, looking down at the paths, graves and lights
-    Vec3 foyerC{towerAt.x, float(at.y + 1), towerAt.z};
-    std::optional<gf::landmark::Start> start;
-    for (int dx = -48; dx <= 48 && !start; dx += 8)
-        for (int dz = -48; dz <= 48 && !start; dz += 8) start = gf::landmark::startAt(dim, BlockPos{at.x + dx, at.y + 2, at.z + dz});
-    if (start)
-        for (auto const& p : gf::landmark::ext::startPieces(*start))
-            if (p.type == "twilightforest:TFLTTFoy") foyerC = Vec3{(p.box.minX + p.box.maxX) / 2.0f, float(p.box.minY), (p.box.minZ + p.box.maxZ) / 2.0f};
-    // what the yard turned on the ground around the tower (the landmark pipeline's placement)
+    // what the yard turned on the ground around the tower (the landmark pipeline's placement), read
+    // while the player is above it (far away, the server unloads those chunks)
+    std::optional<Vec3> pathC;
     {
         real = realPlayer();
         if (!real) co_return;
@@ -1134,16 +1127,28 @@ GF_REGISTER_SELFTEST("lich.client_showcase", [](Context& ctx) -> ll::coro::CoroT
             }
         log().info("lich.client_showcase: the yard turned {} path and {} coarse / rooted dirt blocks", paths, dirt);
         ctx.check(paths > 0 && dirt > 0, "the generated tower has its yard (" + std::to_string(paths) + " path, " + std::to_string(dirt) + " dirt)");
-        if (paths > 0) foyerC = Vec3{float(sx / paths), float(at.y + 1), float(sz / paths)}; // look at the first path
+        if (paths > 0) pathC = Vec3{float(sx / paths), float(at.y + 1), float(sz / paths)}; // the first path
     }
+    co_await holdView(ctx, viewpoint, aim, 20 * 8);
+    log().info("lich.client_showcase: stage tower_far");
+    co_await holdView(ctx, viewpoint, aim, 20 * 5);
+    // the yard: from above, outside the foyer, looking down at the paths, graves and lights
+    Vec3 foyerC{towerAt.x, float(at.y + 1), towerAt.z};
+    std::optional<gf::landmark::Start> start;
+    for (int dx = -48; dx <= 48 && !start; dx += 8)
+        for (int dz = -48; dz <= 48 && !start; dz += 8) start = gf::landmark::startAt(dim, BlockPos{at.x + dx, at.y + 2, at.z + dz});
+    if (start)
+        for (auto const& p : gf::landmark::ext::startPieces(*start))
+            if (p.type == "twilightforest:TFLTTFoy") foyerC = Vec3{(p.box.minX + p.box.maxX) / 2.0f, float(p.box.minY), (p.box.minZ + p.box.maxZ) / 2.0f};
+    if (pathC) foyerC = *pathC; // look at the first path
     Vec3  outward{foyerC.x - towerAt.x, 0.0f, foyerC.z - towerAt.z};
     float olen = std::sqrt(outward.x * outward.x + outward.z * outward.z);
     if (olen < 1.0f) {
         outward = Vec3{float(-fx), 0.0f, float(-fz)};
         olen    = 1.0f;
     }
-    // above the yard, a little outward of it, looking down at the first path and the dirt
-    Vec3 yardView{foyerC.x + outward.x / olen * 14.0f, foyerC.y + 26.0f, foyerC.z + outward.z / olen * 14.0f};
+    // outward of the yard (away from the tower), looking back at the first path and the dirt
+    Vec3 yardView{foyerC.x + outward.x / olen * 30.0f, foyerC.y + 18.0f, foyerC.z + outward.z / olen * 30.0f};
     co_await holdView(ctx, yardView, foyerC, 20 * 4);
     log().info("lich.client_showcase: stage tower_yard");
     co_await holdView(ctx, yardView, foyerC, 20 * 5);
