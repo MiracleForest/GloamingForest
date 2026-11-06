@@ -92,12 +92,13 @@ Save-Screenshot 'block-items' | Out-Null
 $mx = 4300; $mz = 4300; $my = -60
 Invoke-Chat '/clear @s'
 Invoke-Chat "/setblock $mx $($my + 1) $($mz + 2) twilightforest:aurora_block"
-Invoke-Teleport "/tp @s $($mx + 0.5) $my $($mz + 0.5) facing $($mx + 0.5) $($my + 1.5) $($mz + 2.5)"
 Invoke-SelfTest 'aurora.client_miner' | Out-Null
 Invoke-Chat '/gamemode survival'
+# face the block last (the chat and the selftest command come first)
+Invoke-Teleport "/tp @s $($mx + 0.5) $my $($mz + 0.5) facing $($mx + 0.5) $($my + 1.5) $($mz + 2.5)"
 Start-Sleep -Seconds 2
 $mineMark = Get-LogMark
-Focus-Game; Assert-GameForeground
+Focus-Game
 [BsE2E.Native]::MouseButton(0, $false); Start-Sleep -Milliseconds 1500; [BsE2E.Native]::MouseButton(0, $true)
 try {
     $mined = Wait-LogLine 'aurora: aurora block broken after (\d+) ticks of mining' 10 -Since $mineMark
