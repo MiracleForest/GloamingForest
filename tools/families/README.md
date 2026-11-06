@@ -96,6 +96,19 @@ Per family:
 | `snowloggable` | `snow_texture`, `shape` (the plant's outline for the hit test). A skeleton that has Java's shapes per state and `layers` (F1's TF bushes) keeps them; otherwise the kit adds the snow's boxes per layer count |
 | `lightable` | `light_levels` `{normal, dim, ominous}` |
 
+## Sound events
+
+The kit adds the events the game plays with a family block's sound type to that type in the
+resource pack's `sounds.json`: `place_in_water` (a waterloggable block placed into water; the type's
+place event, Java's BlockItem#place place sound) and, for chests, `chest.open` / `chest.closed`
+(ChestBlockEntity: `random.chestopen` / `random.chestclosed`, volume 0.5, pitch 0.9..1.0). Every
+family entry counts, hand-made blocks (a manual BP file) too; a waterloggable or chest family block
+with no sound type in `blocks.json` fails the run. The hanging signs take Bedrock's `hanging_sign`
+type (CeilingHangingSignBlock / WallHangingSignBlock: `woodType.hangingSignSoundType()`) unless
+`params.sound` says otherwise; a sound the hand-made RP layer (`blocks.d`) sets always stays (a
+warning names it) and is listed in `data/gf/families_sounds/<name>` (`{"manual": {id: sound}}`),
+which the selftest `families.sound_events` accepts as it is.
+
 ## States
 
 As `docs/spec/blockstates.md` (F1, rule R1): every Java property `p` is `twilightforest:p` with

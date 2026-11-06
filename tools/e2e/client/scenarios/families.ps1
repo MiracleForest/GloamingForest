@@ -51,6 +51,9 @@
 #                                           cobblestone in the right half's third slot (Java's ChestMenu
 #                                           broadcastChanges: the client mod's screen is refreshed after a
 #                                           hopper's tick, the vanilla screen follows F10's proxy)
+#   out/families/families-29-tf-slab-in-water.png  a twilight oak slab the player placed into a water
+#                                           source (waterlogged; the content log names no missing
+#                                           place_in_water or chest sound)
 #   out/families/families-16-tf-sign-text.png        client mod: TF's canopy signs written through the
 #                                           editor and coloured with items, from the north: the wall
 #                                           sign's front (4 black lines), the standing sign's back
@@ -534,6 +537,38 @@ if ($script:Mode -ne 'remote-vanilla') {
     Invoke-Build "replaceitem entity @a slot.weapon.mainhand 0 air"
 }
 
+# A TF waterloggable slab placed by the player into a water source (Java: BlockItem#place plays the
+# place sound once): the game plays the sound type's place_in_water (tools/families defines it as
+# the type's place event), on this client too (its own prediction); checked at the end through the
+# content log, which must not say "No sound found ... 'place_in_water'" (nor the same for the chest
+# events of the chest opened above). The water sits in the ground (y - 1) and the player stands on the
+# grass just south of it looking down steeply (69 degrees: the ray passes the grass top at y inside the
+# water's column), so the dirt below the water is clicked through it and the slab goes into the water.
+$px = 230
+Invoke-Build "setblock $px $($y - 1) $z water"
+Invoke-Teleport "/tp @s $($px + 0.5) $y $($z + 1.5) 180 69"
+Start-Sleep -Seconds 3
+Invoke-Build "replaceitem entity @a slot.weapon.mainhand 0 twilightforest:twilight_oak_slab 4"
+Start-Sleep -Seconds 2
+Click 0.5 0.5 -Relative -Right
+Start-Sleep -Seconds 2
+Save-Screenshot 'families-29-tf-slab-in-water' | Out-Null
+Invoke-Build "replaceitem entity @a slot.weapon.mainhand 0 air"
+# the server confirms the slab went into the water and holds it (the screenshot alone hardly tells a
+# waterlogged slab from the floor): families.water_slab_probe names a twilight_oak_slab with water
+# in its extra layer near this client's player
+$mark = Get-LogMark
+$r = Invoke-SelfTest 'families.water_slab_probe'
+if ($r.Pass -ne 1) { throw 'families.water_slab_probe did not pass' }
+$wetLine = "twilightforest:twilight_oak_slab in water at $px $($y - 1) $z"
+try { Wait-LogLine ([regex]::Escape($wetLine)) 15 -Since $mark | Out-Null; $wet = $true }
+catch { if ("$_" -match '^Game exited') { throw }; $wet = $false }
+if (-not $wet) {
+    $seen = @(Get-LeviLog -Since $mark | Select-String -Pattern 'twilight_oak_slab|nothing to probe|near the client players' | ForEach-Object { $_.Line })
+    throw "the slab placed into the water is not a waterlogged twilight_oak_slab at $px $($y - 1) $z on the server ($($seen -join '; '))"
+}
+Write-Step "the server holds a waterlogged twilight_oak_slab at $px $($y - 1) $z"
+
 # The text of a sign written by the server (families.sign_a_write): the client mod draws it on the
 # board (front: four lines), a vanilla client shows the name tag of the side facing it (the front:
 # the viewer stands south of it; the back's name tag is hidden for this viewer)
@@ -581,3 +616,15 @@ if ($script:Mode -eq 'remote-vanilla') {
     Save-Screenshot 'families-14-sign-form' | Out-Null
     Close-Screen
 }
+
+# The client played the families' sound events from their definitions: its content log (written as
+# the game closes, so close it here; run.ps1's own Stop-Game then finds nothing to stop) has no
+# "[Sound][verbose] No sound found for block type '<t>' and event type 'place_in_water' / 'chest.open'
+# / 'chest.closed'" line, which the run's own check only lists (verbose lines never fail it).
+Stop-Game
+Start-Sleep -Seconds 2
+$missingSounds = @((Get-ContentLogEntries).Distinct | Where-Object { $_.Text -match "No sound found for block type '[^']*' and event type '(place_in_water|chest\.open|chest\.closed)'" })
+if ($missingSounds) {
+    throw "the client found no definition for a families sound event: $(($missingSounds | ForEach-Object { "[$($_.Category)][$($_.Level)] $($_.Text) (x$($_.Count))" }) -join '; ')"
+}
+Write-Step "content log: no 'No sound found' line for place_in_water or the chest events ($(@(Get-ContentLogFiles).Count) file(s))"
