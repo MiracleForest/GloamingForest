@@ -35,14 +35,20 @@ std::shared_ptr<Registry const> registry() {
     return gRegistry;
 }
 
-/// The item atlas rectangle of `key` (nullopt when the atlas has no such entry: a zero-size rectangle).
-std::optional<TextureUVCoordinateSet> atlasUv(std::string const& key) {
+/// The item atlas rectangle of `key` into `out` (false, `out` empty, when the atlas has no such entry: a
+/// zero-size rectangle). TextureUVCoordinateSet has no copy constructor of its own: default-constructed,
+/// then assigned.
+bool atlasUv(std::string const& key, std::optional<TextureUVCoordinateSet>& out) {
+    out.reset();
     try {
         TextureUVCoordinateSet const& uv = ItemIconManager::getTextureUVCoordinateSet(key, 0);
-        if (uv._u0 == uv._u1 || uv._v0 == uv._v1) return std::nullopt;
-        return uv;
+        if (uv._u0 == uv._u1 || uv._v0 == uv._v1) return false;
+        out.emplace();
+        *out = uv;
+        return true;
     } catch (...) {
-        return std::nullopt;
+        out.reset();
+        return false;
     }
 }
 
@@ -102,15 +108,12 @@ LL_TYPE_INSTANCE_HOOK(
     ++tc::gDepth;
     try {
         std::optional<TextureUVCoordinateSet> base;
-        if (!layers->base.empty()) {
-            base = tc::atlasUv(layers->base);
-            if (!base) tc::warnOnce(layers->base);
-        }
+        if (!layers->base.empty() && !tc::atlasUv(layers->base, base)) tc::warnOnce(layers->base);
         call(base);
         // the overlays in the same batch: drawn after the base, so on top of it
+        std::optional<TextureUVCoordinateSet> uv;
         for (auto const& key : layers->overlays) {
-            auto uv = tc::atlasUv(key);
-            if (!uv) {
+            if (!tc::atlasUv(key, uv)) {
                 tc::warnOnce(key);
                 continue;
             }
