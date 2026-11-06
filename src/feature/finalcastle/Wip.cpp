@@ -180,6 +180,9 @@ void flushWip() {
     }
     for (auto const& j : ready)
         if (auto* region = game::regionOf(j.dim)) spawnCarriers(*region, j.pos);
+    // persist the shorter queue now: the carriers are persistent, an unclean stop before the next
+    // world save would spawn them a second time
+    if (!ready.empty()) save();
 }
 
 void punch(Actor& punchCarrier) {

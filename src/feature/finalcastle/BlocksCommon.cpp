@@ -232,15 +232,16 @@ void save() {
 
 void load() {
     auto& s = rt();
-    s.pending.clear();
-    s.devices.clear();
-    s.deviceIds.clear();
+    // once per world: tick() may have lazy-loaded (BDS installs after the world exists) and scheduled
+    // new ticks before onWorldReady; loading again would drop them (onWorldClosed resets the flag)
+    if (s.loadedFromDb) return;
     auto t = now();
+    // saved entries never replace live ones
     if (auto j = game::db::get(kTicksKey); j && j->is_array())
         for (auto const& e : *j)
             if (e.is_array() && e.size() == 6)
-                s.pending[GlobalPos{e[0].get<int>(), e[1].get<int>(), e[2].get<int>(), e[3].get<int>()}] =
-                    Pending{t + e[5].get<std::uint64_t>(), e[4].get<std::string>()};
+                s.pending.try_emplace(GlobalPos{e[0].get<int>(), e[1].get<int>(), e[2].get<int>(), e[3].get<int>()},
+                                      Pending{t + e[5].get<std::uint64_t>(), e[4].get<std::string>()});
     if (auto j = game::db::get(kDevicesKey); j && j->is_array())
         for (auto const& e : *j)
             if (e.is_array() && e.size() == 4) s.devices.insert(GlobalPos{e[0].get<int>(), e[1].get<int>(), e[2].get<int>(), e[3].get<int>()});
@@ -333,6 +334,7 @@ void installRuntime() {
         for (auto const& p : all) forget(p);
         s.pending.clear();
         s.devices.clear();
+        s.deviceIds.clear();
         s.loadedFromDb = false;
     });
 }

@@ -180,6 +180,16 @@ void installThorns() {
     });
     blockevents::onProjectileHit(id::BurntThorns, burntDissolve);
 
+    // BlockItem#place refuses a state that cannot survive before anything changes: predict the spot
+    // (the clicked block when replaceable, else its neighbour) so water / plants there are kept
+    ia::onUseOn({.item = id::ThornRose}, [](ia::UseOnContext const& c) {
+        auto* region = game::regionOf(c.pos.dim);
+        if (!region || c.face < 0 || c.face > 5) return ia::Result::Pass;
+        auto clicked = game::blockPos(c.pos);
+        auto target  = game::replaceable(*region, clicked) ? clicked : offset(clicked, c.face);
+        if (!game::replaceable(*region, target)) return ia::Result::Pass;
+        return roseCanSurvive(*region, target, c.face) ? ia::Result::Pass : ia::Result::Deny;
+    }, ia::priority::Low);
     // ThornRoseBlock: facing the clicked face; survival (BushBlock#updateShape / canSurvive)
     ia::onPlace({.block = id::ThornRose}, [](ia::PlaceContext const& c) {
         auto* region = game::regionOf(c.pos.dim);

@@ -44,9 +44,17 @@ Boxes roomBoxes(gf::landmark::Start const& start) {
     static std::mutex            mutex;
     static std::map<Key, Boxes>  cache;
     Key                          key{start.seed, start.dimension, start.center.x, start.center.y, start.center.z};
+    // the terraformer asks per density sample: the worldgen thread's last start skips the lock
+    thread_local Key   lastKey{};
+    thread_local Boxes lastBoxes;
+    if (lastBoxes && lastKey == key) return lastBoxes;
     {
         std::lock_guard lock(mutex);
-        if (auto it = cache.find(key); it != cache.end()) return it->second;
+        if (auto it = cache.find(key); it != cache.end()) {
+            lastKey   = key;
+            lastBoxes = it->second;
+            return lastBoxes;
+        }
     }
     auto      context = gf::landmark::ext::contextRandom(start);
     PieceList pieces;
@@ -57,6 +65,8 @@ Boxes roomBoxes(gf::landmark::Start const& start) {
     std::lock_guard lock(mutex);
     if (cache.size() > 64) cache.clear();
     cache[key] = boxes;
+    lastKey    = key;
+    lastBoxes  = boxes;
     return boxes;
 }
 

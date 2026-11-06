@@ -485,6 +485,14 @@ GF_REGISTER_SELFTEST("finalcastle.thorn_feature", [](Context& ctx) -> ll::coro::
     LiveRegion highRegion(*r, bp(high));
     (void)features::place("twilightforest:thorns", highRegion, bp(high), rand);
     ctx.check(ctx.blockAt(high) == "minecraft:air", "no thorns above sea level + 150");
+    // leave nothing behind outside the flat area, even when the check failed (R12)
+    for (int x = high.x - 8; x <= high.x + 8; ++x)
+        for (int y = high.y - 1; y <= high.y + 24; ++y)
+            for (int z = high.z - 8; z <= high.z + 8; ++z) {
+                BlockPos p{x, y, z};
+                auto     name = r->getBlock(p).getTypeName();
+                if (name == id::BrownThorns || name == id::ThornLeaves || name == id::ThornRose) game::clearBlock(*r, p);
+            }
 });
 
 } // namespace gf::feature::finalcastle::blocks::tests

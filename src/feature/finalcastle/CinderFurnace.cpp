@@ -317,7 +317,9 @@ void tickFurnace(BlockSource& region, BlockPos const& pos) {
 
 void installCinderFurnace() {
     // the block entity's three slots: the native container (BP minecraft:block_entity), which
-    // hoppers reach; inserts follow AbstractFurnaceBlockEntity#canPlaceItem (an unsided InvWrapper)
+    // hoppers reach; inserts follow AbstractFurnaceBlockEntity#canPlaceItem. Deviation: Java's hopper
+    // treats the furnace as a sided WorldlyContainer (top -> input, sides -> fuel, bottom -> output);
+    // F10's inventory::Handler has no face, so every face fills the first slot that accepts the stack
     inventory::Handler h;
     h.slots  = 3;
     h.insert = [](GlobalPos const& pos, ItemStack const& stack, bool simulate) -> ItemStack {
