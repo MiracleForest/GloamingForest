@@ -1780,6 +1780,13 @@ local DEFAULT_SOUND = {
     hanging_sign = "hanging_sign", wall_hanging_sign = "hanging_sign", chest = "wood", trapped_chest = "wood",
 }
 
+-- Families whose Java class sets the sound type in its constructor, over the properties' one (and
+-- over the import's sound for the id): CeilingHangingSignBlock and WallHangingSignBlock call
+-- properties.sound(woodType.hangingSignSoundType()), and TF's wood types (TFWoodTypes: new
+-- WoodType(name, set)) take WoodType's default SoundType.HANGING_SIGN, although TFBlocks copies the
+-- planks' properties (SoundType.WOOD) into them. A params.sound still wins.
+local FORCED_SOUND = {hanging_sign = "hanging_sign", wall_hanging_sign = "hanging_sign"}
+
 -- ---- data ----------------------------------------------------------------------------------------
 
 -- Normalises one data file's entries: [{id, family, params}] (or {"entries": [...]}).
@@ -1866,6 +1873,26 @@ local function manual_ids(dirs)
             local doc = try_json(f)
             local id = doc and doc["minecraft:block"] and doc["minecraft:block"].description and doc["minecraft:block"].description.identifier
             if type(id) == "string" then out[id] = f end
+        end
+    end
+    return out
+end
+
+-- Block sound types the hand-made resource pack layer sets (`<dir>/blocks.d/*.json`, the manual
+-- layer of the blocks.json merge): id -> {sound, file}. The manual layer wins per id, so the kit
+-- never replaces one of these.
+local function manual_block_sounds(dirs)
+    local out = {}
+    for _, dir in ipairs(dirs) do
+        if os.isdir(path.join(dir, "blocks.d")) then
+            for _, f in ipairs(os.files(path.join(dir, "blocks.d", "*.json"))) do
+                local doc = try_json(f)
+                if type(doc) == "table" then
+                    for id, b in pairs(doc) do
+                        if type(b) == "table" and type(b.sound) == "string" then out[id] = {sound = b.sound, file = f} end
+                    end
+                end
+            end
         end
     end
     return out
@@ -2010,6 +2037,146 @@ local function entity_textures(g, rpdir, ctx)
     return t
 end
 
+-- ---- block sound events the families need ----------------------------------------------------------
+--
+-- The game picks a block's sounds by its sound type (RP blocks.json "sound") in sounds.json
+-- block_sounds; an event the type does not define is reported in the content log ("[Sound][verbose]
+-- No sound found for block type 'wood' and event type 'place_in_water'") and not played from the
+-- type. Two events of the families' blocks are missing from the game's own types:
+-- - place_in_water: the game's LevelSoundEvent PlaceInWater when a block is placed into water and
+--   keeps it (a waterloggable family block). Java's BlockItem#place plays the block's place sound
+--   wherever it is placed (SoundType#getPlaceSound), so the type's place_in_water is its place event.
+-- - chest.open / chest.closed: the game's chest events played with the chest's block (vanilla's
+--   chests have type wood too, which defines neither, so the game falls back to its
+--   individual_event_sounds chest.open / chest.closed). TF's chests are vanilla ChestBlocks of their
+--   wood (ChestBlockEntity#playSound: CHEST_OPEN / CHEST_CLOSE, volume 0.5, pitch 0.9..1.0, which
+--   the inventory contract plays itself, F10): the chest family's types define the same values.
+-- Packs merge sounds.json per event (the game's own vanilla_1.26.10 pack redefines only wood's place
+-- event), so the events are added to the type as it is: its other events stay the game's (or the
+-- import's, for TF's own types).
+-- Side effect on vanilla content, intended: the types are the game's own (wood, stone, metal, glass,
+-- grass, sand, cloth, ...), which vanilla blocks share, so a vanilla waterloggable block of such a
+-- type placed into water plays its type's place event through this place_in_water too, and vanilla
+-- chests (type wood) play chest.open / chest.closed through these definitions. Both carry vanilla's
+-- own values (VANILLA_PLACE is the game's place event of each type, CHEST_EVENTS the game's chest
+-- events), so vanilla blocks sound as Java's do and as the game's fallback would; only the content
+-- log's "No sound found" verbose lines go away for them as well.
+
+-- The place events of the game's block sound types (Minecraft Bedrock 1.26.51, the vanilla resource
+-- packs' sounds.json block_sounds, the last pack's definition of each).
+local VANILLA_PLACE = {
+    amethyst_block = {sound = "place.amethyst_block", volume = 1.0, pitch = 0.8},
+    anvil = {sound = "random.anvil_land", volume = 0.5, pitch = {0.8, 1.0}},
+    azalea_leaves = {sound = "place.azalea_leaves", volume = 1.0, pitch = {0.8, 1.0}},
+    bamboo_wood = {sound = "place.bamboo_wood", volume = 1.0, pitch = {0.8, 0.8}},
+    bamboo_wood_hanging_sign = {sound = "place.bamboo_wood_hanging_sign", volume = 1.0, pitch = {0.8, 1.0}},
+    basalt = {sound = "place.basalt", volume = 1.0, pitch = {0.8, 1.0}},
+    bone_block = {sound = "place.bone_block", volume = 1.0, pitch = {0.8, 1.0}},
+    calcite = {sound = "place.calcite", volume = 1.0},
+    candle = {sound = "place.candle", volume = 1.0, pitch = 1.0},
+    chain = {sound = "place.chain", volume = 1.0, pitch = {0.8, 1.0}},
+    cherry_leaves = {sound = "place.cherry_leaves", volume = 1.0},
+    cherry_wood = {sound = "place.cherry_wood", volume = 1.0, pitch = {0.8, 0.8}},
+    cherry_wood_hanging_sign = {sound = "place.cherry_wood_hanging_sign", volume = 1.0, pitch = {0.8, 1.0}},
+    cloth = {sound = "place.cloth", volume = 1.0, pitch = {0.8, 1.0}},
+    copper = {sound = "place.copper", volume = 1.0, pitch = {0.8, 1.0}},
+    deepslate = {sound = "place.deepslate", volume = 1.0, pitch = {0.8, 1.0}},
+    deepslate_bricks = {sound = "place.deepslate_bricks", volume = 1.0, pitch = {0.8, 1.0}},
+    glass = {sound = "place.stone", volume = 1.0, pitch = {0.8, 1.0}},
+    grass = {sound = "place.grass", volume = 0.8, pitch = {0.8, 1.0}},
+    gravel = {sound = "place.gravel", volume = 1.0, pitch = {0.8, 1.0}},
+    hanging_sign = {sound = "place.hanging_sign", volume = 1.0, pitch = {0.8, 1.0}},
+    ladder = {sound = "place.wood", volume = 1.0, pitch = {0.8, 1.0}},
+    lantern = {sound = "block.lantern.place", volume = 1.0, pitch = {0.8, 1.0}},
+    metal = {sound = "place.stone", volume = 1.0, pitch = {1.2, 1.25}},
+    moss_block = {sound = "place.moss", volume = 0.93},
+    moss_carpet = {sound = "place.moss", volume = 0.93},
+    mud_bricks = {sound = "block.mud_bricks.place", volume = 0.3, pitch = {0.6, 0.8}},
+    nether_brick = {sound = "place.nether_brick", volume = 1.0, pitch = {0.8, 1.0}},
+    nether_wood = {sound = "place.nether_wood", volume = 1.0, pitch = {0.8, 0.8}},
+    nether_wood_hanging_sign = {sound = "place.nether_wood_hanging_sign", volume = 1.0, pitch = {0.8, 1.0}},
+    netherite = {sound = "place.netherite", volume = 1.0, pitch = {0.8, 1.0}},
+    normal = {sound = "place.stone", volume = 1.0, pitch = {0.8, 1.0}},
+    sand = {sound = "place.sand", volume = 1.0, pitch = {0.8, 1.0}},
+    scaffolding = {sound = "block.scaffolding.place", volume = 1.0, pitch = {0.8, 0.9}},
+    slime = {sound = "place.slime.big", volume = 1.0, pitch = {0.8, 1.0}},
+    snow = {sound = "place.snow", volume = 1.0, pitch = {0.8, 1.0}},
+    stem = {sound = "place.stem", volume = 1.0, pitch = {0.8, 1.0}},
+    stone = {sound = "place.stone", volume = 1.0, pitch = {0.8, 1.0}},
+    tuff = {sound = "place.tuff", volume = 1.0, pitch = 0.8},
+    vines = {sound = "place.vines", volume = 1.0, pitch = {0.8, 1.0}},
+    wood = {sound = "place.wood", volume = 1.0, pitch = {0.8, 0.8}},
+}
+
+-- The game's own chest events (individual_event_sounds chest.open / chest.closed of the vanilla
+-- pack: ChestBlockEntity's CHEST_OPEN / CHEST_CLOSE at volume 0.5, pitch 0.9..1.0).
+local CHEST_EVENTS = {
+    ["chest.open"] = {sound = "random.chestopen", volume = 0.5, pitch = {0.9, 1.0}},
+    ["chest.closed"] = {sound = "random.chestclosed", volume = 0.5, pitch = {0.9, 1.0}},
+}
+
+-- A sound event definition written to sounds.json (arrays marked as arrays).
+local function sound_event(def)
+    local out = {}
+    for k, v in pairs(def) do out[k] = type(v) == "table" and arr(copy(v)) or v end
+    return out
+end
+
+-- Adds place_in_water to the sound type of every waterloggable family block of `by_id`, and the
+-- chest events to the sound type of every chest family block, in the pack's sounds.json. Every
+-- family entry counts, the generated blocks and the ones a unit makes by hand (a manual BP file:
+-- the kit leaves its document alone, but its sound type still needs the events). Such a block
+-- without any sound type in the pack's blocks.json fails: the game would look the events up on a
+-- type nobody defined them for.
+local function add_family_sound_events(rpdir, result, by_id, errors)
+    local blocks = try_json(path.join(rpdir, "blocks.json")) or {}
+    local function type_of(id)
+        local b = blocks[id]
+        return type(b) == "table" and type(b.sound) == "string" and b.sound or nil
+    end
+    local in_water, chests = {}, {}
+    for _, id in ipairs(sorted_keys(by_id)) do
+        local g = by_id[id]
+        local chest = g.shape == "chest" or g.shape == "trapped_chest"
+        if g.modifiers.waterloggable or chest then
+            local t = type_of(id)
+            if t == nil then
+                table.insert(errors, string.format("families: %s is a %s family block without a block sound type in the resource pack's blocks.json (params.sound, or its blocks.d fragment), so it has no %s event", id, chest and "chest" or "waterloggable", chest and "chest.open / chest.closed" or "place_in_water"))
+            else
+                if g.modifiers.waterloggable then in_water[t] = in_water[t] or id end
+                if chest then chests[t] = chests[t] or id end
+            end
+        end
+    end
+    if table.empty(in_water) and table.empty(chests) then return end
+    merge_json_file(path.join(rpdir, "sounds.json"), function (doc)
+        doc = doc or {}
+        doc.block_sounds = doc.block_sounds or {}
+        local function events_of(t)
+            doc.block_sounds[t] = doc.block_sounds[t] or {}
+            doc.block_sounds[t].events = doc.block_sounds[t].events or {}
+            return doc.block_sounds[t].events
+        end
+        for _, t in ipairs(sorted_keys(in_water)) do
+            local own = doc.block_sounds[t] and doc.block_sounds[t].events and doc.block_sounds[t].events.place
+            local place = own or VANILLA_PLACE[t]
+            if place == nil then
+                table.insert(errors, string.format("families: %s is waterloggable, but its block sound type '%s' has no place event to play when it is placed into water (tools/families/families.lua VANILLA_PLACE)", in_water[t], t))
+            else
+                local events = events_of(t)
+                if events.place_in_water == nil then events.place_in_water = type(place) == "table" and sound_event(place) or place end
+            end
+        end
+        for _, t in ipairs(sorted_keys(chests)) do
+            local events = events_of(t)
+            for _, name in ipairs(sorted_keys(CHEST_EVENTS)) do
+                if events[name] == nil then events[name] = sound_event(CHEST_EVENTS[name]) end
+            end
+        end
+        return doc
+    end)
+end
+
 -- Generates the family blocks of `entries` into one BP / RP pair. Returns {blocks, skipped, files}.
 local function generate_set(entries, bpdir, rpdir, opts, errors)
     local by_id, order = group(entries, errors)
@@ -2029,7 +2196,7 @@ local function generate_set(entries, bpdir, rpdir, opts, errors)
             functions = arr({{["function"] = "set_count", count = 2}})}})}})})
         return rel
     end
-    local result = {blocks = 0, skipped = 0, files = {}, sounds = {}, waterloggable = {}, chests = {}, tags = {}}
+    local result = {blocks = 0, skipped = 0, files = {}, sounds = {}, forced_sounds = {}, waterloggable = {}, chests = {}, tags = {}}
     for _, id in ipairs(order) do
         local g = by_id[id]
         if manual[id] then
@@ -2083,8 +2250,10 @@ local function generate_set(entries, bpdir, rpdir, opts, errors)
             table.insert(result.files, file)
             if g.modifiers.waterloggable then result.waterloggable[id] = file end
             result.blocks = result.blocks + 1
-            local sound = g.params.sound or (shape and DEFAULT_SOUND[shape])
+            local forced = g.params.sound == nil and shape and FORCED_SOUND[shape] or nil
+            local sound = g.params.sound or forced or (shape and DEFAULT_SOUND[shape])
             if sound then result.sounds[id] = sound end
+            if forced then result.forced_sounds[id] = true end
         end
     end
     result.ct_corners = ctx.ct_corners
@@ -2121,17 +2290,35 @@ local function generate_set(entries, bpdir, rpdir, opts, errors)
     -- block sounds (RP blocks.json): the kit's default per family where the block has no sound yet.
     -- An id that has one keeps it: TF's sound types (the jars' twilightforest.jar, TFSoundTypes) are
     -- F1's import, its rp/blocks.d and rp/sounds.json.d fragments (block_sounds and the step, fall,
-    -- jump and land interactive_sounds)
+    -- jump and land interactive_sounds), except where the family's Java class sets the sound type
+    -- itself (FORCED_SOUND: the hanging signs), which replaces the one their properties give (the
+    -- import's). A sound the hand-made RP layer sets (opts.manual_sounds) always stays: the manual
+    -- layer wins per id; a forced sound it differs from is reported in result.notes
+    local manual_sounds = opts.manual_sounds or {}
+    result.notes = {}
     if not table.empty(result.sounds) then
         merge_json_file(path.join(rpdir, "blocks.json"), function (doc)
             doc = doc or {format_version = "1.21.40"}
-            for id, sound in pairs(result.sounds) do
-                if doc[id] == nil then doc[id] = {sound = sound}
-                elseif type(doc[id]) == "table" and doc[id].sound == nil then doc[id].sound = sound end
+            for _, id in ipairs(sorted_keys(result.sounds)) do
+                local sound = result.sounds[id]
+                local by_hand = manual_sounds[id]
+                if by_hand then
+                    if result.forced_sounds[id] and by_hand.sound ~= sound then
+                        table.insert(result.notes, string.format("families: %s keeps the sound '%s' of %s (the manual layer), not the family's '%s'", id, by_hand.sound, by_hand.file, sound))
+                    end
+                elseif doc[id] == nil then doc[id] = {sound = sound}
+                elseif type(doc[id]) == "table" and (doc[id].sound == nil or result.forced_sounds[id]) then doc[id].sound = sound end
             end
             return doc
         end)
     end
+    -- the family blocks whose sound type the manual layer set (id -> sound): the runtime's check
+    -- (families.sound_events) takes these as they are, as the merge above does
+    result.manual_sounds = {}
+    for id, _ in pairs(by_id) do
+        if manual_sounds[id] then result.manual_sounds[id] = manual_sounds[id].sound end
+    end
+    add_family_sound_events(rpdir, result, by_id, errors)
     return result
 end
 
@@ -2189,6 +2376,17 @@ local function write_ct_corners(outdir, corners, name, files)
     local file = path.join(outdir, "data", "gf", "families_render", name)
     os.mkdir(path.directory(file))
     json.savefile(file, {ct_corners = corners})
+    table.insert(files, file)
+end
+
+-- The family blocks whose block sound type the hand-made RP layer sets (data/gf/families_sounds/<name>):
+-- {manual: {id: sound}}. The manual layer wins per id over the family's sound (FORCED_SOUND too),
+-- and families.sound_events accepts these as the merge kept them.
+local function write_manual_sounds(outdir, sounds, name, files)
+    if table.empty(sounds) then return end
+    local file = path.join(outdir, "data", "gf", "families_sounds", name)
+    os.mkdir(path.directory(file))
+    json.savefile(file, {manual = sounds})
     table.insert(files, file)
 end
 
@@ -2334,13 +2532,15 @@ local function mark(bpdir, count)
 end
 
 -- opts: {manual_dirs = {...}} (default: assets/pack/bp and assets/test/bp of `projectdir`),
--- no_fixtures.
+-- {manual_rp_dirs = {...}} (default: assets/pack/rp and assets/test/rp), no_fixtures.
 -- Returns {blocks, skipped, fixtures, files = {...}, waterloggable = {id -> file}, permutations,
 -- already (both sets were generated before: nothing done), errors = {...}}.
 function generate(projectdir, outdir, opts)
     opts = opts or {}
     local errors = {}
     local manual = manual_ids(opts.manual_dirs or {path.join(projectdir, "assets", "pack", "bp"), path.join(projectdir, "assets", "test", "bp")})
+    -- the hand-made RP layer's block sounds (assets/pack/rp, assets/test/rp: blocks.d fragments)
+    local manual_sounds = manual_block_sounds(opts.manual_rp_dirs or {path.join(projectdir, "assets", "pack", "rp"), path.join(projectdir, "assets", "test", "rp")})
     -- waterloggable: id -> generated file (every waterloggable modifier, by family or params.traits)
     local summary = {blocks = 0, skipped = 0, fixtures = 0, files = {}, waterloggable = {}, chests = {}, chest_tags = {}, permutations = 0, errors = errors}
     local sets, done = 0, 0
@@ -2354,13 +2554,15 @@ function generate(projectdir, outdir, opts)
         if marked(bp) then
             done = done + 1
         else
-            local r = generate_set(entries, bp, rp, {manual = manual, strict_textures = true}, errors)
+            local r = generate_set(entries, bp, rp, {manual = manual, manual_sounds = manual_sounds, strict_textures = true}, errors)
+            for _, n in ipairs(r.notes or {}) do print("warning: " .. n) end
             summary.blocks, summary.skipped = r.blocks, r.skipped
             for _, f in ipairs(r.files) do table.insert(summary.files, f) end
             for id, f in pairs(r.waterloggable) do summary.waterloggable[id] = f end
             for id, shape in pairs(r.chests) do summary.chests[id] = shape; summary.chest_tags[id] = r.tags[id] end
             declare_chests(outdir, r.chests, "families.json", summary.files)
             write_ct_corners(outdir, r.ct_corners, "families.json", summary.files)
+            write_manual_sounds(outdir, r.manual_sounds, "families.json", summary.files)
             mark(bp, r.blocks)
         end
     end
@@ -2374,13 +2576,15 @@ function generate(projectdir, outdir, opts)
         if #fx.entries > 0 and marked(tbp) then
             done = done + 1
         elseif #fx.entries > 0 then
-            local r = generate_set(fx.entries, tbp, trp, {manual = manual, textures = fx.textures}, errors)
+            local r = generate_set(fx.entries, tbp, trp, {manual = manual, manual_sounds = manual_sounds, textures = fx.textures}, errors)
+            for _, n in ipairs(r.notes or {}) do print("warning: " .. n) end
             summary.fixtures = r.blocks
             for _, f in ipairs(r.files) do table.insert(summary.files, f) end
             for id, f in pairs(r.waterloggable) do summary.waterloggable[id] = f end
             for id, shape in pairs(r.chests) do summary.chests[id] = shape; summary.chest_tags[id] = r.tags[id] end
             declare_chests(outdir, r.chests, "families_test.json", summary.files)
             write_ct_corners(outdir, r.ct_corners, "families_test.json", summary.files)
+            write_manual_sounds(outdir, r.manual_sounds, "families_test.json", summary.files)
             mark(tbp, r.blocks)
             -- fixture textures (vanilla texture paths) and names
             merge_json_file(path.join(trp, "textures", "terrain_texture.json"), function (doc)
