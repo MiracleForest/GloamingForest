@@ -227,7 +227,9 @@ GF_REGISTER_SELFTEST("naga.segments", [](Context& ctx) -> ll::coro::CoroTask<> {
     for (int i = 0; i < kMaxSegments; i++) {
         auto const& p  = s->segments[i].pos;
         double      d  = std::sqrt(double(p.x - lead.x) * (p.x - lead.x) + double(p.y - lead.y) * (p.y - lead.y) + double(p.z - lead.z) * (p.z - lead.z));
-        chain         &= std::abs(d - 2.0) < 0.6;
+        // segment 0 follows the head as it was before this tick's travel (F8's aiStep runs before the
+        // engine moves the mob): up to one tick of the head's motion (about 0.7 while charging) apart
+        chain         &= std::abs(d - 2.0) < (i == 0 ? 1.0 : 0.05);
         dists         += (i ? " " : "") + std::to_string(d).substr(0, 4);
         lead           = p;
     }
