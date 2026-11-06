@@ -46,6 +46,7 @@
 #include "feature/gamerules/GameRules.h"
 #include "feature/inventory/Inventory.h"
 #include "feature/progression/Progression.h"
+#include "feature/stats/Stats.h"
 #include "feature/stronghold/Blocks.h"
 #include "feature/stronghold/Goblins.h"
 #include "feature/stronghold/Phantom.h"
@@ -317,9 +318,11 @@ GF_REGISTER_SELFTEST("stronghold.pedestal", [](Context& ctx) -> ll::coro::CoroTa
         auto& p = ctx.player();
         p.teleport(Vec3{ped.x + 3.5f, float(ped.y), ped.z + 0.5f}, DimensionType(ped.dim));
         co_await ctx.ticks(2);
+        long long statBefore = gf::stats::value(ctx.player(), "twilightforest:trophy_pedestals_activated");
         ctx.require(ctx.setBlock(ped.offset(0, 1, 0), "twilightforest:naga_trophy"), "a naga trophy on top");
         blocks::neighborChanged(*region, game::blockPos(ped));
         co_await ctx.ticks(2);
+        ctx.check(gf::stats::value(ctx.player(), "twilightforest:trophy_pedestals_activated") > statBefore, "trophy_pedestals_activated counts it");
         ctx.check(game::statesOf(region->getBlock(game::blockPos(ped)))["twilightforest:active"] == "true" ||
                       game::statesOf(region->getBlock(game::blockPos(ped)))["twilightforest:active"] == "1",
                   "the pedestal is active");

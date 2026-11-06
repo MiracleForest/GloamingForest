@@ -28,6 +28,7 @@
 
 #include "mc/deps/core/math/Vec2.h"
 #include "mc/deps/shared_types/legacy/EquipmentSlot.h"
+#include "mc/legacy/ActorRuntimeID.h"
 #include "mc/util/VariantParameterList.h"
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/Mob.h"
