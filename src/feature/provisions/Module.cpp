@@ -22,6 +22,8 @@
 // - the frosted effect (Frosted.cpp), the four enchantments (Enchantments.cpp) and Experiment 115
 //   (Experiment115.cpp).
 #include <string>
+#include <string_view>
+#include <vector>
 
 #include "ll/api/event/EventBus.h"
 #include "ll/api/event/ListenerBase.h"
@@ -44,6 +46,7 @@
 #include "feature/provisions/Internal.h"
 #include "feature/stats/Stats.h"
 #include "game/Items.h"
+#include "mod/I18n.h"
 #include "mod/Log.h"
 #include "mod/Module.h"
 
@@ -82,11 +85,25 @@ void registerFoods() {
     ::gf::item::ext::setRarity(ids::kStroganoff, ::gf::item::ext::Rarity::Uncommon);
 }
 
+/// TF's disc credits (jukebox_song.twilightforest.<key>), the English fallbacks of TF's en_us.
+std::string songCredit(std::string_view key) {
+    if (key == "radiance" || key == "steps" || key == "superstitious") return "Rotch Gwylt - " + std::string(key == "radiance" ? "Radiance" : key == "steps" ? "Steps" : "Superstitious");
+    std::string name(key == "warfarer" ? "wayfarer" : key);
+    name[0] = static_cast<char>(name[0] - 'a' + 'A');
+    return "MrCompost - " + name;
+}
+
 void registerDiscs() {
     for (auto const& s : cp::songs()) {
         auto disc = "twilightforest:music_disc_" + std::string(s.track);
         ::gf::item::ext::setRecordSound(disc, "music_disc.twilightforest." + std::string(s.track));
         ::gf::item::ext::setRarity(disc, ::gf::item::ext::Rarity::Rare);
+        // JukeboxPlayable's tooltip: the song's description in gray
+        auto key      = "jukebox_song.twilightforest." + std::string(s.key);
+        auto fallback = songCredit(s.key);
+        ::gf::item::addTooltip(disc, [key, fallback](ItemStack const&, std::vector<std::string>& lines, Player const* viewer) {
+            lines.push_back("§7" + (viewer ? ::gf::trFor(*viewer, key, fallback) : ::gf::tr(key, fallback)));
+        });
     }
 }
 
