@@ -17,9 +17,9 @@
       },
       "minecraft:emitter_shape_point": {
         "direction": [
-          "variable.direction.x",
-          "variable.direction.y",
-          "variable.direction.z"
+          "variable.direction.x / math.max(math.sqrt(variable.direction.x * variable.direction.x + variable.direction.y * variable.direction.y + variable.direction.z * variable.direction.z), 0.000001)",
+          "variable.direction.y / math.max(math.sqrt(variable.direction.x * variable.direction.x + variable.direction.y * variable.direction.y + variable.direction.z * variable.direction.z), 0.000001)",
+          "variable.direction.z / math.max(math.sqrt(variable.direction.x * variable.direction.x + variable.direction.y * variable.direction.y + variable.direction.z * variable.direction.z), 0.000001)"
         ]
       },
       "minecraft:particle_initial_speed": "math.sqrt(variable.direction.x * variable.direction.x + variable.direction.y * variable.direction.y + variable.direction.z * variable.direction.z) * 20",
@@ -30,7 +30,9 @@
         "linear_drag_coefficient": 0.8164
       },
       "minecraft:particle_motion_collision": {
-        "collision_radius": 0.1
+        "collision_radius": 0.1,
+        "coefficient_of_restitution": 0,
+        "collision_drag": 3
       },
       "minecraft:particle_appearance_billboard": {
         "size": [

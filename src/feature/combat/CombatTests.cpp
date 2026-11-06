@@ -428,13 +428,50 @@ GF_REGISTER_SELFTEST("combat.fx_effect_variables", [](Context& ctx) -> ll::coro:
     fx::particle(dim, "minecraft:falling_dust", at, Vec3{}, 1, JsonT{{"block", "minecraft:cauldron"}, {"states", {{"cauldron_liquid", "water"}, {"fill_level", 6}}}});
     fx::particle(dim, "minecraft:falling_dust", at, Vec3{}, 1, JsonT{{"block", "minecraft:oak_log"}, {"states", {{"pillar_axis", "x"}}}});
     ctx.check(fx::counters().variablePackets >= c4.variablePackets + 2, "falling dust of block states carries variable.color");
+    // colours within 1/255 of Java's 0xRRGGBB
+    auto rgb     = [](int c) { return fx::Rgba{((c >> 16) & 0xFF) / 255.f, ((c >> 8) & 0xFF) / 255.f, (c & 0xFF) / 255.f, 1.f}; };
+    auto sameRgb = [](fx::Rgba const& a, fx::Rgba const& b) {
+        return std::abs(a.r - b.r) <= 1.f / 255.f && std::abs(a.g - b.g) <= 1.f / 255.f && std::abs(a.b - b.b) <= 1.f / 255.f;
+    };
     if (auto const* logX = gf::game::blockWithStates("minecraft:oak_log", JsonT{{"pillar_axis", "x"}}), *logY = gf::game::blockWithStates("minecraft:oak_log", JsonT{{"pillar_axis", "y"}});
         logX && logY) {
         auto& region = dim.getBlockSourceFromMainChunkSource();
         auto  x      = fx::blockDustColor(*logX, &region, at);
         auto  y      = fx::blockDustColor(*logY, &region, at);
-        ctx.info("oak log map colour by axis: x (" + std::to_string(x.r) + ", " + std::to_string(x.g) + ", " + std::to_string(x.b) + "), y (" + std::to_string(y.r) + ", " +
-                 std::to_string(y.g) + ", " + std::to_string(y.b) + ")");
+        auto  show   = [](fx::Rgba const& c) { return "(" + std::to_string(c.r) + ", " + std::to_string(c.g) + ", " + std::to_string(c.b) + ")"; };
+        // Java's oak log: MapColor WOOD (0x8F7748) on its ends (axis y), PODZOL (0x815631) on its sides
+        ctx.check(!sameRgb(x, y), "the map colour fallback is the block state's (oak log x " + show(x) + " differs from y " + show(y) + ")");
+        ctx.check(sameRgb(x, rgb(0x815631)), "oak log axis x: PODZOL 0x815631 " + show(x));
+        ctx.check(sameRgb(y, rgb(0x8F7748)), "oak log axis y: WOOD 0x8F7748 " + show(y));
+    } else {
+        ctx.fail("the oak log axis states exist");
+    }
+
+    // Java's ids Bedrock folds into one block (paramBlockOf): the cauldrons and the beds
+    {
+        auto& region = dim.getBlockSourceFromMainChunkSource();
+        auto  dust   = [&](JsonT const& params) { return fx::paramDustColor(fx::paramBlockOf(params), &region, at); };
+        auto  water  = dust(JsonT{{"block", "minecraft:water_cauldron"}, {"states", {{"level", "2"}}}});
+        auto  lava   = dust(JsonT{{"block", "minecraft:lava_cauldron"}});
+        auto  snow   = dust(JsonT{{"block", "minecraft:powder_snow_cauldron"}, {"states", {{"level", 3}}}});
+        ctx.check(water && sameRgb(*water, rgb(0xFFFFFF)), "minecraft:water_cauldron: white (its BlockColor without a level)");
+        ctx.check(lava && sameRgb(*lava, rgb(0x707070)), "minecraft:lava_cauldron: the cauldron's map colour, STONE 0x707070");
+        ctx.check(snow && sameRgb(*snow, rgb(0x707070)), "minecraft:powder_snow_cauldron: STONE 0x707070");
+        auto const* waterBlock = fx::paramBlockOf(JsonT{{"block", "minecraft:water_cauldron"}, {"states", {{"level", 2}}}}).block;
+        ctx.check(waterBlock && gf::game::statesOf(*waterBlock)["cauldron_liquid"] == "water" && gf::game::intState(*waterBlock, "fill_level") == 4,
+                  "water_cauldron level 2 is minecraft:cauldron with water at fill_level 4");
+        auto foot = dust(JsonT{{"block", "minecraft:red_bed"}});
+        auto head = dust(JsonT{{"block", "minecraft:red_bed"}, {"states", {{"part", "head"}}}});
+        auto blue = dust(JsonT{{"block", "minecraft:blue_bed"}, {"states", {{"part", "foot"}}}});
+        ctx.check(foot && sameRgb(*foot, rgb(0x993333)), "red bed foot: COLOR_RED 0x993333");
+        ctx.check(head && sameRgb(*head, rgb(0xC7C7C7)), "red bed head: WOOL 0xC7C7C7");
+        ctx.check(blue && sameRgb(*blue, rgb(0x334CB2)), "blue bed foot: COLOR_BLUE 0x334CB2");
+        auto const* bed = fx::paramBlockOf(JsonT{{"block", "minecraft:red_bed"}, {"states", {{"part", "head"}}}}).block;
+        ctx.check(bed && gf::game::blockId(*bed) == "minecraft:bed" && gf::game::intState(*bed, "head_piece_bit").value_or(0) == 1, "a Java bed is minecraft:bed with its part");
+        auto bedrockHead = dust(JsonT{{"block", "minecraft:bed"}, {"states", {{"part", "head"}}}});
+        ctx.check(bedrockHead && sameRgb(*bedrockHead, rgb(0xC7C7C7)), "minecraft:bed with Java's part head: WOOL");
+        ctx.check(fx::paramBlockOf(JsonT{{"block", "minecraft:red_bed"}, {"states", {{"part", 1}}}}).block != nullptr, "a malformed bed part is the foot, not an error");
+        ctx.check(!dust(JsonT{{"block", "minecraft:no_such_block"}}), "an unknown block has no colour");
     }
 });
 

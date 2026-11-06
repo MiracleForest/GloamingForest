@@ -205,6 +205,21 @@ void fillEffectVariables(MolangMap& map, std::uint32_t vars, Vec3 const& velocit
 /// state.getMapColor(level, pos)), the type's map colour without a region.
 [[nodiscard]] Rgba blockDustColor(Block const& block, BlockSource* region, Vec3 const& pos);
 
+/// The block of params "block" (+ "states"), and the map colour Java gives its state where Bedrock
+/// keeps it out of the block state (a bed's: BedBlock's FOOT the dye's map colour, HEAD WOOL).
+struct ParamBlock {
+    Block const*        block = nullptr; ///< nullptr: params name no known block
+    std::optional<Rgba> mapColor;
+};
+/// params "block" (+ "states") as a Bedrock block (Fx.cpp). Java's ids Bedrock folds into one
+/// block are translated: minecraft:water_cauldron / powder_snow_cauldron (state "level" 1..3) and
+/// lava_cauldron are minecraft:cauldron with cauldron_liquid and fill_level (level * 2, lava 6), the
+/// 16 minecraft:<dye>_bed (state "part") minecraft:bed with head_piece_bit and Java's map colour.
+[[nodiscard]] ParamBlock paramBlockOf(nlohmann::json const& params);
+/// FallingDustParticle's colour of a params block at `pos`: its map colour when it carries one,
+/// else blockDustColor; nullopt without a block.
+[[nodiscard]] std::optional<Rgba> paramDustColor(ParamBlock const& block, BlockSource* region, Vec3 const& pos);
+
 #ifdef GF_CLIENT
 namespace client {
 /// The client's "fx.particle" messages so far (selftests): drawn by the native sink (F12's
