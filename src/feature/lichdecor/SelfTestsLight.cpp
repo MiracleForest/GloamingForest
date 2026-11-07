@@ -21,8 +21,16 @@
 #include "mc/world/level/Spawner.h"
 #include "mc/world/level/block/Block.h"
 #include "mc/world/phys/AABB.h"
+#include "mc/world/level/dimension/Dimension.h"
+#include "mc/world/redstone/circuit/CircuitSceneGraph.h"
+#include "mc/world/redstone/circuit/CircuitSystem.h"
+#include "mc/world/redstone/circuit/components/BaseCircuitComponent.h"
+#include "mc/world/redstone/circuit/components/CircuitComponentList.h"
+
+#include <memory>
 
 #include "feature/combat/Combat.h"
+#include "feature/ext/lichdecor/SupportPower.h"
 #include "feature/common/Redstone.h"
 #include "feature/lichdecor/LightablesInternal.h"
 #include "feature/spawn/Spawn.h"
@@ -41,6 +49,31 @@ using core::GlobalPos;
 
 BlockPos bp(GlobalPos const& g) { return game::blockPos(g); }
 GlobalPos up(GlobalPos const& g, int n = 1) { return g.offset(0, n, 0); }
+
+/// The circuit graph at the candelabra, its support and a consumer: component types, strengths and
+/// how many sources each has (diagnostics for lichdecor.candelabra_circuit).
+std::string circuitReport(BlockSource& region, BlockPos const& producer, BlockPos const& support, BlockPos const& consumer) {
+    CircuitSystem* system = region.getDimension().mCircuitSystem.get();
+    if (!system) return "no circuit system";
+    std::string out;
+    auto        describe = [&](char const* name, BlockPos const& p) {
+        auto&                 all  = system->mSceneGraph->mAllComponents;
+        BaseCircuitComponent* comp = nullptr;
+        if (auto it = all.find(p); it != all.end()) comp = it->second.get();
+        out += std::string(name) + "=";
+        if (!comp) {
+            out += "none; ";
+            return;
+        }
+        out += "type " + std::to_string(static_cast<long long>(comp->getCircuitComponentType())) + " strength " + std::to_string(comp->getStrength()) + " sources " +
+               std::to_string(comp->mSources->mComponents.size()) + " direction " + std::to_string(comp->getDirection()) + "; ";
+    };
+    describe("producer", producer);
+    describe("support", support);
+    describe("consumer", consumer);
+    out += "ext power " + std::to_string(gf::feature::ext::lichdecor::directedPower(region, producer));
+    return out;
+}
 
 std::string st(Context& ctx, GlobalPos const& g, char const* name) {
     auto* r = ctx.region();
@@ -225,8 +258,7 @@ GF_REGISTER_SELFTEST("lichdecor.candelabra_signal", [](Context& ctx) -> ll::coro
     auto lamp = support.offset(1, 0, 0);
     ctx.require(ctx.setBlock(lamp, "minecraft:redstone_lamp"), "lamp");
     co_await ctx.ticks(6);
-    // Known gap (docs/units/lichdecor.md): the circuit producer of the extension does not yet make
-    // the support a powered conductor for vanilla mechanisms; logged, not checked
+    // (the lamp is checked by lichdecor.candelabra_circuit)
     ctx.info("a redstone lamp beside the support: " + ctx.blockAt(lamp));
     // the comparator table
     r = ctx.region();
@@ -243,6 +275,63 @@ GF_REGISTER_SELFTEST("lichdecor.candelabra_signal", [](Context& ctx) -> ll::coro
     r = ctx.region();
     ctx.check(gf::redstone::signalFrom(*r, bp(wall), bp(g)) == 3, "DIM wall: 3 per candle into the support at FACING");
     ctx.check(gf::redstone::signalFrom(*r, bp(wall), bp(wall.offset(0, -1, 0))) == 0, "nothing below a wall candelabra");
+    co_return;
+});
+
+// The DIM candelabra's strong power through its support into vanilla mechanisms (the circuit
+// producer of feature/ext/lichdecor/SupportPower), and what a vanilla comparator reads: the
+// candelabra right behind it (getAnalogOutputSignal), never one at its side (ComparatorBlock reads
+// side inputs with getSignal / getDirectSignal of diodes only).
+GF_REGISTER_SELFTEST("lichdecor.candelabra_circuit", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto box = co_await ctx.flatArea(2270, 8);
+    (void)box;
+    auto* r = ctx.region();
+    ctx.require(r != nullptr, "region");
+    // (1) a standing DIM candelabra on a stone block: a lamp beside the stone lights
+    auto support = ctx.testPos(2271, 1);
+    auto g       = up(support);
+    auto lamp    = support.offset(1, 0, 0);
+    ctx.require(ctx.setBlock(support, "minecraft:stone"), "support");
+    ctx.require(ctx.setBlock(lamp, "minecraft:redstone_lamp"), "lamp");
+    co_await ctx.ticks(2);
+    ctx.require(ctx.setBlock(g, kCandelabra, {{"twilightforest:has_candle_1", true}, {"twilightforest:has_candle_2", true}, {"twilightforest:lighting", "dim"}}), "candelabra");
+    r = ctx.region();
+    setDataAt(*r, bp(g), Json{{"candles", Json::array({"minecraft:candle", "minecraft:candle", nullptr})}});
+    syncCandelabraPower(*r, bp(g));
+    co_await ctx.ticks(8);
+    ctx.info("circuit: " + circuitReport(*ctx.region(), bp(g), bp(support), bp(lamp)));
+    ctx.check(ctx.blockAt(lamp) == "minecraft:lit_redstone_lamp", "a lamp beside the support of a DIM candelabra lights (" + ctx.blockAt(lamp) + ")");
+    // put out: the lamp goes dark again
+    r = ctx.region();
+    setStates(*r, bp(g), r->getBlock(bp(g)), Json{{"lighting", "none"}});
+    syncCandelabraPower(*r, bp(g));
+    co_await ctx.ticks(8);
+    ctx.check(ctx.blockAt(lamp) == "minecraft:redstone_lamp", "the lamp goes out with the candelabra (" + ctx.blockAt(lamp) + ")");
+    ctx.setBlock(g, "minecraft:air");
+    co_await ctx.ticks(2);
+    // (2) a comparator reads an OMINOUS candelabra right behind it (6 + 2 candles), not at its side
+    auto comparator = ctx.testPos(2275, 1);
+    ctx.require(ctx.setBlock(comparator, "minecraft:unpowered_comparator", {{"minecraft:cardinal_direction", "south"}}), "comparator");
+    r = ctx.region();
+    auto rear = gf::redstone::comparatorRear(r->getBlock(bp(comparator)));
+    ctx.require(rear.has_value() && *rear >= 2, "the comparator's input side");
+    static int const kOff[6][3] = {{0, -1, 0}, {0, 1, 0}, {0, 0, -1}, {0, 0, 1}, {-1, 0, 0}, {1, 0, 0}};
+    auto behind = comparator.offset(kOff[*rear][0], 0, kOff[*rear][2]);
+    // a side: turn the rear direction by 90 degrees
+    int  sideFace = *rear <= 3 ? 5 : 3;
+    auto side     = comparator.offset(kOff[sideFace][0], 0, kOff[sideFace][2]);
+    Json ominous{{"twilightforest:has_candle_1", true}, {"twilightforest:has_candle_2", true}, {"twilightforest:lighting", "ominous"}};
+    ctx.require(ctx.setBlock(behind, kCandelabra, ominous), "candelabra behind");
+    r = ctx.region();
+    setDataAt(*r, bp(behind), Json{{"candles", Json::array({"minecraft:candle", "minecraft:candle", nullptr})}});
+    ctx.check(gf::redstone::comparatorInput(*r, bp(comparator)).value_or(-1) == 8, "the comparator reads the candelabra behind it (8)");
+    ctx.setBlock(behind, "minecraft:air");
+    ctx.require(ctx.setBlock(side, kCandelabra, ominous), "candelabra at the side");
+    r = ctx.region();
+    setDataAt(*r, bp(side), Json{{"candles", Json::array({"minecraft:candle", "minecraft:candle", nullptr})}});
+    ctx.check(gf::redstone::comparatorInput(*r, bp(comparator)).value_or(0) == 0, "a candelabra at the comparator's side is not read");
+    ctx.setBlock(side, "minecraft:air");
+    ctx.setBlock(comparator, "minecraft:air");
     co_return;
 });
 

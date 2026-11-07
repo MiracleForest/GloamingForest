@@ -58,9 +58,6 @@ What the unit implements, how it maps TF 4.8 onto Bedrock, and what is still mis
 
 ## Not done yet
 
-- The DIM candelabra's strong power reaches `gf::redstone::power()` / `signalFrom()` of the support, but the circuit
-  producer of `SupportPower` does not yet light vanilla mechanisms beside the support (`lichdecor.candelabra_signal`
-  logs the lamp instead of checking it).
 - Client-mod renderers (`src/client/lichdecor`): the animated flames and smoke (`animateTick`), the brazier's fire,
   the ominous candles' bobbing flames, the skull chest lid, the magic painting parallax / opacity layers, the candle
   colours of skull candles and candelabras (block data, not states: the pack shows the plain candle).
@@ -75,3 +72,21 @@ What the unit implements, how it maps TF 4.8 onto Bedrock, and what is still mis
   own tables have other ids and formats), so `set_loot minecraft:...` reports the table as unknown.
 - The particle option codecs are checked for their required fields only (not their value ranges); the
   `Can't parse particle options` text lists the missing keys as DataFixerUpper does, without the full codec context.
+
+## Audit round 1
+
+Checked (A3, landmarks and bosses I): the candelabra's power into vanilla mechanisms and what a vanilla comparator
+reads (`lichdecor.candelabra_circuit`), on top of the existing light / room tests.
+
+Fixed:
+
+- The DIM candelabra now lights vanilla mechanisms through its support (`CandelabraBlock#getDirectSignal`): the
+  extension's producer (`src/feature/ext/lichdecor/SupportPower.cpp`) was created with the right connection (the
+  support's powered-block component listed it as its source) but at strength 0: `CircuitSystem#setStrength` only finds
+  components already in the scene graph, and a producer created that tick waits in the pending adds. The strength is
+  now set on the component itself. `lichdecor.candelabra_circuit` lights a redstone lamp beside the support of a
+  DIM standing candelabra and turns it off with the candelabra.
+- Comparator side test: a vanilla comparator reads an OMINOUS candelabra right behind it (6 + 2 candles = 8) and
+  nothing from one at its side.
+
+Open: the client-mod renderers listed under "Not done yet".

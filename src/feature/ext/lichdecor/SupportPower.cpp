@@ -61,7 +61,7 @@ bool setDirectedPower(BlockSource& region, BlockPos const& at, int towards, int 
     }
     if (strength <= 0) {
         if (mine) {
-            system->setStrength(at, 0);
+            comp->setStrength(0);
             comp->mRemoved = true; // the graph drops removed components on its next update
             system->mSceneGraph->remove(at, comp);
         }
@@ -78,7 +78,9 @@ bool setDirectedPower(BlockSource& region, BlockPos const& at, int towards, int 
         if (!created) return false;
         ours()[key] = created;
     }
-    system->setStrength(at, std::min(strength, 15));
+    // on the component itself: CircuitSystem#setStrength only finds components already in the graph,
+    // and one created this tick waits in the pending adds until the graph's next update
+    ours()[key]->setStrength(std::min(strength, 15));
     return true;
 }
 
