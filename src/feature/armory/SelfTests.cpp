@@ -674,15 +674,9 @@ GF_REGISTER_SELFTEST("armory.no_template_smithing", [](Context& ctx) {
     ctx.check(!noTemplateSmithing(make("minecraft:stick"), cloth).has_value(), "refused for a base outside #emperors_cloth_applicable");
     ctx.check(noTemplateSmithing(make("minecraft:iron_helmet"), cloth).has_value(), "a vanilla helmet takes it");
     ctx.check(noTemplateSmithing(make("minecraft:elytra"), cloth).has_value(), "the elytra takes it");
-    // the crafting table fallback
-    std::vector<ItemStack> stacks{chest, cloth};
-    gf::recipes::CraftingGrid grid;
-    grid.width  = 2;
-    grid.height = 1;
-    for (auto& s : stacks) grid.slots.push_back(&s);
-    auto crafted = gf::recipes::internal::assembleSpecial(ids::kClothSmithing, grid);
-    ctx.check(crafted && items::idOf(*crafted) == "twilightforest:knightmetal_chestplate" && gf::item::getData(*crafted, "twilightforest:emperors_cloth").is_object(),
-              "the crafting table's emperor's cloth recipe");
+    // no crafting-table copy: TF's own crafting recipe (U9's twilightforest:emperors_cloth_recipe) is the one
+    ctx.check(!gf::recipes::internal::assembleSpecial(ids::kClothSmithing, gf::recipes::CraftingGrid{}).has_value(),
+              "no special crafting registered under twilightforest:emperors_cloth_smithing");
 });
 
 } // namespace gf::feature::armory::tests

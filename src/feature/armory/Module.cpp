@@ -334,23 +334,6 @@ void smeltingModifier(std::vector<ItemStack>& loot, loot::LootContext const& ctx
     }
 }
 
-// ---- no-template smithing ---------------------------------------------------------------------------
-
-std::vector<ItemStack const*> filled(recipes::CraftingGrid const& grid) {
-    std::vector<ItemStack const*> out;
-    for (auto const* s : grid.slots)
-        if (s && !items::isEmpty(*s)) out.push_back(s);
-    return out;
-}
-
-/// The (base, addition) of a two-item grid that a no-template smithing recipe accepts.
-std::optional<ItemStack> clothCraft(recipes::CraftingGrid const& grid) {
-    auto f = filled(grid);
-    if (f.size() != 2) return std::nullopt;
-    if (auto r = noTemplateSmithing(*f[0], *f[1])) return r;
-    return noTemplateSmithing(*f[1], *f[0]);
-}
-
 // ---- registration -----------------------------------------------------------------------------------
 
 void registerItems() {
@@ -438,16 +421,11 @@ void registerRecipes() {
             }
         );
     }
-    // no-template smithing in the crafting table (any armour + the cloth; the elytra is its own layout)
-    recipes::registerSpecialCrafting(
-        ids::kClothSmithing,
-        [](recipes::CraftingGrid const& g) { return clothCraft(g).has_value(); },
-        [](recipes::CraftingGrid const& g) {
-            auto out = clothCraft(g);
-            return out ? *out : ItemStack::EMPTY_ITEM();
-        }
-    );
-    recipes::ext::addSpecialLayout(ids::kClothSmithing, ids::kClothSmithingElytra);
+    // No crafting-table copy of twilightforest:emperors_cloth_smithing: Bedrock's smithing table needs a
+    // template, and TF's own crafting recipe twilightforest:emperors_cloth_recipe (U9) already puts the
+    // cloth on any applicable piece with the same result (a copy of the base with
+    // twilightforest:emperors_cloth); a second crafting recipe of the same layout was a duplicate
+    // (content-log warning). noTemplateSmithing keeps NoTemplateSmithingRecipe's match and result.
 }
 
 class ArmoryModule {
