@@ -771,18 +771,27 @@ GF_REGISTER_SELFTEST("trees.time_core_ticks", [](Context& ctx) -> ll::coro::Coro
 
 GF_REGISTER_SELFTEST("trees.time_core_block_entity_tickers", [](Context& ctx) -> ll::coro::CoroTask<> {
     // TimeLogCoreBlock: state.getTicker(...) of ANY block entity, TF's own included: a unit registers
-    // its block's ticker (gf::trees_ext::registerTimeCoreTicker); here the fixture block stands in
+    // its block's ticker (gf::trees_ext::registerTimeCoreTicker); here a plain vanilla block stands in.
+    // Not gf_test:fixture_block: families.blockevents leaves a random tick handler on it for the rest
+    // of the run (blockevents has no removal), and a randomly ticking block counts without asking its
+    // ticker, so in the full run the ticker was never asked and "no ticker" still ticked.
+    static constexpr char kStandIn[] = "minecraft:smooth_basalt";
     RangeGuard guard;
     gf::config::mut<TreesConfig>().timeCoreRange = 1;
     GlobalPos core = ctx.testPos(378, 2), fixture = core.offset(1, 0, 0), box = core.offset(-1, 0, 0);
     ctx.require(ctx.setBlock(core, "twilightforest:time_log_core", {{"twilightforest:axis", "y"}}), "a timewood clock");
-    ctx.require(ctx.setBlock(fixture, "gf_test:fixture_block"), "the fixture block");
+    ctx.require(ctx.setBlock(fixture, kStandIn), "the stand-in block");
+    ctx.require(gf::trees_ext::timeCoreTicker(kStandIn) == nullptr, std::string("no ticker registered for ") + kStandIn + " yet");
+    {
+        auto* r = ctx.region();
+        ctx.require(r != nullptr && !timeCoreWorks(*r, bp(fixture)), std::string(kStandIn) + " does not tick on its own");
+    }
     struct Unregister {
-        ~Unregister() { gf::trees_ext::unregisterTimeCoreTicker("gf_test:fixture_block"); }
+        ~Unregister() { gf::trees_ext::unregisterTimeCoreTicker(kStandIn); }
     } unregister;
     int ticks = 0, asked = 0;
     bool hasTicker = true;
-    gf::trees_ext::registerTimeCoreTicker("gf_test:fixture_block", [&](BlockSource&, BlockPos const&, bool simulate) {
+    gf::trees_ext::registerTimeCoreTicker(kStandIn, [&](BlockSource&, BlockPos const&, bool simulate) {
         if (!hasTicker) return false;
         if (simulate) ++asked;
         else ++ticks;
@@ -1277,25 +1286,44 @@ GF_REGISTER_SELFTEST("trees.mangrove_sapling_water", [](Context& ctx) -> ll::cor
     ctx.require(ctx.setBlock(pos(1, 0, 2), "minecraft:dirt") && ctx.setBlock(pos(3, 0, 2), "minecraft:dirt") && ctx.setBlock(pos(7, 0, 2), "minecraft:dirt"), "dirt under the saplings");
     ctx.require(ctx.setBlock(pos(5, 1, 2), "minecraft:stone"), "the channel's end");
     ctx.require(ctx.setBlock(source, "minecraft:water"), "a water source");
-    ctx.require(ctx.setBlock(feed, "minecraft:water"), "the channel's source");
-    co_await ctx.ticks(20);
+    // Bedrock's minecraft:water is the static liquid: placed by setBlock with no neighbour changing
+    // afterwards it never ticks and never spreads. The channel's source is the dynamic one (a source:
+    // liquid_depth 0), whose placement schedules its liquid tick, so it flows into the channel.
+    ctx.require(ctx.setBlock(feed, "minecraft:flowing_water", {{"liquid_depth", 0}}), "the channel's source");
     auto* region = ctx.region();
-    ctx.require(region != nullptr, "a region");
-    auto depth = [&](GlobalPos const& p) { return game::intState(region->getBlock(bp(p)), "liquid_depth").value_or(-1); };
+    auto  depth  = [&](GlobalPos const& p) { return game::intState(region->getBlock(bp(p)), "liquid_depth").value_or(-1); };
+    auto  flows  = [&] { return ctx.blockAt(flowing) == "minecraft:flowing_water" || (ctx.blockAt(flowing) == "minecraft:water" && depth(flowing) > 0); };
+    for (int i = 0; i < 100; ++i) {
+        co_await ctx.ticks(1);
+        region = ctx.region();
+        ctx.require(region != nullptr, "a region");
+        if (i >= 20 && flows()) break;
+    }
     ctx.require(ctx.blockAt(flowing) == "minecraft:flowing_water" || (ctx.blockAt(flowing) == "minecraft:water" && depth(flowing) > 0),
                 "flowing water in the channel (" + ctx.blockAt(flowing) + " depth " + std::to_string(depth(flowing)) + ")");
-    for (GlobalPos const& p : {source, flowing, dry}) co_await click(ctx, p.offset(0, -1, 0), "twilightforest:mangrove_sapling");
-    co_await ctx.ticks(2);
-    region = ctx.region();
-    ctx.require(region != nullptr, "a region");
-    auto wet = [&](GlobalPos const& p) {
-        auto const& extra = region->getExtraBlock(bp(p)).getTypeName();
-        return extra == "minecraft:water" || extra == "minecraft:flowing_water";
+    // The placed state is read right after each placement (click: 2 ticks), before the next liquid
+    // tick (water: 5 ticks). Later, Bedrock's flowing water spreads into the liquid layer of every
+    // block with minecraft:liquid_detection can_contain_liquid (Java's SimpleWaterloggedBlock only
+    // takes a source: canPlaceLiquid), which is the waterloggable blocks' behaviour, not the
+    // sapling's placement this test is about.
+    auto wetNow = [&](GlobalPos const& p) -> std::string {
+        auto* r = ctx.region();
+        if (!r) return "no region";
+        auto const& extra = r->getExtraBlock(bp(p));
+        auto const& id    = extra.getTypeName();
+        if (id != "minecraft:water" && id != "minecraft:flowing_water") return "";
+        return id + " depth " + std::to_string(game::intState(extra, "liquid_depth").value_or(-1));
     };
+    std::map<int, std::string> placedWet; // by x
+    for (GlobalPos const& p : {source, flowing, dry}) {
+        co_await click(ctx, p.offset(0, -1, 0), "twilightforest:mangrove_sapling");
+        placedWet[p.x] = wetNow(p);
+    }
     for (GlobalPos const& p : {source, flowing, dry}) ctx.check(ctx.blockAt(p) == "twilightforest:mangrove_sapling", "a mangrove sapling was placed (" + ctx.blockAt(p) + ")");
-    ctx.check(wet(source), "the sapling placed into a water source is waterlogged");
-    ctx.check(!wet(flowing), "the sapling placed into flowing water is not");
-    ctx.check(!wet(dry), "the sapling placed in air is not");
+    ctx.check(!placedWet[source.x].empty(), "the sapling placed into a water source is waterlogged");
+    ctx.check(placedWet[flowing.x].empty(), "the sapling placed into flowing water is not (" + placedWet[flowing.x] + ")");
+    ctx.check(placedWet[dry.x].empty(), "the sapling placed in air is not (" + placedWet[dry.x] + ")");
+    ctx.check(!wetNow(source).empty(), "the waterlogged sapling keeps its water");
     for (GlobalPos const& p : {source, flowing, dry, feed}) ctx.cleanupBlock(p);
 });
 
