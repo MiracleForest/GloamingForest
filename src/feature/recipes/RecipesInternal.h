@@ -43,7 +43,8 @@ struct PlayerGrid {
 [[nodiscard]] std::vector<std::string> specialCandidates(std::string const& resultItemId, CraftingGrid const& grid);
 /// The crafting hook's choice: `bpRecipeId` (the recipe the request crafted, "" when unknown) when
 /// it is special, else the first of specialCandidates whose matcher accepts `grid`; "" for none.
-/// `refused`: the named recipe is special but its matcher refused the grid.
+/// `refused`: the named recipe is special but its matcher refused the grid, or (unknown recipe)
+/// candidates fit and every matcher refused it.
 [[nodiscard]] std::string resolveSpecial(std::string const& bpRecipeId, std::string const& resultItemId, CraftingGrid const& grid, bool* refused = nullptr);
 /// Whether `grid` holds the ingredients of a recipe (shaped: the pattern anywhere in the grid,
 /// mirrored too, nothing else; shapeless: exactly one stack per ingredient).

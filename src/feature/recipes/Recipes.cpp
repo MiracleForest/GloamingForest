@@ -708,6 +708,7 @@ std::string resolveSpecial(std::string const& bpRecipeId, std::string const& res
         }
         return data::withNamespace(bpRecipeId);
     }
+    bool rejected = false;
     for (auto const& id : specialCandidates(resultItemId, grid)) {
         Matcher matcher;
         {
@@ -716,7 +717,11 @@ std::string resolveSpecial(std::string const& bpRecipeId, std::string const& res
             if (auto const* sp = specialOf(s, id)) matcher = sp->matcher;
         }
         if (!matcher || matcher(grid)) return id;
+        rejected = true;
     }
+    // every special recipe that fits the grid said no (e.g. a gate such as U13's
+    // disableUncraftingTable): the craft is refused, never left to the BP recipe's static result
+    if (refused && rejected) *refused = true;
     return {};
 }
 
@@ -995,7 +1000,7 @@ LL_TYPE_INSTANCE_HOOK(
         bool refused = false;
         auto id      = rc::internal::resolveSpecial(bp, resultItem, grid.grid, &refused);
         if (refused) {
-            gf::log().info("recipes: special crafting {} refused for {}", bp, player.getRealName());
+            gf::log().info("recipes: special crafting {} refused for {}", bp.empty() ? resultItem : bp, player.getRealName());
             return ItemStackNetResult::Error;
         }
         if (id.empty()) return origin(results, numCrafts);

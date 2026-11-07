@@ -574,7 +574,13 @@ GF_REGISTER_SELFTEST("item.special_crafting_shared_result", [](Context& ctx) {
     TestGrid none({{0, 0, "minecraft:paper"}});
     ctx.check(rc::internal::specialCandidates(kFixture, none.grid).empty() && rc::internal::resolveSpecial("", kFixture, none.grid).empty(),
               "no special BP recipe fits a lone paper (twin_b's loose matcher is not asked): the crafted recipe's own result");
-    for (auto const* id : {"gf_test:twin_special", "gf_test:twin_b", "gf_test:twin_0"}) rc::internal::unregisterSpecial(id);
+    bool refusedA = true;
+    ctx.check(!rc::internal::resolveSpecial("", kFixture, two.grid, &refusedA).empty() && !refusedA, "a refusal followed by a taker is no refusal");
+    rc::internal::unregisterSpecial("gf_test:twin_special");
+    bool refused0 = false;
+    auto zero     = rc::internal::resolveSpecial("", kFixture, two.grid, &refused0);
+    ctx.check(zero.empty() && refused0, "the only fitting special refuses: the craft is refused, not the BP recipe's result (got '" + zero + "')");
+    for (auto const* id : {"gf_test:twin_b", "gf_test:twin_0"}) rc::internal::unregisterSpecial(id);
     for (auto const* r : {&sticks, &paper, &first}) rc::internal::setTestNativeRecipe(*r, true);
     ctx.check(rc::internal::nativeById("gf_test:twin_a") == nullptr, "the stand-ins are gone");
 });
