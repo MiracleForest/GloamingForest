@@ -22,7 +22,7 @@ client screenshot review pending; Bedrock gaps in `docs/spec/not-ported.md`.
 - Original synthesized sounds for every TF sound event and original structure templates; TF's CC BY-NC-SA
   textures, models and translations imported for 29 locales.
 - Client-mod screens and renderers with vanilla-client fallbacks (forms, DDUI, lore).
-- About 950 in-game selftests (`/twilightforest selftest`) and the C++ unit tests.
+- About 960 in-game selftests (`/twilightforest selftest`) and the C++ unit tests.
 - The build: xmake targets `gf-core`, `GloamingForest` (server and client builds) and `gf-tests`;
   `tools/build.ps1` with machine-wide throttle slots; the shared Twilight Forest checkout (`tools/tf/fetch.ps1`).
 - The foundation adapted from Levitate v0.1.0: modules, configs and the in-game config screen,

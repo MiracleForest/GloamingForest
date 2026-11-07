@@ -17,7 +17,7 @@ Preview. The whole of The Twilight Forest 4.8 is ported: the dimension and its p
 terrain, every landmark with its boss (Naga, Lich, Minoshroom, Hydra, Knight Phantoms, Ur-Ghast, Alpha Yeti,
 Snow Queen, giants, final castle), the mobs, blocks, items, armour, artifacts, the uncrafting table and maps,
 Travellers' Gear, advancements, the sky and weather, and original sounds and structure templates. Every unit
-is checked by the server selftests (about 950 in game, plus the C++ unit tests). Expect rough edges: the
+is checked by the server selftests (about 960 in game, plus the C++ unit tests). Expect rough edges: the
 client-mod screenshot review is still pending, and what Bedrock cannot do (or does differently) is listed in
 [docs/spec/not-ported.md](docs/spec/not-ported.md). Report problems in the issues.
 
