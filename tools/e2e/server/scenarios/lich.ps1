@@ -9,7 +9,7 @@ Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
 $mark = Get-LogMark
 $r = Invoke-SelfTest 'lich.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) lich selftest(s) failed" }
-if ($r.Pass -lt 14) { throw "expected at least 14 lich selftests to pass, got $($r.Pass)" }
+if ($r.Pass -lt 16) { throw "expected at least 16 lich selftests to pass, got $($r.Pass)" }
 $log = Get-ServerLog -Since $mark
 foreach ($line in @('lich: shield broken by twilightforest:lich_bolt', 'lich: bolt reflected by', 'lich: a rising zombie became a zombie',
         'lich: a death tome left its lectern', 'lich tower: ', 'lich tower: volume hash ')) {

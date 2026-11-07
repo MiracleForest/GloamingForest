@@ -50,6 +50,12 @@
 #include "game/Items.h"
 #include "mod/Log.h"
 #include "selftest/SelfTest.h"
+#include <utility>
+#include "mc/world/level/GameType.h"
+#include "feature/boss/BossInternal.h"
+#include "feature/gamerules/GameRules.h"
+#include "feature/inventory/Inventory.h"
+#include "feature/progression/Progression.h"
 
 namespace gf::feature::lich {
 
@@ -551,13 +557,15 @@ GF_REGISTER_SELFTEST("lich.spawner_range", [](Context& ctx) -> ll::coro::CoroTas
 
 // The golden lich tower (rule R19): the layout of a fixed seed on flat ground (piece types and
 // boxes relative to the origin; independent of the world) and the blocks of its lower 32 layers
-// placed into a flat test area. The goldens hold while U22's room templates are absent (the
-// placeholder rooms); with U22 present the hashes are logged for U22 / A8 to commit.
-constexpr std::int64_t  kGoldenSeed   = 21;
-constexpr std::uint64_t kGoldenLayout = 9018693297151821187ull; // U22 absent
+// placed into a flat test area. Two sets: with U22's room templates (the shipped build) and
+// without them (the placeholder rooms).
+constexpr std::int64_t  kGoldenSeed      = 21;
+constexpr std::uint64_t kGoldenLayout    = 9018693297151821187ull; // U22 absent
+constexpr std::uint64_t kGoldenLayoutU22 = 17021626904049777675ull; // U22 present (audit A3)
 // the placed layout depends on where it stands (its chunk seeds the layout): the golden holds for
 // the test area of the e2e worlds (seed 20260521, the BDS spawn); elsewhere it is logged only
-constexpr char const* kGoldenVolume   = "a6cad5e5eb1dc5ad"; // U22 absent (pieces placed in F6's sort-key order)
+constexpr char const* kGoldenVolume    = "a6cad5e5eb1dc5ad"; // U22 absent (pieces placed in F6's sort-key order)
+constexpr char const* kGoldenVolumeU22 = "55fda7b2a7c17ebe"; // U22 present (audit A3)
 constexpr int         kGoldenVolumeAt[2] = {64, 100};
 
 std::uint64_t layoutHash(std::vector<tower::PieceBox> const& pieces, BlockPos const& origin, std::map<std::string, int>& counts) {
@@ -604,7 +612,8 @@ GF_REGISTER_SELFTEST("lich.tower_layout", [](Context& ctx) -> ll::coro::CoroTask
     std::string summary;
     for (auto const& [type, n] : counts) summary += " " + type.substr(15) + "=" + std::to_string(n);
     ctx.info("lich tower: " + std::to_string(pieces.size()) + " pieces," + summary + "; layout hash " + std::to_string(hash) + (u22 ? " (U22 rooms present)" : " (placeholder rooms)"));
-    if (!u22 && kGoldenLayout != 0) ctx.check(hash == kGoldenLayout, "the layout matches the golden (" + std::to_string(hash) + " vs " + std::to_string(kGoldenLayout) + ")");
+    if (auto golden = u22 ? kGoldenLayoutU22 : kGoldenLayout; golden != 0)
+        ctx.check(hash == golden, "the layout matches the golden (" + std::to_string(hash) + " vs " + std::to_string(golden) + ")");
     // the same layout twice: deterministic
     std::map<std::string, int> again;
     ctx.check(layoutHash(tower::layoutForTest(origin, kGoldenSeed), origin, again) == hash, "the layout is deterministic");
@@ -631,7 +640,8 @@ GF_REGISTER_SELFTEST("lich.tower_layout", [](Context& ctx) -> ll::coro::CoroTask
     ctx.info("lich tower: volume hash " + volume + " of " + std::to_string(placed.size()) + " pieces at " + std::to_string(at.x) + " " + std::to_string(at.z)
              + (u22 ? " (U22 rooms present)" : " (placeholder rooms)"));
     bool goldenSpot = at.x == kGoldenVolumeAt[0] && at.z == kGoldenVolumeAt[1];
-    if (!u22 && goldenSpot && std::string(kGoldenVolume).size() > 0) ctx.check(volume == kGoldenVolume, "the placed tower matches the golden volume (" + volume + ")");
+    if (std::string golden = u22 ? kGoldenVolumeU22 : kGoldenVolume; goldenSpot && !golden.empty())
+        ctx.check(volume == golden, "the placed tower matches the golden volume (" + volume + " vs " + golden + ")");
     removeAround(ctx, core::GlobalPos{ctx.dimension(), at.x, at.y, at.z}, "minecraft:painting", 90.0f);
 });
 
@@ -1158,6 +1168,185 @@ GF_REGISTER_SELFTEST("lich.client_showcase", [](Context& ctx) -> ll::coro::CoroT
     co_await holdView(ctx, sideView, shaft, 20 * 4);
     log().info("lich.client_showcase: stage tower_side");
     co_await holdView(ctx, sideView, shaft, 20 * 5);
+});
+
+// ---- landmark walk-through (audit A3) ------------------------------------------------------------------
+
+namespace {
+
+/// tfEnforcedProgression for the length of a test.
+struct WalkEnforcedScope {
+    bool previous = false;
+    WalkEnforcedScope() {
+        previous = gf::gamerules::getBool("tfEnforcedProgression");
+        gf::gamerules::set("tfEnforcedProgression", true);
+    }
+    ~WalkEnforcedScope() { gf::gamerules::set("tfEnforcedProgression", previous); }
+};
+
+/// The landmark of a boss against TF's structure record (LandmarkStructure: AdvancementLockConfig,
+/// HintConfig, ConquerableStructure) and what the lock does to a survival player: a start forced far
+/// from the test rows (its chunks never load: nothing is placed) refuses a player without the lock's
+/// advancement inside its protected pieces (ProgressionEvents#isAreaProtected) and lets him in once
+/// he has it. `lock` empty: the landmark has no lock and protects nothing.
+void walkLandmark(Context& ctx, std::string const& key, std::string const& lock, std::string const& hintBook, int farX) {
+    auto const* d = gf::landmark::descriptor(key);
+    ctx.require(d != nullptr, key + " has a descriptor");
+    ctx.check(d->conquerable, key + " is conquerable");
+    if (lock.empty()) ctx.check(d->lockAdvancements.empty(), key + " has no progression lock");
+    else ctx.check(d->lockAdvancements == std::vector<std::string>{lock}, key + " is locked by " + lock + " (" + std::to_string(d->lockAdvancements.size()) + " locks)");
+    ctx.check(d->hintBookKey == (hintBook.empty() ? std::string() : "twilightforest.book." + hintBook), key + "'s hint book (" + d->hintBookKey + ")");
+    WalkEnforcedScope enforced;
+    core::GlobalPos   site{ctx.dimension(), farX, 80, 150007};
+    gf::landmark::ext::ScopedStart forced(key, site);
+    ctx.require(forced && forced->generated, "forced a " + key + " start");
+    auto pieces = gf::landmark::ext::startPieces(*forced);
+    ctx.require(!pieces.empty(), key + " has pieces");
+    auto& sp = ctx.spawnPlayer("gf_walk");
+    sp.setPlayerGameType(GameType::Survival);
+    int protectedPieces = 0, refused = 0;
+    std::optional<BlockPos> probe;
+    for (auto const& p : pieces) {
+        if (!p.protectedPiece) continue;
+        ++protectedPieces;
+        BlockPos c{(p.box.minX + p.box.maxX) / 2, (p.box.minY + p.box.maxY) / 2, (p.box.minZ + p.box.maxZ) / 2};
+        if (gf::landmark::isProtectedFor(sp, c)) {
+            ++refused;
+            if (!probe) probe = c;
+        }
+    }
+    ctx.info(key + ": " + std::to_string(pieces.size()) + " pieces, " + std::to_string(protectedPieces) + " protected, " + std::to_string(refused) +
+             " refuse a player without " + (lock.empty() ? std::string("a lock") : lock));
+    BlockPos outside{forced->box.maxX + 40, forced->center.y, forced->box.maxZ + 40};
+    ctx.check(!gf::landmark::isProtectedFor(sp, outside), "nothing is protected outside the start");
+    if (lock.empty()) {
+        ctx.check(refused == 0, key + " protects nothing");
+        return;
+    }
+    ctx.check(protectedPieces > 0 && refused > 0, key + "'s protected pieces refuse a player without " + lock);
+    if (!probe) return;
+    gf::progression::grant(sp, lock);
+    ctx.check(!gf::landmark::isProtectedFor(sp, *probe), "with " + lock + " the landmark is open");
+    gf::progression::revoke(sp, lock);
+    ctx.check(gf::landmark::isProtectedFor(sp, *probe), "without it the landmark is locked again");
+    sp.setPlayerGameType(GameType::Creative);
+    ctx.check(!gf::landmark::isProtectedFor(sp, *probe), "creative players are never refused");
+}
+
+} // namespace
+
+// The lich tower against TF's LichTowerStructure record: locked by progress_naga, the lichtower
+// hint book, conquerable; its protected pieces refuse a player without progress_naga.
+GF_REGISTER_SELFTEST("lich.landmark_walk", [](Context& ctx) { walkLandmark(ctx, kTowerKey, "twilightforest:progress_naga", "lichtower", 150107); });
+
+// The boss gauntlet (audit A3): a player wakes the Lich at its spawner, breaks its six shields with
+// lich bolts (phase 1 -> 2), its minions are spent (phase 3), and kills it; after the death
+// animation the death chest at the home point holds the trophy, a scepter and the exanimate
+// essence, the lich tower is the conquered home landmark, and progress_lich's inputs fired
+// (player_killed_entity of the Lich, hurt_boss).
+GF_REGISTER_SELFTEST("lich.gauntlet", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope easy;
+    static std::map<std::string, int> triggers;
+    static std::string                killedEntity;
+    static bool                       listening = false;
+    if (!std::exchange(listening, true))
+        for (char const* id : {"minecraft:player_killed_entity", "twilightforest:hurt_boss"})
+            gf::progression::onTrigger(id, [id = std::string(id)](Player& player, nlohmann::json const& data) {
+                if (player.getNameTag() != "gf_lich_gauntlet") return;
+                triggers[id]++;
+                if (id == "minecraft:player_killed_entity") killedEntity = data.value("entity", std::string());
+            });
+    triggers.clear();
+    killedEntity.clear();
+    gf::feature::boss::resetTestRecords();
+    co_await ctx.flatArea(2140, 32);
+    auto spawner = ctx.testPos(2156, 2).offset(0, 1, 0);
+    ctx.require(ctx.setBlock(spawner, kSpawner), "the lich spawner is placed");
+    auto& sp  = ctx.spawnPlayer("gf_lich_gauntlet");
+    auto  pid = uidOf(sp);
+    sp.teleport(at(spawner.offset(4, 0, 0)), static_cast<DimensionType>(spawner.dim));
+    (void)gf::selftest::runServerCommand("effect \"" + sp.getRealName() + "\" resistance 60 255 true", spawner.dim);
+    std::int64_t uid = 0;
+    for (int i = 0; i < 80 && !uid; ++i) {
+        co_await ctx.ticks(1);
+        if (auto* region = ctx.region())
+            for (auto* a : actorsIn(*region, spawner.dim, AABB{Vec3{spawner.x - 8.0f, spawner.y - 4.0f, spawner.z - 8.0f}, Vec3{spawner.x + 9.0f, spawner.y + 8.0f, spawner.z + 9.0f}}))
+                if (a && a->isAlive() && a->getTypeName() == kLich) uid = uidOf(*a);
+    }
+    ctx.require(uid != 0, "the spawner woke the Lich");
+    struct LichGone {
+        std::int64_t uid;
+        ~LichGone() { removeById(uid); } // a failed test leaves no Lich to turn back into a spawner
+    } gone{uid};
+    ctx.check(ctx.blockAt(spawner) != kSpawner, "the spawner is gone");
+    auto* lich = mobById(uid);
+    ctx.require(lich != nullptr, "the Lich is there");
+    lichState(*lich)->attackCooldown = 1000; // no shadow attacks, clones or teleports while the test hits it
+    auto home = gf::entity::home(*lich);
+    ctx.check(home.has_value() && home->pos.x == spawner.x && home->pos.z == spawner.z, "its home is the spawner");
+    ctx.check(phaseOf(*lich) == 1 && shieldOf(*lich) == 6, "phase 1 with six shields");
+    for (int i = 0; i < 6; ++i) {
+        auto* p = actorById(pid);
+        lich    = mobById(uid);
+        ctx.require(p && lich, "the Lich and the player are there");
+        gf::combat::hurt(*lich, 6.0f, "twilightforest:lich_bolt", p);
+        co_await ctx.ticks(2);
+    }
+    lich = mobById(uid);
+    ctx.require(lich != nullptr, "the Lich is still there");
+    ctx.check(shieldOf(*lich) == 0 && phaseOf(*lich) == 2, "six lich bolts broke the shields: phase 2 (" + std::to_string(phaseOf(*lich)) + ")");
+    setMinionsLeft(*lich, 0);
+    ctx.check(phaseOf(*lich) == 3, "no minions left: phase 3");
+    {
+        // a hit that hurts it first (the player joins the fight: MultiplayerInclusivity), then the kill
+        auto* p = actorById(pid);
+        ctx.require(p != nullptr, "the player is there");
+        lichState(*lich)->tpInvisibility = 0;
+        gf::combat::hurt(*lich, 5.0f, "minecraft:player_attack", p);
+    }
+    co_await ctx.ticks(12);
+    // the kill (a hit may make it teleport: Lich#hurt refuses hits while it is invisible from a
+    // teleport, so the test clears that before each try)
+    for (int i = 0; i < 10; ++i) {
+        auto* p = actorById(pid);
+        lich    = mobById(uid);
+        if (!lich || !lich->isAlive() || gf::boss::ext::deathTime(*lich) > 0) break;
+        ctx.require(p != nullptr, "the player is there");
+        lichState(*lich)->tpInvisibility = 0;
+        gf::combat::hurt(*lich, 1000.0f, "minecraft:player_attack", p);
+        co_await ctx.ticks(2);
+    }
+    std::optional<core::GlobalPos> chest;
+    for (int t = 0; t < 420 && !chest; ++t) {
+        co_await ctx.ticks(1);
+        chest = gf::feature::boss::lastDeathChest();
+    }
+    ctx.require(chest.has_value(), "the death chest was placed");
+    co_await ctx.ticks(5);
+    ctx.check(mobById(uid) == nullptr, "the body is gone after its death animation");
+    auto chestId = ctx.blockAt(*chest);
+    ctx.check(chestId == "twilightforest:twilight_oak_chest" || chestId == "twilightforest:canopy_chest", "a twilight oak or canopy death chest (" + chestId + ")");
+    bool trophy = false, scepter = false, essence = false;
+    if (auto* region = game::regionOf(chest->dim))
+        if (auto inv = gf::inventory::find(*region, game::blockPos(*chest)); inv && inv->get) {
+            for (int i = 0; i < inv->slots; ++i) {
+                auto id = game::items::idOf(inv->get(*chest, i));
+                trophy |= id == "twilightforest:lich_trophy";
+                essence |= id == "twilightforest:exanimate_essence";
+                scepter |= id == "twilightforest:twilight_scepter" || id == "twilightforest:lifedrain_scepter" || id == "twilightforest:zombie_scepter" ||
+                           id == "twilightforest:fortification_scepter";
+            }
+            if (inv->set)
+                for (int i = 0; i < inv->slots; ++i) inv->set(*chest, i, game::items::empty());
+        }
+    ctx.check(trophy && scepter && essence, "the chest holds the trophy, a scepter and the exanimate essence");
+    auto conquest = gf::feature::boss::lastConquest();
+    ctx.check(conquest && conquest->second == kTowerKey, "the Lich's postmortem conquers its home structure key, the lich tower, at its home (no start stands in the test area) (" + (conquest ? conquest->second : std::string("none")) + ")");
+    ctx.check(triggers["minecraft:player_killed_entity"] >= 1 && killedEntity == kLich, "player_killed_entity fired for " + killedEntity);
+    ctx.check(triggers["twilightforest:hurt_boss"] >= 1, "hurt_boss fired");
+    ctx.cleanupBlock(*chest);
+    removeAround(ctx, spawner, "minecraft:xp_orb", 16.0f);
+    removeAround(ctx, spawner, "minecraft:item", 16.0f);
 });
 
 } // namespace gf::feature::lich

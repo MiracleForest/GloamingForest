@@ -101,3 +101,27 @@ What the unit implements, how it maps TF 4.8 onto Bedrock, and what is still mis
 - The mason jar's item rotation and the chiseled shelf's Death Tome spawner are their owners' block data (U6, U22):
   the unit fills the jar and the shelf through `gf::inventory` when those blocks register a container, and records the
   rolled rotation in the queued edit.
+
+## Audit round 1
+
+Checked (A3, landmarks and bosses I):
+
+- A seeded fight from the spawner to the conquest (`lich.gauntlet`): a player wakes the Lich at its spawner (home at the
+  spawner), six lich bolts break the shields (phase 1 -> 2), the minions spent (phase 3), a hit and the kill; after the
+  death animation the twilight oak / canopy death chest holds the trophy, a scepter and the exanimate essence, the boss
+  kit's postmortem conquers `twilightforest:lich_tower` at the home point, and `player_killed_entity` / `hurt_boss`
+  fired (`progress_lich` met in the log).
+- The tower against TF's `LichTowerStructure` record (`lich.landmark_walk`): locked by `progress_naga`, the `lichtower`
+  hint book, conquerable; every piece refuses a survival player without `progress_naga`, lets him in with it, never
+  refuses a creative player.
+
+Fixed:
+
+- `Tower.cpp`: the decor marker `wither_candle` placed `twilightforest:wither_skele_skull_candle`, an id that does not
+  exist (TF's Java field is `WITHER_SKELE_SKULL_CANDLE`, its registry name `wither_skeleton_skull_candle`): the block
+  was skipped. It now places `twilightforest:wither_skeleton_skull_candle`.
+- `lich.tower_layout` checks goldens with U22's room templates present (the shipped build), taken after the fix above:
+  layout `17021626904049777675`, volume `55fda7b2a7c17ebe` at (64, 100); the placeholder-room goldens stay for a build
+  without U22's templates. These goldens depend on U22's templates (a U22 template change needs new goldens).
+
+Open: none found in this round beyond the "Not ported" list above.
