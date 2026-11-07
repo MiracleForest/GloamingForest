@@ -739,8 +739,9 @@ namespace {
 /// path pops the block itself without spawnResources, so its items are suppressed and the Java
 /// table rolls instead.
 struct SilkBreak {
-    int  inside  = 0;     // inside the block-drop hook (its items pass)
-    bool reached = false; // the block-drop hook ran for this break
+    int  inside     = 0;     // inside the block-drop hook (its items pass)
+    bool reached    = false; // the block-drop hook ran for this break
+    int  suppressed = 0;     // items of the game's silk touch pop held back
 };
 thread_local SilkBreak* tSilkBreak = nullptr;
 
@@ -857,7 +858,7 @@ LL_TYPE_INSTANCE_HOOK(
     } restore{previous};
     origin(player, pos);
     tSilkBreak = previous;
-    if (silk.reached) return;
+    if (silk.reached || silk.suppressed == 0) return; // the table rolled, or the game popped nothing (creative)
     dropTfBlock(player.getDimensionBlockSource(), pos, *this, std::string("twilightforest:blocks/") + id.substr(15), &tool, &player, std::nullopt);
 }
 
@@ -876,7 +877,10 @@ LL_TYPE_INSTANCE_HOOK(
     int              throwTime
 ) {
     // Bedrock's silk touch pop of a TF block (LootPlayerDestroyHook): the Java table rolls instead
-    if (gf::loot::tSilkBreak && gf::loot::tSilkBreak->inside == 0) return nullptr;
+    if (gf::loot::tSilkBreak && gf::loot::tSilkBreak->inside == 0) {
+        ++gf::loot::tSilkBreak->suppressed;
+        return nullptr;
+    }
     auto* item = origin(region, inst, spawner, pos, throwTime);
     if (item) gf::loot::captureSpawnedItem(*item, spawner);
     return item;
