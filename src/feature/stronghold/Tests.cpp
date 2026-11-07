@@ -456,8 +456,11 @@ GF_REGISTER_SELFTEST("stronghold.goblin_armor", [](Context& ctx) -> ll::coro::Co
 GF_REGISTER_SELFTEST("stronghold.blockchain_throw", [](Context& ctx) -> ll::coro::CoroTask<> {
     DifficultyScope normal(Difficulty::Normal);
     auto            box = co_await ctx.flatArea(2560, 16);
-    auto            at  = ctx.testPos(2566, 2);
-    auto*           g   = spawnAt(at, id::BlockChainGoblin);
+    // the middle of the cleared area: the throw goes 6 blocks the way the goblin looks, whichever
+    // way that is, and must not reach the uncleared terrain beyond the area (a wall stops it)
+    auto  row = ctx.testPos(2560);
+    auto  at  = core::GlobalPos{row.dim, box.minX + 8, row.y, box.minZ + 8};
+    auto* g   = spawnAt(at, id::BlockChainGoblin);
     ctx.require(g != nullptr, "a block and chain goblin");
     auto uid = fe::uidOf(*g);
     co_await ctx.ticks(3);
