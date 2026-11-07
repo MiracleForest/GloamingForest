@@ -25,7 +25,7 @@ if ($remote) {
     Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
     $r = Invoke-SelfTest 'stronghold.*' -TimeoutSeconds 1200
     if ($r.Fail -gt 0) { throw "$($r.Fail) stronghold selftest(s) failed" }
-    if ($r.Pass -lt 9) { throw "expected 9 stronghold selftests to pass, got $($r.Pass)" }
+    if ($r.Pass -lt 10) { throw "expected 10 stronghold selftests to pass, got $($r.Pass)" }
 }
 Invoke-Chat '/gamemode creative'
 Invoke-Chat '/difficulty easy'

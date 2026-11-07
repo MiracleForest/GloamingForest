@@ -15,10 +15,11 @@
 // the inactive pedestal unbreakable and the active one minable (TrophyPedestalBlock#getDestroyProgress).
 //
 // The stronghold shield: breakable only from its inside face (StrongholdShieldBlock
-// #getDestroyProgress). The imported BP keeps it unbreakable (strength -1, F1's import.behaviour
-// checks that); a survival player's mining that starts (or ends) on any other face is refused here
-// as well, so the face rule holds once the inside-face break time (digSpeed(stone) / 150 a tick) is
-// given to the block. Explosions and mobs cannot break it.
+// #getDestroyProgress: digSpeed(stone) / 1.5 / 100 a tick from the inside face, nothing from the
+// others). The manual BP (assets/pack/bp/blocks/stronghold/stronghold_shield.json) gives the block
+// that break time (seconds_to_destroy 5: 7.5 s by hand, Bedrock's pickaxe speeds through
+// minecraft:is_pickaxe_item_destructible, as 150 / digSpeed ticks); a survival player's mining that
+// starts (or ends) on any other face is refused here. Explosions and mobs cannot break it.
 #include "feature/stronghold/Blocks.h"
 
 #include <algorithm>

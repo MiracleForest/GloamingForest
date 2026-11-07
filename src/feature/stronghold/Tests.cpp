@@ -56,6 +56,12 @@
 #include "game/Blocks.h"
 #include "game/Items.h"
 #include "selftest/SelfTest.h"
+#include <optional>
+#include <utility>
+#include "mc/world/level/GameType.h"
+#include "feature/ext/landmark/LandmarkExt.h"
+#include "feature/ext/landmark/LandmarkTest.h"
+#include "feature/landmark/Landmark.h"
 
 namespace gf::feature::stronghold::tests {
 
@@ -302,6 +308,13 @@ GF_REGISTER_SELFTEST("stronghold.shield_faces", [](Context& ctx) {
         ctx.require(b != nullptr, std::string("a shield facing ") + r.facing);
         for (int f = 0; f < 6; f++)
             ctx.check(blocks::canBreakShieldFrom(*b, f) == (f == r.face), std::string("facing ") + r.facing + ", face " + std::to_string(f));
+    }
+    // minable at all (the inside face's digSpeed(stone) / 1.5 / 100 a tick: 7.5 s by hand), never
+    // by an explosion
+    if (auto const* b = game::blockWithStates(blocks::kShield, {{"twilightforest:facing", "north"}})) {
+        float speed = b->mDirectData->mDestroySpeed;
+        ctx.check(speed > 0.0f, "the shield can be mined (destroy speed " + std::to_string(speed) + ")");
+        ctx.check(b->mDirectData->mExplosionResistance > 1000.0f, "explosions cannot break it");
     }
 });
 
@@ -566,5 +579,75 @@ GF_REGISTER_SELFTEST("stronghold.phantom_fight", [](Context& ctx) -> ll::coro::C
     (void)spId;
     (void)box;
 });
+
+// ---- landmark walk-through (audit A3) ------------------------------------------------------------------
+
+namespace {
+
+/// tfEnforcedProgression for the length of a test.
+struct WalkEnforcedScope {
+    bool previous = false;
+    WalkEnforcedScope() {
+        previous = gf::gamerules::getBool("tfEnforcedProgression");
+        gf::gamerules::set("tfEnforcedProgression", true);
+    }
+    ~WalkEnforcedScope() { gf::gamerules::set("tfEnforcedProgression", previous); }
+};
+
+/// The landmark of a boss against TF's structure record (LandmarkStructure: AdvancementLockConfig,
+/// HintConfig, ConquerableStructure) and what the lock does to a survival player: a start forced far
+/// from the test rows (its chunks never load: nothing is placed) refuses a player without the lock's
+/// advancement inside its protected pieces (ProgressionEvents#isAreaProtected) and lets him in once
+/// he has it. `lock` empty: the landmark has no lock and protects nothing.
+void walkLandmark(Context& ctx, std::string const& key, std::string const& lock, std::string const& hintBook, int farX) {
+    auto const* d = gf::landmark::descriptor(key);
+    ctx.require(d != nullptr, key + " has a descriptor");
+    ctx.check(d->conquerable, key + " is conquerable");
+    if (lock.empty()) ctx.check(d->lockAdvancements.empty(), key + " has no progression lock");
+    else ctx.check(d->lockAdvancements == std::vector<std::string>{lock}, key + " is locked by " + lock + " (" + std::to_string(d->lockAdvancements.size()) + " locks)");
+    ctx.check(d->hintBookKey == (hintBook.empty() ? std::string() : "twilightforest.book." + hintBook), key + "'s hint book (" + d->hintBookKey + ")");
+    WalkEnforcedScope enforced;
+    core::GlobalPos   site{ctx.dimension(), farX, 80, 150007};
+    gf::landmark::ext::ScopedStart forced(key, site);
+    ctx.require(forced && forced->generated, "forced a " + key + " start");
+    auto pieces = gf::landmark::ext::startPieces(*forced);
+    ctx.require(!pieces.empty(), key + " has pieces");
+    auto& sp = ctx.spawnPlayer("gf_walk");
+    sp.setPlayerGameType(GameType::Survival);
+    int protectedPieces = 0, refused = 0;
+    std::optional<BlockPos> probe;
+    for (auto const& p : pieces) {
+        if (!p.protectedPiece) continue;
+        ++protectedPieces;
+        BlockPos c{(p.box.minX + p.box.maxX) / 2, (p.box.minY + p.box.maxY) / 2, (p.box.minZ + p.box.maxZ) / 2};
+        if (gf::landmark::isProtectedFor(sp, c)) {
+            ++refused;
+            if (!probe) probe = c;
+        }
+    }
+    ctx.info(key + ": " + std::to_string(pieces.size()) + " pieces, " + std::to_string(protectedPieces) + " protected, " + std::to_string(refused) +
+             " refuse a player without " + (lock.empty() ? std::string("a lock") : lock));
+    BlockPos outside{forced->box.maxX + 40, forced->center.y, forced->box.maxZ + 40};
+    ctx.check(!gf::landmark::isProtectedFor(sp, outside), "nothing is protected outside the start");
+    if (lock.empty()) {
+        ctx.check(refused == 0, key + " protects nothing");
+        return;
+    }
+    ctx.check(protectedPieces > 0 && refused > 0, key + "'s protected pieces refuse a player without " + lock);
+    if (!probe) return;
+    gf::progression::grant(sp, lock);
+    ctx.check(!gf::landmark::isProtectedFor(sp, *probe), "with " + lock + " the landmark is open");
+    gf::progression::revoke(sp, lock);
+    ctx.check(gf::landmark::isProtectedFor(sp, *probe), "without it the landmark is locked again");
+    sp.setPlayerGameType(GameType::Creative);
+    ctx.check(!gf::landmark::isProtectedFor(sp, *probe), "creative players are never refused");
+}
+
+} // namespace
+
+// The knight stronghold against TF's KnightStrongholdStructure record: locked by
+// progress_trophy_pedestal, the tfstronghold hint book, conquerable; its protected pieces refuse a
+// player without progress_trophy_pedestal.
+GF_REGISTER_SELFTEST("stronghold.landmark_walk", [](Context& ctx) { walkLandmark(ctx, id::Stronghold, "twilightforest:progress_trophy_pedestal", "tfstronghold", 150507); });
 
 } // namespace gf::feature::stronghold::tests
