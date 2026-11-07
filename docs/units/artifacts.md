@@ -109,3 +109,10 @@ Open:
 - Client visuals of this round (flask icons, armour hiding) were not run in the client e2e (round-2
   workers run server scenarios only).
 
+
+
+## Audit round 2
+
+Sounds (W2 round 2, audio pass). Checked with `tools/sounds/lint.ps1` on the assembled pack (`tools/assemble.ps1 -Check`): before this round 11 of this unit's sound events still played F3's name-derived baseline placeholder. Keepsake casket, fortification shield (add, block, break, expire), life, twilight and zombie scepters. Files TF shares with other owners keep one design: the scepter drain / twilight_use / zombie files use U21 lich's existing designs, the casket files are mirrored by U22 lichdecor, and the zombie-on-iron-door stand-in (shield block) is the same as U8 weapons' knightmetal shatter. `tools/sounds/recipes/artifacts.json` now designs every one of them (original synthesized sounds, unit-local patches layered from the shared library; TF's audio never read; ids, subtitles, categories, volumes, pitches and variant counts unchanged), rendered with `pwsh tools/sounds/synth.ps1 -Unit artifacts` into `assets/gen/audio/artifacts/`. `synth.ps1 -Check` and `lint.ps1` pass; with the other round-2 audio PRs (one per owning unit) the lint reports 0 baseline-only events for the whole pack.
+
+Open: nothing for audio.

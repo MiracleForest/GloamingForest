@@ -1,0 +1,34 @@
+{
+  "about": "U26 darktower: refinements of the baseline (tools/sounds/baseline/darktower.json). Original sound designs; TF's audio is never read. The events (ids, subtitles, categories, volumes, pitches, variant counts) stay TF's. The Ghast Trap is a carminite machine (GhastTrapBlockEntity plays its sounds at pitch 4, which Java clamps to 2): it buzzes with an electric hum and sparks over its whirr, warms up with a rising whirr and a hum that speeds up, and shuts off with a falling whirr and dying sparks. The Sliding Trap's block grinds along with a low stick-slip creak over a stone scrape.",
+  "patches": {
+    "ghast_trap/buzz": {
+      "params": {"f0": 300, "f1": 600, "len": 0.6, "hum": 110, "wob": 18},
+      "length": "$len", "tail": 0.4,
+      "layers": [
+        {"type": "patch", "patch": "magic/whirr", "length": "$len+0.4", "gain": -4, "params": {"f0": "$f0", "f1": "$f1", "len": "$len", "wob": "$wob"}},
+        {"type": "osc", "wave": "saw", "freq": {"from": "$hum", "to": "$hum*$f1/$f0", "curve": "exp", "time": "$len"}, "amp": 0.6, "env": {"a": 0.03, "d": "$len*0.4", "s": 0.7, "r": "$len*0.2"}, "tremolo": {"rate": "$wob*2", "depth": 0.5}, "filter": [{"type": "bp", "freq": 1500, "q": 0.8}], "drive": 2},
+        {"type": "osc", "wave": "square", "freq": {"from": "$hum*2.02", "to": "$hum*2.02*$f1/$f0", "curve": "exp", "time": "$len"}, "amp": 0.25, "env": {"a": 0.03, "d": "$len*0.4", "s": 0.7, "r": "$len*0.2"}, "filter": [{"type": "lp", "freq": 2400}]},
+        {"type": "patch", "patch": "ambient/crackle", "length": "$len+0.3", "gain": -12, "params": {"len": "$len", "density": 30, "ping": 0.2}}
+      ],
+      "fx": [{"type": "reverb", "room": 0.5, "mix": 0.12}]
+    },
+    "slider/grind": {
+      "params": {},
+      "length": 1.0, "tail": 0.4,
+      "layers": [
+        {"type": "patch", "patch": "object/creak", "length": 1.4, "params": {"pitch": 45, "len": 1.0, "jitter": 0.5, "bend": 3}},
+        {"type": "noise", "color": "brown", "length": 1.0, "env": {"a": 0.08, "d": 0.4, "s": 0.7, "r": 0.2}, "tremolo": {"rate": 13, "depth": 0.4}, "filter": [{"type": "bp", "freq": 320, "q": 1.2}], "gain": -4}
+      ]
+    }
+  },
+  "files": {
+    "mob/ur_ghast/trap_on1": {"patch": "ghast_trap/buzz", "params": {"f0": 280, "f1": 560, "hum": 100}, "seed": 2601},
+    "mob/ur_ghast/trap_on2": {"patch": "ghast_trap/buzz", "params": {"f0": 300, "f1": 600, "hum": 105}, "seed": 2602},
+    "mob/ur_ghast/trap_on3": {"patch": "ghast_trap/buzz", "params": {"f0": 315, "f1": 625, "hum": 110}, "seed": 2603},
+    "mob/ur_ghast/trap_on4": {"patch": "ghast_trap/buzz", "params": {"f0": 330, "f1": 650, "hum": 115}, "seed": 2604},
+    "mob/ur_ghast/trap_on5": {"patch": "ghast_trap/buzz", "params": {"f0": 345, "f1": 680, "hum": 120}, "seed": 2605},
+    "mob/ur_ghast/trap_spin_down": {"patch": "ghast_trap/buzz", "params": {"f0": 900, "f1": 130, "len": 1.6, "hum": 220, "wob": 14}, "seed": 2611},
+    "mob/ur_ghast/trap_warmup": {"patch": "ghast_trap/buzz", "params": {"f0": 130, "f1": 900, "len": 2.0, "hum": 55, "wob": 10}, "seed": 2612},
+    "random/creakgo2": {"patch": "slider/grind", "seed": 2621}
+  }
+}

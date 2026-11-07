@@ -32,3 +32,31 @@ Open:
   start-box hook, which another worker is adding in this round; not done here.
 - The client sees the crack animation on the outside faces before the server refuses the break (Bedrock's mining
   progress is the client's); TF's client shows no progress there.
+
+## Audit round 2
+
+Sounds (W2 round 2, audio pass). Checked with `tools/sounds/lint.ps1` on the assembled pack (`tools/assemble.ps1 -Check`): before this round 17 of this unit's sound events still played F3's name-derived baseline placeholder. Goblin knights and the block-and-chain goblin (shared goblin files, as in TF; the muffled set is the same voice inside a helmet), helmet crab, Knight Phantom (wraith files, as in TF) and the trophy pedestal's stand-in for Java's zombie infection sound. `tools/sounds/recipes/stronghold.json` now designs every one of them (original synthesized sounds, unit-local patches layered from the shared library; TF's audio never read; ids, subtitles, categories, volumes, pitches and variant counts unchanged), rendered with `pwsh tools/sounds/synth.ps1 -Unit stronghold` into `assets/gen/audio/stronghold/`. `synth.ps1 -Check` and `lint.ps1` pass; with the other round-2 audio PRs (one per owning unit) the lint reports 0 baseline-only events for the whole pack.
+
+Shared files: the goblin (redcap) and Knight Phantom (wraith) files are TF's shared files, so `recipes/stronghold.json` keeps U17 hostiles' designs of them (same patch, parameters, seeds) and both owners' trees sound the same, as in TF. Also: the lower goblin knight's ambient/hurt/death are played from `Goblins.cpp` (muffled by `hasArmor`); `sounds.json.d/stronghold.json` now gives it an entry with empty `ambient` / `hurt` / `death` so Bedrock's `entity_sounds.defaults` cannot add generic hurt/death sounds on top.
+
+Checked:
+
+- `twilightforest:lower_goblin_knight` hurt / death / ambient sounds (A5's sweep): played by the code
+  (`Goblins.cpp`: `GOBLIN_KNIGHT_(MUFFLED_)AMBIENT / HURT / DEATH` by `hasArmor`), which sounds.json cannot choose
+  by armour; the sweep only reads sounds.json and keeps reporting them. Correct as they are.
+- `KnightStructureStart`'s box (max y one below the start point): F6 builds it in (`Starts.cpp`, trait
+  `topBelowStart`, PR "F6: Clamp the knight stronghold start box"); nothing left for U25.
+
+Fixed:
+
+- Real conquest: `stronghold.conquest` forces a knight stronghold start far from the test rows (nothing placed),
+  gives a lone knight phantom (the last of its group) its home inside the first piece and kills it:
+  `KnightPhantom#postmortem` conquers the start. The dark chest at the unloaded home is dropped
+  (`stronghold.phantom_fight` checks the chest).
+
+Open:
+
+- The crack animation on the shield's outside faces: Bedrock's mining progress is the client's own, from the block's
+  single destroy time. Hiding it needs a client-side destroy-progress hook (R8: no unit may hook mining; an F0 / F12
+  contract such as a per-face destroy speed filter on `interactions`), so it stays as in round 1.
+- F1's `import.behaviour` case for `stronghold_shield` (see round 1).

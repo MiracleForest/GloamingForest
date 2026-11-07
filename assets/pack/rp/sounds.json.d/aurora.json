@@ -33,7 +33,8 @@
         "pitch": [0.8, 1.2],
         "events": {
           "ambient": "entity.twilightforest.ice.ambient",
-          "hurt": "entity.twilightforest.ice.hurt"
+          "hurt": "entity.twilightforest.ice.hurt",
+          "death": ""
         }
       },
       "twilightforest:ice_crystal": {
