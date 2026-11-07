@@ -77,7 +77,11 @@ void registerStateProvider(std::string const& typeId, StateProviderFn fn) { put(
 namespace detail {
 
 Json const& vanillaFeatures() {
-    static Json const j = Json::parse(kVanillaFeatures);
+    static Json const j = [] {
+        auto out = Json::parse(kVanillaFeatures);
+        for (auto const& [id, feature] : Json::parse(kVanillaFeaturesExtra).items()) out["configured"][id] = feature;
+        return out;
+    }();
     return j;
 }
 
@@ -137,6 +141,20 @@ std::shared_ptr<Data const> loadData() {
                 }
             }
         }
+    }
+    // the Java class chains of TF's blocks (the survival rules of kit::canSurvive)
+    try {
+        std::ifstream in(root / "gf" / "import" / "skeleton.json");
+        if (in) {
+            auto skeleton = Json::parse(in);
+            for (auto const& [id, chain] : fieldObj(skeleton, "classes").items()) {
+                auto& out = d->blockClasses[id];
+                for (auto const& cls : chain)
+                    if (cls.is_string()) out.push_back(cls.get<std::string>());
+            }
+        }
+    } catch (std::exception const& e) {
+        gf::log().error("worldgen: cannot read data/gf/import/skeleton.json: {}", e.what());
     }
     for (auto const& [id, biome] : d->biomes) {
         auto& set   = d->biomeFeatureSets[id];

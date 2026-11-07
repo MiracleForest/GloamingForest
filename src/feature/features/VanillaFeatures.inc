@@ -13,3 +13,33 @@ static char const kVanillaFeatures[] =
     R"J(necraft:patch_tall_grass","placement":[{"chance":5,"type":"minecraft:rarity_filter"},{"type":"minecraft:in_square"},{"heightmap":"MOTION_BLOCKING","type":"minecraft:heightmap"},{"type":"minecraft:biome"}]},"minecraft:patch_waterlily":{"feature":"minecraft:patch_waterlily","placement":[{"count":4,"type":"minecraft:count"},{"type":"minecraft:in_square"},{"heightmap":"WORLD_SURFACE_WG","type":"minecraft:heightmap"},{"type":"minecraft:biome"}]},"minecraft:red_mushroom_normal":{"feature":"minecraft:patch_red_mushroom","placement":[{"chance":512,"type":"minecraft:rarity_filter"},{"type":"minecraft:in_square"},{"heightmap":"MOTION_BLOCKING","type":"minecraft:heightmap"},{"type":"minecraft:biome"}]},"minecraft:red_mushroom_taiga":{"feature":"minecraft:patch_red_mushroom","placement":[{"chance":256,"type":"minecraft:rarity_filter"},{"type":"minecraft:in_square"},{"heightmap":"MOTION_BLOCKING","type":"minecraft:heightmap"},{"type":"minecraft:biome"}]},"minecraft:seagrass_deep":{"feature":"minecraft:seagrass_tall","placement":[{"type":"minecraft:in_square"},{"heightmap":"OCEAN_FLOOR_WG","type":"minecraft:heightmap"},{"count":48,"type":"minecraft:count"},{"type":"minecraft:biome"}]},"minecraft:seagrass_normal":{"feature":"minecraft:seagrass_short","placement":[{"type":"minecraft:in_square"},{"heightmap":"OCEAN_FLOOR_WG","type":"minecraft:heightmap"},{"count":48,"type":"minecraft:count"},{"type":"minecraft:biome"}]},"minecraft:seagrass_simple":{"feature":"minecraft:seagrass_simple","place)J"
     R"J(ment":[{"step":"liquid","type":"minecraft:carving_mask"},{"chance":10,"type":"minecraft:rarity_filter"},{"predicate":{"predicates":[{"blocks":"minecraft:stone","offset":[0,-1,0],"type":"minecraft:matching_blocks"},{"blocks":"minecraft:water","type":"minecraft:matching_blocks"},{"blocks":"minecraft:water","offset":[0,1,0],"type":"minecraft:matching_blocks"}],"type":"minecraft:all_of"},"type":"minecraft:block_predicate_filter"},{"type":"minecraft:biome"}]},"minecraft:vines":{"feature":"minecraft:vines","placement":[{"count":127,"type":"minecraft:count"},{"type":"minecraft:in_square"},{"height":{"max_inclusive":{"absolute":100},"min_inclusive":{"absolute":64},"type":"minecraft:uniform"},"type":"minecraft:height_range"},{"type":"minecraft:biome"}]}}})J"
     ;
+
+// Vanilla 1.21.1 configured features TF's own features reference by id (TreeFeatures.SPRUCE / PINE /
+// HUGE_BROWN_MUSHROOM / HUGE_RED_MUSHROOM, VegetationFeatures.PATCH_GRASS_JUNGLE), written from
+// their Java definitions; merged into kVanillaFeatures' "configured".
+static char const kVanillaFeaturesExtra[] = R"J({
+"minecraft:spruce":{"type":"minecraft:tree","config":{"decorators":[],"dirt_provider":{"type":"minecraft:simple_state_provider","state":{"Name":"minecraft:dirt"}},
+ "foliage_placer":{"type":"minecraft:spruce_foliage_placer","offset":{"type":"minecraft:uniform","max_inclusive":2,"min_inclusive":0},"radius":{"type":"minecraft:uniform","max_inclusive":3,"min_inclusive":2},"trunk_height":{"type":"minecraft:uniform","max_inclusive":2,"min_inclusive":1}},
+ "foliage_provider":{"type":"minecraft:simple_state_provider","state":{"Name":"minecraft:spruce_leaves","Properties":{"distance":"7","persistent":"false","waterlogged":"false"}}},
+ "force_dirt":false,"ignore_vines":true,"minimum_size":{"type":"minecraft:two_layers_feature_size","limit":2,"lower_size":0,"upper_size":2},
+ "trunk_placer":{"type":"minecraft:straight_trunk_placer","base_height":5,"height_rand_a":2,"height_rand_b":1},
+ "trunk_provider":{"type":"minecraft:simple_state_provider","state":{"Name":"minecraft:spruce_log","Properties":{"axis":"y"}}}}},
+"minecraft:pine":{"type":"minecraft:tree","config":{"decorators":[],"dirt_provider":{"type":"minecraft:simple_state_provider","state":{"Name":"minecraft:dirt"}},
+ "foliage_placer":{"type":"minecraft:pine_foliage_placer","height":{"type":"minecraft:uniform","max_inclusive":4,"min_inclusive":3},"offset":1,"radius":1},
+ "foliage_provider":{"type":"minecraft:simple_state_provider","state":{"Name":"minecraft:spruce_leaves","Properties":{"distance":"7","persistent":"false","waterlogged":"false"}}},
+ "force_dirt":false,"ignore_vines":true,"minimum_size":{"type":"minecraft:two_layers_feature_size","limit":2,"lower_size":0,"upper_size":2},
+ "trunk_placer":{"type":"minecraft:straight_trunk_placer","base_height":6,"height_rand_a":4,"height_rand_b":0},
+ "trunk_provider":{"type":"minecraft:simple_state_provider","state":{"Name":"minecraft:spruce_log","Properties":{"axis":"y"}}}}},
+"minecraft:huge_brown_mushroom":{"type":"minecraft:huge_brown_mushroom","config":{
+ "cap_provider":{"type":"minecraft:simple_state_provider","state":{"Name":"minecraft:brown_mushroom_block","Properties":{"down":"false","east":"true","north":"true","south":"true","up":"true","west":"true"}}},
+ "foliage_radius":3,
+ "stem_provider":{"type":"minecraft:simple_state_provider","state":{"Name":"minecraft:mushroom_stem","Properties":{"down":"false","east":"true","north":"true","south":"true","up":"false","west":"true"}}}}},
+"minecraft:huge_red_mushroom":{"type":"minecraft:huge_red_mushroom","config":{
+ "cap_provider":{"type":"minecraft:simple_state_provider","state":{"Name":"minecraft:red_mushroom_block","Properties":{"down":"false","east":"true","north":"true","south":"true","up":"true","west":"true"}}},
+ "foliage_radius":2,
+ "stem_provider":{"type":"minecraft:simple_state_provider","state":{"Name":"minecraft:mushroom_stem","Properties":{"down":"false","east":"true","north":"true","south":"true","up":"false","west":"true"}}}}},
+"minecraft:patch_grass_jungle":{"type":"minecraft:random_patch","config":{"tries":32,"xz_spread":7,"y_spread":3,"feature":{
+ "feature":{"type":"minecraft:simple_block","config":{"to_place":{"type":"minecraft:weighted_state_provider","entries":[{"data":{"Name":"minecraft:short_grass"},"weight":3},{"data":{"Name":"minecraft:fern"},"weight":1}]}}},
+ "placement":[{"type":"minecraft:block_predicate_filter","predicate":{"type":"minecraft:all_of","predicates":[{"type":"minecraft:matching_blocks","blocks":"minecraft:air"},
+  {"type":"minecraft:not","predicate":{"type":"minecraft:matching_blocks","offset":[0,-1,0],"blocks":"minecraft:podzol"}}]}}]}}}
+})J";

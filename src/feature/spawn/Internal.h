@@ -52,4 +52,8 @@ int spawnForChunkGeneration(worldgen::Region& region, std::string const& biomeId
 /// when empty), found below the chunk's highest non-air sub-chunk.
 [[nodiscard]] int worldSurfaceY(BlockSource& region, int x, int z);
 
+/// The Bedrock entity id of a Java entity id: "minecraft:" added to a bare id, and the vanilla ids
+/// Bedrock names otherwise ("minecraft:zombified_piglin" -> "minecraft:zombie_pigman", ...).
+[[nodiscard]] std::string bedrockEntityId(std::string_view javaId);
+
 } // namespace gf::spawn::detail
