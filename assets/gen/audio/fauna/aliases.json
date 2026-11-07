@@ -67,12 +67,12 @@
           "spec": {
             "patch": "object/rustle",
             "params": {
-              "density": 180,
-              "f0": 2000,
-              "f1": 8000,
-              "len": 0.573
+              "density": 120,
+              "f0": 1800,
+              "f1": 9000,
+              "len": 0.55
             },
-            "seed": 3984727379
+            "seed": 2101
           }
         },
         {
@@ -80,12 +80,12 @@
           "spec": {
             "patch": "object/rustle",
             "params": {
-              "density": 180,
-              "f0": 2000,
-              "f1": 8000,
-              "len": 0.6
+              "density": 140,
+              "f0": 1600,
+              "f1": 8500,
+              "len": 0.62
             },
-            "seed": 4001504998
+            "seed": 2102
           }
         }
       ]
@@ -142,11 +142,13 @@
           "spec": {
             "patch": "creature/growl",
             "params": {
-              "len": 1.4,
-              "pitch": 52.52,
-              "size": 0.55
+              "len": 1.6,
+              "pitch": 46,
+              "size": 0.45,
+              "rasp": 0.5,
+              "rough": 5
             },
-            "seed": 1166072427
+            "seed": 2401
           }
         },
         {
@@ -154,11 +156,13 @@
           "spec": {
             "patch": "creature/growl",
             "params": {
-              "len": 1.4,
-              "pitch": 55,
-              "size": 0.55
+              "len": 1.5,
+              "pitch": 49,
+              "size": 0.45,
+              "rasp": 0.55,
+              "rough": 5
             },
-            "seed": 1182850046
+            "seed": 2402
           }
         },
         {
@@ -166,11 +170,13 @@
           "spec": {
             "patch": "creature/growl",
             "params": {
-              "len": 1.4,
-              "pitch": 57.47,
-              "size": 0.55
+              "len": 1.7,
+              "pitch": 43,
+              "size": 0.42,
+              "rasp": 0.45,
+              "rough": 5.5
             },
-            "seed": 1199627665
+            "seed": 2403
           }
         }
       ]
