@@ -138,6 +138,8 @@ GF_REGISTER_SELFTEST("import.blocks", [](Context& ctx) {
     requireSkeleton(ctx);
     auto const& blocks = skeleton()["blocks"];
     Failures    fails{ctx, "blocks (registered with their frozen states and defaults)"};
+    int         extended = 0;
+    std::string added; // "id: state, ..." of the first blocks with added states
     for (auto const& [id, states] : blocks.items()) {
         auto const* block = gf::game::blockWith(id);
         if (!block) {
@@ -156,12 +158,17 @@ GF_REGISTER_SELFTEST("import.blocks", [](Context& ctx) {
                 break;
             }
         }
-        int custom = 0;
+        // the frozen states are all there (above); a unit may add twilightforest: states (R1: "later changes may only
+        // add", docs/spec/blockstates.md), e.g. U29's giant block tile index, so more states are listed, not failed
+        // (a spurious state from the generator itself is caught by tools/import/run.ps1 -Check against
+        // tools/import/expected-states.json)
+        std::string extra;
         for (auto const& [name, _] : got)
-            if (name.rfind("twilightforest:", 0) == 0) ++custom;
-        if (custom != static_cast<int>(states.size())) fails.add(id + " has " + std::to_string(custom) + " states, expected " + std::to_string(states.size()));
+            if (name.rfind("twilightforest:", 0) == 0 && !states.contains(name)) extra += (extra.empty() ? "" : ", ") + name.substr(15);
+        if (!extra.empty() && ++extended <= 8) added += (added.empty() ? "" : "; ") + id + ": " + extra;
     }
     ctx.check(blocks.size() == 523, "523 TF blocks in the skeleton (got " + std::to_string(blocks.size()) + ")");
+    if (extended) ctx.info(std::to_string(extended) + " blocks carry twilightforest: states added by their owners (R1): " + added + (extended > 8 ? "; ..." : ""));
     fails.done(static_cast<int>(blocks.size()));
 });
 
@@ -252,7 +259,10 @@ GF_REGISTER_SELFTEST("import.java_states", [](Context& ctx) {
             for (auto const& x : v) s += (s.empty() ? "" : ", ") + x;
             return s;
         };
-        ctx.check(got == expected, std::string(id) + ": states [" + join(got) + "], TF declares [" + join(expected) + "]");
+        // TF's states are all registered; an owner may add more (R1), which is reported, not failed
+        bool all = std::all_of(expected.begin(), expected.end(), [&](std::string const& s) { return std::find(got.begin(), got.end(), s) != got.end(); });
+        ctx.check(all, std::string(id) + ": states [" + join(got) + "], TF declares [" + join(expected) + "]");
+        if (all && got.size() > expected.size()) ctx.info(std::string(id) + ": states [" + join(got) + "] add to TF's [" + join(expected) + "] (R1)");
     }
 });
 
