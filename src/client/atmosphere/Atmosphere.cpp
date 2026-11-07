@@ -923,14 +923,16 @@ std::vector<ColourVertex> const& starVertices() {
     return v;
 }
 
-/// starVertices without the stars the void plate hides (every corner of the quad under the plate).
+/// starVertices without the stars the void plate hides (the quad's centre under the plate: a star
+/// across the rim is hidden or drawn whole, as near as a star of 0.1..0.25 can be to the clipped one).
 std::vector<ColourVertex> const& starsAbovePlate() {
     static std::vector<ColourVertex> const v = [] {
         auto const&               all = starVertices();
         std::vector<ColourVertex> out;
         for (std::size_t i = 0; i + 4 <= all.size(); i += 4) {
-            bool hidden = true;
-            for (std::size_t j = i; j < i + 4 && hidden; ++j) hidden = ca::underVoidPlate({all[j].x, all[j].y, all[j].z});
+            ca::Vec3f c{0, 0, 0};
+            for (std::size_t j = i; j < i + 4; ++j) c = {c.x + all[j].x, c.y + all[j].y, c.z + all[j].z};
+            bool hidden = ca::underVoidPlate(c);
             if (!hidden) out.insert(out.end(), all.begin() + static_cast<std::ptrdiff_t>(i), all.begin() + static_cast<std::ptrdiff_t>(i + 4));
         }
         return out;
