@@ -41,3 +41,21 @@ main paths lead to paths, tents and decos; paths end in decos (racks through `ra
 the wool segment's UV box tinted with `Sheep#getColor`; `tf-derived`, CC BY-NC-SA 4.0), the tinted and
 the 1.025-scaled lines geometries, the pose animation (`QuestRamModel#prepareMobModel` from the packed
 colour property) and the client entity / render controllers from F1's and F2's files.
+
+## Audit round 1
+
+Checked (A1, W2 round 1); nothing changed in U19's code this round:
+
+- **Template ids**: the camp and feature templates still use `gloamingforest:` ids. They go back to
+  `twilightforest:` once assemble knows template pool ids (being fixed in F0's assemble this round);
+  not merged when this audit ran.
+- **Graveyard**: `gloamingforest:feature/graveyard/grave_lower` and `grave_full` use
+  `minecraft:rooted_dirt`, which F7's Java-to-Bedrock block table (`renames()` in
+  `src/feature/structure/BlockStates.cpp`) does not map (`... has no Bedrock block (processed with no
+  block, not placed)` in every full run): those cells are left as they were. The fix is F7's: map it to
+  `minecraft:dirt_with_roots` (the features kit already does). Reported.
+- **Camp pots**: `structure: no container accepts loot table twilightforest:camp_pot at a
+  minecraft:decorated_pot` (every full run): TF's camp decorated pots carry a loot table
+  (DecoratedPotBlockEntity is a RandomizableContainer); F10's loot / inventory contract has no
+  handler for Bedrock's decorated pot (one item stack), so the camp's pots are empty. Reported to
+  F10.
