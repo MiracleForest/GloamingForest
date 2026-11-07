@@ -245,7 +245,17 @@ pwsh -NoProfile -File tools/e2e/server/run.ps1 -Scenario <unit>
 pwsh -NoProfile -File tools/e2e/client/run.ps1 -Scenario <unit> -Mode local    # + remote-vanilla
 pwsh tools/ci/ownership.ps1 -Unit <unit>                       # against origin/main (git fetch origin first)
 pwsh tools/ci/arr-guard.ps1
+pwsh tools/ci/unimplemented.ps1 [-Owner <U/F id>] [-Fail]     # registered-but-unimplemented report (R17)
+pwsh -NoProfile -File tools/e2e/client/run-all.ps1 [-RemoteVanilla]   # every client scenario + summary.md
 ```
+
+- `tools/build.ps1 -KeepGoing`: after a failed compile, every other out-of-date file is checked too
+  (syntax only, xmake's own command lines, `-ErrorLimit` per file), so one slot wait shows all errors.
+- `tools/ci/unimplemented.ps1` lists the TF blocks, items and entities whose TF class is TF's own and
+  that nothing in GloamingForest handles (no `twilightforest:<path>` / `<path>` literal in `src/`
+  outside selftests, no family / container entry, no hand-made BP definition, no tag the code
+  names); `docs/spec/not-ported.md` and `tools/ci/unimplemented-reviewed.json` (id -> reason) account
+  for the rest. The header of the script has the exact rules.
 
 - `tools/ci/ownership.ps1` compares with `origin/main` by default (`main` only without a remote): the
   local `main` of a worktree is usually stale and would count other units' merged work as yours.

@@ -23,7 +23,9 @@
 --   Checks   integer block states 0..n, block permutation budget, dangling twilightforest:
 --            references in BP / data (per kind: a `block` key must name a block; the values of
 --            tag-valued keys name tags; the reviewed ids of tools/import/known-ids.json are known
---            by kind, its tfDangling references are warnings), every asset file has an owner
+--            by kind, its tfDangling references are warnings; template pools are the keys of the
+--            imported twilight/template_definition files, template ids and jigsaw connector names
+--            those the structures/**.gft.json define), every asset file has an owner
 --            (docs/spec/owners.tsv), the pack path probes (checks.packPathProbes: a file in a
 --            directory granted to a unit reaches the assembled pack and belongs to that unit), and
 --            the ARR hash guard (no TF .ogg / .nbt content, tools/ci/arr-blobs.txt).
@@ -763,6 +765,15 @@ local function add_known(known, kind, id)
     known[kind][id] = true
     if kind:match("^tag:") then known.tag[id] = true else known["*"][id] = true end
 end
+-- a kind that only its own keys may name (a template id, a jigsaw connector name): not in "*"
+local function add_known_only(known, kind, id)
+    known[kind] = known[kind] or {}
+    known[kind][id] = true
+end
+-- The keys of an original template (.gft.json) that name a template kind: the template's own "id"
+-- (top level) and a jigsaw connector's pool (an imported template_definition key or a worldgen
+-- template_pool), name and target (connector names).
+local GFT_JIGSAW_KINDS = {pool = {"template_pool"}, name = {"jigsaw_name"}, target = {"jigsaw_name"}}
 
 -- data/<ns>/<rest>.json -> registry ("loot_table", "worldgen/biome", "tags/block", ...) and "<ns>:<path>"
 -- with the path below the registry directory only.
@@ -918,7 +929,9 @@ local function check_dangling(jsonfiles, known, cfg, datadir, reviewed)
                     end
                 else
                     local sub = REF_KEY_KINDS[k]
-                    if entry and (k == "name" or k == "value") then sub = entry
+                    if ctx.gft and parentkey == nil and k == "id" then sub = {"template"}
+                    elseif ctx.gft and parentkey == "jigsaw" and GFT_JIGSAW_KINDS[k] then sub = GFT_JIGSAW_KINDS[k]
+                    elseif entry and (k == "name" or k == "value") then sub = entry
                     elseif k == "values" and ctx.values then sub = ctx.values
                     elseif k == "id" and (ctx.id or kinds) then sub = ctx.id or kinds -- {"id": ...} of a typed list
                     elseif k == "parent" and ctx.parent then sub = ctx.parent end
@@ -930,7 +943,7 @@ local function check_dangling(jsonfiles, known, cfg, datadir, reviewed)
     for _, file in ipairs(jsonfiles) do
         local doc = try_json(file)
         if doc then
-            local ctx = {file = file}
+            local ctx = {file = file, gft = file:match("%.gft%.json$") ~= nil}
             local indata = datadir and norm(file):find(norm(datadir) .. "/", 1, true) == 1
             local registry = indata and data_registry(rel(file, datadir)) or nil
             if registry then
@@ -1342,7 +1355,33 @@ local function known_ids(bpdirs, outdir, owners, reviewed)
             -- data/<ns>/<registry>/<path>.json -> <ns>:<path> of that registry's kind (the path below
             -- the registry directory only: loot_table/entities/naga.json is twilightforest:entities/naga)
             local registry, id = data_registry(rel(file, datadir))
-            if registry then add_known(known, registry_kind(registry), id) end
+            if registry then
+                add_known(known, registry_kind(registry), id)
+                -- a template definition ({"<pool>": {weight, height_adjustment, ...}}) is keyed by the
+                -- template pool it joins (twilightforest:camp/tent): the pool ids are TF's own (R1)
+                if registry == "twilight/template_definition" then
+                    local doc = try_json(file)
+                    if type(doc) == "table" and not is_array(doc) then
+                        for pool, _ in json_pairs(doc) do
+                            if type(pool) == "string" and pool:find(":", 1, true) then add_known_only(known, "template_pool", pool) end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    -- the original templates (F7, <outdir>/structures/<ns>/**.gft.json) define their template id
+    -- ("id") and the names of their jigsaw connectors (jigsaw[].name, the "target" of another one)
+    local structdir = path.join(outdir, "structures")
+    if os.isdir(structdir) then
+        for _, file in ipairs(os.files(path.join(structdir, "**.gft.json"))) do
+            local doc = try_json(file)
+            if type(doc) == "table" then
+                if type(doc.id) == "string" then add_known(known, "template", doc.id) end -- a template id is an id like any other (R1)
+                for _, j in ipairs(type(doc.jigsaw) == "table" and doc.jigsaw or {}) do
+                    if type(j) == "table" and type(j.name) == "string" and j.name ~= "" then add_known_only(known, "jigsaw_name", j.name) end
+                end
+            end
         end
     end
     for kind, ids in pairs(owners.kinds) do
