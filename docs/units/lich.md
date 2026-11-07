@@ -144,3 +144,9 @@ Fixed:
 Verified, no change: the rising zombie's knockback resistance 1 is TF's behaviour (`RisingZombie#knockback` is
 empty: Java's attribute is 0 but the zombie never moves from a hit). Peaceful: the Lich is a boss (F8's boss kit
 turns it back into its spawner); the tome, minions and rising zombies are plain monsters (F8's generic removal).
+
+Golden update (after the round-2 merges): `lich.tower_layout`'s placed volume hash changed from
+`55fda7b2a7c17ebe` to `b3676e28677cce22`. A block-by-block dump of the placed lower 32 layers at caae45b5 and at
+cd112547 differs in one line only: the mason jar of a U22 room at (58, 14, 9) now carries U6's new
+`twilightforest:jar_light=0` state (PR #195, the jar's light from MasonJarBlockEntity; 0 for an empty jar is TF's
+behaviour). The tower itself is unchanged, so the golden was bumped.

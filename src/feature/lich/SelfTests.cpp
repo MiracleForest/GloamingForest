@@ -565,7 +565,9 @@ constexpr std::uint64_t kGoldenLayoutU22 = 17021626904049777675ull; // U22 prese
 // the placed layout depends on where it stands (its chunk seeds the layout): the golden holds for
 // the test area of the e2e worlds (seed 20260521, the BDS spawn); elsewhere it is logged only
 constexpr char const* kGoldenVolume    = "a6cad5e5eb1dc5ad"; // U22 absent (pieces placed in F6's sort-key order)
-constexpr char const* kGoldenVolumeU22 = "55fda7b2a7c17ebe"; // U22 present (audit A3)
+// U22 present (audit A3); since U6's twilightforest:jar_light state (MasonJarBlockEntity's light) the
+// one mason jar in these layers hashes with jar_light=0, every other block is unchanged
+constexpr char const* kGoldenVolumeU22 = "b3676e28677cce22";
 constexpr int         kGoldenVolumeAt[2] = {64, 100};
 
 std::uint64_t layoutHash(std::vector<tower::PieceBox> const& pieces, BlockPos const& origin, std::map<std::string, int>& counts) {
