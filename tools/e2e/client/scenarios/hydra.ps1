@@ -62,7 +62,7 @@ if (-not (Register-SelfTestResult $r)) { throw 'hydra.client_lair failed' }
 if (-not $remote) {
     $r = Invoke-SelfTest 'hydra.*'
     if ($r.Fail -gt 0) { throw "$($r.Fail) hydra selftest(s) failed" }
-    if ($r.Pass -lt 23) { throw "expected at least 23 hydra selftests to pass, got $($r.Pass)" }
+    if ($r.Pass -lt 24) { throw "expected at least 24 hydra selftests to pass, got $($r.Pass)" }
 } elseif (-not (Get-GameProcess)) {
     throw 'the game closed while connected to the host'
 }

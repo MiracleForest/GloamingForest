@@ -51,6 +51,12 @@
 #include "game/Items.h"
 #include "game/WorldDb.h"
 #include "selftest/SelfTest.h"
+#include <map>
+#include <utility>
+#include "mc/world/level/GameType.h"
+#include "feature/ext/landmark/LandmarkExt.h"
+#include "feature/gamerules/GameRules.h"
+#include "feature/progression/Progression.h"
 
 namespace gf::feature::hydra::tests {
 
@@ -1439,7 +1445,8 @@ GF_REGISTER_SELFTEST("hydra.conquest", [](Context& ctx) -> ll::coro::CoroTask<> 
     ctx.check(after.has_value() && gf::landmark::isConquered(*after), "the hydra lair is conquered");
     // the death chest near the home point (EntityUtil#bossChestLocation), emptied so the area's
     // restore drops nothing
-    int chests = 0;
+    int  chests = 0;
+    bool trophy = false, chop = false, blood = false;
     if (auto* region = game::regionOf(home->pos.dim))
         for (int dx = -3; dx <= 3; ++dx)
             for (int dy = -3; dy <= 3; ++dy)
@@ -1447,10 +1454,17 @@ GF_REGISTER_SELFTEST("hydra.conquest", [](Context& ctx) -> ll::coro::CoroTask<> 
                     auto p = home->pos.offset(dx, dy, dz);
                     if (ctx.blockAt(p) != "twilightforest:mangrove_chest") continue;
                     ++chests;
-                    if (auto inv = gf::inventory::find(*region, game::blockPos(p)); inv && inv->set)
-                        for (int i = 0; i < inv->slots; ++i) inv->set(p, i, game::items::empty());
+                    if (auto inv = gf::inventory::find(*region, game::blockPos(p)))
+                        for (int i = 0; i < inv->slots; ++i) {
+                            auto id = inv->get ? game::items::idOf(inv->get(p, i)) : std::string();
+                            trophy |= id == "twilightforest:hydra_trophy";
+                            chop |= id == "twilightforest:hydra_chop";
+                            blood |= id == "twilightforest:fiery_blood";
+                            if (inv->set) inv->set(p, i, game::items::empty());
+                        }
                 }
     ctx.check(chests > 0, "the mangrove death chest stands at the home point");
+    ctx.check(trophy && chop && blood, "the chest holds the hydra trophy, hydra chops and fiery blood");
     forced.reset();
     (void)box;
 });
@@ -1522,5 +1536,74 @@ GF_REGISTER_SELFTEST("hydra.rests_on_java_box", [](Context& ctx) -> ll::coro::Co
     co_await ctx.ticks(2);
     (void)box;
 });
+
+// ---- landmark walk-through (audit A3) ------------------------------------------------------------------
+
+namespace {
+
+/// tfEnforcedProgression for the length of a test.
+struct WalkEnforcedScope {
+    bool previous = false;
+    WalkEnforcedScope() {
+        previous = gf::gamerules::getBool("tfEnforcedProgression");
+        gf::gamerules::set("tfEnforcedProgression", true);
+    }
+    ~WalkEnforcedScope() { gf::gamerules::set("tfEnforcedProgression", previous); }
+};
+
+/// The landmark of a boss against TF's structure record (LandmarkStructure: AdvancementLockConfig,
+/// HintConfig, ConquerableStructure) and what the lock does to a survival player: a start forced far
+/// from the test rows (its chunks never load: nothing is placed) refuses a player without the lock's
+/// advancement inside its protected pieces (ProgressionEvents#isAreaProtected) and lets him in once
+/// he has it. `lock` empty: the landmark has no lock and protects nothing.
+void walkLandmark(Context& ctx, std::string const& key, std::string const& lock, std::string const& hintBook, int farX) {
+    auto const* d = gf::landmark::descriptor(key);
+    ctx.require(d != nullptr, key + " has a descriptor");
+    ctx.check(d->conquerable, key + " is conquerable");
+    if (lock.empty()) ctx.check(d->lockAdvancements.empty(), key + " has no progression lock");
+    else ctx.check(d->lockAdvancements == std::vector<std::string>{lock}, key + " is locked by " + lock + " (" + std::to_string(d->lockAdvancements.size()) + " locks)");
+    ctx.check(d->hintBookKey == (hintBook.empty() ? std::string() : "twilightforest.book." + hintBook), key + "'s hint book (" + d->hintBookKey + ")");
+    WalkEnforcedScope enforced;
+    core::GlobalPos   site{ctx.dimension(), farX, 80, 150007};
+    gf::landmark::ext::ScopedStart forced(key, site);
+    ctx.require(forced && forced->generated, "forced a " + key + " start");
+    auto pieces = gf::landmark::ext::startPieces(*forced);
+    ctx.require(!pieces.empty(), key + " has pieces");
+    auto& sp = ctx.spawnPlayer("gf_walk");
+    sp.setPlayerGameType(GameType::Survival);
+    int protectedPieces = 0, refused = 0;
+    std::optional<BlockPos> probe;
+    for (auto const& p : pieces) {
+        if (!p.protectedPiece) continue;
+        ++protectedPieces;
+        BlockPos c{(p.box.minX + p.box.maxX) / 2, (p.box.minY + p.box.maxY) / 2, (p.box.minZ + p.box.maxZ) / 2};
+        if (gf::landmark::isProtectedFor(sp, c)) {
+            ++refused;
+            if (!probe) probe = c;
+        }
+    }
+    ctx.info(key + ": " + std::to_string(pieces.size()) + " pieces, " + std::to_string(protectedPieces) + " protected, " + std::to_string(refused) +
+             " refuse a player without " + (lock.empty() ? std::string("a lock") : lock));
+    BlockPos outside{forced->box.maxX + 40, forced->center.y, forced->box.maxZ + 40};
+    ctx.check(!gf::landmark::isProtectedFor(sp, outside), "nothing is protected outside the start");
+    if (lock.empty()) {
+        ctx.check(refused == 0, key + " protects nothing");
+        return;
+    }
+    ctx.check(protectedPieces > 0 && refused > 0, key + "'s protected pieces refuse a player without " + lock);
+    if (!probe) return;
+    gf::progression::grant(sp, lock);
+    ctx.check(!gf::landmark::isProtectedFor(sp, *probe), "with " + lock + " the landmark is open");
+    gf::progression::revoke(sp, lock);
+    ctx.check(gf::landmark::isProtectedFor(sp, *probe), "without it the landmark is locked again");
+    sp.setPlayerGameType(GameType::Creative);
+    ctx.check(!gf::landmark::isProtectedFor(sp, *probe), "creative players are never refused");
+}
+
+} // namespace
+
+// The hydra lair against TF's HydraLairStructure record: locked by progress_labyrinth, the
+// hydralair hint book, conquerable; its protected pieces refuse a player without progress_labyrinth.
+GF_REGISTER_SELFTEST("hydra.landmark_walk", [](Context& ctx) { walkLandmark(ctx, kLair, "twilightforest:progress_labyrinth", "hydralair", 150407); });
 
 } // namespace gf::feature::hydra::tests
