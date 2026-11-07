@@ -4,10 +4,14 @@
 // and builds a row of Experiment 115 in its 16 states in front of them, for the screenshots of
 // tools/e2e/client/scenarios/provisions.ps1. Only players carrying the entity tag
 // gf_provisions_showcase (the scenario adds it) are touched: in a 'full' run it does nothing.
+#include <cstdint>
 #include <string>
+#include <vector>
 
 #include "ll/api/service/Bedrock.h"
 
+#include "mc/legacy/ActorUniqueID.h"
+#include "mc/world/actor/Actor.h"
 #include "mc/world/actor/player/Inventory.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/ItemStack.h"
@@ -16,6 +20,7 @@
 
 #include "core/provisions/Provisions.h"
 #include "feature/effects/Effects.h"
+#include "feature/spawn/Spawn.h"
 #include "feature/provisions/Internal.h"
 #include "game/Blocks.h"
 #include "game/Items.h"
@@ -43,6 +48,12 @@ int forRealPlayers(Fn&& fn) {
     return n;
 }
 
+/// The frosted pigs of the showcase (IceLayer's cubes in the screenshot), removed by real_clear.
+std::vector<std::int64_t>& showcasePigs() {
+    static std::vector<std::int64_t> v;
+    return v;
+}
+
 } // namespace
 
 GF_REGISTER_SELFTEST("provisions.real_arm", [](Context&) {
@@ -68,6 +79,12 @@ GF_REGISTER_SELFTEST("provisions.real_arm", [](Context&) {
                 if (auto const* stone = gf::game::blockWith("minecraft:stone")) gf::game::setBlock(region, BlockPos{at.x, at.y - 1, at.z}, *stone);
                 fp::setE115(region, at, {bites, regen == 1});
             }
+        // a pig with frosted III 5 blocks ahead: the client mod draws IceLayer's cubes on it
+        Vec3 pigAt{static_cast<float>(feet.x) + 0.5f, static_cast<float>(feet.y), static_cast<float>(feet.z) + 5.5f};
+        if (auto* pig = gf::spawn::spawnMob(region, "minecraft:pig", pigAt, gf::spawn::SpawnReason::Triggered)) {
+            gf::effects::apply(*pig, fp::ids::kFrosted, 20 * 60, 2);
+            showcasePigs().push_back(pig->getOrCreateUniqueID().rawID);
+        }
         gf::log().info("provisions: armed {}", p.getRealName());
     });
     gf::log().info("provisions: real_arm armed {} player(s)", n);
@@ -79,4 +96,8 @@ GF_REGISTER_SELFTEST("provisions.real_clear", [](Context&) {
         p.getInventory().removeAllItems();
         p.sendInventory(false);
     });
+    if (auto level = ll::service::getLevel())
+        for (auto uid : showcasePigs())
+            if (auto* pig = level->fetchEntity(ActorUniqueID{uid}, false)) pig->remove();
+    showcasePigs().clear();
 });

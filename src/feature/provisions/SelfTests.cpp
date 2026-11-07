@@ -6,6 +6,9 @@
 // the music discs (record component, jukebox song). Behaviour from TF 4.8 (see the headers of the
 // files under test).
 #include <cmath>
+#include <cstdint>
+#include <optional>
+#include <vector>
 #include <string>
 #include <utility>
 
@@ -29,6 +32,7 @@
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/GameType.h"
 #include "mc/world/level/Level.h"
+#include "mc/world/level/dimension/DimensionType.h"
 #include "mc/world/level/block/actor/BlockActorType.h"
 #include "mc/world/level/block/actor/JukeboxBlockActor.h"
 
@@ -41,6 +45,7 @@
 #include "feature/ext/item/Records.h"
 #include "feature/ext/provisions/Provisions.h"
 #include "feature/item/ItemInternal.h"
+#include "feature/net/Net.h"
 #include "feature/progression/Progression.h"
 #include "feature/provisions/Internal.h"
 #include "feature/spawn/Spawn.h"
@@ -333,6 +338,48 @@ GF_REGISTER_SELFTEST("provisions.frosted", [](Context& ctx) -> ll::coro::CoroTas
     player.setPlayerGameType(GameType::Creative);
     ctx.check(!gf::provisions::ext::doChillAuraEffect(player, 100, 0), "creative players are never frosted");
     player.setPlayerGameType(GameType::Survival);
+});
+
+// IceLayer's data: the client mod hears which entities near it are frosted (provisions.frosted), and
+// again when that changes.
+GF_REGISTER_SELFTEST("provisions.frosted_sync", [](Context& ctx) -> ll::coro::CoroTask<> {
+    namespace net = ::gf::feature::net;
+    auto box = co_await ctx.flatArea(1060, 8);
+    (void)box;
+    auto g = ctx.testPos(1061, 2);
+    ctx.player().teleport(Vec3{g.x + 0.5f, static_cast<float>(g.y), g.z + 0.5f}, static_cast<DimensionType>(g.dim));
+    co_await ctx.ticks(2);
+    auto* a = pig(ctx, ctx.testPos(1064, 2));
+    ctx.require(a != nullptr, "a pig");
+    auto uid = a->getOrCreateUniqueID();
+    net::setTestCompanion(ctx.player(), true);
+    (void)net::takeTestMessages(ctx.player());
+    auto frostedIn = [&](std::vector<gf::core::Envelope> const& msgs) -> std::optional<int> {
+        std::optional<int> amp;
+        bool               any = false;
+        for (auto const& m : msgs) {
+            if (m.channel != fp::kChanFrosted) continue;
+            any = true;
+            amp.reset(); // the latest message wins
+            for (auto const& e : m.payload.value("entities", nlohmann::json::array()))
+                if (e.is_array() && e.size() == 2 && e[0].get<std::int64_t>() == uid.rawID) amp = e[1].get<int>();
+        }
+        return any ? amp : std::optional<int>{-1};
+    };
+    gf::effects::apply(*a, fp::ids::kFrosted, 200, 1);
+    co_await ctx.ticks(2 * fp::kFrostedSyncInterval + 2);
+    auto got = frostedIn(net::takeTestMessages(ctx.player()));
+    ctx.check(got && *got == 1, "the companion hears the pig is frosted at level II (" + (got ? std::to_string(*got) : std::string("absent")) + ")");
+    co_await ctx.ticks(2 * fp::kFrostedSyncInterval + 2);
+    got = frostedIn(net::takeTestMessages(ctx.player()));
+    ctx.check(got && *got == -1, "nothing again while the list is unchanged");
+    a = a->getLevel().fetchEntity(uid, false);
+    if (a) gf::effects::remove(*a, fp::ids::kFrosted);
+    co_await ctx.ticks(2 * fp::kFrostedSyncInterval + 2);
+    got = frostedIn(net::takeTestMessages(ctx.player()));
+    ctx.check(!got.has_value(), "the thawed pig leaves the list");
+    net::setTestCompanion(ctx.player(), false);
+    if (auto* still = ctx.player().getLevel().fetchEntity(uid, false)) still->remove();
 });
 
 // ---- enchantments --------------------------------------------------------------------------------------------

@@ -70,6 +70,15 @@ void postAttackEffects(Actor& victim, Actor& attacker);
 /// Frozen counters of entities no longer frosted thaw (every server tick).
 void thawFrozen();
 
+/// The client mod's channel of frosted entities (IceLayer): {"entities": [[unique id, amplifier], ...]},
+/// the frosted living entities within kFrostedSyncRange blocks of the companion in its dimension, sent
+/// when that list changes (checked every kFrostedSyncInterval ticks).
+inline constexpr char kChanFrosted[]        = "provisions.frosted";
+inline constexpr int  kFrostedSyncInterval  = 5;
+inline constexpr float kFrostedSyncRange    = 64.0f;
+/// Sends kChanFrosted to the companions whose list changed (every server tick; acts every interval).
+void syncFrosted();
+
 /// The renewal tick of one player (the main hand and the off hand).
 void renewalTick(Player& player);
 
