@@ -83,6 +83,7 @@ void finalizeSpawn(Mob& spider) {
 }
 
 void spiderTick(Actor& self) {
+    if (despawnInPeaceful(self)) return;
     auto* m = asMob(self);
     if (!m || !self.isAlive()) return;
     if (firstSpawn(self)) finalizeSpawn(*m);

@@ -193,7 +193,8 @@ GF_REGISTER_SELFTEST("hostiles.mob_goldens", [](Context& ctx) -> ll::coro::CoroT
 
 // MistWolf#doHurtTarget: a bite at light 0 blinds for 7 s on Normal, not at all on Easy
 GF_REGISTER_SELFTEST("hostiles.mist_wolf_blindness", [](Context& ctx) -> ll::coro::CoroTask<> {
-    auto box = co_await ctx.flatArea(1710, 12, 8);
+    DifficultyScope easy(Difficulty::Easy); // a monster leaves on Peaceful (Mob#checkDespawn)
+    auto            box = co_await ctx.flatArea(1710, 12, 8);
     (void)box;
     auto inner = ctx.testPos(1712, 0).offset(0, 1, 0);
     stoneBox(ctx, inner, 3, 3, 4);
@@ -204,6 +205,7 @@ GF_REGISTER_SELFTEST("hostiles.mist_wolf_blindness", [](Context& ctx) -> ll::cor
     co_await ctx.ticks(10); // the light engine settles inside the box
     auto* region = ctx.region();
     ctx.require(region != nullptr, "region");
+    ctx.require(mobById(wid) != nullptr, "the wolf is there");
     int light = maxLocalRawBrightness(*region, blockPosOf(*mobById(wid)));
     ctx.require(light == 0, "dark inside the box (light " + std::to_string(light) + ")");
     for (auto [diff, expect] : {std::pair{Difficulty::Normal, 7 * 20}, std::pair{Difficulty::Easy, 0}}) {

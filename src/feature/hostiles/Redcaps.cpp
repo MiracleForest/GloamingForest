@@ -298,6 +298,7 @@ private:
 };
 
 void redcapTick(Actor& self) {
+    if (despawnInPeaceful(self)) return;
     auto* m = asMob(self);
     if (!m || !self.isAlive()) return;
     if (firstSpawn(self)) finalizeSpawn(*m);

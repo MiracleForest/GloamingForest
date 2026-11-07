@@ -16,11 +16,13 @@
         "controller.render.default"
       ],
       "animations": {
-        "base": "animation.twilightforest.redcap.base"
+        "base": "animation.twilightforest.redcap.base",
+        "attack_arms": "animation.twilightforest.redcap.attack_arms"
       },
       "scripts": {
         "animate": [
-          "base"
+          "base",
+          "attack_arms"
         ]
       },
       "enable_attachables": true,

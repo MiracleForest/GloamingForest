@@ -11,6 +11,11 @@
 #   druid_bolt, slime_blob   a druid's nature bolt and a slime beetle's blob in flight
 #   king_spider_rider   the king spider with its skeleton druid
 #   wraith              the wraith (alpha 0.6) in front of a stone wall
+#   redcap_swing_<n>    a redcap swinging at a survival player, 3 frames (FixedHumanoidModel's attack:
+#                       the body turn and the arms moving with it, animation.twilightforest.redcap.attack_arms)
+#   anim_<name>         A5 animation review: every living TF mob (bosses aside) moved across the camera
+#                       a block a step with /tp, then standing: the walk and idle poses against TF's
+#                       setupAnim (bosses: their units' scenarios)
 # Modes: local runs the selftests on the integrated server first; remote-mod and remote-vanilla join
 # the BDS host and take the same shots (everything here is resource pack and server side: a vanilla
 # client sees the same).
@@ -24,7 +29,7 @@ if ($remote) {
     Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
     $r = Invoke-SelfTest 'hostiles.*' -TimeoutSeconds 900
     if ($r.Fail -gt 0) { throw "$($r.Fail) hostiles selftest(s) failed" }
-    if ($r.Pass -lt 12) { throw "expected 12 hostiles selftests to pass, got $($r.Pass)" }
+    if ($r.Pass -lt 16) { throw "expected 16 hostiles selftests to pass, got $($r.Pass)" }
 }
 
 Invoke-Chat '/gamemode creative'
@@ -115,5 +120,41 @@ foreach ($f in $fights) {
     Invoke-Chat "/kill @e[type=twilightforest:$($f[0])]"
     Start-Sleep -Seconds 1
 }
+
+# ---- the redcap's attack swing (three frames of one swing) ----
+Invoke-Teleport '/tp @s 1740 -60 780 0 10'
+Invoke-Chat '/gamemode survival'
+Invoke-Chat '/summon twilightforest:redcap ~ ~ ~2 180'
+Start-Sleep -Seconds 2
+foreach ($n in 1..3) {
+    Save-Screenshot "redcap_swing_$n" | Out-Null
+    Start-Sleep -Milliseconds 100
+}
+Invoke-Chat '/gamemode creative'
+Invoke-Chat '/kill @e[type=twilightforest:redcap]'
 Invoke-Chat '/difficulty easy'
 Invoke-Chat '/effect @s clear'
+
+# ---- A5 animation review: every living TF mob walking past the camera (creative: no fights) ----
+# the summoned mob is moved one block a step across the view so its walk animation plays
+$living = @('adherent', 'alpha_yeti', 'armored_giant', 'bighorn_sheep', 'blockchain_goblin', 'boar', 'carminite_broodling',
+    'carminite_ghastguard', 'carminite_ghastling', 'carminite_golem', 'death_tome', 'deer', 'dwarf_rabbit', 'fire_beetle',
+    'giant_miner', 'harbinger_cube', 'hedge_spider', 'helmet_crab', 'hostile_wolf', 'ice_crystal', 'king_spider', 'kobold',
+    'lich_minion', 'lower_goblin_knight', 'loyal_zombie', 'maze_slime', 'minotaur', 'mist_wolf', 'mosquito_swarm', 'penguin',
+    'pinch_beetle', 'quest_ram', 'raven', 'redcap', 'redcap_sapper', 'rising_zombie', 'roving_cube', 'skeleton_druid',
+    'slime_beetle', 'snow_guardian', 'squirrel', 'stable_ice_core', 'swarm_spider', 'tiny_bird', 'towerwood_borer', 'troll',
+    'unstable_ice_core', 'upper_goblin_knight', 'winter_wolf', 'wraith', 'yeti')
+Invoke-Chat '/difficulty easy'
+foreach ($m in $living) {
+    Invoke-Teleport '/tp @s 1760 -60 800 0 10'
+    Invoke-Chat "/summon twilightforest:$m 1757 -60 806"
+    Start-Sleep -Milliseconds 500
+    foreach ($step in 0..5) {
+        Invoke-Chat "/tp @e[type=twilightforest:$m] $(1757 + $step) -60 806"
+        Start-Sleep -Milliseconds 150
+    }
+    Save-Screenshot "anim_$m" | Out-Null
+    Start-Sleep -Milliseconds 400
+    Save-Screenshot "anim_$($m)_idle" | Out-Null
+    Invoke-Chat "/kill @e[type=twilightforest:$m]"
+}

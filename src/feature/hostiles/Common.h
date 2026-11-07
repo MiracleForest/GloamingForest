@@ -93,6 +93,10 @@ void onForget(std::function<void(std::int64_t uid)> fn);
 [[nodiscard]] bool doEntityDrops();
 /// 0 peaceful, 1 easy, 2 normal, 3 hard.
 [[nodiscard]] int difficulty();
+/// Mob#checkDespawn on Peaceful (Monster#shouldDespawnInPeaceful, HostileWolf / Wraith too): removes the
+/// mob (next tick, F8's removeLater) and returns true; Bedrock keeps custom monsters on Peaceful. Call
+/// first in every U17 mob's tick.
+bool despawnInPeaceful(Actor& actor);
 /// LevelReader#getMaxLocalRawBrightness: max(sky light - sky darken, block light).
 [[nodiscard]] int maxLocalRawBrightness(BlockSource& region, BlockPos const& pos);
 /// DimensionType#brightness of the Twilight Forest (ambient light 0.01) for a light level.

@@ -50,6 +50,25 @@
           ]
         }
       }
+    },
+    "animation.twilightforest.redcap.attack_arms": {
+      "loop": true,
+      "bones": {
+        "rightArm": {
+          "position": [
+            "4 * (1 - math.cos(((variable.attack_time > 0) ? math.sin(math.sqrt(variable.attack_time) * 360) * 0.2 : 0) * 57.29578))",
+            0,
+            "4 * math.sin(((variable.attack_time > 0) ? math.sin(math.sqrt(variable.attack_time) * 360) * 0.2 : 0) * 57.29578)"
+          ]
+        },
+        "leftArm": {
+          "position": [
+            "-4 * (1 - math.cos(((variable.attack_time > 0) ? math.sin(math.sqrt(variable.attack_time) * 360) * 0.2 : 0) * 57.29578))",
+            0,
+            "-4 * math.sin(((variable.attack_time > 0) ? math.sin(math.sqrt(variable.attack_time) * 360) * 0.2 : 0) * 57.29578)"
+          ]
+        }
+      }
     }
   }
 }
