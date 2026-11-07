@@ -87,3 +87,7 @@ Open (C++, not edited in this audio-only round): `src/feature/hostiles/SpawnSwee
   which `gf::fx` cannot do today (no per-player or vanilla-only emission; F10's contract): open, a candidate for
   an fx extension. The velocity of `twilightforest:snow` / `minecraft:flame` on vanilla clients is F10's fx
   molang (see the `variable.velocity` content-log errors of other units' particles).
+- **Spawn sweep sound rows**: the `known()` rows of the lower goblin knight's `sound.hurt` / `sound.death` are gone (U25's
+  audio PR #149 maps them). The rows of U23's maze slime, U29's giants and U30's final castle mobs stay until their
+  audio PRs (#161, #158, #160) are on main; the unstable ice core's `sound.death` row stays (U28 keeps its death
+  single, played by code). Drop each row with its PR: the sweep fails on a known row only if the sound is missing.
