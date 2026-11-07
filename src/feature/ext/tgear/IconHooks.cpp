@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <memory>
 #include <mutex>
+#include <string>
 #include <unordered_map>
 
 #include "ll/api/memory/Hook.h"
@@ -14,6 +15,9 @@
 #include "mc/client/gui/controls/renderers/InventoryItemRenderer.h"
 #include "mc/client/gui/geometry_atlas/ItemHandleData.h"
 #include "mc/client/gui/geometry_atlas/ItemHandleImpl.h"
+#include "mc/client/gui/screens/ItemRendererData.h"
+#include "mc/client/gui/screens/ItemRendererDataHelpers.h"
+#include "mc/client/gui/screens/UIItemRenderInfo.h"
 #include "mc/client/renderer/BaseActorRenderContext.h"
 #include "mc/client/renderer/actor/ItemRenderer.h"
 #include "mc/client/renderer/texture/TextureUVCoordinateSet.h"
@@ -35,6 +39,7 @@ std::shared_ptr<Registry const>  gRegistry = std::make_shared<Registry const>();
 std::atomic<std::uint64_t>       gLayered{0};
 std::atomic<std::uint64_t>       gHandles{0};
 std::atomic<std::uint64_t>       gInfos{0};
+std::atomic<bool>                gGuiSeen{false}, gInfoSeen{false}, gHandleSeen{false}; ///< first call of each hook (diagnostics)
 thread_local int                 gDepth = 0; ///< inside our own origin calls
 
 std::shared_ptr<Registry const> registry() {
@@ -81,6 +86,23 @@ void warnOnce(std::string const& key) {
     if (seen.emplace(key, true).second) gf::log().warn("tgear: no item atlas entry '{}' (icon layer skipped)", key);
 }
 
+/// One line per (pass, TF item id), at most 24 in all: which GUI pass draws which TF item and whether it has layers
+/// (diagnostics of the icon passes on this game version).
+void tracePass(char const* pass, ItemStackBase const& item, bool layered) {
+    static std::atomic<int> left{40};
+    if (left.load(std::memory_order_relaxed) <= 0 || item.isNull()) return;
+    std::string id = item.getTypeName();
+    if (id.rfind("twilightforest:", 0) != 0) return;
+    static std::mutex                      m;
+    static std::unordered_map<std::string, bool> seen;
+    {
+        std::lock_guard lock(m);
+        if (!seen.emplace(std::string(pass) + "|" + id + (layered ? "|1" : "|0"), true).second) return;
+    }
+    if (left.fetch_sub(1) <= 0) return;
+    gf::log().info("tgear: {} draws {} ({})", pass, id, layered ? "layered" : "no layers");
+}
+
 } // namespace
 
 void setIconLayers(std::string const& itemId, IconFn fn) {
@@ -120,8 +142,10 @@ LL_TYPE_INSTANCE_HOOK(
     auto call = [&](std::optional<TextureUVCoordinateSet> const& uv) {
         origin(renderContext, itemRenderChunkType, item, x, y, lightMultiplier, alphaMultiplier, scale, frame, allowAnimation, zOrder, uv);
     };
+    if (!tc::gGuiSeen.load(std::memory_order_relaxed) && !tc::gGuiSeen.exchange(true)) gf::log().info("tgear: GUI icon pass reached (renderGuiItemInChunk, first item {})", item.isNull() ? std::string("none") : item.getTypeName());
     if (tc::gDepth > 0 || item.isNull()) return call(customIconUVCoords);
     auto layers = tc::layersOf(item);
+    tc::tracePass("renderGuiItemInChunk", item, layers.has_value());
     if (!layers) return call(customIconUVCoords);
     ++tc::gDepth;
     try {
@@ -159,8 +183,10 @@ LL_TYPE_INSTANCE_HOOK(
 ) {
     auto info = origin(item, newAnimationFrame, inInventoryPane);
     try {
+        if (!tc::gInfoSeen.load(std::memory_order_relaxed) && !tc::gInfoSeen.exchange(true)) gf::log().info("tgear: icon info pass reached (ComponentItem::getIconInfo, first item {})", item.isNull() ? std::string("none") : item.getTypeName());
         if (item.isNull()) return info;
         auto layers = tc::layersOf(static_cast<ItemStack const&>(item));
+        tc::tracePass("getIconInfo", item, layers.has_value());
         if (!layers || layers->base.empty()) return info;
         info.mIconName.get() = layers->base;
         info.mIconFrame      = 0;
@@ -182,6 +208,7 @@ LL_TYPE_INSTANCE_HOOK(
 ) {
     void* self = origin(std::move(data));
     try {
+        if (!tc::gHandleSeen.load(std::memory_order_relaxed) && !tc::gHandleSeen.exchange(true)) gf::log().info("tgear: icon tile pass reached (GeometryAtlas::ItemHandleImpl)");
         std::optional<tc::IconLayers> layers;
         auto visit = [&](InventoryItemRenderer& r) {
             ItemStack const& stack = r.mItemInstance;
@@ -197,16 +224,76 @@ LL_TYPE_INSTANCE_HOOK(
     return self;
 }
 
+// Diagnostics: which GUI paths see the TF items of the slots (the hotbar and the inventory slots reach none of the
+// hooks above on 1.26.51): InventoryItemRenderer::getItemRenderInfo and ItemRendererDataHelpers::setItemRendererBindings.
+LL_TYPE_STATIC_HOOK(
+    TgearRenderInfoProbeHook,
+    ll::memory::HookPriority::Normal,
+    InventoryItemRenderer,
+    &InventoryItemRenderer::getItemRenderInfo,
+    ::UIItemRenderInfo,
+    ::ItemStack const& item
+) {
+    try {
+        tc::tracePass("getItemRenderInfo", item, tc::layersOf(item).has_value());
+    } catch (...) {}
+    return origin(item);
+}
+
+LL_STATIC_HOOK(
+    TgearBindingsProbeHook,
+    ll::memory::HookPriority::Normal,
+    &ItemRendererDataHelpers::setItemRendererBindings,
+    void,
+    ::ItemRendererData&    itemData,
+    ::ItemStackBase const& item
+) {
+    try {
+        tc::tracePass("setItemRendererBindings", item, tc::layersOf(static_cast<ItemStack const&>(item)).has_value());
+    } catch (...) {}
+    origin(itemData, item);
+}
+
+// Diagnostics: which TF items the GUI's other item path draws (ItemRenderer::renderGuiItemNew).
+LL_TYPE_INSTANCE_HOOK(
+    TgearGuiNewProbeHook,
+    ll::memory::HookPriority::Normal,
+    ItemRenderer,
+    &ItemRenderer::renderGuiItemNew,
+    void,
+    ::BaseActorRenderContext& renderContext,
+    ::ItemStack const&        item,
+    int                       frame,
+    float                     x,
+    float                     y,
+    bool                      renderEnchantmentFoil,
+    float                     transparency,
+    float                     lightMultiplier,
+    float                     scale,
+    int                       zOrder
+) {
+    try {
+        tc::tracePass("renderGuiItemNew", item, tc::layersOf(item).has_value());
+    } catch (...) {}
+    origin(renderContext, item, frame, x, y, renderEnchantmentFoil, transparency, lightMultiplier, scale, zOrder);
+}
+
 } // namespace
 
 namespace gf::ext::tgear::client {
 
 void installIconHooks() {
-    TgearGuiIconHook::hook();
-    TgearItemHandleHook::hook();
-    TgearIconInfoHook::hook();
+    int gui = TgearGuiIconHook::hook(), handle = TgearItemHandleHook::hook(), info = TgearIconInfoHook::hook();
+    TgearGuiNewProbeHook::hook();
+    TgearRenderInfoProbeHook::hook();
+    TgearBindingsProbeHook::hook();
+    static std::atomic<bool> told{false};
+    if (!told.exchange(true)) gf::log().info("tgear: icon hooks installed (gui {}, tile {}, info {})", gui, handle, info);
 }
 void uninstallIconHooks() {
+    TgearGuiNewProbeHook::unhook();
+    TgearRenderInfoProbeHook::unhook();
+    TgearBindingsProbeHook::unhook();
     TgearIconInfoHook::unhook();
     TgearItemHandleHook::unhook();
     TgearGuiIconHook::unhook();

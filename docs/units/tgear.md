@@ -183,3 +183,25 @@ its vanilla fallbacks and its deviations from TF 4.8 (for A8's deviation list).
   `tgear.item_display_map_cycle` C, `tgear.red_thread_vision` unbound), TF's defaults. Bedrock's own keyboard
   binding of Z opens the mob effects screen, which takes the key while it is open: remap one of the two in
   the controls to zoom (the client e2e unbinds the effects key for its run, tgear.prelaunch.ps1).
+
+## Audit round 1
+
+- Server scenario `tgear`: PASSED (23 / 23 selftests, 2026-11-07).
+- Client run (`-Scenario tgear -Mode local`): FAILS at "no slot icon was drawn with its layers". It never passed with
+  that check: no earlier client log (worktrees of 2026-11-05 and 11-06) has a `tgear: icon of ... drawn with` line.
+  The HUD item display (map with its frame and decorations, the position line, the clock with time.png's sun, the moon
+  dial line) and the worn gear in the inventory (gloves, belt, wings) look as TF's in the screenshots.
+- Found (diagnostics added to `src/feature/ext/tgear/IconHooks.cpp`: one line per GUI pass and TF item): on 1.26.51
+  the hotbar and the inventory slots bind their items through `ItemRendererDataHelpers::setItemRendererBindings`
+  (OreUI data: `ItemRendererData` holds the item id + aux, the count and a few strings, no user data), and the slot
+  icons are then drawn from a fresh stack of that id: `renderGuiItemInChunk` / `ComponentItem::getIconInfo` see the
+  gear and the red thread only as count-1 stacks without modifiers (the recipe book's and the atlas capture's), so
+  `gearIcon` / `threadIcon` find no layers there. The layered stacks reach `setItemRendererBindings` only, and the
+  `GeometryAtlas::ItemHandleImpl` constructor hook never runs. Open for round 2: carry the layers through the binding
+  (a key the renderer keeps, e.g. one of `ItemRendererData`'s strings, mapped back to the layers when the tile is
+  drawn) or draw the overlays over the bound slot; then the broken texture, the modifier overlays and the spool
+  sizes show.
+- Open: the hidden effects of the gear (Haste of `haste`, Jump Boost of the wings) show their icons in Bedrock's HUD
+  effect list (see U12's audit).
+- Not this unit's (seen in every client run): the content-log warnings of U9's / U7's emperor's cloth recipes
+  ("has the same ingredients as minecraft:iron_chestplate's recipe ... Adding duplicate crafting_table recipe").
