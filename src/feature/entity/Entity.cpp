@@ -56,6 +56,7 @@
 #include "feature/combat/Combat.h"
 #include "feature/common/Interactions.h"
 #include "feature/entity/EntityInternal.h"
+#include "feature/ext/entity/Handles.h"
 #include "feature/net/Net.h"
 #include "game/WorldDb.h"
 #include "mod/Log.h"
@@ -196,8 +197,19 @@ constexpr char const* kDiedKey = "entity:died"; ///< data(): the die hooks ran f
 /// Notes an actor whose state companions get when they start seeing it (companion sync below).
 void noteSynced(std::int64_t uid, ActorState const& s);
 
+/// One registration of gf::entity::registerType / ext::addBehaviour (shared: a dispatch keeps the
+/// behaviour alive while one of its hooks removes it).
+struct BehaviourEntry {
+    std::uint64_t         id = 0;
+    gf::entity::Behaviour behaviour;
+    bool                  removed = false; ///< removed while a dispatch holds it: its hooks no longer run
+};
+using BehaviourList = std::vector<std::shared_ptr<BehaviourEntry>>;
+
 struct Registry {
-    std::unordered_map<std::string, gf::entity::Behaviour>       behaviours;
+    /// every registration of a type, in registration order (the hooks of all of them run)
+    std::unordered_map<std::string, BehaviourList>               behaviours;
+    std::uint64_t                                                nextBehaviour = 0;
     std::vector<InternalHooks>                                   internal;
     std::vector<std::function<bool(Mob&, Actor&)>>               targetFilters;
     std::vector<std::function<void()>>                           levelTicks;
@@ -249,6 +261,13 @@ void guarded(char const* where, std::string const& type, Fn&& fn) {
     }
 }
 
+/// The behaviours of `type` for one dispatch (a copy: a hook may register or remove behaviours).
+BehaviourList behavioursOf(std::string const& type) {
+    auto& r  = reg();
+    auto  it = r.behaviours.find(type);
+    return it == r.behaviours.end() ? BehaviourList{} : it->second;
+}
+
 /// Every server tick: the actor's behaviour, the internal hooks, goals, parts and mount.
 void onActorTick(Actor& actor) {
     if (!isServerActor(actor)) return;
@@ -261,19 +280,21 @@ void onActorTick(Actor& actor) {
     s.lastSeen    = currentTick();
     if (s.typeId.empty()) s.typeId = type;
     if (s.died && actor.isAlive() && actor.getHealth() > 0) s.died = false; // a respawned player
-    auto bit                       = r.behaviours.find(type);
-    gf::entity::Behaviour const* b = bit != r.behaviours.end() ? &bit->second : nullptr;
+    auto const list = behavioursOf(type);
     if (!s.spawned) {
         s.spawned = true;
-        if (b && b->onSpawn) guarded("onSpawn", type, [&] { b->onSpawn(actor); });
+        for (auto const& e : list)
+            if (!e->removed && e->behaviour.onSpawn) guarded("onSpawn", type, [&] { e->behaviour.onSpawn(actor); });
         for (auto const& h : r.internal)
             if (h.spawn) guarded("spawn", type, [&] { h.spawn(actor, s); });
     }
-    if (b && b->tick) guarded("tick", type, [&] { b->tick(actor); });
+    for (auto const& e : list)
+        if (!e->removed && e->behaviour.tick) guarded("tick", type, [&] { e->behaviour.tick(actor); });
     if (!actor.isAlive() && !asMob(actor)) return;
     if (auto* mob = asMob(actor)) {
         if (mob->isAlive()) guarded("goals", type, [&] { tickGoals(*mob, s); });
-        if (b && b->aiStep) guarded("aiStep", type, [&] { b->aiStep(actor); });
+        for (auto const& e : list)
+            if (!e->removed && e->behaviour.aiStep) guarded("aiStep", type, [&] { e->behaviour.aiStep(actor); });
         if (!s.parts.empty()) guarded("parts", type, [&] { followParts(*mob, s); });
         if (s.hostileMount || r.hostileMounts.contains(type)) guarded("mount", type, [&] { tickMount(*mob, s); });
     }
@@ -302,8 +323,8 @@ void onActorDie(Mob& mob, ActorDamageSource const& source) {
     if (source.isEntitySource() || source.isChildEntitySource()) killer = actorById(source.getEntityUniqueID().rawID);
     bool        byPlayer = killer && killer->isPlayer();
     std::string dtype    = damageTypeOf(static_cast<int>(source.mCause), byPlayer);
-    if (auto bit = r.behaviours.find(type); bit != r.behaviours.end() && bit->second.die)
-        guarded("die", type, [&] { bit->second.die(mob, dtype, killer); });
+    for (auto const& e : behavioursOf(type))
+        if (!e->removed && e->behaviour.die) guarded("die", type, [&] { e->behaviour.die(mob, dtype, killer); });
     for (auto const& h : r.internal)
         if (h.die) guarded("internal die", type, [&] { h.die(mob, dtype, killer); });
 }
@@ -320,13 +341,20 @@ void writeSave(Actor const& actor, CompoundTag& tag) {
     if (it == r.states.end()) return;
     auto& s  = *it->second;
     auto  ty = actor.getTypeName();
-    if (auto bit = r.behaviours.find(ty); bit != r.behaviours.end() && bit->second.save) {
+    // every behaviour's save writes into one document (each its own keys), read back by every load
+    auto const list = behavioursOf(ty);
+    if (std::any_of(list.begin(), list.end(), [](auto const& e) { return static_cast<bool>(e->behaviour.save); })) {
         Json extra = Json::object();
-        bool ok    = false;
-        guarded("save", ty, [&] {
-            bit->second.save(const_cast<Actor&>(actor), extra);
-            ok = true;
-        });
+        bool ok    = true;
+        for (auto const& e : list) {
+            if (e->removed || !e->behaviour.save) continue;
+            bool done = false;
+            guarded("save", ty, [&] {
+                e->behaviour.save(const_cast<Actor&>(actor), extra);
+                done = true;
+            });
+            ok = ok && done;
+        }
         // the save replaces the previous one: nothing saved now means nothing loaded later (a save
         // that failed keeps the last good one)
         if (ok && !extra.is_null() && !extra.empty()) s.data["entity:save"] = std::move(extra);
@@ -349,10 +377,9 @@ void readSave(Actor& actor, CompoundTag const& tag) {
     if (s.data.value(kDiedKey, false)) s.died = true; // a dead body saved with its chunk
     noteSynced(uidOf(actor), s);
     auto ty  = actor.getTypeName();
-    if (auto bit = reg().behaviours.find(ty); bit != reg().behaviours.end() && bit->second.load) {
-        Json extra = s.data.contains("entity:save") ? s.data["entity:save"] : Json::object();
-        guarded("load", ty, [&] { bit->second.load(actor, extra); });
-    }
+    Json const extra = s.data.contains("entity:save") ? s.data["entity:save"] : Json::object();
+    for (auto const& e : behavioursOf(ty))
+        if (!e->removed && e->behaviour.load) guarded("load", ty, [&] { e->behaviour.load(actor, extra); });
 }
 
 bool targetAllowed(Mob& mob, Actor* target) {
@@ -538,12 +565,47 @@ void unmarkHostileMountForTest(std::string const& typeId) {
 }
 
 bool dispatchHurt(Actor& actor, float& amount, std::string const& damageType, Actor* attacker) {
+    auto const& type = actor.getTypeName();
+    // every behaviour's hurt in registration order, each seeing the amount the one before left; the
+    // first one that refuses cancels the damage
+    for (auto const& e : behavioursOf(type)) {
+        if (e->removed || !e->behaviour.hurt) continue;
+        bool go = true;
+        guarded("hurt", type, [&] { go = e->behaviour.hurt(actor, amount, damageType, attacker); });
+        if (!go) return false;
+    }
+    return true;
+}
+
+std::uint64_t addBehaviour(std::string const& entityId, gf::entity::Behaviour behaviour) {
     auto& r  = reg();
-    auto  it = r.behaviours.find(actor.getTypeName());
-    if (it == r.behaviours.end() || !it->second.hurt) return true;
-    bool go = true;
-    guarded("hurt", it->first, [&] { go = it->second.hurt(actor, amount, damageType, attacker); });
-    return go;
+    auto  id = ++r.nextBehaviour;
+    r.behaviours[entityId].push_back(std::make_shared<BehaviourEntry>(BehaviourEntry{id, std::move(behaviour)}));
+    invalidateInterest();
+    return id;
+}
+
+bool removeBehaviour(std::uint64_t id) {
+    if (id == 0) return false;
+    auto& r = reg();
+    for (auto it = r.behaviours.begin(); it != r.behaviours.end(); ++it) {
+        auto& list = it->second;
+        if (!std::erase_if(list, [id](auto const& e) {
+                if (e->id != id) return false;
+                e->removed = true;
+                return true;
+            }))
+            continue;
+        if (list.empty()) r.behaviours.erase(it);
+        invalidateInterest();
+        return true;
+    }
+    return false;
+}
+
+std::size_t behaviourCount(std::string const& typeId) {
+    auto it = reg().behaviours.find(typeId);
+    return it == reg().behaviours.end() ? 0 : it->second.size();
 }
 
 } // namespace gf::feature::entity
@@ -622,13 +684,15 @@ namespace gf::entity {
 
 namespace fe = gf::feature::entity;
 
-void registerType(std::string const& entityId, Behaviour behaviour) {
-    auto& slot = fe::reg().behaviours[entityId];
-    if (slot.onSpawn || slot.tick || slot.aiStep || slot.hurt || slot.die || slot.save || slot.load || slot.interact)
-        log().warn("entity: behaviour of {} registered twice (the later one replaces it)", entityId);
-    slot = std::move(behaviour);
-    fe::invalidateInterest();
-}
+// Registrations add up: several units may give one type behaviours (U16 on vanilla cats, wolves
+// and parrots, another unit on the same mob); each hook runs for every registration of the type in
+// registration order. ext::addBehaviour returns a handle for ext::removeBehaviour.
+void registerType(std::string const& entityId, Behaviour behaviour) { (void)fe::addBehaviour(entityId, std::move(behaviour)); }
+
+namespace ext {
+BehaviourHandle addBehaviour(std::string const& entityId, Behaviour behaviour) { return fe::addBehaviour(entityId, std::move(behaviour)); }
+bool            removeBehaviour(BehaviourHandle handle) { return fe::removeBehaviour(handle); }
+} // namespace ext
 
 Json& data(Actor& actor, std::string const& key) {
     auto& s = fe::stateOf(actor);
@@ -777,11 +841,15 @@ public:
             Actor* target = &c.entity;
             if (auto parent = parentOfPart(c.entity)) target = actorById(parent);
             if (!target) return ia::Result::Pass;
-            auto it = reg().behaviours.find(target->getTypeName());
-            if (it == reg().behaviours.end() || !it->second.interact) return ia::Result::Pass;
-            bool used = false;
-            guarded("interact", it->first, [&] { used = it->second.interact(*target, c.player); });
-            return used ? ia::Result::Consume : ia::Result::Pass;
+            // every behaviour's interact in registration order; the first that used it wins
+            std::string const type = target->getTypeName();
+            for (auto const& e : behavioursOf(type)) {
+                if (e->removed || !e->behaviour.interact) continue;
+                bool used = false;
+                guarded("interact", type, [&] { used = e->behaviour.interact(*target, c.player); });
+                if (used) return ia::Result::Consume;
+            }
+            return ia::Result::Pass;
         }));
         // Behaviour::hurt runs inside the combat pipeline (rule R8: gf::combat owns the hurt hook;
         // the contract has no removal, so the handler is registered once per process)
