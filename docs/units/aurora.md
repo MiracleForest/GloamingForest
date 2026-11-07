@@ -162,3 +162,9 @@ Spec: [docs/spec/aurora.md](../spec/aurora.md). Code: `src/feature/aurora/` (ser
   core lay, for round 2.
 - Open: none for the beam. HoverSummonGoal / HoverThenDropGoal (tracking 30) still rely on Bedrock's look
   control, which turns the head at that rate.
+
+## Audit round 2
+
+Sounds (W2 round 2, audio pass). Checked with `tools/sounds/lint.ps1` on the assembled pack (`tools/assemble.ps1 -Check`): before this round 9 of this unit's sound events still played F3's name-derived baseline placeholder. Ice core, Snow Guardian and Snow Queen (shared ice files, as in TF). `tools/sounds/recipes/aurora.json` now designs every one of them (original synthesized sounds, unit-local patches layered from the shared library; TF's audio never read; ids, subtitles, categories, volumes, pitches and variant counts unchanged), rendered with `pwsh tools/sounds/synth.ps1 -Unit aurora` into `assets/gen/audio/aurora/`. `synth.ps1 -Check` and `lint.ps1` pass; with the other round-2 audio PRs (one per owning unit) the lint reports 0 baseline-only events for the whole pack.
+
+Also: the unstable ice core's death sound is played once from `Mobs.cpp` at the lethal hit; its `sounds.json.d/aurora.json` entry now says `"death": ""` so Bedrock's `entity_sounds.defaults` (`game.player.die`) cannot add a second, generic death sound (TF's UnstableIceCore plays ICE_CORE_DEATH only).
