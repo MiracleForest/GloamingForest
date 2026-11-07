@@ -9,6 +9,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "nlohmann/json.hpp"
@@ -21,6 +22,7 @@
 class AABB;
 class Actor;
 class ActorDamageSource;
+class BlockActor;
 class BlockPos;
 class BlockSource;
 class Mob;
@@ -159,6 +161,20 @@ void watchPortalQueriesForTest(std::int64_t uid);
 void onLevelTick(std::function<void()> fn);
 /// Removes the actor on the next level tick (never inside an actor's own tick).
 void removeLater(std::int64_t uid);
+
+/// `be instanceof Container` of a Bedrock block actor (EntityUtil#canDestroyBlock).
+[[nodiscard]] bool isContainerBlockActor(BlockActor const& be);
+/// Whether Java has a block entity where Bedrock has this block actor (not for flower pots, note
+/// blocks, cauldrons, pistons, ...).
+[[nodiscard]] bool javaHasBlockEntity(BlockActor const& be);
+/// Whether a twilightforest: block has a block entity in Java (TFBlockEntities' valid blocks, TF's
+/// chests and signs): Bedrock's custom blocks have none (gf::entity::ext::BreakRule::SpareBlockEntities).
+[[nodiscard]] bool hasJavaBlockEntity(std::string_view blockId);
+/// Whether the actor is removed on Peaceful right now (Monster#shouldDespawnInPeaceful; queued with
+/// removeLater). F8's tick asks it first thing.
+bool despawnIfPeaceful(Actor& actor, std::string const& type);
+/// Whether the type is in the Peaceful despawn set (gf::entity::ext::setDespawnInPeaceful).
+[[nodiscard]] bool peacefulDespawnType(std::string const& type);
 
 /// Whether a Behaviour is registered for `typeId`.
 [[nodiscard]] bool hasBehaviour(std::string const& typeId);
