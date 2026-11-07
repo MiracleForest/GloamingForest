@@ -90,3 +90,9 @@ Fixed:
   nothing from one at its side.
 
 Open: the client-mod renderers listed under "Not done yet".
+
+## Audit round 2
+
+Sounds (W2 round 2, audio pass). Checked with `tools/sounds/lint.ps1` on the assembled pack (`tools/assemble.ps1 -Check`): before this round 6 of this unit's sound events still played F3's name-derived baseline placeholder. Candelabra (dim, ominous), ominous fire, skull chest and wrought iron fence (the Keepsake Casket's files, as in TF: `recipes/lichdecor.json` keeps U9 artifacts' designs of them, so both trees sound the same). `tools/sounds/recipes/lichdecor.json` now designs every one of them (original synthesized sounds, unit-local patches layered from the shared library; TF's audio never read; ids, subtitles, categories, volumes, pitches and variant counts unchanged), rendered with `pwsh tools/sounds/synth.ps1 -Unit lichdecor` into `assets/gen/audio/lichdecor/`. `synth.ps1 -Check` and `lint.ps1` pass; with the other round-2 audio PRs (one per owning unit) the lint reports 0 baseline-only events for the whole pack.
+
+Open: nothing for audio.
