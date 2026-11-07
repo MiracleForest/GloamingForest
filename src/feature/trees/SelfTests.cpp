@@ -556,7 +556,7 @@ struct SaplingGolden {
 };
 constexpr SaplingGolden kSaplingGoldens[] = {
     {"twilight_oak_sapling", "a1b2c5a299f0e75e"}, {"canopy_sapling", "d9124ba1a42db576"},         {"mangrove_sapling", "d9d95df8efd64c0b"},       {"darkwood_sapling", "8d2cb57d8fbc026a"},
-    {"time_sapling", "488bf3bed2c51e32"},         {"transformation_sapling", "90f238ac17b5fe5c"}, {"mining_sapling", "cb9cad4efe78e3c1"},         {"sorting_sapling", "761d50d030059e92"},
+    {"time_sapling", "41114127bb94d469"},         {"transformation_sapling", "cec10f55a39b13e5"}, {"mining_sapling", "4649995dbe7ae7fa"},         {"sorting_sapling", "a43bff803da40cc7"},
     {"rainbow_oak_sapling", "99fd8e7c28d9425d"},
 };
 
