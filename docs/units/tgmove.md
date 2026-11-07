@@ -195,3 +195,28 @@ so F2's `models.attachables` selftest still sees the generated file.
   double tap, but the push is client-side prediction a vanilla client does not make, and a server push on a guessed
   tap would fire on ordinary strafing), step up and water walking on the client side (the server's copy does not
   water-walk for a client that does not).
+
+## Audit round 1
+
+- Checked: the two `tgmove.*` failures reported from a full run (`tgmove.unrestrained_blocks`: "the full jump on honey:
+  0.514"; `tgmove.validator`: the snap back, the retried packet and the sidestep packet). Both come from one run
+  (worktree of U17, 2026-11-06) whose server log has `Server stop requested.` at 19:32:39.9, exactly 900 s after the
+  scenario started: `tools/e2e/server/run.ps1`'s default `-TimeoutSec 900` stopped the server in the middle of
+  `tgmove.unrestrained_blocks` ("Disabling GloamingForest" follows), so this unit's tick hooks, the companion channels
+  and the `tgmove.travellers_movement` validator were gone for the honey jump and for every check of
+  `tgmove.validator`; the selftests ran on in the stopping server (as did `trees.core_disabled_config` after them).
+  Not a defect of this unit: run `full` with `-TimeoutSec 14400` (docs/spec/e2e.md). The same code passes in main's
+  full run (927 / 928, 2026-11-07) and in the `tgmove` scenario.
+- Client run (key-driven movement, `tools/e2e/client/run.ps1 -Scenario tgmove -Mode local`, 2026-11-07): PASSED.
+  Measured against TF: double jump 2.52 blocks (TF about 2.5); sidestep 4.04 blocks while the strafe key is held (TF's
+  push alone 1.6 / 0.454 = 3.5; the held key adds its walk); glide sink 0.352 blocks per tick (TF terminal 0.357) and
+  0.196 forward with sneak (TF about 0.2); water walk stands at the source + 0.5; step up 1.0 block; unrestrained honey
+  jumps 2.52 three times (TF 2.52, made up once each); agile ranger bow-draw walk 0.212 (walk 0.207); soul sand 0.209,
+  cobweb 0.207, ice walk 0.205 / slide 0.26 as on grass, slime walk 0.205; swift swim 0.207 (0.085 without); straight
+  ahead x1.393 forward, strafe 0.581 (TF 0.581), FOV compensated. Screenshots (wings idle, double jump with the
+  DOUBLE_JUMP pose and particles, glide, water walk, step up, bow) checked by eye: the wings' rest and flap poses read
+  as TF's TravellersWingsModel.
+- Open: the hidden Jump Boost II of high jump (and the hidden Slow Falling of the vanilla glide) shows its icon in
+  Bedrock's HUD effect list (`mEffectVisible` false hides the particles only; Java's attribute shows nothing). Hiding
+  it needs a client hook of the HUD effect list (HudMobEffectsRenderer / MobEffectsLayout, whose entries carry no
+  effect id): an F12 contract addition for round 2.
