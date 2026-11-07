@@ -22,6 +22,10 @@
 #include "mc/server/SimulatedPlayer.h"
 #include "mc/world/item/Item.h"
 #include "mc/world/item/ItemStack.h"
+#include "mc/world/item/enchanting/Enchant.h"
+#include "mc/world/item/enchanting/EnchantResult.h"
+#include "mc/world/item/enchanting/EnchantUtils.h"
+#include "mc/world/item/enchanting/EnchantmentInstance.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
@@ -31,6 +35,8 @@
 
 #include "feature/combat/Combat.h"
 #include "feature/datamaps/DataMaps.h"
+#include "feature/enchant/Enchant.h"
+#include "feature/entity/Entity.h"
 #include "feature/ext/item/Item.h"
 #include "feature/item/Item.h"
 #include "feature/projectile/Projectile.h"
@@ -47,6 +53,7 @@ namespace gf::feature::weapons {
 
 extern int gAnnihilated;
 extern int gEnderSwaps;
+extern int gPunches;
 extern int gGlassBreaks;
 extern int gParries;
 extern int gShieldBlocks;
@@ -354,6 +361,62 @@ GF_REGISTER_SELFTEST("weapons.triple_bow", [](Context& ctx) -> ll::coro::CoroTas
     bowRelease(player, *bow, 1);
     ctx.check(bow->getDamageValue() == 1, "a 1-tick draw (power < 0.1) does not shoot");
     for (int i = 0; i < inv.getContainerSize(); ++i) inv.setItem(i, ItemStack::EMPTY_ITEM());
+});
+
+// Punch on the triple bow's vanilla arrows (AbstractArrow#doKnockback on the hit).
+GF_REGISTER_SELFTEST("weapons.bow_punch", [](Context& ctx) -> ll::coro::CoroTask<> {
+    co_await ctx.flatArea(810, 10);
+    survival(ctx);
+    auto at = ctx.testPos(810, 2);
+    place(ctx, at, Vec3{at.x + 6.5f, at.y + 0.7f, at.z + 0.5f});
+    co_await ctx.ticks(2);
+    auto* sheep = spawnMob(at, "minecraft:sheep", 6.5f, 0.5f);
+    ctx.require(sheep != nullptr, "a sheep ahead");
+    auto  sid    = world::uidOf(*sheep);
+    float startX = sheep->getPosition().x;
+    auto& player = ctx.player();
+    auto& inv    = player.getInventory();
+    for (int i = 0; i < inv.getContainerSize(); ++i) inv.setItem(i, ItemStack::EMPTY_ITEM());
+    ctx.require(ctx.give("minecraft:arrow", 4) >= 0, "arrows");
+    auto bow = game::items::make(kTripleBow);
+    ctx.require(bow.has_value(), "a triple bow");
+    gf::enchant::set(*bow, "minecraft:punch", 2);
+    int before = gPunches;
+    bowRelease(player, *bow, 20);
+    auto feet = player.getFeetPos();
+    AABB near{Vec3{feet.x - 2, feet.y - 2, feet.z - 3}, Vec3{feet.x + 4, feet.y + 4, feet.z + 3}};
+    int  marked = 0;
+    for (auto* e : world::actorsIn(*ctx.region(), ctx.dimension(), near))
+        if (e && e->getTypeName() == "minecraft:arrow" && gf::entity::data(*e, "weapons:punch") == 2) ++marked;
+    ctx.check(marked == 3, "the three arrows carry Punch II (" + std::to_string(marked) + ")");
+    for (int i = 0; i < 30 && gPunches == before; ++i) co_await ctx.ticks(1);
+    ctx.check(gPunches > before, "an arrow's hit knocked the sheep back with Punch");
+    co_await ctx.ticks(3);
+    if (auto* s = world::actorById(sid)) {
+        ctx.info("the sheep moved " + std::to_string(s->getPosition().x - startX) + " along the shot");
+        s->remove();
+    }
+    for (int i = 0; i < inv.getContainerSize(); ++i) inv.setItem(i, ItemStack::EMPTY_ITEM());
+    for (auto* e : world::actorsIn(*ctx.region(), ctx.dimension(), AABB{Vec3{at.x - 2.f, at.y - 2.f, at.z - 4.f}, Vec3{at.x + 12.f, at.y + 6.f, at.z + 4.f}}))
+        if (e && e->getTypeName() == "minecraft:arrow") e->remove();
+});
+
+// The ore magnet takes Unbreaking and Mending books (TF: #minecraft:enchantable/durability), never
+// the enchanting table's other tool enchantments.
+GF_REGISTER_SELFTEST("weapons.ore_magnet_enchants", [](Context& ctx) {
+    auto magnet = game::items::make(kOreMagnet);
+    ctx.require(magnet.has_value(), "an ore magnet");
+    auto can = [&](Enchant::Type t) {
+        EnchantmentInstance e;
+        e.mEnchantType = t;
+        e.mLevel       = 1;
+        return EnchantUtils::canEnchant(*magnet, e, false).result != EnchantResultType::Fail;
+    };
+    ctx.check(can(Enchant::Type::Unbreaking), "Unbreaking applies");
+    ctx.check(can(Enchant::Type::Mending), "Mending applies");
+    ctx.check(!can(Enchant::Type::Efficiency), "Efficiency does not");
+    ctx.check(!can(Enchant::Type::Fortune), "Fortune does not");
+    ctx.check(!can(Enchant::Type::Sharpness), "Sharpness does not");
 });
 
 // Seeker arrows home in on a mob beside their path; ice arrows chill.

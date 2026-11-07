@@ -20,6 +20,10 @@
       "minecraft:durability": {
         "max_durability": 64
       },
+      "minecraft:enchantable": {
+        "slot": "flintsteel",
+        "value": 0
+      },
       "minecraft:tags": {
         "tags": [
           "alexscaves:ferromagnetic_items"

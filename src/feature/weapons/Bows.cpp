@@ -39,6 +39,9 @@
 #include "mc/world/actor/player/Inventory.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/actor/projectile/AbstractArrow.h"
+#include "mc/world/attribute/AttributeInstance.h"
+#include "mc/world/attribute/AttributeInstanceConstRef.h"
+#include "mc/world/attribute/SharedAttributes.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/item/enchanting/Enchant.h"
 #include "mc/world/item/enchanting/EnchantUtils.h"
@@ -63,11 +66,13 @@
 namespace gf::feature::weapons {
 
 int gEnderSwaps = 0; ///< selftests
+int gPunches    = 0; ///< selftests: Punch knockbacks of vanilla arrows
 
 namespace {
 
 constexpr char kEnderTag[] = "twilightforest:ender";
 constexpr char kSeekKey[]  = "weapons:seeker";
+constexpr char kPunchKey[] = "weapons:punch";
 
 /// Player#getProjectile: where the arrow comes from.
 struct Ammo {
@@ -125,7 +130,23 @@ Actor* vanillaArrow(Player& player, ItemStack const& bow, ItemStack const& arrow
         if (power > 0) pc->mEnchantPower = power;
         if (crit) pc->mCritParticleOnHurt = true;
     }
+    // Punch (the bow's minecraft:knockback post-attack effect in 1.21): the game's own bow sets it
+    // in BowItem::releaseUsing, which TF's bows replace, so the hit applies it (onDealt below)
+    if (int punch = EnchantUtils::getEnchantLevel(Enchant::Type::Punch, bow); punch > 0) gf::entity::data(*a, kPunchKey) = punch;
     return a;
+}
+
+/// AbstractArrow#doKnockback of a vanilla arrow with Punch `punch` hitting `victim`.
+void doKnockback(Actor& arrow, Actor& victim, int punch) {
+    double resist = 0.0;
+    auto   attr   = victim.getAttribute(SharedAttributes::KNOCKBACK_RESISTANCE());
+    if (attr.mPtr) resist = attr.mPtr->mCurrentValue;
+    auto   v = arrow.getPosDelta();
+    double h = std::sqrt(double(v.x) * v.x + double(v.z) * v.z);
+    if (h <= 1e-9) return;
+    double f = punch * 0.6 * std::max(0.0, 1.0 - resist) / h;
+    world::push(victim, Vec3{static_cast<float>(v.x * f), 0.1F, static_cast<float>(v.z * f)});
+    ++gPunches;
 }
 
 /// The enchantments of the bow on one of TF's own arrows (Power, Punch, Flame).
@@ -329,6 +350,15 @@ void registerBows() {
         auto& player = static_cast<Player&>(*causing);
         // EntityEvents#entityHurts: an arrow from a player whose used hand holds the triple bow
         if (d.type == "minecraft:arrow" && game::items::idOf(player.getCarriedItem()) == kTripleBow) d.victim.mInvulnerableTime = 0;
+        // Punch of the triple / ender bow's vanilla arrows (once per arrow, as its hit)
+        if (direct->getTypeName() == "minecraft:arrow" && isLiving(d.victim) && d.victim.isAlive()) {
+            auto& punch = gf::entity::data(*direct, kPunchKey);
+            if (punch.is_number_integer() && punch.get<int>() > 0) {
+                int level = punch.get<int>();
+                punch     = nullptr;
+                doKnockback(*direct, d.victim, level);
+            }
+        }
         // ToolEvents#onEnderBowHit
         if (direct->hasTag(kEnderTag) && isLiving(d.victim) && &d.victim != causing &&
             !gf::tags::has(gf::tags::Registry::EntityType, "c:bosses", d.victim.getTypeName())) {
