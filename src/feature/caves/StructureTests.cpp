@@ -166,8 +166,8 @@ struct TestMode {
 
 // Recorded from the translation (GloamingForest's own goldens, docs/units/caves.md).
 constexpr char kTrollLayout[]  = "twilightforest:TFTCCon=11 twilightforest:TFTCGard=4 twilightforest:TFTCMai=1 twilightforest:TFTCVa=1 28,-15,-100,163,11,25";
-constexpr char kTrollHash[]    = "107e7f2b134b8b4f";
-constexpr char kCastleHash[]   = "e55964b79f66e871";
+constexpr char kTrollHash[]    = "bedf1a4ba1742ba7"; // giant blocks carry U29's gf:giant_* tiling states
+constexpr char kCastleHash[]   = "af832880f6c53481"; // giant blocks carry U29's gf:giant_* tiling states
 constexpr char kYetiHash[]     = "d58693ea939cb6cd";
 constexpr char kFeaturesHash[] = "bcf3047b03b92576";
 
