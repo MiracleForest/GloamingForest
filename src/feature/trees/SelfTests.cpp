@@ -201,11 +201,16 @@ int countBlocks(BlockSource& region, BlockBox const& box, std::string_view needl
 }
 
 bool compareWithJava(Context& ctx, std::string const& name, BlockBox const& box, std::vector<std::string> const& cells = {});
+void resetGround(BlockSource& region, int minX, int minZ, int maxX, int maxZ, int grassY);
 
 /// Places every feature of `ids` on a 4 x 4 grid of 36-block cells in one flat area, then compares the
 /// area with the Java oracle's `name` case.
 ll::coro::CoroTask<> placeAll(Context& ctx, int dx, std::string name, std::vector<std::string> const& ids) {
     auto box = co_await ctx.flatArea(dx, 144, 72);
+    // the flat world's ground under the grass first, as the oracle resets it per case: the trees' roots
+    // reach below what flatArea restores, and roots or holes an earlier run or test left there stop or
+    // redirect the mangrove's roots (#tree_roots_skip, canRootGrowIn) and shift every later draw
+    if (auto* region = ctx.region()) resetGround(*region, box.minX, box.minZ, box.maxX, box.maxZ, box.minY - 1);
     for (std::size_t i = 0; i < ids.size(); ++i) {
         int      cx  = static_cast<int>(i % 4), cz = static_cast<int>(i / 4);
         BlockPos pos{box.minX + 18 + cx * 36, box.minY, box.minZ + 18 + cz * 36};
@@ -216,6 +221,8 @@ ll::coro::CoroTask<> placeAll(Context& ctx, int dx, std::string name, std::vecto
         if (ok) ctx.info(ids[i] + " placed");
     }
     compareWithJava(ctx, name, box, ids);
+    // and this run's roots under the grass (flatArea puts back only its box)
+    if (auto* region = ctx.region()) resetGround(*region, box.minX, box.minZ, box.maxX, box.maxZ, box.minY - 1);
 }
 
 std::string tree(char const* path) { return std::string("twilightforest:tree/") + path; }
@@ -397,6 +404,7 @@ ll::coro::CoroTask<> golden(Context& ctx, int dx, std::string const& id, std::st
     auto     box = co_await ctx.flatArea(dx, 48, 48);
     BlockPos pos{box.minX + 24, box.minY, box.minZ + 24};
     co_await ctx.ensureLoaded(game::globalPos(ctx.dimension(), pos));
+    if (auto* region = ctx.region()) resetGround(*region, box.minX, box.minZ, box.maxX, box.maxZ, box.minY - 1); // as placeAll
     auto writes = leafDistanceWrites();
     ctx.info(id + " at " + std::to_string(pos.x) + " " + std::to_string(pos.y) + " " + std::to_string(pos.z) + " (box " + std::to_string(box.minX) + " " +
              std::to_string(box.minY) + " " + std::to_string(box.minZ) + " .. " + std::to_string(box.maxX) + " " + std::to_string(box.maxY) + " " + std::to_string(box.maxZ) + ")");
@@ -406,6 +414,7 @@ ll::coro::CoroTask<> golden(Context& ctx, int dx, std::string const& id, std::st
     ctx.info(id + " volume hash " + hash);
     if (!want.empty()) ctx.check(hash == want, id + " matches its golden hash " + want + " (got " + hash + ")");
     compareWithJava(ctx, "golden_" + id.substr(id.rfind('/') + 1), box);
+    if (auto* region = ctx.region()) resetGround(*region, box.minX, box.minZ, box.maxX, box.maxZ, box.minY - 1);
 }
 
 } // namespace
