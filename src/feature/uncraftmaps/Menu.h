@@ -131,6 +131,21 @@ private:
     MenuState& mS;
 };
 
+/// The vanilla form's repair (Table.cpp): the broken (marked) parts of the shown uncrafting recipe
+/// filled from the player's inventory, as a player of TF's screen puts them into the assembly grid
+/// over the ghost recipe (the combined grid of UncraftingMenu#slotsChanged).
+struct RepairPlan {
+    std::array<int, 9> fromSlot{}; ///< the inventory slot of each filled cell (-1: none)
+    ItemStack          result;
+    int                cost = 0;
+};
+/// Fills `st.assembly` (taking nothing yet) for the input in inventory slot `inputSlot` (already in
+/// `st.input`) and computes the result; nullopt without a broken part, a missing part or no result.
+[[nodiscard]] std::optional<RepairPlan> planRepair(Player& player, int inputSlot, MenuState& st, Menu& menu);
+/// Repairs the stack in inventory slot `slot` with the parts from the inventory and the levels, as
+/// the screen's result slot takes it; false (nothing changed) when it can't (`why`).
+bool repairInSlot(Player& player, int slot, core::uncraftmaps::Cycles cycles, std::string* why = nullptr);
+
 /// The menu state of a player with the table open (nullptr: none).
 [[nodiscard]] MenuState* openMenu(Player& player);
 /// Opens the menu for `player` at `pos` (a previous one is closed first, its items returned).

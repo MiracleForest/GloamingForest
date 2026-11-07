@@ -94,12 +94,6 @@ void destroyParticles(BlockSource& region, BlockPos const& pos, Block const& blo
 [[nodiscard]] float javaExplosionResistance(Block const& block);
 /// Whether `actor` is a "LivingEntity" (players, mobs; not parts, items, projectiles).
 [[nodiscard]] bool isLiving(Actor& actor);
-/// DamageSource#getEntity / #getDirectEntity of a gf::combat damage (see Common.cpp).
-struct CausingDirect {
-    Actor* causing = nullptr;
-    Actor* direct  = nullptr;
-};
-[[nodiscard]] CausingDirect causingAndDirect(Actor* attacker, Actor* direct);
 /// EntityTypeTags.FREEZE_IMMUNE_ENTITY_TYPES / FREEZE_HURTS_EXTRA_TYPES of 1.21.1.
 [[nodiscard]] bool freezeImmune(Actor const& actor);
 [[nodiscard]] bool freezeHurtsExtra(Actor const& actor);

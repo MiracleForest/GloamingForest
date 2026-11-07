@@ -34,3 +34,26 @@ Open:
 
 - Frosted ice cube render (the client overlay of FrostedEffect), Experiment 115's alternate icons
   (`think` / `full` item predicates): client-mod drawing, not done this round.
+
+## Audit round 2
+
+Fixed:
+
+- **Frosted ice cubes** (IceLayer, client mod). Java reads the frosted_slowdown modifier from the attributes it
+  syncs to every client; Bedrock clients see only their own effects, so the server sends each companion the frosted
+  living entities within 64 blocks in its dimension (`provisions.frosted` {entities: [[unique id, amplifier]]}, checked
+  every 5 ticks, sent when the list changes, again after a companion joins) and `src/client/provisions/Frosted.cpp`
+  draws IceLayer's cubes: Java's seeded `java.util.Random` (id * id * 3121 + id * 45238971, the runtime id as
+  Java's network id), int(height / 0.4) + amplifier + 2 half-block cubes in LivingEntityRenderer's model space
+  (body yaw, the flip, -1.501), the death tome's offset, not on the local player in first person. The cube is
+  `geometry.twilightforest.provisions.ice_cube` with the game's ice texture through `drawGeo` (alpha-tested, not
+  translucent as Java's translucentMovingBlock; the random tumble uses drawGeo's y-x-z order). Selftest
+  `provisions.frosted_sync`; the client scenario frosts a showcase pig (not run this round).
+- **Experiment 115 icons** (client mod): the `think` variant (`twilightforest:e115_variant`, the advancement icon of
+  `experiment_115_115`) shows `item/think115` through U11's icon layers (`tf_provisions_think115`).
+
+Open:
+
+- The `full` variant (TF: the block model `experiment115_8_8_regenerating` as the item) keeps the item icon: slot
+  icons are item atlas sprites and F12's GUI item renderer does not run for slots on 1.26.51.
+- Vanilla clients get neither (no companion data, no icon layers).

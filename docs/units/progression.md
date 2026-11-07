@@ -153,3 +153,11 @@ see the re-grants.
 - Fixed: one toast slot table. U14's toasts and F12's toast queue each had their own table, so an F12 toast arriving
   later took slot 0 under a U14 toast. F12 now exposes `toast::claimSlot` / `releaseSlot` (feature/ext/ui/Client.h)
   and U14 takes its slots from it (`src/client/progression/Toasts.cpp`); this needs F12's PR merged first.
+
+## Audit round 2
+
+- Fixed: the advancement icon's flask. TF's icon of `full_mettle_alchemist` carries the component
+  `twilightforest:flask_contents` ({potion: {potion: <Java id>}, doses, breakable}); U14 copied it under that key, but
+  U9's flasks read their item data `flask_contents` ({potion: Bedrock potion aux, doses, breakage, breakable}), so the
+  icon showed an empty flask. `iconItem` now writes U9's key and format (Java potion id -> Bedrock aux);
+  `progression.icon_variants` checks it.

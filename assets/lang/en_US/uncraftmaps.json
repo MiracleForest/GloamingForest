@@ -2,5 +2,9 @@
   "gf.uncraftmaps.form.cost": "Cost: {} levels",
   "gf.uncraftmaps.form.empty": "Nothing in your inventory can be uncrafted.",
   "gf.uncraftmaps.form.failed": "You can't uncraft this now.",
-  "gf.uncraftmaps.form.pick": "Pick an item to uncraft:"
+  "gf.uncraftmaps.form.pick": "Pick an item to uncraft:",
+  "gf.uncraftmaps.form.repair": "Repair with the broken parts from your inventory: {} ({} levels)",
+  "gf.uncraftmaps.form.repair_button": "Repair",
+  "gf.uncraftmaps.form.repair_failed": "You can't repair this now.",
+  "gf.uncraftmaps.form.repair_levels": "You don't have enough levels to repair this."
 }

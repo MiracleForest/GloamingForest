@@ -390,16 +390,19 @@ function Invoke-UiItems([string]$mode) {
     Focus-Game
     Press-VK 0x74; Start-Sleep -Milliseconds 400; Press-VK 0x74   # F5 twice: third person, front
     Wait-UiLine 'ui fixture: head item drawn' 20 $mark | Out-Null
-    # render::hideArmor (TF's emperor's cloth): the fixture's rule would hide the worn chestplate with the
-    # fixture's data key. On 1.26.51 the actor renderer (v2) does not ask DataDrivenModel::
-    # shouldRenderAttachableOnActor for the player's armour, so the chestplate is still drawn: recorded,
-    # not failed, until the hook reaches the v2 path (docs/spikes/S5.md, Audit round 1)
+    # render::hideArmor (TF's emperor's cloth): the fixture's rule hides the worn chestplate with the
+    # fixture's data key. On 1.26.51 the v2 actor renderer does not ask DataDrivenModel::
+    # shouldRenderAttachableOnActor; F12 takes the hidden stack out of the wearer's armour for the frame
+    # instead (src/client/render/ArmorV2.cpp; docs/spikes/S5.md, Audit round 2): the screenshot below
+    # shows the player without the chestplate
     if (-not $remote -or (Test-ClientTrace)) {
         $armorMark = $mark
         try {
             $armor = Wait-LogLine '^(?!\[host\]).*ui fixture: worn minecraft:diamond_chestplate hidden by the fixture''s armour rule' 10 -Since $armorMark
             Write-Step "${mode}: armour hidden: $armor"
-        } catch { Write-Step "${mode}: the worn chestplate was not hidden (the attachable check is not reached on this game version; recorded)" }
+            $v2 = Wait-LogLine '^(?!\[host\]).*render: worn armour hidden from the v2 actor renderer' 10 -Since $armorMark
+            Write-Step "${mode}: v2 actor renderer: $v2"
+        } catch { Write-Step "${mode}: the worn chestplate was not hidden from the v2 actor renderer (recorded)" }
     }
     Start-Sleep -Seconds 2
     Save-Screenshot "$mode-head" | Out-Null

@@ -20,6 +20,12 @@
       "minecraft:foliage_appearance": {
         "color": "#00FF80"
       },
+      "minecraft:atmosphere_identifier": {
+        "atmosphere_identifier": "gloamingforest:enchanted_forest_atmospherics"
+      },
+      "minecraft:biome_music": {
+        "music_definition": "twilightforest:enchanted_forest"
+      },
       "minecraft:ambient_sounds": {
         "underwater_loop": "ambient.underwater.loop",
         "underwater_addition": {

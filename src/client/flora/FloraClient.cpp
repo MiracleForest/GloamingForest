@@ -68,6 +68,7 @@
 #include "client/render/Render.h"
 #include "core/flora/FloraMath.h"
 #include "feature/flora/Flora.h"
+#include "feature/ext/biomes/Biomes.h"
 #include "feature/fx/FxInternal.h"
 #include "game/Items.h"
 #include "feature/net/Net.h"
@@ -142,6 +143,18 @@ void effect(LocalPlayer& player, char const* name, Vec3 const& at) {
     player.getLevel().addParticleEffect(it->second, at, emptyMolang());
 }
 
+/// ParticleTypes.NOTE with speed (0, 0, 0): vanilla's note_particle reads `variable.note_color`
+/// (an unset variable is a content-log error per particle).
+void noteEffect(LocalPlayer& player, Vec3 const& at) {
+    static auto* map = [] {
+        auto* m = new gf::fx::MolangMap();
+        m->setColor("variable.note_color", gf::fx::noteColor(0.0f), false);
+        return m;
+    }();
+    static HashedString const name("minecraft:note_particle");
+    player.getLevel().addParticleEffect(name, at, map->get());
+}
+
 void playSound(char const* name, Vec3 const& at, float volume, float pitch) {
     auto* c = currentClient();
     if (!c) return;
@@ -203,7 +216,7 @@ void tickCicada(LocalPlayer& player, BlockPos const& p, Critter& c) {
     }
     if (c.singing) {
         ++c.singDuration;
-        if (nextInt(5) == 0) effect(player, "minecraft:note_particle", Vec3{p.x + nextFloat(), p.y + nextFloat(), p.z + nextFloat()});
+        if (nextInt(5) == 0) noteEffect(player, Vec3{p.x + nextFloat(), p.y + nextFloat(), p.z + nextFloat()});
     }
     if (!c.singing && c.singDuration <= 0) {
         c.singing   = true;
@@ -283,8 +296,8 @@ void animateTick(LocalPlayer& player, BlockSource const& region, BlockPos const&
             effect(player, "twilightforest:firefly",
                    Vec3{p.x + ((nextFloat() - nextFloat()) * 0.2f + 0.5f), p.y + 0.4f + ((nextFloat() - nextFloat()) * 0.3f), p.z + ((nextFloat() - nextFloat()) * 0.2f + 0.5f)});
     } else if (id == "twilightforest:cicada_jar") {
-        effect(player, "minecraft:note_particle",
-               Vec3{p.x + ((nextFloat() - nextFloat()) * 0.2f + 0.5f), p.y + 0.4f + ((nextFloat() - nextFloat()) * 0.2f), p.z + ((nextFloat() - nextFloat()) * 0.2f + 0.5f)});
+        noteEffect(player,
+                   Vec3{p.x + ((nextFloat() - nextFloat()) * 0.2f + 0.5f), p.y + 0.4f + ((nextFloat() - nextFloat()) * 0.2f), p.z + ((nextFloat() - nextFloat()) * 0.2f + 0.5f)});
         if (nextInt(75) == 0 && !silent()) playSound("block.twilightforest.cicada", Vec3{p.x + .5f, p.y + .5f, p.z + .5f}, 1.0f, 1.0f);
     } else if (id == "twilightforest:firefly_particle_spawner") {
         int radius = 1;
@@ -391,6 +404,13 @@ public:
         static bool registered = false;
         if (registered) return;
         registered = true;
+        // ColorHandler: fallen leaves take the biome foliage colour (TF's, U1's blend; the default
+        // foliage colour without a world), the huge lily pad 0x208030 in the world and 0x71C35C without
+        tint::registerBlock(gf::feature::flora::ids::FallenLeaves, tint::GameTintFn{[](BlockPos const& p, tint::GameColors const& g) {
+            return g.foliage() ? gf::biomes::ext::foliageColor(p, g) : 0x48B518u;
+        }});
+        tint::registerBlock(gf::feature::flora::ids::HugeLilyPad,
+                            tint::GameTintFn{[](BlockPos const&, tint::GameColors const& g) { return g.foliage() ? 0x208030u : 0x71C35Cu; }});
         // the critters the render pass draws (their client block entities)
         int kind = 0;
         for (char const* id : {kFirefly, kCicada, kMoonworm}) {

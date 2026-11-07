@@ -2,6 +2,9 @@
 // Translated from The Twilight Forest 4.8 (TeamTwilight/twilightforest @ 9e40a757):
 //   src/main/java/twilightforest/client/overlay/ShieldOverlay.java
 //   src/main/java/twilightforest/client/event/OverlayHandler.java (fortification_shield_count, ore_meter_stats)
+//   src/main/java/twilightforest/client/event/ColorHandler.java
+//   src/main/java/twilightforest/client/event/ClientRegistrationEvents.java
+//   src/main/java/twilightforest/asmhooks/ArmorHooks.java
 // Copyright (c) 2012-2017 Ben Mazur / Benimatic and the TeamTwilight contributors.
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -15,10 +18,19 @@
 //     results box at the top left (headers, then rows sorted by count: prettified columns name / dash
 //     / count / ratio with headers, else "name - count (ratio%)"), padding 4, line height + 1,
 //     background 0x9B000000. The rows come from the stack's ore_data, as the server wrote it.
+// And two item looks:
+//   - the potion flasks' icons (ColorHandler, ClientRegistrationEvents' breakage / potion_level
+//     properties): Java's item model overrides with layer0 (the liquid) tinted by
+//     PotionContents#getColor under layer1 (the glass), as prebuilt composites per doses, breakage and
+//     colour (assets/pack/rp/textures/items/artifacts/tf-derived, item atlas keys
+//     tf_artifacts_<brittle|greater>_flask_*), chosen through U11's icon layers (feature/ext/tgear);
+//   - worn armour with the emperor's cloth is not drawn (ArmorHooks#cancelArmorRendering, F12's hideArmor).
 #ifdef GF_CLIENT
 
 #include <algorithm>
 #include <atomic>
+#include <cstdio>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -30,6 +42,7 @@
 #include "client/ui/Ui.h"
 #include "core/artifacts/Artifacts.h"
 #include "feature/artifacts/Artifacts.h"
+#include "feature/ext/tgear/IconHooks.h"
 #include "feature/ext/ui/Client.h"
 #include "feature/net/Net.h"
 #include "game/Items.h"
@@ -40,6 +53,7 @@ namespace gf::client::artifacts {
 
 namespace ar    = gf::feature::artifacts;
 namespace items = gf::game::items;
+namespace icons = ::gf::ext::tgear::client;
 
 namespace {
 
@@ -166,6 +180,42 @@ void drawOreMeter(screen::Canvas& canvas, float) {
     }
 }
 
+/// The flask contents of a stack: U9's item data, else TF's component as an advancement icon carries
+/// it ("twilightforest:flask_contents" {potion: {potion: <Java id>}, doses, breakage, breakable}).
+core::artifacts::Flask flaskLook(ItemStack const& stack) {
+    auto f = ar::flaskOf(stack);
+    if (!f.empty() || f.doses > 0 || f.breakage > 0) return f;
+    auto j = items::getData(stack, "twilightforest:flask_contents");
+    if (!j.is_object()) return f;
+    f.doses        = j.value("doses", 0);
+    f.breakage     = j.value("breakage", 0);
+    auto        pot  = j.value("potion", nlohmann::json::object());
+    std::string java = pot.is_object() ? pot.value("potion", std::string{}) : std::string{};
+    for (int aux = 0; aux < 64 && !java.empty(); ++aux)
+        if (auto const* p = core::artifacts::potionByAux(aux); p && p->javaId == java) {
+            f.potion = aux;
+            break;
+        }
+    return f;
+}
+
+/// The brittle / greater flask models: potion_level = doses (overrides up to 3), breakage 0..2.
+std::optional<icons::IconLayers> flaskIcon(ItemStack const& stack) {
+    bool brittle  = items::idOf(stack) == ar::kBrittleFlask;
+    auto f        = flaskLook(stack);
+    int  doses    = std::clamp(f.doses, 0, 3);
+    int  breakage = brittle ? std::clamp(f.breakage, 0, 2) : 0;
+    if (doses == 0 || f.empty()) {
+        if (breakage == 0) return std::nullopt; // the item's own icon (layer0 blank)
+        return icons::IconLayers{.base = "tf_artifacts_brittle_flask_0_" + std::to_string(breakage)};
+    }
+    char hex[8];
+    std::snprintf(hex, sizeof hex, "%06x", core::artifacts::potionColor(f.potion) & 0xFFFFFFu);
+    std::string key = brittle ? "tf_artifacts_brittle_flask_" + std::to_string(doses) + "_" + std::to_string(breakage) + "_" + hex
+                              : "tf_artifacts_greater_flask_" + std::to_string(doses) + "_" + hex;
+    return icons::IconLayers{.base = std::move(key)};
+}
+
 } // namespace
 
 class ArtifactsClientModule {
@@ -180,6 +230,10 @@ public:
             feature::net::client::on(ar::kChanCharm, [](nlohmann::json const& msg) {
                 log().info("artifacts: charm animation {}", msg.value("item", std::string{}));
             });
+            icons::setIconLayers(ar::kBrittleFlask, flaskIcon);
+            icons::setIconLayers(ar::kGreaterFlask, flaskIcon);
+            // ArmorHooks#cancelArmorRendering: worn armour (the elytra too) wearing the cloth is not drawn
+            render::hideArmor([](ItemStack const& s) { return ar::hasCloth(s); });
             return true;
         }();
         (void)once;

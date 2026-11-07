@@ -20,6 +20,20 @@ namespace GfImport
             { "minecraft:wooden_slabs", "minecraft:wooden_slabs" },
         };
 
+        // Java item ids that name another item on Bedrock (src/feature/tags/JavaIds.cpp has the full table); only the
+        // ones Bedrock's recipes do not resolve as aliases: Java's minecraft:stone_slab (the plain stone slab) is
+        // Bedrock's minecraft:normal_stone_slab (F9's item.sweep_recipes found nagastone_spiral uncraftable)
+        static readonly Dictionary<string, string> BedrockRecipeItems = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            { "minecraft:stone_slab", "minecraft:normal_stone_slab" },
+        };
+
+        static string BedrockItem(string id)
+        {
+            string b;
+            return id != null && BedrockRecipeItems.TryGetValue(id, out b) ? b : id;
+        }
+
         const int MaxRecipeExpansion = 64;
 
         /// <summary>The alternatives of a Java ingredient as Bedrock recipe items ({"item": ...} or {"tag": ...}).</summary>
@@ -28,7 +42,7 @@ namespace GfImport
             var res = new List<J>();
             if (ing == null) return res;
             if (ing.IsArr) { foreach (var x in ing.A) res.AddRange(Alternatives(x)); return res; }
-            if (ing["item"] != null) { res.Add(J.Obj().Set("item", ing["item"].AsString())); return res; }
+            if (ing["item"] != null) { res.Add(J.Obj().Set("item", BedrockItem(ing["item"].AsString()))); return res; }
             string itype = ing["type"] != null ? ing["type"].AsString() : null;
             if (itype == "neoforge:difference" || itype == "neoforge:intersection" || itype == "neoforge:compound")
             {
@@ -41,7 +55,7 @@ namespace GfImport
                     set = kids.Count == 0 ? new List<string>()
                         : itype == "neoforge:compound" ? kids.SelectMany(k => k).Distinct().ToList() : kids.Aggregate((a, b) => a.Intersect(b).ToList());
                 }
-                foreach (var s in set) res.Add(J.Obj().Set("item", s));
+                foreach (var s in set) res.Add(J.Obj().Set("item", BedrockItem(s)));
                 return res;
             }
             if (itype == "neoforge:components")
@@ -65,7 +79,7 @@ namespace GfImport
                 // tags of TF items only (not blocks) are declared on those items (minecraft:tags, see ItemDoc)
                 if (members.Count > 1 && members.All(IsTaggableItem)) { res.Add(J.Obj().Set("tag", tag)); return res; }
                 // other tags do not exist on Bedrock: one recipe per member (see BedrockRecipes)
-                foreach (var m in members) res.Add(J.Obj().Set("item", m));
+                foreach (var m in members) res.Add(J.Obj().Set("item", BedrockItem(m)));
                 if (members.Count == 0) Warn("recipe ingredient tag " + tag + " has no known members");
             }
             return res;
@@ -98,8 +112,8 @@ namespace GfImport
         static J Result(J r)
         {
             if (r == null) return null;
-            if (r.IsStr) return J.Obj().Set("item", r.AsString());
-            var o = J.Obj().Set("item", (r["id"] ?? r["item"]).AsString());
+            if (r.IsStr) return J.Obj().Set("item", BedrockItem(r.AsString()));
+            var o = J.Obj().Set("item", BedrockItem((r["id"] ?? r["item"]).AsString()));
             if (r["count"] != null && r["count"].AsLong(1) != 1) o.Set("count", r["count"].AsLong(1));
             return o;
         }

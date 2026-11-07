@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <numbers>
 #include <set>
 
 #include "core/atmosphere/Atmosphere.h"
@@ -330,6 +331,22 @@ TEST(Atmosphere, VoidPlate) {
     EXPECT_NEAR(q[0][1].x, 512.0f, 1e-3f); // -180 degrees: -512 * cos(-pi)
     EXPECT_TRUE(drawsVoidPlate(-33.0, -32));
     EXPECT_FALSE(drawsVoidPlate(-31.0, -32));
+}
+
+TEST(Atmosphere, UnderVoidPlate) {
+    // up, level and straight down
+    EXPECT_FALSE(underVoidPlate({0, 1, 0}));
+    EXPECT_FALSE(underVoidPlate({1, 0, 0}));
+    EXPECT_TRUE(underVoidPlate({0, -1, 0}));
+    // towards a corner (-180 degrees: +x) the plate reaches 512: 4 down over 500 is on it, over 520 not
+    EXPECT_TRUE(underVoidPlate({500, -4, 0}));
+    EXPECT_FALSE(underVoidPlate({520, -4, 0}));
+    // towards an edge's middle (22.5 degrees off a corner) only 512 * cos(22.5) = 473.0
+    float const c = std::cos(std::numbers::pi_v<float> / 8.0f), s = std::sin(std::numbers::pi_v<float> / 8.0f);
+    EXPECT_TRUE(underVoidPlate({470.0f * c, -4, 470.0f * s}));
+    EXPECT_FALSE(underVoidPlate({476.0f * c, -4, 476.0f * s}));
+    // the length of dir does not matter
+    EXPECT_EQ(underVoidPlate({5.0f, -0.04f, 0}), underVoidPlate({500.0f, -4.0f, 0}));
 }
 
 TEST(Atmosphere, ResourceLocations) {

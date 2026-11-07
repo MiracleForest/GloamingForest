@@ -17,9 +17,14 @@
 // Vanilla fallback (best effort, README deviation): a form lists the inventory stacks that have an
 // uncrafting recipe; picking one shows its ingredients (broken parts marked), the level cost and the
 // cycle buttons, and "Uncraft" takes the ingredients as the menu would (the levels, the input count,
-// the uncraft_item trigger). Recrafting and repairing need the client mod's screen.
+// the uncraft_item trigger). "Repair" puts the input's broken parts from the inventory into the
+// assembly grid over the shown recipe and takes the result (the combined recipe of TF's screen, with
+// the enchantments and the recrafting cost); free recrafting into another recipe needs the client
+// mod's screen.
 #include <algorithm>
+#include <array>
 #include <map>
+#include <optional>
 
 #include "ll/api/event/EventBus.h"
 #include "ll/api/event/player/PlayerDisconnectEvent.h"
@@ -163,6 +168,10 @@ void openRecipeForm(Player& player, GlobalPos const& pos, int slot, core::uncraf
         if (config().disableUncrafting) body += "\n§4" + trFor(player, "container.twilightforest.uncrafting_table.uncrafting_disabled", "Uncrafting is disabled via config") + "§r";
         if (cost > 0) body += "\n" + trFor(player, "gf.uncraftmaps.form.cost", "Cost: {} levels", cost);
     }
+    // repairing: the broken parts from the inventory over the ghost recipe (the page has read the ghost)
+    std::optional<RepairPlan> repair = planRepair(player, slot, state, menu);
+    if (repair)
+        body += "\n" + trFor(player, "gf.uncraftmaps.form.repair", "Repair with the broken parts from your inventory: {} ({} levels)", items::displayName(repair->result), repair->cost);
     std::vector<ui::FormButton> buttons;
     auto                        reopen = [pos, slot](core::uncraftmaps::Cycles c) {
         return [pos, slot, c](Player& p) { openRecipeForm(p, pos, slot, c); };
@@ -218,6 +227,21 @@ void openRecipeForm(Player& player, GlobalPos const& pos, int slot, core::uncraf
                                    reopen(c)(p);
                                }});
         }
+    }
+    if (repair) {
+        buttons.push_back({trFor(player, "gf.uncraftmaps.form.repair_button", "Repair"), "", [pos, slot, cycles, stack](Player& p) {
+                               if (!stillValid(p, pos)) return;
+                               auto now = ItemStack(p.getInventory().getItem(slot));
+                               if (!items::sameItemSameData(now, stack) || items::countOf(now) != items::countOf(stack)) return openRecipeForm(p, pos, slot, cycles);
+                               std::string why;
+                               if (!repairInSlot(p, slot, cycles, &why)) {
+                                   p.sendMessage("§c"
+                                                 + (why == "levels" ? trFor(p, "gf.uncraftmaps.form.repair_levels", "You don't have enough levels to repair this.")
+                                                                    : trFor(p, "gf.uncraftmaps.form.repair_failed", "You can't repair this now.")));
+                                   return openRecipeForm(p, pos, slot, cycles);
+                               }
+                               openForm(p, pos);
+                           }});
     }
     buttons.push_back({trFor(player, "gui.back", "Back"), "", [pos](Player& p) { openForm(p, pos); }});
     ui::form(player, trFor(player, "container.twilightforest.uncrafting_table", "Uncrafting Table"), body, std::move(buttons));
@@ -288,6 +312,86 @@ void updatePowered(BlockSource& region, BlockPos const& pos) {
 }
 
 } // namespace
+
+// ---- the vanilla form's repair ------------------------------------------------------------------
+
+/// Fills `st.assembly` from the inventory (taking nothing yet) and computes the result; nullopt (the
+/// assembly grid empty again) when the input is not damaged, a broken part is missing from the
+/// inventory, the combined grid makes nothing, or the filled cells alone form the recipe (TF then
+/// crafts normally from the assembly grid and keeps the input: no repair).
+std::optional<RepairPlan> planRepair(Player& player, int inputSlot, MenuState& st, Menu& menu) {
+    auto fail = [&]() -> std::optional<RepairPlan> {
+        for (auto& a : st.assembly) a = ItemStack{};
+        st.result = ItemStack{};
+        return std::nullopt;
+    };
+    if (!st.ghost || menu.inputBanned() || items::isEmpty(st.input) || st.input.getDamageValue() <= 0) return fail();
+    RepairPlan         plan;
+    std::map<int, int> used; // inventory slot -> items planned
+    auto&              inv    = player.getInventory();
+    bool               filled = false;
+    plan.fromSlot.fill(-1);
+    for (int i = 0; i < 9; ++i) {
+        auto const& part = st.uncrafting[static_cast<std::size_t>(i)];
+        if (items::isEmpty(part) || !st.marked[static_cast<std::size_t>(i)]) continue;
+        // the same item and data as the ghost part (a plain stack: never a renamed, enchanted or
+        // other variant one)
+        int found = -1;
+        for (int s = 0; s < 36 && found < 0; ++s) {
+            if (s == inputSlot) continue;
+            auto const& have = inv.getItem(s);
+            if (!items::isEmpty(have) && items::sameItemSameData(have, part) && items::countOf(have) > used[s]) found = s;
+        }
+        if (found < 0) return fail();
+        ++used[found];
+        plan.fromSlot[static_cast<std::size_t>(i)] = found;
+        st.assembly[static_cast<std::size_t>(i)]   = items::withCount(ItemStack(inv.getItem(found)), 1);
+        filled                                      = true;
+    }
+    if (!filled) return fail();
+    menu.slotsChanged(Menu::Changed::Assembly);
+    if (items::isEmpty(st.result)) return fail();
+    for (auto const* r : Menu::craftingRecipesFor(st.assembly))
+        if (items::sameItemSameData(Menu::assemble(*r), st.result)) return fail();
+    plan.result = st.result;
+    plan.cost   = st.recraftingCost;
+    return plan;
+}
+
+bool repairInSlot(Player& p, int slot, core::uncraftmaps::Cycles cycles, std::string* why) {
+    auto now = ItemStack(p.getInventory().getItem(slot));
+    MenuState st;
+    st.cycles = cycles;
+    Menu m(p, st);
+    st.input = now;
+    m.slotsChanged(Menu::Changed::Input);
+    auto plan = planRepair(p, slot, st, m);
+    if (!plan) {
+        if (why) *why = "parts";
+        st.input = ItemStack{};
+        return false;
+    }
+    // the parts leave the inventory for the assembly grid
+    auto& inv = p.getInventory();
+    for (int s : plan->fromSlot) {
+        if (s < 0) continue;
+        auto have = ItemStack(inv.getItem(s));
+        inv.setItem(s, items::countOf(have) > 1 ? items::withCount(have, items::countOf(have) - 1) : ItemStack{});
+    }
+    m.clicked(kSlotResult, 0, Click::Pickup);
+    if (items::isEmpty(st.carried)) {
+        // not taken (the levels): the parts go back, the input stays in its slot
+        if (why) *why = "levels";
+        st.input = ItemStack{};
+        m.removed();
+        return false;
+    }
+    inv.setItem(slot, st.input);
+    st.input = ItemStack{};
+    m.removed(); // the result and what is left in the assembly grid go to the player
+    log().info("uncraftmaps: {} repaired {} with the form", p.getRealName(), items::idOf(now));
+    return true;
+}
 
 // ---- module ------------------------------------------------------------------------------------------
 

@@ -45,3 +45,14 @@ Behaviour spec: [docs/spec/woodwork.md](../spec/woodwork.md). Code: `src/feature
 - Climbing the climbable hollow logs needs the client mod (Bedrock has no data-driven climbable block).
 - Vanilla clients: TF boats look like the game's boats (the game's boat renderer, by runtime
   identifier); the rack item is a held item of the display entity (the game's third-person hand pose).
+
+## Audit round 2
+
+- Fixed: the horizontal hollow logs declared `on_liquid_touches: "no_reaction"`, so flowing water
+  spread into dry logs. They now use `"blocking"` (`tools/import/overrides/woodwork.json`), as F11's
+  waterloggable families do: Java's `SimpleWaterloggedBlock#canPlaceLiquid` takes only a source, and a
+  bucket still waterlogs the log.
+- Checked, not changed: the 18 hollow log items have no `minecraft:icon` on purpose (the override
+  removes it, commit d40cc841). Without an icon the game draws the placer block, the horizontal hollow
+  log, which matches TF's item model (parent `block/hollow_<wood>_log_horizontal`). F1's asset lint
+  lists them as a note only; the woodwork client scenario's hotbar screenshot covers them.

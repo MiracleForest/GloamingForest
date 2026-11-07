@@ -157,3 +157,17 @@ gtested): one random block within 8 of the eyes per tick, darkness adds `(1 - bl
 sky light takes `sky / 15 * 0.001`; at 1 the sound plays to that player only (PlaySoundPacket,
 volume 0.5) from that block's direction, 2 blocks beyond it. The client biome files carry no mood,
 so Bedrock's own timing does not add to it.
+
+## Audit round 2
+
+- **Biome music**: every client biome file now carries `minecraft:biome_music` with `music_definition`
+  `twilightforest:<biome>`, the entry U10 defines for it in `sounds/music_definitions.json`
+  (`assets/pack/rp/music_definitions.d/provisions.json`: TF's biome `music`, `music.twilightforest.twilight_forest` in
+  every biome). Bedrock's 1.21.120 client biomes pick their music through this component (its own biomes name theirs,
+  e.g. the End's `"end"`); before, no TF biome named a definition.
+- **Vibrant Visuals atmosphere**: every client biome file references U15's `gloamingforest:<biome>_atmospherics`
+  (`minecraft:atmosphere_identifier`; the files are U15's, `assets/pack/rp/atmospherics/atmosphere/`, same round): TF's
+  sky and horizon colours for VV's physical sky without the sun's dusk band. Bedrock's other per-biome VV
+  identifiers (lighting, colour grading) stay the game's defaults.
+- Not verified in a client run this round (the e2e client instance was missing from the machine): the music and the
+  VV sky need the client scenario `biomes` / `atmosphere` once it is back.

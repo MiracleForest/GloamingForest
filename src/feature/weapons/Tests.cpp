@@ -548,6 +548,7 @@ GF_REGISTER_SELFTEST("weapons.shield_and_fan", [](Context& ctx) -> ll::coro::Cor
     ctx.check(gParries == parries + 1, "it was parried");
     auto v = gf::projectile::ext::velocity(*shot);
     ctx.check(v.x > 0, "and flies back along the look");
+    ctx.check(gf::projectile::ext::owner(*shot) == &p, "the blocker owns the parried arrow (Projectile#setOwner)");
     shot->remove();
     zombie->remove();
     p.stopUsingItem();

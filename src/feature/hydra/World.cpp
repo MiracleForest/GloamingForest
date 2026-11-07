@@ -80,11 +80,6 @@ std::uint64_t currentTick() {
     return level ? level->getCurrentServerTick().tickID : 0;
 }
 
-CausingDirect causingAndDirect(Actor* attacker, Actor* direct) {
-    if (attacker && direct && !asMob(*attacker) && asMob(*direct)) std::swap(attacker, direct);
-    return {attacker, direct};
-}
-
 bool isFireDamage(std::string const& type) {
     // #minecraft:is_fire of 1.21.1
     static constexpr std::string_view kVanilla[] = {"minecraft:in_fire", "minecraft:campfire", "minecraft:on_fire", "minecraft:lava",
