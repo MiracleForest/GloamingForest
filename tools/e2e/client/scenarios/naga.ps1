@@ -18,7 +18,7 @@ $hostLine = if ($remote) { '\[host\].*' } else { '' }
 if (-not $remote) {
     $r = Invoke-SelfTest 'naga.*'
     if ($r.Fail -gt 0) { throw "$($r.Fail) naga selftest(s) failed" }
-    if ($r.Pass -lt 16) { throw "expected at least 16 naga selftests to pass, got $($r.Pass)" }
+    if ($r.Pass -lt 17) { throw "expected at least 17 naga selftests to pass, got $($r.Pass)" }
 }
 
 Invoke-Chat '/gamemode creative'

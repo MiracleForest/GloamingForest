@@ -18,7 +18,7 @@ Wait-LogLine 'naga: registered the Naga, its spawner and boss lifecycle' 30 | Ou
 $mark = Get-LogMark
 $r = Invoke-SelfTest 'naga.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) naga selftest(s) failed" }
-if ($r.Pass -lt 16) { throw "expected at least 16 naga selftests to pass, got $($r.Pass)" }
+if ($r.Pass -lt 17) { throw "expected at least 17 naga selftests to pass, got $($r.Pass)" }
 $states = Get-ServerLog -Since $mark | Select-String -Pattern 'naga\.state_machine: states: (.*)' | Select-Object -Last 1
 if ($states) { Write-Step "movement pattern: $($states.Matches[0].Groups[1].Value)" }
 $hash = Get-ServerLog -Since $mark | Select-String -Pattern 'courtyard volume hash (\S+)' | Select-Object -Last 1
