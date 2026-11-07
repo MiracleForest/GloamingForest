@@ -20,6 +20,7 @@
   pwsh tools/build.ps1                          # both platforms, release
   pwsh tools/build.ps1 -Target server           # one platform (iterate with this)
   pwsh tools/build.ps1 -Target all -Tests       # both platforms + gtest (before a PR)
+  pwsh tools/build.ps1 -Target server -KeepGoing # on a compile error, report every failing file
 #>
 param(
     [ValidateSet('server', 'client', 'all')][string]$Target = 'all',
@@ -29,7 +30,12 @@ param(
     [string]$Unit = $env:GF_UNIT,
     [int]$SlotTimeoutMinutes = 180,
     # Re-resolve the packages and rewrite xmake-requires.lock with the entries of every target type (-Target all only).
-    [switch]$UpdateLock
+    [switch]$UpdateLock,
+    # After a failed compile, check every other out-of-date translation unit too (in the same slot) and
+    # print all their errors: one slot wait surfaces every compile error, not just the first file's.
+    [switch]$KeepGoing,
+    # clang's per-file error limit in the -KeepGoing pass (0 = unlimited; clang's default is 20).
+    [int]$ErrorLimit = 100
 )
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path "$PSScriptRoot/..").Path
@@ -83,6 +89,91 @@ if ($UpdateLock -and $Target -ne 'all') {
     exit 1
 }
 
+# -KeepGoing: xmake has no keep-going mode (its job runner stops at the first failed compile), so after
+# a failed build this checks every translation unit xmake would still compile, syntax only (/Zs), with
+# xmake's own command lines (compile_commands.json) in parallel, and prints each one's errors.
+# Out of date = no object file, or the object is older than its source or a project file its xmake
+# depfile (build/<t>/.deps/**.obj.d) lists. $Prefixes: the source roots of the failed target.
+function Invoke-KeepGoing([string]$t, [string[]]$Prefixes) {
+    try {
+        $buildDir = Join-Path $root "build/$t"
+        $ccDir = Join-Path $buildDir 'keepgoing'
+        # under the package lock like 'xmake f', and the committed lock file kept as it is
+        $req = Enter-GfLock -Path (Join-Path (Get-GfThrottleHome) 'xmake-require.lock') -What 'xmake package lock' -TimeoutMinutes 60 -Unit $Unit
+        try {
+            xmake project -P $root -k compile_commands $ccDir | Out-Null
+            $code = $LASTEXITCODE
+            if ($null -ne $lockText -and [IO.File]::ReadAllText($lockFile) -ne $lockText) { [IO.File]::WriteAllText($lockFile, $lockText) }
+        } finally { Exit-GfLock $req }
+        $ccFile = Join-Path $ccDir 'compile_commands.json'
+        if ($code -or -not (Test-Path $ccFile)) { Write-Host '==> keep-going: xmake project -k compile_commands failed'; return }
+        $entries = Get-Content $ccFile -Raw | ConvertFrom-Json
+        $mtimes = @{}
+        function MTime([string]$p) {
+            if (-not $mtimes.ContainsKey($p)) {
+                # a path that is not a file (a fragment of a path with a space) never makes an object stale
+                $mtimes[$p] = if (Test-Path -LiteralPath $p -PathType Leaf) { (Get-Item -LiteralPath $p).LastWriteTimeUtc } else { [datetime]::MinValue }
+            }
+            return $mtimes[$p]
+        }
+        $todo = [Collections.Generic.List[object]]::new()
+        $seen = @{}
+        foreach ($e in $entries) {
+            $dir = $e.directory
+            $file = if ([IO.Path]::IsPathRooted($e.file)) { $e.file } else { Join-Path $dir $e.file }
+            $relFile = [IO.Path]::GetRelativePath($root, $file).Replace('\', '/')
+            if (-not ($Prefixes | Where-Object { $relFile.StartsWith("$_/") })) { continue }
+            $cmd = @($e.arguments)
+            if (-not $cmd) { continue }
+            $obj = $cmd | Where-Object { $_ -match '^[-/]Fo(.+)$' } | ForEach-Object { $_.Substring(3) } | Select-Object -First 1
+            if (-not $obj) { continue }
+            $objFull = if ([IO.Path]::IsPathRooted($obj)) { $obj } else { Join-Path $dir $obj }
+            if ($seen.ContainsKey($objFull)) { continue }
+            $seen[$objFull] = $true
+            $stale = $true
+            if (Test-Path -LiteralPath $objFull) {
+                $objTime = (Get-Item -LiteralPath $objFull).LastWriteTimeUtc
+                $deps = @($file)
+                # build/<t>/o/<target>/<src>.obj (GloamingForest) or build/<t>/.objs/<target>/<plat>/<src>.obj
+                $relObj = [IO.Path]::GetRelativePath($buildDir, $objFull).Replace('\', '/')
+                $depFile = Join-Path $buildDir ('.deps/' + ($relObj -replace '^(o|\.objs)/', '') + '.d')
+                if (Test-Path -LiteralPath $depFile) {
+                    $m = [regex]::Match((Get-Content -LiteralPath $depFile -Raw), '(?s)depfiles\s*=\s*"(.*?)(?<!\\)",')
+                    if ($m.Success) {
+                        # a Lua string ('\\' = '\', '\'+newline = newline) holding a make rule
+                        # ("<obj>: \<newline>  <dep> \<newline> ..."); project files are the relative paths
+                        $text = $m.Groups[1].Value.Replace("`r", '').Replace('\\', "`u{1}").Replace("\`n", "`n").Replace("`u{1}", '\')
+                        # make continuations, then escaped spaces kept inside their path
+                        $text = $text.Replace("\`n", ' ').Replace('\ ', "`u{2}")
+                        $paths = ($text -split '\s+') | Where-Object { $_ } | Select-Object -Skip 1 | ForEach-Object { $_.Replace("`u{2}", ' ') }
+                        $deps += $paths | Where-Object { -not [IO.Path]::IsPathRooted($_) -and $_ -notmatch '^[A-Za-z]:' } | ForEach-Object { Join-Path $root $_ }
+                    }
+                }
+                $stale = [bool]($deps | Where-Object { (MTime $_) -gt $objTime } | Select-Object -First 1)
+            }
+            if ($stale) {
+                $args2 = @($cmd | Select-Object -Skip 1 | Where-Object { $_ -notmatch '^[-/]F[od]' }) + @('/Zs', "/clang:-ferror-limit=$ErrorLimit")
+                $todo.Add([pscustomobject]@{ exe = $cmd[0]; args = $args2; dir = $dir; file = $relFile })
+            }
+        }
+        if ($todo.Count -eq 0) { Write-Host '==> keep-going: no other out-of-date translation unit'; return }
+        Write-Host "==> keep-going: checking $($todo.Count) out-of-date translation unit(s) (syntax only, $Jobs at a time)"
+        $results = $todo | ForEach-Object -ThrottleLimit $Jobs -Parallel {
+            Set-Location -LiteralPath $_.dir
+            $out = & $_.exe @($_.args) 2>&1 | ForEach-Object { "$_" }
+            [pscustomobject]@{ file = $_.file; ok = ($LASTEXITCODE -eq 0); out = $out }
+        }
+        $failed = @($results | Where-Object { -not $_.ok } | Sort-Object file)
+        foreach ($r in $failed) {
+            Write-Host "---- $($r.file)" -ForegroundColor Red
+            $r.out | Where-Object { $_ } | ForEach-Object { Write-Host $_ }
+        }
+        Write-Host "==> keep-going: $($failed.Count) of $($todo.Count) translation unit(s) failed: $(($failed | ForEach-Object file) -join ', ')" -ForegroundColor Red
+    } catch {
+        Write-Host "==> keep-going pass failed: $_" -ForegroundColor Yellow
+    }
+}
+
 $slot = $null
 try {
     # xmake and its clang-cl children die with this process: a killed build never leaves compiles
@@ -120,7 +211,10 @@ try {
             } finally { Exit-GfLock $req }
             Write-Host "==> building $t"
             xmake build -P $root -j $Jobs -y GloamingForest
-            if ($LASTEXITCODE) { throw "build failed for $t" }
+            if ($LASTEXITCODE) {
+                if ($KeepGoing) { Invoke-KeepGoing $t @('src') }
+                throw "build failed for $t"
+            }
             $out = Join-Path $root "bin/$t/GloamingForest"
             if (-not (Test-Path (Join-Path $out 'GloamingForest.dll'))) { throw "missing output $out" }
             Write-Host "==> $t ready: $out"
@@ -128,7 +222,10 @@ try {
         if ($Tests) {
             Write-Host '==> unit tests'
             xmake build -P $root -j $Jobs -y gf-tests
-            if ($LASTEXITCODE) { throw 'gf-tests build failed' }
+            if ($LASTEXITCODE) {
+                if ($KeepGoing) { Invoke-KeepGoing $targets[-1] @('tests', 'src/core') }
+                throw 'gf-tests build failed'
+            }
             xmake run -P $root gf-tests
             if ($LASTEXITCODE) { throw 'unit tests failed' }
         }

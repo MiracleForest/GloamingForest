@@ -20,11 +20,23 @@ never a pass).
 ```powershell
 pwsh tools/build.ps1 -Target all -Tests                             # both builds + gtest (through a build slot)
 pwsh -NoProfile -File tools/e2e/server/run.ps1 -Scenario smoke      # [-TimeoutSec 900] [-Quiet] [-Slot n]
-pwsh -NoProfile -File tools/e2e/server/run.ps1 -Scenario full       # every selftest of every unit
+pwsh -NoProfile -File tools/e2e/server/run.ps1 -Scenario full       # every selftest of every unit (raises its own budget to 4 h)
 pwsh -NoProfile -File tools/e2e/client/run.ps1 -Scenario smoke -Mode local
 pwsh -NoProfile -File tools/e2e/client/run.ps1 -Scenario smoke -Mode remote-mod
 pwsh -NoProfile -File tools/e2e/client/run.ps1 -Scenario smoke -Mode remote-vanilla
+pwsh -NoProfile -File tools/e2e/client/run-all.ps1 [-RemoteVanilla] [-Scenario a,b] # client acceptance run
 ```
+
+A scenario that needs more than the server harness's default budget (`-TimeoutSec 900`) calls
+`Request-ScenarioTime <seconds>` first (`full` does); an explicit `-TimeoutSec` still wins.
+
+**Client acceptance run** (`client/run-all.ps1`): every unit's client scenario
+(`client/scenarios/<name>.ps1` without a dot; `-Variants` adds `biomes.classic`, `ui.graphics`, ...)
+in sequence, `-Mode local` by default, `-RemoteVanilla` adds the vanilla-client run. A run that
+exits 2 (NOT RUN) is retried (`-MaxAttempts 3`, `-RetryDelaySec 60`); a failure is not. It writes
+`client/out/run-all/<time>/summary.md` (result, attempts, time, selftests, content-log warnings,
+screenshot folder and count, first failure per run; also copied to `client/out/run-all/summary.md`)
+and every attempt's harness output next to it. Exit 0 all passed, 1 a failure, 2 only NOT RUN left.
 
 Never start BDS or the game by hand for a test, and never run `xmake` outside `tools/build.ps1`
 (rule R23): the scripts take the throttle slots that keep a shared machine usable.

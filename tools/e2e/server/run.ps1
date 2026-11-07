@@ -24,13 +24,13 @@
 
 .EXAMPLE
   pwsh tools/e2e/server/run.ps1 -Scenario smoke -Build
-  pwsh tools/e2e/server/run.ps1 -Scenario full -TimeoutSec 1800
+  pwsh tools/e2e/server/run.ps1 -Scenario full      # full raises its own budget to 4 h
 #>
 param(
     [Parameter(Mandatory)] [string]$Scenario,
     [switch]$Build,
     [switch]$KeepOpen,                 # interactive: keep the server running and forward your console input
-    [int]$TimeoutSec = 900,            # whole-scenario budget (boot excluded)
+    [int]$TimeoutSec = 900,            # whole-scenario budget (boot excluded); a scenario may raise the default (Request-ScenarioTime)
     [int]$BootTimeoutSec = 600,        # a loaded machine (parallel builds) can take minutes to create the world
     [string[]]$Property = @(),         # extra server.properties overrides: -Property gamemode=creative,difficulty=easy
     [string]$ModDir,                   # default: <repo>/bin/server/GloamingForest
@@ -42,6 +42,7 @@ param(
 $ErrorActionPreference = 'Stop'
 . "$PSScriptRoot/lib.ps1"
 $script:EchoOutput = -not $Quiet
+$script:TimeoutExplicit = $PSBoundParameters.ContainsKey('TimeoutSec')   # Request-ScenarioTime keeps it
 
 $scenarioFile = Join-Path $PSScriptRoot "scenarios/$Scenario.ps1"
 if (-not (Test-Path $scenarioFile)) { throw "Unknown scenario: $scenarioFile" }

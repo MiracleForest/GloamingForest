@@ -321,6 +321,22 @@ function Wait-LogLine([string]$Pattern, [int]$TimeoutSeconds = 120, [int]$Since 
     }
 }
 
+# A scenario that needs more than run.ps1's default budget (-TimeoutSec 900) asks for it here:
+# the scenario deadline becomes at least now + $Seconds. A -TimeoutSec given on the command line
+# wins (the caller asked for that budget); the step says so.
+$script:TimeoutExplicit = $false
+function Request-ScenarioTime([int]$Seconds) {
+    $want = (Get-Date).AddSeconds($Seconds)
+    if ($script:TimeoutExplicit) {
+        if ($script:Deadline -lt $want) { Write-Step "the scenario asks for $Seconds s; keeping the explicit -TimeoutSec" }
+        return
+    }
+    if ($script:Deadline -lt $want) {
+        $script:Deadline = $want
+        Write-Step "scenario budget raised to $Seconds s"
+    }
+}
+
 # Used by Invoke-SelfTest (common.ps1).
 function Send-SelfTestCommand([string]$Command) { Send-Console $Command }
 
