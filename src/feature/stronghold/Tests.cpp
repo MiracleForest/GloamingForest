@@ -39,6 +39,7 @@
 #include "core/VolumeHash.h"
 #include "core/jrand/JRand.h"
 #include "feature/boss/Boss.h"
+#include "feature/boss/BossInternal.h"
 #include "feature/combat/Combat.h"
 #include "feature/entity/Entity.h"
 #include "feature/entity/EntityInternal.h"
@@ -649,5 +650,46 @@ void walkLandmark(Context& ctx, std::string const& key, std::string const& lock,
 // progress_trophy_pedestal, the tfstronghold hint book, conquerable; its protected pieces refuse a
 // player without progress_trophy_pedestal.
 GF_REGISTER_SELFTEST("stronghold.landmark_walk", [](Context& ctx) { walkLandmark(ctx, id::Stronghold, "twilightforest:progress_trophy_pedestal", "tfstronghold", 150507); });
+
+// The real conquest (KnightPhantom#postmortem -> LandmarkUtil#markStructureConquered): a knight
+// stronghold start forced far from the test rows (its chunks never load: nothing is placed), a lone
+// knight phantom (the last of its group) spawned in the test area with its home point inside the
+// start's first piece, killed: the start is conquered. The dark chest belongs to the home point's unloaded chunk,
+// so the dying record is dropped without it (stronghold.phantom_fight checks the chest).
+GF_REGISTER_SELFTEST("stronghold.conquest", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope normal(Difficulty::Normal);
+    auto            box  = co_await ctx.flatArea(2560, 16);
+    auto            at   = ctx.testPos(2568, 2).offset(0, 1, 0);
+    core::GlobalPos site{ctx.dimension(), 152560, 80, 160007};
+    (void)gf::landmark::ext::forgetStartForTest(site, id::Stronghold);
+    std::optional<gf::landmark::ext::ScopedStart> forced;
+    forced.emplace(id::Stronghold, site);
+    ctx.require(*forced && (*forced)->generated, "forced a knight stronghold start");
+    // the home inside the first piece (the start's box tops out one below the generation point,
+    // KnightStructureStart, so the center itself is above it)
+    ctx.require(!(*forced)->pieceBoxes.empty(), "the stronghold has pieces");
+    auto const&     pb = (*forced)->pieceBoxes.front();
+    core::GlobalPos home{site.dim, (pb.minX + pb.maxX) / 2, (pb.minY + pb.maxY) / 2, (pb.minZ + pb.maxZ) / 2};
+    auto            start = gf::landmark::startAt(home.dim, game::blockPos(home));
+    ctx.require(start.has_value() && start->key == id::Stronghold, "the home point is inside the stronghold start");
+    ctx.check(!gf::landmark::isConquered(*start), "the stronghold is not conquered before the fight");
+    auto* k = spawnAt(at, id::KnightPhantom);
+    ctx.require(k != nullptr, "a knight phantom");
+    auto uid = fe::uidOf(*k);
+    ge::setHome(*k, home, 30);
+    co_await ctx.ticks(2);
+    auto* a = fe::actorById(uid);
+    ctx.require(a != nullptr && a->isAlive(), "the knight ticks");
+    a->kill();
+    co_await ctx.ticks(3);
+    gf::feature::boss::dropDyingForTest(uid);
+    if (auto* d = fe::actorById(uid)) ctx.check(phantom::isOver(*d), "IT_IS_OVER on the last knight");
+    auto after = gf::landmark::startAt(home.dim, game::blockPos(home));
+    ctx.check(after.has_value() && gf::landmark::isConquered(*after), "the last knight's death conquered the knight stronghold");
+    if (auto* d = fe::actorById(uid)) d->remove();
+    forced.reset();
+    discardAround(at, 12);
+    (void)box;
+});
 
 } // namespace gf::feature::stronghold::tests
