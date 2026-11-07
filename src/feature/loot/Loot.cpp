@@ -27,8 +27,11 @@
 //   drops replace the item entities. Bedrock spawns a mob's own loot right after `die` returns, so
 //   only this merge waits for the next tick.
 // - Block drops: blocks of the twilightforest namespace drop from <ns>:blocks/<path> (survives
-//   explosion, silk touch, fortune, shears ...); other blocks keep Bedrock's drops, run through the
-//   global modifiers (TF's fiery pickaxe smelting, giant pickaxe grouping) when any is registered.
+//   explosion, silk touch, fortune, shears ...), and nothing without that table (TF's
+//   noLootTable() blocks); other blocks keep Bedrock's drops, run through the global modifiers
+//   (TF's fiery pickaxe smelting, giant pickaxe grouping) when any is registered. Bedrock's silk
+//   touch break pops the block itself without BlockType::spawnResources: a Block::playerDestroy
+//   hook suppresses those items for TF blocks and rolls the Java table instead.
 
 #include "feature/loot/Loot.h"
 
@@ -56,6 +59,8 @@
 #include "mc/world/attribute/AttributeInstanceConstRef.h"
 #include "mc/world/attribute/SharedAttributes.h"
 #include "mc/world/item/ItemStack.h"
+#include "mc/world/item/enchanting/Enchant.h"
+#include "mc/world/item/enchanting/EnchantUtils.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
@@ -727,6 +732,42 @@ std::size_t pendingDeathCount() { return pendingDeaths().size(); }
 
 // ---- hooks ---------------------------------------------------------------------------------------
 
+namespace gf::loot {
+namespace {
+
+/// A TF block broken by a player with a silk touch tool (Block::playerDestroy): Bedrock's silk touch
+/// path pops the block itself without spawnResources, so its items are suppressed and the Java
+/// table rolls instead.
+struct SilkBreak {
+    int  inside     = 0;     // inside the block-drop hook (its items pass)
+    bool reached    = false; // the block-drop hook ran for this break
+    int  suppressed = 0;     // items of the game's silk touch pop held back
+};
+thread_local SilkBreak* tSilkBreak = nullptr;
+
+/// Rolls a TF block's Java table and pops the stacks; a block without a table drops nothing.
+void dropTfBlock(BlockSource& region, BlockPos const& pos, Block const& block, std::string const& tableId, ItemStack const* tool,
+                 Actor const* actor, std::optional<float> radius) {
+    if (!table(tableId)) return; // TF's noLootTable(): nothing (never Bedrock's own drops)
+    LootContext ctx;
+    ctx.region     = &region;
+    ctx.origin     = Vec3{static_cast<float>(pos.x) + .5f, static_cast<float>(pos.y) + .5f, static_cast<float>(pos.z) + .5f};
+    ctx.thisEntity = const_cast<Actor*>(actor);
+    ctx.player     = actor && actor->isPlayer() ? static_cast<Player*>(const_cast<Actor*>(actor)) : nullptr;
+    ctx.tool       = tool;
+    ctx.block      = &block;
+    std::vector<ItemStack> drops;
+    {
+        ExplosionScope scope(radius);
+        drops = roll(tableId, ctx);
+    }
+    for (auto const& s : drops) BlockType::popResource(region, pos, s, actor);
+}
+
+} // namespace
+} // namespace gf::loot
+
+
 LL_TYPE_INSTANCE_HOOK(
     LootUnpackHook,
     ll::memory::HookPriority::Normal,
@@ -765,27 +806,60 @@ LL_TYPE_INSTANCE_HOOK(
     bool modifiable = !tf && hasGlobalModifiers() && !static_cast<ItemStack const&>(dropsContext.mUsedItem).isNull()
                    && region.getBlockEntity(pos) == nullptr;
     if (region.getLevel().isClientSide() || (!tf && !modifiable)) return origin(region, pos, block, random, dropsContext, actorContext);
-    std::string tableId = tf ? std::string("twilightforest:blocks/") + id.substr(15) : tableIdFor(id, "blocks");
+    if (tSilkBreak) {
+        tSilkBreak->reached = true;
+        ++tSilkBreak->inside;
+    }
+    struct Leave {
+        ~Leave() {
+            if (tSilkBreak) --tSilkBreak->inside;
+        }
+    } leave;
     std::optional<float> radius;
     if (dropsContext.mCause == ResourceDropsCause::Explosion && dropsContext.mExplosionRadius > 0) radius = dropsContext.mExplosionRadius;
+    auto const* tool = &static_cast<ItemStack const&>(dropsContext.mUsedItem);
+    if (tf) return dropTfBlock(region, pos, block, std::string("twilightforest:blocks/") + id.substr(15), tool, actorContext, radius);
+    // vanilla blocks: Bedrock's drops through the global modifiers
     LootContext ctx;
     ctx.region     = &region;
     ctx.origin     = Vec3{static_cast<float>(pos.x) + .5f, static_cast<float>(pos.y) + .5f, static_cast<float>(pos.z) + .5f};
     ctx.thisEntity = const_cast<Actor*>(actorContext);
     ctx.player     = actorContext && actorContext->isPlayer() ? static_cast<Player*>(const_cast<Actor*>(actorContext)) : nullptr;
-    ctx.tool       = &static_cast<ItemStack const&>(dropsContext.mUsedItem);
+    ctx.tool       = tool;
     ctx.block      = &block;
-    std::vector<ItemStack> drops;
-    if (tf) {
-        if (!table(tableId)) return origin(region, pos, block, random, dropsContext, actorContext); // no Java table: Bedrock's drops
-        ExplosionScope scope(radius);
-        drops = roll(tableId, ctx);
-    } else {
-        // vanilla blocks: Bedrock's drops through the global modifiers
-        auto bedrock = getResourceDrops(block, random, dropsContext);
-        drops        = applyGlobalModifiers(std::move(bedrock.mItems.get()), ctx, tableId);
-    }
+    auto bedrock = getResourceDrops(block, random, dropsContext);
+    auto drops   = applyGlobalModifiers(std::move(bedrock.mItems.get()), ctx, tableIdFor(id, "blocks"));
     for (auto const& s : drops) BlockType::popResource(region, pos, s, actorContext);
+}
+
+// A player's break of a TF block with a silk touch tool: Bedrock pops the block itself (no
+// spawnResources); those items are suppressed and the Java table rolls (TF's thorns, experiment 115
+// and stronghold shield drop nothing, others what their table gives under silk touch).
+LL_TYPE_INSTANCE_HOOK(
+    LootPlayerDestroyHook,
+    ll::memory::HookPriority::Normal,
+    Block,
+    &Block::playerDestroy,
+    void,
+    Player&         player,
+    BlockPos const& pos
+) {
+    using namespace gf::loot;
+    auto const& id = getTypeName();
+    if (player.isClientSide() || id.rfind("twilightforest:", 0) != 0) return origin(player, pos);
+    ItemStack const tool = player.getCarriedItem(); // a copy: the break may wear the tool out
+    if (tool.isNull() || EnchantUtils::getEnchantLevel(Enchant::Type::SilkTouch, tool) <= 0) return origin(player, pos);
+    SilkBreak  silk;
+    SilkBreak* previous = tSilkBreak;
+    tSilkBreak          = &silk;
+    struct Restore {
+        SilkBreak* previous;
+        ~Restore() { tSilkBreak = previous; }
+    } restore{previous};
+    origin(player, pos);
+    tSilkBreak = previous;
+    if (silk.reached || silk.suppressed == 0) return; // the table rolled, or the game popped nothing (creative)
+    dropTfBlock(player.getDimensionBlockSource(), pos, *this, std::string("twilightforest:blocks/") + id.substr(15), &tool, &player, std::nullopt);
 }
 
 // Item entities spawned while a mob dies (gf::loot::DropCapture, the death pipeline): the game's
@@ -802,6 +876,11 @@ LL_TYPE_INSTANCE_HOOK(
     Vec3 const&      pos,
     int              throwTime
 ) {
+    // Bedrock's silk touch pop of a TF block (LootPlayerDestroyHook): the Java table rolls instead
+    if (gf::loot::tSilkBreak && gf::loot::tSilkBreak->inside == 0) {
+        ++gf::loot::tSilkBreak->suppressed;
+        return nullptr;
+    }
     auto* item = origin(region, inst, spawner, pos, throwTime);
     if (item) gf::loot::captureSpawnedItem(*item, spawner);
     return item;
@@ -829,6 +908,7 @@ public:
     void install() {
         LootUnpackHook::hook();
         LootBlockDropsHook::hook();
+        LootPlayerDestroyHook::hook();
         LootSpawnItemHook::hook();
         static bool registered = false;
         if (!registered) {
@@ -871,6 +951,7 @@ public:
     }
     void uninstall() {
         LootSpawnItemHook::unhook();
+        LootPlayerDestroyHook::unhook();
         LootBlockDropsHook::unhook();
         LootUnpackHook::unhook();
     }
