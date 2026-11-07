@@ -1,0 +1,35 @@
+{
+  "format_version": "1.8.0",
+  "render_controllers": {
+    "controller.render.twilightforest.bow": {
+      "arrays": {
+        "textures": {
+          "Array.gf_bow_textures": [
+            "Texture.default",
+            "Texture.bow_pulling_0",
+            "Texture.bow_pulling_1",
+            "Texture.bow_pulling_2"
+          ]
+        },
+        "geometries": {
+          "Array.gf_bow_geometries": [
+            "Geometry.default",
+            "Geometry.bow_pulling_0",
+            "Geometry.bow_pulling_1",
+            "Geometry.bow_pulling_2"
+          ]
+        }
+      },
+      "geometry": "Array.gf_bow_geometries[v.gf_bow_frame]",
+      "materials": [
+        {
+          "*": "v.is_enchanted ? Material.enchanted : Material.default"
+        }
+      ],
+      "textures": [
+        "Array.gf_bow_textures[v.gf_bow_frame]",
+        "Texture.enchanted"
+      ]
+    }
+  }
+}

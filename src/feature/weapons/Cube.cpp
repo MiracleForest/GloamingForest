@@ -197,7 +197,8 @@ void registerCube() {
     );
     // CubeOfAnnihilationItem#canDisableShield: hitting a blocking player disables the shield
     gf::combat::onIncoming(gf::combat::priority::High, [](gf::combat::DamageInfo& d) {
-        auto [causing, direct] = causingAndDirect(d.attacker, d.direct);
+        Actor* causing = d.attacker; // DamageSource#getEntity
+        Actor* direct  = d.direct;   // #getDirectEntity
         if (!causing || !causing->isPlayer() || !d.victim.isPlayer() || causing != direct) return gf::combat::Verdict::Pass;
         if (game::items::idOf(static_cast<Player&>(*causing).getCarriedItem()) != kCube) return gf::combat::Verdict::Pass;
         auto& victim = static_cast<Player&>(d.victim);
