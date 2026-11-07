@@ -108,6 +108,31 @@ struct BelowGuard {
     }
 };
 
+/// Context::flatArea for a Twilight Forest test area. flatArea gives the area's chunks 200 ticks
+/// (10 s) to load once its ticking area is added; a fresh Twilight chunk runs F5's whole generator
+/// (terrain, landmark starts, features), and under the load of a 'full' run (other servers and
+/// builds on the machine) the 9 to 16 new chunks of a 48-block area took longer
+/// (questcamps.graveyard: "every chunk of the area loaded within 10 s"). The player stands at the
+/// area's center first (its view covers a 48-block area) and the chunks get up to 60 s to generate;
+/// flatArea then adds its ticking area and finds them loaded.
+ll::coro::CoroTask<BlockBox> twilightArea(Context& ctx, int dx, int size, int height) {
+    auto at = ctx.testPos(dx);
+    int  half = size / 2;
+    core::GlobalPos center{at.dim, at.x + half, at.y, at.z + half};
+    // ensureLoaded gives up after 5 s, which is the slow case this waits for: poll on either way
+    (void)co_await ctx.ensureLoaded(center);
+    for (int i = 0; i < 1200; ++i) {
+        auto* region = ctx.region();
+        bool  loaded = region != nullptr;
+        for (int x = at.x; loaded && x <= at.x + size - 1 + 15; x += 16)
+            for (int z = at.z; loaded && z <= at.z + size - 1 + 15; z += 16)
+                loaded = region->hasChunksAt(BlockPos{std::min(x, at.x + size - 1), at.y, std::min(z, at.z + size - 1)}, 0, false);
+        if (loaded) break;
+        co_await ctx.ticks(1);
+    }
+    co_return co_await ctx.flatArea(dx, size, height);
+}
+
 /// The golden volume hashes of the original templates placed raw (no processors), reviewed once
 /// with the client screenshots (rule R19). A template whose design changes gets its new hash here.
 std::map<std::string, std::string> const& goldens() {
@@ -133,20 +158,20 @@ std::string rawHash(Context& ctx, std::string const& id, BlockPos const& origin)
 /// The ids of every U19 template.
 std::vector<std::string> allTemplates() {
     std::vector<std::string> ids = {"twilightforest:quest_grove"};
-    for (char const* s : {"campfire_east", "campfire_south", "campfire_west"}) ids.push_back(std::string("gloamingforest:camp/") + s);
-    for (char const* s : {"solo_tent", "duo_tent", "open_tent", "luxury_tent"}) ids.push_back(std::string("gloamingforest:camp/tent/") + s);
+    for (char const* s : {"campfire_east", "campfire_south", "campfire_west"}) ids.push_back(std::string("twilightforest:camp/") + s);
+    for (char const* s : {"solo_tent", "duo_tent", "open_tent", "luxury_tent"}) ids.push_back(std::string("twilightforest:camp/tent/") + s);
     for (char const* s : {"intersection_left", "intersection_right", "intersection_short", "j_path", "l_path", "path_2x4", "path_3x4", "path_2x6", "path_2x7"})
-        ids.push_back(std::string("gloamingforest:camp/path/") + s);
+        ids.push_back(std::string("twilightforest:camp/path/") + s);
     for (char const* s : {"compost_large", "compost_small", "garden_1x3", "garden_2x4", "garden_straight", "garden_u", "pen", "repair_station", "berries_staked",
                           "berries_support", "berries_trellis", "blackberry_wall", "blueberry_wall", "raspberry_wall", "double_drying_rack", "long_drying_rack",
                           "lumber1", "lumber2", "lumber3"})
-        ids.push_back(std::string("gloamingforest:camp/deco/") + s);
+        ids.push_back(std::string("twilightforest:camp/deco/") + s);
     for (char const* s : {"druid_hut/druid_hut", "druid_hut/druid_sideways", "druid_hut/druid_doubledeck", "druid_hut/basement_study", "druid_hut/basement_study_trap",
                           "druid_hut/basement_shelves", "druid_hut/basement_shelves_trap", "druid_hut/basement_gallery", "druid_hut/basement_gallery_trap",
                           "well/simple_well_top", "well/simple_well_bottom", "well/fancy_well_top", "well/fancy_well_bottom", "graveyard/graveyard",
                           "graveyard/grave_full", "graveyard/grave_upper", "graveyard/grave_lower", "graveyard/grave_trap", "ruins/grove_pillar",
                           "ruins/grove_arch", "ruins/stone_circle"})
-        ids.push_back(std::string("gloamingforest:feature/") + s);
+        ids.push_back(std::string("twilightforest:feature/") + s);
     return ids;
 }
 
@@ -229,15 +254,15 @@ GF_REGISTER_SELFTEST("questcamps.templates", [](Context& ctx) {
     for (auto const& id : ids) ctx.check(st::templates::get(id) != nullptr, "template " + id);
     // TemplateFeature's snap: nextInt(16 - size) for any rotation, so at most 15 x 15
     for (auto const& id : ids) {
-        if (!id.starts_with("gloamingforest:feature/") || id.find("graveyard/") != std::string::npos) continue;
+        if (!id.starts_with("twilightforest:feature/") || id.find("graveyard/") != std::string::npos) continue;
         if (id.find("basement") != std::string::npos || id.find("_bottom") != std::string::npos) continue;
         auto const* t = st::templates::get(id);
         if (t) ctx.check(t->sizeX <= 15 && t->sizeZ <= 15, id + " fits 15 x 15");
     }
     // the graves share one footprint (GraveyardFeature uses grave_full's size for all three)
-    auto const* full = st::templates::get("gloamingforest:feature/graveyard/grave_full");
+    auto const* full = st::templates::get("twilightforest:feature/graveyard/grave_full");
     for (char const* g : {"grave_upper", "grave_lower"}) {
-        auto const* t = st::templates::get(std::string("gloamingforest:feature/graveyard/") + g);
+        auto const* t = st::templates::get(std::string("twilightforest:feature/graveyard/") + g);
         ctx.check(full && t && t->sizeX == full->sizeX && t->sizeZ == full->sizeZ, std::string(g) + " has grave_full's footprint");
     }
     auto const* grove = st::templates::get("twilightforest:quest_grove");
@@ -352,6 +377,14 @@ GF_REGISTER_SELFTEST("questcamps.grove_layout", [](Context& ctx) -> ll::coro::Co
         piece->postProcess(region, random, chunkBox, BlockPos{gx, gy, gz});
     }
     co_await ctx.ticks(2);
+    // the placed grove's golden volume hash (rule R19): the template, its processors and markers on
+    // flat ground, seed 1900
+    {
+        auto hash = ctx.snapshotVolume(BlockBox{piece->bbox.minX, gy, piece->bbox.minZ, piece->bbox.maxX, piece->bbox.maxY, piece->bbox.maxZ});
+        ctx.info("grove placed hash " + hash);
+        auto it = goldens().find("grove_placed");
+        ctx.check(it != goldens().end() && it->second == hash, "the golden hash of the placed grove (got " + hash + ")");
+    }
     int droppers = 0;
     for (int x = gx - 12; x <= gx + 14; ++x)
         for (int z = gz - 12; z <= gz + 14; ++z) droppers += ctx.blockAt(core::GlobalPos{ctx.dimension(), x, gy + 3, z}) == "minecraft:dropper";
@@ -381,7 +414,7 @@ GF_REGISTER_SELFTEST("questcamps.camp_assembly", [](Context& ctx) -> ll::coro::C
     st::BlockSourceRegion     region(*ctx.region(), origin);
     core::jrand::LegacyRandom random(424242);
     auto gen    = st::ext::contextOf(region, random, 1919);
-    auto pieces = st::ext::assemble("gloamingforest:camp/structure_start", origin, -1, gen);
+    auto pieces = st::ext::assemble("twilightforest:camp/structure_start", origin, -1, gen);
     ctx.require(!pieces.empty(), "the camp assembled");
     std::map<std::string, int> kinds;
     std::string                layout;
@@ -431,6 +464,14 @@ GF_REGISTER_SELFTEST("questcamps.camp_assembly", [](Context& ctx) -> ll::coro::C
                 fire += id == "minecraft:campfire";
                 paths += id == "minecraft:grass_path" || id == "minecraft:dirt_path";
             }
+    // the placed camp's golden volume hash (rule R19): the seeded layout post-processed on flat ground
+    // (from flatArea's grass layer up: the layers below are the world's own)
+    {
+        auto hash = ctx.snapshotVolume(BlockBox{all.minX, box.minY - 1, all.minZ, all.maxX, all.maxY, all.maxZ});
+        ctx.info("camp placed hash " + hash);
+        auto it = goldens().find("camp_placed");
+        ctx.check(it != goldens().end() && it->second == hash, "the golden hash of the placed camp (got " + hash + ")");
+    }
     ctx.check(fire == 1, "the campfire burns at the start");
     ctx.check(paths > 4, "the paths are laid on the ground (" + std::to_string(paths) + " path blocks)");
     removeIn(ctx, box, "minecraft:painting");
@@ -454,7 +495,7 @@ GF_REGISTER_SELFTEST("questcamps.template_goldens", [](Context& ctx) -> ll::coro
 GF_REGISTER_SELFTEST("questcamps.druid_hut_markers", [](Context& ctx) -> ll::coro::CoroTask<> {
     // TemplateFeature scans the columns down to y 0 (Java's bound): the Twilight Forest's floor
     ctx.require(co_await enterTwilight(ctx), "the Twilight Forest is available");
-    auto box    = co_await ctx.flatArea(1920, 48, kTall);
+    auto box    = co_await twilightArea(ctx, 1920, 48, kTall);
     auto origin = chunkOrigin(box);
     BelowGuard guard(ctx, BlockBox{box.minX, box.minY - 16, box.minZ, box.maxX, box.minY - 1, box.maxZ});
     ctx.info("flat area y " + std::to_string(box.minY) + ", heightmap " + std::to_string(st::BlockSourceRegion(*ctx.region(), origin).height(gf::worldgen::Heightmap::MotionBlockingNoLeaves, origin.x, origin.z)));
@@ -487,7 +528,7 @@ GF_REGISTER_SELFTEST("questcamps.druid_hut_markers", [](Context& ctx) -> ll::cor
 GF_REGISTER_SELFTEST("questcamps.wells", [](Context& ctx) -> ll::coro::CoroTask<> {
     // TemplateFeature scans the columns down to y 0 (Java's bound): the Twilight Forest's floor
     ctx.require(co_await enterTwilight(ctx), "the Twilight Forest is available");
-    auto box    = co_await ctx.flatArea(1925, 48, kTall);
+    auto box    = co_await twilightArea(ctx, 1925, 48, kTall);
     auto origin = chunkOrigin(box);
     BelowGuard guard(ctx, BlockBox{box.minX, box.minY - 16, box.minZ, box.maxX, box.minY - 1, box.maxZ});
     st::BlockSourceRegion region(*ctx.region(), origin);
@@ -512,7 +553,7 @@ GF_REGISTER_SELFTEST("questcamps.wells", [](Context& ctx) -> ll::coro::CoroTask<
 GF_REGISTER_SELFTEST("questcamps.graveyard", [](Context& ctx) -> ll::coro::CoroTask<> {
     // TemplateFeature scans the columns down to y 0 (Java's bound): the Twilight Forest's floor
     ctx.require(co_await enterTwilight(ctx), "the Twilight Forest is available");
-    auto box = co_await ctx.flatArea(1935, 48, kTall);
+    auto box = co_await twilightArea(ctx, 1935, 48, kTall);
     BelowGuard guard(ctx, BlockBox{box.minX, box.minY - 4, box.minZ, box.maxX, box.minY - 1, box.maxZ});
     st::BlockSourceRegion region(*ctx.region(), BlockPos{box.minX + 24, box.minY, box.minZ + 24});
     BlockPos origin{box.minX + 20, box.minY, box.minZ + 20};
@@ -539,7 +580,7 @@ GF_REGISTER_SELFTEST("questcamps.graveyard", [](Context& ctx) -> ll::coro::CoroT
 GF_REGISTER_SELFTEST("questcamps.ruins", [](Context& ctx) -> ll::coro::CoroTask<> {
     // TemplateFeature scans the columns down to y 0 (Java's bound): the Twilight Forest's floor
     ctx.require(co_await enterTwilight(ctx), "the Twilight Forest is available");
-    auto box    = co_await ctx.flatArea(1950, 48, kTall);
+    auto box    = co_await twilightArea(ctx, 1950, 48, kTall);
     auto origin = chunkOrigin(box);
     st::BlockSourceRegion region(*ctx.region(), origin);
     std::set<std::string> seen;
@@ -555,7 +596,7 @@ GF_REGISTER_SELFTEST("questcamps.ruins", [](Context& ctx) -> ll::coro::CoroTask<
     core::jrand::LegacyRandom random(3);
     bool circle = placeStoneCircle(region, origin, random);
     ctx.check(circle, "a stone circle was placed (" + lastFeatureReport().failure + ")");
-    ctx.check(lastFeatureReport().templateId == "gloamingforest:feature/ruins/stone_circle", "the stone circle template");
+    ctx.check(lastFeatureReport().templateId == "twilightforest:feature/ruins/stone_circle", "the stone circle template");
 });
 
 // ---- the client showcase (runs only on request of the client scenario) -----------------------------------------
@@ -603,7 +644,7 @@ GF_REGISTER_SELFTEST("questcamps.client_showcase", [](Context& ctx) -> ll::coro:
         st::BlockSourceRegion     region(*ctx.region(), origin);
         core::jrand::LegacyRandom random(424242);
         auto gen    = st::ext::contextOf(region, random, 1919);
-        auto pieces = st::ext::assemble("gloamingforest:camp/structure_start", origin, -1, gen);
+        auto pieces = st::ext::assemble("twilightforest:camp/structure_start", origin, -1, gen);
         core::jrand::LegacyRandom post(7);
         for (auto& p : pieces) p->postProcess(region, post, BlockBox{box.minX, box.minY - 4, box.minZ, box.maxX, box.maxY, box.maxZ}, origin);
     }
