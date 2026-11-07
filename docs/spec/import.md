@@ -399,6 +399,29 @@ never drops), and a tier tag without such a tool tag (no effect). Every override
 of the wrong shape, an unknown section, a target that is not generated, a failing patch operation) is an
 `[import] error:` line, the faulty part is not applied, and the run reports them all before it fails.
 
+## Asset lint
+
+`pwsh tools/import/lint.ps1 [-Out <assembled mod>] [-Vanilla <game data/resource_packs>] [-Json <report>]` checks an
+assembled mod (`tools/assemble.ps1 -Check` writes `build/assemble-check`; a build writes `bin/<target>/GloamingForest`)
+against what its packs reference, after every unit's manual layer is merged (the import's own `-Check` sees only the
+gen layer):
+
+- **lang**: en_US has TF's 2061 en_us keys in `lang/en_US.json` and `texts/en_US.lang`; every Bedrock locale has every
+  key TF translates for it (as *Lang* above maps the files) with TF's text; every BP block, item and TF entity has its
+  name key in `texts/en_US.lang`; every `assets/lang/en_US` string is merged. It prints each locale's coverage (TF's
+  own translations of the 2061 keys; the rest is English, as in Java).
+- **textures**: every path of the atlases (`terrain_texture`, `item_texture`, `flipbook_textures`), the client
+  entities, attachables and particles is a pack file or a file of the game's vanilla packs (the `contents.json` of
+  every `vanilla*` pack of the LeviLauncher instance; without it non-TF paths are listed as unverified); every atlas
+  key a BP block, item, spawn egg or `blocks.json` names is defined (Bedrock's own atlas keys are counted).
+- **models**: every geometry, animation, animation controller and render controller a BP block, client entity or
+  attachable names with a TF name is defined in the pack (Bedrock's own are counted).
+- **complete**: every block, item, spawn egg and entity of the skeleton is in the packs, every TF entity has a
+  client entity and every item an icon (block placers without one are listed: the inventory then shows the game's
+  fallback, to be checked on a client screenshot).
+
+Exit code 0 = OK, 1 = problems (listed), 2 = no assembled mod.
+
 ## Determinism
 
 The output depends only on the TF checkout, owners.tsv, owners.rules.json, merges.json, the overrides and the reviewed inputs `tools/import/known-ids.json`, `tools/import/expected-states.json` and `tools/import/expected-behaviour.json`. Text

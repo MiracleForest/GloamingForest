@@ -17,3 +17,11 @@ if ($missing.Count -gt 0) { throw "import selftest(s) did not pass: $($missing -
 $warn = @(Get-ServerLog | Where-Object { $_ -match '\bWARN\]?\s?\[Server\]\s*(<[^>]*>\s*)?\[[A-Za-z][A-Za-z ]*\]' })
 Write-Step "content-log warnings: $($warn.Count)"
 $warn | Select-Object -First 20 | ForEach-Object { Write-Step "  $_" }
+
+# The asset lint on the mod this run deployed ($ModDir of tools/e2e/server/run.ps1) (tools/import/lint.ps1): lang coverage of TF's 2061 keys in the 29 locales,
+# every texture, geometry, animation and render controller the packs name, the skeleton's ids in the packs.
+$lintLog = Join-Path $script:OutDir 'asset-lint.log'
+& pwsh -NoProfile -File (Join-Path $script:RepoRoot 'tools/import/lint.ps1') -Out $ModDir -Json (Join-Path $script:OutDir 'asset-lint.json') *> $lintLog
+$lintExit = $LASTEXITCODE
+Get-Content $lintLog | ForEach-Object { Write-Step "  $_" }
+if ($lintExit -ne 0) { throw "tools/import/lint.ps1 failed (exit $lintExit; see $lintLog)" }
