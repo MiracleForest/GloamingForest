@@ -2176,16 +2176,35 @@ GF_REGISTER_SELFTEST("dimension.portal_ridden", [](Context& ctx) -> ll::coro::Co
     ctx.check(canUsePortal(*boat), "Entity#canUsePortal(false) of the boat with its rider is true (no rule against riders)");
     if (auto* pig = actor(pigId)) ctx.check(!canUsePortal(*pig), "its rider is not asked (a passenger never uses a portal itself)");
     int const destX = pool.x * 8, destZ = pool.z * 8;
-    AABB const near{Vec3(destX - 24, world::kMinY, destZ - 24), Vec3(destX + 24, world::kMinY + world::kHeight, destZ + 24)};
+    // where to look: around the scaled destination, and around the portal the teleporter chose for
+    // the pool (its cache) or built (the watched sites). TFTeleporter#moveToSafeCoords moves an
+    // arrival out of landmark chunks (scanIntoSafeBiomes), which can be hundreds of blocks away.
+    auto searchAreas = [&]() {
+        std::vector<AABB> out{AABB{Vec3(destX - 24, world::kMinY, destZ - 24), Vec3(destX + 24, world::kMinY + world::kHeight, destZ + 24)}};
+        auto around = [&](BlockPos const& c) {
+            out.emplace_back(Vec3(c.x - 12, world::kMinY, c.z - 12), Vec3(c.x + 14, world::kMinY + world::kHeight, c.z + 14));
+        };
+        for (int dx = 0; dx < 2; ++dx)
+            for (int dz = 0; dz < 2; ++dz)
+                if (auto cached = tp::cacheGet(world::kDimensionId, pool.x + dx, pool.z + dz)) around(cached->pos);
+        for (auto const& corner : terrain.sitesIn(tfId)) around(corner);
+        return out;
+    };
+    auto boatsAndPigs = [&](auto&& fn) {
+        auto* r = game::regionOf(tfId);
+        if (!r) return;
+        std::set<std::int64_t> seen;
+        for (auto const& area : searchAreas())
+            for (auto* e : r->getEntities(area, 0.0f))
+                if (e && (e->getTypeName() == "minecraft:boat" || e->getTypeName() == "minecraft:pig") && seen.insert(idOf(*e)).second) fn(*e);
+    };
     // what is there already: a rider that slid off a vehicle above into the portal went on its
     // own (an unridden pig may use portals), and is no part of this trip
     std::set<std::int64_t> before;
-    if (auto* r = game::regionOf(tfId))
-        for (auto* e : r->getEntities(near, 0.0f))
-            if (e && (e->getTypeName() == "minecraft:boat" || e->getTypeName() == "minecraft:pig")) {
-                before.insert(idOf(*e));
-                spawned.push_back(idOf(*e));
-            }
+    boatsAndPigs([&](Actor& e) {
+        before.insert(idOf(e));
+        spawned.push_back(idOf(e));
+    });
     if (!before.empty()) ctx.info(std::to_string(before.size()) + " boat(s) / pig(s) of the earlier parts went through on their own");
     watchPortalDecisions(boatId);
     inPortal(*boat);
@@ -2196,14 +2215,15 @@ GF_REGISTER_SELFTEST("dimension.portal_ridden", [](Context& ctx) -> ll::coro::Co
     int                     ticks = 0;
     for (; ticks < 300 && !(boatThere && pigThere); ++ticks) {
         co_await ctx.ticks(1);
-        auto* r = game::regionOf(tfId);
-        if (!r) continue;
         boatThere = pigThere = nullptr;
-        for (auto* e : r->getEntities(near, 0.0f)) {
-            if (!e || before.contains(idOf(*e))) continue;
-            if (e->getTypeName() == "minecraft:boat") boatThere = e;
-            else if (e->getTypeName() == "minecraft:pig") pigThere = e;
-        }
+        // the same entities (when the engine kept their ids), or new ones near the arrival
+        if (auto* b = actor(boatId); b && static_cast<int>(b->getDimensionId()) == tfId) boatThere = b;
+        if (auto* p = actor(pigId); p && static_cast<int>(p->getDimensionId()) == tfId) pigThere = p;
+        boatsAndPigs([&](Actor& e) {
+            if (before.contains(idOf(e))) return;
+            if (!boatThere && e.getTypeName() == "minecraft:boat") boatThere = &e;
+            else if (!pigThere && e.getTypeName() == "minecraft:pig") pigThere = &e;
+        });
     }
     auto boatDecisions = portalDecisions();
     watchPortalDecisions(0);
