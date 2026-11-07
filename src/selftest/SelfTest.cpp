@@ -320,14 +320,14 @@ ll::coro::CoroTask<core::BlockBox> Context::flatArea(int dx, int size, int heigh
     auto* region = this->region();
     require(region != nullptr, "test dimension available");
     bool loaded = false;
-    for (int i = 0; i < 200 && !loaded; ++i) {
+    for (int i = 0; i < 1200 && !loaded; ++i) { // 60 s: Twilight chunks generate slowly under load
         loaded = true;
         for (int x = box.minX; loaded && x <= box.maxX + 15; x += 16)
             for (int z = box.minZ; loaded && z <= box.maxZ + 15; z += 16)
                 loaded = region->hasChunksAt(BlockPos{std::min(x, box.maxX), box.minY, std::min(z, box.maxZ)}, 0, false);
         if (!loaded) co_await ll::chrono::ticks(1);
     }
-    require(loaded, "flatArea(" + std::to_string(dx) + ", " + std::to_string(size) + "): every chunk of the area loaded within 10 s");
+    require(loaded, "flatArea(" + std::to_string(dx) + ", " + std::to_string(size) + "): every chunk of the area loaded within 60 s");
     core::BlockBox full = box;
     full.minY           = box.minY - 1; // the ground layer
     auto restore        = std::make_unique<Restore>();
