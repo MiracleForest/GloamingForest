@@ -22,15 +22,15 @@
           "(math.random(0, 1) - math.random(0, 1)) * 0.05"
         ],
         "direction": [
-          "(v.velocity.x ?? 0) * 20",
-          "(v.velocity.y ?? 0) * 20 + 0.02",
-          "(v.velocity.z ?? 0) * 20"
+          "v.velocity.x * 20",
+          "v.velocity.y * 20 + 0.02",
+          "v.velocity.z * 20"
         ]
       },
       "minecraft:particle_lifetime_expression": {
         "max_lifetime": "(math.floor(8 / (v.particle_random_1 * 0.8 + 0.2)) + 4) / 20"
       },
-      "minecraft:particle_initial_speed": "math.sqrt(math.pow((v.velocity.x ?? 0) * 20, 2) + math.pow((v.velocity.y ?? 0) * 20 + 0.02, 2) + math.pow((v.velocity.z ?? 0) * 20, 2))",
+      "minecraft:particle_initial_speed": "math.sqrt(math.pow(v.velocity.x * 20, 2) + math.pow(v.velocity.y * 20 + 0.02, 2) + math.pow(v.velocity.z * 20, 2))",
       "minecraft:particle_motion_dynamic": {
         "linear_acceleration": [
           0,
