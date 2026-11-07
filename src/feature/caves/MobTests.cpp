@@ -289,6 +289,26 @@ GF_REGISTER_SELFTEST("caves.alpha_yeti", [](Context& ctx) -> ll::coro::CoroTask<
         rampaged = alphaRampaging(*y);
     }
     ctx.check(rampaged, "it rampages");
+    // destroyBlocksInAABB (EntityUtil#canDestroyBlock): a container survives, a sign and stone do not
+    if (auto* y = mobById(id); y && rampaged) {
+        auto p      = y->getFeetPos();
+        auto top    = static_cast<int>(std::floor(y->getAABB().max.y)) + 2;
+        auto cx     = static_cast<int>(std::floor(p.x)), cz = static_cast<int>(std::floor(p.z));
+        auto chest  = core::GlobalPos{base.dim, cx, top, cz};
+        auto sign   = core::GlobalPos{base.dim, cx + 1, top, cz};
+        auto stone  = core::GlobalPos{base.dim, cx, top, cz + 1};
+        ctx.setBlock(chest, "minecraft:chest");
+        ctx.setBlock(sign, "minecraft:standing_sign");
+        ctx.setBlock(stone, "minecraft:stone");
+        ctx.check(ctx.region() && ctx.region()->getBlockEntity(bp(chest)) != nullptr, "the chest has its block actor");
+        co_await ctx.ticks(6);
+        ctx.check(ctx.blockAt(chest) == "minecraft:chest", "the rampage spares a container: " + ctx.blockAt(chest));
+        ctx.check(ctx.blockAt(sign) == "minecraft:air", "the rampage breaks a sign (a block entity, not a container): " + ctx.blockAt(sign));
+        ctx.check(ctx.blockAt(stone) == "minecraft:air", "the rampage breaks stone: " + ctx.blockAt(stone));
+        ctx.cleanupBlock(chest);
+        ctx.cleanupBlock(sign);
+        ctx.cleanupBlock(stone);
+    }
     bool tired = false;
     // (a goal without requiresUpdateEveryTick ticks every other tick: 180 goal ticks are 360 game ticks)
     for (int i = 0; i < 420 && !tired; i++) {
