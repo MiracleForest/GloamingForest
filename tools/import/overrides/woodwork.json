@@ -29684,7 +29684,7 @@
       {
        "liquid_type": "water",
        "can_contain_liquid": true,
-       "on_liquid_touches": "no_reaction"
+       "on_liquid_touches": "blocking"
       }
      ]
     }
@@ -31279,7 +31279,7 @@
       {
        "liquid_type": "water",
        "can_contain_liquid": true,
-       "on_liquid_touches": "no_reaction"
+       "on_liquid_touches": "blocking"
       }
      ]
     }
@@ -32874,7 +32874,7 @@
       {
        "liquid_type": "water",
        "can_contain_liquid": true,
-       "on_liquid_touches": "no_reaction"
+       "on_liquid_touches": "blocking"
       }
      ]
     }
@@ -34469,7 +34469,7 @@
       {
        "liquid_type": "water",
        "can_contain_liquid": true,
-       "on_liquid_touches": "no_reaction"
+       "on_liquid_touches": "blocking"
       }
      ]
     }
@@ -36064,7 +36064,7 @@
       {
        "liquid_type": "water",
        "can_contain_liquid": true,
-       "on_liquid_touches": "no_reaction"
+       "on_liquid_touches": "blocking"
       }
      ]
     }
@@ -37659,7 +37659,7 @@
       {
        "liquid_type": "water",
        "can_contain_liquid": true,
-       "on_liquid_touches": "no_reaction"
+       "on_liquid_touches": "blocking"
       }
      ]
     }
@@ -39254,7 +39254,7 @@
       {
        "liquid_type": "water",
        "can_contain_liquid": true,
-       "on_liquid_touches": "no_reaction"
+       "on_liquid_touches": "blocking"
       }
      ]
     }
@@ -40849,7 +40849,7 @@
       {
        "liquid_type": "water",
        "can_contain_liquid": true,
-       "on_liquid_touches": "no_reaction"
+       "on_liquid_touches": "blocking"
       }
      ]
     }
@@ -42444,7 +42444,7 @@
       {
        "liquid_type": "water",
        "can_contain_liquid": true,
-       "on_liquid_touches": "no_reaction"
+       "on_liquid_touches": "blocking"
       }
      ]
     }
@@ -44047,7 +44047,7 @@
       {
        "liquid_type": "water",
        "can_contain_liquid": true,
-       "on_liquid_touches": "no_reaction"
+       "on_liquid_touches": "blocking"
       }
      ]
     }
@@ -45650,7 +45650,7 @@
       {
        "liquid_type": "water",
        "can_contain_liquid": true,
-       "on_liquid_touches": "no_reaction"
+       "on_liquid_touches": "blocking"
       }
      ]
     }
@@ -47253,7 +47253,7 @@
       {
        "liquid_type": "water",
        "can_contain_liquid": true,
-       "on_liquid_touches": "no_reaction"
+       "on_liquid_touches": "blocking"
       }
      ]
     }
@@ -48856,7 +48856,7 @@
       {
        "liquid_type": "water",
        "can_contain_liquid": true,
-       "on_liquid_touches": "no_reaction"
+       "on_liquid_touches": "blocking"
       }
      ]
     }
@@ -50459,7 +50459,7 @@
       {
        "liquid_type": "water",
        "can_contain_liquid": true,
-       "on_liquid_touches": "no_reaction"
+       "on_liquid_touches": "blocking"
       }
      ]
     }
@@ -52062,7 +52062,7 @@
       {
        "liquid_type": "water",
        "can_contain_liquid": true,
-       "on_liquid_touches": "no_reaction"
+       "on_liquid_touches": "blocking"
       }
      ]
     }
@@ -53665,7 +53665,7 @@
       {
        "liquid_type": "water",
        "can_contain_liquid": true,
-       "on_liquid_touches": "no_reaction"
+       "on_liquid_touches": "blocking"
       }
      ]
     }
@@ -55268,7 +55268,7 @@
       {
        "liquid_type": "water",
        "can_contain_liquid": true,
-       "on_liquid_touches": "no_reaction"
+       "on_liquid_touches": "blocking"
       }
      ]
     }
@@ -56871,7 +56871,7 @@
       {
        "liquid_type": "water",
        "can_contain_liquid": true,
-       "on_liquid_touches": "no_reaction"
+       "on_liquid_touches": "blocking"
       }
      ]
     }
