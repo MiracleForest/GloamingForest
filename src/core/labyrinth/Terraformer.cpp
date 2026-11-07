@@ -173,4 +173,11 @@ int mazeSlimeSize(int roll, bool boosted) {
 
 float slamDamage(float attackDamage) { return attackDamage * 0.5F; }
 
+float slimeStepSpeedFactor(float friction) {
+    double const k  = static_cast<double>(friction) * 0.91;
+    double const dy = 0.0784; // LivingEntity#travel's gravity (0.08 x 0.98), turned up by bounceUp
+    double const m  = 0.4 + dy * 0.2;
+    return static_cast<float>((1.0 - k) / (1.0 - k * m));
+}
+
 } // namespace gf::core::labyrinth
