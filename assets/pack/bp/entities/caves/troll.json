@@ -38,6 +38,9 @@
         "entity_types": { "filters": { "test": "is_family", "subject": "other", "operator": "!=", "value": "troll" } }
       },
       "minecraft:conditional_bandwidth_optimization": {}
+    },
+    "events": {
+      "gf:show_rock": { "set_property": { "twilightforest:rock": 2 } }
     }
   }
 }
