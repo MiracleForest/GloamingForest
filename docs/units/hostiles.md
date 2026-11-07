@@ -73,3 +73,17 @@ A5 (mobs audit, W2 round 1). Checked against F13's goldens (tests/golden/mobs.js
 Sounds (W2 round 2, audio pass). Checked with `tools/sounds/lint.ps1` on the assembled pack (`tools/assemble.ps1 -Check`): before this round 25 of this unit's sound events still played F3's name-derived baseline placeholder. Fire, pinch and slime beetles, redcap, the three wolves (shared files, as in TF) and the wraith (U25 stronghold mirrors the redcap and wraith designs for its goblins and Knight Phantom, TF's shared files). `tools/sounds/recipes/hostiles.json` now designs every one of them (original synthesized sounds, unit-local patches layered from the shared library; TF's audio never read; ids, subtitles, categories, volumes, pitches and variant counts unchanged), rendered with `pwsh tools/sounds/synth.ps1 -Unit hostiles` into `assets/gen/audio/hostiles/`. `synth.ps1 -Check` and `lint.ps1` pass; with the other round-2 audio PRs (one per owning unit) the lint reports 0 baseline-only events for the whole pack.
 
 Open (C++, not edited in this audio-only round): `src/feature/hostiles/SpawnSweep.cpp` `known()` still lists `sound.hurt` / `sound.death` deviations for adherent, harbinger_cube, roving_cube, plateau_boss (U30) and giant_miner, armored_giant (U29); their owners' `sounds.json.d` now map Monster's default hurt/death, so those rows are stale (harmless: the finding no longer fires).
+
+- **Fixed: `[Animation][error] can't find animation riding.body`** (x3 in the remote-vanilla client run of
+  2026-11-07). The skeleton druid's client entity (`assets/pack/rp/entity/hostiles/skeleton_druid.entity.json`)
+  animates with Bedrock's `controller.animation.humanoid.riding`, whose `riding` state plays `riding.body`,
+  `riding.arms` and `riding.legs` since the 1.21.90 vanilla pack (`vanilla_1.21.90` .. `vanilla_1.21.130`
+  `animation_controllers`; the base `vanilla` pack's older copy plays only arms and legs). The entity named only
+  `riding.arms` / `riding.legs`; it now also maps `riding.body` to `animation.humanoid.riding.body` (as Bedrock's own
+  skeleton does). No other client entity of the packs uses that controller.
+- **Breath particles** (winter wolf snow, fire beetle flames): still server sent through `gf::fx::particle`, so every
+  client (companion or vanilla) gets the same particles from the server's view vector, as TF's client-side
+  `aiStep` emits them. Moving them into the client mod needs the server to stop sending them to companions only,
+  which `gf::fx` cannot do today (no per-player or vanilla-only emission; F10's contract): open, a candidate for
+  an fx extension. The velocity of `twilightforest:snow` / `minecraft:flame` on vanilla clients is F10's fx
+  molang (see the `variable.velocity` content-log errors of other units' particles).
