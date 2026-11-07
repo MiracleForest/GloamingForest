@@ -60,3 +60,8 @@ Open:
   single destroy time. Hiding it needs a client-side destroy-progress hook (R8: no unit may hook mining; an F0 / F12
   contract such as a per-face destroy speed filter on `interactions`), so it stays as in round 1.
 - F1's `import.behaviour` case for `stronghold_shield` (see round 1).
+
+Regression fix (after the round-2 merges): `stronghold.helmet_crab_blue` spawned its helmet crab in the e2e
+world's Peaceful difficulty; F8 now removes TF's monsters there at their first tick (`Monster#
+shouldDespawnInPeaceful`), so the crab was gone after two ticks. The test now runs at Normal
+(`DifficultyScope`, as `stronghold.phantom_fight` does).
