@@ -179,6 +179,20 @@ std::optional<std::pair<int, int>> sizeOf(mce::TexturePtr const* t) {
 namespace ui {
 
 bool blit(screen::Canvas& canvas, std::string const& texture, screen::Rect const& dst, float u, float v, float w, float h, float texW, float texH) {
+    return blit(canvas, texture, dst, u, v, w, h, texW, texH, Blend::Normal);
+}
+
+bool blitSprite(screen::Canvas& canvas, std::string const& texture, screen::Rect const& dst, Blend blend) {
+    auto size = sizeOf(textureOf(texture, &canvas.context()));
+    if (!size) {
+        // still loading or missing: blit tells which (and logs a missing one once)
+        return blit(canvas, texture, dst, 0, 0, 1, 1, 1, 1, blend);
+    }
+    auto [tw, th] = *size;
+    return blit(canvas, texture, dst, 0, 0, static_cast<float>(tw), static_cast<float>(th), static_cast<float>(tw), static_cast<float>(th), blend);
+}
+
+bool blit(screen::Canvas& canvas, std::string const& texture, screen::Rect const& dst, float u, float v, float w, float h, float texW, float texH, Blend blend) {
     auto* t = textureOf(texture, &canvas.context());
     if (!t) return false;
     auto const* data = dataOf(*t);
@@ -195,11 +209,16 @@ bool blit(screen::Canvas& canvas, std::string const& texture, screen::Rect const
     auto& ctx = canvas.context();
     float x0 = canvas.originX() + dst.x, y0 = canvas.originY() + dst.y, x1 = x0 + dst.w, y1 = y0 + dst.h;
     float u0 = u / texW, v0 = v / texH, u1 = (u + w) / texW, v1 = (v + h) / texH;
-    int   method = gBlitMethod.load();
+    int   method = blend == Blend::Invert ? kBlitMesh : gBlitMethod.load();
     if (method == kBlitMesh) {
-        // a textured quad in GUI pixels with a UI material (the UI's matrices map GUI pixels)
-        auto const* material = uiMaterial("ui_textured");
+        // a textured quad in GUI pixels with a UI material (the UI's matrices map GUI pixels); the
+        // inverting blend is the game's crosshair material (ui.material: ui_crosshair)
+        auto const* material = uiMaterial(blend == Blend::Invert ? "ui_crosshair" : "ui_textured");
         if (!material) return false;
+        if (blend == Blend::Invert) {
+            static std::atomic<bool> told{false};
+            if (!told.exchange(true)) log().info("ui: sprite drawn with the inverting crosshair blend ({})", texture);
+        }
         ScreenContext& sc   = ctx.mScreenContext;
         Tessellator&   tess = sc.tessellator;
         tess.begin(Tessellator::DebugContextCallback{}, mce::PrimitiveMode::QuadList, 8, false);
@@ -506,7 +525,7 @@ using Clock                  = std::chrono::steady_clock;
 constexpr float kToastWidth  = 160;
 constexpr float kToastHeight = 32;   // one slot
 constexpr long  kSlideMs     = 600;  // ToastInstance: the slide in / out
-constexpr int   kSlots       = 5;    // ToastComponent.occupiedSlots
+constexpr int   kSlots       = kSlotCount; // ToastComponent.occupiedSlots (shared: claimSlot)
 /// Bedrock's UI toast sound (Java's ui.toast.in / ui.toast.out have no Bedrock counterpart; the
 /// hide plays it lower).
 constexpr char  kToastSound[] = "random.toast";
@@ -530,7 +549,8 @@ struct Toasts {
     std::mutex         mutex;
     std::vector<Shown> visible;
     std::deque<Queued> queued;
-    bool               occupied[kSlots]{};
+    bool               occupied[kSlots]{}; ///< slots of F12's own toasts
+    bool               claimed[kSlots]{};  ///< slots other drawers claimed (claimSlot)
     bool               logged       = false;
     bool               hiddenLogged = false;
 };
@@ -632,7 +652,7 @@ void render(screen::Canvas& c, float guiWidth) {
     while (!t.queued.empty()) {
         int free = -1;
         for (int i = 0; i < kSlots && free < 0; ++i)
-            if (!t.occupied[i]) free = i;
+            if (!t.occupied[i] && !t.claimed[i]) free = i;
         if (free < 0) break;
         Shown s;
         s.spec  = std::move(t.queued.front().spec);
@@ -649,6 +669,33 @@ void render(screen::Canvas& c, float guiWidth) {
     }
 }
 } // namespace
+
+int claimSlot() {
+    auto&           t = toasts();
+    std::lock_guard lock(t.mutex);
+    for (int i = 0; i < kSlots; ++i) {
+        if (!t.occupied[i] && !t.claimed[i]) {
+            t.claimed[i] = true;
+            return i;
+        }
+    }
+    return -1;
+}
+
+void releaseSlot(int slot) {
+    if (slot < 0 || slot >= kSlots) return;
+    auto&           t = toasts();
+    std::lock_guard lock(t.mutex);
+    t.claimed[slot] = false; // F12's own slots (occupied) are not a claimer's to free
+}
+
+int slotsTaken() {
+    auto&           t = toasts();
+    std::lock_guard lock(t.mutex);
+    int n = 0;
+    for (int i = 0; i < kSlots; ++i) n += t.occupied[i] || t.claimed[i] ? 1 : 0;
+    return n;
+}
 
 void show(ToastSpec const& spec) { show(spec, Style{}); }
 
@@ -924,6 +971,7 @@ public:
             std::lock_guard lock(t.mutex);
             t.visible.clear();
             t.queued.clear();
+            // F12's own slots only: a claimer gives its claims back itself (it drops its toasts too)
             std::fill(std::begin(t.occupied), std::end(t.occupied), false);
         }));
         UiTooltipHook::hook();

@@ -25,6 +25,7 @@
 //   game's own colours at the position come from the same resolver, the original function asked for
 //   a vanilla block of that tint method, when a tint function asks for them);
 // - name tags: ActorRenderDispatcher::extractRenderTextObjects (hideNameTag).
+// - worn armour: DataDrivenModel::shouldRenderAttachableOnActor (hideArmor).
 //
 // The registries are immutable snapshots (copy on write): the render thread and the chunk builder
 // threads read them without a lock; each builder thread keeps its own per-block-state cache for the
@@ -63,6 +64,8 @@
 #include "ll/api/memory/Hook.h"
 
 #include "mc/client/game/ClientInstance.h"
+#include "mc/client/model/models/DataDrivenModel.h"
+#include "mc/world/actor/animation/AttachableSlotIndex.h"
 #include "mc/client/game/IClientInstance.h"
 #include "mc/client/gui/controls/UIControl.h"
 #include "mc/client/gui/controls/renderers/InventoryItemRenderer.h"
@@ -139,6 +142,7 @@
 #include "client/render/TexturePath.h"
 #include "feature/ext/ui/Client.h"
 #include "game/Blocks.h"
+#include "game/Items.h"
 #include "mod/Log.h"
 #include "mod/Main.h"
 #include "mod/Module.h"
@@ -252,6 +256,7 @@ struct Snapshot {
     std::unordered_map<std::string, tint::GameTintFn>            tints; ///< plain TintFns wrapped
     std::unordered_map<std::string, NameTagFn>                   nameTagTypes;   ///< empty fn: every entity of the type
     std::vector<std::pair<std::size_t, NameTagFn>>               nameTagFilters; ///< handle, predicate
+    std::vector<std::pair<std::size_t, ArmorFn>>                 armorFilters;   ///< handle, predicate (hideArmor)
 };
 using SnapshotPtr = std::shared_ptr<Snapshot const>;
 
@@ -259,7 +264,8 @@ struct Registry {
     std::mutex                write; ///< writers only
     std::atomic<SnapshotPtr>  snapshot{std::make_shared<Snapshot const>()};
     std::atomic<std::uint64_t> version{0};
-    std::atomic<bool>         anyBlocks{false}, anyTints{false}, anyItems{false}, anyNameTags{false}; ///< fast paths
+    std::atomic<bool>         anyBlocks{false}, anyTints{false}, anyItems{false}, anyNameTags{false}, anyArmor{false}; ///< fast paths
+    std::atomic<std::uint64_t> armorAsked{0}, armorHidden{0}; ///< hideArmor's check (tests, e2e)
     std::size_t               nextNameTagHandle = 1; ///< writers only
     // tracked block positions per render chunk section (keyed by the section's origin): a chunk
     // builder replaces the entry of the section it built, the render thread reads them all
@@ -286,6 +292,7 @@ void update(F&& change) {
     r.anyTints    = !next->tints.empty();
     r.anyItems    = !next->items.empty();
     r.anyNameTags = !next->nameTagTypes.empty() || !next->nameTagFilters.empty();
+    r.anyArmor    = !next->armorFilters.empty();
     r.snapshot.store(std::move(next), std::memory_order_release);
     r.version.fetch_add(1, std::memory_order_acq_rel);
 }
@@ -663,6 +670,37 @@ bool nameTagHidden(Actor const& entity) {
     }
     return false;
 }
+
+// ---- armour hiding -----------------------------------------------------------------------------------------
+
+std::size_t hideArmor(ArmorFn when) {
+    if (!when) return 0;
+    std::size_t handle = 0;
+    update([&](Snapshot& s) {
+        handle = reg().nextNameTagHandle++; // one handle counter for every predicate registry
+        s.armorFilters.emplace_back(handle, std::move(when));
+    });
+    return handle;
+}
+
+bool showArmor(std::size_t handle) {
+    bool had = false;
+    update([&](Snapshot& s) { had = std::erase_if(s.armorFilters, [handle](auto const& f) { return f.first == handle; }) > 0; });
+    return had;
+}
+
+bool armorHidden(ItemStack const& stack) {
+    if (!reg().anyArmor.load(std::memory_order_relaxed)) return false;
+    auto s = snap();
+    for (auto const& [handle, fn] : s->armorFilters) {
+        try {
+            if (fn(stack)) return true;
+        } catch (...) {}
+    }
+    return false;
+}
+
+ArmorChecks armorChecks() { return {reg().armorAsked.load(), reg().armorHidden.load()}; }
 
 // ---- per-frame work --------------------------------------------------------------------------------------
 
@@ -1224,6 +1262,41 @@ LL_TYPE_INSTANCE_HOOK(
     return origin(font, tessellator, actor, str, camTargetPos, a, color);
 }
 
+// Armour hiding (hideArmor; TF's ArmorHooks#cancelArmorRendering): the game asks whether a worn
+// stack's attachable is drawn on its wearer.
+LL_TYPE_STATIC_HOOK(
+    RenderArmorHook,
+    ll::memory::HookPriority::Normal,
+    DataDrivenModel,
+    &DataDrivenModel::shouldRenderAttachableOnActor,
+    bool,
+    ItemStack const&           itemInstance,
+    AttachableSlotIndex const& attachableSlotIndex,
+    bool                       isSpectator,
+    bool                       isFirstPerson,
+    bool                       isRenderingOnMap,
+    bool                       lessThanOrEqualToVersion_1_16_210,
+    bool                       hideArmor
+) {
+    bool draw = origin(itemInstance, attachableSlotIndex, isSpectator, isFirstPerson, isRenderingOnMap, lessThanOrEqualToVersion_1_16_210, hideArmor);
+    // armour slots only (head, torso, legs, feet, body): held items are never hidden
+    if (!draw || static_cast<int>(attachableSlotIndex) >= static_cast<int>(AttachableSlotIndex::CarriedItem)) return draw;
+    auto& rg = r::reg();
+    if (rg.armorAsked.fetch_add(1, std::memory_order_relaxed) == 0)
+        r::infoOnce("armor_check", "worn armour check reached (slot " + std::to_string(static_cast<int>(attachableSlotIndex)) + ", " + itemInstance.getTypeName() + ")");
+    if (!rg.anyArmor.load(std::memory_order_relaxed)) return draw;
+    try {
+        if (r::armorHidden(itemInstance)) {
+            rg.armorHidden.fetch_add(1, std::memory_order_relaxed);
+            static std::atomic<bool> told{false};
+            if (!told.load(std::memory_order_relaxed) && !told.exchange(true))
+                r::infoOnce("armor_hidden", "worn armour hidden (" + gf::game::items::idOf(itemInstance) + ")");
+            return false;
+        }
+    } catch (...) {}
+    return draw;
+}
+
 LL_TYPE_INSTANCE_HOOK(
     RenderItemInHandHook,
     ll::memory::HookPriority::Normal,
@@ -1677,9 +1750,11 @@ public:
         render_hooks::RenderFirstPersonHook::hook();
         render_hooks::RenderTintHook::hook();
         render_hooks::RenderNameTagHook::hook();
+        render_hooks::RenderArmorHook::hook();
     }
     void uninstall() {
         render_hooks::RenderNameTagHook::unhook();
+        render_hooks::RenderArmorHook::unhook();
         render_hooks::RenderTintHook::unhook();
         render_hooks::RenderFirstPersonHook::unhook();
         render_hooks::RenderMapInstanceHook::unhook();

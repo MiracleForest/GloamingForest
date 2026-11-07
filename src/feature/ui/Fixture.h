@@ -50,7 +50,14 @@ void rememberHead(Player& player);
 void setHeld(Player& player, ItemStack const& stack);
 /// Puts `stack` on the head, the helmet remembered first.
 void setHead(Player& player, ItemStack const& stack);
-/// Puts every remembered player that is in the level back (helmet, every remembered slot, position
+/// Puts `stack` into armour slot `slot` (1 chest, 2 legs, 3 feet; 0 is setHead), the slot's stack
+/// remembered first (once until restorePlayers).
+void setArmorPiece(Player& player, int slot, ItemStack const& stack);
+/// The item data key (game::items::setData) of the armour the client fixture hides on its wearer
+/// (render::hideArmor; TF's emperor's cloth): the head step dresses the players in a chestplate with
+/// it and boots without it.
+inline constexpr char kHiddenArmorData[] = "gf_ui_hidden_armor";
+/// Puts every remembered player that is in the level back (helmet, armour, every remembered slot, position
 /// and rotation); players not in the level stay remembered. Returns how many players were restored.
 int restorePlayers();
 /// The players remembered now (memory and world DB).
