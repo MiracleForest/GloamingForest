@@ -13,7 +13,7 @@ Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
 
 $r = Invoke-SelfTest 'hydra.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) hydra selftest(s) failed" }
-if ($r.Pass -lt 23) { throw "expected at least 23 hydra selftests to pass, got $($r.Pass)" }
+if ($r.Pass -lt 24) { throw "expected at least 24 hydra selftests to pass, got $($r.Pass)" }
 foreach ($line in 'hydra: installed', 'hydra: spawned at', 'hydra: head 1 slain', 'hydra: head 1 is born again',
                   'hydra: mortar detonated', 'hydra: mortar reflected by', 'hydra: head 2 named Ladon', 'hydra: dying',
                   'boss: twilightforest:hydra_boss_spawner spawned twilightforest:hydra',
