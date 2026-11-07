@@ -130,10 +130,11 @@ jobs:
         run: |
           $tag = 'v1.26.50.4'   # bedrock-samples release of the game version the mod targets (1.26.5x)
           $vanilla = Join-Path $env:RUNNER_TEMP 'bedrock-vanilla'
-          $sha = gh api "repos/Mojang/bedrock-samples/commits/$tag" --jq .sha
-          $tree = gh api "repos/Mojang/bedrock-samples/git/trees/$($sha)?recursive=1" | ConvertFrom-Json
-          if (-not $tree -or $tree.truncated) { Write-Host '::error::could not list bedrock-samples'; exit 1 }
-          $paths = @($tree.tree | Where-Object { $_.type -eq 'blob' -and $_.path -like 'resource_pack/*' } | ForEach-Object { $_.path.Substring(14) })
+          # the resource_pack subtree only (the recursive listing of the whole repository is larger)
+          $rp = gh api "repos/Mojang/bedrock-samples/contents/?ref=$tag" --jq '.[] | select(.name == "resource_pack") | .sha'
+          $tree = gh api "repos/Mojang/bedrock-samples/git/trees/$($rp)?recursive=1" | ConvertFrom-Json
+          if (-not $tree -or $tree.truncated) { Write-Host '::error::could not list bedrock-samples/resource_pack'; exit 1 }
+          $paths = @($tree.tree | Where-Object { $_.type -eq 'blob' } | ForEach-Object { $_.path })
           New-Item -ItemType Directory -Force (Join-Path $vanilla 'vanilla') | Out-Null
           @{ content = @($paths | ForEach-Object { @{ path = $_ } }) } | ConvertTo-Json -Depth 4 -Compress |
             Set-Content (Join-Path $vanilla 'vanilla/contents.json')

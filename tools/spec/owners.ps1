@@ -596,11 +596,19 @@ foreach ($u in $rules.units.Keys) {
                 # twilightforest: one that TF does not define (a GloamingForest trigger on TF's bus, e.g.
                 # U14's flask_doses_reset); every other kind: a full id outside TF's namespace
                 $bare = $k -eq 'gamerule' -and $i -match '^[A-Za-z][A-Za-z0-9_]*$'
+                # TF's triggers are kept by their path (the namespace is added when the rows are written):
+                # a twilightforest: trigger is declared by its path too, so TF's own and other units' collide
+                $tfTrigger = $k -eq 'trigger' -and $i -match '^twilightforest:([a-z0-9_./-]+)$'
+                if ($tfTrigger) { $i = $Matches[1] }
+                $declaredBy = $null
+                foreach ($d in $declared) { if ($d[0] -eq $k -and $d[1] -eq $i) { $declaredBy = $d; break } }
+                $tfOwn = ($bare -or $tfTrigger) -and $ids.Contains($k) -and $ids[$k].Contains($i) -and -not $declaredBy
                 $problem = if ($k -eq 'lang' -and $i -notmatch '^[A-Za-z0-9_.-]+$') { "is not a translation key ([A-Za-z0-9_.-]+)" }
                     elseif ($k -eq 'lang' -and $lang.ContainsKey($i)) { "is a TF en_us key: the lang rules own it" }
-                    elseif ($k -ne 'lang' -and -not $bare -and $i -notmatch '^[a-z0-9_.-]+:[a-z0-9_./-]+$') { "is not a full id <namespace>:<path>" }
-                    elseif ($bare -and $ids.Contains($k) -and $ids[$k].Contains($i) -and -not ($owner[$k].ContainsKey($i) -and $owner[$k][$i] -eq $u)) { "is TF's: the rule tables own TF ids" }
-                    elseif ($i.StartsWith('twilightforest:') -and ($k -ne 'trigger' -or ($ids.Contains($k) -and $ids[$k].Contains($i)))) { "is TF's: the rule tables own TF ids" }
+                    elseif ($k -ne 'lang' -and -not $bare -and -not $tfTrigger -and $i -notmatch '^[a-z0-9_.-]+:[a-z0-9_./-]+$') { "is not a full id <namespace>:<path>" }
+                    elseif ($declaredBy) { "is declared by $($declaredBy[2]) already" }
+                    elseif ($tfOwn) { "is TF's: the rule tables own TF ids" }
+                    elseif (-not $tfTrigger -and $i.StartsWith('twilightforest:')) { "is TF's: the rule tables own TF ids" }
                     elseif ($m -notin 'gen', 'manual') { "has mode '$m' (gen or manual)" }
                     elseif ($other = @($owner.Keys | Where-Object { $owner[$_].ContainsKey($i) -and $owner[$_][$i] -ne $u } | Select-Object -First 1)) { "is owned by $($owner[$other[0]][$i]) already ($($other[0]))" }
                 if ($problem) { Write-Host "[owners] $u ids.${k}: '$i' $problem" -ForegroundColor Red; exit 1 }
