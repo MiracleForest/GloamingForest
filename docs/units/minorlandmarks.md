@@ -66,3 +66,31 @@ Checked against TF 4.8 (A1, W2 round 1):
 
 Still open: hedge pathing (not portable), the `forced` flag (F6), raw noise biomes (F5); the features'
 plants are to be re-checked once F5's `canSurvive` fix lands.
+
+## Audit round 2
+
+Checked (W2 round 2): the vanilla feature override against F5's vanilla set and the plants the
+minor features place.
+
+Dependency: F5's vanilla set never reached the feature data on main. `vanillaFeatures()`
+(src/feature/features/Features.cpp:82) loops over `Json::parse(kVanillaFeaturesExtra).items()`, whose
+temporary dies before the C++20 range-for body runs, so the five extra features (spruce, pine, the huge
+mushrooms, jungle grass) were never merged ("worldgen data: 150 configured features" instead of 155).
+The inline copies hid this. Without them, `patch_grass_jungle` warn `unknown configured feature` until F5's fix (a
+named variable) is merged. With that fix applied locally: 155 configured features and no warnings.
+This change merges after it.
+
+Fixed:
+
+- **Vanilla feature**: F5's vanilla set now has `minecraft:patch_grass_jungle` (the same Java 1.21.1
+  values), so `tools/import/overrides/minorlandmarks.json` (its only patch inlined it) is removed and
+  the placed feature names the vanilla id again, as TF's data does.
+- **Floating plants**: `minorlandmarks.features` now also checks every moss patch, grass, fern and
+  seagrass a feature placed against F5's survival rule (`kit::canSurvive`): TF's features (fallen
+  logs, hollow stumps, ...) put them on what they built without a survival check of their own. None
+  floats. The features place no small mushrooms or oreberries, so F5's brightness limit for their
+  survival in generation (round 2) does not change them.
+
+Still open: hedge pathing (not portable), the `forced` flag (F6, being added this round; `naturalStart`
+already reads it), raw noise biomes (F5's `noiseBiomeAt`, being added this round; the fallen trunk and
+biome checks switch to it once merged).

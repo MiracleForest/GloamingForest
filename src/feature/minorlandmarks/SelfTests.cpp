@@ -123,6 +123,20 @@ public:
         }
         return n;
     }
+    /// The plants in `box` (TF's moss patch, grass, ferns, seagrass) that cannot stay where a feature
+    /// put them (F5's BlockState#canSurvive), as "id at x y z" lines.
+    [[nodiscard]] std::vector<std::string> floatingPlants(BlockBox const& box) {
+        static constexpr std::string_view kPlants[] = {"twilightforest:moss_patch", "minecraft:short_grass", "minecraft:tallgrass", "minecraft:fern", "minecraft:seagrass"};
+        std::vector<std::string>          out;
+        std::vector<std::pair<BlockPos, Block const*>> plants;
+        for (auto const& [k, b] : mBlocks) {
+            int x = static_cast<int>(static_cast<unsigned long long>(k) >> 40) - (1 << 23), y = static_cast<int>((k >> 20) & 0xfffff) - (1 << 19), z = static_cast<int>(k & 0xfffff) - (1 << 19);
+            if (box.contains(x, y, z) && std::find(std::begin(kPlants), std::end(kPlants), b->getTypeName()) != std::end(kPlants)) plants.emplace_back(BlockPos{x, y, z}, b);
+        }
+        for (auto const& [pos, b] : plants)
+            if (!gf::features::kit::canSurvive(*this, pos, *b)) out.push_back(b->getTypeName() + " at " + std::to_string(pos.x) + " " + std::to_string(pos.y) + " " + std::to_string(pos.z));
+        return out;
+    }
     [[nodiscard]] std::size_t size() const { return mBlocks.size(); }
     /// The block types in `box` with their counts (the most common first), for the reports.
     [[nodiscard]] std::string histogram(BlockBox const& box) const {
@@ -562,6 +576,10 @@ GF_REGISTER_SELFTEST("minorlandmarks.features", [](Context& ctx) {
             if (placed) {
                 seedUsed = seed;
                 hash     = mem.hash(BlockBox{-24, c.groundY - 30, -24, 24, c.groundY + 30, 24});
+                // TF's features place their plants on what they built (no survival check of their own):
+                // none of them may be left hanging
+                auto floating = mem.floatingPlants(BlockBox{-24, c.groundY - 30, -24, 24, c.groundY + 30, 24});
+                ctx.check(floating.empty(), std::string(c.name) + ": no plant left floating" + (floating.empty() ? std::string{} : " (" + floating.front() + ", " + std::to_string(floating.size()) + " in all)"));
             }
         }
         ctx.check(placed, std::string(c.name) + " placed (seed " + std::to_string(seedUsed) + ")");
