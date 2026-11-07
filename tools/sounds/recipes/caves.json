@@ -1,0 +1,105 @@
+{
+  "about": "U27 caves: refinements of the baseline (tools/sounds/baseline/caves.json). Original sound designs; TF's audio is never read. The events (ids, subtitles, categories, volumes, pitches, variant counts) stay TF's; as in TF the Yeti plays the Alpha Yeti's files (TF plays them at its own pitch). The yetis are big furred beasts in an ice cave: deep wobbling growls with a frosty breath, a short barking roar when they take notice, a huge rising roar, heavy panting, a grunt and a thump as they grab, a swung whoosh with an effort grunt when they throw, and a long roar that sinks into the cave's echo when they die. The Troll grumbles in slow, low syllables over a throat rumble, grunts with a rock scrape as it grabs a rock, heaves the rock with a whoosh, and dies with a long groan and the thump of its fall.",
+  "patches": {
+    "yeti/growl": {
+      "about": "Yeti growl: a deep wobbling growl with a frosty breath hiss.",
+      "params": {"pitch": 66, "len": 1.1},
+      "length": "$len", "tail": 0.35,
+      "layers": [
+        {"type": "patch", "patch": "creature/growl", "length": "$len+0.4", "params": {"pitch": "$pitch", "len": "$len", "size": 0.55, "rough": 4, "rasp": 0.5, "wobble": 0.8, "rumble": 32}},
+        {"type": "patch", "patch": "creature/hiss", "length": "$len+0.2", "gain": -16, "params": {"len": "$len*0.8", "bright": 0.5, "attack": 0.15}}
+      ],
+      "fx": [{"type": "reverb", "room": 0.55, "mix": 0.12}]
+    },
+    "yeti/grab": {
+      "about": "Yeti grab: a short grunting growl and the thump of the catch.",
+      "params": {"pitch": 78},
+      "length": 0.6, "tail": 0.35,
+      "layers": [
+        {"type": "patch", "patch": "creature/growl", "length": 0.9, "params": {"pitch": "$pitch", "len": 0.5, "size": 0.6, "rough": 5, "rasp": 0.6, "wobble": 1}},
+        {"type": "patch", "patch": "impact/thud", "start": 0.06, "length": 0.6, "gain": -5, "params": {"pitch": 80, "len": 0.25, "crack": 0.3}}
+      ],
+      "fx": [{"type": "reverb", "room": 0.5, "mix": 0.1}]
+    },
+    "yeti/throw": {
+      "about": "Yeti throw: an effort grunt and a heavy swung whoosh.",
+      "params": {"pitch": 110},
+      "length": 0.6, "tail": 0.3,
+      "layers": [
+        {"type": "patch", "patch": "creature/call", "length": 0.6, "gain": -5, "params": {"pitch": "$pitch", "len": 0.25, "rise": 2, "fall": -6, "rough": 3.5, "size": 0.55, "vowelA": 0, "vowelB": 3, "breath": 0.4}},
+        {"type": "patch", "patch": "object/whoosh", "start": 0.08, "length": 0.7, "params": {"len": 0.55, "f0": 150, "f1": 1200, "q": 1.2}}
+      ]
+    },
+    "yeti/death": {
+      "about": "Yeti death: a long roar falling into a growl, in the cave's echo.",
+      "params": {"pitch": 62},
+      "length": 2.6, "tail": 1.0,
+      "layers": [
+        {"type": "patch", "patch": "creature/roar", "length": 3.4, "params": {"pitch": "$pitch", "len": 2.2, "rise": -8, "room": 0.85, "size": 0.55, "rough": 4.5, "noise": 0.55}},
+        {"type": "patch", "patch": "creature/growl", "start": 0.9, "length": 2.2, "gain": -9, "params": {"pitch": "$pitch*0.75", "len": 1.5, "size": 0.5, "rough": 4, "rasp": 0.5, "wobble": 1.2}}
+      ]
+    },
+    "troll/grumble": {
+      "about": "Troll grumble: slow low syllables over a throat rumble.",
+      "params": {"pitch": 110, "count": 3},
+      "length": "$count*0.2+0.1", "tail": 0.3,
+      "layers": [
+        {"type": "patch", "patch": "creature/chatter", "length": "$count*0.22+0.4", "params": {"pitch": "$pitch", "count": "$count", "syll": 0.18, "size": 0.7, "rough": 2.6}},
+        {"type": "patch", "patch": "creature/growl", "length": "$count*0.22+0.4", "gain": -10, "params": {"pitch": "$pitch*0.55", "len": "$count*0.19", "size": 0.7, "rough": 3, "rasp": 0.3, "rumble": 26}}
+      ],
+      "fx": [{"type": "reverb", "room": 0.5, "mix": 0.1}]
+    },
+    "troll/grab": {
+      "about": "Troll grabbing a rock: a grunt and a gritty scrape of stone.",
+      "params": {},
+      "length": 0.55, "tail": 0.3,
+      "layers": [
+        {"type": "patch", "patch": "creature/growl", "length": 0.8, "params": {"pitch": 95, "len": 0.45, "size": 0.75, "rough": 3.5, "rasp": 0.4}},
+        {"type": "patch", "patch": "impact/crunch", "start": 0.1, "length": 0.6, "gain": -6, "params": {"len": 0.3, "freq": 500, "bright": 0.6}}
+      ]
+    },
+    "troll/throw": {
+      "about": "Troll throwing a rock: a heaving grunt and a whoosh.",
+      "params": {},
+      "length": 0.55, "tail": 0.3,
+      "layers": [
+        {"type": "patch", "patch": "creature/call", "length": 0.6, "gain": -4, "params": {"pitch": 125, "len": 0.28, "rise": 3, "fall": -6, "rough": 3, "size": 0.7, "vowelA": 0, "vowelB": 3, "breath": 0.35}},
+        {"type": "patch", "patch": "object/whoosh", "start": 0.1, "length": 0.6, "params": {"len": 0.45, "f0": 200, "f1": 1300, "q": 1.3}}
+      ]
+    },
+    "troll/death": {
+      "about": "Troll death: a long falling groan and the thump of the body.",
+      "params": {},
+      "length": 1.5, "tail": 0.5,
+      "layers": [
+        {"type": "patch", "patch": "creature/call", "length": 1.8, "params": {"pitch": 118, "len": 1.25, "rise": 2, "fall": -14, "rough": 3, "size": 0.68, "vowelA": 0, "vowelB": 4, "breath": 0.3}},
+        {"type": "patch", "patch": "impact/thud", "start": 1.05, "length": 0.8, "gain": -4, "params": {"pitch": 60, "len": 0.4, "crack": 0.2}}
+      ],
+      "fx": [{"type": "reverb", "room": 0.5, "mix": 0.1}]
+    }
+  },
+  "files": {
+    "mob/alpha_yeti/alert": {"patch": "creature/roar", "params": {"pitch": 88, "len": 0.8, "rise": 6, "size": 0.55, "rough": 4.5, "noise": 0.6, "room": 0.55}, "seed": 2701},
+    "mob/alpha_yeti/death": {"patch": "yeti/death", "params": {"pitch": 62}, "seed": 2702},
+    "mob/alpha_yeti/grab": {"patch": "yeti/grab", "params": {"pitch": 78}, "seed": 2703},
+    "mob/alpha_yeti/growl1": {"patch": "yeti/growl", "params": {"pitch": 64, "len": 1.1}, "seed": 2704},
+    "mob/alpha_yeti/growl2": {"patch": "yeti/growl", "params": {"pitch": 69, "len": 1.0}, "seed": 2705},
+    "mob/alpha_yeti/growl3": {"patch": "yeti/growl", "params": {"pitch": 73, "len": 1.2}, "seed": 2706},
+    "mob/alpha_yeti/hurt1": {"patch": "creature/call", "params": {"pitch": 112, "len": 0.35, "rise": 3, "fall": -8, "rough": 4, "size": 0.55, "vowelA": 0, "vowelB": 3, "breath": 0.35}, "seed": 2707},
+    "mob/alpha_yeti/hurt2": {"patch": "creature/call", "params": {"pitch": 120, "len": 0.32, "rise": 4, "fall": -7, "rough": 4, "size": 0.55, "vowelA": 0, "vowelB": 2, "breath": 0.35}, "seed": 2708},
+    "mob/alpha_yeti/hurt3": {"patch": "creature/call", "params": {"pitch": 128, "len": 0.38, "rise": 3, "fall": -9, "rough": 4, "size": 0.55, "vowelA": 1, "vowelB": 3, "breath": 0.35}, "seed": 2709},
+    "mob/alpha_yeti/pant1": {"patch": "creature/pant", "params": {"len": 0.9, "count": 3, "size": 0.5}, "seed": 2710},
+    "mob/alpha_yeti/pant2": {"patch": "creature/pant", "params": {"len": 0.95, "count": 3, "size": 0.52}, "seed": 2711},
+    "mob/alpha_yeti/pant3": {"patch": "creature/pant", "params": {"len": 1.0, "count": 4, "size": 0.48}, "seed": 2712},
+    "mob/alpha_yeti/roar": {"patch": "creature/roar", "params": {"pitch": 64, "len": 2.0, "rise": 5, "size": 0.55, "rough": 5, "noise": 0.6, "room": 0.8}, "seed": 2713},
+    "mob/alpha_yeti/throw": {"patch": "yeti/throw", "params": {"pitch": 110}, "seed": 2714},
+    "mob/troll/idle1": {"patch": "troll/grumble", "params": {"pitch": 104, "count": 3}, "seed": 2721},
+    "mob/troll/idle2": {"patch": "troll/grumble", "params": {"pitch": 110, "count": 2}, "seed": 2722},
+    "mob/troll/idle3": {"patch": "troll/grumble", "params": {"pitch": 116, "count": 4}, "seed": 2723},
+    "mob/troll/idle4": {"patch": "troll/grumble", "params": {"pitch": 121, "count": 3}, "seed": 2724},
+    "mob/troll/death": {"patch": "troll/death", "seed": 2725},
+    "mob/troll/grab": {"patch": "troll/grab", "seed": 2726},
+    "mob/troll/hurt": {"patch": "creature/call", "params": {"pitch": 140, "len": 0.3, "rise": 4, "fall": -7, "rough": 3, "size": 0.7, "vowelA": 0, "vowelB": 3, "breath": 0.3}, "seed": 2727},
+    "mob/troll/throw": {"patch": "troll/throw", "seed": 2728}
+  }
+}

@@ -67,3 +67,9 @@ A5 (mobs audit, W2 round 1). Checked against F13's goldens (tests/golden/mobs.js
   STRUCTURE home still needs the spawn reason on the actor (F5 `spawn::spawnMob` / F7 `runEntity`).
 - **Client scenario**: `tools/e2e/client/scenarios/hostiles.ps1` adds the redcap swing frames and an
   animation review of every living non-boss TF mob (`anim_<name>`); written, not run (A5).
+
+## Audit round 2
+
+Sounds (W2 round 2, audio pass). Checked with `tools/sounds/lint.ps1` on the assembled pack (`tools/assemble.ps1 -Check`): before this round 25 of this unit's sound events still played F3's name-derived baseline placeholder. Fire, pinch and slime beetles, redcap, the three wolves (shared files, as in TF) and the wraith (U25 stronghold mirrors the redcap and wraith designs for its goblins and Knight Phantom, TF's shared files). `tools/sounds/recipes/hostiles.json` now designs every one of them (original synthesized sounds, unit-local patches layered from the shared library; TF's audio never read; ids, subtitles, categories, volumes, pitches and variant counts unchanged), rendered with `pwsh tools/sounds/synth.ps1 -Unit hostiles` into `assets/gen/audio/hostiles/`. `synth.ps1 -Check` and `lint.ps1` pass; with the other round-2 audio PRs (one per owning unit) the lint reports 0 baseline-only events for the whole pack.
+
+Open (C++, not edited in this audio-only round): `src/feature/hostiles/SpawnSweep.cpp` `known()` still lists `sound.hurt` / `sound.death` deviations for adherent, harbinger_cube, roving_cube, plateau_boss (U30) and giant_miner, armored_giant (U29); their owners' `sounds.json.d` now map Monster's default hurt/death, so those rows are stale (harmless: the finding no longer fires).

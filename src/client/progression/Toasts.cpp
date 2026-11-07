@@ -21,8 +21,9 @@
 //   slot until it slid out; more wait in a queue), 600 ms slides (visibility f², 1 - f² while
 //   hiding), the in / out sound when a slide starts (Bedrock's random.toast, as F12), nothing
 //   drawn while the GUI is hidden (F1; the queue waits). The frame is the texture F12 draws every
-//   toast on (toast::kFrameTexture). The slots F12's own queue holds (other units' toasts) are
-//   left free: a new toast takes the first free slot after them.
+//   toast on (toast::kFrameTexture). The slots are F12's shared table (toast::claimSlot /
+//   releaseSlot): F12's queue (other units' toasts) and these take the lowest free slot of one
+//   table, as Java's one ToastComponent.
 // They are drawn by a HUD layer, and by the advancement screen over itself while it is open (Java
 // draws the toasts over every screen): exactly one of them draws in a frame, decided by draw order,
 // not by time. A frame draws the HUD scene first, then the screen's host scene. While an
@@ -65,7 +66,6 @@ using Clock  = std::chrono::steady_clock;
 constexpr float kWidth   = 160;
 constexpr float kHeight  = 32;
 constexpr long  kSlideMs = 600;
-constexpr int   kSlots   = 5;
 constexpr char  kSound[] = "random.toast";
 
 struct Toast {
@@ -90,7 +90,6 @@ struct State {
     std::mutex           mutex;
     std::vector<Instance> visible;
     std::deque<Toast>    queued;
-    bool                 occupied[kSlots]{};
     int                  screensOpen  = 0;     ///< advancement screens alive (toastScreenOpen)
     unsigned long        screenCalls  = 0;     ///< drawToasts calls of the screen (drawn or not)
     unsigned long        hudSeen      = 0;     ///< screenCalls at the HUD layer's last call
@@ -204,24 +203,20 @@ void renderAll(screen::Canvas& c) {
     long const now      = nowMs();
     for (auto it = st.visible.begin(); it != st.visible.end();) {
         if (renderOne(c, guiWidth, *it, now)) {
-            st.occupied[it->index] = false;
-            it                     = st.visible.erase(it);
+            toast::releaseSlot(it->index); // F12's shared slot table
+            it = st.visible.erase(it);
         } else {
             ++it;
         }
     }
-    // the slots F12's queue fills first (its toasts take the lowest free slots) stay free
-    int reserved = static_cast<int>(std::min<std::size_t>(ui::toastCount(), kSlots));
+    // one slot table with F12's toasts (Java's ToastComponent.occupiedSlots): the lowest free slot
     while (!st.queued.empty()) {
-        int free = -1;
-        for (int i = reserved; i < kSlots && free < 0; ++i)
-            if (!st.occupied[i]) free = i;
+        int free = toast::claimSlot();
         if (free < 0) break;
         Instance s;
         s.toast = std::move(st.queued.front());
         s.index = free;
         st.queued.pop_front();
-        st.occupied[free] = true;
         st.visible.push_back(std::move(s));
     }
 }
@@ -280,8 +275,8 @@ std::size_t cancelToasts(std::string const& what) {
             ++it;
             continue;
         }
-        st.occupied[it->index] = false;
-        it                     = st.visible.erase(it);
+        toast::releaseSlot(it->index);
+        it = st.visible.erase(it);
         ++n;
     }
     return n;
@@ -298,9 +293,9 @@ void toastScreenOpen(bool open) {
 void clearToasts() {
     auto&           st = state();
     std::lock_guard lock(st.mutex);
+    for (auto const& s : st.visible) toast::releaseSlot(s.index);
     st.visible.clear();
     st.queued.clear();
-    std::fill(std::begin(st.occupied), std::end(st.occupied), false);
 }
 
 ll::event::ListenerPtr& exitListener() {
