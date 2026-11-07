@@ -203,7 +203,15 @@ namespace GfImport
                     if (h != null)
                     {
                         string want = h.IsStr ? "false" : J.Obj().Set("seconds_to_destroy", Math.Round(h.AsDouble(), 4)).ToCompact();
-                        string have = mining != null ? mining.ToCompact() : "(none)";
+                        // the hardness only: an owner's per-item speeds (item_specific_speeds: e.g. TF's shears speed on
+                        // berry bushes, ShearsItem.getDestroySpeed) are no hardness and are not TF's Properties
+                        J hardnessOnly = mining;
+                        if (mining != null && mining.Kind == JKind.Object && mining.Has("item_specific_speeds"))
+                        {
+                            hardnessOnly = mining.Clone();
+                            hardnessOnly.Remove("item_specific_speeds");
+                        }
+                        string have = hardnessOnly != null ? hardnessOnly.ToCompact() : "(none)";
                         if (want != have) Errors.Add(where + ": minecraft:destructible_by_mining " + have + ", TF gives " + want + " (" + e["source"].AsString() + ")");
                         checkedValues++;
                     }
