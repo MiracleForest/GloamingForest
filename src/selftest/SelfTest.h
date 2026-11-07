@@ -154,7 +154,7 @@ public:
     bool setBlock(core::GlobalPos const& pos, std::string const& id, nlohmann::json const& states = nlohmann::json::object());
     /// The block id at `pos` ("" when not loaded).
     [[nodiscard]] std::string blockAt(core::GlobalPos const& pos) const;
-    /// Brings the test player next to `pos` and waits (up to 5 s) until its chunks are loaded:
+    /// Brings the test player next to `pos` and waits (up to 20 s) until its chunks are loaded:
     /// `ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded")`.
     [[nodiscard]] ll::coro::CoroTask<bool> ensureLoaded(core::GlobalPos pos);
     /// Remembers a position to clear (set to air) after the test.

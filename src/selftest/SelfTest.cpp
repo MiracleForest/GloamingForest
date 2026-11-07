@@ -390,7 +390,10 @@ ll::coro::CoroTask<bool> Context::ensureLoaded(core::GlobalPos pos) {
         Vec3{static_cast<float>(pos.x) + 0.5f, static_cast<float>(pos.y) + 2.f, static_cast<float>(pos.z) + 0.5f},
         DimensionType(pos.dim)
     );
-    for (int i = 0; i < 100; ++i) {
+    // up to 20 s: chunks no run generated before go through the whole Twilight Forest pipeline
+    // (noise, surface, blankets, carvers, landmark starts), which on a loaded machine (parallel builds
+    // and servers) takes longer than the 5 s this allowed before; a loaded area returns at once
+    for (int i = 0; i < 400; ++i) {
         if (auto* region = game::regionOf(pos.dim)) {
             if (region->hasChunksAt(game::blockPos(pos), 2, false)) co_return true;
         }
