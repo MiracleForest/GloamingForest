@@ -9,8 +9,11 @@
 #                                iron armour), 4x player model
 #   giants-rumble-<mode>.png     the beanstalk grower's dust (the camera shakes for the client mod)
 #   giants-beanstalk-<mode>.png  the grown beanstalk with its leaves
-# Then (with U27's cloud pieces merged) the cloud castle above a forced giant_house: one-time review
-# of giants.cloud_castle_hash (rule R19). Local mode also runs the giants.* selftests.
+#   giants-castle-<mode>.png     (with U27's cloud pieces merged) the cloud castle of a giant_house laid
+#                                out ahead at y 168, seen from its height: the one-time review of
+#                                giants.cloud_castle_hash (rule R19; giant cobblestone walls, giant log
+#                                roof, fluffy clouds, cloud trees)
+# Local mode also runs the giants.* selftests.
 Save-Screenshot 'hud' | Out-Null
 $remote = $script:Mode -ne 'local'
 $hostLine = if ($remote) { '\[host\].*' } else { '' }
@@ -33,6 +36,11 @@ Wait-LogLine "${hostLine}giants\.client_showcase: rumble ready" 60 -Since $mark 
 Save-Screenshot "giants-rumble-$($script:Mode)" | Out-Null
 Wait-LogLine "${hostLine}giants\.client_showcase: beanstalk ready" 120 -Since $mark | Out-Null
 Save-Screenshot "giants-beanstalk-$($script:Mode)" | Out-Null
+$castle = Wait-LogLine "${hostLine}giants\.client_showcase: castle (ready|skipped)" 180 -Since $mark
+if ($castle -match 'castle ready') {
+    Start-Sleep -Seconds 2
+    Save-Screenshot "giants-castle-$($script:Mode)" | Out-Null
+}
 Wait-LogLine "${hostLine}$script:SelfTestDoneRegex" 90 -Since $mark | Out-Null
 $r = ConvertFrom-SelfTestLines (Get-LeviLog -Since $mark) 'giants.client_showcase'
 if (-not (Register-SelfTestResult $r)) { throw 'giants.client_showcase failed' }
@@ -40,7 +48,7 @@ if (-not (Register-SelfTestResult $r)) { throw 'giants.client_showcase failed' }
 if (-not $remote) {
     $r = Invoke-SelfTest 'giants.*'
     if ($r.Fail -gt 0) { throw "$($r.Fail) giants selftest(s) failed" }
-    if ($r.Pass -lt 11) { throw "expected at least 11 giants selftests to pass, got $($r.Pass)" }
+    if ($r.Pass -lt 12) { throw "expected at least 12 giants selftests to pass, got $($r.Pass)" }
 } elseif (-not (Get-GameProcess)) {
     throw 'the game closed while connected to the host'
 }

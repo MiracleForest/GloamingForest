@@ -11,6 +11,7 @@
 #include "ll/api/coro/CoroTask.h"
 #include "ll/api/service/Bedrock.h"
 
+#include "mc/deps/core/math/Vec2.h"
 #include "mc/deps/core/math/Vec3.h"
 #include "mc/deps/shared_types/legacy/EquipmentSlot.h"
 #include "mc/world/actor/Actor.h"
@@ -40,6 +41,7 @@
 #include "feature/ext/giants/W0Internals.h"
 #include "feature/giants/Giants.h"
 #include "feature/giants/Structure.h"
+#include "feature/structure/Region.h"
 #include "feature/loot/Loot.h"
 #include "feature/progression/Progression.h"
 #include "feature/spawn/Spawn.h"
@@ -374,6 +376,39 @@ GF_REGISTER_SELFTEST("giants.cloud_snow", [](Context& ctx) -> ll::coro::CoroTask
               "one layer (snowAccumulationHeight 1)");
 });
 
+// BlockHooks#isRainingAt makes an entity under a raining cloud wet: a burning pig goes out, a snow
+// golem (isSensitiveToWater) takes drown damage.
+GF_REGISTER_SELFTEST("giants.cloud_wetness", [](Context& ctx) -> ll::coro::CoroTask<> {
+    static int  drownHits  = 0;
+    static bool registered = false;
+    if (!registered) {
+        registered = true;
+        gf::combat::onDealt(0, [](gf::combat::DamageInfo const& d) {
+            if (d.type == "minecraft:drown" && d.victim.getTypeName() == "minecraft:snow_golem") drownHits++;
+        });
+    }
+    drownHits   = 0;
+    auto  box    = co_await ctx.flatArea(2996, 4, 12);
+    auto* region = ctx.region();
+    ctx.require(region != nullptr, "a region");
+    auto ground = core::GlobalPos{ctx.dimension(), box.minX, box.minY - 1, box.minZ};
+    // a roof of rainy clouds over the whole 4 x 4 area (the mobs may wander a little)
+    for (int dx = 0; dx < 4; ++dx)
+        for (int dz = 0; dz < 4; ++dz) ctx.require(ctx.setBlock(at(ground, dx, 8, dz), id::RainyCloud), "rainy clouds");
+    auto* pig   = gf::spawn::spawnMob(*region, "minecraft:pig", Vec3{ground.x + 1.0f, float(ground.y + 1), ground.z + 1.0f}, gf::spawn::SpawnReason::Command);
+    auto* golem = gf::spawn::spawnMob(*region, "minecraft:snow_golem", Vec3{ground.x + 3.0f, float(ground.y + 1), ground.z + 3.0f}, gf::spawn::SpawnReason::Command);
+    ctx.require(pig && golem, "a pig and a snow golem under the clouds");
+    auto pigUid = fe::uidOf(*pig), golemUid = fe::uidOf(*golem);
+    pig->setOnFire(10, true);
+    co_await ctx.ticks(12);
+    auto* p = fe::actorById(pigUid);
+    auto* g = fe::actorById(golemUid);
+    ctx.check(p && !p->isOnFire(), "the rain from the cloud put the pig's fire out");
+    ctx.check(drownHits > 0, "the snow golem takes drown damage in the cloud's rain (" + std::to_string(drownHits) + " hits)");
+    if (p) p->remove();
+    if (g) g->remove();
+});
+
 GF_REGISTER_SELFTEST("giants.cloud_fall", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto box   = co_await ctx.flatArea(2972, 5, 8);
     auto cloud = core::GlobalPos{ctx.dimension(), box.minX + 2, box.minY, box.minZ + 2};
@@ -447,8 +482,9 @@ GF_REGISTER_SELFTEST("giants.giant_mobs", [](Context& ctx) -> ll::coro::CoroTask
     p.teleportTo(Vec3{pos.x + 2.5f, float(pos.y), pos.z + 2.5f}, true, 0, 1, false);
     co_await ctx.ticks(2);
     if (auto* g = fe::actorById(mUid)) gf::combat::hurt(ctx.player(), 2.0f, "minecraft:mob_attack", g, g);
+    // dealt inside the handler, as properlyApplyCustomDamageSource does within doHurtTarget
+    ctx.check(antHits == 1, "a giant's melee is twilightforest:ant damage, at once (" + std::to_string(antHits) + ")");
     co_await ctx.ticks(2);
-    ctx.check(antHits == 1, "a giant's melee is twilightforest:ant damage (" + std::to_string(antHits) + ")");
     // and the AI uses it (the player may be invulnerable for a moment after the first hit)
     antHits = 0;
     for (int i = 0; i < 30 && antHits == 0; ++i) {
@@ -574,6 +610,7 @@ GF_REGISTER_SELFTEST("giants.client_showcase", [](Context& ctx) -> ll::coro::Cor
         ctx.info("no real player: nothing to show");
         co_return;
     }
+    auto   viewerUid = fe::uidOf(*real);
     auto   f   = real->getFeetPos();
     auto   v   = real->getViewVector(1.0f);
     int    dim = static_cast<int>(real->getDimensionId());
@@ -654,6 +691,52 @@ GF_REGISTER_SELFTEST("giants.client_showcase", [](Context& ctx) -> ll::coro::Cor
                 if (bid == id::HugeStalk || bid == id::BeanstalkLeaves) game::clearBlock(*region, p);
             }
     for (auto const& p : placed) game::clearBlock(*region, game::blockPos(p));
+    placed.clear();
+    // the cloud castle (rule R19's one-time review of giants.cloud_castle_hash): giant_house laid out
+    // from about 8 blocks ahead (loaded chunks), the castle floor at y 168; the viewer goes up to its
+    // height 16 blocks back and returns afterwards
+    if (!cloudCastleAvailable()) {
+        ctx.info("castle skipped: U27's cloud castle piece types are not registered");
+        co_return;
+    }
+    int sx = static_cast<int>(std::floor(f.x + fx * 40.0)) - 24, sz = static_cast<int>(std::floor(f.z + fz * 40.0)) - 24;
+    core::jrand::WorldgenRandom context(std::make_unique<core::jrand::LegacyRandom>(0));
+    context.setLargeFeatureSeed(kSeed, sx >> 4, sz >> 4);
+    structure::bases::PieceList pieces;
+    ctx.require(layoutGiantHouse(context, sx, 0, sz, pieces), "the giant house lays out");
+    // what was not air in the pieces' boxes before (terrain, builds) is left alone by the cleanup
+    std::vector<BlockPos> wasAir;
+    for (auto const& piece : pieces) {
+        auto const& b = piece->bbox;
+        for (int y = b.minY; y <= b.maxY; ++y)
+            for (int x = b.minX; x <= b.maxX; ++x)
+                for (int z = b.minZ; z <= b.maxZ; ++z)
+                    if (region->getBlock(BlockPos{x, y, z}).isAir()) wasAir.push_back(BlockPos{x, y, z});
+    }
+    {
+        structure::BlockSourceRegion world(*region, BlockPos{sx, 168, sz});
+        structure::BlockBox          all{-30000000, -64, -30000000, 30000000, 319, 30000000};
+        for (auto& piece : pieces) {
+            core::jrand::LegacyRandom r(0);
+            piece->postProcess(world, r, all, BlockPos{0, 0, 0});
+        }
+    }
+    // the viewer stands on a barrier at the castle's height (no fall, whatever the game mode)
+    BlockPos stand{static_cast<int>(std::floor(f.x - fx * 16.0)), 175, static_cast<int>(std::floor(f.z - fz * 16.0))};
+    bool     barrier = region->getBlock(stand).isAir();
+    if (barrier)
+        if (auto const* b = game::blockWith("minecraft:barrier")) game::setBlock(*region, stand, *b);
+    if (auto* viewer = fe::playerById(viewerUid)) {
+        float yaw = static_cast<float>(std::atan2(-fx, fz) * 180.0 / 3.14159265358979);
+        viewer->teleport(Vec3{stand.x + 0.5f, 176.0f, stand.z + 0.5f}, viewer->getDimensionId(), Vec2{5.0f, yaw});
+    }
+    co_await ctx.ticks(60);
+    ctx.info("castle ready");
+    co_await ctx.ticks(60);
+    if (auto* viewer = fe::playerById(viewerUid)) viewer->teleport(Vec3{f.x, f.y, f.z}, viewer->getDimensionId());
+    for (auto const& p : wasAir)
+        if (!region->getBlock(p).isAir()) game::clearBlock(*region, p);
+    if (barrier) game::clearBlock(*region, stand);
 });
 
 } // namespace gf::feature::giants::tests

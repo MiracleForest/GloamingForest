@@ -13,7 +13,8 @@
 // cloud puffs (twilightforest:cloud_puff); the fluffy, rainy and snowy clouds' random ticks rain
 // or snow on the first opaque block below them (cauldrons fill, snow layers grow, and, as Bedrock
 // has no isRainingAt hook, the farmland moistens and fire goes out there: the listed deviation of
-// docs/spec/giants.md 2.3). The client mod draws the rain / snow under clouds itself
+// docs/spec/giants.md 2.3), and an entity under a raining cloud is wet (its fire goes out, an
+// enderman, blaze, snow golem or strider takes drown damage). The client mod draws the rain / snow under clouds itself
 // (src/client/giants); vanilla clients get rain streaks and splashes from the server.
 #include <algorithm>
 #include <cmath>
@@ -245,6 +246,45 @@ void vanillaWeatherTick() {
     if (ticks % 200 == 0) std::erase_if(columns(), [&](auto const& e) { return std::find(seen.begin(), seen.end(), e.first) == seen.end(); });
 }
 
+// ---- entity wetness under rainy clouds -----------------------------------------------------------------
+
+/// Entity#isInRain through BlockHooks#isRainingAt: the feet block or the block at the top of the box
+/// has a raining cloud above it (only where the level itself does not rain on it: the engine's own
+/// rain is the engine's).
+bool inCloudRain(Actor& actor) {
+    if (actor.isInRain()) return false;
+    auto&       region = actor.getDimensionBlockSource();
+    auto const  feet   = actor.getFeetPos();
+    auto const& box    = actor.getAABB();
+    return rainingFromCloudAt(region, game::blockPosOf(feet)) || rainingFromCloudAt(region, game::blockPosOf(Vec3{feet.x, box.max.y, feet.z}));
+}
+
+/// LivingEntity#isSensitiveToWater of 1.21.1 (EnderMan, Blaze, SnowGolem, Strider).
+bool sensitiveToWater(Actor const& actor) {
+    auto const& t = actor.getTypeName();
+    return t == "minecraft:enderman" || t == "minecraft:blaze" || t == "minecraft:snow_golem" || t == "minecraft:strider";
+}
+
+/// What isInWaterRainOrBubble does to an entity under a raining cloud: Entity#move puts out a fire
+/// (with the extinguish sound), LivingEntity#aiStep hurts a water-sensitive mob (drown, 1).
+void wetnessTick() {
+    if (commonPrecipitationDistance() <= 0) return;
+    auto level = ll::service::getLevel();
+    if (!level) return;
+    for (Actor* a : level->getRuntimeActorList()) {
+        if (!a || !a->isAlive()) continue;
+        bool burning   = a->isOnFire();
+        bool sensitive = sensitiveToWater(*a);
+        if (!burning && !sensitive) continue;
+        if (!inCloudRain(*a)) continue;
+        if (burning) {
+            a->stopFire();
+            gf::fx::sound(a->getDimension(), "random.fizz", a->getPosition(), 0.7f, 1.6f + (random().nextFloat() - random().nextFloat()) * 0.4f);
+        }
+        if (sensitive) gf::combat::hurt(*a, 1.0f, "minecraft:drown");
+    }
+}
+
 } // namespace
 
 std::vector<PrecipitationColumn> collectPrecipitationColumns(BlockSource& region, BlockPos const& at, int distance, int r) {
@@ -358,6 +398,7 @@ void installClouds() {
     });
     fe::onLevelTick([] {
         vanillaWeatherTick();
+        wetnessTick();
         auto now = fe::currentTick();
         if (now % 200 == 0) {
             std::erase_if(standing(), [now](auto const& e) { return now - e.second > 200; });

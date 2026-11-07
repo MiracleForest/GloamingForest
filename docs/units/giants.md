@@ -25,7 +25,8 @@ Spec: [docs/spec/giants.md](../spec/giants.md). Code: `src/core/giants` (gtested
   `client.giantSkinUUIDs` is kept in the config section but unused.
 - The rain / snow under clouds are falling particles, not TF's sheets; vanilla clients get them from
   the server (4 a tick per player).
-- Entity wetness under rainy clouds (enderman / blaze damage) is not reproduced (no isRainingAt hook).
+- Entity wetness under rainy clouds is emulated by the unit (fire out, drown damage to water-sensitive mobs);
+  other isRainingAt consumers (lightning rods, fishing, riptide) do not see the clouds.
 - The giant pickaxe / sword's +2.5 interaction range has no Bedrock attribute (not reproduced).
 - The giant block outline is drawn besides Bedrock's own highlight (it cannot be replaced).
 - Up / down faces of the tiled geometry follow Blockbench's Bedrock UV convention (both axes flipped):
@@ -47,3 +48,35 @@ Open (round 2, all Bedrock limits; not-ported candidates):
 - Cloud rain / snow sheets (falling particles instead) and entity wetness under rainy clouds (no isRainingAt hook
   that units may own; R8).
 - The giant block outline replacing the highlight (drawn beside Bedrock's own).
+
+## Audit round 2
+
+Checked against TF 4.8 (`GiantMiner#doHurtTarget`, `GiantMiner` / `ArmoredGiant` sounds, `BlockHooks#isRainingAt`,
+`Entity#move` / `LivingEntity#aiStep` under rain, `TFGiantRenderer`).
+
+Fixed:
+
+- **Ant damage inside the hit**: GiantMiner#doHurtTarget's `twilightforest:ant` damage is dealt inside the
+  combat handler (F10 runs the handlers of a nested hurt), not on the next tick; `giants.giant_mobs` checks it
+  at once.
+- **Hurt / death sounds** (A5): the giants are plain `Monster`s in Java (`entity.hostile.hurt` /
+  `entity.hostile.death`, both the damage hit sounds): `assets/pack/rp/sounds.json.d/giants.json` plays
+  Bedrock's `game.player.hurt` (the same `damage/hit1..3`) for both, pitch 0.8..1.2.
+- **Entity wetness under rainy clouds**: an entity whose feet or head block has a raining cloud above it
+  (`isRainingAt` through the clouds, where the level itself does not rain) is wet: its fire goes out with the
+  extinguish fizz (`Entity#move`), and an enderman, blaze, snow golem or strider takes 1 drown damage
+  (`LivingEntity#aiStep`, isSensitiveToWater). Selftest `giants.cloud_wetness`.
+- **Cloud castle review**: `giants.client_showcase` builds a giant_house's cloud castle ahead of the viewer at
+  y 168 and moves the viewer up to it; the client scenario shoots `giants-castle-<mode>` (rule R19's one-time
+  review; written, not run).
+
+Open (Bedrock limits; not-ported candidates):
+
+- Giant skins (`TFGiantRenderer` binds the viewer's own skin, or `giantSkinUUIDs` profiles): a Bedrock mob's
+  texture comes from the resource pack; binding a player's skin texture would need an F12 entity texture hook.
+- The giant pickaxe / sword's +2.5 block and entity interaction range: Bedrock has no reach attribute and the
+  client limits its pick range; needs an F12 client pick-range extension.
+- Cloud rain / snow sheets (falling particles instead; F12's `drawGeo` has no scrolling UVs for a sheet).
+- Other isRainingAt consumers under clouds (lightning rods, fishing, tridents' riptide, skeleton horse traps):
+  engine-side, not reached.
+- The giant block outline replacing the highlight (drawn beside Bedrock's own; replacing it is F12's renderer).
