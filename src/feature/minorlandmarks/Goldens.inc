@@ -6,7 +6,7 @@
 {"feature_dark_forest_placer", "77d8525467bcc160"},
 {"feature_fallen_hollow_log", "973fbcc845a59643"},
 {"feature_fallen_small_log", "07dd5000fad2e3fe"},
-{"feature_foundation", "49cef57ac1f29c0f"},
+{"feature_foundation", "671d757872c1cea1"},
 {"feature_hollow_stump", "eadb23011c761410"},
 {"feature_lampposts", "2d9603fd07b1487c"},
 {"feature_monolith", "293d88bc4d856839"},
