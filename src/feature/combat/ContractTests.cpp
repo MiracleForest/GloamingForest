@@ -976,6 +976,82 @@ GF_REGISTER_SELFTEST("combat.nested_hurt", [](Context& ctx) -> ll::coro::CoroTas
               "an onEntityDrops handler comes off by its handle");
 });
 
+// A handler that changes DamageInfo::type converts the hit: the handlers after it see the new type,
+// the ones before it do not run again (their modifiers apply once), the hit lands as the new type
+// (onDealt hears it). An explicit conversion (cancel + gf::combat::hurt of the same victim, attacker
+// and direct entity from a handler) continues the hit the same way.
+GF_REGISTER_SELFTEST("combat.type_change", [](Context& ctx) -> ll::coro::CoroTask<> {
+    namespace cb = gf::combat;
+    struct Seen {
+        std::int64_t             victim = 0;
+        bool                     explicitConversion = false;
+        int                      modifier = 0;
+        std::vector<std::string> converter;
+        std::vector<std::string> after;
+        std::vector<std::string> dealtTypes;
+        float                    dealtAmount = 0;
+    };
+    static Seen seen;
+    auto mine = [](cb::DamageInfo const& d) { return d.victim.getOrCreateUniqueID().rawID == seen.victim; };
+    auto h1   = cb::ext::addIncoming(cb::priority::Highest, [mine](cb::DamageInfo& d) {
+        if (!mine(d)) return cb::Verdict::Pass;
+        ++seen.modifier;
+        d.amount += 1.0f; // a modifier: must apply once
+        return cb::Verdict::Pass;
+    });
+    auto h2 = cb::ext::addIncoming(cb::priority::High, [mine](cb::DamageInfo& d) {
+        if (!mine(d)) return cb::Verdict::Pass;
+        seen.converter.push_back(d.type);
+        if (d.type != "minecraft:generic") return cb::Verdict::Pass;
+        if (!seen.explicitConversion) {
+            d.type = "twilightforest:ant";
+            return cb::Verdict::Pass;
+        }
+        (void)cb::hurt(d.victim, d.amount, "twilightforest:ant", d.attacker, d.direct);
+        return cb::Verdict::Cancel;
+    });
+    auto h3 = cb::ext::addIncoming(cb::priority::Normal, [mine](cb::DamageInfo& d) {
+        if (mine(d)) seen.after.push_back(d.type);
+        return cb::Verdict::Pass;
+    });
+    auto h4 = cb::ext::addDealt(cb::priority::Normal, [mine](cb::DamageInfo const& d) {
+        if (!mine(d)) return;
+        seen.dealtTypes.push_back(d.type);
+        seen.dealtAmount = d.amount;
+    });
+    struct Remove {
+        std::vector<cb::ext::HandlerHandle> hs;
+        ~Remove() {
+            for (auto h : hs) cb::ext::remove(h);
+            seen.victim = 0;
+        }
+    } remove{{h1, h2, h3, h4}};
+    auto join = [](std::vector<std::string> const& v) {
+        std::string s;
+        for (auto const& t : v) s += t + " ";
+        return s;
+    };
+    for (bool explicitConversion : {false, true}) {
+        co_await ctx.ticks(25); // the hurt cooldown
+        auto& p = ctx.player();
+        p.heal(20);
+        seen                    = {};
+        seen.victim             = p.getOrCreateUniqueID().rawID;
+        seen.explicitConversion = explicitConversion;
+        std::string how         = explicitConversion ? "explicit conversion: " : "type change: ";
+        bool        landed      = cb::hurt(p, 2.0f, "minecraft:generic");
+        // the explicit converter cancels the outer hit (its hurt reports false); the nested one landed
+        if (!explicitConversion) ctx.check(landed, how + "the converted hit lands");
+        ctx.check(seen.modifier == 1, how + "the modifier before the converter ran once (" + std::to_string(seen.modifier) + ")");
+        auto wantConverter = explicitConversion ? std::vector<std::string>{"minecraft:generic", "twilightforest:ant"}
+                                                : std::vector<std::string>{"minecraft:generic"};
+        ctx.check(seen.converter == wantConverter, how + "the converter ran " + join(seen.converter));
+        ctx.check(seen.after == std::vector<std::string>{"twilightforest:ant"}, how + "the handler after it ran once with the new type: " + join(seen.after));
+        ctx.check(seen.dealtTypes == std::vector<std::string>{"twilightforest:ant"}, how + "onDealt heard the new type once: " + join(seen.dealtTypes));
+        ctx.check(std::abs(seen.dealtAmount - 3.0f) < 0.01f, how + "3 damage dealt (2 + the modifier once): " + std::to_string(seen.dealtAmount));
+    }
+});
+
 // DamageInfo of a projectile's damage (ActorDamageByChildActorSource(child, owner), what
 // gf::combat::hurt(victim, n, type, owner, projectile) and the game's projectiles build): the
 // attacker is the owner (DamageSource#getEntity), the direct entity the projectile

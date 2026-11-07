@@ -446,6 +446,7 @@ std::uint64_t addSorted(std::vector<Entry<Fn>>& list, int priority, Fn fn) {
 struct Pending {
     Actor*      victim = nullptr;
     std::string type;
+    bool        converted = false; ///< a handler changed the type: the converted hurt did the rest
 };
 thread_local std::vector<Pending> tPending;
 
@@ -575,11 +576,20 @@ float healthOf(Actor& a) { return static_cast<float>(a.getHealth()); }
 /// its parent, a reflected blast); only the same attack again (victim, type, attacker and direct
 /// entity) on top of itself is applied as is, and so is anything nested deeper than kMaxNesting on
 /// one victim, so two handlers that keep answering each other cannot recurse without end.
+///
+/// A conversion (a hurt of the same victim by the same attacker and direct entity started from an
+/// onIncoming handler of the hit: EntityUtil#properlyApplyCustomDamageSource, Wraith#doHurtTarget)
+/// continues that hit: the incoming handlers that already ran on it (their changes are in the amount
+/// the converter hands on) do not run again, the converter and the ones after it see the new type.
+/// A handler that changes DamageInfo::type converts the hit the same way without the nested call.
 struct Attack {
     Actor const* victim;
     std::string  type;
     Actor const* attacker;
     Actor const* direct;
+    bool         incoming = false;         ///< the scope runs the onIncoming handlers
+    std::vector<std::uint64_t> ran;        ///< the incoming handlers done with this hit (registration ids)
+    float const* amount = nullptr;         ///< the hit's amount as its handlers left it so far
 };
 thread_local std::vector<Attack> tInHandlers;
 constexpr int                    kMaxNesting = 8;
@@ -590,6 +600,19 @@ struct HandlerScope {
     HandlerScope(HandlerScope const&)            = delete;
     HandlerScope& operator=(HandlerScope const&) = delete;
 };
+
+/// The incoming handlers a conversion of the innermost hit of the same victim, attacker and direct
+/// entity skips (nullptr: not a conversion). A conversion deals the hit again: the amount its
+/// handlers left (an extra hit of another amount from a handler is a hit of its own).
+std::vector<std::uint64_t> const* convertedFrom(Attack const& attack, float damage) {
+    for (auto it = tInHandlers.rbegin(); it != tInHandlers.rend(); ++it) {
+        if (it->victim != attack.victim) continue;
+        if (it->incoming && it->attacker == attack.attacker && it->direct == attack.direct && it->amount && std::abs(*it->amount - damage) < 1e-4f)
+            return &it->ran;
+        return nullptr; // the innermost hit of this victim is another one
+    }
+    return nullptr;
+}
 
 /// Whether `attack` must skip the handlers: the same attack is in its handlers already, or the
 /// victim's handler nesting is too deep.
@@ -886,10 +909,11 @@ bool hurt(Actor& victim, float amount, std::string const& typeId, Actor* attacke
         tPending.pop_back();
         throw;
     }
+    bool converted = tPending.back().converted;
     tPending.pop_back();
     bool applied = static_cast<bool>(result);
     if (!applied) restoreMark(victim, previous); // a refused hurt names no death
-    if (applied && victim.isPlayer()) {
+    if (applied && !converted && victim.isPlayer()) { // a converted hit took its new type's exhaustion
         auto const* spec = damageType(typeId);
         if (spec && spec->exhaustion > 0) static_cast<Player&>(victim).causeFoodExhaustion(spec->exhaustion);
     }
@@ -917,11 +941,11 @@ ActorHurtResult runPipeline(Actor& self, ActorDamageSource const& source, float 
         gf::death::reapplySurvival(self);
         return r;
     };
-    std::vector<IncomingFn> incoming;
-    std::vector<DealtFn>    dealt;
+    std::vector<Entry<IncomingFn>> incoming;
+    std::vector<DealtFn>           dealt;
     {
         std::lock_guard lock(handlers().mutex);
-        for (auto const& e : handlers().incoming) incoming.push_back(e.fn);
+        incoming = handlers().incoming;
         for (auto const& e : handlers().dealt) dealt.push_back(e.fn);
     }
     // nothing to tell and no effect sound (players only): the game's hurt as is
@@ -930,21 +954,50 @@ ActorHurtResult runPipeline(Actor& self, ActorDamageSource const& source, float 
     DamageInfo info{self, typeOf(self, source), attacker, direct, damage};
     Attack     attack{&self, info.type, attacker, direct};
     if (inHandlers(attack)) return plain(damage);
+    // a conversion continues its hit: the handlers done with it are not run again
+    std::vector<std::uint64_t> skip;
+    if (auto const* ran = convertedFrom(attack, damage)) skip = *ran;
+    std::string const originalType = info.type;
     if (!incoming.empty()) {
-        HandlerScope scope(attack);
-        for (auto const& fn : incoming) {
+        Attack running = attack;
+        running.incoming = true;
+        running.ran      = skip;
+        running.amount   = &info.amount;
+        tInHandlers.push_back(std::move(running));
+        struct Pop {
+            ~Pop() { tInHandlers.pop_back(); }
+        } pop;
+        for (auto const& e : incoming) {
+            if (std::find(skip.begin(), skip.end(), e.seq) != skip.end()) continue;
             Verdict v = Verdict::Pass;
             try {
-                v = fn(info);
+                v = e.fn(info);
             } catch (std::exception const& ex) {
                 gf::log().error("combat: incoming handler failed: {}", ex.what());
             }
+            tInHandlers.back().ran.push_back(e.seq);
             if (v == Verdict::Cancel) {
                 ActorHurtResult cancelled{};
                 cancelled.mHurtOrDamage         = std::variant<bool, float>(false);
                 cancelled.mShouldAllowKnockback = false;
                 return cancelled;
             }
+        }
+        // a handler changed the damage type: the hit lands as that type (its cause, knockback,
+        // death message, exhaustion and onDealt), the incoming handlers done with it skipped
+        if (info.type != originalType) {
+            if (!damageType(info.type)) log().warn("combat: a handler changed the damage to the unknown type {}", info.type);
+            // the entities the converted hurt reports (gf::combat::hurt's damage source)
+            Actor* a = info.attacker ? info.attacker : info.direct;
+            tInHandlers.back().attacker = a;
+            tInHandlers.back().direct   = a && info.direct && info.direct != a ? info.direct : a;
+            // the gf::combat::hurt this hit runs in (if any) leaves the exhaustion to the new type
+            if (!tPending.empty() && tPending.back().victim == &self) tPending.back().converted = true;
+            bool landed = hurt(self, info.amount, info.type, info.attacker, info.direct);
+            ActorHurtResult converted{};
+            converted.mHurtOrDamage         = std::variant<bool, float>(landed);
+            converted.mShouldAllowKnockback = landed;
+            return converted;
         }
     }
     float before   = healthOf(self);
