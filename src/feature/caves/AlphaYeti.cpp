@@ -11,7 +11,7 @@
 //
 // The Alpha Yeti on F8's boss kit: ice bombs from afar while it cannot rampage (projectiles do it
 // no harm then), a rampage once anything hurt it (jumps, falling ice, ice bombs in all directions,
-// the ground pound on landing, blocks broken around it), then 100 tired ticks in which it is
+// the ground pound when it lands from a jump or drop, blocks broken around it), then 100 tired ticks in which it is
 // vulnerable; grabs and throws its target like the yeti. Float, stroll, look and the hurt-by
 // target are BP behaviours; the rampage's snow ring and the tired splash are the RP's particle
 // emitters driven by the twilightforest:rampaging / twilightforest:tired properties.
@@ -35,6 +35,8 @@
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/BlockChangeContext.h"
 #include "mc/world/level/block/BlockType.h"
+#include "mc/world/level/block/actor/BlockActor.h"
+#include "mc/world/level/block/actor/BlockActorType.h"
 #include "mc/world/level/storage/GameRuleId.h"
 #include "mc/world/level/storage/GameRules.h"
 #include "mc/world/phys/AABB.h"
@@ -46,6 +48,7 @@
 #include "feature/entity/Entity.h"
 #include "feature/ext/entity/EntityExt.h"
 #include "feature/fx/Fx.h"
+#include "feature/inventory/Inventory.h"
 #include "feature/projectile/Projectile.h"
 #include "feature/spawn/Spawn.h"
 #include "feature/tags/Tags.h"
@@ -65,6 +68,8 @@ struct AlphaState {
     bool         tired      = false;
     int          collisionCounter = 0;
     bool         wasOnGround = true;
+    float        lastY       = 0.0F;
+    bool         fell        = false; // Java's fallDistance > 0: it moved down since it left the ground
     std::int64_t lastTarget = 0;
 };
 std::unordered_map<std::int64_t, AlphaState>& states() {
@@ -114,15 +119,42 @@ void iceSound(Mob& yeti) {
     gf::fx::sound(yeti.getDimension(), "entity.twilightforest.alpha_yeti.ice", yeti.getFeetPos(), 1.0F, 1.0F / (r.nextFloat() * 0.4F + 0.8F));
 }
 
-/// EntityUtil#canDestroyBlock (hardness 0..50, not air, no container block entity).
+/// `be instanceof Container` of Java's block entities (BaseContainerBlockEntity, the
+/// ContainerSingleItem jukebox / decorated pot, the chiseled bookshelf). Bedrock's item frames are
+/// block actors where Java's are entities that destroyBlock never touches: they are spared too.
+bool isContainer(BlockActor const& be) {
+    switch (be.getType()) {
+    case BlockActorType::Furnace:
+    case BlockActorType::BlastFurnace:
+    case BlockActorType::Smoker:
+    case BlockActorType::Chest:
+    case BlockActorType::Dispenser:
+    case BlockActorType::Dropper:
+    case BlockActorType::Hopper:
+    case BlockActorType::ShulkerBox:
+    case BlockActorType::BarrelBlock:
+    case BlockActorType::BrewingStand:
+    case BlockActorType::Crafter:
+    case BlockActorType::Jukebox:
+    case BlockActorType::ChiseledBookshelf:
+    case BlockActorType::DecoratedPot:
+    case BlockActorType::ItemFrame:
+    case BlockActorType::GlowItemFrame: return true;
+    default: return false;
+    }
+}
+
+/// EntityUtil#canDestroyBlock (hardness 0..50, not air, no Container block entity: signs, banners,
+/// beds, skulls and spawners are destroyed like in TF; TF's custom containers have no block actor
+/// here, gf::inventory knows them).
 bool canDestroyBlock(BlockSource& region, BlockPos const& pos) {
     Block const& b = region.getBlock(pos);
     if (b.isAir()) return false;
     float hardness = b.getBlockType().getDestroySpeed();
     if (!(hardness >= 0.0F && hardness < 50.0F)) return false;
-    // TF keeps Container block entities; Bedrock's block actors are kept as a whole (no container
-    // test on the BlockActor API): chests, barrels, furnaces ... and also signs, banners
-    return region.getBlockEntity(pos) == nullptr;
+    if (auto* be = region.getBlockEntity(pos); be && isContainer(*be)) return false;
+    if (b.getBlockType().mNameInfo->mNamespaceName.get() != "minecraft" && gf::inventory::find(region, pos)) return false;
+    return true;
 }
 
 /// AlphaYeti#destroyBlocksInAABB.
@@ -355,12 +387,21 @@ void installAlphaYeti() {
             destroyBlocksInAABB(*yeti, yeti->getAABB());
             s.collisionCounter = 0;
         }
-        // causeFallDamage while rampaging (every landing, whatever the height): the ground pound
-        bool onGround = yeti->isOnGround();
-        if (onGround && !s.wasOnGround && s.rampaging) {
-            iceSound(*yeti);
-            hitNearbyEntities(*yeti);
+        // causeFallDamage while rampaging: Entity#checkFallDamage calls it on a landing with
+        // fallDistance > 0 (any height; Bedrock fires no fall event below 3 blocks), i.e. after the
+        // rampage's jumps or any drop, never on a step up or while it stays on the ground
+        bool  onGround = yeti->isOnGround();
+        float y        = yeti->getFeetPos().y;
+        if ((!onGround || !s.wasOnGround) && y < s.lastY) s.fell = true;
+        if (yeti->isInWater()) s.fell = false; // Entity#updateInWaterStateAndDoFluidPushing resets fallDistance
+        if (onGround) {
+            if (!s.wasOnGround && s.fell && s.rampaging) {
+                iceSound(*yeti);
+                hitNearbyEntities(*yeti);
+            }
+            s.fell = false;
         }
+        s.lastY = y;
         s.wasOnGround = onGround;
     };
     b.hurt = [](Actor& self, float&, std::string const& type, Actor*) {

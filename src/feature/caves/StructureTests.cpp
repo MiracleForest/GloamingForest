@@ -40,10 +40,13 @@ namespace st = gf::structure;
 
 constexpr std::int64_t kSeed = 20260521; // the e2e world's seed
 
-/// A sparse in-memory region: stone below `ground`, air above.
+/// A sparse in-memory region: stone below `ground`, air above. The heightmaps scan down from
+/// `scanTop` (default ground + 64) to ground - 64.
 class MemoryRegion final : public worldgen::Region {
 public:
-    explicit MemoryRegion(int ground) : mGround(ground) { st::resetRegionRandom(this); }
+    explicit MemoryRegion(int ground, int scanTop = INT_MIN) : mGround(ground), mScanTop(scanTop == INT_MIN ? ground + 64 : scanTop) {
+        st::resetRegionRandom(this);
+    }
     ~MemoryRegion() override { st::resetRegionRandom(this); }
     [[nodiscard]] int          centerChunkX() const override { return 0; }
     [[nodiscard]] int          centerChunkZ() const override { return 0; }
@@ -61,7 +64,7 @@ public:
         return true;
     }
     [[nodiscard]] int height(worldgen::Heightmap, int x, int z) const override {
-        for (int y = mGround + 64; y >= mGround - 64; --y)
+        for (int y = mScanTop; y >= mGround - 64; --y)
             if (!getBlock(BlockPos{x, y, z}).isAir()) return y + 1;
         return mGround;
     }
@@ -103,6 +106,7 @@ private:
         return {static_cast<int>(k >> 40) - (1 << 23), static_cast<int>((k >> 20) & 0xfffff) - (1 << 19), static_cast<int>(k & 0xfffff) - (1 << 19)};
     }
     int                                         mGround;
+    int                                         mScanTop;
     std::unordered_map<long long, Block const*> mBlocks;
 };
 
@@ -168,7 +172,10 @@ struct TestMode {
 constexpr char kTrollLayout[]  = "twilightforest:TFTCCon=11 twilightforest:TFTCGard=4 twilightforest:TFTCMai=1 twilightforest:TFTCVa=1 28,-15,-100,163,11,25";
 constexpr char kTrollHash[]    = "bedf1a4ba1742ba7"; // giant blocks carry U29's gf:giant_* tiling states
 constexpr char kCastleHash[]   = "af832880f6c53481"; // giant blocks carry U29's gf:giant_* tiling states
-constexpr char kYetiHash[]     = "d58693ea939cb6cd";
+constexpr char kYetiHash[]     = "219d7a9970bbf71a"; // with the ice stalactites (the heightmap sees the hill)
+/// The yeti cave test's terrain layers (the terraformer's hill: floor, room and ceiling).
+constexpr int kTerrainMinY = -8;
+constexpr int kTerrainMaxY = 32;
 constexpr char kFeaturesHash[] = "bcf3047b03b92576";
 
 } // namespace
@@ -238,21 +245,36 @@ GF_REGISTER_SELFTEST("caves.yeti_cave_hash", [](Context& ctx) {
     auto& yeti = static_cast<YetiCave&>(*pieces.front());
     // HollowHillComponent(size 2) at y + 4, its box lowered by one
     ctx.check(yeti.bbox.maxX - yeti.bbox.minX == 68, "hill radius 34");
-    // the terrain the terraformer shapes: solid where its density is positive
-    MemoryRegion mem(-64);
+    // the terrain the terraformer shapes: solid where its density is positive (the heightmaps see the
+    // hill's top: BlockSpikeFeature only places below the surface - 2)
+    MemoryRegion mem(-64, kTerrainMaxY + 8);
     auto         center = st::boxCenter(yeti.bbox);
     for (int x = yeti.bbox.minX; x <= yeti.bbox.maxX; x++)
         for (int z = yeti.bbox.minZ; z <= yeti.bbox.maxZ; z++)
-            for (int y = -8; y <= 32; y++) {
+            for (int y = kTerrainMinY; y <= kTerrainMaxY; y++) {
                 double ground = y < 0 ? 1.0 : -0.01 * (static_cast<double>(y) + 0.5);
                 if (ground + core::caves::yetiCaveTerraformer(center.x, center.z, x, y, z) > 0.0) mem.setBlock(BlockPos{x, y, z}, st::blocks::java("minecraft:stone"), 2);
             }
     generate(pieces, mem);
     auto spawner = yeti.getWorldPos(34, 1, 34);
     ctx.check(mem.idAt(spawner) == "twilightforest:alpha_yeti_boss_spawner", "the alpha yeti spawner at local (34, 1, 34): " + mem.idAt(spawner));
+    // the yeti_cave speleothems: ice, packed ice and blue ice stalactites only (stalagmite chance 0)
     auto ice = mem.count("minecraft:packed_ice") + mem.count("minecraft:ice") + mem.count("minecraft:blue_ice");
-    // (the speleothems need the real terrain's ceiling: the flat approximation here may give none)
-    ctx.info("ice speleothem blocks: " + std::to_string(ice));
+    ctx.check(ice > 100 && mem.count("minecraft:ice") > 0 && mem.count("minecraft:packed_ice") > 0 && mem.count("minecraft:blue_ice") > 0,
+              "ice, packed ice and blue ice stalactites: " + std::to_string(ice));
+    int hanging = 0;
+    for (int x = yeti.bbox.minX; x <= yeti.bbox.maxX; x++)
+        for (int z = yeti.bbox.minZ; z <= yeti.bbox.maxZ; z++)
+            for (int y = kTerrainMinY + 1; y < kTerrainMaxY; y++) {
+                auto id = mem.idAt(BlockPos{x, y, z});
+                if (id != "minecraft:ice" && id != "minecraft:packed_ice" && id != "minecraft:blue_ice") continue;
+                auto above = mem.idAt(BlockPos{x, y + 1, z});
+                auto below = mem.idAt(BlockPos{x, y - 1, z});
+                // a stalactite's lowest block: air under it, ice or the stone ceiling above it
+                if (below == "minecraft:air" && above != "minecraft:air") hanging++;
+            }
+    ctx.check(hanging > 10, "the stalactites hang from the ceiling: " + std::to_string(hanging) + " tips");
+    ctx.info("ice speleothem blocks: " + std::to_string(ice) + ", tips " + std::to_string(hanging));
     auto loaded = st::loadPiece(yeti.save());
     ctx.check(loaded && loaded->bbox == yeti.bbox && loaded->getWorldPos(34, 1, 34) == spawner, "the yeti cave loads back (with its y shift)");
     golden(ctx, "yeti_cave_hash", kYetiHash, mem.hash());
