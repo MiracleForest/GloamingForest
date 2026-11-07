@@ -1678,9 +1678,14 @@ end
 local modifiers = {}
 
 -- Java SimpleWaterloggedBlock: Bedrock's liquid detection keeps the water layer (Java's
--- waterlogged property is not a block state on Bedrock, docs/spec/blockstates.md).
+-- waterlogged property is not a block state on Bedrock, docs/spec/blockstates.md). Only a source
+-- waterlogs in Java (a bucket, or the block placed into a source: SimpleWaterloggedBlock#placeLiquid
+-- and getStateForPlacement); flowing water stops at a dry block (canPlaceLiquid is not asked by
+-- spreading flow, FlowingFluid#canHoldFluid). Bedrock's "no_reaction" lets flowing water into the
+-- block; "blocking" stops the flow while the block can still contain water (and a waterlogged one
+-- still flows out).
 modifiers.waterloggable = function (doc)
-    comps(doc)["minecraft:liquid_detection"] = {detection_rules = arr({{liquid_type = "water", can_contain_liquid = true, on_liquid_touches = "no_reaction"}})}
+    comps(doc)["minecraft:liquid_detection"] = {detection_rules = arr({{liquid_type = "water", can_contain_liquid = true, on_liquid_touches = "blocking"}})}
 end
 
 -- TF SnowLoggable: layers 0..8 of snow in the block (SNOW_SHAPE_BY_LAYER: 2 px per layer): snow

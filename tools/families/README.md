@@ -238,3 +238,28 @@ They are vanilla Minecraft's (not TF's) UI strings, taken verbatim from Java Edi
 language files (Mojang's 1.21.1 asset index) for the 29 Bedrock locales; Bedrock's `nb_NO` uses
 Java's `no_no`. Bedrock ships the same short strings under `sign.edit` / `container.chest`. Their
 provenance is recorded here and in the PR that added them (#31) for the licence review.
+
+## Audit round 1
+
+Checked: the world lifecycle of the kit's deferred / scheduled block updates, block event
+registration, and waterlogging against Java's SimpleWaterloggedBlock.
+
+Fixed:
+- The access violation in `detail::clearQueues` (src/feature/families/World.cpp) from the
+  world-closed listener at server stop: the queues live on the heap for the whole process (never
+  destroyed by static destruction), are guarded by a mutex, and a world close only hands the
+  pending work aside; the next tick on the server thread destroys it.
+- `gf::blockevents::ext::add*` / `remove` (src/feature/ext/families/BlockEventsHandles.h): every
+  block event registration with a handle; a removed handler is never called again, its function is
+  destroyed at the next tick (a handler may remove itself). Selftest `families.blockevents`.
+- Waterloggable families: `on_liquid_touches` is `blocking` (was `no_reaction`), so flowing water
+  stops at a dry block as in Java (FlowingFluid#canHoldFluid asks
+  SimpleWaterloggedBlock#canPlaceLiquid, which takes only a source); a bucket or a block placed into
+  a source still waterlogs it. Selftest `families.waterlogging`.
+
+Open:
+- Imported (F1, `tools/import/overrides/woodwork.json`: the hollow logs) and hand-made unit blocks
+  (U5 `rope`, `iron_ladder`, U30 `blue_force_field`, ...) still declare `no_reaction`; their owners
+  should switch to `blocking` the same way.
+- A family block placed into flowing water keeps the flow in its water layer (Java: not
+  waterlogged, getStateForPlacement asks for a source).
