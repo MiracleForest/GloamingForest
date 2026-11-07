@@ -117,6 +117,37 @@ jobs:
           }
           if ($failed) { exit 1 }
 
+      # A7's asset lints on the packs 'Assemble checks' wrote (build/assemble-check). The runner has
+      # no game: the import lint checks vanilla texture paths against the file list of Mojang's
+      # bedrock-samples resource pack (the tree only, no blobs; written as a vanilla/contents.json as the
+      # game has it). That list lacks some sound files the game ships (basalt_deltas clicks, ...), so the
+      # sound lint leaves vanilla sound names unverified there (it checks them against a real game locally).
+      - name: Asset lints (import, sounds)
+        if: matrix.target_type == 'server'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = 'v1.26.50.4'   # bedrock-samples release of the game version the mod targets (1.26.5x)
+          $vanilla = Join-Path $env:RUNNER_TEMP 'bedrock-vanilla'
+          $sha = gh api "repos/Mojang/bedrock-samples/commits/$tag" --jq .sha
+          $tree = gh api "repos/Mojang/bedrock-samples/git/trees/$($sha)?recursive=1" | ConvertFrom-Json
+          if (-not $tree -or $tree.truncated) { Write-Host '::error::could not list bedrock-samples'; exit 1 }
+          $paths = @($tree.tree | Where-Object { $_.type -eq 'blob' -and $_.path -like 'resource_pack/*' } | ForEach-Object { $_.path.Substring(14) })
+          New-Item -ItemType Directory -Force (Join-Path $vanilla 'vanilla') | Out-Null
+          @{ content = @($paths | ForEach-Object { @{ path = $_ } }) } | ConvertTo-Json -Depth 4 -Compress |
+            Set-Content (Join-Path $vanilla 'vanilla/contents.json')
+          Write-Host "bedrock-samples $tag : $($paths.Count) resource pack files"
+          $failed = @()
+          foreach ($c in @(@('tools/import/lint.ps1', '-Vanilla', $vanilla), @('tools/sounds/lint.ps1'))) {
+            Write-Host "::group::pwsh $($c -join ' ')"
+            pwsh -NoProfile -File @c
+            $rc = $LASTEXITCODE
+            Write-Host '::endgroup::'
+            if ($rc) { Write-Host "::error::$($c -join ' ') failed (exit $rc)"; $failed += $c[0] }
+          }
+          if ($failed) { exit 1 }
+
       - name: ARR guard
         if: matrix.target_type == 'server'
         shell: pwsh
