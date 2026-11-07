@@ -26,3 +26,11 @@ if (Test-Path (Join-Path $tf 'src/generated/resources/assets/twilightforest/soun
 } else {
     Write-Step 'tools/sounds/baseline/generate.ps1 -Check skipped (no TF checkout: pwsh tools/tf/fetch.ps1)'
 }
+
+# The sound lint on the mod this run deployed ($ModDir of tools/e2e/server/run.ps1) (tools/sounds/lint.ps1): every TF event in sound_definitions.json with its
+# files, the 9 composed tracks, and the refined / vanilla / baseline count of every owner (reported).
+$lintLog = Join-Path $script:OutDir 'sound-lint.log'
+& pwsh -NoProfile -File (Join-Path $root 'tools/sounds/lint.ps1') -Out $ModDir -Json (Join-Path $script:OutDir 'sound-lint.json') *> $lintLog
+$lintExit = $LASTEXITCODE
+Get-Content $lintLog | ForEach-Object { Write-Step "  $_" }
+if ($lintExit -ne 0) { throw "tools/sounds/lint.ps1 failed (exit $lintExit; see $lintLog)" }
