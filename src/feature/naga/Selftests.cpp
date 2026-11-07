@@ -58,6 +58,10 @@
 #include "mod/Log.h"
 #include "mod/Main.h"
 #include "selftest/SelfTest.h"
+#include <optional>
+#include <utility>
+#include "feature/boss/BossInternal.h"
+#include "feature/gamerules/GameRules.h"
 
 #ifdef GF_CLIENT
 #include "feature/ext/ui/Client.h"
@@ -744,6 +748,7 @@ GF_REGISTER_SELFTEST("naga.death", [](Context& ctx) -> ll::coro::CoroTask<> {
     hurtBossData.clear();
     hurtBossEntity.clear();
     sawScale = sawTrophy = false;
+    gf::feature::boss::resetTestRecords();
     auto         box  = co_await ctx.flatArea(2070, 16);
     auto         home = ctx.testPos(2078, 2);
     auto&        sp   = ctx.spawnPlayer("naga_fight");
@@ -817,6 +822,10 @@ GF_REGISTER_SELFTEST("naga.death", [](Context& ctx) -> ll::coro::CoroTask<> {
         }
     ctx.check(scales >= 6, "the chest holds the naga scales (" + std::to_string(scales) + ")");
     ctx.check(trophies == 1, "the chest holds the naga trophy");
+    // BaseTFBoss#postmortem: LandmarkUtil#markStructureConquered of the courtyard at the home point
+    auto conquest = gf::feature::boss::lastConquest();
+    ctx.check(conquest && conquest->second == kCourtyard && conquest->first.x == home.x && conquest->first.z == home.z,
+              "the Naga's postmortem conquers its home structure key, the naga courtyard, at its home (" + (conquest ? conquest->second : std::string("none")) + ")");
     // progress_naga's criteria (one of them completes it): naga (player_killed_entity of a
     // twilightforest:naga), was_in_fight (hurt_boss of a twilightforest:naga), scale and trophy
     // (inventory_changed with the items). U14's criteria engine grants it; these are its inputs.
@@ -1184,6 +1193,75 @@ GF_REGISTER_SELFTEST("naga.display_courtyard", [](Context& ctx) -> ll::coro::Cor
     ctx.info("courtyard at " + std::to_string(kSiteCx) + " " + std::to_string(kSiteCy) + " " + std::to_string(kSiteCz));
     co_await ctx.ticks(600);
 });
+
+// ---- landmark walk-through (audit A3) ------------------------------------------------------------------
+
+namespace {
+
+/// tfEnforcedProgression for the length of a test.
+struct WalkEnforcedScope {
+    bool previous = false;
+    WalkEnforcedScope() {
+        previous = gf::gamerules::getBool("tfEnforcedProgression");
+        gf::gamerules::set("tfEnforcedProgression", true);
+    }
+    ~WalkEnforcedScope() { gf::gamerules::set("tfEnforcedProgression", previous); }
+};
+
+/// The landmark of a boss against TF's structure record (LandmarkStructure: AdvancementLockConfig,
+/// HintConfig, ConquerableStructure) and what the lock does to a survival player: a start forced far
+/// from the test rows (its chunks never load: nothing is placed) refuses a player without the lock's
+/// advancement inside its protected pieces (ProgressionEvents#isAreaProtected) and lets him in once
+/// he has it. `lock` empty: the landmark has no lock and protects nothing.
+void walkLandmark(Context& ctx, std::string const& key, std::string const& lock, std::string const& hintBook, int farX) {
+    auto const* d = gf::landmark::descriptor(key);
+    ctx.require(d != nullptr, key + " has a descriptor");
+    ctx.check(d->conquerable, key + " is conquerable");
+    if (lock.empty()) ctx.check(d->lockAdvancements.empty(), key + " has no progression lock");
+    else ctx.check(d->lockAdvancements == std::vector<std::string>{lock}, key + " is locked by " + lock + " (" + std::to_string(d->lockAdvancements.size()) + " locks)");
+    ctx.check(d->hintBookKey == (hintBook.empty() ? std::string() : "twilightforest.book." + hintBook), key + "'s hint book (" + d->hintBookKey + ")");
+    WalkEnforcedScope enforced;
+    core::GlobalPos   site{ctx.dimension(), farX, 80, 150007};
+    gf::landmark::ext::ScopedStart forced(key, site);
+    ctx.require(forced && forced->generated, "forced a " + key + " start");
+    auto pieces = gf::landmark::ext::startPieces(*forced);
+    ctx.require(!pieces.empty(), key + " has pieces");
+    auto& sp = ctx.spawnPlayer("gf_walk");
+    sp.setPlayerGameType(GameType::Survival);
+    int protectedPieces = 0, refused = 0;
+    std::optional<BlockPos> probe;
+    for (auto const& p : pieces) {
+        if (!p.protectedPiece) continue;
+        ++protectedPieces;
+        BlockPos c{(p.box.minX + p.box.maxX) / 2, (p.box.minY + p.box.maxY) / 2, (p.box.minZ + p.box.maxZ) / 2};
+        if (gf::landmark::isProtectedFor(sp, c)) {
+            ++refused;
+            if (!probe) probe = c;
+        }
+    }
+    ctx.info(key + ": " + std::to_string(pieces.size()) + " pieces, " + std::to_string(protectedPieces) + " protected, " + std::to_string(refused) +
+             " refuse a player without " + (lock.empty() ? std::string("a lock") : lock));
+    BlockPos outside{forced->box.maxX + 40, forced->center.y, forced->box.maxZ + 40};
+    ctx.check(!gf::landmark::isProtectedFor(sp, outside), "nothing is protected outside the start");
+    if (lock.empty()) {
+        ctx.check(refused == 0, key + " protects nothing");
+        return;
+    }
+    ctx.check(protectedPieces > 0 && refused > 0, key + "'s protected pieces refuse a player without " + lock);
+    if (!probe) return;
+    gf::progression::grant(sp, lock);
+    ctx.check(!gf::landmark::isProtectedFor(sp, *probe), "with " + lock + " the landmark is open");
+    gf::progression::revoke(sp, lock);
+    ctx.check(gf::landmark::isProtectedFor(sp, *probe), "without it the landmark is locked again");
+    sp.setPlayerGameType(GameType::Creative);
+    ctx.check(!gf::landmark::isProtectedFor(sp, *probe), "creative players are never refused");
+}
+
+} // namespace
+
+// The naga courtyard against TF's NagaCourtyardStructure record: no progression lock, no hint,
+// conquerable; it protects nothing.
+GF_REGISTER_SELFTEST("naga.landmark_walk", [](Context& ctx) { walkLandmark(ctx, kCourtyard, "", "", 150007); });
 
 } // namespace gf::feature::naga::tests
 
