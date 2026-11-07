@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "gloamingforest:camp/tent/open_tent",
+  "id": "twilightforest:camp/tent/open_tent",
   "size": [5, 4, 5],
   "palette": [
     {"Name":"minecraft:structure_void"},
@@ -21,6 +21,6 @@
     {"pos":[3,0,1],"marker":"data","data":{"metadata":"tent_pot@west"}}
   ],
   "jigsaw": [
-    {"pos":[2,0,0],"front":"north","top":"up","pool":"minecraft:empty","name":"gloamingforest:camp/tent","target":""}
+    {"pos":[2,0,0],"front":"north","top":"up","pool":"minecraft:empty","name":"twilightforest:camp/tent","target":""}
   ]
 }
