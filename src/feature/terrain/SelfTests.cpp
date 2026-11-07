@@ -684,7 +684,11 @@ GF_REGISTER_SELFTEST("terrain.canopy_avoid", [](Context& ctx) {
         ctx.check(chunkReferences(center.dim, center.x >> 4, center.z >> 4, {kOpen}), "a valid start is a reference of its chunk");
         ctx.check(!chunkReferences(center.dim, center.x >> 4, center.z >> 4, {kTower}), "only the listed structures count");
     }
-    core::GlobalPos towerAt{row.dim, center.x + 160, 64, center.z};
+    // the tower on the landmark grid's center nearest to a chunk 10 chunks east, as every real landmark
+    // is: the canopy clears the circle around LegacyLandmarkPlacements#getNearestCenterXZ, not around
+    // the start, so a start off the grid kept its canopy (the test then hung on the world's spawn)
+    auto            grid = core::landmark::nearestCenter((center.x + 160) >> 4, center.z >> 4);
+    core::GlobalPos towerAt{row.dim, grid.x, 64, grid.z};
     gf::landmark::ext::ScopedStart tower(kTower, towerAt);
     ctx.require(static_cast<bool>(tower), "F6 forced a dark tower start");
     int  tcx = towerAt.x >> 4, tcz = towerAt.z >> 4;
