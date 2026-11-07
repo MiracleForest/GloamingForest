@@ -81,6 +81,7 @@
 #include "feature/ext/armory/ArmorHooks.h"
 #include "feature/ext/item/Item.h"
 #include "feature/ext/item/Recipes.h"
+#include "feature/ext/provisions/Provisions.h"
 #include "feature/fx/Fx.h"
 #include "feature/item/Item.h"
 #include "feature/loot/Loot.h"
@@ -221,13 +222,9 @@ bool wearsFreezeImmune(Actor const& a) {
     return false;
 }
 
-/// ApplyFrostedEffect#doChillAuraEffect.
-void chill(Mob& victim, int duration, int amplifier, bool shouldHit) {
-    if (!shouldHit || gf::tags::has(gf::tags::Registry::EntityType, "minecraft:freeze_immune_entity_types", victim.getTypeName())) return;
-    if (wearsFreezeImmune(victim)) return;
-    if (victim.isPlayer() && static_cast<Player&>(victim).isCreative()) return;
-    gf::effects::apply(victim, ids::kFrosted, duration, amplifier);
-}
+/// ApplyFrostedEffect#doChillAuraEffect: U10's frosted helper (its immunities: freeze immune
+/// entity types, #freeze_immune_wearables worn, creative players).
+void chill(Mob& victim, int duration, int amplifier, bool shouldHit) { (void)gf::provisions::ext::doChillAuraEffect(victim, duration, amplifier, shouldHit); }
 
 void onDealt(combat::DamageInfo const& d) {
     // Java: getOriginalDamage() > 0; the handlers only hear about damage that applied (the health
