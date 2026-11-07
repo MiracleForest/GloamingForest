@@ -250,10 +250,19 @@ ll::coro::CoroTask<> placeAll(Context& ctx, int dx, std::string name, std::vecto
     // reach below what flatArea restores, and roots or holes an earlier run or test left there stop or
     // redirect the mangrove's roots (#tree_roots_skip, canRootGrowIn) and shift every later draw
     if (auto* region = ctx.region()) resetGround(*region, box.minX, box.minZ, box.maxX, box.maxZ, box.minY - 1);
+    auto cellPos = [&](std::size_t i) {
+        int cx = static_cast<int>(i % 4), cz = static_cast<int>(i / 4);
+        return BlockPos{box.minX + 18 + cx * 36, box.minY, box.minZ + 18 + cz * 36};
+    };
+    // every cell's chunks first, then the placements and the comparison in one tick: a tree reaching
+    // into a neighbouring cell's tree changes its leaves' neighbours, and F11's neighbour update
+    // (Java LeavesBlock.updateShape, scheduled one tick later) computes the true distance of a leaf
+    // TF's updateLeaves left at "not computed" (Java keeps 7: world generation sends no shape
+    // updates). Waiting for a later cell's chunks between placements let that tick run first in
+    // loaded full runs (`mega_canopy_tree ... Java distance 7, here 2` next to forest_mega_oak_tree)
+    for (std::size_t i = 0; i < ids.size(); ++i) co_await ctx.ensureLoaded(game::globalPos(ctx.dimension(), cellPos(i)));
     for (std::size_t i = 0; i < ids.size(); ++i) {
-        int      cx  = static_cast<int>(i % 4), cz = static_cast<int>(i / 4);
-        BlockPos pos{box.minX + 18 + cx * 36, box.minY, box.minZ + 18 + cz * 36};
-        co_await ctx.ensureLoaded(game::globalPos(ctx.dimension(), pos));
+        BlockPos pos = cellPos(i);
         if (ids[i].ends_with("time_tree") && ctx.region()) pos = pedestal(*ctx.region(), pos);
         bool ok = placeSeeded(ctx, ids[i], pos, 1234 + static_cast<std::int64_t>(i));
         ctx.check(ok, ids[i] + " placed");
