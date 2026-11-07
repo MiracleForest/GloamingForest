@@ -42,7 +42,8 @@
           "render_method": "alpha_test"
         }
       },
-      "minecraft:light_dampening": 0
+      "minecraft:light_dampening": 0,
+      "minecraft:loot": "loot_tables/empty.json"
     }
   }
 }

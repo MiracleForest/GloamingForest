@@ -568,7 +568,10 @@ void setTomeOnLectern(Actor& tome, bool on, BlockPos const* seat) {
     }
     lecterns()[uidOf(tome)]      = on;
     ge::data(tome, "on_lectern") = on;
-    ge::setProperty(tome, "gf:on_lectern", on); // the BP's gf:lectern group keeps it persistent (isPersistenceRequired)
+    // the BP's gf:lectern group: no AI while seated; its gf:persistent group (added with it, never
+    // removed): LichTowerWingRoom's tomeMimic.setPersistenceRequired(), for good
+    ge::setProperty(tome, "gf:on_lectern", on);
+    if (on) tome.setPersistent();
 }
 
 int risingTicks(Actor const& zombie) {

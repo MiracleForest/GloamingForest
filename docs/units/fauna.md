@@ -54,3 +54,9 @@ spawn sweep (`hostiles.spawn_sweep`, `hostiles.mob_assets`) covers the ten fauna
   The kobold and the mosquito swarm leave on Peaceful (Monster#shouldDespawnInPeaceful; Bedrock kept
   them), with the selftest `fauna.peaceful`.
 - **Still open**: none found beyond the Bedrock limits above.
+
+## Audit round 2
+
+Sounds (W2 round 2, audio pass). Checked with `tools/sounds/lint.ps1` on the assembled pack (`tools/assemble.ps1 -Check`): before this round 26 of this unit's sound events still played F3's name-derived baseline placeholder. Deer, kobold, mosquito, penguin, raven, squirrel and tiny bird events are refined; the parrot imitations play the imitated owners' events (aliases: 10 events of caves, darktower, lich, hostiles, hydra, aurora, labyrinth and naga in `assets/gen/audio/fauna/aliases.json`); 8 of the imitations were baseline only because the owners' events were, and they follow this round's hostiles, caves, naga and aurora refinements; the alias copies were refreshed by rendering fauna after every other owner (`synth.ps1 -Unit fauna` again whenever one of those owners changes its event). `tools/sounds/recipes/fauna.json` now designs every one of them (original synthesized sounds, unit-local patches layered from the shared library; TF's audio never read; ids, subtitles, categories, volumes, pitches and variant counts unchanged), rendered with `pwsh tools/sounds/synth.ps1 -Unit fauna` into `assets/gen/audio/fauna/`. `synth.ps1 -Check` and `lint.ps1` pass; with the other round-2 audio PRs (one per owning unit) the lint reports 0 baseline-only events for the whole pack.
+
+Open: nothing for audio.

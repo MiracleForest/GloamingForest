@@ -174,6 +174,21 @@ std::vector<std::array<Vec3f, 4>> voidPlateQuads() {
     return out;
 }
 
+bool underVoidPlate(Vec3f dir) {
+    if (!(dir.y < 0.0f)) return false;
+    float const horiz = std::hypot(dir.x, dir.z);
+    if (horiz == 0.0f) return true; // straight down: the fan's centre
+    // where the ray meets y -4, horizontally; the octagon (corners at multiples of 45 degrees, radius
+    // 512) reaches 512 * cos(22.5) / cos(angle from the nearest edge's middle) in that direction
+    float const h   = 4.0f * horiz / -dir.y;
+    double      a   = std::atan2(static_cast<double>(dir.z), static_cast<double>(-dir.x)); // voidPlateQuads: x = -512 cos a, z = 512 sin a
+    double const s  = std::numbers::pi / 4.0;
+    double       m  = std::fmod(a, s);
+    if (m < 0.0) m += s;
+    double const rim = 512.0 * std::cos(s / 2.0) / std::cos(m - s / 2.0);
+    return h <= rim;
+}
+
 std::vector<std::array<FoggedVertex, 4>> voidPlateFogged(float fogStart, float fogEnd, int rings) {
     rings = std::max(rings, 1);
     std::vector<std::array<FoggedVertex, 4>> out;

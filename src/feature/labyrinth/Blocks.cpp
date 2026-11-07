@@ -23,8 +23,16 @@
 #include <unordered_map>
 
 #include "mc/deps/core/math/Vec3.h"
+#include "mc/platform/UUID.h"
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/player/Player.h"
+#include "mc/world/attribute/AttributeInstance.h"
+#include "mc/world/attribute/AttributeInstanceRef.h"
+#include "mc/world/attribute/AttributeModifier.h"
+#include "mc/world/attribute/AttributeModifierOperation.h"
+#include "mc/world/attribute/AttributeOperands.h"
+#include "mc/world/attribute/MutableAttributeWithContext.h"
+#include "mc/world/attribute/SharedAttributes.h"
 #include "mc/world/item/Item.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
@@ -34,6 +42,7 @@
 
 #include "ll/api/service/Bedrock.h"
 
+#include "core/labyrinth/Terraformer.h"
 #include "feature/combat/Combat.h"
 #include "feature/common/Interactions.h"
 #include "feature/ext/labyrinth/W0Internals.h"
@@ -84,6 +93,34 @@ bool onMazeSlime(Actor& a) { return gf::game::blockIdAt(a.getDimensionBlockSourc
 /// Entity#isSuppressingBounce / isSteppingCarefully: a sneaking player.
 bool suppressingBounce(Actor const& a) { return a.isPlayer() && a.isSneaking(); }
 
+// SlimeBlock#stepOn for vanilla players: their movement is their client's, so the server cannot
+// multiply their speed each tick; while one walks on the block (on the ground, not sneaking) its
+// movement speed gets a multiply-total modifier with the same steady speed (slimeStepSpeedFactor of
+// the block's friction 0.8, which the BP's minecraft:friction 0.2 already gives the client).
+// Companions slow themselves (src/client/labyrinth). The modifier is not saved with the player and
+// is read back from the attribute every tick (no cache that something else's modifier reset could
+// leave stale).
+constexpr char const* kSlowName = "twilightforest:maze_slime_step";
+
+void setSlowed(Player& p, bool want) {
+    auto  attr = p.getMutableAttribute(SharedAttributes::MOVEMENT_SPEED());
+    auto* inst = attr.mInstance->mPtr;
+    if (!inst) return;
+    auto uuid = mce::UUID::fromStringHash(kSlowName);
+    bool has  = false;
+    for (auto const& m : inst->getModifiers())
+        if (m.mId == uuid) has = true;
+    if (has == want) return;
+    if (!want) {
+        inst->removeModifier(uuid, attr.mContext);
+        return;
+    }
+    float factor = gf::core::labyrinth::slimeStepSpeedFactor(0.8F);
+    AttributeModifier mod(uuid, kSlowName, factor - 1.0F, AttributeModifierOperation::OperationMultiplyTotal,
+                          AttributeOperands::OperandCurrent, false);
+    inst->addModifier(mod, attr.mContext);
+}
+
 } // namespace
 
 bool damagesTool(std::string const& itemId, ItemStack const& stack) {
@@ -128,11 +165,17 @@ void install() {
                 f.dx = pos.x - f.lastX;
                 f.dy = pos.y - f.lastY;
                 f.dz = pos.z - f.lastZ;
+                // a teleport is no fall: faster than Java's terminal speed (about 3.92 a tick)
+                if (f.dy < -4.0) f.dx = f.dy = f.dz = 0.0;
             }
             f.lastX = pos.x;
             f.lastY = pos.y;
             f.lastZ = pos.z;
             f.known = true;
+            // stepOn's slowdown for vanilla players (companions: their client)
+            bool want = !gf::net::isCompanion(p) && p.isAlive() && p.isOnGround() && !suppressingBounce(p) &&
+                        onMazeSlime(p);
+            setSlowed(p, want);
             return true;
         }));
         if (falls().size() > 512) falls().clear();

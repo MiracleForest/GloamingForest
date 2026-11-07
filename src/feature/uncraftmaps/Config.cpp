@@ -16,10 +16,12 @@
 #include "ll/api/service/Bedrock.h"
 
 #include "mc/world/actor/player/Player.h"
+#include "mc/world/item/ItemStack.h"
 #include "mc/world/level/Level.h"
 
 #include "feature/ext/item/Recipes.h"
 #include "feature/net/Net.h"
+#include "game/Items.h"
 #include "mod/Config.h"
 #include "mod/Log.h"
 #include "mod/Module.h"
@@ -106,6 +108,17 @@ public:
         // UncraftingTableCondition (recipe condition of twilightforest:uncrafting_table):
         // !TFConfig.disableEntireTable
         recipes::ext::registerCondition("twilightforest:uncrafting_table_enabled", [](nlohmann::json const&) { return !config().disableUncraftingTable; });
+        // The same condition on the table's own BP crafting recipe (Bedrock loads it whatever the
+        // config): a special crafting gate over that layout refuses the craft while the table is
+        // disabled and crafts the recipe's own result otherwise
+        recipes::registerSpecialCrafting(
+            "twilightforest:uncrafting_table_enabled_gate", [](recipes::CraftingGrid const&) { return !config().disableUncraftingTable; },
+            [](recipes::CraftingGrid const&) {
+                auto s = game::items::make("twilightforest:uncrafting_table", 1);
+                return s ? *s : ItemStack{};
+            }
+        );
+        recipes::ext::addSpecialLayout("twilightforest:uncrafting_table_enabled_gate", "twilightforest:uncrafting_table");
     }
     void uninstall() {}
 };

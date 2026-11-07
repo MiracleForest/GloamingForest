@@ -28,7 +28,6 @@
       "minecraft:breathable": { "total_supply": 15, "suffocate_time": 0 },
       "minecraft:nameable": {},
       "minecraft:persistent": {},
-      "minecraft:fire_immune": false,
       "minecraft:experience_reward": { "on_death": "query.last_hit_by_player ? 317 : 0" },
       "minecraft:rideable": {
         "seat_count": 1,
@@ -41,6 +40,10 @@
       "minecraft:behavior.random_look_around": { "priority": 7 },
       "minecraft:behavior.hurt_by_target": { "priority": 1 },
       "minecraft:conditional_bandwidth_optimization": {}
+    },
+    "events": {
+      "gf:show_rampage": { "set_property": { "twilightforest:rampaging": true } },
+      "gf:show_tired": { "set_property": { "twilightforest:tired": true } }
     }
   }
 }

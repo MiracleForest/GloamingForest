@@ -33,6 +33,7 @@
 #include "feature/landmark/Landmark.h"
 #include "feature/net/Net.h"
 #include "feature/recipes/Recipes.h"
+#include "feature/recipes/RecipesInternal.h"
 #include "feature/tags/Tags.h"
 #include "feature/uncraftmaps/Config.h"
 #include "feature/uncraftmaps/Maps.h"
@@ -549,6 +550,85 @@ GF_REGISTER_SELFTEST("uncraftmaps.fixture_map", [](Context& ctx) {
         return true;
     });
     ctx.info("magic map given to " + std::to_string(given) + " real player(s)");
+});
+
+// The vanilla form's repair: a half-broken iron pickaxe and two iron ingots in the inventory fill the
+// two broken parts over the ghost recipe (TF's combined grid) and give a new pickaxe for the
+// recrafting levels; without the ingots there is nothing to repair with.
+GF_REGISTER_SELFTEST("uncraftmaps.form_repair", [](Context& ctx) {
+    auto& p   = ctx.player();
+    auto& inv = p.getInventory();
+    auto cleanup = [&] {
+        for (int i = 0; i < 36; ++i) inv.setItem(i, ItemStack{});
+        p.sendInventory(false);
+        setLevels(p, 0);
+    };
+    cleanup();
+    auto pick = make(ctx, "minecraft:iron_pickaxe");
+    pick.setDamageValue(125);
+    enchant::set(pick, "minecraft:efficiency", 2);
+    inv.setItem(0, pick);
+    std::string why;
+    ctx.check(!repairInSlot(p, 0, {}, &why), "no iron in the inventory: no repair");
+    ctx.check(items::idOf(inv.getItem(0)) == "minecraft:iron_pickaxe" && inv.getItem(0).getDamageValue() == 125, "the pickaxe is untouched");
+    inv.setItem(1, make(ctx, "minecraft:iron_ingot", 3));
+    int cost = -1;
+    {
+        MenuState st;
+        Menu      m(p, st);
+        st.input  = ItemStack(inv.getItem(0));
+        m.slotsChanged(Menu::Changed::Input);
+        auto plan = planRepair(p, 0, st, m);
+        ctx.check(plan.has_value(), "the two broken parts can be filled from the inventory");
+        if (!plan) return cleanup();
+        ctx.check(plan->fromSlot[0] == 1 && plan->fromSlot[1] == 1 && plan->fromSlot[2] == -1, "the broken parts come from the ingot stack");
+        ctx.check(items::idOf(plan->result) == "minecraft:iron_pickaxe" && plan->result.getDamageValue() == 0, "the result is a new iron pickaxe");
+        ctx.check(enchant::level(plan->result, "minecraft:efficiency") == 2, "it keeps the enchantment");
+        cost = plan->cost;
+    }
+    ctx.check(cost > 0, "repairing costs levels (" + std::to_string(cost) + ")");
+    setLevels(p, cost > 0 ? cost - 1 : 0);
+    ctx.check(!repairInSlot(p, 0, {}, &why), "too few levels: no repair");
+    {
+        int back = 0;
+        for (int i = 0; i < 36; ++i)
+            if (items::idOf(inv.getItem(i)) == "minecraft:iron_ingot") back += items::countOf(inv.getItem(i));
+        ctx.check(back == 3, "the ingots came back (" + std::to_string(back) + ")");
+    }
+    setLevels(p, cost);
+    ctx.check(repairInSlot(p, 0, {}, &why), "the repair is taken (" + why + ")");
+    int iron = 0, picks = 0, fresh = 0;
+    for (int i = 0; i < 36; ++i) {
+        auto const& s = inv.getItem(i);
+        if (items::idOf(s) == "minecraft:iron_ingot") iron += items::countOf(s);
+        if (items::idOf(s) == "minecraft:iron_pickaxe") {
+            ++picks;
+            if (s.getDamageValue() == 0 && enchant::level(s, "minecraft:efficiency") == 2) ++fresh;
+        }
+    }
+    ctx.check(iron == 1, "two ingots were used (" + std::to_string(iron) + " left)");
+    ctx.check(picks == 1 && fresh == 1, "the damaged pickaxe became a new enchanted one");
+    ctx.check(levelsOf(p) == 0, "the levels were charged (" + std::to_string(levelsOf(p)) + " left)");
+    cleanup();
+});
+
+// TF's UncraftingTableCondition on the table's own recipe: the crafting table refuses it while the
+// table is disabled.
+GF_REGISTER_SELFTEST("uncraftmaps.table_recipe_gate", [](Context& ctx) {
+    auto focus = make(ctx, "twilightforest:maze_map_focus");
+    auto table = make(ctx, "minecraft:crafting_table");
+    recipes::CraftingGrid grid;
+    for (int i = 0; i < 9; ++i) grid.slots.push_back(i == 4 ? &focus : &table);
+    bool refused = false;
+    auto id      = recipes::internal::resolveSpecial("twilightforest:uncrafting_table", "twilightforest:uncrafting_table", grid, &refused);
+    ctx.check(!refused && !id.empty(), "the table crafts while enabled");
+    auto out = recipes::internal::assembleSpecial(id, grid);
+    ctx.check(out && items::idOf(*out) == "twilightforest:uncrafting_table" && items::countOf(*out) == 1, "one uncrafting table");
+    UncraftmapsConfig c;
+    c.disableUncraftingTable = true;
+    ScopedConfig scoped(c);
+    (void)recipes::internal::resolveSpecial("twilightforest:uncrafting_table", "twilightforest:uncrafting_table", grid, &refused);
+    ctx.check(refused, "the craft is refused while the table is disabled");
 });
 
 } // namespace gf::feature::uncraftmaps

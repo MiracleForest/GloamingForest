@@ -20,6 +20,12 @@
           "death": "entity.twilightforest.minoshroom.death",
           "step": { "sound": "entity.twilightforest.minoshroom.step", "volume": 0.15, "pitch": 0.8 }
         }
+      },
+      "twilightforest:maze_slime": {
+        "events": {
+          "hurt": "",
+          "death": ""
+        }
       }
     }
   }

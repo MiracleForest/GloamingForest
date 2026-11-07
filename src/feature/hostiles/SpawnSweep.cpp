@@ -110,8 +110,6 @@ std::map<std::string, std::string, std::less<>> const& known() {
         {"twilightforest:roving_cube|sound.death", "U30: Monster default entity.hostile.death"},
         {"twilightforest:plateau_boss|sound.hurt", "U30: Monster default entity.hostile.hurt"},
         {"twilightforest:plateau_boss|sound.death", "U30: Monster default entity.hostile.death"},
-        {"twilightforest:lower_goblin_knight|sound.hurt", "U25: Monster default entity.hostile.hurt (ambient too: muffled by hasArmor)"},
-        {"twilightforest:lower_goblin_knight|sound.death", "U25: GOBLIN_KNIGHT_(MUFFLED_)DEATH by hasArmor"},
         {"twilightforest:maze_slime|sound.hurt", "U23: MAZE_SLIME_HURT(_SMALL) by size"},
         {"twilightforest:maze_slime|sound.death", "U23: MAZE_SLIME_DEATH(_SMALL) by size"},
         {"twilightforest:unstable_ice_core|sound.death", "U28: BaseIceMob keeps Monster's entity.hostile.death"},

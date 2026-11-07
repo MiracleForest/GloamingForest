@@ -497,6 +497,14 @@ GF_REGISTER_SELFTEST("labyrinth.slime_block", [](Context& ctx) -> ll::coro::Coro
     float before = p.getHealth();
     bool  hurt   = gf::combat::hurt(p, 6.0f, "minecraft:fall");
     ctx.check(!hurt && std::abs(ctx.player().getHealth() - before) < 0.01f, "no fall damage on a maze slime block");
+    // SlimeBlock#stepOn for a vanilla player (the SimulatedPlayer): a movement speed modifier while it
+    // stands on the block (read on a tick it is on the ground there; it may still bounce after landing)
+    float onBlock = -1.0f;
+    for (int t = 0, grounded = 0; t < 60 && onBlock < 0.0f; ++t) {
+        co_await ctx.ticks(1);
+        grounded = ctx.player().isOnGround() ? grounded + 1 : 0;
+        if (grounded >= 3) onBlock = attr(ctx.player(), SharedAttributes::MOVEMENT_SPEED());
+    }
     // SlimeBlock#bounceUp: a living entity keeps its speed, others lose a fifth
     ctx.check(std::abs(blocks::bounceSpeed(-0.8, true) - 0.8) < 1e-9 && std::abs(blocks::bounceSpeed(-0.5, false) - 0.4) < 1e-9 && blocks::bounceSpeed(0.3, true) == 0.0,
               "the bounce speed");
@@ -520,6 +528,12 @@ GF_REGISTER_SELFTEST("labyrinth.slime_block", [](Context& ctx) -> ll::coro::Coro
         ctx.check(landed && peak > 1.0f, "a mob bounces on a maze slime block");
         if (auto* m = mobById(uid)) m->remove();
     } else ctx.fail("a pig spawns");
+    {
+        float off    = attr(ctx.player(), SharedAttributes::MOVEMENT_SPEED());
+        float factor = core::labyrinth::slimeStepSpeedFactor(0.8F);
+        ctx.info("movement speed on the block " + std::to_string(onBlock) + ", off it " + std::to_string(off));
+        ctx.check(off > 0.0f && std::abs(onBlock - off * factor) < 0.002f, "a vanilla player walks slowed on a maze slime block (stepOn)");
+    }
     // the sticky piston and the other maze slime recipes are loaded
     ctx.check(gf::recipes::byId("twilightforest:compressed_blocks/maze_slime") != nullptr, "maze slime block recipe");
     ctx.check(gf::recipes::byId("twilightforest:sticky_piston_maze_ver") != nullptr, "sticky piston recipe");
@@ -781,6 +795,44 @@ GF_REGISTER_SELFTEST("labyrinth.gauntlet", [](Context& ctx) -> ll::coro::CoroTas
     ctx.check(triggers["twilightforest:hurt_boss"] >= 1, "hurt_boss fired");
     ctx.cleanupBlock(*chest);
     discardAround(spawner, 16.0f);
+    (void)box;
+});
+
+// The real conquest (BaseTFBoss#postmortem -> LandmarkUtil#markStructureConquered): a labyrinth start
+// forced far from the test rows (its chunks never load: nothing is placed), the Minoshroom spawned in
+// the test area with its home point at the start's center, killed: the start is conquered. The death
+// chest belongs to the home point's unloaded chunk, so the dying record is dropped without it
+// (labyrinth.gauntlet checks the chest).
+GF_REGISTER_SELFTEST("labyrinth.conquest", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope easy(Difficulty::Easy);
+    gf::feature::boss::resetTestRecords();
+    auto            box  = co_await ctx.flatArea(2340, 12);
+    auto            at   = ctx.testPos(2346, 2).offset(0, 1, 0);
+    core::GlobalPos site{ctx.dimension(), 152340, 80, 160007};
+    (void)gf::landmark::ext::forgetStartForTest(site, maze::kLabyrinth);
+    std::optional<gf::landmark::ext::ScopedStart> forced;
+    forced.emplace(maze::kLabyrinth, site);
+    ctx.require(*forced && (*forced)->generated, "forced a labyrinth start");
+    auto home  = (*forced)->center;
+    auto start = gf::landmark::startAt(home.dim, game::blockPos(home));
+    ctx.require(start.has_value() && start->key == maze::kLabyrinth, "the home point is inside the labyrinth start");
+    ctx.check(!gf::landmark::isConquered(*start), "the labyrinth is not conquered before the fight");
+    auto* m = spawnAt(at, mobs::kMinoshroom);
+    ctx.require(m != nullptr, "a Minoshroom");
+    auto uid = m->getOrCreateUniqueID().rawID;
+    gf::entity::setHome(*m, home, 20);
+    co_await ctx.ticks(2);
+    m = mobById(uid);
+    ctx.require(m != nullptr, "the Minoshroom ticks");
+    m->kill();
+    co_await ctx.ticks(2);
+    gf::feature::boss::dropDyingForTest(uid);
+    auto after = gf::landmark::startAt(home.dim, game::blockPos(home));
+    ctx.check(after.has_value() && gf::landmark::isConquered(*after), "the Minoshroom's death conquered the labyrinth");
+    ctx.check(gf::feature::boss::lastConquestFound(), "and the boss kit found the start");
+    if (auto* a = fe::actorById(uid)) a->remove();
+    forced.reset();
+    discardAround(at, 12.0f);
     (void)box;
 });
 

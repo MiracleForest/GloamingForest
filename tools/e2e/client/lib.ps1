@@ -1546,6 +1546,11 @@ function Start-LogSession {
     $script:ClientScreen = $null
     $script:LogLines.Clear(); $script:LogTail = ''; $script:LogDecoder = [Text.Encoding]::UTF8.GetDecoder()
     $script:LogPos = if (Test-Path $script:LogFile) { (Get-Item $script:LogFile).Length } else { 0L }
+    # The host's log is the run's (one BDS for every game session): a new session reads it from the
+    # start again, as the first one did. Otherwise a relaunch (a remote join that timed out) lost
+    # the host lines read before it, and a scenario's wait for the host's "world ready" (printed
+    # before the first launch) timed out (ui, tgear remote-vanilla). Joins wait from a mark.
+    $script:HostLogPos = 0L; $script:HostTail = ''
 }
 
 # Remote modes: the BDS console log (tools/e2e/server/out/client-host-<unit>/server.log) is merged into

@@ -144,6 +144,13 @@ TEST(Labyrinth, MobRules) {
     EXPECT_EQ(mazeSlimeSize(2, true), 4);
 }
 
+TEST(Labyrinth, SlimeStepSpeedFactor) {
+    // the slime block's friction 0.8: k 0.728, stepOn 0.41568 -> 0.272 / 0.69738
+    EXPECT_NEAR(slimeStepSpeedFactor(0.8F), 0.272 / (1.0 - 0.728 * 0.41568), 1e-5);
+    EXPECT_GT(slimeStepSpeedFactor(0.8F), 0.38F);
+    EXPECT_LT(slimeStepSpeedFactor(0.8F), 0.40F);
+}
+
 TEST(Labyrinth, MobsMatchJavaGoldens) {
     auto const golden = load(gf::tests::golden::goldenDir() / "mobs.json");
     ASSERT_TRUE(golden.contains("entities"));

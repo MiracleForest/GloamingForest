@@ -47,6 +47,7 @@
 #include "feature/ext/entity/EntityExt.h"
 #include "feature/ext/entity/Handles.h"
 #include "feature/net/Net.h"
+#include "feature/ext/entity/World.h"
 #include "game/Blocks.h"
 #include "game/WorldDb.h"
 #include "mod/Log.h"
@@ -1077,6 +1078,83 @@ GF_REGISTER_SELFTEST("entity.persist_read", [](Context& ctx) -> ll::coro::CoroTa
     ctx.check(h && h->pos == at && h->radius == 7, "the marker's home came back from the save");
     if (seen == nonce && ctx.failures().empty()) ctx.info("persist marker verified nonce=" + std::to_string(nonce));
     marker->remove();
+});
+
+
+// Monster#shouldDespawnInPeaceful through the kit: every non-boss TF monster is marked, bosses and
+// the loyal zombie are not; a marked type is removed at its first tick on Peaceful (no death) and
+// kept on Easy
+GF_REGISTER_SELFTEST("entity.peaceful", [](Context& ctx) -> ll::coro::CoroTask<> {
+    for (auto const* id : {"twilightforest:redcap", "twilightforest:hostile_wolf", "twilightforest:carminite_ghastguard",
+                           "twilightforest:kobold", "twilightforest:yeti", "twilightforest:wraith"})
+        ctx.check(ge::ext::despawnsInPeaceful(id), std::string(id) + " leaves on Peaceful");
+    for (auto const* id : {"twilightforest:naga", "twilightforest:alpha_yeti", "twilightforest:loyal_zombie", "twilightforest:boar",
+                           "twilightforest:penguin"})
+        ctx.check(!ge::ext::despawnsInPeaceful(id), std::string(id) + " stays on Peaceful (boss kit / not a monster)");
+    struct Unmark {
+        ~Unmark() { ge::ext::setDespawnInPeaceful("gf_test:boss", false); }
+    } unmark;
+    ge::ext::setDespawnInPeaceful("gf_test:boss", true);
+    ctx.check(ge::ext::despawnsInPeaceful("gf_test:boss"), "a unit can mark a type");
+    DifficultyScope scope(Difficulty::Easy);
+    auto            at   = ctx.testPos(5878, 2);
+    auto*           kept = spawnMob(at, "gf_test:boss");
+    ctx.require(kept != nullptr, "the fixture spawns on Easy");
+    auto keptId = uidOf(*kept);
+    co_await ctx.ticks(3);
+    ctx.check(mobById(keptId) != nullptr, "a marked mob stays on Easy");
+    scope.set(Difficulty::Peaceful);
+    co_await ctx.ticks(3);
+    auto* gone = mobById(keptId);
+    ctx.check(gone == nullptr || !gone->isAlive(), "a marked mob leaves on Peaceful");
+    if (gone) gone->remove();
+    ge::ext::setDespawnInPeaceful("gf_test:boss", false);
+    auto* stays = spawnMob(at, "gf_test:boss");
+    ctx.require(stays != nullptr, "the fixture spawns");
+    auto staysId = uidOf(*stays);
+    co_await ctx.ticks(3);
+    ctx.check(mobById(staysId) != nullptr, "an unmarked type stays on Peaceful");
+    removeActor(staysId);
+});
+
+// EntityUtil#canDestroyBlock (SpareContainers) and ChargeAttackGoal's "no block entity" rule
+// (SpareBlockEntities), and destroyBlocks over a box
+GF_REGISTER_SELFTEST("entity.block_breaking", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto box    = co_await ctx.flatArea(5880, 6);
+    auto at     = ctx.testPos(5880, 1).offset(0, 1, 0);
+    auto region = ctx.region();
+    ctx.require(region != nullptr, "the test dimension");
+    auto place = [&](int dx, char const* id) {
+        auto p = at.offset(dx, 0, 0);
+        ctx.require(ctx.setBlock(p, id), std::string("place ") + id);
+        return game::blockPos(p);
+    };
+    auto stone   = place(0, "minecraft:stone");
+    auto chest   = place(1, "minecraft:chest");
+    auto sign    = place(2, "minecraft:standing_sign");
+    auto bedrock = place(3, "minecraft:bedrock");
+    auto tfChest = place(4, "twilightforest:twilight_oak_chest");
+    auto jar     = place(5, "twilightforest:firefly_jar");
+    BlockPos air{stone.x, stone.y + 1, stone.z};
+    using R = ge::ext::BreakRule;
+    ctx.check(ge::ext::canDestroyBlock(*region, stone, R::SpareContainers), "stone breaks");
+    ctx.check(!ge::ext::canDestroyBlock(*region, air, R::SpareContainers), "air never");
+    ctx.check(!ge::ext::canDestroyBlock(*region, bedrock, R::SpareContainers), "bedrock never (hardness < 0)");
+    ctx.check(!ge::ext::canDestroyBlock(*region, chest, R::SpareContainers), "a container is spared");
+    ctx.check(ge::ext::canDestroyBlock(*region, sign, R::SpareContainers), "a sign breaks (not a Container)");
+    ctx.check(!ge::ext::canDestroyBlock(*region, sign, R::SpareBlockEntities), "the charge spares a sign (a block entity)");
+    ctx.check(!ge::ext::canDestroyBlock(*region, tfChest, R::SpareContainers), "a TF chest is spared (gf::inventory container)");
+    ctx.check(ge::ext::canDestroyBlock(*region, jar, R::SpareContainers), "a firefly jar breaks for the hydra (no Container)");
+    ctx.check(!ge::ext::canDestroyBlock(*region, jar, R::SpareBlockEntities), "the charge spares a firefly jar (Java block entity)");
+    int broken = ge::ext::destroyBlocks(*region, stone, BlockPos{jar.x, jar.y, jar.z}, R::SpareBlockEntities, false);
+    ctx.check(broken == 1, "the charge breaks only the stone (" + std::to_string(broken) + ")");
+    ctx.check(ctx.blockAt(at) == "minecraft:air", "the stone is gone: " + ctx.blockAt(at));
+    ctx.check(ctx.blockAt(at.offset(2, 0, 0)) == "minecraft:standing_sign", "the sign stays");
+    broken = ge::ext::destroyBlocks(*region, stone, BlockPos{jar.x, jar.y, jar.z}, R::SpareContainers, false);
+    ctx.check(broken == 2, "the hydra's rule breaks the sign and the jar (" + std::to_string(broken) + ")");
+    ctx.check(ctx.blockAt(at.offset(1, 0, 0)) == "minecraft:chest", "the chest stays");
+    ctx.check(ctx.blockAt(at.offset(4, 0, 0)) == "twilightforest:twilight_oak_chest", "the TF chest stays");
+    (void)box;
 });
 
 } // namespace gf::feature::entity::tests

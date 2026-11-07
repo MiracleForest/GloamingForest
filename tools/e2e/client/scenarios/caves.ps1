@@ -8,7 +8,7 @@
 #   mushglooms      huge mushgloom cap and stem blocks
 #   block-items     the six block items
 #   troll, troll-rock, yeti, yeti-angry, alpha-yeti, alpha-yeti-rampage, alpha-yeti-tired,
-#   thrown-block, falling-ice   the mobs and their states (the angry yeti's eyes and arms, the alpha
+#   thrown-block, falling-ice, thrown-block-flight, falling-ice-flight   the mobs and their states (the angry yeti's eyes and arms, the alpha
 #                   yeti's raised arms and snow ring, its tired pose and splash)
 # Out: out/caves[-<mode>]/*.png - open each one and compare it with TF's textures and models.
 if ($script:Mode -eq 'local') { Wait-LogLine 'GloamingForest world ready' 120 | Out-Null }
@@ -113,7 +113,16 @@ Show-Mob 'twilightforest:yeti' 'yeti-angry' 0 5 1.5 '/damage @e[type=twilightfor
 Show-Mob 'twilightforest:alpha_yeti' 'alpha-yeti' 0 9 1.5
 Show-Mob 'twilightforest:thrown_block' 'thrown-block' 1 3
 Show-Mob 'twilightforest:falling_ice' 'falling-ice' 1 3
-# the troll's rock and the alpha yeti's rampage / tired states (the selftest kit sets them)
+# the troll's held rock (granite: render controller troll_rock, the cube over its head as Java's
+# riding ThrownBlock) and the alpha yeti's rampage / tired poses: the BP's gf:show_* events set the
+# synced properties the native code sets in a fight
+Show-Mob 'twilightforest:troll' 'troll-rock' 0 5 1.5 '/event entity @e[type=twilightforest:troll,c=1] gf:show_rock'
+Show-Mob 'twilightforest:alpha_yeti' 'alpha-yeti-rampage' 0 9 1.5 '/event entity @e[type=twilightforest:alpha_yeti,c=1] gf:show_rampage'
+Show-Mob 'twilightforest:alpha_yeti' 'alpha-yeti-tired' 0 9 1.5 '/event entity @e[type=twilightforest:alpha_yeti,c=1] gf:show_tired'
+# the thrown block and the falling ice in flight (summoned 4 blocks up: they fall through the shot)
+Show-Mob 'twilightforest:thrown_block' 'thrown-block-flight' 4 4 0.4
+Show-Mob 'twilightforest:falling_ice' 'falling-ice-flight' 4 4 0.4
+# the selftests' fights (rock pick-up and throw, rampage and tired)
 if ($script:Mode -ne 'remote-vanilla') {
     Invoke-SelfTest 'caves.troll_rock' | Out-Null
     Invoke-SelfTest 'caves.alpha_yeti' | Out-Null

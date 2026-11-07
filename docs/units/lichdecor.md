@@ -96,3 +96,24 @@ Open: the client-mod renderers listed under "Not done yet".
 Sounds (W2 round 2, audio pass). Checked with `tools/sounds/lint.ps1` on the assembled pack (`tools/assemble.ps1 -Check`): before this round 6 of this unit's sound events still played F3's name-derived baseline placeholder. Candelabra (dim, ominous), ominous fire, skull chest and wrought iron fence (the Keepsake Casket's files, as in TF: `recipes/lichdecor.json` keeps U9 artifacts' designs of them, so both trees sound the same). `tools/sounds/recipes/lichdecor.json` now designs every one of them (original synthesized sounds, unit-local patches layered from the shared library; TF's audio never read; ids, subtitles, categories, volumes, pitches and variant counts unchanged), rendered with `pwsh tools/sounds/synth.ps1 -Unit lichdecor` into `assets/gen/audio/lichdecor/`. `synth.ps1 -Check` and `lint.ps1` pass; with the other round-2 audio PRs (one per owning unit) the lint reports 0 baseline-only events for the whole pack.
 
 Open: nothing for audio.
+
+Audit (W2 round 2, A5 / audit items):
+
+Checked: the round-1 "Open" list (the client-mod renderers of "Not done yet") against `CandelabraBlock`,
+`AbstractSkullCandleBlock`, `WallSkullCandleBlock`, `OminousCandleBlock#animateTick` and
+`LightableBlock#addParticlesAndSound`.
+
+Fixed:
+
+- **Candle flames** (client mod, `src/client/lichdecor/Flames.cpp`): ClientLevel#animateTick's sampling
+  (667 samples at radius 16 and 667 at 32 a tick) runs the animateTick of lit candelabras (their lit
+  candles), skull candles (the wall form a quarter block off the wall) and ominous candles (their bobbing
+  `getCurrentY` height): the small / dim / ominous flame on every candle and the 30 % smoke for NORMAL
+  lighting and ominous candles. The positions come from the unit's `light::animateFlames`.
+
+Open:
+
+- The candle ambient sound of `addParticlesAndSound` (17 %) is not played.
+- Vanilla clients show no flames (custom blocks have no display tick; the server does not send them).
+- Still open from "Not done yet": the brazier's fire and smoke, the skull chest lid, the magic painting
+  parallax / opacity layers, the candle colours of skull candles and candelabras.

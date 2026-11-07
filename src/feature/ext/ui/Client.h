@@ -25,7 +25,11 @@
 //   with TF's two IMapDecorationRenderers (the conquered red X, the player icon on top) and the
 //   vanilla map icons.
 // - camera: what camera::shake does (TF's degrees) and its state (tests).
-// - keys: when registerKey must run (mod load) and what happens to a key registered later.
+// - keys: when registerKey must run (mod load) and what happens to a key registered later; the
+//   current binding of a key (the player's remapping in the controls).
+// - hud: hiding effect icons of the game's HUD effect list (Java's MobEffectInstance#showIcon false:
+//   TF's hidden effects and the carriers of custom effects).
+// - render: world text (Java's TextDisplay: billboarded text with a background, in the world).
 // - textures: every texture name these APIs take is a resource pack path without extension, or an
 //   absolute file path (with its extension), which is read from the disk (development fixtures).
 
@@ -125,10 +129,11 @@ std::size_t hideNameTag(NameTagFn when);
 /// frame on the render thread (keep it cheap; the stack is the client's copy, with the item data the
 /// server sent). Held items (main hand, off hand) are never hidden. A stack is hidden when any
 /// registered function returns true. Returns a handle for showArmor (0: `when` was empty).
-/// Known gap (1.26.51, audit round 1): the v2 actor renderer that draws players' worn armour does not
-/// call that check (armorChecks().asked stays 0 in the client e2e), so a registered function has no
-/// visible effect there yet; finding the v2 equivalent (ActorAttachableDerivitiveData::mAttachedItems
-/// is where it keeps the worn stacks) is open.
+/// The v2 actor renderer (DataDrivenRendererV2, which draws players and data-driven actors on 1.26.51)
+/// does not call that check: for it a hidden worn stack is taken out of the wearer's armour container
+/// (the client's copy) while the renderer takes the actor for the frame (tryAddActor) and put back
+/// when the frame is generated (generateFrame), so the renderer bakes no attachable for it
+/// (armorChecks().v2Hidden counts them; the hidden stacks' functions run once per actor and frame).
 using ArmorFn = std::function<bool(ItemStack const& stack)>;
 std::size_t hideArmor(ArmorFn when);
 /// Removes a hideArmor function by its handle; false when there was none.
@@ -139,10 +144,42 @@ bool showArmor(std::size_t handle);
 /// the game's own rules, e.g. spectators), and how many of them a hideArmor function hid, since the
 /// process started (tests and e2e: the check is reached).
 struct ArmorChecks {
-    std::uint64_t asked  = 0;
-    std::uint64_t hidden = 0;
+    std::uint64_t asked    = 0;
+    std::uint64_t hidden   = 0;
+    std::uint64_t v2Hidden = 0; ///< worn stacks kept from the v2 actor renderer
 };
 [[nodiscard]] ArmorChecks armorChecks();
+
+/// World text (Java's Display.TextDisplay as TF uses it: the final castle gazebo's "WIP" lines): text
+/// with an optional background, billboarded or fixed, drawn with the game's font in the world.
+struct WorldText {
+    enum class Billboard { Fixed, Vertical, Horizontal, Center };
+    int                      dim = 0;            ///< the dimension it is drawn in (the local player's)
+    Vec3                     pos{};              ///< world position (the text's bottom centre, as TextDisplay)
+    std::vector<std::string> lines;              ///< lines (each wrapped at lineWidth font pixels; § formatting kept)
+    Billboard                billboard  = Billboard::Fixed;
+    float                    yaw        = 0;     ///< Fixed / Horizontal / Vertical: the entity's yRot (degrees)
+    float                    pitch      = 0;     ///< Fixed / Vertical: the entity's xRot
+    float                    scale      = 1.0f;  ///< Display#transformation scale (one font pixel = 0.025 block x scale)
+    unsigned                 color      = 0xFFFFFFFF; ///< ARGB text colour (alpha: TextDisplay#textOpacity)
+    unsigned                 background = 0x40000000; ///< ARGB background (TextDisplay's default; 0: none)
+    bool                     shadow     = false;
+    bool                     seeThrough = false; ///< drawn through blocks
+    int                      lineWidth  = 200;   ///< TextDisplay#lineWidth
+    float                    viewRange  = 64.0f; ///< blocks (Display#viewRange 1.0 x 64)
+    bool                     fullBright = false; ///< Display#brightnessOverride 15 (else the light at pos)
+};
+/// Shows a world text on this client until removed or the client leaves the world; returns its handle.
+std::size_t addWorldText(WorldText text);
+/// Replaces a world text (false: unknown handle).
+bool setWorldText(std::size_t handle, WorldText text);
+/// Removes a world text (false: unknown handle).
+bool removeWorldText(std::size_t handle);
+/// Draws one world text now (an entity renderer drawing the text of its entity, an onWorld callback);
+/// the dimension is not checked. False when nothing was drawn (no world pass, out of range).
+bool drawWorldText(RenderContext& ctx, WorldText const& text);
+/// How many world texts were drawn since the process started (tests and e2e).
+[[nodiscard]] std::uint64_t worldTextsDrawn();
 
 /// The per-frame render context handed to renderers (valid during the callback only).
 ///
@@ -301,6 +338,28 @@ namespace gf::client::hud {
 /// Whether the player hid the GUI (F1; Java's options.hideGui). HUD layers are drawn either way, as
 /// in Java where each TF overlay checks hideGui itself (all but the portal overlay do).
 [[nodiscard]] bool guiHidden();
+
+/// One effect of the local player as the game's HUD effect list shows it (Bedrock's
+/// HudMobEffectsRenderer: an icon per active effect).
+struct EffectIcon {
+    std::string id;            ///< "minecraft:<name>" (MobEffect::getNameById)
+    int         amplifier = 0;
+    int         duration  = 0; ///< remaining ticks (-1: infinite)
+    bool        ambient   = false;
+    bool        particles = true; ///< MobEffectInstance's effect-visible flag (the particles)
+};
+/// Hides HUD effect icons (Java's MobEffectInstance#showIcon false: U12's high jump, U11's haste,
+/// the glide's slow falling): an effect whose icon any registered function hides is left out of the
+/// HUD effect list for the draw only (the effect itself stays). Render thread, once per effect and
+/// HUD frame: keep it cheap. Returns a handle for showEffectIcons (0: `when` was empty).
+using EffectIconFn = std::function<bool(EffectIcon const& effect)>;
+std::size_t hideEffectIcons(EffectIconFn when);
+/// Removes a hideEffectIcons function; false when there was none.
+bool showEffectIcons(std::size_t handle);
+/// Whether a registered function hides `effect` (what the HUD asks; tests).
+[[nodiscard]] bool effectIconHidden(EffectIcon const& effect);
+/// The effect icons hidden from the HUD since the process started (tests and e2e).
+[[nodiscard]] std::uint64_t effectIconsHidden();
 } // namespace gf::client::hud
 
 namespace gf::client::toast {
@@ -496,6 +555,17 @@ namespace gf::client::keys {
 [[nodiscard]] std::vector<std::string> registered();
 /// Whether `id` was registered after the input handler was built (delivered from raw key events).
 [[nodiscard]] bool lateBound(std::string const& id);
+
+/// The keys a binding is on now: the player's remapping in the keyboard controls, else the default
+/// key it was registered with (a late key, or controls not loaded yet). Java's KeyMapping#getKey /
+/// getTranslatedKeyMessage.
+struct Binding {
+    std::vector<int> keys;            ///< Windows virtual-key codes (empty: unbound)
+    std::string      name;            ///< the game's name of the first key ("" when unbound or unknown)
+    bool             remapped = false; ///< read from the controls' remapping layout
+};
+/// The current binding of a registered key (nullopt: `id` was never registered).
+[[nodiscard]] std::optional<Binding> binding(std::string const& id);
 } // namespace gf::client::keys
 
 #endif // GF_CLIENT
