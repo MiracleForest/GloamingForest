@@ -923,6 +923,21 @@ std::vector<ColourVertex> const& starVertices() {
     return v;
 }
 
+/// starVertices without the stars the void plate hides (every corner of the quad under the plate).
+std::vector<ColourVertex> const& starsAbovePlate() {
+    static std::vector<ColourVertex> const v = [] {
+        auto const&               all = starVertices();
+        std::vector<ColourVertex> out;
+        for (std::size_t i = 0; i + 4 <= all.size(); i += 4) {
+            bool hidden = true;
+            for (std::size_t j = i; j < i + 4 && hidden; ++j) hidden = ca::underVoidPlate({all[j].x, all[j].y, all[j].z});
+            if (!hidden) out.insert(out.end(), all.begin() + static_cast<std::ptrdiff_t>(i), all.begin() + static_cast<std::ptrdiff_t>(i + 4));
+        }
+        return out;
+    }();
+    return v;
+}
+
 /// The sky fog planes of FogHandler (FOG_SKY) now: what TF's position shader fogs the void plate with.
 ca::FogPlanes skyFogPlanes() {
     auto&           s = shared();
@@ -1160,7 +1175,11 @@ void drawWorldSky(render::RenderContext& ctx, bool stars, bool voidPlate, StarsM
     float r   = far > 0 ? std::min(0.9f * far, 2000.0f) : 400.0f;
     if (stars) {
         std::string spec = !preview.starsMat.empty() ? preview.starsMat : mode == StarsMode::WorldStars ? std::string("@stars") : std::string(kVibrantStars);
-        if (drawWith(ctx.screen, choose(spec), scaled(starVertices(), r / 100.0f)))
+        // TFSkyRenderer covers the stars below the horizon with the void plate it draws after them
+        // without depth; here the world pass orders them by depth and blend, and stars showed
+        // through the plate: the stars the plate covers are left out instead
+        std::vector<ColourVertex> const& all = voidPlate ? starsAbovePlate() : starVertices();
+        if (drawWith(ctx.screen, choose(spec), scaled(all, r / 100.0f)))
             logOnce("stars_world", fmt::format("atmosphere: TF stars drawn in the world pass (radius {:.0f}, {})", r, spec));
     }
     if (voidPlate) { // in front of the stars below the horizon

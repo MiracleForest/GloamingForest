@@ -120,6 +120,11 @@ template <class Fetch>
 /// a triangle fan around (0, y, 0), y = -4 relative to the camera, radius 512, as quads (the last
 /// corner repeated), corners at -180, -135, ..., 180 degrees.
 [[nodiscard]] std::vector<std::array<Vec3f, 4>> voidPlateQuads();
+/// Whether the void plate of voidPlateQuads covers the direction `dir` from the camera (any length):
+/// the ray goes down and meets the plate (y -4) inside its octagon. TFSkyRenderer draws the plate
+/// after the stars without depth, so a star in such a direction is hidden (Vibrant Visuals draws the
+/// stars in the world pass, where the plate cannot cover them: they are left out instead).
+[[nodiscard]] bool underVoidPlate(Vec3f dir);
 /// A vertex of the fogged void plate: its position (camera relative, as voidPlateQuads) and the
 /// share of the sky fog colour TF's position shader mixes into its black (linear_fog of the dark
 /// buffer's own vertex, cylindrical distance: max(length(xz), |y|) at y -16).
