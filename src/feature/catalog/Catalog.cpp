@@ -168,6 +168,7 @@ public:
             game::db::onWorldReady([] { // client: every local world
                 internal::invalidate();
                 internal::applyDefaults();
+                internal::applyVariants();
             });
             game::db::onWorldClosed([] { internal::invalidate(); });
         }
@@ -176,6 +177,7 @@ public:
         if (game::db::available()) {
             internal::invalidate();
             internal::applyDefaults();
+            internal::applyVariants();
         }
     }
     void uninstall() {}
