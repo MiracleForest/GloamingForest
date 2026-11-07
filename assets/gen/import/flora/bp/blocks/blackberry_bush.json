@@ -13,7 +13,13 @@
     },
     "components": {
       "minecraft:destructible_by_mining": {
-        "seconds_to_destroy": 0.4
+        "seconds_to_destroy": 0.4,
+        "item_specific_speeds": [
+          {
+            "item": "minecraft:shears",
+            "destroy_speed": 0.833333
+          }
+        ]
       },
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 0

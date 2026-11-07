@@ -457,6 +457,12 @@ GF_REGISTER_SELFTEST("flora.jars", [](Context& ctx) -> ll::coro::CoroTask<> {
     click(ctx, m, "minecraft:oak_log", 1, false, 0.95);
     ctx.check(jars::lidAt(*region, bp(m)) == "minecraft:oak_log", "an oak log on the top swaps the lid");
     ctx.check(jars::isLid("minecraft:stripped_bamboo_block") && !jars::isLid("minecraft:stone"), "the registered lids");
+    // the jar emits the light of a stored block item (the jar_light state) and keeps its lid and contents
+    click(ctx, m, "minecraft:glowstone", 2);
+    ctx.check(stateAt(ctx, m, "twilightforest:jar_light") == 15, "a jar of glowstone emits light 15 (" + std::to_string(stateAt(ctx, m, "twilightforest:jar_light")) + ")");
+    ctx.check(jars::lidAt(*region, bp(m)) == "minecraft:oak_log" && game::items::countOf(jars::contents(*region, bp(m))) == 2, "the light state keeps the lid and the stack");
+    click(ctx, m);
+    ctx.check(stateAt(ctx, m, "twilightforest:jar_light") == 0, "the emptied jar is dark again");
     // the firefly particle spawner takes fireflies (radius + 1)
     auto s = p.offset(3, 0, 0);
     ctx.setBlock(s, "twilightforest:firefly_particle_spawner", {{st::Radius, 1}});

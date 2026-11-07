@@ -1442,6 +1442,224 @@
         "path": "/minecraft:block/permutations/15/components/minecraft:material_instances/texture/tint_method",
         "value": "default_foliage"
       }
+    ],
+    "bp/blocks/raspberry_bush.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:destructible_by_mining/item_specific_speeds",
+        "value": [
+          {
+            "item": "minecraft:shears",
+            "destroy_speed": 0.833333
+          }
+        ]
+      }
+    ],
+    "bp/blocks/blueberry_bush.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:destructible_by_mining/item_specific_speeds",
+        "value": [
+          {
+            "item": "minecraft:shears",
+            "destroy_speed": 0.833333
+          }
+        ]
+      }
+    ],
+    "bp/blocks/blackberry_bush.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:destructible_by_mining/item_specific_speeds",
+        "value": [
+          {
+            "item": "minecraft:shears",
+            "destroy_speed": 0.833333
+          }
+        ]
+      }
+    ],
+    "bp/blocks/maloberry_bush.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:destructible_by_mining/item_specific_speeds",
+        "value": [
+          {
+            "item": "minecraft:shears",
+            "destroy_speed": 0.833333
+          }
+        ]
+      }
+    ],
+    "bp/blocks/blightberry_bush.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:destructible_by_mining/item_specific_speeds",
+        "value": [
+          {
+            "item": "minecraft:shears",
+            "destroy_speed": 0.833333
+          }
+        ]
+      }
+    ],
+    "bp/blocks/duskberry_bush.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:destructible_by_mining/item_specific_speeds",
+        "value": [
+          {
+            "item": "minecraft:shears",
+            "destroy_speed": 0.833333
+          }
+        ]
+      }
+    ],
+    "bp/blocks/skyberry_bush.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:destructible_by_mining/item_specific_speeds",
+        "value": [
+          {
+            "item": "minecraft:shears",
+            "destroy_speed": 0.833333
+          }
+        ]
+      }
+    ],
+    "bp/blocks/stingberry_bush.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:destructible_by_mining/item_specific_speeds",
+        "value": [
+          {
+            "item": "minecraft:shears",
+            "destroy_speed": 0.833333
+          }
+        ]
+      }
+    ],
+    "bp/blocks/mason_jar.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/description/states",
+        "value": {
+          "twilightforest:jar_light": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15
+          ]
+        }
+      },
+      {
+        "op": "add",
+        "path": "/minecraft:block/permutations",
+        "value": [
+          {
+            "condition": "q.block_state('twilightforest:jar_light') == 1",
+            "components": {
+              "minecraft:light_emission": 1
+            }
+          },
+          {
+            "condition": "q.block_state('twilightforest:jar_light') == 2",
+            "components": {
+              "minecraft:light_emission": 2
+            }
+          },
+          {
+            "condition": "q.block_state('twilightforest:jar_light') == 3",
+            "components": {
+              "minecraft:light_emission": 3
+            }
+          },
+          {
+            "condition": "q.block_state('twilightforest:jar_light') == 4",
+            "components": {
+              "minecraft:light_emission": 4
+            }
+          },
+          {
+            "condition": "q.block_state('twilightforest:jar_light') == 5",
+            "components": {
+              "minecraft:light_emission": 5
+            }
+          },
+          {
+            "condition": "q.block_state('twilightforest:jar_light') == 6",
+            "components": {
+              "minecraft:light_emission": 6
+            }
+          },
+          {
+            "condition": "q.block_state('twilightforest:jar_light') == 7",
+            "components": {
+              "minecraft:light_emission": 7
+            }
+          },
+          {
+            "condition": "q.block_state('twilightforest:jar_light') == 8",
+            "components": {
+              "minecraft:light_emission": 8
+            }
+          },
+          {
+            "condition": "q.block_state('twilightforest:jar_light') == 9",
+            "components": {
+              "minecraft:light_emission": 9
+            }
+          },
+          {
+            "condition": "q.block_state('twilightforest:jar_light') == 10",
+            "components": {
+              "minecraft:light_emission": 10
+            }
+          },
+          {
+            "condition": "q.block_state('twilightforest:jar_light') == 11",
+            "components": {
+              "minecraft:light_emission": 11
+            }
+          },
+          {
+            "condition": "q.block_state('twilightforest:jar_light') == 12",
+            "components": {
+              "minecraft:light_emission": 12
+            }
+          },
+          {
+            "condition": "q.block_state('twilightforest:jar_light') == 13",
+            "components": {
+              "minecraft:light_emission": 13
+            }
+          },
+          {
+            "condition": "q.block_state('twilightforest:jar_light') == 14",
+            "components": {
+              "minecraft:light_emission": 14
+            }
+          },
+          {
+            "condition": "q.block_state('twilightforest:jar_light') == 15",
+            "components": {
+              "minecraft:light_emission": 15
+            }
+          }
+        ]
+      }
     ]
   }
 }

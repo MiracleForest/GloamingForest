@@ -5,6 +5,9 @@
       "identifier": "twilightforest:mason_jar",
       "menu_category": {
         "category": "construction"
+      },
+      "states": {
+        "twilightforest:jar_light": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
       }
     },
     "components": {
@@ -42,6 +45,98 @@
         "size": [10, 14, 10]
       },
       "minecraft:light_dampening": 0
-    }
+    },
+    "permutations": [
+      {
+        "condition": "q.block_state('twilightforest:jar_light') == 1",
+        "components": {
+          "minecraft:light_emission": 1
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:jar_light') == 2",
+        "components": {
+          "minecraft:light_emission": 2
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:jar_light') == 3",
+        "components": {
+          "minecraft:light_emission": 3
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:jar_light') == 4",
+        "components": {
+          "minecraft:light_emission": 4
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:jar_light') == 5",
+        "components": {
+          "minecraft:light_emission": 5
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:jar_light') == 6",
+        "components": {
+          "minecraft:light_emission": 6
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:jar_light') == 7",
+        "components": {
+          "minecraft:light_emission": 7
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:jar_light') == 8",
+        "components": {
+          "minecraft:light_emission": 8
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:jar_light') == 9",
+        "components": {
+          "minecraft:light_emission": 9
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:jar_light') == 10",
+        "components": {
+          "minecraft:light_emission": 10
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:jar_light') == 11",
+        "components": {
+          "minecraft:light_emission": 11
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:jar_light') == 12",
+        "components": {
+          "minecraft:light_emission": 12
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:jar_light') == 13",
+        "components": {
+          "minecraft:light_emission": 13
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:jar_light') == 14",
+        "components": {
+          "minecraft:light_emission": 14
+        }
+      },
+      {
+        "condition": "q.block_state('twilightforest:jar_light') == 15",
+        "components": {
+          "minecraft:light_emission": 15
+        }
+      }
+    ]
   }
 }
