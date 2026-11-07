@@ -431,6 +431,23 @@ int heightFor(Info const& info, int dim, int x, int z) {
 
 // ---- generators --------------------------------------------------------------------------------------
 
+namespace {
+std::shared_mutex&                                              adjustersMutex() {
+    static std::shared_mutex m;
+    return m;
+}
+std::unordered_map<std::string, ext::StartBoxFn>& adjusters() {
+    static std::unordered_map<std::string, ext::StartBoxFn> a;
+    return a;
+}
+} // namespace
+
+ext::StartBoxFn startBoxAdjusterFor(std::string const& key) {
+    std::shared_lock lock(adjustersMutex());
+    auto             it = adjusters().find(key);
+    return it == adjusters().end() ? ext::StartBoxFn{} : it->second;
+}
+
 std::shared_ptr<Generator const> generatorFor(std::string const& key) {
     std::lock_guard lock(generators().mutex);
     auto            it = generators().gens.find(key);
@@ -893,6 +910,10 @@ RecordPtr createStart(Info const& info, int dim, int chunkX, int chunkZ, std::op
         }
         // StructureStart#getBoundingBox: Structure#adjustBoundingBox
         rec->start.box       = cl::adjustBoundingBox(all, info.adjustment);
+        // KnightStructureStart#getBoundingBox: no higher than one below the generation point
+        if (info.traits.topBelowStart) rec->start.box = ext::clampBoxTop(rec->start.box, y - 1);
+        // a structure's own start box rule (ext::setStartBoxAdjuster)
+        if (auto adjust = startBoxAdjusterFor(info.d.key)) rec->start.box = adjust(rec->start, rec->start.box);
         rec->start.generated = true;
     } else {
         // no generator yet: the site is reserved with the clearance square around the center
@@ -1637,6 +1658,21 @@ std::optional<std::vector<nlohmann::json>> potentialSpawns(int dimension, std::s
         return list(cs.value("labelled_monster_spawns", Json::object()).value(std::to_string(index), Json::array()));
     }
     return std::nullopt;
+}
+
+} // namespace gf::landmark::ext
+
+namespace gf::landmark::ext {
+
+void setStartBoxAdjuster(std::string const& key, StartBoxFn fn) {
+    std::unique_lock lock(feature::landmark::adjustersMutex());
+    if (fn) feature::landmark::adjusters()[key] = std::move(fn);
+    else feature::landmark::adjusters().erase(key);
+}
+
+BlockBox clampBoxTop(BlockBox box, int maxY) {
+    box.maxY = std::min(box.maxY, maxY);
+    return box;
 }
 
 } // namespace gf::landmark::ext

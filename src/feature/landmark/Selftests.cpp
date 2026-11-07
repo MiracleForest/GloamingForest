@@ -212,6 +212,11 @@ struct StartsScope {
         chunks.emplace_back(cx, cz);
         before.push_back(fl::recordsStartedIn(dim, cx, cz));
     }
+    /// Erases the records started in a touched chunk (put back when the scope ends).
+    void clear(int cx, int cz) {
+        touch(cx, cz);
+        for (auto const& r : fl::recordsStartedIn(dim, cx, cz)) fl::eraseRecord(dim, cx, cz, r->start.key);
+    }
     void lift() { fl::setStructureDimOverride(std::nullopt); }
     ~StartsScope() {
         lift();
@@ -1412,6 +1417,9 @@ GF_REGISTER_SELFTEST("landmark.starts", [](Context& ctx) -> ll::coro::CoroTask<>
     auto nearCenter = cl::nearestCenter(cx, cz);
     ctx.require(co_await ctx.ensureLoaded(GlobalPos{dim, nearCenter.x, base.y, nearCenter.z}), "the nearest landmark center chunk loaded");
     scope.touch(nearCenter.x >> 4, nearCenter.z >> 4);
+    // the real starts of that center chunk (a hedge maze, a hollow hill, ... the world generated
+    // there) step aside for the test; the scope puts them back
+    scope.clear(nearCenter.x >> 4, nearCenter.z >> 4);
     auto natural = fl::createStart(*fixture, dim, nearCenter.x >> 4, nearCenter.z >> 4, GlobalPos{dim, nearCenter.x, base.y + 40, nearCenter.z}, false);
     ctx.require(natural != nullptr && !natural->pieces.empty(), "a fixture start at the center");
     fl::putRecord(natural);
@@ -1430,6 +1438,7 @@ GF_REGISTER_SELFTEST("landmark.starts", [](Context& ctx) -> ll::coro::CoroTask<>
     auto farCenter = cl::nearestCenter(cx + 128, cz);
     ctx.require(!fl::chunkLoaded(dim, farCenter.x >> 4, farCenter.z >> 4), "a landmark center 2048 blocks away is not loaded");
     scope.touch(farCenter.x >> 4, farCenter.z >> 4);
+    scope.clear(farCenter.x >> 4, farCenter.z >> 4);
     auto distant = fl::createStart(*fixture, dim, farCenter.x >> 4, farCenter.z >> 4, GlobalPos{dim, farCenter.x, base.y + 40, farCenter.z}, false);
     ctx.require(distant != nullptr, "a fixture start at the far center");
     fl::putRecord(distant);

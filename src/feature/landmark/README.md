@@ -105,3 +105,22 @@ shell around the center (x and z within 3, y up to +6) and a 7x1x3 oak porch in 
 |---|---|---|
 | `gf_test:landmark_fixture` | `twilightforest:progress_naga` (the shell is protected, the porch not); hint book `lichtower` | ControlledSpawns: monster list `1` (skeleton 4 2-3, spider 1 1-2) on the shell's upper floor (y >= center + 4), list `0` (zombie 1 1-1) on the porch, no list on the shell's ground floor or beside it (`Generator::spawnIndex`); empty ambient and water lists; no creatures in the chunks it reaches |
 | `gf_test:landmark_fixture_open` | none (conquerable, protects nothing) | spawn overrides: `monster` `piece` (witch 3 1-1, creeper 7 2-4) in the shell and the porch, `ambient` `full` (empty) in the whole box |
+
+## Audit round 1
+
+Checked: TF's StructureStart overrides of the start box (only
+`KnightStrongholdStructure.KnightStructureStart#getBoundingBox` changes it) and the
+`landmark.starts` selftest next to real starts.
+
+Fixed:
+
+- Start box clamp: a start of a structure of type `twilightforest:knight_stronghold` ends one
+  below its generation point (`min(maxY, stub y - 1)`, after Structure#adjustBoundingBox), as
+  KnightStructureStart does (descriptor trait `topBelowStart`). Generators can add their own rule
+  with `landmark::ext::setStartBoxAdjuster(key, fn)` (`ext::clampBoxTop` helps).
+- `landmark.starts`: the real starts of the landmark center chunks the test uses (a hedge maze, a
+  hollow hill generated there) step aside while it runs (`StartsScope::clear`) and are put back.
+
+Open:
+
+- Starts saved before this change keep their unclamped box until they are rebuilt.
