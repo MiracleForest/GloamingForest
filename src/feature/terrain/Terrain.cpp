@@ -32,6 +32,7 @@
 #include <deque>
 #include <filesystem>
 #include <fstream>
+#include <intrin.h>
 #include <list>
 #include <mutex>
 #include <sstream>
@@ -443,6 +444,40 @@ void recordChunkMs(double ms) {
     if (times().size() > 4096) times().pop_front();
 }
 void addChunkMs(double ms) { tChunkMs += ms; }
+
+namespace {
+extern "C" __declspec(dllimport) void* __stdcall GetCurrentThread();
+extern "C" __declspec(dllimport) int __stdcall   QueryThreadCycleTime(void* thread, unsigned long long* cycles);
+
+/// Time-stamp counter ticks per millisecond (the unit of QueryThreadCycleTime on invariant-TSC
+/// processors), measured once against the steady clock (the performance counter) over 20 ms.
+double cyclesPerMs() {
+    static double const rate = [] {
+        auto               t0 = std::chrono::steady_clock::now();
+        unsigned long long c0 = __rdtsc();
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        unsigned long long c1 = __rdtsc();
+        double             ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
+        return ms > 0 ? static_cast<double>(c1 - c0) / ms : 0.0;
+    }();
+    return rate;
+}
+} // namespace
+
+// QueryThreadCycleTime counts the processor's time-stamp ticks while the thread runs on the
+// invariant-TSC desktops the budget is checked on (Microsoft does not promise that unit everywhere:
+// on a VM or a processor without it the times are off by the rate, and the budget with them). The
+// mode is chosen once, so the two ends of a measurement never mix cycle and wall times.
+double threadCpuMs() {
+    static bool const cycles = [] {
+        unsigned long long c = 0;
+        return cyclesPerMs() > 0 && QueryThreadCycleTime(GetCurrentThread(), &c) != 0;
+    }();
+    if (!cycles) return std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    unsigned long long c = 0;
+    QueryThreadCycleTime(GetCurrentThread(), &c); // the current thread's pseudo handle: cannot fail
+    return static_cast<double>(c) / cyclesPerMs();
+}
 std::uint64_t chunkTimesRecorded() { return recorded().load(); }
 std::vector<double> chunkTimes() {
     std::lock_guard lock(timesMutex());
@@ -451,8 +486,8 @@ std::vector<double> chunkTimes() {
 
 namespace {
 struct StageTimer {
-    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
-    ~StageTimer() { tChunkMs += std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count(); }
+    double start = threadCpuMs();
+    ~StageTimer() { tChunkMs += threadCpuMs() - start; }
 };
 
 int twilightDim() {
@@ -1027,6 +1062,7 @@ void onWorldReady() {
 
 struct TerrainModule {
     void install() {
+        (void)threadCpuMs(); // calibrates the cycle rate (20 ms) here, not in the first chunk's stage
         noteLifecycleThread();
         installed() = true;
         registerDensityTypes();
