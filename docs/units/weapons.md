@@ -64,3 +64,7 @@ Open:
 - The creative-only infinite glass sword entry: F9's `gf::catalog::ext::setDefaultData` gives one data to
   every catalog entry of an id, and the item catalog cannot list the glass sword twice with different data
   (union merge of `item_catalog.d`, no per-entry hook). Needs an F9 API for a second, data-carrying entry.
+
+Sounds (W2 round 2, audio pass). Checked with `tools/sounds/lint.ps1` on the assembled pack (`tools/assemble.ps1 -Check`): before this round 2 of this unit's sound events still played F3's name-derived baseline placeholder. Peacock fan gust and knightmetal shield shatter (stand-ins for Java vanilla sounds Bedrock lacks; the shatter's zombie-on-iron-door stand-in is the same design as U9 artifacts' fortification shield block, one Java sound). `tools/sounds/recipes/weapons.json` now designs every one of them (original synthesized sounds, unit-local patches layered from the shared library; TF's audio never read; ids, subtitles, categories, volumes, pitches and variant counts unchanged), rendered with `pwsh tools/sounds/synth.ps1 -Unit weapons` into `assets/gen/audio/weapons/`. `synth.ps1 -Check` and `lint.ps1` pass; with the other round-2 audio PRs (one per owning unit) the lint reports 0 baseline-only events for the whole pack.
+
+Open: nothing for audio.

@@ -391,8 +391,8 @@ void carveWith(State const& st, bool highlands, worldgen::Chunk& chunk, worldgen
     // WorldCarver#isStartChunk (TF: the highland caves always start)
     float probability = cfg.contains("probability") ? cfg["probability"].get<float>() : 0.1F;
     if (!highlands && !(random.nextFloat() <= probability)) return;
-    auto start = std::chrono::steady_clock::now();
-    auto shape = s->gen->shape();
+    double start = threadCpuMs();
+    auto   shape = s->gen->shape();
     Carver c{
         highlands,
         *s,
@@ -408,7 +408,7 @@ void carveWith(State const& st, bool highlands, worldgen::Chunk& chunk, worldgen
         gf::terrain::ext::LiquidLayer::of(chunk)
     };
     c.carve(random);
-    addChunkMs(std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count());
+    addChunkMs(threadCpuMs() - start);
 }
 
 bool carveBlockAt(

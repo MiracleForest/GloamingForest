@@ -63,3 +63,7 @@ Open:
 
 - A vanilla player on the block is bounced but not slowed (client-side movement).
 - The mushrooms' look on a real client (no client run in this round).
+
+## Audit round 2
+
+Sounds (W2 round 2, audio pass): the maze slime's hurt, death and squish sounds are played from `Mobs.cpp` (MAZE_SLIME_*(_SMALL) by size, at TF's volume); `assets/pack/rp/sounds.json.d/labyrinth.json` now gives `twilightforest:maze_slime` an entry with empty `hurt` / `death` so Bedrock's `entity_sounds.defaults` (`game.player.hurt` / `game.player.die`) cannot add generic sounds on top. Open: nothing for audio.

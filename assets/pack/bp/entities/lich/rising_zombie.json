@@ -23,6 +23,7 @@
       "minecraft:nameable": {},
       "minecraft:breathable": { "total_supply": 15, "suffocate_time": 0, "breathes_solids": true, "breathes_water": true },
       "minecraft:damage_sensor": { "triggers": [ { "cause": "suffocation", "deals_damage": "no" } ] },
+      "minecraft:despawn": { "despawn_from_distance": {} },
       "minecraft:experience_reward": { "on_death": "query.last_hit_by_player ? 5 : 0" }
     }
   }

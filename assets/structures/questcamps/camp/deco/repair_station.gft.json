@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "gloamingforest:camp/deco/repair_station",
+  "id": "twilightforest:camp/deco/repair_station",
   "size": [4, 3, 3],
   "palette": [
     {"Name":"minecraft:structure_void"},
@@ -18,6 +18,6 @@
     {"pos":[3,0,2],"marker":"data","data":{"metadata":"camp_armor_rack@north"}}
   ],
   "jigsaw": [
-    {"pos":[1,0,0],"front":"north","top":"up","pool":"minecraft:empty","name":"gloamingforest:camp/deco","target":""}
+    {"pos":[1,0,0],"front":"north","top":"up","pool":"minecraft:empty","name":"twilightforest:camp/deco","target":""}
   ]
 }

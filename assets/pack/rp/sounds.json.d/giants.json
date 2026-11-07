@@ -1,0 +1,22 @@
+{
+  "entity_sounds": {
+    "entities": {
+      "twilightforest:giant_miner": {
+        "volume": 1.0,
+        "pitch": [0.8, 1.2],
+        "events": {
+          "hurt": "game.player.hurt",
+          "death": "game.player.die"
+        }
+      },
+      "twilightforest:armored_giant": {
+        "volume": 1.0,
+        "pitch": [0.8, 1.2],
+        "events": {
+          "hurt": "game.player.hurt",
+          "death": "game.player.die"
+        }
+      }
+    }
+  }
+}
