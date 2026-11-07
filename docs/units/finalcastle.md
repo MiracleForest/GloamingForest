@@ -26,3 +26,24 @@ Open (round 2):
 - Thorn connection details, the roving cube and the WIP texts as world text (name tags today; the client mod has
   no world-text renderer) are unchanged this round.
 - Helper actor ids `gloamingforest:final_castle_text` / `_punch`: namespace decision left to A8.
+
+## Audit round 2
+
+Checked:
+- Hurt / death sounds of the adherent, the harbinger cube, the roving cube and the plateau boss (A5's sweep): none
+  overrides `getHurtSound` / `getDeathSound` in TF (Monster's `entity.hostile.hurt` / `.death`). Their
+  `sounds.json.d/finalcastle.json` entries come with the round-2 audio pass (branch `w2r2-audio-finalcastle`), not
+  this PR.
+
+Fixed:
+- Force fields and thorns (TF: SimpleWaterloggedBlock) declared `on_liquid_touches: "no_reaction"`: now
+  `"blocking"` as F11's waterloggable families (flowing water stops at a dry block; a bucket still waterlogs it).
+
+Still open (unchanged, with what they need):
+- Force field corner panels (`cornerConnects` and ForceFieldModel's neighbour culling): a client block renderer
+  (F12 `registerBlockRenderer`) or states over the permutation budget.
+- Castle door glow (full-bright overlay) and the vanished door's MapColor.NONE: no emissive material or transparent
+  map colour on Bedrock blocks; not-ported candidates unless F12's block renderer draws the overlay.
+- Cinder furnace hopper faces: F10's `inventory::Handler` still has no face argument on main.
+- Thorn connection details, the roving cube's look and the WIP texts as world text (name tags today; F12 has no
+  world-text renderer).
