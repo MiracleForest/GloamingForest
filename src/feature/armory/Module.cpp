@@ -475,17 +475,7 @@ public:
             std::lock_guard lock(state().mutex);
             state().snowFlags.clear();
         });
-        // ToolEvents#damageNonMazebreakerToolsMore: any other damageable tool loses 16 more there
-        ia::onDestroyed(ia::Match::tag(ids::kMazebreakerTag), [](ia::DestroyContext const& c, bool destroyed) {
-            if (!destroyed || c.player.isCreative()) return;
-            ItemStack held = c.player.getCarriedItem();
-            if (items::isEmpty(held) || !held.isDamageableItem() || items::idOf(held) == ids::kMazebreaker) return;
-            held.hurtAndBreak(ca::kMazebreakerExtraWear, &c.player);
-            auto const* item  = held.mItem.get();
-            bool        broke = items::isEmpty(held) || (item && held.getDamageValue() >= item->getMaxDamage());
-            c.player.setCarriedItem(broke ? ItemStack::EMPTY_ITEM() : held);
-            c.player.sendInventory(false);
-        });
+        // ToolEvents#damageNonMazebreakerToolsMore is U23's (labyrinth): the owner of the accelerated tag registers it
         gf::log().info("armory: {} armour pieces, {} tools, {} crafted enchantments installed", ca::armorPieces().size(), ca::tools().size(),
                    ca::defaultEnchantments().size());
     }
