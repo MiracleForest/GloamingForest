@@ -34,6 +34,7 @@
 
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/player/Player.h"
+#include "mc/deps/shared_types/legacy/Difficulty.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/ChunkBlockPos.h"
@@ -467,6 +468,20 @@ GF_REGISTER_SELFTEST("biomes.survey", [](Context& ctx) {
 // SpawnReason::Natural, what its natural spawner calls), the creature and the monster category; the
 // same spawns without U1's pass through Bedrock's own spawn rules are logged for comparison.
 GF_REGISTER_SELFTEST("biomes.vanilla_spawns", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // monsters spawn only off Peaceful (Java's spawnEnemies, Bedrock's spawner alike), and the
+    // e2e worlds are Peaceful: Normal for the test, the world's difficulty afterwards
+    struct DifficultyScope {
+        SharedTypes::Legacy::Difficulty previous = SharedTypes::Legacy::Difficulty::Peaceful;
+        DifficultyScope() {
+            if (auto level = ll::service::getLevel()) {
+                previous = level->getDifficulty();
+                level->setDifficulty(SharedTypes::Legacy::Difficulty::Normal);
+            }
+        }
+        ~DifficultyScope() {
+            if (auto level = ll::service::getLevel()) level->setDifficulty(previous);
+        }
+    } normal;
     ctx.require(co_await ctx.inTwilight(), "in the Twilight Forest");
     auto  box    = co_await ctx.flatArea(150, 5);
     auto* region = ctx.region();
