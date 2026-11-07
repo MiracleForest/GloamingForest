@@ -229,3 +229,43 @@ Checked against TF 4.8 and the goldens (A1, W2 round 1):
 Still open: the hollow oak sapling at a chunk corner (F6's `forced` flag, Known gaps); plants placed by
 the tree features and the canopy mushrooms are to be re-checked once F5's `canSurvive` fix lands
 (nothing floats in `trees.features_*`, which compare with Java block for block on flat ground).
+
+## Audit round 2
+
+Checked (W2 round 2): the vanilla feature overrides against F5's vanilla set, the plants the tree
+features place, and the `trees.features_a` flake in the full runs since round 1.
+
+Dependency: F5's vanilla set never reached the feature data on main. `vanillaFeatures()`
+(src/feature/features/Features.cpp:82) loops over `Json::parse(kVanillaFeaturesExtra).items()`, whose
+temporary dies before the C++20 range-for body runs, so the five extra features (spruce, pine, the huge
+mushrooms, jungle grass) were never merged ("worldgen data: 150 configured features" instead of 155).
+The inline copies hid this. Without them, spruce, pine and the huge mushrooms warn `unknown configured feature` until F5's fix (a
+named variable) is merged. With that fix applied locally: 155 configured features and no warnings.
+This change merges after it.
+
+Fixed:
+
+- **Vanilla features**: F5's vanilla set now has `minecraft:spruce`, `pine`, `huge_brown_mushroom` and
+  `huge_red_mushroom` (`src/feature/features/VanillaFeatures.inc`, the same Java 1.21.1 values), so
+  the inline copies in `tools/import/overrides/trees.json` (highlands tree selector, vanilla mushroom
+  selector) are gone; the selectors name the vanilla ids again, as TF's data does. The inline spruce
+  and pine carried `gf_trees:update_leaves`, which does nothing on Bedrock's spruce leaves (no
+  distance state), so nothing placed changes.
+- **`trees.features_a` flake** (`mega_canopy_tree ... Java distance 7, here 2`, also after round 1's
+  random tick stop): the cells' trees reach into each other (the mega canopy tree and the forest mega
+  oak next to it). A tree placed next to another's leaves fires F11's neighbour update (Java
+  `LeavesBlock#updateShape`, scheduled one tick later), which computes the true distance of a leaf TF's
+  `updateLeaves` left "not computed" (Java keeps 7: world generation sends no shape updates).
+  `placeAll` waited for each cell's chunks between placements, so under load that tick could run
+  before the comparison. It now loads every cell's chunks first, then places all the features and
+  compares in the same tick.
+
+Checked, unchanged:
+
+- **Floating plants**: `trees.features_a/b/c` compare with the Java oracle block for block, so a plant
+  a tree feature placed where Java's survival check refuses it would show as a difference; none does.
+  The tree features place no small mushrooms or oreberries, so F5's brightness limit for mushroom /
+  oreberry survival in generation (round 2) does not change them.
+
+Still open: the hollow oak sapling at a chunk corner until F6 records `forced` in a start's data
+(Known gaps).
