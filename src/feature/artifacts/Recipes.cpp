@@ -228,7 +228,7 @@ bool clothMatch(rc::CraftingGrid const& g, ItemStack* out) {
     if (!cloth || !item) return false;
     if (out) {
         *out = items::withCount(*item, 1);
-        items::setData(*out, kDataCloth, true);
+        items::setData(*out, kDataCloth, Json::object()); // Unit.INSTANCE
     }
     return true;
 }

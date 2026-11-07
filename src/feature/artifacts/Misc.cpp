@@ -89,7 +89,7 @@ std::string moonPhaseKeyFor(Actor const* viewer) {
     return core::artifacts::moonPhaseKey(natural && level, day, aprilFools());
 }
 
-bool hasCloth(ItemStack const& stack) { return !items::getData(stack, kDataCloth).is_null(); }
+bool hasCloth(ItemStack const& stack) { return !items::getData(stack, kDataCloth).is_null() || !items::getData(stack, kDataClothLegacy).is_null(); }
 
 void registerMisc() {
     static char const* const kPhases[] = {"Full Moon", "Waning Gibbous", "Third Quarter", "Waning Crescent", "New Moon", "Waxing Crescent", "First Quarter", "Waxing Gibbous"};
@@ -139,6 +139,7 @@ void registerMisc() {
         if (auto const* b = game::blockWithStates("minecraft:cauldron", j)) game::setBlock(*region, game::blockPos(c.pos), *b);
         auto& held = ia::mutableItem(c.item);
         items::setData(held, kDataCloth, nullptr);
+        items::setData(held, kDataClothLegacy, nullptr);
         c.player.sendInventory(false);
         gf::stats::award(c.player, "minecraft:clean_armor");
         log().info("artifacts: {} washed the emperor's cloth off {}", c.player.getRealName(), c.itemId);

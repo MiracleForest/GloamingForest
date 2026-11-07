@@ -59,8 +59,11 @@ names (chipped / damaged) are the first lore line.
 Bedrock has no right-click-onto-a-stack in inventories: a flask is filled by using it while a potion
 is in the other hand, or by using a potion while a flask is in the other hand. A filled flask carries a
 stack nonce so it never stacks (Java's stack size 1). The dose bar is F9's item bar; the tooltip is text
-lore (the potion name and a dose meter) instead of TF's tooltip image. Flask icons do not show the
-potion colour (Bedrock item icons are static).
+lore (the potion name and a dose meter) instead of TF's tooltip image. With the client mod the icon
+follows TF's item models (doses 1..3, splintered / damaged glass) with the liquid in the potion's colour
+(ColorHandler): 264 prebuilt composites (22 potion colours x 12 dose / breakage looks, TF-derived, under
+`assets/pack/rp/textures/items/artifacts/tf-derived/`) picked through U11's icon layers; vanilla clients
+see the empty flask.
 
 ## Ore meter
 
@@ -70,9 +73,39 @@ Vanilla players get "Loading..." on the action bar and the results as chat lines
 
 ## Not ported
 
-- Emperor's cloth hiding the armour on the wearer (no armour render hook in F12); the cloth recipe,
-  tooltip and washing work. The cloth recipe's armour layout uses Bedrock's `minecraft:is_armor` item tag.
-- The mystic crown's inventory icon is the crown splinter's (TF draws a 3D model).
+- Emperor's cloth hiding the armour on the wearer: registered with F12's `hideArmor` (client mod), but
+  F12 notes that 1.26.51's v2 actor renderer draws players' worn armour without the check it hooks, so
+  it shows no effect on players yet (feature/ext/ui/Client.h); vanilla clients always see the armour. The
+  cloth recipe, tooltip and washing work. The cloth recipe's armour layout uses Bedrock's
+  `minecraft:is_armor` item tag.
+- The mystic crown's inventory icon is the crown splinter's (TF draws the lich's hat model; Bedrock's
+  slot icons are atlas sprites and F12's GUI item renderer does not run for inventory slots on 1.26.51).
 - The pocket watch's Mining Fatigue immunity removes an instance on the next tick (no
   "effect applicable" event).
+
+## Audit round 2
+
+Fixed:
+
+- **Emperor's cloth data key.** U9 wrote the cloth as item data `emperors_cloth`, U7's no-template smithing
+  (and its selftest) as TF's component id `twilightforest:emperors_cloth`, so a piece clothed in the
+  smithing fallback had no tooltip and could not be washed. U9 now writes TF's id (value `{}`, Unit) and
+  still reads and washes off the old key. Selftest `artifacts.recipes`.
+- **Duplicate cloth recipe.** U7's crafting-table copy of `twilightforest:emperors_cloth_smithing`
+  (armour + cloth, elytra + cloth) duplicated U9's `twilightforest:emperors_cloth_recipe_{armor,elytra}`
+  (TF's own crafting recipe, same match and result): Bedrock logged a duplicate-recipe warning. U7 drops
+  its copy (U7 PR); U9's recipe is the one crafting table recipe.
+- **Loyal zombie despawning.** LoyalZombie#removeWhenFarAway (only untamed ones) was already the
+  `gf:untamed` group; it no longer despawns at the simulation edge (Java has no such rule), and
+  `artifacts.loyal_zombie` checks the tamed zombie has no `minecraft:despawn` and an untamed one has.
+- **Flask icons** (client mod): see Potion flasks.
+- **Emperor's cloth armour hiding** (client mod): `hideArmor` registered (see Not ported for F12's gap).
+
+Open:
+
+- Keepsake casket lid animation (ChestLidController via SkullChestRenderer#renderCasket): needs the lid
+  as its own bone hidden by a block state while a block renderer draws it opening; not done.
+- Mystic crown GUI model (see Not ported).
+- Client visuals of this round (flask icons, armour hiding) were not run in the client e2e (round-2
+  workers run server scenarios only).
 

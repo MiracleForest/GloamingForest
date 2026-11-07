@@ -6,6 +6,7 @@
 #include "ll/api/coro/CoroTask.h"
 #include "ll/api/service/Bedrock.h"
 
+#include "mc/deps/core/string/HashedString.h"
 #include "mc/deps/shared_types/legacy/Difficulty.h"
 #include "mc/deps/shared_types/legacy/actor/ArmorSlot.h"
 #include "mc/server/SimulatedPlayer.h"
@@ -173,8 +174,21 @@ GF_REGISTER_SELFTEST("artifacts.loyal_zombie", [](Context& ctx) -> ll::coro::Cor
     auto* region = ctx.region();
     Mob*  z      = spawnMob(*region, kLoyalZombie, at(c.offset(2, 1, 0)));
     ctx.require(z != nullptr, "a loyal zombie");
+    // LoyalZombie#removeWhenFarAway: only an untamed one despawns (BP group gf:untamed)
+    static HashedString const despawn("minecraft:despawn");
+    Mob* wild = spawnMob(*region, kLoyalZombie, at(c.offset(4, 1, 2)));
+    ctx.require(wild != nullptr, "an untamed loyal zombie");
+    auto wildId = uidOf(*wild);
     tameLoyalZombie(*z, ctx.player());
     auto zid = uidOf(*z);
+    co_await ctx.ticks(1);
+    if (auto* w = actorById(wildId)) {
+        ctx.check(w->hasComponent(despawn), "an untamed loyal zombie despawns far from players");
+        w->remove();
+    }
+    z = static_cast<Mob*>(actorById(zid));
+    ctx.require(z != nullptr, "the tamed zombie is there");
+    ctx.check(!z->hasComponent(despawn), "a tamed loyal zombie never despawns");
     ctx.check(z->getMaxHealth() == 40, "40 max health (" + std::to_string(z->getMaxHealth()) + ")");
     ctx.check(z->getOwnerId().rawID == uidOf(ctx.player()), "owned by the summoner");
     co_await ctx.ticks(45);
@@ -421,6 +435,10 @@ GF_REGISTER_SELFTEST("artifacts.recipes", [](Context& ctx) -> ll::coro::CoroTask
     ItemStack cloth  = make(kEmperorsCloth);
     auto      clothed = test::craft("cloth", {&cloth, &helmet});
     ctx.require(clothed && hasCloth(*clothed), "the cloth goes on a helmet");
+    ctx.check(items::getData(*clothed, "twilightforest:emperors_cloth").is_object(), "as TF's twilightforest:emperors_cloth component (the key U7's no-template smithing writes)");
+    ItemStack legacy = make("minecraft:iron_boots");
+    items::setData(legacy, "emperors_cloth", true);
+    ctx.check(hasCloth(legacy), "a stack clothed before audit round 2 still counts");
     ctx.check(!test::craft("cloth", {&cloth, &*clothed}), "not twice");
     // washing it off in a water cauldron
     co_await ctx.flatArea(970, 8);

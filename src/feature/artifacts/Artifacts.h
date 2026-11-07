@@ -60,7 +60,8 @@ inline constexpr char kFourLeafClover[]       = "twilightforest:four_leaf_clover
 
 /// Item data keys (TF's data components).
 inline constexpr char kDataCasketDamage[] = "casket_damage";
-inline constexpr char kDataCloth[]        = "emperors_cloth";
+inline constexpr char kDataCloth[]        = "twilightforest:emperors_cloth"; ///< TF's component id (U7's no-template smithing writes the same key)
+inline constexpr char kDataClothLegacy[]  = "emperors_cloth";                ///< written before audit round 2; read and washed off
 inline constexpr char kDataFlask[]        = "flask_contents";
 inline constexpr char kDataOreData[]      = "ore_data";
 inline constexpr char kDataOreFilter[]    = "ore_filter";
