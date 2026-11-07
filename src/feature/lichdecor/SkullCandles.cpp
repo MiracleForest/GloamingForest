@@ -250,6 +250,16 @@ ia::Result placeSkullCandleItem(ia::UseOnContext const& c, std::string const& ty
 
 } // namespace
 
+std::vector<Vec3> skullCandleFlameOffsets(Block const& b, bool wall) {
+    auto out = offsets(b, wall);
+    if (!wall) return out;
+    // WallSkullCandleBlock#animateTick: off the wall by a quarter block (-facing step * 0.25)
+    auto f  = std::string(state(b, "facing"));
+    float sx = f == "west" ? -1.0F : f == "east" ? 1.0F : 0.0F, sz = f == "north" ? -1.0F : f == "south" ? 1.0F : 0.0F;
+    for (auto& o : out) o = Vec3{o.x - sx * 0.25F, o.y, o.z - sz * 0.25F};
+    return out;
+}
+
 std::optional<SkullCandleKind> skullCandleKind(std::string_view id) {
     for (auto const& k : kKinds) {
         if (id == candleBlock(k.type, false)) return SkullCandleKind{k.type, false};

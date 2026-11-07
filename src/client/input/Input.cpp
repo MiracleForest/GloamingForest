@@ -32,6 +32,9 @@
 #include "ll/api/memory/Hook.h"
 
 #include "mc/client/game/ClientInstance.h"
+#include "mc/client/input/KeyboardRemappingLayout.h"
+#include "mc/client/input/Keymapping.h"
+#include "mc/client/options/IOptionRegistry.h"
 #include "mc/client/gui/screens/interfaces/ISceneStack.h"
 #include "mc/client/player/LocalPlayer.h"
 #include "mc/deps/ecs/gamerefs_entity/EntityContext.h"
@@ -199,6 +202,51 @@ std::vector<std::string> registered() {
     std::lock_guard          lock(s.mutex);
     std::vector<std::string> out;
     for (auto const& [k, _] : s.keys) out.push_back(k);
+    return out;
+}
+
+// The current binding: LeviLamina adds a bound key to the game's keyboard remapping layout under an
+// action named after the key handle (its full name, "key." prefixed as the game's own actions); the
+// player's remapping in the controls changes that mapping's keys. A late key (or a client without
+// its controls loaded) answers with the default key it was registered with.
+std::optional<Binding> binding(std::string const& id) {
+    int  defaultKey = 0;
+    bool late       = false;
+    {
+        auto&           s = st();
+        std::lock_guard lock(s.mutex);
+        auto            it = s.keys.find(id);
+        if (it == s.keys.end()) return std::nullopt;
+        defaultKey = it->second.code;
+        late       = it->second.late;
+    }
+    Binding out;
+    if (defaultKey > 0) out.keys.push_back(defaultKey);
+    std::shared_ptr<KeyboardRemappingLayout> layout;
+    try {
+        if (auto* c = currentClient()) layout = c->getOptions().getCurrentKeyboardRemapping();
+    } catch (...) {}
+    if (!layout) return out;
+    try {
+        if (!late) {
+            std::vector<std::string> names{id, "key." + id};
+            auto& registry = ll::input::KeyRegistry::getInstance();
+            if (registry.hasKey(id)) {
+                auto full = registry.getOrCreateKey(id, {}, true).getFullName();
+                names.push_back(full);
+                names.push_back("key." + full);
+            }
+            for (auto const& m : layout->mKeymappings.get()) {
+                auto const& action = m.mAction.get();
+                if (std::find(names.begin(), names.end(), action) == names.end()) continue;
+                out.keys     = m.mKeys.get();
+                std::erase_if(out.keys, [](int k) { return k <= 0; });
+                out.remapped = true;
+                break;
+            }
+        }
+        if (!out.keys.empty()) out.name = layout->getMappedKeyName(out.keys.front());
+    } catch (...) {}
     return out;
 }
 

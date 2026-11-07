@@ -1370,21 +1370,29 @@ GF_REGISTER_SELFTEST("landmark.starts", [](Context& ctx) -> ll::coro::CoroTask<>
     ctx.check(ms < 1000, "without waiting for that thread (" + std::to_string(ms) + " ms)");
 
     // a generation thread (no evaluation of its own under way) waits for the thread evaluating the
-    // chunk, then goes on
+    // chunk, then goes on. The chunk is one no player is near: a chunk next to the test's players is
+    // queried by the server thread (protection, spawns, ensureStartsAround), which evaluates a busy
+    // chunk itself and so ended the wait early in full runs. The wait is lengthened for the test and
+    // observed by the waiter count, not by a number of ticks a loaded server may outlast.
     {
-        int const wx = cx - 1;
-        scope.touch(wx, cz);
-        fl::forgetEvaluation(dim, wx, cz);
-        fl::setEvaluationBusy(dim, wx, cz, true);
+        int const wx = cx - 8192, wz = cz + 8192;
+        scope.touch(wx, wz);
+        fl::forgetEvaluation(dim, wx, wz);
+        fl::setEvaluationBusy(dim, wx, wz, true);
+        fl::setEvaluationWaitForTest(std::chrono::minutes(2));
         auto       state = std::make_shared<std::atomic<int>>(0); // 0 waiting, 1 known, 2 not known
         TestThread worker;
-        worker.release = [dim, wx, cz] { fl::setEvaluationBusy(dim, wx, cz, false); };
-        worker.thread  = std::thread([state, dim, wx, cz] { state->store(fl::ensureStartsIn(dim, wx, cz) ? 1 : 2); });
-        co_await ctx.ticks(4);
-        ctx.check(state->load() == 0, "a generation thread waits while another thread evaluates the chunk");
-        fl::setEvaluationBusy(dim, wx, cz, false);
-        for (int i = 0; i < 40 && state->load() == 0; ++i) co_await ctx.ticks(1);
-        ctx.check(state->load() == 1 && fl::startsEvaluated(dim, wx, cz), "and evaluates it once released (state " + std::to_string(state->load()) + ")");
+        worker.release = [dim, wx, wz] {
+            fl::setEvaluationBusy(dim, wx, wz, false);
+            fl::setEvaluationWaitForTest(std::nullopt);
+        };
+        worker.thread = std::thread([state, dim, wx, wz] { state->store(fl::ensureStartsIn(dim, wx, wz) ? 1 : 2); });
+        for (int i = 0; i < 200 && fl::evaluationWaiters(dim, wx, wz) == 0 && state->load() == 0; ++i) co_await ctx.ticks(1);
+        ctx.check(state->load() == 0 && fl::evaluationWaiters(dim, wx, wz) == 1, "a generation thread waits while another thread evaluates the chunk");
+        fl::setEvaluationBusy(dim, wx, wz, false);
+        for (int i = 0; i < 400 && state->load() == 0; ++i) co_await ctx.ticks(1);
+        fl::setEvaluationWaitForTest(std::nullopt);
+        ctx.check(state->load() == 1 && fl::startsEvaluated(dim, wx, wz), "and evaluates it once released (state " + std::to_string(state->load()) + ")");
     }
 
     // /twilightforest locate's probe (CHUNK_LOAD_NEEDED): one structure set, nothing stored, and the
@@ -1417,6 +1425,11 @@ GF_REGISTER_SELFTEST("landmark.starts", [](Context& ctx) -> ll::coro::CoroTask<>
     auto nearCenter = cl::nearestCenter(cx, cz);
     ctx.require(co_await ctx.ensureLoaded(GlobalPos{dim, nearCenter.x, base.y, nearCenter.z}), "the nearest landmark center chunk loaded");
     scope.touch(nearCenter.x >> 4, nearCenter.z >> 4);
+    // the center chunk's natural starts made first (by a generation thread that may still be at it,
+    // or here): cleared before they are complete, a late evaluation would store them next to the
+    // test's starts
+    for (int i = 0; i < 400 && fl::evaluationBusy(dim, nearCenter.x >> 4, nearCenter.z >> 4); ++i) co_await ctx.ticks(1);
+    (void)fl::ensureStartsIn(dim, nearCenter.x >> 4, nearCenter.z >> 4);
     // the real starts of that center chunk (a hedge maze, a hollow hill, ... the world generated
     // there) step aside for the test; the scope puts them back
     scope.clear(nearCenter.x >> 4, nearCenter.z >> 4);

@@ -29,7 +29,6 @@ inline constexpr char kMazebreakerTag[]     = "twilightforest:mazebreaker_accele
 inline constexpr char kSmeltingModifier[]   = "twilightforest:fiery_pick_smelting";
 inline constexpr char kNoTemplateSmithing[] = "twilightforest:no_template_smithing";
 inline constexpr char kClothSmithing[]      = "twilightforest:emperors_cloth_smithing";
-inline constexpr char kClothSmithingElytra[] = "twilightforest:emperors_cloth_smithing_elytra";
 inline constexpr char kKnightmetalEquip[]   = "item.twilightforest.knightmetal_armor.equip";
 } // namespace ids
 

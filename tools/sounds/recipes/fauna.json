@@ -1,0 +1,103 @@
+{
+  "about": "U16 fauna: refinements of the baseline (tools/sounds/baseline/fauna.json). Original sound designs; TF's audio is never read. The events (ids, subtitles, categories, volumes, pitches, variant counts) stay TF's. The deer lows (TF's subtitle: 'Deer moos'): a soft nasal bellow with a thin bleat on top, a yelp when hurt and a long falling bellow when it dies. The kobold grumbles in a gruff little voice over a throat growl. The mosquito swarm is several detuned whines drifting around each other over a faint wing hum. The penguin honks (a dark nasal caw), the raven caws hoarse and squawks raw, the squirrel chitters (quick chirps over a tiny rattle) and the tiny bird chirps and sings short phrases. The parrot imitations play the imitated owners' events (TF's pitch 1.8, volume 0.6).",
+  "patches": {
+    "deer/voice": {
+      "about": "Deer bellow: a nasal o-to-u call with breath, a thin bleat an octave up, a short room.",
+      "params": {"pitch": 300, "len": 0.6, "rise": 1, "fall": -4, "rough": 1.4, "bleat": -14},
+      "length": "$len", "tail": 0.3,
+      "layers": [
+        {"type": "patch", "patch": "creature/call", "length": "$len+0.4", "params": {"pitch": "$pitch", "len": "$len", "rise": "$rise", "fall": "$fall", "vowelA": 3, "vowelB": 4, "size": 1.05, "rough": "$rough", "breath": 0.3, "vib": 0.35, "vibRate": 5}},
+        {"type": "patch", "patch": "creature/bleat", "length": "$len+0.4", "gain": "$bleat", "params": {"pitch": "$pitch*2", "len": "$len*0.8", "size": 1.3, "vib": 0.6}}
+      ],
+      "fx": [{"type": "filter", "filter": "hp", "freq": 110}, {"type": "reverb", "room": 0.35, "mix": 0.08}]
+    },
+    "kobold/grumble": {
+      "about": "Kobold grumble: gruff chatter over a throat growl.",
+      "params": {"pitch": 330, "count": 3},
+      "length": "$count*0.14+0.1", "tail": 0.25,
+      "layers": [
+        {"type": "patch", "patch": "creature/chatter", "length": "$count*0.16+0.4", "params": {"pitch": "$pitch", "count": "$count", "syll": 0.13, "size": 1.45, "rough": 2.4}},
+        {"type": "patch", "patch": "creature/growl", "length": "$count*0.16+0.4", "gain": -9, "params": {"pitch": "$pitch*0.35", "len": "$count*0.13", "size": 1.1, "rough": 2, "rasp": 0.25, "rumble": 30}}
+      ]
+    },
+    "mosquito/swarm": {
+      "about": "Mosquito swarm: three detuned whines that drift past each other and a faint wing-beat hum.",
+      "params": {"pitch": 620, "len": 1.6},
+      "length": "$len", "tail": 0.2,
+      "layers": [
+        {"type": "patch", "patch": "creature/whine", "length": "$len+0.3", "params": {"pitch": "$pitch", "len": "$len"}},
+        {"type": "patch", "patch": "creature/whine", "length": "$len+0.3", "start": 0.12, "gain": -4, "params": {"pitch": "$pitch*1.09", "len": "$len*0.85"}},
+        {"type": "patch", "patch": "creature/whine", "length": "$len+0.3", "start": 0.3, "gain": -7, "params": {"pitch": "$pitch*0.9", "len": "$len*0.7"}},
+        {"type": "noise", "color": "pink", "amp": 0.12, "env": {"a": 0.2, "d": "$len*0.5", "s": 0.6, "r": 0.2}, "tremolo": {"rate": 310, "depth": 0.8}, "filter": [{"type": "bp", "freq": 650, "q": 2}]}
+      ],
+      "fx": [{"type": "chorus", "rate": 0.9, "depth": 0.004, "mix": 0.4}]
+    },
+    "squirrel/chitter": {
+      "about": "Squirrel chitter: quick rising chirps over a tiny fast rattle.",
+      "params": {"f0": 2900, "count": 5},
+      "length": "$count*0.065+0.05", "tail": 0.1,
+      "layers": [
+        {"type": "patch", "patch": "creature/chirp", "length": "$count*0.07+0.2", "params": {"f0": "$f0", "f1": "$f0*1.5", "len": 0.04, "count": "$count", "gap": 0.065, "spread": 3}},
+        {"type": "patch", "patch": "creature/rattle", "length": "$count*0.07+0.2", "gain": -10, "params": {"len": "$count*0.06", "rate": 46, "freq": 4200, "q": 6}}
+      ]
+    },
+    "bird/song": {
+      "about": "Tiny bird song: two short chirp phrases, the second higher and quicker.",
+      "params": {"f0": 3200},
+      "length": 1.5, "tail": 0.2,
+      "layers": [
+        {"type": "patch", "patch": "creature/chirp", "length": 1.0, "params": {"f0": "$f0", "f1": "$f0*1.7", "len": 0.075, "count": 6, "gap": 0.12, "spread": 5}},
+        {"type": "patch", "patch": "creature/chirp", "start": 0.78, "length": 0.8, "gain": -2, "params": {"f0": "$f0*1.25", "f1": "$f0*1.9", "len": 0.05, "count": 5, "gap": 0.085, "spread": 3}}
+      ],
+      "fx": [{"type": "reverb", "room": 0.45, "mix": 0.12}]
+    }
+  },
+  "files": {
+    "mob/deer/idle1": {"patch": "deer/voice", "params": {"pitch": 270, "len": 0.55}, "seed": 1601},
+    "mob/deer/idle2": {"patch": "deer/voice", "params": {"pitch": 290, "len": 0.62, "rise": 2}, "seed": 1602},
+    "mob/deer/idle3": {"patch": "deer/voice", "params": {"pitch": 310, "len": 0.5, "fall": -6}, "seed": 1603},
+    "mob/deer/death": {"patch": "deer/voice", "params": {"pitch": 280, "len": 1.0, "rise": 3, "fall": -13, "rough": 2, "bleat": -8}, "seed": 1604},
+    "mob/deer/hurt1": {"patch": "deer/voice", "params": {"pitch": 420, "len": 0.24, "rise": 5, "fall": -6, "rough": 2.2, "bleat": -6}, "seed": 1605},
+    "mob/deer/hurt2": {"patch": "deer/voice", "params": {"pitch": 450, "len": 0.22, "rise": 6, "fall": -5, "rough": 2.2, "bleat": -6}, "seed": 1606},
+    "mob/kobold/ambient1": {"patch": "kobold/grumble", "params": {"pitch": 300, "count": 3}, "seed": 1611},
+    "mob/kobold/ambient2": {"patch": "kobold/grumble", "params": {"pitch": 320, "count": 4}, "seed": 1612},
+    "mob/kobold/ambient3": {"patch": "kobold/grumble", "params": {"pitch": 340, "count": 5}, "seed": 1613},
+    "mob/kobold/ambient4": {"patch": "kobold/grumble", "params": {"pitch": 355, "count": 2}, "seed": 1614},
+    "mob/kobold/ambient5": {"patch": "kobold/grumble", "params": {"pitch": 315, "count": 3}, "seed": 1615},
+    "mob/kobold/ambient6": {"patch": "kobold/grumble", "params": {"pitch": 365, "count": 4}, "seed": 1616},
+    "mob/kobold/death1": {"patch": "creature/call", "params": {"pitch": 350, "len": 0.7, "rise": 3, "fall": -15, "size": 1.45, "rough": 2.6, "breath": 0.3, "vowelA": 0, "vowelB": 4}, "seed": 1617},
+    "mob/kobold/death2": {"patch": "creature/call", "params": {"pitch": 375, "len": 0.65, "rise": 2, "fall": -13, "size": 1.45, "rough": 2.6, "breath": 0.3, "vowelA": 0, "vowelB": 3}, "seed": 1618},
+    "mob/kobold/death3": {"patch": "creature/call", "params": {"pitch": 395, "len": 0.75, "rise": 4, "fall": -16, "size": 1.45, "rough": 2.6, "breath": 0.3, "vowelA": 1, "vowelB": 4}, "seed": 1619},
+    "mob/kobold/hurt1": {"patch": "creature/call", "params": {"pitch": 410, "len": 0.18, "rise": 6, "fall": -4, "size": 1.5, "rough": 2.8, "vowelA": 0, "vowelB": 1}, "seed": 1620},
+    "mob/kobold/hurt2": {"patch": "creature/call", "params": {"pitch": 430, "len": 0.2, "rise": 5, "fall": -5, "size": 1.5, "rough": 2.8, "vowelA": 0, "vowelB": 2}, "seed": 1621},
+    "mob/kobold/hurt3": {"patch": "creature/call", "params": {"pitch": 450, "len": 0.17, "rise": 7, "fall": -3, "size": 1.5, "rough": 2.8, "vowelA": 1, "vowelB": 0}, "seed": 1622},
+    "mob/mosquito/animals132": {"patch": "mosquito/swarm", "params": {"pitch": 610, "len": 1.6}, "seed": 1625},
+    "mob/penguin/idle1": {"patch": "creature/caw", "params": {"pitch": 470, "len": 0.17, "count": 2, "gap": 0.22, "size": 1.0, "rough": 1.4}, "seed": 1631},
+    "mob/penguin/idle2": {"patch": "creature/caw", "params": {"pitch": 495, "len": 0.2, "count": 1, "size": 1.0, "rough": 1.4}, "seed": 1632},
+    "mob/penguin/idle3": {"patch": "creature/caw", "params": {"pitch": 520, "len": 0.15, "count": 3, "gap": 0.19, "size": 1.05, "rough": 1.3}, "seed": 1633},
+    "mob/penguin/idle4": {"patch": "creature/caw", "params": {"pitch": 545, "len": 0.18, "count": 1, "size": 1.05, "rough": 1.5}, "seed": 1634},
+    "mob/penguin/idle5": {"patch": "creature/caw", "params": {"pitch": 565, "len": 0.16, "count": 2, "gap": 0.2, "size": 1.1, "rough": 1.3}, "seed": 1635},
+    "mob/penguin/idle6": {"patch": "creature/caw", "params": {"pitch": 590, "len": 0.19, "count": 1, "size": 1.1, "rough": 1.6}, "seed": 1636},
+    "mob/penguin/idle7": {"patch": "creature/caw", "params": {"pitch": 610, "len": 0.15, "count": 2, "gap": 0.18, "size": 1.1, "rough": 1.4}, "seed": 1637},
+    "mob/penguin/death": {"patch": "creature/call", "params": {"pitch": 480, "len": 0.6, "rise": 2, "fall": -12, "size": 1.15, "rough": 2, "breath": 0.25, "vowelA": 0, "vowelB": 4}, "seed": 1638},
+    "mob/penguin/hurt": {"patch": "creature/caw", "params": {"pitch": 680, "len": 0.13, "count": 1, "size": 1.15, "rough": 2.6}, "seed": 1639},
+    "mob/raven/caw1": {"patch": "creature/caw", "params": {"pitch": 640, "len": 0.27, "count": 2, "gap": 0.34, "size": 1.25, "rough": 3.5}, "seed": 1641},
+    "mob/raven/caw2": {"patch": "creature/caw", "params": {"pitch": 690, "len": 0.24, "count": 3, "gap": 0.3, "size": 1.3, "rough": 3.2}, "seed": 1642},
+    "mob/raven/squawk1": {"patch": "creature/caw", "params": {"pitch": 820, "len": 0.2, "count": 1, "size": 1.4, "rough": 5}, "seed": 1643},
+    "mob/raven/squawk2": {"patch": "creature/caw", "params": {"pitch": 870, "len": 0.16, "count": 2, "gap": 0.14, "size": 1.4, "rough": 5}, "seed": 1644},
+    "mob/squirrel/idle1": {"patch": "squirrel/chitter", "params": {"f0": 2700, "count": 4}, "seed": 1651},
+    "mob/squirrel/idle2": {"patch": "squirrel/chitter", "params": {"f0": 2850, "count": 6}, "seed": 1652},
+    "mob/squirrel/idle3": {"patch": "squirrel/chitter", "params": {"f0": 3000, "count": 3}, "seed": 1653},
+    "mob/squirrel/idle4": {"patch": "squirrel/chitter", "params": {"f0": 3150, "count": 5}, "seed": 1654},
+    "mob/squirrel/idle5": {"patch": "squirrel/chitter", "params": {"f0": 3300, "count": 7}, "seed": 1655},
+    "mob/squirrel/death": {"patch": "creature/squeak", "params": {"pitch": 2100, "len": 0.32, "bend": -14, "count": 2, "gap": 0.16}, "seed": 1656},
+    "mob/squirrel/hurt": {"patch": "creature/squeak", "params": {"pitch": 2500, "len": 0.09, "bend": 6, "count": 2, "gap": 0.08}, "seed": 1657},
+    "mob/tiny_bird/chirp1": {"patch": "creature/chirp", "params": {"f0": 3600, "f1": 5600, "len": 0.06, "count": 2, "gap": 0.09, "spread": 2.5}, "seed": 1661},
+    "mob/tiny_bird/chirp2": {"patch": "creature/chirp", "params": {"f0": 3800, "f1": 5400, "len": 0.05, "count": 3, "gap": 0.08, "spread": 2}, "seed": 1662},
+    "mob/tiny_bird/chirp3": {"patch": "creature/chirp", "params": {"f0": 4000, "f1": 6000, "len": 0.07, "count": 2, "gap": 0.1, "spread": 3}, "seed": 1663},
+    "mob/tiny_bird/hurt1": {"patch": "creature/squeak", "params": {"pitch": 3100, "len": 0.08, "bend": 5, "count": 1}, "seed": 1664},
+    "mob/tiny_bird/hurt2": {"patch": "creature/squeak", "params": {"pitch": 3300, "len": 0.07, "bend": 7, "count": 2, "gap": 0.07}, "seed": 1665},
+    "mob/tiny_bird/song1": {"patch": "bird/song", "params": {"f0": 3100}, "seed": 1666},
+    "mob/tiny_bird/song2": {"patch": "bird/song", "params": {"f0": 3400}, "seed": 1667}
+  }
+}

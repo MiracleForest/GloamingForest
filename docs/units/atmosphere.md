@@ -126,3 +126,20 @@ fallback. Spec: [docs/spec/atmosphere.md](../spec/atmosphere.md).
   with no sun Mie scattering and TF's sky colours, referenced from each TF biome's client biome file through
   `minecraft:atmosphere_identifier`) would take the orange band away; the client biome files are U1's.
 - Open (round 2): the HUD shows the icons of the hidden effects other units give (see U12's audit); not this unit's.
+
+## Audit round 2
+
+- **Vibrant Visuals: stars below the horizon over the void plate** (measured 6, range 0..2, round 1). Under VV the stars
+  and the plate draw in the world pass, ordered by depth and blend, and stars showed through the plate. TFSkyRenderer
+  draws the plate after the stars without depth, so every star in a direction that meets the plate is hidden: when the
+  plate is drawn in the world pass the stars it covers are now left out (`core::atmosphere::underVoidPlate`, the ray
+  against the octagon at y -4, gtested in `Atmosphere.UnderVoidPlate`; `starsAbovePlate()` in
+  `src/client/atmosphere/Atmosphere.cpp`). Classic is unchanged (the sky pass draws the plate over the stars).
+- **Vibrant Visuals' dusk**: `assets/pack/rp/atmospherics/atmosphere/<biome>_atmospherics.json` (22, one per TF
+  biome, `gloamingforest:<biome>_atmospherics`) give VV's physical sky TF's colours at the dimension's fixed time
+  13000 and take its sun scattering away (sun and moon Mie 0, no sun glare; laid out as Bedrock's own fixed-sky
+  `end_atmospherics`): zenith = ClientLevel#getSkyColor (the biome sky colour x the daylight 0.379 of 13000), horizon =
+  the frame's fog colour of `core::atmosphere::fogColor` at Java's default 12 chunks (the biome fog colour through
+  getBrightnessDependentFogColor, pulled 14.6 % towards the sky). U1's client biome files reference them through
+  `minecraft:atmosphere_identifier` (U1's PR of this round). Not verified in a client run this round (the e2e client
+  instance was missing from the machine); the scenario's VV dusk value stays recorded, not checked.

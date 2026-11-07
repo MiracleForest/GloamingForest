@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "gloamingforest:camp/deco/garden_2x4",
+  "id": "twilightforest:camp/deco/garden_2x4",
   "size": [4, 2, 7],
   "palette": [
     {"Name":"minecraft:structure_void"},
@@ -16,6 +16,6 @@
     [1, 2], [5, 2], [1, 2], [5, 2], [1, 2], [5, 2], [1, 5]
   ],
   "jigsaw": [
-    {"pos":[1,0,0],"front":"north","top":"up","pool":"minecraft:empty","name":"gloamingforest:camp/deco","target":""}
+    {"pos":[1,0,0],"front":"north","top":"up","pool":"minecraft:empty","name":"twilightforest:camp/deco","target":""}
   ]
 }

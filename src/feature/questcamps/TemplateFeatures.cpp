@@ -51,9 +51,8 @@ thread_local FeatureReport tReport;
 
 // ---- helpers -------------------------------------------------------------------------------------------------
 
-/// The template standing in for TF's "twilightforest:feature/<path>" (no template definition: the
-/// gloamingforest namespace, like the Naga courtyard's templates).
-std::string tid(std::string const& path) { return "gloamingforest:feature/" + path; }
+/// The template standing in for TF's "twilightforest:feature/<path>" (TF's own id, R1).
+std::string tid(std::string const& path) { return "twilightforest:feature/" + path; }
 
 cq::Rot toCore(Rotation r) { return static_cast<cq::Rot>(st::rotationIndex(r)); }
 cq::Mir toCore(Mirror m) { return static_cast<cq::Mir>(static_cast<int>(m)); }

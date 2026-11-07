@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "gloamingforest:camp/campfire_west",
+  "id": "twilightforest:camp/campfire_west",
   "size": [9, 3, 9],
   "palette": [
     {"Name":"minecraft:structure_void"},
@@ -24,10 +24,10 @@
     {"pos":[7,0,7],"marker":"data","data":{"metadata":"birch_drying_rack@north"}}
   ],
   "jigsaw": [
-    {"pos":[4,0,4],"front":"down","top":"south","pool":"minecraft:empty","name":"gloamingforest:camp/structure_start","target":""},
-    {"pos":[4,0,0],"front":"north","top":"up","pool":"gloamingforest:camp/tent","name":"gloamingforest:camp/exit","target":"gloamingforest:camp/tent"},
-    {"pos":[4,0,8],"front":"south","top":"up","pool":"gloamingforest:camp/rack_path","name":"gloamingforest:camp/exit","target":"gloamingforest:camp/path"},
-    {"pos":[0,0,4],"front":"west","top":"up","pool":"gloamingforest:camp/main_path","name":"gloamingforest:camp/exit","target":"gloamingforest:camp/path"},
-    {"pos":[8,0,4],"front":"east","top":"up","pool":"gloamingforest:camp/tent","name":"gloamingforest:camp/exit","target":"gloamingforest:camp/tent"}
+    {"pos":[4,0,4],"front":"down","top":"south","pool":"minecraft:empty","name":"twilightforest:camp/structure_start","target":""},
+    {"pos":[4,0,0],"front":"north","top":"up","pool":"twilightforest:camp/tent","name":"twilightforest:camp/exit","target":"twilightforest:camp/tent"},
+    {"pos":[4,0,8],"front":"south","top":"up","pool":"twilightforest:camp/rack_path","name":"twilightforest:camp/exit","target":"twilightforest:camp/path"},
+    {"pos":[0,0,4],"front":"west","top":"up","pool":"twilightforest:camp/main_path","name":"twilightforest:camp/exit","target":"twilightforest:camp/path"},
+    {"pos":[8,0,4],"front":"east","top":"up","pool":"twilightforest:camp/tent","name":"twilightforest:camp/exit","target":"twilightforest:camp/tent"}
   ]
 }

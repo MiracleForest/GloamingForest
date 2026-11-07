@@ -127,6 +127,8 @@ struct Records {
     /// start chunks whose sets are being evaluated, with the thread that claimed them
     std::unordered_map<ChunkKey, std::thread::id, ChunkKeyHash>             inProgress;
     std::condition_variable_any                                             evaluatedChanged;
+    /// threads waiting in ensureStartsIn for another thread's evaluation, per start chunk
+    std::unordered_map<ChunkKey, int, ChunkKeyHash>                         waiters;
     std::unordered_set<ChunkKey, ChunkKeyHash>                              aroundDone; ///< ensureStartsAround ran
     /// probeStart's answers: (dim, start chunk, structure set) -> the key starting there ("" none)
     std::map<std::tuple<int, int, int, std::string>, std::string>            probes;
@@ -160,6 +162,12 @@ bool evaluatingHere(ChunkKey const& key) {
 /// How long a generation thread waits for another thread evaluating the same start chunk before it
 /// evaluates the chunk itself (the evaluating thread never waits, so this is only a safety net).
 constexpr auto kEvaluationWait = std::chrono::seconds(2);
+/// setEvaluationWaitForTest's value (0: kEvaluationWait).
+std::atomic<std::int64_t> gEvaluationWaitMs{0};
+std::chrono::milliseconds evaluationWait() {
+    auto ms = gEvaluationWaitMs.load(std::memory_order_relaxed);
+    return ms > 0 ? std::chrono::milliseconds(ms) : std::chrono::duration_cast<std::chrono::milliseconds>(kEvaluationWait);
+}
 
 /// Chunks covered by a box (column-wise).
 template <class Fn>
@@ -756,6 +764,7 @@ RecordPtr recordFromJson(Json const& j) {
     rec->placed           = j.value("placed", false);
     rec->start.data       = j.value("data", Json::object());
     if (!rec->start.data.is_object()) rec->start.data = Json::object(); // a damaged entry: Start::data is an object
+    rec->start.data["forced"] = rec->forced; // starts saved before the flag was in their data
     bool allLive          = true;
     std::vector<std::shared_ptr<structure::Piece>> live;
     for (auto const& p : j.value("pieces", Json::array())) {
@@ -877,7 +886,7 @@ RecordPtr createStart(Info const& info, int dim, int chunkX, int chunkZ, std::op
     rec->start.center     = {dim, x, y, z};
     rec->start.seed       = levelSeed();
     rec->start.conquered  = false;
-    rec->start.data       = Json{{"chunk", Json::array({chunkX, chunkZ})}};
+    rec->start.data       = Json{{"chunk", Json::array({chunkX, chunkZ})}, {"forced", forced}}; // forced: made by forceStart / generateAt (placed vs natural)
 
     auto gen = generatorFor(info.d.key);
     if (gen && gen->layout) {
@@ -1112,7 +1121,8 @@ bool ensureStartsIn(int dim, int chunkX, int chunkZ) {
     }
     // a layout asking about its own chunk: what is stored so far (the evaluation is under way here)
     if (evaluatingHere(key)) return false;
-    auto const deadline = std::chrono::steady_clock::now() + kEvaluationWait;
+    auto const wait     = evaluationWait();
+    auto const deadline = std::chrono::steady_clock::now() + wait;
     for (;;) {
         std::uint64_t world = 0;
         switch (tryClaim(r, key, world)) {
@@ -1128,14 +1138,33 @@ bool ensureStartsIn(int dim, int chunkX, int chunkZ) {
             bool settled = false;
             {
                 std::unique_lock lock(r.mutex);
+                ++r.waiters[key];
                 settled = r.evaluatedChanged.wait_until(lock, deadline, [&] { return r.evaluated.contains(key) || !r.inProgress.contains(key); });
+                if (--r.waiters[key] <= 0) r.waiters.erase(key);
             }
             if (settled) continue; // known now, or free to claim (the other thread's world was closed)
             log().warn("landmark: chunk {} {}: another thread is still evaluating its starts after {} s; evaluating them here", chunkX, chunkZ,
-                       std::chrono::duration_cast<std::chrono::seconds>(kEvaluationWait).count());
+                       std::chrono::duration_cast<std::chrono::seconds>(wait).count());
         }
         return evaluateStarts(r, key, recordWorld(), false);
     }
+}
+
+int evaluationWaiters(int dim, int chunkX, int chunkZ) {
+    auto&            r = records();
+    std::shared_lock lock(r.mutex);
+    auto             it = r.waiters.find({dim, chunkX, chunkZ});
+    return it == r.waiters.end() ? 0 : it->second;
+}
+
+bool evaluationBusy(int dim, int chunkX, int chunkZ) {
+    auto&            r = records();
+    std::shared_lock lock(r.mutex);
+    return r.inProgress.contains({dim, chunkX, chunkZ});
+}
+
+void setEvaluationWaitForTest(std::optional<std::chrono::milliseconds> wait) {
+    gEvaluationWaitMs.store(wait ? std::max<std::int64_t>(1, wait->count()) : 0, std::memory_order_relaxed);
 }
 
 bool startsEvaluated(int dim, int chunkX, int chunkZ) {
