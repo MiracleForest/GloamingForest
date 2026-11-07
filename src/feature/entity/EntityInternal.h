@@ -164,8 +164,14 @@ void removeLater(std::int64_t uid);
 [[nodiscard]] bool hasBehaviour(std::string const& typeId);
 /// Calls the registered Behaviour::hurt of `actor`'s type (true: the damage goes on).
 bool dispatchHurt(Actor& actor, float& amount, std::string const& damageType, Actor* attacker);
-/// Removes a behaviour registration (fixture behaviours live only while their tests run).
+/// Removes every behaviour registration of a type (fixture behaviours live only while their tests run).
 void unregisterTypeForTest(std::string const& typeId);
+/// gf::entity::registerType / ext::addBehaviour: adds one registration (handle > 0).
+std::uint64_t addBehaviour(std::string const& entityId, gf::entity::Behaviour behaviour);
+/// ext::removeBehaviour: false when the handle is unknown (removed already).
+bool removeBehaviour(std::uint64_t id);
+/// The number of registrations of a type (selftests).
+[[nodiscard]] std::size_t behaviourCount(std::string const& typeId);
 /// The die hook's dispatch (Behaviour::die and the internal die hooks) for a selftest.
 void dispatchDieForTest(Mob& mob, ActorDamageSource const& source);
 
@@ -263,6 +269,9 @@ enum class PathType {
 
 /// The parent actor id of a part actor (0: not a part).
 [[nodiscard]] std::int64_t parentOfPart(Actor const& part);
+/// Whether the parent took the hit the part `partUid` just forwarded through gf::combat (TFPart#hurt's
+/// answer); read once, nullopt when that part forwarded nothing since.
+[[nodiscard]] std::optional<bool> takePartForward(std::int64_t partUid);
 /// Moves the parts of `parent` to their offsets (tick hook).
 void followParts(Mob& parent, ActorState& state);
 /// Installs the part damage / interaction routing.

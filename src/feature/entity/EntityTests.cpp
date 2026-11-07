@@ -45,6 +45,7 @@
 #include "feature/entity/EntityFixture.h"
 #include "feature/entity/EntityInternal.h"
 #include "feature/ext/entity/EntityExt.h"
+#include "feature/ext/entity/Handles.h"
 #include "feature/net/Net.h"
 #include "game/Blocks.h"
 #include "game/WorldDb.h"
@@ -293,6 +294,42 @@ GF_REGISTER_SELFTEST("entity.behaviour", [](Context& ctx) -> ll::coro::CoroTask<
     co_await ctx.ticks(25);
     removeActor(uid);
     (void)box;
+});
+
+// Registrations of one type add up (U16's vanilla cat / wolf / parrot behaviours next to another
+// unit's), run in registration order, and come off by handle. Synchronous: no tick runs while the
+// probe behaviours of minecraft:player are registered.
+GF_REGISTER_SELFTEST("entity.behaviour_additive", [](Context& ctx) {
+    std::string const type = "minecraft:player";
+    auto&             self = ctx.player();
+    std::size_t const base = behaviourCount(type);
+    std::vector<int>  order;
+    auto a = ge::ext::addBehaviour(type, {.hurt = [&](Actor&, float& amount, std::string const&, Actor*) {
+                                              order.push_back(1);
+                                              amount *= 2.0f;
+                                              return true;
+                                          }});
+    auto b = ge::ext::addBehaviour(type, {.hurt = [&](Actor&, float& amount, std::string const&, Actor*) {
+                                              order.push_back(2);
+                                              amount += 1.0f;
+                                              return amount < 10.0f;
+                                          }});
+    ctx.check(a != 0 && b != 0 && a != b, "every registration gets its own handle");
+    ctx.check(behaviourCount(type) == base + 2, "two registrations of one type are both kept");
+    float amount = 3.0f;
+    bool  go     = dispatchHurt(self, amount, "minecraft:generic", nullptr);
+    ctx.check(go && amount == 7.0f, "both hurt hooks ran, each on the amount the one before left (" + std::to_string(amount) + ")");
+    ctx.check(order == std::vector<int>({1, 2}), "the hooks run in registration order");
+    order.clear();
+    amount = 5.0f;
+    ctx.check(!dispatchHurt(self, amount, "minecraft:generic", nullptr), "one refusal cancels the damage");
+    ctx.check(ge::ext::removeBehaviour(a), "removeBehaviour finds its registration");
+    ctx.check(!ge::ext::removeBehaviour(a), "a second removal of the same handle finds nothing");
+    order.clear();
+    amount = 3.0f;
+    (void)dispatchHurt(self, amount, "minecraft:generic", nullptr);
+    ctx.check(order == std::vector<int>({2}) && amount == 4.0f, "a removed registration's hooks no longer run");
+    ctx.check(ge::ext::removeBehaviour(b) && behaviourCount(type) == base, "the type is back to its own registrations");
 });
 
 GF_REGISTER_SELFTEST("entity.goals", [](Context& ctx) -> ll::coro::CoroTask<> {

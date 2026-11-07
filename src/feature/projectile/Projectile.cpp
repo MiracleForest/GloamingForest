@@ -74,6 +74,7 @@
 #include "feature/combat/Combat.h"
 #include "feature/entity/EntityInternal.h"
 #include "feature/ext/entity/EntityExt.h"
+#include "feature/ext/entity/Handles.h"
 #include "feature/fx/Fx.h"
 #include "game/Blocks.h"
 #include "game/Items.h"
@@ -289,6 +290,39 @@ bool canHit(Actor& projectile, Sim const& s, Actor& target) {
     return true;
 }
 
+/// The hit a projectile is processing (NeoForge's ProjectileImpactEvent around Projectile#onHit):
+/// ext::cancelImpact cancels it, ext::setVelocity during it steers the projectile on.
+struct Impact {
+    std::int64_t uid         = 0;
+    bool         cancelled   = false;
+    bool         velocitySet = false;
+};
+thread_local std::vector<Impact> tImpacts;
+
+struct ImpactScope {
+    explicit ImpactScope(std::int64_t uid) { tImpacts.push_back({uid}); }
+    ~ImpactScope() { tImpacts.pop_back(); }
+    ImpactScope(ImpactScope const&)            = delete;
+    ImpactScope& operator=(ImpactScope const&) = delete;
+    [[nodiscard]] bool cancelled() const { return tImpacts.back().cancelled; }
+    [[nodiscard]] bool velocitySet() const { return tImpacts.back().velocitySet; }
+};
+
+Impact* impactOf(std::int64_t uid) {
+    for (auto it = tImpacts.rbegin(); it != tImpacts.rend(); ++it)
+        if (it->uid == uid) return &*it;
+    return nullptr;
+}
+
+/// Java's projectiles are no LivingEntity: a TF projectile (a BP entity, which Bedrock makes a Mob)
+/// loses the Mob category, so whatever asks Actor::hasCategory(ActorCategory::Mob) (the units'
+/// asMob helpers, F8's own tick, mobs choosing targets) treats it as the projectile it is.
+void dropMobCategory(Actor& projectile) {
+    auto cats = static_cast<std::uint32_t>(projectile.mCategories);
+    auto mob  = static_cast<std::uint32_t>(ActorCategory::Mob);
+    if (cats & mob) projectile.mCategories = static_cast<ActorCategory>(cats & ~mob);
+}
+
 void markRemoved(Actor& projectile) {
     S().toRemove.push_back(fe::uidOf(projectile));
     S().live.erase(fe::uidOf(projectile));
@@ -346,9 +380,20 @@ bool arrowHitEntity(Actor& p, Sim& s, pe::ArrowSpec const& arrow, Actor& target)
     // vanilla objects (their own Entity#hurt)
     bool   part      = fe::parentOfPart(target) != 0;
     bool   living    = !part && (target.isPlayer() || target.hasCategory(ActorCategory::Mob));
+    bool   wasOnFire = target.isOnFire();
+    if (part) (void)fe::takePartForward(fe::uidOf(target)); // nothing left over from an earlier hit
     if (p.isOnFire() && !enderman) target.setOnFire(5, true);
     bool   landed    = living || part ? gf::combat::hurt(target, static_cast<float>(dmg), "minecraft:arrow", owner ? owner : &p, &p)
                                       : hurtObject(target, p, owner, static_cast<float>(dmg));
+    // TFPart#hurt answers with its parent's hurt (the part's own damage is always refused)
+    if (part)
+        if (auto forwarded = fe::takePartForward(fe::uidOf(target))) landed = *forwarded;
+    // a cancelled impact (a parry, a perfect dodge: ProjectileImpactEvent) never hit: the arrow flies
+    // on with the velocity the handler left it, neither removed nor deflected
+    if (auto const* impact = impactOf(fe::uidOf(p)); impact && impact->cancelled) {
+        if (!wasOnFire && target.isOnFire() && !landed) target.stopFire();
+        return false;
+    }
     if (landed) {
         if (enderman) return false;
         if (!living) {
@@ -376,7 +421,9 @@ bool arrowHitEntity(Actor& p, Sim& s, pe::ArrowSpec const& arrow, Actor& target)
         gf::fx::sound(p.getDimension(), arrow.hitSound, p.getPosition(), 1.0F, hitPitch(p));
         return true;
     }
-    // ProjectileDeflection.REVERSE, then * 0.2
+    // the target's fire as it was (entity.setRemainingFireTicks(k)), then ProjectileDeflection.REVERSE
+    // and * 0.2
+    if (!wasOnFire && target.isOnFire()) target.stopFire();
     float turn = 170.0F + random.nextFloat() * 20.0F;
     s.vel      = Vec3{s.vel.x * -0.1f, s.vel.y * -0.1f, s.vel.z * -0.1f};
     auto rot   = p.getRotation();
@@ -438,6 +485,7 @@ void tickProjectile(Actor& p, fe::ActorState& state) {
     Sim&        s     = it->second;
     Spec const& spec  = specOf(s.type);
     auto const* arrow = arrowOf(s.type);
+    dropMobCategory(p); // again every tick: a reloaded or re-defined actor gets its categories back
     if (spec.tick) spec.tick(p);
     if (!p.isAlive() || !live.contains(uid)) return;
     auto& region = p.getDimensionBlockSource();
@@ -523,19 +571,32 @@ void tickProjectile(Actor& p, fe::ActorState& state) {
             if (t && *t < tBest && *t <= tBlock) tBest = *t, best = e;
         }
     }
-    bool gone = false;
+    bool gone      = false;
+    bool flyOn     = false; ///< the hit is over and the projectile goes on moving this tick
     if (best) {
+        ImpactScope impact(uid);
         if (arrow) {
             gone = arrowHitEntity(p, s, *arrow, *best);
-            if (spec.onHitEntity) spec.onHitEntity(p, *best); // the subclass's additions (IceArrow's chill)
+            // the subclass's additions (IceArrow's chill), unless the impact was cancelled
+            if (!impact.cancelled() && spec.onHitEntity) spec.onHitEntity(p, *best);
         } else {
             gone = spec.onHitEntity ? spec.onHitEntity(p, *best) : true;
         }
+        if (impact.cancelled()) gone = false;
+        if (!live.contains(uid)) return;
     } else if (hr.mType == HitResultType::Tile) {
         if (arrow) {
             // AbstractArrow#onHitBlock: stuck, 0.05 back along the motion
-            if (spec.onHitBlock) spec.onHitBlock(p, hr.mBlock, hr.mFacing);
+            bool cancelled = false;
+            if (spec.onHitBlock) {
+                ImpactScope impact(uid);
+                spec.onHitBlock(p, hr.mBlock, hr.mFacing);
+                cancelled = impact.cancelled();
+            }
             if (!live.contains(uid)) return;
+            if (cancelled) flyOn = true;
+        }
+        if (arrow && !flyOn) {
             Vec3   d{hr.mPos.x - pos.x, hr.mPos.y - pos.y, hr.mPos.z - pos.z};
             double dl = lengthOf(d);
             Vec3   back = dl > 1e-9 ? Vec3{float(d.x / dl * 0.05), float(d.y / dl * 0.05), float(d.z / dl * 0.05)} : Vec3{0, 0, 0};
@@ -555,16 +616,24 @@ void tickProjectile(Actor& p, fe::ActorState& state) {
             p.moveTo(at, rotationOf(d));
             return;
         }
-        if (spec.onHitBlock) {
+        if (!arrow && spec.onHitBlock) {
+            ImpactScope impact(uid);
             gone = spec.onHitBlock(p, hr.mBlock, hr.mFacing);
+            if (impact.cancelled()) gone = false;
             if (!gone && live.contains(uid)) {
-                // stuck in the block
-                s.inGround = true;
-                s.vel      = Vec3{0, 0, 0};
-                p.moveTo(hr.mPos, p.getRotation());
-                return;
+                // ThrowableProjectile#tick moves on after a hit that kept the projectile, with the
+                // velocity its onHitBlock left (ChainBlock's bounce, a parry): one that steered it
+                // (ext::setVelocity) or cancelled the impact flies on. One that did neither rests at
+                // the hit point (TF's own keep their projectile there: IceBomb zeroes its motion and
+                // gravity, HydraMortar slides on the ground) with its velocity kept for ext::velocity
+                // and a later ext::setVelocity that launches it again.
+                if (!impact.cancelled() && !impact.velocitySet()) {
+                    s.inGround = true;
+                    p.moveTo(hr.mPos, p.getRotation());
+                    return;
+                }
             }
-        } else gone = true;
+        } else if (!arrow) gone = true;
     }
     if (gone || !live.contains(uid)) {
         if (live.contains(uid)) markRemoved(p);
@@ -637,6 +706,7 @@ Actor* shoot(Actor& shooter, std::string const& entityId, Vec3 const& direction,
     }
     auto* added = level->addEntity(region, std::move(owner));
     if (!added) return nullptr;
+    fp::dropMobCategory(*added);
     fp::Sim s;
     s.type  = entityId;
     s.vel   = vel;
@@ -674,10 +744,22 @@ Vec3 velocity(Actor const& projectile) {
 }
 
 void setVelocity(Actor& projectile, Vec3 const& v) {
-    auto it = fp::S().live.find(fe::uidOf(projectile));
+    auto uid = fe::uidOf(projectile);
+    auto it  = fp::S().live.find(uid);
     if (it == fp::S().live.end()) return;
     it->second.vel      = v;
     it->second.inGround = false;
+    if (auto* impact = fp::impactOf(uid)) impact->velocitySet = true;
+}
+
+void setOwner(Actor& projectile, Actor* owner) {
+    auto it = fp::S().live.find(fe::uidOf(projectile));
+    if (it == fp::S().live.end()) return;
+    it->second.owner = owner ? fe::uidOf(*owner) : 0;
+}
+
+void cancelImpact(Actor& projectile) {
+    if (auto* impact = fp::impactOf(fe::uidOf(projectile))) impact->cancelled = true;
 }
 
 void registerArrow(std::string const& entityId, Spec spec, ArrowSpec arrow) {

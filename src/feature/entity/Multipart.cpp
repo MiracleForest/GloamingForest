@@ -90,6 +90,9 @@ struct PartHitScope {
     }
 };
 
+/// The last hit a part forwarded to its parent: {part uid, whether the parent took it}.
+thread_local std::pair<std::int64_t, bool> tPartForward{0, false};
+
 bool entityTypeExists(std::string const& id) {
     auto& m = M();
     if (!m.knownLoaded) {
@@ -188,6 +191,13 @@ std::int64_t parentOfPart(Actor const& part) {
 
 std::string const& currentPartHit() { return M().partHit; }
 
+std::optional<bool> takePartForward(std::int64_t partUid) {
+    if (tPartForward.first == 0 || tPartForward.first != partUid) return std::nullopt;
+    bool landed  = tPartForward.second;
+    tPartForward = {0, false};
+    return landed;
+}
+
 void followParts(Mob& parent, ActorState& s) {
     bool respawned = false;
     for (auto& rec : s.parts) {
@@ -248,11 +258,15 @@ void installMultipart() {
             };
             if (environmental.contains(d.type)) return gf::combat::Verdict::Cancel;
             auto* parent = actorById(parentId);
+            bool  landed = false;
             if (parent && parent->isAlive() && M().forwarding < 4) {
                 auto*        ps = findState(uidOf(d.victim));
                 PartHitScope scope(ps ? ps->partId : std::string());
-                gf::combat::hurt(*parent, d.amount, d.type, d.attacker, d.direct);
+                landed = gf::combat::hurt(*parent, d.amount, d.type, d.attacker, d.direct);
             }
+            // TFPart#hurt returns the parent's answer (the projectile kit reads it: a hit the parent
+            // took removes the arrow, a refused one deflects it)
+            tPartForward = {uidOf(d.victim), landed};
             return gf::combat::Verdict::Cancel;
         });
     }

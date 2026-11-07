@@ -14,6 +14,7 @@
 #include "mc/server/SimulatedPlayer.h"
 #include "mc/deps/core/math/Vec2.h"
 #include "mc/world/actor/Actor.h"
+#include "mc/world/actor/ActorCategory.h"
 #include "mc/world/actor/ActorDefinitionIdentifier.h"
 #include "mc/world/actor/ActorFactory.h"
 #include "mc/world/actor/Mob.h"
@@ -33,6 +34,7 @@
 #include "feature/entity/Entity.h"
 #include "feature/entity/EntityInternal.h"
 #include "feature/ext/entity/EntityExt.h"
+#include "feature/ext/entity/Handles.h"
 #include "feature/projectile/Projectile.h"
 #include "feature/projectile/ProjectileInternal.h"
 #include "game/Blocks.h"
@@ -53,6 +55,7 @@ struct Hits {
     std::string entity;
     int         face      = -1;
     bool        keepBlock = false;
+    bool        bounce    = false; ///< the block hit keeps the projectile and steers it up (ext::setVelocity)
     bool        steer     = false;
 };
 Hits& hits() {
@@ -75,8 +78,9 @@ struct ProjectileScope {
                         return true;
                     },
                 .onHitBlock =
-                    [](Actor&, BlockPos const&, int face) {
+                    [](Actor& p, BlockPos const&, int face) {
                         hits().face = face;
+                        if (hits().bounce) gp::ext::setVelocity(p, Vec3{0.0f, 0.4f, 0.0f});
                         return !hits().keepBlock;
                     },
             }
@@ -121,6 +125,9 @@ void removeActorById(std::int64_t uid) {
 struct CancelHits {
     std::int64_t target    = 0;
     int          cancelled = 0;
+    bool         parry     = false; ///< EntityEvents#onParryProjectile: deflect, new owner, impact cancelled
+    bool         directIsProjectile = false; ///< DamageInfo::direct was the projectile (attacker its shooter)
+    std::string  seen; ///< "attacker / direct" type names of the last cancelled hit
 };
 CancelHits& cancelHits() {
     static CancelHits c;
@@ -134,6 +141,14 @@ struct CancelHitsScope {
                 auto& c = cancelHits();
                 if (c.target == 0 || fe::uidOf(d.victim) != c.target) return gf::combat::Verdict::Pass;
                 ++c.cancelled;
+                c.directIsProjectile = d.direct && gp::ext::isProjectile(*d.direct) && d.attacker && !gp::ext::isProjectile(*d.attacker);
+                c.seen = (d.attacker ? d.attacker->getTypeName() : std::string("none")) + " / " + (d.direct ? d.direct->getTypeName() : std::string("none"));
+                Actor* projectile    = d.direct && gp::ext::isProjectile(*d.direct) ? d.direct : (d.attacker && gp::ext::isProjectile(*d.attacker) ? d.attacker : nullptr);
+                if (c.parry && projectile) {
+                    gp::ext::setVelocity(*projectile, Vec3{-0.5f, 0.0f, 0.0f});
+                    gp::ext::setOwner(*projectile, &d.victim);
+                    gp::ext::cancelImpact(*projectile);
+                }
                 return gf::combat::Verdict::Cancel;
             });
             return true;
@@ -213,11 +228,34 @@ GF_REGISTER_SELFTEST("entity.projectile", [](Context& ctx) -> ll::coro::CoroTask
     for (int i = 0; i < 30 && hits().face < 0; ++i) co_await ctx.ticks(1);
     co_await ctx.ticks(3);
     if (auto* stuck = fe::actorById(pid)) {
-        auto v = gp::ext::velocity(*stuck);
-        ctx.check(v.x == 0 && v.y == 0 && v.z == 0, "a kept projectile stays in the ground, still");
-        stuck->remove();
+        auto y = stuck->getPosition().y;
+        ctx.check(gp::ext::inGround(*stuck), "a kept projectile that was not steered rests where it hit");
+        co_await ctx.ticks(2);
+        if ((stuck = fe::actorById(pid))) {
+            ctx.check(std::abs(stuck->getPosition().y - y) < 1.0e-3f, "and stays there");
+            stuck->remove();
+        }
     } else {
         ctx.check(false, "a kept projectile stays in the ground");
+    }
+    // a block hit that keeps the projectile and steers it (ChainBlock#bounce): it flies on with the
+    // new velocity (ThrowableProjectile#tick), nothing zeroed
+    hits().face   = -1;
+    hits().bounce = true;
+    shooter       = fe::playerById(spId);
+    ctx.require(shooter != nullptr, "the shooter is still there");
+    p = gp::shoot(*shooter, kFixture, Vec3{0.0f, -1.0f, 0.0f}, 0.5f, 0.0f);
+    ctx.require(p != nullptr, "a bouncing projectile");
+    ctx.check(!p->hasCategory(ActorCategory::Mob), "a TF projectile is no mob (Java: no LivingEntity)");
+    pid = fe::uidOf(*p);
+    for (int i = 0; i < 30 && hits().face < 0; ++i) co_await ctx.ticks(1);
+    hits().bounce = false;
+    if (auto* b = fe::actorById(pid)) {
+        auto v = gp::ext::velocity(*b);
+        ctx.check(!gp::ext::inGround(*b) && v.y > 0.2f, "a steered block hit flies on (vy " + std::to_string(v.y) + ")");
+        b->remove();
+    } else {
+        ctx.check(false, "a steered block hit keeps the projectile");
     }
     // drag and gravity: horizontal shot, y after two ticks = y0 + 0 + (0 * 0.99 - 0.03)
     hits().keepBlock = false;
@@ -321,7 +359,36 @@ GF_REGISTER_SELFTEST("entity.arrow", [](Context& ctx) -> ll::coro::CoroTask<> {
         }
         ctx.check(postHurtsForTest() == postBefore, "no doPostHurtEffects for a hit that did not land");
         if (auto* tt = fe::actorById(targetId)) ctx.check(tt->getHealth() == healthBefore, "and the target took no damage");
+        // (F10's DamageInfo order for a child source; checked by combat.child_source)
+        ctx.info("DamageInfo of an arrow hit: attacker / direct = " + cancelHits().seen);
         if (auto* a = fe::actorById(pid)) a->remove();
+    }
+    // a parried hit (EntityEvents#onParryProjectile: AIM_DEFLECT, the blocker owns it, the impact
+    // event cancelled): no REVERSE, the arrow flies on with the parry's velocity
+    {
+        CancelHitsScope cancel(targetId);
+        cancelHits().parry = true;
+        hits().entity.clear();
+        t = fe::actorById(targetId);
+        ctx.require(t != nullptr, "the target is still there");
+        auto* shooter3 = fe::playerById(spId);
+        ctx.require(shooter3 != nullptr, "the shooter is still there");
+        eye  = shooter3->getEyePos();
+        tpos = t->getFeetPos();
+        p    = gp::shoot(*shooter3, kFixture, Vec3{tpos.x - eye.x, tpos.y + 1.0f - eye.y, tpos.z - eye.z}, 3.0f, 0.0f);
+        ctx.require(p != nullptr, "a parried arrow is shot");
+        pid = fe::uidOf(*p);
+        for (int i = 0; i < 20 && cancelledHits() == 0; ++i) co_await ctx.ticks(1);
+        ctx.check(cancelledHits() >= 1, "the parry ran");
+        ctx.check(hits().entity.empty(), "a cancelled impact runs no hit hook of the type");
+        if (auto* a = fe::actorById(pid)) {
+            auto v = gp::ext::velocity(*a);
+            ctx.check(v.x < -0.4f, "the parried arrow keeps the parry's velocity, not reversed (vx " + std::to_string(v.x) + ")");
+            ctx.check(gp::ext::owner(*a) == fe::actorById(targetId), "the parrying target owns the arrow (Projectile#setOwner)");
+            a->remove();
+        } else {
+            ctx.check(false, "a parried arrow keeps flying");
+        }
     }
     if (auto* a = fe::actorById(targetId)) a->remove();
     // gravity 0.05 (AbstractArrow), not the throwable's 0.03
