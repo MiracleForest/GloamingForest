@@ -47,3 +47,5 @@ Still open (unchanged, with what they need):
 - Cinder furnace hopper faces: F10's `inventory::Handler` still has no face argument on main.
 - Thorn connection details, the roving cube's look and the WIP texts as world text (name tags today; F12 has no
   world-text renderer).
+
+Sounds (W2 round 2, audio pass): the adherent, harbinger cube, roving cube and plateau boss had no entity-sound entry (hostiles.mob_assets audit; Bedrock's own `entity_sounds.defaults` may already supply hurt/death, the explicit entry states TF's choice either way). In TF they keep Monster's defaults (`entity.hostile.hurt` / `entity.hostile.death`; the Adherent's own `GHAST_SHOOT` stays in code); `assets/pack/rp/sounds.json.d/finalcastle.json` now maps them to Bedrock's `game.player.hurt` / `game.player.die` (volume 1, pitch 0.8-1.2 as Java's voice pitch). None of them has an ambient sound in TF. Open: nothing for audio.
