@@ -1,0 +1,75 @@
+{
+  "about": "U6 flora: refinements of the baseline (tools/sounds/baseline/flora.json). Original sound designs; TF's audio is never read. The events (ids, subtitles, categories, volumes, pitches, variant counts) stay TF's; as in TF the jar's break, fall, hit and step share the three jar knocks. The cicada screams: a loud pulsing high drone with a lower body resonance and a slow swell. The jars are thick glass: a knock is a clink with a dull body thump, setting one down a lower clink and a thump, putting an item in a sliding rattle and a small drop, taking it out a slide and a cork-like pop, swapping the lid a short twist and a clink, and a wiggling jar rattles on its base.",
+  "patches": {
+    "cicada/scream": {
+      "params": {"len": 2.4, "pulse": 115, "band": 5200},
+      "length": "$len", "tail": 0.3,
+      "layers": [
+        {"type": "patch", "patch": "creature/cicada", "length": "$len+0.3", "params": {"len": "$len", "pulse": "$pulse", "band": "$band"}},
+        {"type": "patch", "patch": "creature/cicada", "length": "$len+0.3", "gain": -10, "params": {"len": "$len", "pulse": "$pulse", "band": "$band*0.5"}}
+      ]
+    },
+    "jar/knock": {
+      "params": {"freq": 1700},
+      "length": 0.1, "tail": 0.9,
+      "layers": [
+        {"type": "patch", "patch": "impact/knock_glass", "length": 1.0, "params": {"freq": "$freq", "decay": 0.6, "spread": 0.2}},
+        {"type": "patch", "patch": "impact/knock", "length": 0.6, "gain": -10, "params": {"freq": 300, "decay": 0.3}}
+      ]
+    },
+    "jar/place": {
+      "params": {},
+      "length": 0.15, "tail": 0.8,
+      "layers": [
+        {"type": "patch", "patch": "impact/knock_glass", "length": 1.0, "params": {"freq": 1250, "decay": 0.45}},
+        {"type": "patch", "patch": "impact/thud", "length": 0.5, "gain": -6, "params": {"pitch": 150, "len": 0.12, "crack": 0.2}}
+      ]
+    },
+    "jar/insert": {
+      "params": {},
+      "length": 0.35, "tail": 0.5,
+      "layers": [
+        {"type": "patch", "patch": "object/slide", "length": 0.8, "params": {"len": 0.3, "f0": 2200, "f1": 800, "clink": 1700}},
+        {"type": "patch", "patch": "object/pop", "start": 0.28, "length": 0.3, "gain": -12, "params": {"pitch": 500, "len": 0.08}}
+      ]
+    },
+    "jar/remove": {
+      "params": {},
+      "length": 0.35, "tail": 0.5,
+      "layers": [
+        {"type": "patch", "patch": "object/slide", "length": 0.8, "params": {"len": 0.3, "f0": 800, "f1": 2400, "clink": 2300}},
+        {"type": "patch", "patch": "object/pop", "start": 0.25, "length": 0.3, "gain": -8, "params": {"pitch": 900, "len": 0.08}}
+      ]
+    },
+    "jar/lid": {
+      "params": {},
+      "length": 0.25, "tail": 0.7,
+      "layers": [
+        {"type": "patch", "patch": "object/slide", "length": 0.6, "params": {"len": 0.22, "f0": 1400, "f1": 1900, "clink": 2000}},
+        {"type": "patch", "patch": "impact/knock_glass", "start": 0.18, "length": 0.9, "gain": -8, "params": {"freq": 1900, "decay": 0.4}}
+      ]
+    },
+    "jar/wiggle": {
+      "params": {"freq": 2000},
+      "length": 0.25, "tail": 0.6,
+      "layers": [
+        {"type": "patch", "patch": "impact/knock_glass", "length": 0.9, "params": {"freq": "$freq", "decay": 0.35, "count": 4, "gap": 0.055, "spread": 0.3}},
+        {"type": "patch", "patch": "impact/knock", "length": 0.6, "gain": -10, "params": {"freq": 400, "decay": 0.2, "count": 4, "gap": 0.055}}
+      ]
+    }
+  },
+  "files": {
+    "mob/cicada1": {"patch": "cicada/scream", "params": {"len": 2.3, "pulse": 112, "band": 5200}, "seed": 601},
+    "mob/cicada2": {"patch": "cicada/scream", "params": {"len": 2.4, "pulse": 124, "band": 5600}, "seed": 602},
+    "random/jar/jar1": {"patch": "jar/knock", "params": {"freq": 1600}, "seed": 611},
+    "random/jar/jar2": {"patch": "jar/knock", "params": {"freq": 1700}, "seed": 612},
+    "random/jar/jar3": {"patch": "jar/knock", "params": {"freq": 1800}, "seed": 613},
+    "random/jar/jar_place": {"patch": "jar/place", "seed": 614},
+    "random/jar/jar_in": {"patch": "jar/insert", "seed": 615},
+    "random/jar/jar_out": {"patch": "jar/remove", "seed": 616},
+    "random/jar/jar_swap": {"patch": "jar/lid", "seed": 617},
+    "random/jar/jar_wiggle1": {"patch": "jar/wiggle", "params": {"freq": 1950}, "seed": 621},
+    "random/jar/jar_wiggle2": {"patch": "jar/wiggle", "params": {"freq": 2050}, "seed": 622},
+    "random/jar/jar_wiggle3": {"patch": "jar/wiggle", "params": {"freq": 2150}, "seed": 623}
+  }
+}
