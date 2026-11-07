@@ -88,11 +88,6 @@ void setMainBiomeSource(MainBiomeFn fn);
 [[nodiscard]] std::string biomeAt(BlockPos const& pos);
 /// TF's main biome at a column.
 [[nodiscard]] std::string mainBiomeAt(int blockX, int blockZ);
-/// The raw biome of the source at quart (4-block) coordinates, without BiomeManager's zoom
-/// (BiomeSource#getNoiseBiome, as Structure#isValidBiome and TF's findBiomeHorizontal read it). The
-/// quart y is clamped to the dimension's range as ChunkAccess#getNoiseBiome does ("" when no source
-/// is set).
-[[nodiscard]] std::string noiseBiomeAt(int quartX, int quartY, int quartZ);
 
 /// The base terrain (density -> stone / water) and the surface rules (U2).
 void setTerrain(TerrainProvider fn);
