@@ -1,9 +1,30 @@
-# U6 `flora`: Flora, critters and berries
+# U6 flora: unit notes
 
-Behaviour reference: [docs/spec/flora.md](../spec/flora.md) and TF 4.8 (`9e40a757`).
+Behaviour spec: [docs/spec/flora.md](../spec/flora.md).
 
 ## Audit round 2
 
-Sounds (W2 round 2, audio pass). Checked with `tools/sounds/lint.ps1` on the assembled pack (`tools/assemble.ps1 -Check`): before this round 10 of this unit's sound events still played F3's name-derived baseline placeholder. Cicada and the jar block's sounds. `tools/sounds/recipes/flora.json` now designs every one of them (original synthesized sounds, unit-local patches layered from the shared library; TF's audio never read; ids, subtitles, categories, volumes, pitches and variant counts unchanged), rendered with `pwsh tools/sounds/synth.ps1 -Unit flora` into `assets/gen/audio/flora/`. `synth.ps1 -Check` and `lint.ps1` pass; with the other round-2 audio PRs (one per owning unit) the lint reports 0 baseline-only events for the whole pack.
+Fixed:
+- Cicada and cicada jar notes (`src/client/flora/FloraClient.cpp`): `minecraft:note_particle` was emitted
+  with an empty molang map, so every note logged a content-log error for the unset `variable.note_color`
+  (about 170k lines in the atmosphere client scenario). The notes now carry NoteParticle's colour of
+  speed 0 (TF adds `ParticleTypes.NOTE` with speed (0, 0, 0)).
+- Shears on berry bushes: `BerryBushBlock#getDestroyProgress` gives shears a fixed progress of 0.2 per
+  tick. The eight overworld and dark tower bushes get `item_specific_speeds` for `minecraft:shears` of
+  0.833333 s (Bedrock gives an entry of `s` seconds `5 / (30 s)` per tick with shears, as measured by U3
+  for leaves). The patch is in `tools/import/overrides/flora.json`.
+- Mason jar light: the jar now emits the light of a stored block item. It uses a GloamingForest state,
+  `twilightforest:jar_light` 0..15 (the import override adds the state and 15 light permutations),
+  which `jars::setContents` sets from the stored block's light emission. Block data (lid, rotation,
+  contents) survives the state change. Checked in `flora.jars`.
+- Tints (client mod): fallen leaves take TF's biome foliage colour (U1's `biomes::ext::foliageColor`;
+  FoliageColor's default without a world). The huge lily pad takes 0x208030 in the world and 0x71C35C
+  without one (ColorHandler).
 
-Open: nothing for audio.
+Still open:
+- Hoppers and the mason jar: TF lets a hopper insert from above only (the item handler on the UP side).
+  The jar keeps its slot in block data, which the game's hoppers cannot see, and F11's hopper bridge
+  (`feature/ext/families/Hoppers.h`) has no per-side rule. Closing this needs a native container
+  (`minecraft:block_entity`) plus a per-side hopper rule in F11.
+- The jar light state has no effect on stacks loaded into the jar by other means than `setContents`
+  (for example a loot table merge).

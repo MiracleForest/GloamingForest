@@ -36,6 +36,8 @@
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/block/Block.h"
+#include "mc/world/level/block/BlockType.h"
+#include "mc/common/Brightness.h"
 
 #include "core/Holiday.h"
 #include "core/flora/FloraMath.h"
@@ -59,7 +61,8 @@ namespace jars {
 
 namespace {
 
-constexpr char kLidKey[] = "twilightforest:jar_lid";
+constexpr char kLidKey[]     = "twilightforest:jar_lid";
+constexpr char kLightState[] = "twilightforest:jar_light";
 
 std::set<std::string> const& lids() {
     static std::set<std::string> const s = [] {
@@ -136,8 +139,20 @@ void syncMasonJar(BlockSource& region, BlockPos const& pos) {
 
 std::optional<inventory::Handler> handlerAt(BlockSource& region, BlockPos const& pos) { return inventory::find(region, pos); }
 
+/// MasonJarBlockEntity's light: the light emission of a stored block item (0 otherwise), kept in the
+/// jar's `twilightforest:jar_light` state (a GloamingForest addition: Bedrock blocks emit light per
+/// permutation only; tools/import/overrides/flora.json).
+int lightOf(ItemStack const& stack) {
+    if (game::items::isEmpty(stack) || !stack.mBlock) return 0;
+    Block const& b = *stack.mBlock;
+    return std::clamp(static_cast<int>(b.getBlockType().getLightEmission(b).mValue), 0, 15);
+}
+
 void setContents(BlockSource& region, BlockPos const& pos, ItemStack const& stack) {
-    if (auto h = handlerAt(region, pos); h && h->set) h->set(game::globalPos(region, pos), 0, stack);
+    if (auto h = handlerAt(region, pos); h && h->set) {
+        h->set(game::globalPos(region, pos), 0, stack);
+        setStates(region, pos, {{kLightState, lightOf(stack)}});
+    }
 }
 
 int maxStack(ItemStack const& s) { return std::max<int>(1, s.getMaxStackSize()); }
