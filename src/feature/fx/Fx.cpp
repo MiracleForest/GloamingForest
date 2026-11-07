@@ -403,6 +403,9 @@ Resolved resolveParticle(std::string const& particleId) {
         return r;
     }
     r.native = true; // a mod particle: companions may draw it natively
+    // the pack's effects read variable.velocity unguarded (Molang's ?? only takes direct variables):
+    // vanilla clients always get it, zero for a still particle
+    r.vars |= kVarVelocity;
     if (k.particles.contains(id)) r.effect = id;
     else warnOnce(k, "particle '" + particleId + "' has no resource pack effect (vanilla clients)");
     return r;
