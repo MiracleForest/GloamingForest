@@ -35,6 +35,7 @@
 //   ActorDamageSource#getDeathMessage hook; a vanilla type keeps Bedrock's message for its cause.
 
 #include "feature/combat/Combat.h"
+#include "feature/ext/combat/Handles.h"
 
 #include <algorithm>
 #include <atomic>
@@ -414,16 +415,16 @@ void loadTypes(Types& t) {
 
 template <class Fn>
 struct Entry {
-    int priority;
-    int seq;
-    Fn  fn;
+    int           priority;
+    std::uint64_t seq; ///< registration order, also the handle of ext::remove
+    Fn            fn;
 };
 
 struct Handlers {
     std::mutex                    mutex;
     std::vector<Entry<IncomingFn>> incoming;
     std::vector<Entry<DealtFn>>    dealt;
-    int                           seq = 0;
+    std::uint64_t                 seq = 0;
 };
 
 Handlers& handlers() {
@@ -432,9 +433,11 @@ Handlers& handlers() {
 }
 
 template <class Fn>
-void addSorted(std::vector<Entry<Fn>>& list, int priority, Fn fn) {
-    list.push_back({priority, ++handlers().seq, std::move(fn)});
+std::uint64_t addSorted(std::vector<Entry<Fn>>& list, int priority, Fn fn) {
+    auto id = ++handlers().seq;
+    list.push_back({priority, id, std::move(fn)});
     std::stable_sort(list.begin(), list.end(), [](auto const& a, auto const& b) { return a.priority > b.priority; });
+    return id;
 }
 
 // ---- the TF damage being applied / the marks for death messages -------------------------------------
@@ -566,18 +569,39 @@ std::string vanillaTypeOf(Actor& victim, ActorDamageSource const& source) {
 
 float healthOf(Actor& a) { return static_cast<float>(a.getHealth()); }
 
-/// Recursion guard: the victims whose handlers run now; damage to one of them from inside its
-/// own handlers is applied as is (other victims get their handlers, as Java's nested events).
-thread_local std::vector<Actor const*> tInHandlers;
+/// Recursion guard: the attacks whose handlers run now. A hurt started inside the handlers runs the
+/// handlers again, as Java's nested damage events do (a handler that cancels a mob's hit and deals
+/// it again as a TF damage type: EntityUtil#properlyApplyCustomDamageSource, a part forwarding to
+/// its parent, a reflected blast); only the same attack again (victim, type, attacker and direct
+/// entity) on top of itself is applied as is, and so is anything nested deeper than kMaxNesting on
+/// one victim, so two handlers that keep answering each other cannot recurse without end.
+struct Attack {
+    Actor const* victim;
+    std::string  type;
+    Actor const* attacker;
+    Actor const* direct;
+};
+thread_local std::vector<Attack> tInHandlers;
+constexpr int                    kMaxNesting = 8;
 
 struct HandlerScope {
-    explicit HandlerScope(Actor const& a) { tInHandlers.push_back(&a); }
+    explicit HandlerScope(Attack attack) { tInHandlers.push_back(std::move(attack)); }
     ~HandlerScope() { tInHandlers.pop_back(); }
     HandlerScope(HandlerScope const&)            = delete;
     HandlerScope& operator=(HandlerScope const&) = delete;
 };
 
-bool inHandlers(Actor const& a) { return std::find(tInHandlers.begin(), tInHandlers.end(), &a) != tInHandlers.end(); }
+/// Whether `attack` must skip the handlers: the same attack is in its handlers already, or the
+/// victim's handler nesting is too deep.
+bool inHandlers(Attack const& attack) {
+    int depth = 0;
+    for (auto const& a : tInHandlers) {
+        if (a.victim != attack.victim) continue;
+        if (a.type == attack.type && a.attacker == attack.attacker && a.direct == attack.direct) return true;
+        if (++depth >= kMaxNesting) return true;
+    }
+    return false;
+}
 
 /// The victims inside a hook's damage pipeline (Actor::hurt or a direct Mob::_hurt): the inner
 /// Mob::_hurt of a hurt the pipeline already runs passes straight through.
@@ -728,8 +752,12 @@ std::pair<Actor*, Actor*> entitiesOf(ActorDamageSource const& source) {
     if (!source.isEntitySource()) return {nullptr, nullptr};
     auto level = ll::service::getLevel();
     if (!level) return {nullptr, nullptr};
-    Actor* direct   = level->fetchEntity(source.getEntityUniqueID(), false);
-    Actor* attacker = level->fetchEntity(source.getDamagingEntityUniqueID(), false);
+    // ActorDamageByChildActorSource(child, owner): getEntityUniqueID is the owner (Java's
+    // DamageSource#getEntity), getDamagingEntityUniqueID the child (the projectile, #getDirectEntity);
+    // a plain ActorDamageByActorSource names one entity, both
+    Actor* attacker = level->fetchEntity(source.getEntityUniqueID(), false);
+    // (a child that is gone already leaves no direct entity; a shooterless one is its own causer)
+    Actor* direct   = source.isChildEntitySource() ? level->fetchEntity(source.getDamagingEntityUniqueID(), false) : attacker;
     if (!attacker) attacker = direct;
     return {attacker, direct};
 }
@@ -798,6 +826,39 @@ void onDealt(int priority, DealtFn fn) {
     addSorted(handlers().dealt, priority, std::move(fn));
 }
 
+namespace ext {
+HandlerHandle addIncoming(int priority, IncomingFn fn) {
+    if (!fn) return 0;
+    std::lock_guard lock(handlers().mutex);
+    return addSorted(handlers().incoming, priority, std::move(fn));
+}
+HandlerHandle addDealt(int priority, DealtFn fn) {
+    if (!fn) return 0;
+    std::lock_guard lock(handlers().mutex);
+    return addSorted(handlers().dealt, priority, std::move(fn));
+}
+bool remove(HandlerHandle handle) {
+    if (handle == 0) return false;
+    // the removed function is destroyed outside the lock (its captures may hold anything)
+    std::vector<IncomingFn> goneIn;
+    std::vector<DealtFn>    goneDealt;
+    {
+        std::lock_guard lock(handlers().mutex);
+        auto            take = [&](auto& list, auto& gone) {
+            for (auto it = list.begin(); it != list.end(); ++it)
+                if (it->seq == handle) {
+                    gone.push_back(std::move(it->fn));
+                    list.erase(it);
+                    return true;
+                }
+            return false;
+        };
+        if (!take(handlers().incoming, goneIn)) take(handlers().dealt, goneDealt);
+    }
+    return !goneIn.empty() || !goneDealt.empty();
+}
+} // namespace ext
+
 bool hurt(Actor& victim, float amount, std::string const& typeId, Actor* attacker, Actor* direct) {
     if (victim.isClientSide()) return false;
     if (!damageType(typeId)) log().warn("combat: unknown damage type {} (applied as generic damage)", typeId);
@@ -856,7 +917,6 @@ ActorHurtResult runPipeline(Actor& self, ActorDamageSource const& source, float 
         gf::death::reapplySurvival(self);
         return r;
     };
-    if (inHandlers(self)) return plain(damage);
     std::vector<IncomingFn> incoming;
     std::vector<DealtFn>    dealt;
     {
@@ -868,8 +928,10 @@ ActorHurtResult runPipeline(Actor& self, ActorDamageSource const& source, float 
     if (incoming.empty() && dealt.empty() && !self.isPlayer()) return plain(damage);
     auto [attacker, direct] = entitiesOf(source);
     DamageInfo info{self, typeOf(self, source), attacker, direct, damage};
+    Attack     attack{&self, info.type, attacker, direct};
+    if (inHandlers(attack)) return plain(damage);
     if (!incoming.empty()) {
-        HandlerScope scope(self);
+        HandlerScope scope(attack);
         for (auto const& fn : incoming) {
             Verdict v = Verdict::Pass;
             try {
@@ -902,7 +964,7 @@ ActorHurtResult runPipeline(Actor& self, ActorDamageSource const& source, float 
     DamageInfo applied{self, info.type, info.attacker, info.direct, info.amount};
     if (auto const* f = std::get_if<float>(&*result.mHurtOrDamage); f && *f > 0) applied.amount = *f;
     else if (before > after) applied.amount = before - after;
-    HandlerScope scope(self);
+    HandlerScope scope(std::move(attack));
     for (auto const& fn : dealt) {
         try {
             fn(applied);
