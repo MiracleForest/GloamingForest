@@ -211,3 +211,22 @@ its vanilla fallbacks and its deviations from TF 4.8 (for A8's deviation list).
 Sounds (W2 round 2, audio pass). Checked with `tools/sounds/lint.ps1` on the assembled pack (`tools/assemble.ps1 -Check`): before this round 4 of this unit's sound events still played F3's name-derived baseline placeholder. Double jump, perfect dodge, side step and side step ready. `tools/sounds/recipes/tgear.json` now designs every one of them (original synthesized sounds, unit-local patches layered from the shared library; TF's audio never read; ids, subtitles, categories, volumes, pitches and variant counts unchanged), rendered with `pwsh tools/sounds/synth.ps1 -Unit tgear` into `assets/gen/audio/tgear/`. `synth.ps1 -Check` and `lint.ps1` pass; with the other round-2 audio PRs (one per owning unit) the lint reports 0 baseline-only events for the whole pack.
 
 Open: nothing for audio.
+
+- **Perfect dodge of TF projectiles**: a projectile simulated by `gf::projectile` (TF's bolts, arrows, snowballs, ...)
+  now has its impact cancelled through F8's `gf::projectile::ext::cancelImpact` (NeoForge's
+  `ProjectileImpactEvent#setCanceled`, as TF's `TravellersGearEvents#performPerfectDodge`): no hit, no removal, it flies
+  on with its velocity. Its hit counts as an impact when it deals a projectile damage type or one of the types TF's
+  projectiles deal in `onHitEntity` (lich bolt / bomb, moonworm, nature bolt, thrown block / axe / pickaxe, tome bolt,
+  wand bolt, ice snowball, chain block); the ice bomb's area freeze, falling ice and the mortar's blast are never
+  dodged. Vanilla projectiles keep the round-1 path (the damage
+  cancelled, the motion restored a tick later). Not covered by a selftest of its own: the only fixture projectile
+  type (`gf_test:boss_part`, F8's) is also the boss fixture's part and its registration is F8-internal; `tgear.perfect_dodge`
+  still checks the vanilla arrow path.
+- **Layered slot icons**: still open. On 1.26.51 the hotbar and inventory slots go through OreUI's
+  `ItemRendererDataHelpers::setItemRendererBindings` (`ItemRendererData`: item id + aux, count, trim / banner / sherd
+  strings, no user data); the tile is then drawn from a fresh stack by a path none of the hooks of `IconHooks.cpp`
+  sees. Carrying the layers through the binding (e.g. an aux value or one of the strings mapped back to the layers)
+  needs a client run to find the draw path and check the result; this round's client runs could not happen (the e2e
+  client instance `%APPDATA%\levilauncher.exe\versions\1.26.51.01` was missing from the machine).
+- **The current key binding in tooltips**: waits for F12's key-name call (being added this round by another agent,
+  not on main when this ran); `${tfkeybinds/...}` still shows the default key.

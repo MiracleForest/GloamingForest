@@ -322,6 +322,8 @@ ia::Result onUse(ia::UseOnContext const& c) {
 
 } // namespace
 
+std::vector<Vec3> candelabraFlameOffsets(Block const& b) { return filledOffsets(b); }
+
 int candelabraCandles(Block const& block) {
     int n = 0;
     for (int i = 1; i <= 3; ++i) n += boolState(block, "has_candle_" + std::to_string(i)) ? 1 : 0;

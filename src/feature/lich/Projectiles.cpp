@@ -277,6 +277,13 @@ void explodeBomb(Actor& bomb) {
     log().info("lich: a lich bomb exploded");
 }
 
+/// The lich bomb a damage comes from: DamageSource#getDirectEntity (F10: the projectile of a child
+/// source, the one entity of a plain source such as the bomb's own explosion).
+Actor* bombSource(gf::combat::DamageInfo const& d) {
+    Actor* direct = d.direct ? d.direct : d.attacker;
+    return direct && isType(*direct, kLichBomb) ? direct : nullptr;
+}
+
 void registerProjectiles() {
     game::db::onWorldClosed([] {
         owners().clear();
@@ -333,8 +340,7 @@ void registerProjectiles() {
         bool bolt = isType(d.victim, kLichBolt), bomb = isType(d.victim, kLichBomb);
         if (!bolt && !bomb) return gf::combat::Verdict::Pass;
         // the bomb's own explosion and the bolts' and bombs' blasts leave them be (ignoreExplosion)
-        Actor* blast = d.direct && isType(*d.direct, kLichBomb) ? d.direct : d.attacker && isType(*d.attacker, kLichBomb) ? d.attacker : nullptr;
-        if (blast) return gf::combat::Verdict::Cancel;
+        if (bombSource(d)) return gf::combat::Verdict::Cancel;
         // LichBomb#hurt: a source tagged IS_EXPLOSION (a creeper, TNT, another blast) leaves it be
         if (bomb && damageTypeIn("minecraft:is_explosion", d.type)) return gf::combat::Verdict::Cancel;
         if (bomb && d.direct && d.direct != &d.victim) explodeBomb(d.victim);                   // source.getDirectEntity() != null
@@ -344,13 +350,13 @@ void registerProjectiles() {
     // EntityEvents#lichBombsDontBlowUpItems: a lich bomb's explosion leaves item entities alone
     gf::combat::onIncoming(gf::combat::priority::Highest, [](gf::combat::DamageInfo& d) {
         if (d.victim.getTypeName() != "minecraft:item") return gf::combat::Verdict::Pass;
-        bool fromBomb = (d.direct && isType(*d.direct, kLichBomb)) || (d.attacker && isType(*d.attacker, kLichBomb))
+        bool fromBomb = bombSource(d) != nullptr
                      || (damageTypeIn("minecraft:is_explosion", d.type) && blastAround(d.victim));
         return fromBomb ? gf::combat::Verdict::Cancel : gf::combat::Verdict::Pass;
     });
     // the bomb's explosion is TFDamageTypes.LICH_BOMB, attributed to the bomb's owner
     gf::combat::onIncoming(gf::combat::priority::Highest, [](gf::combat::DamageInfo& d) {
-        Actor* bomb = d.direct && isType(*d.direct, kLichBomb) ? d.direct : d.attacker && isType(*d.attacker, kLichBomb) ? d.attacker : nullptr;
+        Actor* bomb = bombSource(d);
         if (!bomb) {
             // the blast of a bomb already gone: still the bomb's damage, the owner's kill
             Blast const* b = !d.direct && !d.attacker && damageTypeIn("minecraft:is_explosion", d.type) ? blastAround(d.victim) : nullptr;

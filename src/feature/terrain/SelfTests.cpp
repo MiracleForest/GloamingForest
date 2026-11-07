@@ -494,11 +494,11 @@ GF_REGISTER_SELFTEST("terrain.timing", [](Context& ctx) {
     for (int i = 0; i < 24; ++i) {
         MemWorld w(i % 6 + 40, i / 6 + 40, 0, s->seed);
         auto*    c     = w.chunk(i % 6 + 40, i / 6 + 40);
-        auto     start = std::chrono::steady_clock::now();
+        double   start = threadCpuMs();
         terrainProvider(*c);
         surfaceProvider(*c, w);
         blanketProvider(*c, w);
-        ms.push_back(std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count());
+        ms.push_back(threadCpuMs() - start);
     }
     std::sort(ms.begin(), ms.end());
     double p95    = ms[static_cast<std::size_t>(ms.size() * 95 / 100)];

@@ -1219,6 +1219,28 @@ GF_REGISTER_SELFTEST("families.waterlogging", [](Context& ctx) -> ll::coro::Coro
     (void)box;
 });
 
+GF_REGISTER_SELFTEST("families.waterlog_flowing", [](Context& ctx) -> ll::coro::CoroTask<> {
+    // SimpleWaterloggedBlock#getStateForPlacement: a waterloggable block placed into flowing water is
+    // dry, into a source waterlogged (the placed handler drops a flowing liquid layer, keeps a source)
+    if (!fixturesReady(ctx)) co_return;
+    auto p = ctx.testPos(6173, 1);
+    ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
+    auto& region  = *ctx.region();
+    auto  bp      = gf::game::blockPos(p);
+    auto const* flowing = gf::game::blockWithStates("minecraft:flowing_water", {{"liquid_depth", 3}});
+    auto const* source  = gf::game::blockWithStates("minecraft:water", {{"liquid_depth", 0}});
+    ctx.require(flowing && source, "the water blocks");
+    ctx.require(ctx.setBlock(p, "gf_test:family_slab"), "a waterloggable slab");
+    region.setExtraBlock(bp, *flowing, 2);
+    ctx.check(fam::dropFlowingWater(region, bp), "flowing water in its liquid layer goes");
+    ctx.check(region.getExtraBlock(bp).isAir(), "the slab is dry");
+    region.setExtraBlock(bp, *source, 2);
+    ctx.check(!fam::dropFlowingWater(region, bp), "a source stays");
+    ctx.check(region.getExtraBlock(bp).getTypeName() == "minecraft:water", "the slab is waterlogged");
+    if (auto const* air = gf::game::blockWith("minecraft:air")) region.setExtraBlock(bp, *air, 2);
+    ctx.cleanupBlock(p);
+});
+
 GF_REGISTER_SELFTEST("families.chest_loot", [](Context& ctx) -> ll::coro::CoroTask<> {
     // the inventory contract's chest rules on the family chests: a loot table set through the
     // handler (RandomizableContainer) rolls when the unopened chest breaks and drops with its

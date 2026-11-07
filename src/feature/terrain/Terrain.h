@@ -122,6 +122,10 @@ void carve(bool highlands, worldgen::Chunk& chunk, worldgen::Region& region, cor
 /// TFCavesCarver#isStartChunk + #carve with an explicit context (source chunk, config, mask).
 void carveWith(State const& s, bool highlands, worldgen::Chunk& chunk, worldgen::ext::CarverContext& ctx, core::jrand::RandomSource& random);
 
+/// Milliseconds of CPU time this thread has run so far (QueryThreadCycleTime at the processor's
+/// time-stamp rate): the chunk budget measures the generator's own work, not the time other
+/// processes take from it on a loaded machine (terrain.timing_world in a full run beside builds).
+[[nodiscard]] double threadCpuMs();
 /// Milliseconds of the last chunks' terrain work (noise, surface, blanket, carvers), for terrain.timing.
 void recordChunkMs(double ms);
 /// Adds to the terrain time of the chunk being generated on this thread (the carvers).

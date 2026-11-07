@@ -737,12 +737,9 @@ void doTantrumDamageEffects(Mob& m) {
     }
 }
 
-/// Ghast#isReflectedFireball: the direct entity a large fireball, the causing entity a player. (F10
-/// reports the two of an ActorDamageByChildActorSource the other way round today: direct = the player,
-/// attacker = the fireball; both orders are accepted.)
+/// Ghast#isReflectedFireball: the direct entity a large fireball, the causing entity a player.
 bool reflectedFireball(combat::DamageInfo const& d) {
-    auto is = [](Actor* a, bool player) { return a && (player ? a->isPlayer() : typeOf(*a) == "minecraft:fireball"); };
-    return (is(d.direct, false) && is(d.attacker, true)) || (is(d.attacker, false) && is(d.direct, true));
+    return d.direct && typeOf(*d.direct) == "minecraft:fireball" && d.attacker && d.attacker->isPlayer();
 }
 
 void syncTantrum(Actor& self, UrState& s) {
@@ -1288,9 +1285,7 @@ void install() {
             // Bedrock's minecraft:fire_immune refuses a fire cause outright, so a fire-typed reflected
             // hit goes in again as a projectile hit of the same amount
             if (std::find(kFire.begin(), kFire.end(), d.type) != kFire.end()) {
-                Actor* player   = d.attacker && d.attacker->isPlayer() ? d.attacker : d.direct;
-                Actor* fireball = player == d.attacker ? d.direct : d.attacker;
-                combat::hurt(d.victim, d.amount, "minecraft:mob_projectile", player, fireball);
+                combat::hurt(d.victim, d.amount, "minecraft:mob_projectile", d.attacker, d.direct);
                 return combat::Verdict::Cancel;
             }
             return combat::Verdict::Pass;
@@ -1339,9 +1334,7 @@ void install() {
         // Bedrock's minecraft:fire_immune refuses a fire cause outright: the reflected hit goes in again
         // as a projectile hit (Java: Ghast#isInvulnerableTo lets a reflected fireball through)
         if (d.type == "minecraft:fireball" || d.type == "minecraft:unattributed_fireball") {
-            Actor* player   = d.attacker && d.attacker->isPlayer() ? d.attacker : d.direct;
-            Actor* fireball = player == d.attacker ? d.direct : d.attacker;
-            combat::hurt(d.victim, 1000.0f, "minecraft:mob_projectile", player, fireball);
+            combat::hurt(d.victim, 1000.0f, "minecraft:mob_projectile", d.attacker, d.direct);
             return combat::Verdict::Cancel;
         }
         d.amount = 1000.0f;

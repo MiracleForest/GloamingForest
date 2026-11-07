@@ -2039,6 +2039,7 @@ function	twilightforest:give_3_shields	U9	manual
 function	twilightforest:setup_structure_hunt	F6	manual
 function	twilightforest:tp_overworld	F4	manual
 function	twilightforest:tp_twilight	F4	manual
+gamerule	announceAdvancements	U14	manual
 gamerule	playersTfPortalCreativeDelay	F4	manual
 gamerule	playersTfPortalDefaultDelay	F4	manual
 gamerule	tfEnforcedProgression	U14	manual
@@ -8304,6 +8305,7 @@ trigger	twilightforest:broke_glass_sword	U8	manual
 trigger	twilightforest:complete_quest_ram	U19	manual
 trigger	twilightforest:consume_hydra_chop_on_low_hunger	U10	manual
 trigger	twilightforest:drink_from_flask	U9	manual
+trigger	twilightforest:flask_doses_reset	U14	manual
 trigger	twilightforest:hurt_boss	F8	manual
 trigger	twilightforest:kill_all_phantoms	U25	manual
 trigger	twilightforest:kill_bug	U6	manual
