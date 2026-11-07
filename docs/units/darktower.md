@@ -40,3 +40,8 @@ causing entity a player) and the fire-typed reflected hit goes in again with the
 workaround is gone. The unit had no round-1 audit list.
 
 Open: the "Not ported" rows above (reactor debris crops, fast-graphics tantrum rain).
+
+Regression fix (after the round-2 merges): `darktower.fireball_flight` spawned its carminite ghastling owner in
+the e2e world's Peaceful difficulty; since F8 removes TF's monsters on Peaceful at their first tick
+(`Monster#shouldDespawnInPeaceful`, src/feature/entity/Peaceful.cpp), the owner was gone before the second
+fireball. The test now runs at Easy (`EasyDifficulty`, like the other mob tests of the unit).

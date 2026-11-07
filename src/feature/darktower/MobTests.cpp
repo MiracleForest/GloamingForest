@@ -130,6 +130,7 @@ GF_REGISTER_SELFTEST("darktower.mob_goldens", [](Context& ctx) -> ll::coro::Coro
 
 // UrGhastFireball#onHitBlock: an explosion of power 1 that never breaks blocks (ExplosionInteraction.NONE)
 GF_REGISTER_SELFTEST("darktower.urghast_fireball", [](Context& ctx) -> ll::coro::CoroTask<> {
+    EasyDifficulty easy; // Peaceful removes the ghastling owner (a Monster) at its first tick
     auto box = co_await ctx.flatArea(2640, 24, 24);
     (void)box;
     auto* region = ctx.region();
@@ -160,6 +161,7 @@ GF_REGISTER_SELFTEST("darktower.urghast_fireball", [](Context& ctx) -> ll::coro:
 // (terminal 1.9); Bedrock's own fireball would keep one speed. The per-tick displacement follows Java's
 // curve (an engine that moves before or after the unit's tick may shift it by one tick).
 GF_REGISTER_SELFTEST("darktower.fireball_flight", [](Context& ctx) -> ll::coro::CoroTask<> {
+    EasyDifficulty easy; // Peaceful removes the ghastling owner (a Monster) at its first tick
     auto box = co_await ctx.flatArea(2640, 48, 40);
     (void)box;
     auto* region = ctx.region();
