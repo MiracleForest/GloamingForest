@@ -441,7 +441,11 @@ extracts), 45 attachables. The Curios charm of life necklace (`CuriosCompat`) is
   (CI does not run e2e; wiring `test.ps1` into `.github/` is F0's).
 - Selftests `models.*` (`src/feature/ext/models/ModelsSelfTest.cpp`, rule R18: F2 owns no source directory):
   the deployed index, and every geometry, base animation and attachable it lists is in the deployed pack and
-  well-formed (missing, unparsable or inconsistent files fail a check; every JSON access is checked). The
+  well-formed (missing, unparsable or inconsistent files fail a check; every JSON access is checked).
+  A unit may
+  replace a generated attachable with a manual one of the same identifier (assemble keeps the manual file, R3):
+  `models.attachables` finds every attachable by identifier across the pack (two for one item fail) and accepts
+  the geometries, animations and render controllers the pack defines, not only F2's. The
   client build adds `models.client_hud` (`src/feature/ext/models/ModelsClientHud.cpp`), an info-only probe
   for the client scenario: the game's hide-GUI options as the client holds them (`hud hidden|shown, hand
   hidden|shown`, read on the client thread).
