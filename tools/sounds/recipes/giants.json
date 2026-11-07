@@ -1,0 +1,18 @@
+{
+  "about": "U29 giants: refinements of the baseline (tools/sounds/baseline/giants.json). Original sound designs; TF's audio is never read. The event (id, subtitle, category, volume, pitch, variant count) stays TF's. A magic bean's beanstalk bursting up ('Ground rumbles'): a deep swelling earth rumble under rising woody creaks and the rustle of new leaves.",
+  "patches": {
+    "beanstalk/grow": {
+      "params": {},
+      "length": 2.0, "tail": 0.6,
+      "layers": [
+        {"type": "noise", "color": "brown", "length": 2.0, "env": {"a": 0.4, "d": 0.8, "s": 0.7, "r": 0.5}, "tremolo": {"rate": 9, "depth": 0.3}, "filter": [{"type": "lp", "freq": 160, "stages": 2}]},
+        {"type": "osc", "wave": "sine", "length": 1.8, "freq": {"from": 38, "to": 55, "curve": "exp", "time": 1.8}, "amp": 0.5, "env": {"a": 0.3, "d": 0.8, "s": 0.6, "r": 0.4}},
+        {"type": "patch", "patch": "object/creakgrow", "start": 0.25, "length": 2.2, "gain": -3, "params": {"len": 1.6}}
+      ],
+      "fx": [{"type": "reverb", "room": 0.5, "mix": 0.12}]
+    }
+  },
+  "files": {
+    "random/beanstalk_grow": {"patch": "beanstalk/grow", "seed": 2901}
+  }
+}
