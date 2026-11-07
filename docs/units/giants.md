@@ -8,7 +8,7 @@ Spec: [docs/spec/giants.md](../spec/giants.md). Code: `src/core/giants` (gtested
 | TF | GloamingForest |
 |---|---|
 | `GrowingBeanstalkBlockEntity` | BlockData key `grower` (`core::giants::BeanstalkState`, TF's saved fields) + `gf:giants:growers`; the module ticks every loaded grower each server tick (`tickBeanstalk`, exact translation with Mth.sin's table) |
-| Beanstalk rumble | dust: block particles (5 a tick instead of 20); camera shake: `giants.rumble` to companions (F12 `camera::shake`) |
+| Beanstalk rumble | dust: block particles (20 a tick, sent by the server); camera shake: `giants.rumble` to companions (F12 `camera::shake`) |
 | `SpecialStemLeavesBlock` | F11 leaves family; `huge_stalk` carries the families `log` flag so the leaf distance counts from it |
 | `UberousSoilBlock` | F11 `onNeighborChanged` / `onPlaced`, `interactions::onPlace` (getStateForPlacement), bone meal through `BlockType::onFertilized` (15 times on the next tick) |
 | `GiantBlockModel` | block states `gf:giant_tiled` (false = untiled item / unfixed block) and `gf:giant_x` / `_y` / `_z` (0..3, the cell position; Bedrock allows 16 values per state; gf: so the frozen TF states stay as imported) whose permutations pick one of 64 geometries with the face's 4 x 4 sub-square and only the cell's outer faces: every client, vanilla included, draws the tiling |
@@ -30,3 +30,20 @@ Spec: [docs/spec/giants.md](../spec/giants.md). Code: `src/core/giants` (gtested
 - The giant block outline is drawn besides Bedrock's own highlight (it cannot be replaced).
 - Up / down faces of the tiled geometry follow Blockbench's Bedrock UV convention (both axes flipped):
   to be checked on the post-merge client screenshots.
+
+## Audit round 1
+
+Checked against TF 4.8 (GrowingBeanstalkBlockEntity, CloudCastleComponent via U27's pieces, GiantPickItem /
+GiantSwordItem, CloudEvents, BlockHooks#isRainingAt).
+
+Fixed:
+- `giants.cloud_castle_hash` golden committed (`18f7c25dab5940c5`, the same value on two independent runs); the
+  one-time screenshot review is the client scenario `giants.ps1` (not run this round).
+- The beanstalk rumble dust: 20 block particles a tick like TF (was 5).
+
+Open (round 2, all Bedrock limits; not-ported candidates):
+- Giant skins (a mob cannot wear another player's skin).
+- The giant pickaxe / sword's +2.5 interaction range (no reach attribute; the server validates reach).
+- Cloud rain / snow sheets (falling particles instead) and entity wetness under rainy clouds (no isRainingAt hook
+  that units may own; R8).
+- The giant block outline replacing the highlight (drawn beside Bedrock's own).
