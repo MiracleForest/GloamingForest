@@ -276,7 +276,7 @@ GF_REGISTER_SELFTEST("models.attachables", [](Context& ctx) {
     std::set<std::string> geometries;
     for (auto const& e : member(idx, "geometries")) geometries.insert(str(e, "identifier"));
     bool scanned  = false;
-    auto geometry = [&](std::string const& id) {
+    auto knownGeometry = [&](std::string const& id) {
         if (!geometries.contains(id) && !scanned) {
             scanned = true;
             geometries.merge(definedIn("models", "minecraft:geometry"));
@@ -328,7 +328,7 @@ GF_REGISTER_SELFTEST("models.attachables", [](Context& ctx) {
         ctx.check(geometry.is_object() && !geometry.empty(), file + ": names a geometry");
         for (auto const& [key, geo] : geometry.items()) {
             auto id = geo.is_string() ? geo.get<std::string>() : std::string();
-            ctx.check(id.starts_with("geometry.humanoid.armor.") || geometry(id), file + ": unknown geometry " + id);
+            ctx.check(id.starts_with("geometry.humanoid.armor.") || knownGeometry(id), file + ": unknown geometry " + id);
             ctx.check(member(desc, "textures").contains(key) && member(desc, "materials").contains(key), file + ": " + key + " has a texture and a material");
         }
         for (auto const& [key, anim] : member(desc, "animations").items()) {
