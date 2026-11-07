@@ -195,6 +195,13 @@ std::string biomeAt(BlockPos const& pos) {
     return detail::zoomedBiome(detail::currentSeed(), pos, [&](int qx, int qy, int qz) { return p->biomeSource(qx, std::clamp(qy, lo, hi), qz); });
 }
 
+std::string noiseBiomeAt(int quartX, int quartY, int quartZ) {
+    auto p = detail::providers();
+    if (!p->biomeSource) return {};
+    int lo = core::mth::fromBlock(detail::twilightMinY()), hi = core::mth::fromBlock(detail::twilightMaxY() - 1);
+    return p->biomeSource(quartX, std::clamp(quartY, lo, hi), quartZ);
+}
+
 std::string mainBiomeAt(int blockX, int blockZ) {
     auto p = detail::providers();
     if (p->mainBiome) return p->mainBiome(blockX, blockZ);

@@ -1758,6 +1758,22 @@ GF_REGISTER_SELFTEST("worldgen.biome_zoom", [](Context& ctx) -> ll::coro::CoroTa
     ctx.check(match, "Region::biome is BiomeManager#getBiome over the quart biomes");
     ctx.check(moved > 0, "the zoom moves some positions to a neighbouring quart (" + std::to_string(moved) + " of " + std::to_string(total) + ")");
 
+    // the contract's raw quart biome (BiomeSource#getNoiseBiome) under the zoomed biomeAt
+    if (wg::detail::providers()->biomeSource) {
+        bool rawMatch = true, zoomMatch = true;
+        auto obf      = bm::obfuscateSeed(wg::detail::currentSeed());
+        for (int x = -40; x < 40; x += 7)
+            for (int z = -40; z < 40; z += 9) {
+                auto q = bm::zoom(obf, x, 64, z);
+                if (wg::biomeAt(BlockPos{x, 64, z}) != wg::noiseBiomeAt(q.x, q.y, q.z)) zoomMatch = false;
+                if (wg::noiseBiomeAt(x >> 2, 16, z >> 2) != wg::detail::providers()->biomeSource(x >> 2, 16, z >> 2)) rawMatch = false;
+            }
+        ctx.check(rawMatch, "noiseBiomeAt is the biome source's quart, unzoomed");
+        ctx.check(zoomMatch, "biomeAt is noiseBiomeAt at BiomeManager's quart");
+        ctx.check(wg::noiseBiomeAt(0, 100000, 0) == wg::noiseBiomeAt(0, gf::core::mth::fromBlock(wg::detail::twilightMaxY() - 1), 0),
+                  "noiseBiomeAt clamps the quart y to the dimension");
+    } else ctx.info("no biome source installed: noiseBiomeAt not checked");
+
     // the same through a BlockSource region over live chunks
     auto box = co_await ctx.flatArea(5570, 8);
     auto* bs = ctx.region();

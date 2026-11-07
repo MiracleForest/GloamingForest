@@ -79,7 +79,10 @@ namespace detail {
 Json const& vanillaFeatures() {
     static Json const j = [] {
         auto out = Json::parse(kVanillaFeatures);
-        for (auto const& [id, feature] : Json::parse(kVanillaFeaturesExtra).items()) out["configured"][id] = feature;
+        // a named object: a range-for over a temporary's items() would read a destroyed Json (the
+        // proxy is extended, the parsed object is not)
+        auto const extra = Json::parse(kVanillaFeaturesExtra);
+        for (auto const& [id, feature] : extra.items()) out["configured"][id] = feature;
         return out;
     }();
     return j;
