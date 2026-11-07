@@ -64,6 +64,12 @@ int difficulty() {
     return level ? static_cast<int>(level->getDifficulty()) : 2;
 }
 
+bool despawnInPeaceful(Actor& actor) {
+    if (difficulty() != 0 || !actor.isAlive()) return false;
+    fe::removeLater(actor.getOrCreateUniqueID().rawID);
+    return true;
+}
+
 BlockPos blockPosOf(Actor const& actor) {
     auto p = actor.getFeetPos();
     return BlockPos{static_cast<int>(std::floor(p.x)), static_cast<int>(std::floor(p.y + 1e-4f)), static_cast<int>(std::floor(p.z))};

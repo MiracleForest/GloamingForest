@@ -480,4 +480,31 @@ GF_REGISTER_SELFTEST("fauna.prey", [](Context& ctx) -> ll::coro::CoroTask<> {
         if (auto* m = fe::actorById(u)) m->remove();
 });
 
+// Mob#checkDespawn on Peaceful: the kobold and the mosquito swarm (Monster) leave, the animals stay
+GF_REGISTER_SELFTEST("fauna.peaceful", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto box  = co_await ctx.flatArea(1600, 16);
+    auto base = core::GlobalPos{ctx.dimension(), box.minX + 1, box.minY + 1, box.minZ + 2};
+    std::vector<std::pair<std::string, std::int64_t>> mobs;
+    {
+        DifficultyScope easy(Difficulty::Easy);
+        int             i = 0;
+        for (auto const& id : mobIds()) {
+            auto* m = spawnAt(at(base, i++, 0, 0), id);
+            ctx.require(m != nullptr, "spawned " + id);
+            mobs.emplace_back(id, uidOf(*m));
+        }
+        co_await ctx.ticks(2);
+        for (auto const& [id, uid] : mobs) ctx.check(mobById(uid) != nullptr, id + " is there on Easy");
+        DifficultyScope peaceful(Difficulty::Peaceful);
+        co_await ctx.ticks(5);
+        for (auto const& [id, uid] : mobs) {
+            bool monster = id == kKobold || id == kMosquitoSwarm;
+            ctx.check((mobById(uid) != nullptr) != monster, id + (monster ? " leaves on Peaceful" : " stays on Peaceful"));
+        }
+    }
+    for (auto const& [id, uid] : mobs)
+        if (auto* a = fe::actorById(uid)) a->remove();
+    clearAround(at(base, 5, 0, 0), 6, box.minZ);
+});
+
 } // namespace gf::feature::fauna::tests

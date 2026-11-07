@@ -178,6 +178,7 @@ void munchParticles(Mob& kobold, std::string const& itemId) {
 }
 
 void koboldTick(Actor& self) {
+    if (despawnInPeaceful(self)) return;
     applyJavaEyeHeight(self);
     auto* kobold = fe::asMob(self);
     if (!kobold) return;
@@ -283,7 +284,9 @@ void installMonsters() {
                                            if (auto* m = fe::asMob(self)) addKoboldGoals(*m);
                                        },
                                        .tick = koboldTick});
-    gf::entity::registerType(kMosquitoSwarm, {.onSpawn = [](Actor& self) { applyJavaEyeHeight(self); }, .tick = [](Actor& self) { applyJavaEyeHeight(self); }});
+    gf::entity::registerType(kMosquitoSwarm, {.onSpawn = [](Actor& self) { applyJavaEyeHeight(self); }, .tick = [](Actor& self) {
+                                                  if (!despawnInPeaceful(self)) applyJavaEyeHeight(self);
+                                              }});
     gf::combat::onDealt(gf::combat::priority::Normal, mosquitoBite);
 }
 
