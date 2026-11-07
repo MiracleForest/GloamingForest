@@ -77,6 +77,13 @@ void placeContainerAt(Region& region, BlockBox const& sbb, BlockPos const& pos, 
 void placeSpawnerAt(Region& region, BlockBox const& sbb, BlockPos const& pos, std::string const& entityId);
 /// Whether `entityId` is one TF's HedgeBlock spares (Spider and its subclasses).
 [[nodiscard]] bool isSpiderType(std::string const& entityId);
+/// Whether a hollow tree / fallen trunk start centred at (x, z) in start chunk (chunkX, chunkZ) is a
+/// natural one (findGenerationPoint) rather than a placed one (the sapling, /twilightforest place,
+/// selftests: generateFromSapling / the center kept). The start's data `forced` flag decides when
+/// the landmark kit records it; otherwise the center does: a natural start arrives at its chunk's
+/// corner or +7 (a new start) or at the point findGenerationPoint found, (foundX, foundZ) (a start
+/// rebuilt), so a start placed at exactly one of those is taken for a natural one.
+[[nodiscard]] bool naturalStart(Json const& startData, int chunkX, int chunkZ, int x, int z, int foundX, int foundZ);
 
 // ---- pieces ------------------------------------------------------------------------------------------
 /// HedgeMazeComponent ("twilightforest:TFHedge") at (x, y, z) (HedgeMazeStructure: start + (1, 4, 1)).

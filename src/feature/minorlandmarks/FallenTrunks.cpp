@@ -287,7 +287,7 @@ void installFallenTrunks() {
                 int              z = cz * 16 + random.nextInt(16);
                 // a start placed by a command or a selftest keeps its center (natural starts arrive at
                 // the chunk corner or, rebuilt, at the point found here)
-                bool natural = (c.x == cx * 16 && c.z == cz * 16) || (c.x == cx * 16 + 7 && c.z == cz * 16 + 7) || (c.x == x && c.z == z);
+                bool natural = naturalStart(ctx.start.data, cx, cz, c.x, c.z, x, z);
                 int  worldY  = c.y;
                 if (natural) {
                     auto surface = gf::landmark::ext::firstOccupiedHeight(ctx.start.dimension, x, z, worldgen::Heightmap::WorldSurfaceWg);

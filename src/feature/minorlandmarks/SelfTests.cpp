@@ -22,7 +22,9 @@
 #include "ll/api/service/Bedrock.h"
 
 #include "mc/deps/core/math/Vec3.h"
+#include "mc/scripting/modules/minecraft/ScriptFacing.h"
 #include "mc/server/SimulatedPlayer.h"
+#include "mc/server/sim/LookDuration.h"
 #include "mc/world/actor/Actor.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/ItemStack.h"
@@ -36,7 +38,6 @@
 
 #include "core/VolumeHash.h"
 #include "core/jrand/JRand.h"
-#include "feature/common/Interactions.h"
 #include "feature/ext/landmark/LandmarkExt.h"
 #include "feature/ext/landmark/LandmarkTest.h"
 #include "feature/ext/structure/Placement.h"
@@ -309,19 +310,35 @@ GF_REGISTER_SELFTEST("minorlandmarks.hedge_damage", [](Context& ctx) -> ll::coro
         z->remove();
     } else ctx.fail("the zombie vanished");
 
-    // punching the hedge hurts (HedgeBlock#attack)
+    // punching the hedge hurts (HedgeBlock#attack), and keeps hurting every 10 ticks while the player
+    // keeps mining it (HedgeBlock#tick: swinging and looking at it): the real mining path, not the
+    // interactions dispatch alone
     auto& pl = ctx.player();
     pl.teleport(Vec3{p.x + 3.5f, static_cast<float>(p.y), p.z + 1.5f}, pl.getDimensionId());
     co_await ctx.ticks(25); // past the hurt cooldown
-    int    hp0 = ctx.player().getHealth();
-    auto&  pp  = ctx.player();
-    auto   blk = at(5, 0, 1);
-    std::string empty;
-    std::string hedgeId = kHedge;
-    interactions::DestroyContext dc{pp, ItemStack::EMPTY_ITEM(), empty, region->getBlock(BlockPos{blk.x, blk.y, blk.z}), hedgeId, blk, 1, false};
-    (void)interactions::dispatchStartDestroy(dc);
-    co_await ctx.ticks(2);
-    ctx.check(ctx.player().getHealth() < hp0, "punching the hedge hurts (" + std::to_string(hp0) + " -> " + std::to_string(ctx.player().getHealth()) + ")");
+    ctx.player().heal(20);  // full health: five pricks must not kill
+    co_await ctx.ticks(1);
+    int  hp0 = ctx.player().getHealth();
+    auto blk = at(5, 0, 1);
+    {
+        auto& sp = static_cast<SimulatedPlayer&>(ctx.player());
+        sp.simulateLookAt(BlockPos{blk.x, blk.y, blk.z}, sim::LookDuration::Instant);
+        ctx.check(sp.simulateDestroyBlock(BlockPos{blk.x, blk.y, blk.z}, ScriptModuleMinecraft::ScriptFacing::West), "mining the hedge starts");
+    }
+    co_await ctx.ticks(3);
+    int hp1 = ctx.player().getHealth();
+    ctx.check(hp1 < hp0, "punching the hedge hurts (" + std::to_string(hp0) + " -> " + std::to_string(hp1) + ")");
+    co_await ctx.ticks(35); // the 10-tick re-checks while mining (the hand needs longer to break it)
+    int hp2 = ctx.player().getHealth();
+    static_cast<SimulatedPlayer&>(ctx.player()).simulateStopDestroyingBlock();
+    bool standing = ctx.blockAt(blk) == kHedge;
+    ctx.info("mining the hedge: health " + std::to_string(hp0) + " -> " + std::to_string(hp1) + " -> " + std::to_string(hp2) + (standing ? " (still standing)" : " (broken)"));
+    ctx.check(hp2 < hp1, "the hedge keeps pricking a player who keeps mining it (" + std::to_string(hp1) + " -> " + std::to_string(hp2) + ")");
+    ctx.player().heal(20);
+    co_await ctx.ticks(15); // the last scheduled re-check finds no swinging player
+    int hp3 = ctx.player().getHealth();
+    co_await ctx.ticks(25);
+    ctx.check(ctx.player().getHealth() >= hp3, "no more pricks once the player stops (" + std::to_string(hp3) + " -> " + std::to_string(ctx.player().getHealth()) + ")");
     ctx.check(isSpiderType("twilightforest:hedge_spider") && isSpiderType("minecraft:cave_spider") && !isSpiderType("minecraft:zombie"),
               "Spider and its subclasses are spared");
 });

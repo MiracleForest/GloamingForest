@@ -684,7 +684,7 @@ void installHollowTrees() {
                     core::jrand::LegacyRandom probe(core::mth::ladd(core::mth::ladd(ctx.start.seed, static_cast<std::int64_t>(cx) * 25117LL),
                                                                     static_cast<std::int64_t>(cz) * 151121LL));
                     int px = cx * 16 + probe.nextInt(16), pz = cz * 16 + probe.nextInt(16);
-                    bool natural = (c.x == cx * 16 && c.z == cz * 16) || (c.x == cx * 16 + 7 && c.z == cz * 16 + 7) || (c.x == px && c.z == pz);
+                    bool natural = naturalStart(ctx.start.data, cx, cz, c.x, c.z, px, pz);
                     if (natural) {
                         // HollowTreeStructure#findGenerationPoint
                         int x = cx * 16 + ctx.random.nextInt(16);
