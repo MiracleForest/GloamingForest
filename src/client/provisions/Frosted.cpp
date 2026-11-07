@@ -39,6 +39,7 @@
 #include "client/Client.h"
 #include "client/render/Render.h"
 #include "core/jrand/JRand.h"
+#include "feature/ext/ui/Client.h"
 #include "feature/net/Net.h"
 #include "feature/provisions/Internal.h"
 #include "mod/Log.h"
