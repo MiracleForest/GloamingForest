@@ -14,6 +14,12 @@
       "minecraft:water_appearance": {
         "surface_color": "#3F76E4"
       },
+      "minecraft:atmosphere_identifier": {
+        "atmosphere_identifier": "gloamingforest:highlands_underground_atmospherics"
+      },
+      "minecraft:biome_music": {
+        "music_definition": "twilightforest:highlands_underground"
+      },
       "minecraft:ambient_sounds": {
         "underwater_loop": "ambient.underwater.loop",
         "underwater_addition": {

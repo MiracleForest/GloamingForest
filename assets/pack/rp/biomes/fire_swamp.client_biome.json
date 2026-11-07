@@ -26,6 +26,12 @@
       "minecraft:precipitation": {
         "white_ash": 0.8468
       },
+      "minecraft:atmosphere_identifier": {
+        "atmosphere_identifier": "gloamingforest:fire_swamp_atmospherics"
+      },
+      "minecraft:biome_music": {
+        "music_definition": "twilightforest:fire_swamp"
+      },
       "minecraft:ambient_sounds": {
         "underwater_loop": "ambient.underwater.loop",
         "underwater_addition": {
