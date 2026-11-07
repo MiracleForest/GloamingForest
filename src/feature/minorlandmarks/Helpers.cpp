@@ -118,4 +118,10 @@ bool isSpiderType(std::string const& entityId) {
     return std::find(std::begin(kSpiders), std::end(kSpiders), entityId) != std::end(kSpiders);
 }
 
+bool naturalStart(Json const& startData, int chunkX, int chunkZ, int x, int z, int foundX, int foundZ) {
+    if (startData.is_object())
+        if (auto it = startData.find("forced"); it != startData.end() && it->is_boolean()) return !it->get<bool>();
+    return (x == chunkX * 16 && z == chunkZ * 16) || (x == chunkX * 16 + 7 && z == chunkZ * 16 + 7) || (x == foundX && z == foundZ);
+}
+
 } // namespace gf::feature::minorlandmarks
