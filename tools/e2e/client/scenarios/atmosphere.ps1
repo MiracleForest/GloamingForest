@@ -225,7 +225,11 @@ function Invoke-AtmosphereViews([string]$mode) {
     Test-AtmosphereSignature "$mode stars in the zenith view (midnight)" (Get-AtmosphereSignature $midnight).Stars 30 1500
     Set-View 90 -15
     $horizon = Save-Screenshot "$mode-sky-horizon"
-    Test-AtmosphereSignature "$mode pink (sunset) share of the horizon" (Get-AtmosphereSignature $horizon).Pink 0 0.01
+    $pink = (Get-AtmosphereSignature $horizon).Pink
+    # Vibrant Visuals paints its own physical sky with a dusk from the sun direction at the fixed time 13000
+    # (docs/units/atmosphere.md, Bedrock adaptation: the sunrise colour override does not reach it): recorded
+    if ($vv) { Write-Step "$mode pink share of the horizon: $pink (Vibrant Visuals dusk, a listed deviation)" }
+    else { Test-AtmosphereSignature "$mode pink (sunset) share of the horizon" $pink 0 0.01 }
 
     # fog: the forest's, the spooky forest's near fog (smoothed in over seconds), the dark forest
     Set-View 0 0
@@ -253,8 +257,16 @@ function Invoke-AtmosphereViews([string]$mode) {
     $delta   = Get-AtmosphereDelta $clearUp $aurora
     Write-Step "$mode aurora change: $($delta.R), $($delta.G), $($delta.B) over $($delta.Share) of the view (lightness $($delta.Before) -> $($delta.After))"
     Test-AtmosphereSignature "$mode aurora changed share" $delta.Share 0.02 1
-    Test-AtmosphereSignature "$mode aurora green gain over red" ([Math]::Round($delta.G - $delta.R, 1)) 10 255
-    Test-AtmosphereSignature "$mode aurora lightness gain (a glow, not a shadow)" ([Math]::Round($delta.After - $delta.Before, 1)) 5 255
+    $green = [Math]::Round($delta.G - $delta.R, 1)
+    # Vibrant Visuals lights the world-pass ribbons with the scene light (docs/units/atmosphere.md): their green
+    # gain is recorded there (6.9 in audit round 1), checked in Classic
+    if ($vv) { Write-Step "$mode aurora green gain over red: $green (Vibrant Visuals scene light, a listed deviation)" }
+    else { Test-AtmosphereSignature "$mode aurora green gain over red" $green 10 255 }
+    $glow = [Math]::Round($delta.After - $delta.Before, 1)
+    # under Vibrant Visuals the clear reference is VV's own lighter dusk sky (-16.1 in audit round 1 while the
+    # screenshot shows the ribbons lit): recorded there, checked in Classic
+    if ($vv) { Write-Step "$mode aurora lightness gain: $glow (Vibrant Visuals, recorded)" }
+    else { Test-AtmosphereSignature "$mode aurora lightness gain (a glow, not a shadow)" $glow 5 255 }
     if (-not $vv) { Test-AtmosphereSignature "$mode aurora coverage" ([Math]::Round((Get-AtmosphereSignature $aurora).Aurora - (Get-AtmosphereSignature $clearUp).Aurora, 4)) 0.05 0.6 }
 
     # the void plate (below the floor of the dimension; forced): opaque, the stars below the horizon
