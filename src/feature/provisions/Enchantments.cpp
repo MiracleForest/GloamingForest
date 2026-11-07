@@ -46,6 +46,7 @@
 #include "feature/combat/Combat.h"
 #include "feature/enchant/Enchant.h"
 #include "feature/entity/Entity.h"
+#include "feature/ext/item/Tags.h"
 #include "feature/ext/provisions/Provisions.h"
 #include "feature/landmark/Landmark.h"
 #include "feature/provisions/Internal.h"
@@ -105,14 +106,43 @@ void onDealt(::gf::combat::DamageInfo const& d) {
     return ::gf::combat::Verdict::Pass;
 }
 
-bool matchesIngredient(nlohmann::json const& ing, std::string const& itemId) {
+/// The Bedrock potion aux value of a Java potion id (only the potions TF's scepter repair data
+/// names; -1: unknown).
+int potionAux(std::string const& javaPotion) {
+    if (javaPotion == "minecraft:strength") return 31;
+    if (javaPotion == "minecraft:long_strength") return 32;
+    if (javaPotion == "minecraft:strong_strength") return 33;
+    return -1;
+}
+
+/// Ingredient#test of one recipe ingredient (an alternative list, an item, a tag, or NeoForge's
+/// components ingredient with the potion contents TF's zombie scepter asks for).
+bool matchesIngredient(nlohmann::json const& ing, ItemStack const& stack) {
     if (ing.is_array()) {
         for (auto const& i : ing)
-            if (matchesIngredient(i, itemId)) return true;
+            if (matchesIngredient(i, stack)) return true;
         return false;
     }
     if (!ing.is_object()) return false;
-    if (auto it = ing.find("item"); it != ing.end() && it->is_string()) return it->get<std::string>() == itemId;
+    auto itemId = game::items::idOf(stack);
+    // the recipe data holds Java ids (the renaming is not idempotent: compare the renamed id only)
+    auto same = [&](std::string const& javaId) { return ::gf::tags::ext::bedrockId("item", javaId) == itemId; };
+    if (ing.value("type", std::string()) == "neoforge:components") {
+        bool itemOk = false;
+        if (auto it = ing.find("items"); it != ing.end()) {
+            if (it->is_string()) itemOk = same(it->get<std::string>());
+            else if (it->is_array())
+                for (auto const& e : *it) itemOk |= e.is_string() && same(e.get<std::string>());
+        }
+        if (!itemOk) return false;
+        auto const& comps = ing.value("components", nlohmann::json::object());
+        if (auto pc = comps.find("minecraft:potion_contents"); pc != comps.end()) {
+            int aux = potionAux(pc->value("potion", std::string()));
+            return aux >= 0 && stack.getAuxValue() == aux;
+        }
+        return comps.empty();
+    }
+    if (auto it = ing.find("item"); it != ing.end() && it->is_string()) return same(it->get<std::string>());
     if (auto it = ing.find("tag"); it != ing.end() && it->is_string()) return ::gf::tags::has(::gf::tags::Registry::Item, it->get<std::string>(), itemId);
     return false;
 }
@@ -238,7 +268,7 @@ bool rechargeScepter(Player& player, ItemStack& item) {
             // every ingredient still missing is tested against the stack (Java does not stop at
             // the first match: one stack may fill several ingredients)
             for (auto it = remaining.begin(); it != remaining.end();) {
-                if (fp::matchesIngredient(*it, id)) {
+                if (fp::matchesIngredient(*it, s)) {
                     it = remaining.erase(it);
                     slots.push_back(i);
                 } else ++it;

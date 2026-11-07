@@ -7,9 +7,11 @@
 // files under test).
 #include <cmath>
 #include <string>
+#include <utility>
 
 #include "ll/api/coro/CoroTask.h"
 
+#include "mc/deps/shared_types/item/EnchantSlot.h"
 #include "mc/deps/shared_types/legacy/actor/ArmorSlot.h"
 #include "mc/server/SimulatedPlayer.h"
 #include "mc/world/actor/Actor.h"
@@ -180,6 +182,11 @@ GF_REGISTER_SELFTEST("provisions.stale_bread", [](Context& ctx) -> ll::coro::Cor
     ctx.check(fp::counters().staleSandwich == before + 1, "a melee hit with stale bread is a twilightforest:stale_sandwich hit");
     player.setSelectedItem(held);
     discard(victim);
+    // Tiers.WOOD: enchantability 15 as a sword
+    auto bread = make(fp::ids::kStaleBread);
+    ctx.require(bread.mItem.get() != nullptr, "the stale bread item");
+    ctx.check(bread.mItem->getEnchantValue() == 15, "enchantability 15 (" + std::to_string(bread.mItem->getEnchantValue()) + ")");
+    ctx.check(bread.mItem->getEnchantSlot() == static_cast<int>(SharedTypes::EnchantSlot::Sword), "sword enchantments");
 });
 
 // ---- experiment 115 ----------------------------------------------------------------------------------------
@@ -419,6 +426,31 @@ GF_REGISTER_SELFTEST("provisions.enchantments", [](Context& ctx) -> ll::coro::Co
     ctx.check(eyes == 1, "using one fermented spider eye");
     p2.getInventory().removeAllItems();
     p2.setSelectedItem(ItemStack::EMPTY_ITEM());
+
+    // the zombie scepter's ingredients: rotten flesh and a potion of Strength (any of the three);
+    // another potion is no ingredient (NeoForge's components ingredient)
+    auto zombie = make("twilightforest:zombie_scepter");
+    if (items::isEmpty(zombie)) co_return;
+    int zmax = zombie.mItem->getMaxDamage();
+    zombie.setDamageValue(static_cast<short>(zmax));
+    gf::enchant::set(zombie, fp::ids::kRenewal, 1);
+    auto potion = [](int aux) { return items::make("minecraft:potion", 1, aux).value_or(ItemStack::EMPTY_ITEM()); };
+    for (auto const& [aux, refills] : {std::pair{21, false}, std::pair{32, true}}) {
+        auto& p3 = static_cast<Player&>(ctx.player());
+        p3.getInventory().removeAllItems();
+        p3.setSelectedItem(zombie);
+        ctx.give(p3, make("minecraft:rotten_flesh", 1), 20);
+        ctx.give(p3, potion(aux), 21);
+        co_await ctx.ticks(3);
+        auto& p4 = static_cast<Player&>(ctx.player());
+        auto  zs = p4.getSelectedItem();
+        bool  refilled = items::idOf(zs) == "twilightforest:zombie_scepter" && zs.getDamageValue() == zmax - 9;
+        ctx.check(refilled == refills, std::string("a potion with aux ") + std::to_string(aux) + (refills ? " (long Strength) refills" : " (Healing) does not refill") +
+                                           " the zombie scepter (damage " + std::to_string(zs.getDamageValue()) + ")");
+    }
+    auto& p5 = static_cast<Player&>(ctx.player());
+    p5.getInventory().removeAllItems();
+    p5.setSelectedItem(ItemStack::EMPTY_ITEM());
 });
 
 // ---- music discs ---------------------------------------------------------------------------------------------
