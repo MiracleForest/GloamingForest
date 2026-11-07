@@ -4,6 +4,7 @@
 // candles), the ominous fire and the brazier. Private to the unit.
 
 #include <array>
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -91,6 +92,23 @@ struct SkullCandleKind {
     bool        wall = false;
 };
 [[nodiscard]] std::optional<SkullCandleKind> skullCandleKind(std::string_view blockId);
+
+// ---- animateTick (the client mod's flames, src/client/lichdecor) --------------------------------------
+
+/// One flame of a block's animateTick: its position inside the block and the flame particle
+/// (minecraft:small_flame, twilightforest:dim_flame, twilightforest:ominous_flame).
+struct AnimateFlame {
+    Vec3        offset;
+    char const* particle = "";
+    bool        smoke    = false; ///< LightableBlock: the 30 % smoke only for NORMAL lighting
+};
+/// CandelabraBlock / SkullCandleBlock / WallSkullCandleBlock / OminousCandleBlock#animateTick's
+/// flames of `block` (`gameTime`: OminousCandleBlock.getCurrentY's bob); empty when unlit or not one.
+[[nodiscard]] std::vector<AnimateFlame> animateFlames(Block const& block, BlockPos const& pos, std::int64_t gameTime);
+/// The flame offsets of a candelabra's filled slots (Candelabra.cpp).
+[[nodiscard]] std::vector<Vec3> candelabraFlameOffsets(Block const& block);
+/// A skull candle's flame offsets, the wall form moved a quarter block off the wall (SkullCandles.cpp).
+[[nodiscard]] std::vector<Vec3> skullCandleFlameOffsets(Block const& block, bool wall);
 
 // ---- registration -----------------------------------------------------------------------------------
 

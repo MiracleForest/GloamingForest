@@ -471,6 +471,18 @@ bool mergeSlab(BlockSource& region, BlockPos const& pos) {
     return true;
 }
 
+bool dropFlowingWater(BlockSource& region, BlockPos const& pos) {
+    Block const& liquid = region.getExtraBlock(pos);
+    if (liquid.isAir()) return false;
+    auto const& name = liquid.getTypeName();
+    if (name != "minecraft:water" && name != "minecraft:flowing_water") return false;
+    // a source is liquid_depth 0 (minecraft:water, or flowing_water still updating); Bedrock keeps
+    // whatever water the cell held in the liquid layer
+    if (game::intState(liquid, "liquid_depth").value_or(0) == 0) return false;
+    auto const* air = game::blockWith("minecraft:air");
+    return air && region.setExtraBlock(pos, *air, 3);
+}
+
 bool updateShape(BlockSource& region, BlockPos const& pos) {
     Block const* block = blockAt(region, pos);
     if (!block) return false;
@@ -525,6 +537,12 @@ void installShapes() {
                 }
             });
         }
+    }
+    for (auto const* e : entries()) {
+        // SimpleWaterloggedBlock#getStateForPlacement: WATERLOGGED = fluid is WATER (a source); a
+        // block placed into flowing water is dry (Bedrock keeps the flow in the liquid layer)
+        if (!e->has(Waterloggable)) continue;
+        blockevents::onPlaced(e->id, [](BlockSource& region, BlockPos const& pos, Block const&, Actor*) { dropFlowingWater(region, pos); });
     }
     for (auto const* e : entriesOf(Family::ConnectedTexture)) {
         // the corner blocks of the connected texture blocks around (no direct neighbours)

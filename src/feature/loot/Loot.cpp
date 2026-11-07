@@ -449,7 +449,8 @@ bool isVanillaLootContainer(BlockActor const& actor) {
     case BlockActorType::BarrelBlock:
     case BlockActorType::ShulkerBox:
     case BlockActorType::Dispenser:
-    case BlockActorType::Dropper: return true;
+    case BlockActorType::Dropper:
+    case BlockActorType::DecoratedPot: return true; // DecoratedPotBlockEntity is a RandomizableContainer (TF's camp pots)
     default: return false;
     }
 }
@@ -463,7 +464,8 @@ Container* vanillaContainerOf(BlockActor& actor) {
     case BlockActorType::ShulkerBox:
         return static_cast<Container*>(static_cast<FillingContainer*>(static_cast<RandomizableBlockActorFillingContainer*>(&actor)));
     case BlockActorType::Dispenser:
-    case BlockActorType::Dropper: return static_cast<Container*>(static_cast<RandomizableBlockActorContainer*>(&actor));
+    case BlockActorType::Dropper:
+    case BlockActorType::DecoratedPot: return static_cast<Container*>(static_cast<RandomizableBlockActorContainer*>(&actor));
     default: return nullptr;
     }
 }
@@ -812,7 +814,9 @@ namespace {
 /// The randomizable vanilla container blocks (placeContainer's native loot field).
 std::vector<std::string> const& vanillaContainerBlocks() {
     static std::vector<std::string> const v = [] {
-        std::vector<std::string> out{"minecraft:chest", "minecraft:trapped_chest", "minecraft:barrel", "minecraft:dispenser", "minecraft:dropper", "minecraft:undyed_shulker_box"};
+        std::vector<std::string> out{"minecraft:chest",   "minecraft:trapped_chest", "minecraft:barrel",
+                                     "minecraft:dispenser", "minecraft:dropper",     "minecraft:undyed_shulker_box",
+                                     "minecraft:decorated_pot"}; // DecoratedPotBlockEntity#getTheItem unpacks on use
         for (char const* c : {"white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray", "light_gray", "cyan", "purple", "blue", "brown", "green", "red", "black"})
             out.push_back(std::string("minecraft:") + c + "_shulker_box");
         return out;

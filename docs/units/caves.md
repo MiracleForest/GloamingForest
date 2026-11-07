@@ -67,3 +67,21 @@ Open: those client screenshots; the yeti's own fall damage is the engine's (Bedr
 Sounds (W2 round 2, audio pass). Checked with `tools/sounds/lint.ps1` on the assembled pack (`tools/assemble.ps1 -Check`): before this round 18 of this unit's sound events still played F3's name-derived baseline placeholder. Alpha Yeti and Yeti (shared files, as in TF) and Troll. `tools/sounds/recipes/caves.json` now designs every one of them (original synthesized sounds, unit-local patches layered from the shared library; TF's audio never read; ids, subtitles, categories, volumes, pitches and variant counts unchanged), rendered with `pwsh tools/sounds/synth.ps1 -Unit caves` into `assets/gen/audio/caves/`. `synth.ps1 -Check` and `lint.ps1` pass; with the other round-2 audio PRs (one per owning unit) the lint reports 0 baseline-only events for the whole pack.
 
 Open: nothing for audio.
+
+Mobs and visuals (A5 findings, client shots).
+
+Fixed:
+- `twilightforest:alpha_yeti` was fire immune (A5's sweep): the BP declared `"minecraft:fire_immune": false`, and
+  Bedrock treats the component's presence as immunity. Removed: AlphaYeti is not `fireImmune()` in TF
+  (TFEntities.ALPHA_YETI; BaseTFBoss#lavaHurt burns it).
+- Client shots of the held rock and the alpha yeti's poses: the scenario named `troll-rock`,
+  `alpha-yeti-rampage` and `alpha-yeti-tired` but never took them (the selftests it ran have no camera). The BPs
+  now have `gf:show_rock` (troll: granite, property `twilightforest:rock` 2) and `gf:show_rampage` /
+  `gf:show_tired` (alpha yeti) for `/event entity`, and `tools/e2e/client/scenarios/caves.ps1` shoots them, plus the
+  thrown block and the falling ice in flight (`thrown-block-flight`, `falling-ice-flight`). Written, not run.
+
+Checked:
+- `caves.troll_rock` (a known flake): passed in all 18 recorded runs of the machine's worktrees; no failure line
+  found to work from. Unchanged.
+
+Open: those client screenshots; the yeti's own fall damage is the engine's (Bedrock's 3-block threshold).

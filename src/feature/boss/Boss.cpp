@@ -1933,6 +1933,7 @@ public:
     // and blockdata registrations have no removal in their contracts and stay for the whole process
     // (registered once).
     void install() {
+        if (std::exchange(mInstalled, true)) return; // a second install without an uninstall: no-op
         BossDeathTickHook::hook();
         // EntityEvents#addQualifiedGroupPlayerIfNeeded: melee hits now, every damage through combat
         S().handlers.push_back(ia::onAttacked({}, [](ia::EntityContext const& c, bool hit) {
@@ -2039,10 +2040,14 @@ public:
         });
     }
     void uninstall() {
+        if (!std::exchange(mInstalled, false)) return;
         for (auto id : S().handlers) ia::remove(id);
         S().handlers.clear();
         BossDeathTickHook::unhook();
     }
+
+private:
+    bool mInstalled = false;
 };
 
 } // namespace

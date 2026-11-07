@@ -1,0 +1,38 @@
+{
+  "entity_sounds": {
+    "entities": {
+      "twilightforest:adherent": {
+        "volume": 1.0,
+        "pitch": [0.8, 1.2],
+        "events": {
+          "hurt": "game.player.hurt",
+          "death": "game.player.die"
+        }
+      },
+      "twilightforest:harbinger_cube": {
+        "volume": 1.0,
+        "pitch": [0.8, 1.2],
+        "events": {
+          "hurt": "game.player.hurt",
+          "death": "game.player.die"
+        }
+      },
+      "twilightforest:roving_cube": {
+        "volume": 1.0,
+        "pitch": [0.8, 1.2],
+        "events": {
+          "hurt": "game.player.hurt",
+          "death": "game.player.die"
+        }
+      },
+      "twilightforest:plateau_boss": {
+        "volume": 1.0,
+        "pitch": [0.8, 1.2],
+        "events": {
+          "hurt": "game.player.hurt",
+          "death": "game.player.die"
+        }
+      }
+    }
+  }
+}

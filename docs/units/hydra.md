@@ -33,3 +33,7 @@ Verified, no change: the hydra's knockback resistance 1 is TF's behaviour (`Hydr
 `isPushable` false: Java's attribute is 0 but the hydra never moves from a hit). Peaceful: `Hydra#checkDespawn`
 discards the heads before `BaseTFBoss#checkDespawn`; the heads here are F8 parts of the hydra, removed with it
 by the boss kit's Peaceful rule.
+
+Sounds (W2 round 2, audio pass). Checked with `tools/sounds/lint.ps1` on the assembled pack (`tools/assemble.ps1 -Check`): before this round 1 of this unit's sound events still played F3's name-derived baseline placeholder. The bite warning (`hydra.warn`). `tools/sounds/recipes/hydra.json` now designs every one of them (original synthesized sounds, unit-local patches layered from the shared library; TF's audio never read; ids, subtitles, categories, volumes, pitches and variant counts unchanged), rendered with `pwsh tools/sounds/synth.ps1 -Unit hydra` into `assets/gen/audio/hydra/`. `synth.ps1 -Check` and `lint.ps1` pass; with the other round-2 audio PRs (one per owning unit) the lint reports 0 baseline-only events for the whole pack.
+
+Open: nothing for audio.

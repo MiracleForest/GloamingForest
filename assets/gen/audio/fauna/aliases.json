@@ -7,37 +7,160 @@
         {
           "copy": "alias/caves/mob/alpha_yeti/growl1",
           "spec": {
-            "patch": "creature/growl",
-            "params": {
-              "len": 1,
-              "pitch": 66.85,
-              "size": 0.6
+            "patch": {
+              "about": "Yeti growl: a deep wobbling growl with a frosty breath hiss.",
+              "params": {
+                "pitch": 66,
+                "len": 1.1
+              },
+              "length": "$len",
+              "tail": 0.35,
+              "layers": [
+                {
+                  "type": "patch",
+                  "patch": "creature/growl",
+                  "length": "$len+0.4",
+                  "params": {
+                    "pitch": "$pitch",
+                    "len": "$len",
+                    "size": 0.55,
+                    "rough": 4,
+                    "rasp": 0.5,
+                    "wobble": 0.8,
+                    "rumble": 32
+                  }
+                },
+                {
+                  "type": "patch",
+                  "patch": "creature/hiss",
+                  "length": "$len+0.2",
+                  "gain": -16,
+                  "params": {
+                    "len": "$len*0.8",
+                    "bright": 0.5,
+                    "attack": 0.15
+                  }
+                }
+              ],
+              "fx": [
+                {
+                  "type": "reverb",
+                  "room": 0.55,
+                  "mix": 0.12
+                }
+              ]
             },
-            "seed": 649953475
+            "params": {
+              "pitch": 64,
+              "len": 1.1
+            },
+            "seed": 2704
           }
         },
         {
           "copy": "alias/caves/mob/alpha_yeti/growl2",
           "spec": {
-            "patch": "creature/growl",
-            "params": {
-              "len": 1,
-              "pitch": 70,
-              "size": 0.6
+            "patch": {
+              "about": "Yeti growl: a deep wobbling growl with a frosty breath hiss.",
+              "params": {
+                "pitch": 66,
+                "len": 1.1
+              },
+              "length": "$len",
+              "tail": 0.35,
+              "layers": [
+                {
+                  "type": "patch",
+                  "patch": "creature/growl",
+                  "length": "$len+0.4",
+                  "params": {
+                    "pitch": "$pitch",
+                    "len": "$len",
+                    "size": 0.55,
+                    "rough": 4,
+                    "rasp": 0.5,
+                    "wobble": 0.8,
+                    "rumble": 32
+                  }
+                },
+                {
+                  "type": "patch",
+                  "patch": "creature/hiss",
+                  "length": "$len+0.2",
+                  "gain": -16,
+                  "params": {
+                    "len": "$len*0.8",
+                    "bright": 0.5,
+                    "attack": 0.15
+                  }
+                }
+              ],
+              "fx": [
+                {
+                  "type": "reverb",
+                  "room": 0.55,
+                  "mix": 0.12
+                }
+              ]
             },
-            "seed": 666731094
+            "params": {
+              "pitch": 69,
+              "len": 1
+            },
+            "seed": 2705
           }
         },
         {
           "copy": "alias/caves/mob/alpha_yeti/growl3",
           "spec": {
-            "patch": "creature/growl",
-            "params": {
-              "len": 1,
-              "pitch": 73.15,
-              "size": 0.6
+            "patch": {
+              "about": "Yeti growl: a deep wobbling growl with a frosty breath hiss.",
+              "params": {
+                "pitch": 66,
+                "len": 1.1
+              },
+              "length": "$len",
+              "tail": 0.35,
+              "layers": [
+                {
+                  "type": "patch",
+                  "patch": "creature/growl",
+                  "length": "$len+0.4",
+                  "params": {
+                    "pitch": "$pitch",
+                    "len": "$len",
+                    "size": 0.55,
+                    "rough": 4,
+                    "rasp": 0.5,
+                    "wobble": 0.8,
+                    "rumble": 32
+                  }
+                },
+                {
+                  "type": "patch",
+                  "patch": "creature/hiss",
+                  "length": "$len+0.2",
+                  "gain": -16,
+                  "params": {
+                    "len": "$len*0.8",
+                    "bright": 0.5,
+                    "attack": 0.15
+                  }
+                }
+              ],
+              "fx": [
+                {
+                  "type": "reverb",
+                  "room": 0.55,
+                  "mix": 0.12
+                }
+              ]
             },
-            "seed": 683508713
+            "params": {
+              "pitch": 73,
+              "len": 1.2
+            },
+            "seed": 2706
           }
         }
       ]
@@ -98,12 +221,17 @@
           "spec": {
             "patch": "creature/growl",
             "params": {
-              "len": 0.8,
-              "pitch": 114.6,
-              "rasp": 0.3,
-              "size": 0.9
+              "pitch": 108,
+              "len": 0.85,
+              "size": 0.95,
+              "rough": 3.5,
+              "rasp": 0.4,
+              "wobble": 0.8,
+              "vowelA": 3,
+              "vowelB": 4,
+              "rumble": 34
             },
-            "seed": 3222998934
+            "seed": 1711
           }
         },
         {
@@ -111,12 +239,17 @@
           "spec": {
             "patch": "creature/growl",
             "params": {
-              "len": 0.8,
-              "pitch": 120,
-              "rasp": 0.3,
-              "size": 0.9
+              "pitch": 115,
+              "len": 0.95,
+              "size": 0.95,
+              "rough": 3.5,
+              "rasp": 0.45,
+              "wobble": 0.9,
+              "vowelA": 2,
+              "vowelB": 4,
+              "rumble": 36
             },
-            "seed": 3206221315
+            "seed": 1712
           }
         },
         {
@@ -124,12 +257,17 @@
           "spec": {
             "patch": "creature/growl",
             "params": {
-              "len": 0.8,
-              "pitch": 125.4,
-              "rasp": 0.3,
-              "size": 0.9
+              "pitch": 122,
+              "len": 0.75,
+              "size": 1,
+              "rough": 3.5,
+              "rasp": 0.4,
+              "wobble": 0.7,
+              "vowelA": 3,
+              "vowelB": 3,
+              "rumble": 32
             },
-            "seed": 3189443696
+            "seed": 1713
           }
         }
       ]
@@ -187,23 +325,85 @@
         {
           "copy": "alias/aurora/mob/ice/crackle1",
           "spec": {
-            "patch": "ambient/crackle",
-            "params": {
-              "density": 28,
-              "len": 0.764
+            "patch": {
+              "about": "Ice crackle: frosty clicks and pings over a faint glimmer.",
+              "params": {
+                "len": 0.8,
+                "density": 30
+              },
+              "length": "$len",
+              "tail": 0.5,
+              "layers": [
+                {
+                  "type": "patch",
+                  "patch": "ambient/crackle",
+                  "length": "$len+0.4",
+                  "params": {
+                    "len": "$len",
+                    "density": "$density",
+                    "ping": 0.75
+                  }
+                },
+                {
+                  "type": "patch",
+                  "patch": "magic/shimmer",
+                  "length": "$len+0.8",
+                  "gain": -17,
+                  "params": {
+                    "freq": 1760,
+                    "len": "$len*0.8",
+                    "sparkle": 0.6
+                  }
+                }
+              ]
             },
-            "seed": 1646180918
+            "params": {
+              "len": 0.75,
+              "density": 28
+            },
+            "seed": 2801
           }
         },
         {
           "copy": "alias/aurora/mob/ice/crackle2",
           "spec": {
-            "patch": "ambient/crackle",
-            "params": {
-              "density": 28,
-              "len": 0.8
+            "patch": {
+              "about": "Ice crackle: frosty clicks and pings over a faint glimmer.",
+              "params": {
+                "len": 0.8,
+                "density": 30
+              },
+              "length": "$len",
+              "tail": 0.5,
+              "layers": [
+                {
+                  "type": "patch",
+                  "patch": "ambient/crackle",
+                  "length": "$len+0.4",
+                  "params": {
+                    "len": "$len",
+                    "density": "$density",
+                    "ping": 0.75
+                  }
+                },
+                {
+                  "type": "patch",
+                  "patch": "magic/shimmer",
+                  "length": "$len+0.8",
+                  "gain": -17,
+                  "params": {
+                    "freq": 1760,
+                    "len": "$len*0.8",
+                    "sparkle": 0.6
+                  }
+                }
+              ]
             },
-            "seed": 1629403299
+            "params": {
+              "len": 0.85,
+              "density": 34
+            },
+            "seed": 2802
           }
         }
       ]
@@ -231,34 +431,160 @@
         {
           "copy": "alias/naga/mob/naga/hiss1",
           "spec": {
-            "patch": "creature/hiss",
-            "params": {
-              "bright": 0.955,
-              "len": 0.764
+            "patch": {
+              "about": "Naga hiss: a long dark hiss over a low body rumble.",
+              "params": {
+                "len": 0.8,
+                "bright": 0.8
+              },
+              "length": "$len",
+              "tail": 0.35,
+              "layers": [
+                {
+                  "type": "patch",
+                  "patch": "creature/hiss",
+                  "length": "$len+0.3",
+                  "params": {
+                    "len": "$len",
+                    "bright": "$bright",
+                    "attack": 0.08
+                  }
+                },
+                {
+                  "type": "patch",
+                  "patch": "creature/growl",
+                  "length": "$len+0.3",
+                  "gain": -13,
+                  "params": {
+                    "pitch": 52,
+                    "len": "$len*0.9",
+                    "size": 0.5,
+                    "rough": 2,
+                    "rasp": 0.2,
+                    "wobble": 0.5,
+                    "rumble": 22
+                  }
+                }
+              ],
+              "fx": [
+                {
+                  "type": "reverb",
+                  "room": 0.45,
+                  "mix": 0.1
+                }
+              ]
             },
-            "seed": 2376495360
+            "params": {
+              "len": 0.75,
+              "bright": 0.75
+            },
+            "seed": 2001
           }
         },
         {
           "copy": "alias/naga/mob/naga/hiss2",
           "spec": {
-            "patch": "creature/hiss",
-            "params": {
-              "bright": 1,
-              "len": 0.8
+            "patch": {
+              "about": "Naga hiss: a long dark hiss over a low body rumble.",
+              "params": {
+                "len": 0.8,
+                "bright": 0.8
+              },
+              "length": "$len",
+              "tail": 0.35,
+              "layers": [
+                {
+                  "type": "patch",
+                  "patch": "creature/hiss",
+                  "length": "$len+0.3",
+                  "params": {
+                    "len": "$len",
+                    "bright": "$bright",
+                    "attack": 0.08
+                  }
+                },
+                {
+                  "type": "patch",
+                  "patch": "creature/growl",
+                  "length": "$len+0.3",
+                  "gain": -13,
+                  "params": {
+                    "pitch": 52,
+                    "len": "$len*0.9",
+                    "size": 0.5,
+                    "rough": 2,
+                    "rasp": 0.2,
+                    "wobble": 0.5,
+                    "rumble": 22
+                  }
+                }
+              ],
+              "fx": [
+                {
+                  "type": "reverb",
+                  "room": 0.45,
+                  "mix": 0.1
+                }
+              ]
             },
-            "seed": 2426828217
+            "params": {
+              "len": 0.85,
+              "bright": 0.8
+            },
+            "seed": 2002
           }
         },
         {
           "copy": "alias/naga/mob/naga/hiss3",
           "spec": {
-            "patch": "creature/hiss",
-            "params": {
-              "bright": 1.045,
-              "len": 0.836
+            "patch": {
+              "about": "Naga hiss: a long dark hiss over a low body rumble.",
+              "params": {
+                "len": 0.8,
+                "bright": 0.8
+              },
+              "length": "$len",
+              "tail": 0.35,
+              "layers": [
+                {
+                  "type": "patch",
+                  "patch": "creature/hiss",
+                  "length": "$len+0.3",
+                  "params": {
+                    "len": "$len",
+                    "bright": "$bright",
+                    "attack": 0.08
+                  }
+                },
+                {
+                  "type": "patch",
+                  "patch": "creature/growl",
+                  "length": "$len+0.3",
+                  "gain": -13,
+                  "params": {
+                    "pitch": 52,
+                    "len": "$len*0.9",
+                    "size": 0.5,
+                    "rough": 2,
+                    "rasp": 0.2,
+                    "wobble": 0.5,
+                    "rumble": 22
+                  }
+                }
+              ],
+              "fx": [
+                {
+                  "type": "reverb",
+                  "room": 0.45,
+                  "mix": 0.1
+                }
+              ]
             },
-            "seed": 2410050598
+            "params": {
+              "len": 0.9,
+              "bright": 0.9
+            },
+            "seed": 2003
           }
         }
       ]
@@ -269,73 +595,623 @@
         {
           "copy": "alias/hostiles/mob/redcap/redcap1",
           "spec": {
-            "patch": "creature/chatter",
-            "params": {
-              "count": 4,
-              "pitch": 229.2,
-              "size": 1.3
+            "patch": {
+              "about": "Goblin chuckle: short breathy 'heh' syllables falling in pitch.",
+              "params": {
+                "pitch": 260,
+                "count": 5,
+                "syll": 0.085,
+                "size": 1.35,
+                "rough": 2
+              },
+              "length": "$count*$syll*1.3",
+              "tail": 0.2,
+              "layers": [
+                {
+                  "type": "osc",
+                  "wave": "saw",
+                  "length": "$syll",
+                  "freq": {
+                    "env": [
+                      [
+                        0,
+                        "$pitch*semi(rand(1,4))"
+                      ],
+                      [
+                        "$syll",
+                        "$pitch*semi(rand(-3,0))"
+                      ]
+                    ],
+                    "curve": "exp"
+                  },
+                  "env": {
+                    "a": 0.006,
+                    "d": "$syll*0.6",
+                    "s": 0.4,
+                    "r": 0.03
+                  },
+                  "formant": {
+                    "vowel": "rand(0.7,1.4)",
+                    "shift": "$size",
+                    "mix": 0.85
+                  },
+                  "drive": "$rough",
+                  "repeat": {
+                    "count": "$count",
+                    "every": "$syll*1.3",
+                    "jitter": 0,
+                    "decay": 0.88
+                  }
+                },
+                {
+                  "type": "noise",
+                  "color": "pink",
+                  "amp": 0.3,
+                  "length": "$syll*0.7",
+                  "env": {
+                    "a": 0.004,
+                    "d": "$syll*0.5",
+                    "s": 0.1,
+                    "r": 0.02
+                  },
+                  "filter": [
+                    {
+                      "type": "bp",
+                      "freq": "2200*$size",
+                      "q": 1.2
+                    }
+                  ],
+                  "repeat": {
+                    "count": "$count",
+                    "every": "$syll*1.3",
+                    "jitter": 0,
+                    "decay": 0.88
+                  }
+                }
+              ],
+              "fx": [
+                {
+                  "type": "filter",
+                  "filter": "hp",
+                  "freq": 140
+                },
+                {
+                  "type": "filter",
+                  "filter": "lp",
+                  "freq": "5200*$size",
+                  "stages": 2
+                },
+                {
+                  "type": "reverb",
+                  "room": 0.2,
+                  "mix": 0.06
+                }
+              ]
             },
-            "seed": 1205848400
+            "params": {
+              "pitch": 235,
+              "count": 4
+            },
+            "seed": 1741
           }
         },
         {
           "copy": "alias/hostiles/mob/redcap/redcap2",
           "spec": {
-            "patch": "creature/chatter",
-            "params": {
-              "count": 5,
-              "pitch": 240,
-              "size": 1.3
+            "patch": {
+              "about": "Goblin chuckle: short breathy 'heh' syllables falling in pitch.",
+              "params": {
+                "pitch": 260,
+                "count": 5,
+                "syll": 0.085,
+                "size": 1.35,
+                "rough": 2
+              },
+              "length": "$count*$syll*1.3",
+              "tail": 0.2,
+              "layers": [
+                {
+                  "type": "osc",
+                  "wave": "saw",
+                  "length": "$syll",
+                  "freq": {
+                    "env": [
+                      [
+                        0,
+                        "$pitch*semi(rand(1,4))"
+                      ],
+                      [
+                        "$syll",
+                        "$pitch*semi(rand(-3,0))"
+                      ]
+                    ],
+                    "curve": "exp"
+                  },
+                  "env": {
+                    "a": 0.006,
+                    "d": "$syll*0.6",
+                    "s": 0.4,
+                    "r": 0.03
+                  },
+                  "formant": {
+                    "vowel": "rand(0.7,1.4)",
+                    "shift": "$size",
+                    "mix": 0.85
+                  },
+                  "drive": "$rough",
+                  "repeat": {
+                    "count": "$count",
+                    "every": "$syll*1.3",
+                    "jitter": 0,
+                    "decay": 0.88
+                  }
+                },
+                {
+                  "type": "noise",
+                  "color": "pink",
+                  "amp": 0.3,
+                  "length": "$syll*0.7",
+                  "env": {
+                    "a": 0.004,
+                    "d": "$syll*0.5",
+                    "s": 0.1,
+                    "r": 0.02
+                  },
+                  "filter": [
+                    {
+                      "type": "bp",
+                      "freq": "2200*$size",
+                      "q": 1.2
+                    }
+                  ],
+                  "repeat": {
+                    "count": "$count",
+                    "every": "$syll*1.3",
+                    "jitter": 0,
+                    "decay": 0.88
+                  }
+                }
+              ],
+              "fx": [
+                {
+                  "type": "filter",
+                  "filter": "hp",
+                  "freq": 140
+                },
+                {
+                  "type": "filter",
+                  "filter": "lp",
+                  "freq": "5200*$size",
+                  "stages": 2
+                },
+                {
+                  "type": "reverb",
+                  "room": 0.2,
+                  "mix": 0.06
+                }
+              ]
             },
-            "seed": 1256181257
+            "params": {
+              "pitch": 245,
+              "count": 5
+            },
+            "seed": 1742
           }
         },
         {
           "copy": "alias/hostiles/mob/redcap/redcap3",
           "spec": {
-            "patch": "creature/chatter",
-            "params": {
-              "count": 3,
-              "pitch": 250.8,
-              "size": 1.3
+            "patch": {
+              "about": "Goblin chuckle: short breathy 'heh' syllables falling in pitch.",
+              "params": {
+                "pitch": 260,
+                "count": 5,
+                "syll": 0.085,
+                "size": 1.35,
+                "rough": 2
+              },
+              "length": "$count*$syll*1.3",
+              "tail": 0.2,
+              "layers": [
+                {
+                  "type": "osc",
+                  "wave": "saw",
+                  "length": "$syll",
+                  "freq": {
+                    "env": [
+                      [
+                        0,
+                        "$pitch*semi(rand(1,4))"
+                      ],
+                      [
+                        "$syll",
+                        "$pitch*semi(rand(-3,0))"
+                      ]
+                    ],
+                    "curve": "exp"
+                  },
+                  "env": {
+                    "a": 0.006,
+                    "d": "$syll*0.6",
+                    "s": 0.4,
+                    "r": 0.03
+                  },
+                  "formant": {
+                    "vowel": "rand(0.7,1.4)",
+                    "shift": "$size",
+                    "mix": 0.85
+                  },
+                  "drive": "$rough",
+                  "repeat": {
+                    "count": "$count",
+                    "every": "$syll*1.3",
+                    "jitter": 0,
+                    "decay": 0.88
+                  }
+                },
+                {
+                  "type": "noise",
+                  "color": "pink",
+                  "amp": 0.3,
+                  "length": "$syll*0.7",
+                  "env": {
+                    "a": 0.004,
+                    "d": "$syll*0.5",
+                    "s": 0.1,
+                    "r": 0.02
+                  },
+                  "filter": [
+                    {
+                      "type": "bp",
+                      "freq": "2200*$size",
+                      "q": 1.2
+                    }
+                  ],
+                  "repeat": {
+                    "count": "$count",
+                    "every": "$syll*1.3",
+                    "jitter": 0,
+                    "decay": 0.88
+                  }
+                }
+              ],
+              "fx": [
+                {
+                  "type": "filter",
+                  "filter": "hp",
+                  "freq": 140
+                },
+                {
+                  "type": "filter",
+                  "filter": "lp",
+                  "freq": "5200*$size",
+                  "stages": 2
+                },
+                {
+                  "type": "reverb",
+                  "room": 0.2,
+                  "mix": 0.06
+                }
+              ]
             },
-            "seed": 1239403638
+            "params": {
+              "pitch": 255,
+              "count": 3,
+              "syll": 0.1
+            },
+            "seed": 1743
           }
         },
         {
           "copy": "alias/hostiles/mob/redcap/redcap4",
           "spec": {
-            "patch": "creature/chatter",
-            "params": {
-              "count": 4,
-              "pitch": 261.6,
-              "size": 1.3
+            "patch": {
+              "about": "Goblin chuckle: short breathy 'heh' syllables falling in pitch.",
+              "params": {
+                "pitch": 260,
+                "count": 5,
+                "syll": 0.085,
+                "size": 1.35,
+                "rough": 2
+              },
+              "length": "$count*$syll*1.3",
+              "tail": 0.2,
+              "layers": [
+                {
+                  "type": "osc",
+                  "wave": "saw",
+                  "length": "$syll",
+                  "freq": {
+                    "env": [
+                      [
+                        0,
+                        "$pitch*semi(rand(1,4))"
+                      ],
+                      [
+                        "$syll",
+                        "$pitch*semi(rand(-3,0))"
+                      ]
+                    ],
+                    "curve": "exp"
+                  },
+                  "env": {
+                    "a": 0.006,
+                    "d": "$syll*0.6",
+                    "s": 0.4,
+                    "r": 0.03
+                  },
+                  "formant": {
+                    "vowel": "rand(0.7,1.4)",
+                    "shift": "$size",
+                    "mix": 0.85
+                  },
+                  "drive": "$rough",
+                  "repeat": {
+                    "count": "$count",
+                    "every": "$syll*1.3",
+                    "jitter": 0,
+                    "decay": 0.88
+                  }
+                },
+                {
+                  "type": "noise",
+                  "color": "pink",
+                  "amp": 0.3,
+                  "length": "$syll*0.7",
+                  "env": {
+                    "a": 0.004,
+                    "d": "$syll*0.5",
+                    "s": 0.1,
+                    "r": 0.02
+                  },
+                  "filter": [
+                    {
+                      "type": "bp",
+                      "freq": "2200*$size",
+                      "q": 1.2
+                    }
+                  ],
+                  "repeat": {
+                    "count": "$count",
+                    "every": "$syll*1.3",
+                    "jitter": 0,
+                    "decay": 0.88
+                  }
+                }
+              ],
+              "fx": [
+                {
+                  "type": "filter",
+                  "filter": "hp",
+                  "freq": 140
+                },
+                {
+                  "type": "filter",
+                  "filter": "lp",
+                  "freq": "5200*$size",
+                  "stages": 2
+                },
+                {
+                  "type": "reverb",
+                  "room": 0.2,
+                  "mix": 0.06
+                }
+              ]
             },
-            "seed": 1289736495
+            "params": {
+              "pitch": 265,
+              "count": 6,
+              "syll": 0.075
+            },
+            "seed": 1744
           }
         },
         {
           "copy": "alias/hostiles/mob/redcap/redcap5",
           "spec": {
-            "patch": "creature/chatter",
-            "params": {
-              "count": 5,
-              "pitch": 272.4,
-              "size": 1.3
+            "patch": {
+              "about": "Goblin chuckle: short breathy 'heh' syllables falling in pitch.",
+              "params": {
+                "pitch": 260,
+                "count": 5,
+                "syll": 0.085,
+                "size": 1.35,
+                "rough": 2
+              },
+              "length": "$count*$syll*1.3",
+              "tail": 0.2,
+              "layers": [
+                {
+                  "type": "osc",
+                  "wave": "saw",
+                  "length": "$syll",
+                  "freq": {
+                    "env": [
+                      [
+                        0,
+                        "$pitch*semi(rand(1,4))"
+                      ],
+                      [
+                        "$syll",
+                        "$pitch*semi(rand(-3,0))"
+                      ]
+                    ],
+                    "curve": "exp"
+                  },
+                  "env": {
+                    "a": 0.006,
+                    "d": "$syll*0.6",
+                    "s": 0.4,
+                    "r": 0.03
+                  },
+                  "formant": {
+                    "vowel": "rand(0.7,1.4)",
+                    "shift": "$size",
+                    "mix": 0.85
+                  },
+                  "drive": "$rough",
+                  "repeat": {
+                    "count": "$count",
+                    "every": "$syll*1.3",
+                    "jitter": 0,
+                    "decay": 0.88
+                  }
+                },
+                {
+                  "type": "noise",
+                  "color": "pink",
+                  "amp": 0.3,
+                  "length": "$syll*0.7",
+                  "env": {
+                    "a": 0.004,
+                    "d": "$syll*0.5",
+                    "s": 0.1,
+                    "r": 0.02
+                  },
+                  "filter": [
+                    {
+                      "type": "bp",
+                      "freq": "2200*$size",
+                      "q": 1.2
+                    }
+                  ],
+                  "repeat": {
+                    "count": "$count",
+                    "every": "$syll*1.3",
+                    "jitter": 0,
+                    "decay": 0.88
+                  }
+                }
+              ],
+              "fx": [
+                {
+                  "type": "filter",
+                  "filter": "hp",
+                  "freq": 140
+                },
+                {
+                  "type": "filter",
+                  "filter": "lp",
+                  "freq": "5200*$size",
+                  "stages": 2
+                },
+                {
+                  "type": "reverb",
+                  "room": 0.2,
+                  "mix": 0.06
+                }
+              ]
             },
-            "seed": 1272958876
+            "params": {
+              "pitch": 275,
+              "count": 4,
+              "syll": 0.09
+            },
+            "seed": 1745
           }
         },
         {
           "copy": "alias/hostiles/mob/redcap/redcap6",
           "spec": {
-            "patch": "creature/chatter",
-            "params": {
-              "count": 3,
-              "pitch": 283.2,
-              "size": 1.3
+            "patch": {
+              "about": "Goblin chuckle: short breathy 'heh' syllables falling in pitch.",
+              "params": {
+                "pitch": 260,
+                "count": 5,
+                "syll": 0.085,
+                "size": 1.35,
+                "rough": 2
+              },
+              "length": "$count*$syll*1.3",
+              "tail": 0.2,
+              "layers": [
+                {
+                  "type": "osc",
+                  "wave": "saw",
+                  "length": "$syll",
+                  "freq": {
+                    "env": [
+                      [
+                        0,
+                        "$pitch*semi(rand(1,4))"
+                      ],
+                      [
+                        "$syll",
+                        "$pitch*semi(rand(-3,0))"
+                      ]
+                    ],
+                    "curve": "exp"
+                  },
+                  "env": {
+                    "a": 0.006,
+                    "d": "$syll*0.6",
+                    "s": 0.4,
+                    "r": 0.03
+                  },
+                  "formant": {
+                    "vowel": "rand(0.7,1.4)",
+                    "shift": "$size",
+                    "mix": 0.85
+                  },
+                  "drive": "$rough",
+                  "repeat": {
+                    "count": "$count",
+                    "every": "$syll*1.3",
+                    "jitter": 0,
+                    "decay": 0.88
+                  }
+                },
+                {
+                  "type": "noise",
+                  "color": "pink",
+                  "amp": 0.3,
+                  "length": "$syll*0.7",
+                  "env": {
+                    "a": 0.004,
+                    "d": "$syll*0.5",
+                    "s": 0.1,
+                    "r": 0.02
+                  },
+                  "filter": [
+                    {
+                      "type": "bp",
+                      "freq": "2200*$size",
+                      "q": 1.2
+                    }
+                  ],
+                  "repeat": {
+                    "count": "$count",
+                    "every": "$syll*1.3",
+                    "jitter": 0,
+                    "decay": 0.88
+                  }
+                }
+              ],
+              "fx": [
+                {
+                  "type": "filter",
+                  "filter": "hp",
+                  "freq": 140
+                },
+                {
+                  "type": "filter",
+                  "filter": "lp",
+                  "freq": "5200*$size",
+                  "stages": 2
+                },
+                {
+                  "type": "reverb",
+                  "room": 0.2,
+                  "mix": 0.06
+                }
+              ]
             },
-            "seed": 1323291733
+            "params": {
+              "pitch": 285,
+              "count": 5,
+              "syll": 0.08
+            },
+            "seed": 1746
           }
         }
       ]
@@ -346,49 +1222,289 @@
         {
           "copy": "alias/hostiles/mob/wraith/wraith1",
           "spec": {
-            "patch": "creature/ghost",
-            "params": {
-              "glide": -5,
-              "len": 1.5,
-              "pitch": 191
+            "patch": {
+              "about": "Wraith gasp: a sharp whispered inhale, then a falling ghostly moan in a large room.",
+              "params": {
+                "pitch": 200,
+                "len": 1.3,
+                "glide": -6
+              },
+              "length": "$len+0.3",
+              "tail": 0.6,
+              "layers": [
+                {
+                  "type": "noise",
+                  "color": "white",
+                  "length": 0.32,
+                  "env": {
+                    "env": [
+                      [
+                        0,
+                        0
+                      ],
+                      [
+                        0.26,
+                        1
+                      ],
+                      [
+                        0.32,
+                        0
+                      ]
+                    ],
+                    "curve": "smooth"
+                  },
+                  "filter": [
+                    {
+                      "type": "bp",
+                      "freq": {
+                        "from": 1400,
+                        "to": 3200,
+                        "time": 0.3
+                      },
+                      "q": 1.6
+                    }
+                  ],
+                  "gain": -3
+                },
+                {
+                  "type": "patch",
+                  "patch": "creature/ghost",
+                  "start": 0.28,
+                  "length": "$len+1.2",
+                  "params": {
+                    "pitch": "$pitch",
+                    "len": "$len",
+                    "glide": "$glide",
+                    "whisper": 0.5,
+                    "room": 0.85,
+                    "vowelA": 0,
+                    "vowelB": 4
+                  }
+                }
+              ]
             },
-            "seed": 2473292404
+            "params": {
+              "pitch": 190,
+              "len": 1.3,
+              "glide": -5
+            },
+            "seed": 1771
           }
         },
         {
           "copy": "alias/hostiles/mob/wraith/wraith2",
           "spec": {
-            "patch": "creature/ghost",
-            "params": {
-              "glide": -6,
-              "len": 1.5,
-              "pitch": 200
+            "patch": {
+              "about": "Wraith gasp: a sharp whispered inhale, then a falling ghostly moan in a large room.",
+              "params": {
+                "pitch": 200,
+                "len": 1.3,
+                "glide": -6
+              },
+              "length": "$len+0.3",
+              "tail": 0.6,
+              "layers": [
+                {
+                  "type": "noise",
+                  "color": "white",
+                  "length": 0.32,
+                  "env": {
+                    "env": [
+                      [
+                        0,
+                        0
+                      ],
+                      [
+                        0.26,
+                        1
+                      ],
+                      [
+                        0.32,
+                        0
+                      ]
+                    ],
+                    "curve": "smooth"
+                  },
+                  "filter": [
+                    {
+                      "type": "bp",
+                      "freq": {
+                        "from": 1400,
+                        "to": 3200,
+                        "time": 0.3
+                      },
+                      "q": 1.6
+                    }
+                  ],
+                  "gain": -3
+                },
+                {
+                  "type": "patch",
+                  "patch": "creature/ghost",
+                  "start": 0.28,
+                  "length": "$len+1.2",
+                  "params": {
+                    "pitch": "$pitch",
+                    "len": "$len",
+                    "glide": "$glide",
+                    "whisper": 0.5,
+                    "room": 0.85,
+                    "vowelA": 0,
+                    "vowelB": 4
+                  }
+                }
+              ]
             },
-            "seed": 2523625261
+            "params": {
+              "pitch": 200,
+              "len": 1.2,
+              "glide": -7
+            },
+            "seed": 1772
           }
         },
         {
           "copy": "alias/hostiles/mob/wraith/wraith3",
           "spec": {
-            "patch": "creature/ghost",
-            "params": {
-              "glide": -7,
-              "len": 1.5,
-              "pitch": 209
+            "patch": {
+              "about": "Wraith gasp: a sharp whispered inhale, then a falling ghostly moan in a large room.",
+              "params": {
+                "pitch": 200,
+                "len": 1.3,
+                "glide": -6
+              },
+              "length": "$len+0.3",
+              "tail": 0.6,
+              "layers": [
+                {
+                  "type": "noise",
+                  "color": "white",
+                  "length": 0.32,
+                  "env": {
+                    "env": [
+                      [
+                        0,
+                        0
+                      ],
+                      [
+                        0.26,
+                        1
+                      ],
+                      [
+                        0.32,
+                        0
+                      ]
+                    ],
+                    "curve": "smooth"
+                  },
+                  "filter": [
+                    {
+                      "type": "bp",
+                      "freq": {
+                        "from": 1400,
+                        "to": 3200,
+                        "time": 0.3
+                      },
+                      "q": 1.6
+                    }
+                  ],
+                  "gain": -3
+                },
+                {
+                  "type": "patch",
+                  "patch": "creature/ghost",
+                  "start": 0.28,
+                  "length": "$len+1.2",
+                  "params": {
+                    "pitch": "$pitch",
+                    "len": "$len",
+                    "glide": "$glide",
+                    "whisper": 0.5,
+                    "room": 0.85,
+                    "vowelA": 0,
+                    "vowelB": 4
+                  }
+                }
+              ]
             },
-            "seed": 2506847642
+            "params": {
+              "pitch": 210,
+              "len": 1.4,
+              "glide": -6
+            },
+            "seed": 1773
           }
         },
         {
           "copy": "alias/hostiles/mob/wraith/wraith4",
           "spec": {
-            "patch": "creature/ghost",
-            "params": {
-              "glide": -8,
-              "len": 1.5,
-              "pitch": 218
+            "patch": {
+              "about": "Wraith gasp: a sharp whispered inhale, then a falling ghostly moan in a large room.",
+              "params": {
+                "pitch": 200,
+                "len": 1.3,
+                "glide": -6
+              },
+              "length": "$len+0.3",
+              "tail": 0.6,
+              "layers": [
+                {
+                  "type": "noise",
+                  "color": "white",
+                  "length": 0.32,
+                  "env": {
+                    "env": [
+                      [
+                        0,
+                        0
+                      ],
+                      [
+                        0.26,
+                        1
+                      ],
+                      [
+                        0.32,
+                        0
+                      ]
+                    ],
+                    "curve": "smooth"
+                  },
+                  "filter": [
+                    {
+                      "type": "bp",
+                      "freq": {
+                        "from": 1400,
+                        "to": 3200,
+                        "time": 0.3
+                      },
+                      "q": 1.6
+                    }
+                  ],
+                  "gain": -3
+                },
+                {
+                  "type": "patch",
+                  "patch": "creature/ghost",
+                  "start": 0.28,
+                  "length": "$len+1.2",
+                  "params": {
+                    "pitch": "$pitch",
+                    "len": "$len",
+                    "glide": "$glide",
+                    "whisper": 0.5,
+                    "room": 0.85,
+                    "vowelA": 0,
+                    "vowelB": 4
+                  }
+                }
+              ]
             },
-            "seed": 2422959547
+            "params": {
+              "pitch": 222,
+              "len": 1.25,
+              "glide": -9
+            },
+            "seed": 1774
           }
         }
       ]

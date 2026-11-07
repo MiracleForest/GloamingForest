@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "gloamingforest:feature/druid_hut/basement_gallery_trap",
+  "id": "twilightforest:feature/druid_hut/basement_gallery_trap",
   "size": [8, 13, 8],
   "palette": [
     {"Name":"minecraft:structure_void"},

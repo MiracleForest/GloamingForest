@@ -20,6 +20,7 @@
         "look_at_target_gliding": "animation.humanoid.look_at_target.gliding",
         "look_at_target_swimming": "animation.humanoid.look_at_target.swimming",
         "move": "animation.humanoid.move",
+        "riding.body": "animation.humanoid.riding.body",
         "riding.arms": "animation.humanoid.riding.arms",
         "riding.legs": "animation.humanoid.riding.legs",
         "holding": "animation.humanoid.holding",

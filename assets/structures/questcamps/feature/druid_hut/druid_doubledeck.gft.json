@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "gloamingforest:feature/druid_hut/druid_doubledeck",
+  "id": "twilightforest:feature/druid_hut/druid_doubledeck",
   "size": [9, 13, 9],
   "palette": [
     {"Name":"minecraft:structure_void"},

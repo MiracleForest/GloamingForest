@@ -327,6 +327,9 @@ bool updateShape(BlockSource& region, BlockPos const& pos);
 
 /// Slab doubling (Java SlabBlock.canBeReplaced) for selftests and the use-on handler.
 bool mergeSlab(BlockSource& region, BlockPos const& pos);
+/// A waterloggable family block placed into flowing water is dry (SimpleWaterloggedBlock#
+/// getStateForPlacement: only a source waterlogs): drops a flowing liquid layer; true when it did.
+bool dropFlowingWater(BlockSource& region, BlockPos const& pos);
 /// Door / trapdoor / fence gate use (Java useWithoutItem); `player` may be null.
 bool useDoor(GlobalPos const& pos, Player* player);
 bool useTrapdoor(GlobalPos const& pos, Player* player);
