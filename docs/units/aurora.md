@@ -83,8 +83,13 @@ Spec: [docs/spec/aurora.md](../spec/aurora.md). Code: `src/feature/aurora/` (ser
   MeleeAttackGoal, LookAtPlayerGoal and RandomLookAroundGoal and everything TF-specific are native (the
   queen's look goals are F8 goals so that the hover goals' LOOK flag keeps them off her head while she beams).
   HoverBeamGoal turns her as Mob#lookAt does (yaw and pitch by rotlerp, written to the rotation component:
-  `Actor::setRotationWrapped` is client-only) and the head only through the LookControl, as in Java, so her
-  view vector, and the ray along it, follow the target at TF's rate. The snow guardian's gear is
+  `Actor::setRotationWrapped` is client-only) and runs Java's LookControl step itself (`lookControlTick`:
+  xRot reset to 0 and turned by at most the tracking, yHeadRot turned by at most the tracking): Bedrock's own
+  look control never moves the head at the in-position tracking of 1 degree a tick (the head froze at a stale
+  yaw, so the beam missed a target that had moved, and `aurora.snow_queen_beam` failed whenever the random
+  hover spot needed a turn). Her ray uses that yaw and pitch, so it follows the target at TF's rate. As in
+  Java, the in-position pitch is at most 1 degree: the beam runs level from 0.25 above her feet and hits once
+  she sinks to the target's height. The snow guardian's gear is
   enchanted by DifficultyInstance#getSpecialMultiplier (day time and moon phase, as Java) without the chunk's
   inhabited time (Bedrock has none). Its chestplate goes into the armour container directly (the engine's
   setItemSlot refuses an item without `minecraft:wearable`, which U7's chestplates do not have yet).
@@ -138,3 +143,22 @@ Spec: [docs/spec/aurora.md](../spec/aurora.md). Code: `src/feature/aurora/` (ser
   the live eye heights. The other golden attributes (health, speeds, attack, follow range, knockback
   resistance, box, XP only for a player kill) are gtested against `tests/golden/mobs.json`
   (`AuroraMobs.MatchJavaGoldens`).
+## Audit round 1
+
+- Checked: `aurora.snow_queen_beam` failing in `full` and `aurora` runs on several branches. Diagnosed with
+  per-10-tick traces of the queen: in position (HoverBeamGoal's tracking 1) Bedrock's look control froze her
+  head yaw (unchanged for 300 ticks while the target was 40 degrees off after a shield knock-back), so the ray
+  missed. Not caused by the F5 / F6 / F7 / F8 / F10 / F11 PRs: the result only depended on the random hover
+  spot (U28's own random source), which explains the pass on one branch and fail on another.
+- Fixed: HoverBeamGoal runs Java's LookControl step itself and aims the ray with it (see the deviation above);
+  the test waits up to two goal cycles (600 ticks, stopping at the first hit) and also reads her beam flag
+  after each 10-tick wait (a beam that started and hit inside one wait ended the loop before the flag was
+  read: "she beams once in place" failed although the beam had hit).
+- Open: `aurora.unstable_ice_core` failed twice in all recorded runs ("the ice became stained glass:
+  minecraft:ice"): transformBlocks did not reach the ice. A likely cause is the core's block at its death
+  (knock-back into a neighbour, or feet just below the block), which can put the ice beyond the smallest
+  random range (2); placing the blocks around the dying core's own block instead lets the explosion break the
+  ice (adjacent, at its height), so that was not the fix. The failure message now reports where the dying
+  core lay, for round 2.
+- Open: none for the beam. HoverSummonGoal / HoverThenDropGoal (tracking 30) still rely on Bedrock's look
+  control, which turns the head at that rate.
