@@ -17,6 +17,12 @@
       "minecraft:water_identifier": {
         "water_identifier": "gloamingforest:dense_forest_water"
       },
+      "minecraft:atmosphere_identifier": {
+        "atmosphere_identifier": "gloamingforest:dense_forest_atmospherics"
+      },
+      "minecraft:biome_music": {
+        "music_definition": "twilightforest:dense_forest"
+      },
       "minecraft:ambient_sounds": {
         "underwater_loop": "ambient.underwater.loop",
         "underwater_addition": {
