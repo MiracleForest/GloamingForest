@@ -71,6 +71,7 @@ Traits traitsOf(std::string const& type) {
     if (type == "twilightforest:aurora_palace" || type == "twilightforest:dark_tower" || type == "twilightforest:final_castle"
         || type == "twilightforest:knight_stronghold") {
         controlled(); // ControlledSpawningStructure
+        t.topBelowStart = type == "twilightforest:knight_stronghold"; // KnightStructureStart
     } else if (type == "twilightforest:labyrinth" || type == "twilightforest:lich_tower" || type == "twilightforest:yeti_cave") {
         controlled();
         t.customDensity = true;

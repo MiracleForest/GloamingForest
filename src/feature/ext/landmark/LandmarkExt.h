@@ -61,6 +61,17 @@
 
 namespace gf::landmark::ext {
 
+// ---- start boxes ---------------------------------------------------------------------------------------
+
+/// StructureStart#getBoundingBox overrides: the box of a new start of `key` passes through `fn`
+/// after Structure#adjustBoundingBox (the union of the pieces, widened by the terrain adaptation).
+/// The knight stronghold's rule (KnightStructureStart: no higher than one below the generation
+/// point) is built in. An empty fn removes the adjuster.
+using StartBoxFn = std::function<BlockBox(Start const& start, BlockBox box)>;
+void setStartBoxAdjuster(std::string const& key, StartBoxFn fn);
+/// `box` with its top lowered to `maxY` (when higher).
+[[nodiscard]] BlockBox clampBoxTop(BlockBox box, int maxY);
+
 // ---- terrain -----------------------------------------------------------------------------------------
 
 /// WorldgenHooks#gatherCustomTerrain + getCustomDensity for one chunk: the terraformers

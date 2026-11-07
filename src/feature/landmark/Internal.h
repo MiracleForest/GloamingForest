@@ -97,6 +97,9 @@ struct Traits {
     bool progression       = false; ///< ProgressionStructure (advancement lock + hints)
     bool controlledSpawns  = false; ///< ControlledSpawns (controlled_spawns lists)
     bool customDensity     = false; ///< CustomDensitySource (terraformer)
+    /// KnightStrongholdStructure.KnightStructureStart#getBoundingBox: the start's box ends one
+    /// below its generation point (min(maxY, stub y - 1))
+    bool topBelowStart     = false;
 };
 
 /// The adjustForTerrain override of a structure class: WorldUtil#adjustForTerrain(context, x, z,
