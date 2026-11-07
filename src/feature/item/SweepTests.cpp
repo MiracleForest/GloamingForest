@@ -88,55 +88,12 @@ constexpr char kPrefix[] = "twilightforest:";
 /// Blocks whose drops differ from TF's for a reason reviewed here: "<block id>" (every tool) or
 /// "<block id>@<tool>" (0 hand, 1 shears, 2 silk touch) -> the reason.
 std::map<std::string, std::string> const& blockExceptions() {
-    // TF registers these with noLootTable(): they drop nothing. Bedrock drops the block item: the behavior
-    // pack declares no minecraft:loot and the loot contract (F10, Loot.cpp LootBlockDropsHook) leaves a TF
-    // block without a Java table to Bedrock's own drops. Fix: drop nothing for a TF block without a Java
-    // table (F10), or an empty minecraft:loot in the owner's BP. Most are unbreakable in survival (TF
-    // strength -1); explosions, pistons and /setblock destroy still drop them.
-    static constexpr char kNoTable[] =
-        "TF drops nothing (noLootTable); Bedrock drops the block: no minecraft:loot in the BP and F10's block-drop hook falls back to Bedrock's drops";
-    // Bedrock's silk touch break pops the silk touch item (the block) itself, without BlockType::spawnResources,
-    // so the loot contract never rolls the Java table: TF's thorns, experiment 115 and stronghold shield drop
-    // nothing for any tool. Fix: F10's block-drop hook on the silk touch path too.
-    static constexpr char kSilkSelf[] =
-        "silk touch: Bedrock pops the block itself without spawnResources (F10's hook not reached); TF drops nothing";
     // Not a gap: the oracle rolled the table without a block entity. TF's AbstractSkullCandleBlock#getDrops
     // adds the candles of its block entity (candles x the candle colour) to the head, and with silk touch
     // replaces the head by the skull candle itself, which is what the port drops.
     static constexpr char kOracleCandle[] =
         "the oracle's context has no block entity: TF's getDrops adds the candles (silk touch: the skull candle itself), as the port does";
     static std::map<std::string, std::string> const m{
-        {"twilightforest:alpha_yeti_boss_spawner", kNoTable},
-        {"twilightforest:final_boss_boss_spawner", kNoTable},
-        {"twilightforest:hydra_boss_spawner", kNoTable},
-        {"twilightforest:knight_phantom_boss_spawner", kNoTable},
-        {"twilightforest:lich_boss_spawner", kNoTable},
-        {"twilightforest:minoshroom_boss_spawner", kNoTable},
-        {"twilightforest:naga_boss_spawner", kNoTable},
-        {"twilightforest:snow_queen_boss_spawner", kNoTable},
-        {"twilightforest:ur_ghast_boss_spawner", kNoTable},
-        {"twilightforest:antibuilder", kNoTable},
-        {"twilightforest:antibuilt_block", kNoTable},
-        {"twilightforest:built_block", kNoTable},
-        {"twilightforest:fake_diamond", kNoTable},
-        {"twilightforest:fake_gold", kNoTable},
-        {"twilightforest:infested_towerwood", kNoTable},
-        {"twilightforest:reactor_debris", kNoTable},
-        {"twilightforest:slider", kNoTable},
-        {"twilightforest:unbreakable_vanishing_block", kNoTable},
-        {"twilightforest:beanstalk_grower", kNoTable},
-        {"twilightforest:blue_force_field", kNoTable},
-        {"twilightforest:green_force_field", kNoTable},
-        {"twilightforest:orange_force_field", kNoTable},
-        {"twilightforest:pink_force_field", kNoTable},
-        {"twilightforest:violet_force_field", kNoTable},
-        {"twilightforest:sinister_spawner", kNoTable},
-        {"twilightforest:twilight_portal", kNoTable},
-        {"twilightforest:brown_thorns@2", kSilkSelf},
-        {"twilightforest:green_thorns@2", kSilkSelf},
-        {"twilightforest:burnt_thorns@2", kSilkSelf},
-        {"twilightforest:experiment_115@2", kSilkSelf},
-        {"twilightforest:stronghold_shield@2", kSilkSelf},
         {"twilightforest:creeper_skull_candle", kOracleCandle},
         {"twilightforest:creeper_wall_skull_candle", kOracleCandle},
         {"twilightforest:piglin_skull_candle", kOracleCandle},
