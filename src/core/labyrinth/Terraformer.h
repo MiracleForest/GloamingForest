@@ -77,5 +77,11 @@ inline constexpr int kRooms        = 7;
 [[nodiscard]] int mazeSlimeSize(int roll, bool boosted);
 /// GroundAttackGoal: the slam damage (attack damage x 0.5).
 [[nodiscard]] float slamDamage(float attackDamage);
+/// SlimeBlock#stepOn as a walking-speed factor: a walker on a block of friction `friction` moves each
+/// tick by v' = (v + a) x friction x 0.91 at steady state; stepOn also multiplies the speed by
+/// 0.4 + |dy| x 0.2 (dy: the speed bounceUp leaves on the ground, gravity's 0.0784). The factor is the
+/// ratio of both steady speeds, (1 - k) / (1 - k x m) with k = friction x 0.91 and m the stepOn factor
+/// (about 0.39 on the slime block's 0.8). Used for players whose movement the server cannot change.
+[[nodiscard]] float slimeStepSpeedFactor(float friction);
 
 } // namespace gf::core::labyrinth

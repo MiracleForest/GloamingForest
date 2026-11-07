@@ -24,3 +24,19 @@ the unit reproduces in a different way than TF, with the reason and the workarou
 
 Previously listed and now implemented: Ur-Ghast fireballs in flight across a save, a world reload or a chunk unload
 keep `UrGhastFireball#onHit` (the tracked fireballs are saved in `gf:darktower:fireballs` and wait for their chunk).
+
+## Audit round 2
+
+Sounds (W2 round 2, audio pass). Checked with `tools/sounds/lint.ps1` on the assembled pack (`tools/assemble.ps1 -Check`): before this round 4 of this unit's sound events still played F3's name-derived baseline placeholder. Ghast trap (on, warm-up, spin-down; played at Java's clamped pitch 2) and the sliding trap. `tools/sounds/recipes/darktower.json` now designs every one of them (original synthesized sounds, unit-local patches layered from the shared library; TF's audio never read; ids, subtitles, categories, volumes, pitches and variant counts unchanged), rendered with `pwsh tools/sounds/synth.ps1 -Unit darktower` into `assets/gen/audio/darktower/`. `synth.ps1 -Check` and `lint.ps1` pass; with the other round-2 audio PRs (one per owning unit) the lint reports 0 baseline-only events for the whole pack.
+
+Open: nothing for audio.
+
+Audit (W2 round 2, A5 / audit items):
+
+Checked: the round-1 F10 damage pair (S3 "Open") in `UrGhast.cpp`.
+
+Fixed: `reflectedFireball` reads `Ghast#isReflectedFireball` as TF writes it (direct entity a large fireball,
+causing entity a player) and the fire-typed reflected hit goes in again with the same pair; the both-orders
+workaround is gone. The unit had no round-1 audit list.
+
+Open: the "Not ported" rows above (reactor debris crops, fast-graphics tantrum rain).

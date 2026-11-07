@@ -47,3 +47,9 @@ Open (round 2, all Bedrock limits; not-ported candidates):
 - Cloud rain / snow sheets (falling particles instead) and entity wetness under rainy clouds (no isRainingAt hook
   that units may own; R8).
 - The giant block outline replacing the highlight (drawn beside Bedrock's own).
+
+## Audit round 2
+
+Sounds (W2 round 2, audio pass). Checked with `tools/sounds/lint.ps1` on the assembled pack (`tools/assemble.ps1 -Check`): before this round 1 of this unit's sound events still played F3's name-derived baseline placeholder. Beanstalk growth. `tools/sounds/recipes/giants.json` now designs every one of them (original synthesized sounds, unit-local patches layered from the shared library; TF's audio never read; ids, subtitles, categories, volumes, pitches and variant counts unchanged), rendered with `pwsh tools/sounds/synth.ps1 -Unit giants` into `assets/gen/audio/giants/`. `synth.ps1 -Check` and `lint.ps1` pass; with the other round-2 audio PRs (one per owning unit) the lint reports 0 baseline-only events for the whole pack.
+
+Also: `assets/pack/rp/sounds.json.d/giants.json` gives the giant miner and armored giant Monster's default hurt/death sounds (Java `entity.hostile.hurt` / `entity.hostile.death` -> Bedrock `game.player.hurt` / `game.player.die`); before, they had no entry (hostiles.mob_assets audit). Bedrock's own `entity_sounds.defaults` may already supply these two events; the explicit entry states TF's Monster defaults either way and is what the audit reads. Open: nothing for audio.

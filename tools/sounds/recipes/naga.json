@@ -1,0 +1,44 @@
+{
+  "about": "U20 naga: refinements of the baseline (tools/sounds/baseline/naga.json). Original sound designs; TF's audio is never read. The events (ids, subtitles, categories, volumes, pitches, variant counts) stay TF's. The Naga is a giant serpent: its hiss is long, breathy and dark with the low rumble of its huge body under it; its hurt cry is a rasping hiss forced through a throat; its rattle is a slow, heavy rattle doubled an octave down for weight.",
+  "patches": {
+    "naga/hiss": {
+      "about": "Naga hiss: a long dark hiss over a low body rumble.",
+      "params": {"len": 0.8, "bright": 0.8},
+      "length": "$len", "tail": 0.35,
+      "layers": [
+        {"type": "patch", "patch": "creature/hiss", "length": "$len+0.3", "params": {"len": "$len", "bright": "$bright", "attack": 0.08}},
+        {"type": "patch", "patch": "creature/growl", "length": "$len+0.3", "gain": -13, "params": {"pitch": 52, "len": "$len*0.9", "size": 0.5, "rough": 2, "rasp": 0.2, "wobble": 0.5, "rumble": 22}}
+      ],
+      "fx": [{"type": "reverb", "room": 0.45, "mix": 0.1}]
+    },
+    "naga/hurt": {
+      "about": "Naga hurt: a rasping throat cry under a sharp hiss.",
+      "params": {"pitch": 160},
+      "length": 0.4, "tail": 0.3,
+      "layers": [
+        {"type": "patch", "patch": "creature/call", "length": 0.7, "params": {"pitch": "$pitch", "len": 0.38, "rise": 3, "fall": -6, "breath": 0.7, "rough": 4, "size": 0.65, "vowelA": 1, "vowelB": 4}},
+        {"type": "patch", "patch": "creature/hiss", "length": 0.6, "gain": -6, "params": {"len": 0.35, "bright": 1.2, "attack": 0.02}}
+      ]
+    },
+    "naga/rattle": {
+      "about": "Naga rattle: a heavy rattle doubled an octave down.",
+      "params": {"len": 0.8, "rate": 28},
+      "length": "$len", "tail": 0.3,
+      "layers": [
+        {"type": "patch", "patch": "creature/rattle", "length": "$len+0.2", "params": {"len": "$len", "rate": "$rate", "freq": 2600, "q": 3}},
+        {"type": "patch", "patch": "creature/rattle", "length": "$len+0.2", "gain": -5, "params": {"len": "$len", "rate": "$rate", "freq": 1300, "q": 2.5}}
+      ],
+      "fx": [{"type": "reverb", "room": 0.35, "mix": 0.08}]
+    }
+  },
+  "files": {
+    "mob/naga/hiss1": {"patch": "naga/hiss", "params": {"len": 0.75, "bright": 0.75}, "seed": 2001},
+    "mob/naga/hiss2": {"patch": "naga/hiss", "params": {"len": 0.85, "bright": 0.8}, "seed": 2002},
+    "mob/naga/hiss3": {"patch": "naga/hiss", "params": {"len": 0.9, "bright": 0.9}, "seed": 2003},
+    "mob/naga/hurt1": {"patch": "naga/hurt", "params": {"pitch": 150}, "seed": 2011},
+    "mob/naga/hurt2": {"patch": "naga/hurt", "params": {"pitch": 160}, "seed": 2012},
+    "mob/naga/hurt3": {"patch": "naga/hurt", "params": {"pitch": 170}, "seed": 2013},
+    "mob/naga/rattle1": {"patch": "naga/rattle", "params": {"len": 0.75, "rate": 27}, "seed": 2021},
+    "mob/naga/rattle2": {"patch": "naga/rattle", "params": {"len": 0.85, "rate": 30}, "seed": 2022}
+  }
+}

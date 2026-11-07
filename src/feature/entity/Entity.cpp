@@ -230,7 +230,7 @@ Registry& reg() {
 
 bool computeInterest(std::string const& type) {
     auto& r = reg();
-    if (r.behaviours.contains(type) || r.hostileMounts.contains(type)) return true;
+    if (r.behaviours.contains(type) || r.hostileMounts.contains(type) || peacefulDespawnType(type)) return true;
     for (auto const& h : r.internal)
         if (h.interesting && h.interesting(type)) return true;
     return false;
@@ -276,6 +276,8 @@ void onActorTick(Actor& actor) {
     auto         it   = r.states.find(uid);
     auto const&  type = actor.getTypeName();
     if (it == r.states.end() && !interesting(type)) return;
+    // Mob#checkDespawn on Peaceful comes before everything the mob does this tick
+    if (despawnIfPeaceful(actor, type)) return;
     ActorState& s = it != r.states.end() ? *it->second : stateOf(actor);
     s.lastSeen    = currentTick();
     if (s.typeId.empty()) s.typeId = type;
@@ -816,7 +818,11 @@ namespace {
 
 class EntityModule {
 public:
+    // install / uninstall pair (the client enables and disables mods per world session); a second
+    // install without an uninstall in between is a no-op, so no handler or listener is registered
+    // twice
     void install() {
+        if (std::exchange(mInstalled, true)) return;
         EntityTickHook::hook();
         EntityDieHook::hook();
         EntitySaveHook::hook();
@@ -831,8 +837,10 @@ public:
             if (!reg().removals.empty()) {
                 auto ids = std::move(reg().removals);
                 reg().removals.clear();
+                std::unordered_set<std::int64_t> done; // several callers may queue one actor
                 for (auto id : ids)
-                    if (auto* a = actorById(id)) a->remove();
+                    if (done.insert(id).second)
+                        if (auto* a = actorById(id)) a->remove();
             }
             if (currentTick() % 100 == 0) sweep();
         }));
@@ -880,6 +888,7 @@ public:
         }
     }
     void uninstall() {
+        if (!std::exchange(mInstalled, false)) return;
         uninstallMounts();
         uninstallMultipart();
         for (auto id : handlers()) ia::remove(id);
@@ -896,6 +905,9 @@ public:
         EntityDieHook::unhook();
         EntityTickHook::unhook();
     }
+
+private:
+    bool mInstalled = false;
 };
 
 } // namespace

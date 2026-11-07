@@ -15,6 +15,7 @@
 // candle's twilightforest:candles is the count (1..4).
 
 #include <algorithm>
+#include <cmath>
 
 #include "mc/deps/core/math/Vec3.h"
 #include "mc/world/actor/player/Player.h"
@@ -72,6 +73,41 @@ ia::Result useOminousCandle(ia::UseOnContext const& c) {
 
 void registerOminousCandles() {
     for (int color = 0; color <= 16; ++color) ia::onUseOn({.block = ominousCandle(color)}, useOminousCandle);
+}
+
+/// OminousCandleBlock.getCurrentY: the flame's bob (the renderer's candle height).
+double ominousCandleY(std::int64_t ticks, BlockPos const& pos, int candle) {
+    double time = static_cast<double>(ticks) * 0.014;
+    double x    = std::sin(time * 7.0 + (pos.x * candle));
+    double y    = std::sin(time * 4.2 + (pos.y * candle));
+    double z    = std::sin(time * 3.0 + (pos.z * candle));
+    return (((x + y + z) / 4.0) * 0.5 + 0.5) * 0.25;
+}
+
+std::vector<AnimateFlame> animateFlames(Block const& block, BlockPos const& pos, std::int64_t gameTime) {
+    std::vector<AnimateFlame> out;
+    auto const&               id = block.getTypeName();
+    if (ominousColorOf(id) >= 0) {
+        // OminousCandleBlock.CANDLE_OFFSETS, always burning
+        static constexpr float kXz[5][4][2] = {{},
+                                               {{0.5F, 0.5F}},
+                                               {{0.375F, 0.5F}, {0.625F, 0.44F}},
+                                               {{0.5F, 0.625F}, {0.375F, 0.5F}, {0.56F, 0.44F}},
+                                               {{0.44F, 0.56F}, {0.625F, 0.56F}, {0.375F, 0.375F}, {0.56F, 0.375F}}};
+        int n = std::clamp(intStateOr(block, "candles", 1), 0, 4);
+        for (int i = 0; i < n; ++i)
+            out.push_back({Vec3{kXz[n][i][0], static_cast<float>(ominousCandleY(gameTime, pos, i + 1) + 0.5), kXz[n][i][1]}, "twilightforest:ominous_flame", true});
+        return out;
+    }
+    auto lighting = lightingOf(block);
+    if (!lighting || *lighting == Lighting::None) return out;
+    char const* particle = *lighting == Lighting::Dim ? "twilightforest:dim_flame" : *lighting == Lighting::Ominous ? "twilightforest:ominous_flame" : "minecraft:small_flame";
+    bool        smoke    = *lighting == Lighting::Normal;
+    std::vector<Vec3> offsets;
+    if (id == kCandelabra) offsets = candelabraFlameOffsets(block);
+    else if (auto kind = skullCandleKind(id)) offsets = skullCandleFlameOffsets(block, kind->wall);
+    for (auto const& o : offsets) out.push_back({o, particle, smoke});
+    return out;
 }
 
 } // namespace gf::feature::lichdecor::light

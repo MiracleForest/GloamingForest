@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "gloamingforest:camp/path/path_3x4",
+  "id": "twilightforest:camp/path/path_3x4",
   "size": [3, 3, 4],
   "palette": [
     {"Name":"minecraft:structure_void"},
@@ -13,9 +13,9 @@
     [1, 12], [2, 1], [3, 3], [2, 1], [3, 3], [2, 1], [3, 3], [0, 12]
   ],
   "jigsaw": [
-    {"pos":[0,2,0],"front":"north","top":"up","pool":"minecraft:empty","name":"gloamingforest:camp/path","target":""},
-    {"pos":[0,2,3],"front":"south","top":"up","pool":"gloamingforest:camp/deco","name":"gloamingforest:camp/exit","target":"gloamingforest:camp/deco"},
-    {"pos":[0,2,2],"front":"west","top":"up","pool":"gloamingforest:camp/deco","name":"gloamingforest:camp/exit","target":"gloamingforest:camp/deco"},
-    {"pos":[2,2,1],"front":"east","top":"up","pool":"gloamingforest:camp/deco","name":"gloamingforest:camp/exit","target":"gloamingforest:camp/deco"}
+    {"pos":[0,2,0],"front":"north","top":"up","pool":"minecraft:empty","name":"twilightforest:camp/path","target":""},
+    {"pos":[0,2,3],"front":"south","top":"up","pool":"twilightforest:camp/deco","name":"twilightforest:camp/exit","target":"twilightforest:camp/deco"},
+    {"pos":[0,2,2],"front":"west","top":"up","pool":"twilightforest:camp/deco","name":"twilightforest:camp/exit","target":"twilightforest:camp/deco"},
+    {"pos":[2,2,1],"front":"east","top":"up","pool":"twilightforest:camp/deco","name":"twilightforest:camp/exit","target":"twilightforest:camp/deco"}
   ]
 }

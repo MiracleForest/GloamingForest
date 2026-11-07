@@ -125,3 +125,22 @@ Fixed:
   without U22's templates. These goldens depend on U22's templates (a U22 template change needs new goldens).
 
 Open: none found in this round beyond the "Not ported" list above.
+
+## Audit round 2
+
+Checked against TF 4.8 (`DeathTome`, `LichMinion`, `RisingZombie`, `LichTowerWingRoom#tomeMimic`) and the round-1
+F10 damage pair (S3 "Open").
+
+Fixed:
+
+- **Despawning** (A5): the death tome, the lich minion and the rising zombie despawn far away like any Java
+  `Monster` / `Zombie` (`minecraft:despawn` in their BP files). A tome placed on a lectern stays for good
+  (`LichTowerWingRoom`: `tomeMimic.setPersistenceRequired()`): `gf:to_lectern` adds a `gf:persistent` group
+  (`minecraft:persistent`) that leaving the lectern no longer removes, and `setTomeOnLectern` also marks the
+  actor persistent (`Actor::setPersistent`).
+- `Projectiles.cpp`: the lich bomb's damage is found by its direct entity (`bombSource`: DamageSource
+  #getDirectEntity) instead of trying both orders of the attacker / direct pair (F10 reports them right now).
+
+Verified, no change: the rising zombie's knockback resistance 1 is TF's behaviour (`RisingZombie#knockback` is
+empty: Java's attribute is 0 but the zombie never moves from a hit). Peaceful: the Lich is a boss (F8's boss kit
+turns it back into its spawner); the tome, minions and rising zombies are plain monsters (F8's generic removal).

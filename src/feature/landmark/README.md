@@ -124,3 +124,31 @@ Fixed:
 Open:
 
 - Starts saved before this change keep their unclamped box until they are rebuilt.
+
+## Audit round 2
+
+Checked: the `landmark.starts` failures of the round-1 full runs (`a generation thread waits while
+another thread evaluates the chunk`, with no `still evaluating` warning: the wait ended early, not
+by its deadline; in some runs also `a valid start in the loaded center chunk is the nearest landmark`).
+
+Fixed:
+
+- `landmark.starts` race (root cause): the test marked chunk `cx - 1` busy, next to the test's own
+  freshly spawned player. The server thread's queries around players (protection,
+  `ensureStartsAround` after `forgetEvaluation`) never wait: they evaluate a busy chunk themselves,
+  which marked it evaluated and woke the waiting worker before the check. The test now uses a chunk
+  8192 chunks away that nothing queries, lengthens the wait for itself
+  (`setEvaluationWaitForTest`) and observes the wait through the waiter count
+  (`evaluationWaiters`), not through a number of ticks a loaded server can outlast.
+- Its second half: the center chunk's natural starts are now made (waiting for a generation thread
+  still evaluating it, `evaluationBusy`) before the test clears them, so a late evaluation cannot
+  store a natural start next to the test's.
+- `createStart` records `forced` in `Start::data` (loading puts it into older records' data too):
+  units tell placed starts from natural ones by it (U18's `naturalStart`).
+
+Open (not done this round):
+
+- `startAt` and the `placed` records `generateAt` makes; the `locate` flag rules (U13's notes).
+- Starts saved before the knight stronghold clamp keep their unclamped box until rebuilt (no
+  load-time `setStartBoxAdjuster` pass yet).
+- The landmark-walk helper duplicated in five unit tests is not folded into an F6 test header yet.

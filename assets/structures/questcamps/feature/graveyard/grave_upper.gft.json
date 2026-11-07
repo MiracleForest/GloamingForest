@@ -1,7 +1,7 @@
 {
   "format": "gloamingforest:template",
   "format_version": 1,
-  "id": "gloamingforest:feature/graveyard/grave_upper",
+  "id": "twilightforest:feature/graveyard/grave_upper",
   "size": [4, 4, 1],
   "palette": [
     {"Name":"minecraft:structure_void"},

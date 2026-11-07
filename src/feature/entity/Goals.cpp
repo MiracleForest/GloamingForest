@@ -67,6 +67,7 @@
 #include "feature/combat/Combat.h"
 #include "feature/entity/EntityInternal.h"
 #include "feature/ext/entity/EntityExt.h"
+#include "feature/ext/entity/World.h"
 #include "feature/tags/Tags.h"
 #include "game/Blocks.h"
 #include "game/Items.h"
@@ -673,18 +674,8 @@ private:
         auto&       region = m.getDimensionBlockSource();
         BlockPos    min{static_cast<int>(std::floor(bb.min.x - 0.75)), static_cast<int>(std::floor(bb.min.y)), static_cast<int>(std::floor(bb.min.z - 0.75))};
         BlockPos    max{static_cast<int>(std::floor(bb.max.x + 0.75)), static_cast<int>(std::floor(bb.max.y + 0.15)), static_cast<int>(std::floor(bb.max.z + 0.75))};
-        if (!region.hasChunksAt(min, 0, false) || !region.hasChunksAt(max, 0, false)) return;
-        for (int x = min.x; x <= max.x; ++x)
-            for (int y = min.y; y <= max.y; ++y)
-                for (int z = min.z; z <= max.z; ++z) {
-                    BlockPos     pos{x, y, z};
-                    Block const& block    = region.getBlock(pos);
-                    float        hardness = block.getBlockType().getDestroySpeed();
-                    if (block.isAir() || hardness < 0.0f || hardness >= 50.0f) continue;
-                    if (region.getBlockEntity(pos)) continue; // containers and every other block entity
-                    BlockChangeContext ctx{};
-                    level->destroyBlock(region, pos, true, ctx);
-                }
+        // EntityUtil#canDestroyBlock && getBlockEntity(pos) == null, destroyBlock(pos, true)
+        (void)ge::ext::destroyBlocks(region, min, max, ge::ext::BreakRule::SpareBlockEntities, true);
     }
 
     float        mSpeed;

@@ -263,3 +263,16 @@ Open:
   should switch to `blocking` the same way.
 - A family block placed into flowing water keeps the flow in its water layer (Java: not
   waterlogged, getStateForPlacement asks for a source).
+
+## Audit round 2
+
+Fixed:
+- A waterloggable family block placed into flowing water is dry (SimpleWaterloggedBlock#
+  getStateForPlacement: WATERLOGGED only for a source): the placed handler of every waterloggable
+  entry drops a flowing liquid layer and keeps a source (`dropFlowingWater`, Shapes.cpp). Selftest
+  `families.waterlog_flowing`.
+
+Open:
+- The imported hollow logs (F1, `tools/import/overrides/woodwork.json`) and hand-made unit blocks
+  (U5 `rope`, `iron_ladder`, U30 `blue_force_field`, ...) still declare `on_liquid_touches:
+  no_reaction`: their owners switch to `blocking`.
