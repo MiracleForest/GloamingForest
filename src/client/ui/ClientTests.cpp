@@ -77,6 +77,25 @@ GF_REGISTER_SELFTEST("ui.client_ui", [](Context& ctx) {
     ctx.check(cl::ui::toastCount() == before, "no toast is left");
     ctx.check(std::string_view(cl::toast::kFrameTexture) == "textures/ui/greyBorder" && cl::toast::kFrameSlice == 4 && cl::toast::kFrameSize == 16, "the toast frame is Bedrock's own toast texture, a 16 px nine-slice with 4 px corners");
     ctx.info(std::string("GUI hidden (F1): ") + (cl::hud::guiHidden() ? "yes" : "no"));
+    // the shared slot table (claimSlot / releaseSlot): a claimed slot is taken until it is released (the
+    // render thread's toasts take and free slots meanwhile: only what this test holds is checked)
+    {
+        int slot = cl::toast::claimSlot();
+        if (slot >= 0) {
+            ctx.check(slot < cl::toast::kSlotCount && cl::toast::slotsTaken() >= 1, "a claimed slot is taken");
+            int second = cl::toast::claimSlot();
+            ctx.check(second != slot, "a second claim gets another slot");
+            cl::toast::releaseSlot(second);
+            cl::toast::releaseSlot(slot);
+            int again = cl::toast::claimSlot(); // (-1 only if the render thread took every slot meanwhile)
+            if (again < 0) ctx.info("every slot was taken again before the second claim");
+            cl::toast::releaseSlot(again);
+        } else {
+            ctx.info("every toast slot is taken now: the claim waits");
+        }
+        cl::toast::releaseSlot(-1);
+        cl::toast::releaseSlot(cl::toast::kSlotCount); // out of range: ignored
+    }
 
     // tooltips: lines of the item's providers, removed again at the end
     cl::tooltip::add("gf_test:fixture_item", [](ItemStack const& s, std::vector<std::string>& lines) {
@@ -144,7 +163,7 @@ GF_REGISTER_SELFTEST("ui.client_render", [](Context& ctx) {
     ctx.check(!r::hasItemRenderer("gf_test:ui_test_item", r::FirstPerson), "contexts not asked for are not");
     auto t = r::tintOf("gf_test:ui_test_block", 1, 5, 2);
     ctx.check(t && *t == 0x102035u, "the tint resolver gets the absolute position");
-    ctx.check(!r::tintOf("minecraft:grass_block", 0, 0, 0), "no tint for others");
+    ctx.check(!r::tintOf("gf_test:ui_untinted_block", 0, 0, 0), "no tint for others"); // (U1 tints vanilla grass in TF biomes)
     ctx.info("tracked block positions: " + std::to_string(r::trackedBlockCount()));
     ctx.check(r::unregisterBlockRenderer("gf_test:ui_test_block") && !r::hasBlockRenderer("gf_test:ui_test_block"), "block renderer removed");
     ctx.check(cl::tint::unregisterBlock("gf_test:ui_test_block") && !r::tintOf("gf_test:ui_test_block", 0, 0, 0), "tint removed");
@@ -203,6 +222,24 @@ GF_REGISTER_SELFTEST("ui.client_name_tags", [](Context& ctx) -> ll::coro::CoroTa
     ctx.check(r::showNameTag(handle) && !r::showNameTag(handle) && !r::nameTagHidden(p), "the predicate is removed by its handle, once");
     if (saved) r::hideNameTag(type, *saved);
     ctx.check(r::nameTagRule(type).has_value() == saved.has_value(), "the player type's rule from before the test is back");
+});
+
+// Armour hiding (TF's emperor's cloth): stacks a hideArmor function accepts are hidden until the
+// function is removed by its handle. The worn armour pass itself is checked by the client scenario
+// (ui fixture head step).
+GF_REGISTER_SELFTEST("ui.client_armor", [](Context& ctx) {
+    namespace r = cl::render;
+    auto plain  = gf::game::items::make("minecraft:diamond_chestplate");
+    auto marked = gf::game::items::make("minecraft:diamond_chestplate");
+    ctx.require(plain && marked, "two diamond chestplates");
+    gf::game::items::setData(*marked, "gf_test_hidden", true);
+    ctx.check(!r::armorHidden(*marked), "nothing is hidden before a function is registered (" + std::to_string(r::armorChecks().asked) + " worn stacks asked so far)");
+    auto handle = r::hideArmor([](ItemStack const& s) { return !gf::game::items::getData(s, "gf_test_hidden").is_null(); });
+    ctx.check(handle != 0, "registered");
+    ctx.check(r::armorHidden(*marked) && !r::armorHidden(*plain), "the marked stack is hidden, the plain one is not");
+    ctx.check(r::hideArmor(r::ArmorFn{}) == 0, "an empty function is refused");
+    ctx.check(r::showArmor(handle) && !r::showArmor(handle), "removed by its handle, once");
+    ctx.check(!r::armorHidden(*marked), "shown again");
 });
 
 GF_REGISTER_SELFTEST("ui.client_geo", [](Context& ctx) {

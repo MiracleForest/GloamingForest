@@ -77,6 +77,7 @@ void winterBreath(Mob& m) {
 }
 
 void wolfTick(Actor& self) {
+    if (despawnInPeaceful(self)) return;
     auto* m = asMob(self);
     if (!m || !self.isAlive()) return;
     auto type = typeOf(self);

@@ -118,6 +118,32 @@ void hideNameTag(std::string const& entityId, NameTagFn when = {});
 /// handle for showNameTag (0: `when` was empty, nothing registered).
 std::size_t hideNameTag(NameTagFn when);
 
+/// Armour hiding (TF's ArmorHooks#cancelArmorRendering / CancelElytraRenderingTransformer: the
+/// emperor's cloth): whether the game draws `stack` worn in an armour slot (head, chest, legs, feet
+/// and the body slot of horses / wolves; the elytra is a chest item). Bedrock draws worn armour as
+/// attachables; the check is DataDrivenModel::shouldRenderAttachableOnActor, asked per worn stack and
+/// frame on the render thread (keep it cheap; the stack is the client's copy, with the item data the
+/// server sent). Held items (main hand, off hand) are never hidden. A stack is hidden when any
+/// registered function returns true. Returns a handle for showArmor (0: `when` was empty).
+/// Known gap (1.26.51, audit round 1): the v2 actor renderer that draws players' worn armour does not
+/// call that check (armorChecks().asked stays 0 in the client e2e), so a registered function has no
+/// visible effect there yet; finding the v2 equivalent (ActorAttachableDerivitiveData::mAttachedItems
+/// is where it keeps the worn stacks) is open.
+using ArmorFn = std::function<bool(ItemStack const& stack)>;
+std::size_t hideArmor(ArmorFn when);
+/// Removes a hideArmor function by its handle; false when there was none.
+bool showArmor(std::size_t handle);
+/// Whether a hideArmor function hides `stack` (what the attachable check asks; tests).
+[[nodiscard]] bool armorHidden(ItemStack const& stack);
+/// How many worn stacks the game's attachable check would draw (its own answer true: not hidden by
+/// the game's own rules, e.g. spectators), and how many of them a hideArmor function hid, since the
+/// process started (tests and e2e: the check is reached).
+struct ArmorChecks {
+    std::uint64_t asked  = 0;
+    std::uint64_t hidden = 0;
+};
+[[nodiscard]] ArmorChecks armorChecks();
+
 /// The per-frame render context handed to renderers (valid during the callback only).
 ///
 /// Threads: block, item and entity renderers, onWorld callbacks and sky providers run on the
@@ -218,6 +244,16 @@ namespace gf::client::ui {
 /// canvas (canvas origin applies), source (u, v, w, h) in texture pixels of a `texW` x `texH`
 /// texture. Returns false when the texture can't be loaded.
 bool blit(screen::Canvas& canvas, std::string const& texture, screen::Rect const& dst, float u, float v, float w, float h, float texW = 256, float texH = 256);
+/// How a blit mixes with what is under it: Normal is alpha blending; Invert is Java's
+/// RenderSystem.blendFuncSeparate(ONE_MINUS_DST_COLOR, ONE_MINUS_SRC_COLOR, ONE, ZERO) of the
+/// crosshair (TF's QuestingRamIndicatorOverlay), Bedrock's own crosshair material "ui_crosshair"
+/// (OneMinusDestColor / OneMinusSrcColor): white texels invert the screen, black ones leave it.
+enum class Blend { Normal, Invert };
+/// blit with a blend mode (Invert always draws a textured mesh, whatever blitMethod says).
+bool blit(screen::Canvas& canvas, std::string const& texture, screen::Rect const& dst, float u, float v, float w, float h, float texW, float texH, Blend blend);
+/// A whole texture (a GUI sprite, Java's GuiGraphics.blitSprite) over `dst` with `blend`; false
+/// while it is loading or when it is missing (logged once).
+bool blitSprite(screen::Canvas& canvas, std::string const& texture, screen::Rect const& dst, Blend blend = Blend::Normal);
 /// A nine-slice of a `texW` x `texH` texture over `dst` (the game's nineslice_size): the corners of
 /// `slice` texture pixels drawn 1:1, the edges and the middle stretched. False when the texture
 /// can't be loaded.
@@ -310,6 +346,21 @@ std::size_t cancel(std::string const& title);
 inline constexpr char kFrameTexture[] = "textures/ui/greyBorder";
 inline constexpr int  kFrameSlice     = 4;  ///< nineslice_size of textures/ui/greyBorder.json
 inline constexpr int  kFrameSize      = 16; ///< base_size
+
+/// The toast slots every toast drawer shares (Java's ToastComponent.occupiedSlots: one table for every
+/// toast, 5 slots of 32 GUI pixels from the top right). A unit that draws its own toasts (U14's
+/// AdvancementToast) claims a slot when its toast starts sliding in and releases it once the toast slid
+/// out; F12's queue takes its slots from the same table, so neither draws over the other.
+inline constexpr int kSlotCount = 5;
+/// The lowest free slot, now taken (0..kSlotCount - 1); -1 when every slot is taken (the caller's toast
+/// waits). Any thread.
+[[nodiscard]] int claimSlot();
+/// Gives a slot back that this caller claimed, once (a slot that is not claimed, or out of range, is
+/// ignored; F12's own slots are never freed by it). Leaving a level frees F12's own slots only: a
+/// claimer releases its claims itself when it drops its toasts.
+void releaseSlot(int slot);
+/// The slots taken now, by F12's toasts and by claims (tests).
+[[nodiscard]] int slotsTaken();
 } // namespace gf::client::toast
 
 namespace gf::client::particles {

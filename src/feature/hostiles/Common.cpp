@@ -134,6 +134,12 @@ int difficulty() {
     return level ? static_cast<int>(level->getDifficulty()) : 0;
 }
 
+bool despawnInPeaceful(Actor& actor) {
+    if (difficulty() != 0 || !actor.isAlive()) return false;
+    fe::removeLater(uidOf(actor));
+    return true;
+}
+
 int maxLocalRawBrightness(BlockSource& region, BlockPos const& pos) {
     if (pos.y < region.getMinHeight() || pos.y >= region.getMaxHeight()) return 0;
     auto pair = region.getBrightnessPair(pos);

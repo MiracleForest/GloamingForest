@@ -98,3 +98,31 @@ fallback. Spec: [docs/spec/atmosphere.md](../spec/atmosphere.md).
 - `auroraBiomes` UI: `/twilightforest config atmosphere` edits the list as text (F0's config screen); the per-key
   label `config.twilightforest.aurora_biomes`, its "Edit Biomes" list editor and a client-local editor for a client
   joined to a remote server are F0's / F12's screen work (reported to the coordinator).
+
+## Audit round 1
+
+- Server scenario `atmosphere`: PASSED (2026-11-07).
+- Client run (`tools/e2e/client/run.ps1 -Scenario atmosphere -Mode local`, Classic then Vibrant Visuals). Classic: every
+  view and check passed; the screenshots (zenith at noon and midnight alike with TF's stars, no sun or moon, grey
+  clouds and no sunset band at the horizon, the forest / spooky / dark forest / boss fogs, the aurora ribbons over the
+  glacier preview, the void plate, the locked-biome weathers: blizzard, mosquito swarm, ashes, dark stream, big rain,
+  sparkles and the Ur-Ghast rain) were compared by eye with TF's textures (`textures/environment/*`, the weather
+  sprites) and TF's sky renderer: they match.
+- Fixed: the scenario failed under Vibrant Visuals at "pink (sunset) share of the horizon 0.0758". Commit 68db4333 had
+  made that check strict for Vibrant Visuals too, while this document lists Vibrant Visuals' own dusk (VV paints its
+  physical sky from the sun direction at the fixed time 13000; the sunrise colour override does not reach it) as a
+  deviation. The check is a recorded value again under Vibrant Visuals (the Classic check stays strict). The same
+  commit made the aurora's green gain and lightness gain strict under Vibrant Visuals too: measured 6.9 (range
+  10..255) and -16.1 (5..255) while `vibrant-aurora.png` shows lit cyan-green ribbons (the clear reference view is VV's
+  lighter dusk sky); both are recorded under Vibrant Visuals now.
+- Still failing under Vibrant Visuals (round 2, not closed here): "stars below the horizon over the void plate" is 6
+  (range 0..2): the void plate does not hide every star below the horizon in VV's world pass. The VV views after it
+  were not reached in this round's runs.- Still failing, not this unit's: the Twilight Forest view logs 27 160 x 6 content-log errors
+  `[Molang][error] particles/note.json | variable.note_color.r | unable to find member variable .r`: U6's
+  `src/client/flora/FloraClient.cpp` (cicadas, line 206, and the music block at line 286) spawns
+  `minecraft:note_particle` with an empty molang map; the vanilla effect needs `variable.note_color` {r, g, b}
+  (F10's `fx` sets it from NoteParticle's hue). Reported to the coordinator for U6.
+- Open (round 2): Vibrant Visuals' dusk. A per-biome Vibrant Visuals atmosphere (resource pack `atmospherics/*.json`
+  with no sun Mie scattering and TF's sky colours, referenced from each TF biome's client biome file through
+  `minecraft:atmosphere_identifier`) would take the orange band away; the client biome files are U1's.
+- Open (round 2): the HUD shows the icons of the hidden effects other units give (see U12's audit); not this unit's.

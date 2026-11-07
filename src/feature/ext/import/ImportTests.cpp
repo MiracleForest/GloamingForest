@@ -342,6 +342,7 @@ GF_REGISTER_SELFTEST("import.light", [](Context& ctx) {
 GF_REGISTER_SELFTEST("import.behaviour", [](Context& ctx) {
     constexpr double kUnbreakable    = -1; // destroyTime -1 / getDestroyProgress -1: minecraft:destructible_by_mining false
     constexpr double kIndestructible = -2; // resistance >= 3600000 or Float.MAX_VALUE: minecraft:destructible_by_explosion false
+    constexpr double kOwnerRule      = -3; // the owner's own destroy rule (not checked here, its unit's selftests do)
     struct Case {
         char const* id;
         JDoc        states;
@@ -361,7 +362,9 @@ GF_REGISTER_SELFTEST("import.behaviour", [](Context& ctx) {
         {"twilight_oak_chest", JDoc::object(), 2.5, 2.5},                  // ofFullCopy(TWILIGHT_OAK_PLANKS).strength(2.5F)
         {"giant_leaves", JDoc::object(), 12.8, 15.0},                      // strength(0.2F * 64.0F, 15.0F)
         {"twilight_portal", JDoc::object(), kUnbreakable, 0.0},            // strength(-1.0F): resistance max(0, -1)
-        {"stronghold_shield", JDoc::object(), kUnbreakable, kIndestructible}, // strength(-1.0F, 6000000.0F)
+        // strength(-1.0F, 6000000.0F), but StrongholdShieldBlock.getDestroyProgress lets a player mine it from its inside
+        // face: U25's manual block has a destroy time for that face (src/feature/stronghold), so only the resistance is TF's here
+        {"stronghold_shield", JDoc::object(), kOwnerRule, kIndestructible},
         {"skull_chest", JDoc::object(), 3.0, kIndestructible},             // SkullChestBlock: Float.MAX_VALUE
         {"vanishing_block", {{"twilightforest:active", false}}, 10.0, 6000.0}, // VanishingBlock: !ACTIVE ? 6000F : super
         {"vanishing_block", {{"twilightforest:active", true}}, 10.0, 35.0},
@@ -410,7 +413,8 @@ GF_REGISTER_SELFTEST("import.behaviour", [](Context& ctx) {
             continue;
         }
         ctx.info(what + ": destroy speed " + std::to_string(h) + ", explosion resistance " + std::to_string(r));
-        if (c.hardness == kUnbreakable) ctx.check(h < 0, what + ": unbreakable in TF, destroy speed " + std::to_string(h));
+        if (c.hardness == kOwnerRule) {} // the owner's selftests check it
+        else if (c.hardness == kUnbreakable) ctx.check(h < 0, what + ": unbreakable in TF, destroy speed " + std::to_string(h));
         else ctx.check(near(h, c.hardness * hs), what + ": destroy speed " + std::to_string(h) + ", TF gives " + std::to_string(c.hardness * hs));
         if (c.resistance == kIndestructible)
             ctx.check(r >= 3600000.0 * rs, what + ": indestructible by explosions in TF, resistance " + std::to_string(r));

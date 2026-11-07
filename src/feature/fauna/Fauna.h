@@ -39,6 +39,10 @@ inline constexpr char kMosquitoSwarm[] = "twilightforest:mosquito_swarm";
 [[nodiscard]] core::jrand::RandomSource& rng();
 /// The difficulty of the level (0 peaceful .. 3 hard).
 [[nodiscard]] int difficulty();
+/// Mob#checkDespawn on Peaceful for the unit's monsters (Monster#shouldDespawnInPeaceful: the kobold,
+/// the mosquito swarm): removes the mob (next tick) and returns true. Bedrock keeps custom monsters
+/// on Peaceful. Call first in their ticks.
+bool despawnInPeaceful(Actor& actor);
 /// The actor's block position.
 [[nodiscard]] BlockPos blockPosOf(Actor const& actor);
 /// The Java biome id at the actor (TF's biomes in the Twilight Forest, Bedrock's names elsewhere).

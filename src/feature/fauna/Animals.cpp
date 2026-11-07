@@ -180,6 +180,8 @@ bool shearBighorn(Actor& sheep, Player* player) {
 
 bool dyeBighorn(Actor& sheep, int color) {
     if (!sheep.isAlive() || isSheared(sheep) || colorOf(sheep) == color) return false;
+    // DyeItem#interactLivingEntity: SoundEvents.DYE_USE (item.dye.use), Bedrock's sign.dye.use
+    gf::fx::sound(sheep.getDimension(), "sign.dye.use", sheep.getFeetPos(), 1.0f, 1.0f);
     setColor(sheep, color);
     return true;
 }

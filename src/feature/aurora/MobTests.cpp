@@ -221,8 +221,10 @@ GF_REGISTER_SELFTEST("aurora.unstable_ice_core", [](Context& ctx) -> ll::coro::C
     co_await ctx.ticks(20);
     auto* dying = fe::actorById(uid);
     ctx.check(dying && dying->isAlive(), "the core waits 60 ticks after its death");
+    std::string lies = "gone";
     if (dying) {
         auto f = dying->getFeetPos();
+        lies   = std::to_string(f.x - pos.x) + " " + std::to_string(f.y - pos.y) + " " + std::to_string(f.z - pos.z);
         ctx.check(std::abs(f.x - (pos.x + 0.5f)) < 1.0f && std::abs(f.z - (pos.z + 0.5f)) < 1.0f, "the dying core lies still");
     }
     co_await ctx.ticks(60);
@@ -231,7 +233,7 @@ GF_REGISTER_SELFTEST("aurora.unstable_ice_core", [](Context& ctx) -> ll::coro::C
     auto stone = game::blockIdAt(*region, game::blockPos(stonePos));
     auto ice   = game::blockIdAt(*region, game::blockPos(icePos));
     ctx.check(stone.ends_with("_terracotta"), "the stone became terracotta: " + stone);
-    ctx.check(ice.ends_with("_stained_glass"), "the ice became stained glass: " + ice);
+    ctx.check(ice.ends_with("_stained_glass"), "the ice became stained glass: " + ice + " (the dying core at " + lies + " from its spawn block)");
     discardAround(pos, 10);
 });
 
@@ -458,11 +460,14 @@ GF_REGISTER_SELFTEST("aurora.snow_queen_beam", [](Context& ctx) -> ll::coro::Cor
     setQueenPhaseForTest(*queen, 2);
     int  breath    = 0;
     bool breathing = false;
-    for (int i = 0; i < 40 && breath == 0; i++) {
+    // up to two goal cycles (seek <= 80, hover 80, beam 100 ticks); stops at the first hit
+    for (int i = 0; i < 60 && breath == 0; i++) {
         if (auto* q = mobById(uid)) breathing = breathing || queenBreathingForTest(*q);
         if (auto* q = mobById(uid)) q->setTarget(&ctx.player());
         ctx.player().heal(20); // stay alive through the test
         co_await ctx.ticks(10);
+        // (again after the wait: a beam that starts and hits within it ends the loop)
+        if (auto* q = mobById(uid)) breathing = breathing || queenBreathingForTest(*q);
         for (auto const& [type, amount] : dealt().hits)
             if (type == "twilightforest:chilling_breath") {
                 breath++;
