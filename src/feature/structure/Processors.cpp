@@ -122,6 +122,16 @@ bool processorRuleTest(Json const& rule, Block const& input, Block const& existi
            posRuleTest(rule.value("position_predicate", Json::object()), local, world, structure, random);
 }
 
+/// A processor's output data with the colour of a Java bed state (Bedrock has one bed block).
+Json withBedColor(Json data, Json const& state) {
+    std::string name = state.is_string() ? state.get<std::string>() : state.is_object() ? state.value("Name", std::string{}) : std::string{};
+    int         c    = blocks::bedColor(name);
+    if (c < 0) return data;
+    if (!data.is_object()) data = Json::object();
+    data[blockentities::kBedColorKey] = c;
+    return data;
+}
+
 /// RuleBlockEntityModifier#apply.
 Json outputTag(Json const& rule, RandomSource& random, Json const& data) {
     if (!rule.contains("block_entity_modifier")) return data;
@@ -350,7 +360,7 @@ std::optional<BlockInfo> stateTransfiguring(Region& region, BlockInfo const& ori
         if (processorRuleTest(rule, *current.block, state, original.pos, current.pos, tPivot, random)) {
             auto const* out = blocks::fromJavaState(rule["output_state"]);
             if (!out) return current;
-            return BlockInfo{current.pos, &blocks::transferStates(*current.block, *out), outputTag(rule, random, current.data)};
+            return BlockInfo{current.pos, &blocks::transferStates(*current.block, *out), withBedColor(outputTag(rule, random, current.data), rule["output_state"])};
         }
     }
     return current;
@@ -462,7 +472,7 @@ std::optional<BlockInfo> rule(Region& region, BlockInfo const& original, BlockIn
         if (processorRuleTest(r, *current.block, state, original.pos, current.pos, tPivot, random)) {
             auto const* out = blocks::fromJavaState(r["output_state"]);
             if (!out) return current;
-            return BlockInfo{current.pos, out, outputTag(r, random, current.data)};
+            return BlockInfo{current.pos, out, withBedColor(outputTag(r, random, current.data), r["output_state"])};
         }
     }
     return current;

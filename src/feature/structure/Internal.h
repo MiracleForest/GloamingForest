@@ -58,6 +58,9 @@ namespace blocks {
 /// The Bedrock plant id of a Java "minecraft:potted_<plant>" id ("" for any other id or when the
 /// plant does not exist on Bedrock).
 [[nodiscard]] std::string pottedPlant(std::string_view javaId);
+/// The DyeColor id (white 0 .. black 15) of a Java "minecraft:<colour>_bed" id, -1 for any other
+/// id. Bedrock has one minecraft:bed block whose block actor holds the colour (same numbering).
+[[nodiscard]] int bedColor(std::string_view javaId);
 /// Whether the block stops movement (Material#blocksMotion: has a collision shape).
 [[nodiscard]] bool blocksMotion(Block const& block);
 /// Whether `id` names a block of the block registry (no warning when it does not).
@@ -167,6 +170,8 @@ struct Parsed {
     std::vector<std::int8_t>  paletteWaterlogged;
     /// The plant of a Java minecraft:potted_* state (Bedrock id; "" for every other state).
     std::vector<std::string>  pottedPlant;
+    /// The colour of a Java minecraft:<colour>_bed state (blocks::bedColor; -1 for every other state).
+    std::vector<std::int8_t>  bedColor;
     /// The list StructureTemplate#addToLists puts each palette state in (javaList).
     std::vector<std::int8_t>  paletteList;
     std::vector<std::uint16_t> cells;       ///< palette index per block, y-major, then z, then x
@@ -230,7 +235,8 @@ struct Placed {
     Json         data;
     int          waterlogged = -1; ///< the Java state's waterlogged (-1: the block has no such property)
     std::string  pottedPlant;      ///< flower pot content (Bedrock plant id)
-    bool         nbt   = false;    ///< Java's StructureBlockInfo#nbt is set (block entity data)
+    int          bedColor = -1;    ///< a bed's colour (blocks::bedColor; -1: not a bed)
+    bool         nbt  = false;    ///< Java's StructureBlockInfo#nbt is set (block entity data)
     bool         stood = false;    ///< the block was set in the world (Java: setBlock returned true)
 };
 /// StructureTemplate#placeInWorld for a GloamingForest template: processes every block, places
@@ -418,6 +424,11 @@ struct ParticleList {
 void loadSinisterSpawnerData(boss::ext::SinisterSpawner& spawner, std::string const& entityId, Json const& data);
 /// A flower pot's plant (FlowerPotBlockActor PlantBlock).
 void flowerPot(Region& region, BlockPos const& pos, std::string const& plantId);
+/// A bed's colour (BedBlockActor dye colour, blocks::bedColor numbering).
+void bedColor(Region& region, BlockPos const& pos, int color);
+/// The block entity data key a processor's output carries a bed's colour in (the Java state's
+/// colour; Bedrock's bed blocks are one block).
+inline constexpr char const* kBedColorKey = "gf:bed_color";
 /// Water in the liquid layer at `pos` of a generation region, put there once the chunk is loaded
 /// and only while the block there is still `blockId`.
 void waterlog(Region& region, BlockPos const& pos, std::string const& blockId);

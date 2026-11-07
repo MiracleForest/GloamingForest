@@ -66,6 +66,7 @@
 #include "mc/world/level/block/actor/BlockActor.h"
 #include "mc/world/level/block/actor/BlockActorType.h"
 #include "mc/world/Container.h"
+#include "mc/world/level/block/actor/BedBlockActor.h"
 #include "mc/world/level/block/actor/FlowerPotBlockActor.h"
 #include "mc/world/level/block/actor/HopperBlockActor.h"
 #include "mc/world/level/block/actor/MobSpawnerBlockActor.h"
@@ -1172,6 +1173,19 @@ bool runFlowerPot(BlockSource& source, BlockPos const& pos, Json const& action) 
     return true;
 }
 
+/// A bed's colour (Java's <colour>_bed block; Bedrock: BedBlockActor#mDyeColor).
+bool runBed(BlockSource& source, BlockPos const& pos, Json const& action) {
+    if (source.getBlock(pos).getTypeName() != "minecraft:bed") return true; // replaced since
+    auto* actor = source.getBlockEntity(pos);
+    if (!actor || actor->getType() != BlockActorType::Bed) return false; // the actor is created a tick later
+    auto& bed     = static_cast<BedBlockActor&>(*actor);
+    bed.mDyeColor = action.value("color", 14);
+    bed.mDirty    = true;
+    bed.onChanged(source);
+    actor->refresh(source);
+    return true;
+}
+
 bool run(BlockSource& source, BlockPos const& pos, Json const& action) {
     auto kind = action.value("kind", std::string{});
     if (kind == "container") {
@@ -1254,6 +1268,7 @@ bool run(BlockSource& source, BlockPos const& pos, Json const& action) {
         return true;
     }
     if (kind == "flower_pot") return runFlowerPot(source, pos, action);
+    if (kind == "bed") return runBed(source, pos, action);
     if (kind == "waterlog") {
         // only while the block placed then is still there
         if (source.getBlock(pos).getTypeName() != action.value("block", std::string{})) return true;
@@ -1324,6 +1339,11 @@ void sign(Region& region, BlockPos const& pos, std::vector<std::string> const& l
 void flowerPot(Region& region, BlockPos const& pos, std::string const& plantId) {
     if (plantId.empty()) return;
     queue(region, pos, Json{{"kind", "flower_pot"}, {"plant", plantId}});
+}
+
+void bedColor(Region& region, BlockPos const& pos, int color) {
+    if (color < 0 || color > 15) return;
+    queue(region, pos, Json{{"kind", "bed"}, {"color", color}});
 }
 
 void waterlog(Region& region, BlockPos const& pos, std::string const& blockId) {

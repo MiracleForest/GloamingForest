@@ -182,6 +182,7 @@ std::unique_ptr<Parsed> parse(Template const& t) {
         }
         p->paletteWaterlogged.push_back(wl);
         p->pottedPlant.push_back(blocks::pottedPlant(name));
+        p->bedColor.push_back(static_cast<std::int8_t>(blocks::bedColor(name)));
         p->paletteList.push_back(static_cast<std::int8_t>(javaList(entry)));
     }
     p->cells.reserve(static_cast<std::size_t>(p->sx) * p->sy * p->sz);
@@ -641,6 +642,14 @@ bool placeInWorld(Parsed const& t, Region& region, Placement const& placement, R
             else if (liquids::waterloggable(*current.block)) out.waterlogged = wl > 0 ? 1 : 0;
             if (!t.pottedPlant[idx].empty() && blocks::id(*current.block) == "minecraft:flower_pot") out.pottedPlant = t.pottedPlant[idx];
         }
+        // a bed keeps its colour: the one a processor's output state named, else the template's
+        if (blocks::id(*current.block) == "minecraft:bed") {
+            if (out.data.is_object() && out.data.contains(blockentities::kBedColorKey)) {
+                out.bedColor = out.data[blockentities::kBedColorKey].get<int>();
+                out.data.erase(blockentities::kBedColorKey);
+                if (out.data.empty()) out.data = Json();
+            } else if (!dataCell) out.bedColor = t.bedColor[idx];
+        }
         placed.push_back(std::move(out));
     }
 
@@ -698,8 +707,11 @@ bool placeInWorld(Parsed const& t, Region& region, Placement const& placement, R
         }
     }
     // flower pot contents (the pot block stands now)
-    for (auto const& p : placed)
-        if (!p.pottedPlant.empty() && p.pos.y >= region.minY() && p.pos.y < region.maxY()) blockentities::flowerPot(region, p.pos, p.pottedPlant);
+    for (auto const& p : placed) {
+        if (p.pos.y < region.minY() || p.pos.y >= region.maxY()) continue;
+        if (!p.pottedPlant.empty()) blockentities::flowerPot(region, p.pos, p.pottedPlant);
+        if (p.bedColor >= 0 && p.stood) blockentities::bedColor(region, p.pos, p.bedColor);
+    }
     // block entity data after every block stands (containers need their block). Java loads it into
     // the block entity right after setting each block, and first draws the LootTableSeed of a
     // RandomizableContainer from placeInWorld's random (StructureTemplate#placeInWorld puts it over

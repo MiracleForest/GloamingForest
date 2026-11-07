@@ -219,11 +219,13 @@ void Piece::placeBlock(Region& region, std::string const& blockId, Json const& s
         waterlogged   = v.is_boolean() ? v.get<bool>() : v.is_string() && v.get<std::string>() == "true";
     }
     auto plant = blocks::pottedPlant(blockId);
-    if (!waterlogged && plant.empty()) return;
+    int  bed   = blocks::bedColor(blockId);
+    if (!waterlogged && plant.empty() && bed < 0) return;
     BlockPos pos = getWorldPos(x, y, z);
     if (!chunkBox.contains(pos.x, pos.y, pos.z) || blocks::id(region.getBlock(pos)) != blocks::id(*b)) return; // not placed
     if (waterlogged) liquids::setWaterlogged(region, pos, true);
     if (!plant.empty()) blockentities::flowerPot(region, pos, plant);
+    if (bed >= 0) blockentities::bedColor(region, pos, bed);
 }
 
 Block const& Piece::getBlock(Region& region, int x, int y, int z, BlockBox const& chunkBox) const {
