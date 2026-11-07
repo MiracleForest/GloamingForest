@@ -10,7 +10,7 @@
     },
     "components": {
       "minecraft:emitter_initialization": {
-        "creation_expression": "v.fall = math.max(v.velocity.y ?? 8, 0.5);"
+        "creation_expression": "v.fall = v.velocity.y > 0 ? math.max(v.velocity.y, 0.5) : 8;"
       },
       "minecraft:emitter_rate_instant": {
         "num_particles": 1
