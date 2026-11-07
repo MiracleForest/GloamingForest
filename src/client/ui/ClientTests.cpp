@@ -242,6 +242,55 @@ GF_REGISTER_SELFTEST("ui.client_armor", [](Context& ctx) {
     ctx.check(!r::armorHidden(*marked), "shown again");
 });
 
+// hud::hideEffectIcons (Java's showIcon false): the registry the HUD effect list asks
+GF_REGISTER_SELFTEST("ui.client_effect_icons", [](Context& ctx) {
+    namespace hud = cl::hud;
+    hud::EffectIcon fall{.id = "minecraft:slow_falling", .amplifier = 0, .duration = 40};
+    hud::EffectIcon speed{.id = "minecraft:speed", .amplifier = 1, .duration = 200};
+    ctx.check(!hud::effectIconHidden(fall), "nothing is hidden before a function is registered (" + std::to_string(hud::effectIconsHidden()) + " hidden so far)");
+    auto handle = hud::hideEffectIcons([](hud::EffectIcon const& e) { return e.id == "minecraft:slow_falling" && e.duration <= 40; });
+    ctx.check(handle != 0, "registered");
+    ctx.check(hud::effectIconHidden(fall) && !hud::effectIconHidden(speed), "the glide's slow falling is hidden, speed is not");
+    ctx.check(hud::hideEffectIcons(hud::EffectIconFn{}) == 0, "an empty function is refused");
+    ctx.check(hud::showEffectIcons(handle) && !hud::showEffectIcons(handle), "removed by its handle, once");
+    ctx.check(!hud::effectIconHidden(fall), "shown again");
+});
+
+// keys::binding: the current binding of a registered key (the controls' remapping, else the default)
+GF_REGISTER_SELFTEST("ui.client_key_binding", [](Context& ctx) {
+    namespace keys = cl::keys;
+    ctx.check(!keys::binding("gf_test.no_such_key").has_value(), "an unknown key has no binding");
+    auto ids = keys::registered();
+    if (ids.empty()) {
+        ctx.info("no key registered in this build");
+        return;
+    }
+    for (auto const& id : ids) {
+        auto b = keys::binding(id);
+        ctx.require(b.has_value(), "a registered key has a binding: " + id);
+        std::string codes;
+        for (int k : b->keys) codes += std::to_string(k) + " ";
+        ctx.info(id + ": keys " + codes + "'" + b->name + "'" + (b->remapped ? " (from the controls)" : " (default)"));
+        if (keys::lateBound(id)) ctx.check(!b->remapped, "a late key answers with its default key: " + id);
+    }
+});
+
+// render::addWorldText / setWorldText / removeWorldText (Java's TextDisplay)
+GF_REGISTER_SELFTEST("ui.client_world_text", [](Context& ctx) {
+    namespace r = cl::render;
+    r::WorldText t;
+    t.pos       = Vec3{0.5f, 70.0f, 0.5f};
+    t.lines     = {"\xC2\xA7" "cFinal Castle WIP."};
+    t.billboard = r::WorldText::Billboard::Vertical;
+    auto h      = r::addWorldText(t);
+    ctx.check(h != 0, "added");
+    t.lines.push_back("second line");
+    ctx.check(r::setWorldText(h, t), "replaced");
+    ctx.check(r::removeWorldText(h) && !r::removeWorldText(h), "removed by its handle, once");
+    ctx.check(!r::setWorldText(h, t), "a removed handle is unknown");
+    ctx.info("world texts drawn so far: " + std::to_string(r::worldTextsDrawn()) + "; v2 armour stacks hidden so far: " + std::to_string(r::armorChecks().v2Hidden));
+});
+
 GF_REGISTER_SELFTEST("ui.client_geo", [](Context& ctx) {
     Json file = Json::parse(R"({
         "format_version": "1.12.0",

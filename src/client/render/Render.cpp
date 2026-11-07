@@ -436,6 +436,13 @@ private:
 
 } // namespace
 
+/// The material Lines draws its bars with, for world text backgrounds (WorldText.cpp); nullptr when
+/// the pack has none.
+mce::MaterialPtr const* fillMaterial(bool throughWalls) {
+    auto& m = lineMaterial(throughWalls);
+    return valid(&m) ? &m : nullptr;
+}
+
 bool setupLight(RenderContext& ctx, Vec3 const& at, bool fullBright) {
     if (!ctx.actors) return false;
     IClientInstance& client = ctx.actors->mClientInstance;
@@ -700,7 +707,11 @@ bool armorHidden(ItemStack const& stack) {
     return false;
 }
 
-ArmorChecks armorChecks() { return {reg().armorAsked.load(), reg().armorHidden.load()}; }
+/// The worn stacks taken from the v2 actor renderer (ArmorV2.cpp).
+std::uint64_t armorV2HiddenCount();
+bool          armorFiltersRegistered() { return reg().anyArmor.load(std::memory_order_relaxed); }
+
+ArmorChecks armorChecks() { return {reg().armorAsked.load(), reg().armorHidden.load(), armorV2HiddenCount()}; }
 
 // ---- per-frame work --------------------------------------------------------------------------------------
 
