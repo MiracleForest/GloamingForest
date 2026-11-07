@@ -69,6 +69,8 @@
 #include "feature/common/Interactions.h"
 #include "feature/dimension/World.h"
 #include "feature/entity/Entity.h"
+#include "feature/ext/entity/EntityExt.h"
+#include "feature/ext/entity/Handles.h"
 #include "feature/ext/tgear/CraftHooks.h"
 #include "feature/ext/tgear/PlayerHooks.h"
 #include "feature/families/BlockEvents.h"
@@ -546,14 +548,24 @@ bool bypassesArmor(std::string const& type) {
 }
 
 /// Perfect dodge (TravellersGearEvents#performPerfectDodge): the impact is cancelled, so the projectile
-/// flies on through the wearer (Bedrock: the damage is cancelled and, a tick later, the projectile gets
-/// back the motion it hit with, one step further along, so it passes the wearer or hits it again).
+/// flies on through the wearer. A TF projectile (simulated by gf::projectile) gets the impact itself
+/// cancelled (F8's ext::cancelImpact, NeoForge's ProjectileImpactEvent#setCanceled): no hit, no
+/// removal, it flies on with its velocity. A vanilla projectile (Bedrock's own hit): the damage is
+/// cancelled and, a tick later, the projectile gets back the motion it hit with, one step further
+/// along, so it passes the wearer or hits it again.
 combat::Verdict onIncoming(combat::DamageInfo& d) {
     // the projectile of the hit (combat's direct entity; a child-actor source may name it as the
     // attacker instead)
     Actor* projectile = nullptr;
-    for (Actor* a : {d.direct, d.attacker})
-        if (!projectile && a && a != &d.victim && a->getEntityContext().tryGetComponent<ProjectileComponent>()) projectile = a;
+    bool   simulated  = false;
+    for (Actor* a : {d.direct, d.attacker}) {
+        if (projectile || !a || a == &d.victim) continue;
+        if (gf::projectile::ext::isProjectile(*a)) {
+            projectile = a;
+            simulated  = true;
+        }
+        else if (a->getEntityContext().tryGetComponent<ProjectileComponent>()) projectile = a;
+    }
     if (projectile) {
         auto key = std::make_pair(uidOf(d.victim), uidOf(*projectile));
         {
@@ -568,10 +580,16 @@ combat::Verdict onIncoming(combat::DamageInfo& d) {
         }
         // only the projectile's own impact (ProjectileImpactEvent with an EntityHitResult on the wearer),
         // never the explosion, fire or magic damage a projectile causes
-        if (core::tgear::isProjectileImpactType(d.type) && rollPerfectDodge(d.victim, projectile)) {
+        // (a TF projectile's hit deals its own TF damage type: twilightforest:lich_bolt, ...)
+        bool impact = core::tgear::isProjectileImpactType(d.type) || (simulated && d.type.starts_with("twilightforest:"));
+        if (impact && rollPerfectDodge(d.victim, projectile)) {
             {
                 std::lock_guard lock(state().mutex);
                 state().dodgedImpacts.push_back({key, gameTime()});
+            }
+            if (simulated) {
+                gf::projectile::ext::cancelImpact(*projectile);
+                return combat::Verdict::Cancel;
             }
             auto  id  = projectile->getOrCreateUniqueID();
             Vec3  v   = projectile->getPosDelta();
