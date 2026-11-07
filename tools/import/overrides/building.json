@@ -37,6 +37,69 @@
         "path": "/minecraft:block/components/minecraft:material_instances/over/face_dimming",
         "value": false
       }
+    ],
+    "bp/blocks/alpha_yeti_boss_spawner.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:loot",
+        "value": "loot_tables/empty.json"
+      }
+    ],
+    "bp/blocks/final_boss_boss_spawner.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:loot",
+        "value": "loot_tables/empty.json"
+      }
+    ],
+    "bp/blocks/hydra_boss_spawner.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:loot",
+        "value": "loot_tables/empty.json"
+      }
+    ],
+    "bp/blocks/knight_phantom_boss_spawner.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:loot",
+        "value": "loot_tables/empty.json"
+      }
+    ],
+    "bp/blocks/lich_boss_spawner.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:loot",
+        "value": "loot_tables/empty.json"
+      }
+    ],
+    "bp/blocks/minoshroom_boss_spawner.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:loot",
+        "value": "loot_tables/empty.json"
+      }
+    ],
+    "bp/blocks/naga_boss_spawner.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:loot",
+        "value": "loot_tables/empty.json"
+      }
+    ],
+    "bp/blocks/snow_queen_boss_spawner.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:loot",
+        "value": "loot_tables/empty.json"
+      }
+    ],
+    "bp/blocks/ur_ghast_boss_spawner.json": [
+      {
+        "op": "add",
+        "path": "/minecraft:block/components/minecraft:loot",
+        "value": "loot_tables/empty.json"
+      }
     ]
   }
 }
