@@ -35,6 +35,8 @@
 #include "mc/server/SimulatedPlayer.h"
 #include "mc/server/sim/LookDuration.h"
 #include "mc/world/actor/Actor.h"
+#include "mc/world/actor/ActorDamageByActorSource.h"
+#include "mc/world/actor/ActorDamageByChildActorSource.h"
 #include "mc/world/actor/ActorDefinitionIdentifier.h"
 #include "mc/world/actor/ActorType.h"
 #include "mc/world/actor/item/ItemActor.h"
@@ -60,6 +62,7 @@
 #include "feature/combat/CombatTestUtil.h"
 #include "feature/common/BlockData.h"
 #include "feature/common/Redstone.h"
+#include "feature/ext/combat/Handles.h"
 #include "feature/ext/combat/InventoryViewers.h"
 #include "feature/fx/Fx.h"
 #include "feature/fx/FxInternal.h"
@@ -922,6 +925,73 @@ GF_REGISTER_SELFTEST("combat.missing_advancement", [](Context& ctx) -> ll::coro:
     // a vanilla player gets the game's toast (ToastRequestPacket): nothing on the companion channel
     pr::showMissing(ctx.player(), "twilightforest:progress_lich");
     ctx.check(gf::net::takeTestMessages(ctx.player()).empty(), "a vanilla player gets no companion message");
+});
+
+// A hurt started inside an onIncoming handler runs the handlers again (Java's nested damage events:
+// EntityUtil#properlyApplyCustomDamageSource cancels a mob's hit and deals it again with a TF type);
+// only the same attack on top of itself passes through. The handler comes off by its handle.
+GF_REGISTER_SELFTEST("combat.nested_hurt", [](Context& ctx) -> ll::coro::CoroTask<> {
+    namespace cb = gf::combat;
+    co_await ctx.ticks(25); // the victim's hurt cooldown from earlier tests
+    struct Seen {
+        std::int64_t             victim = 0;
+        std::vector<std::string> types;
+        int                      sameAgain = 0;
+    };
+    static Seen seen;
+    seen        = {};
+    seen.victim = ctx.player().getOrCreateUniqueID().rawID;
+    auto handle = cb::ext::addIncoming(cb::priority::Highest, [](cb::DamageInfo& d) {
+        if (d.victim.getOrCreateUniqueID().rawID != seen.victim) return cb::Verdict::Pass;
+        seen.types.push_back(d.type);
+        if (d.type == "minecraft:generic") {
+            // the conversion: cancel, deal it again with another type (its handlers run)
+            (void)cb::hurt(d.victim, d.amount, "twilightforest:ant", d.attacker, d.direct);
+            return cb::Verdict::Cancel;
+        }
+        if (d.type == "twilightforest:ant" && seen.sameAgain++ == 0) {
+            // the same attack again from its own handlers: applied as is, no third round
+            (void)cb::hurt(d.victim, d.amount, "twilightforest:ant", d.attacker, d.direct);
+        }
+        return cb::Verdict::Cancel;
+    });
+    ctx.require(handle != 0, "ext::addIncoming gives a handle");
+    (void)cb::hurt(ctx.player(), 1.0f, "minecraft:generic");
+    std::string list;
+    for (auto const& t : seen.types) list += t + " ";
+    ctx.check(seen.types == std::vector<std::string>({"minecraft:generic", "twilightforest:ant"}),
+              "the nested hurt of another type ran the handlers, the same attack again did not (" + list + ")");
+    ctx.check(cb::ext::remove(handle), "ext::remove finds the handler");
+    ctx.check(!cb::ext::remove(handle), "a second removal finds nothing");
+    seen.types.clear();
+    co_await ctx.ticks(25);
+    (void)cb::hurt(ctx.player(), 1.0f, "minecraft:generic");
+    ctx.check(seen.types.empty(), "a removed handler hears nothing");
+    seen.victim = 0;
+    // onDealt and onEntityDrops handles
+    auto dealt = cb::ext::addDealt(cb::priority::Normal, [](cb::DamageInfo const&) {});
+    ctx.check(dealt != 0 && cb::ext::remove(dealt) && !cb::ext::remove(dealt), "an onDealt handler comes off by its handle");
+    auto drops = gf::loot::ext::addEntityDrops([](Actor&, std::vector<ItemStack>&, gf::loot::LootContext const&) {});
+    ctx.check(drops != 0 && gf::loot::ext::removeEntityDrops(drops) && !gf::loot::ext::removeEntityDrops(drops),
+              "an onEntityDrops handler comes off by its handle");
+});
+
+// DamageInfo of a projectile's damage (ActorDamageByChildActorSource(child, owner), what
+// gf::combat::hurt(victim, n, type, owner, projectile) and the game's projectiles build): the
+// attacker is the owner (DamageSource#getEntity), the direct entity the projectile
+// (#getDirectEntity).
+GF_REGISTER_SELFTEST("combat.child_source", [](Context& ctx) {
+    auto& owner = ctx.player();
+    auto& child = ctx.spawnPlayer("gf_combat_child");
+    ActorDamageByChildActorSource source(child, owner, SharedTypes::Legacy::ActorDamageCause::Projectile);
+    auto [attacker, direct] = gf::combat::entitiesOf(source);
+    ctx.info("raw: getEntityUniqueID " + std::string(source.getEntityUniqueID().rawID == owner.getOrCreateUniqueID().rawID ? "owner" : "child")
+             + ", getDamagingEntityUniqueID " + (source.getDamagingEntityUniqueID().rawID == owner.getOrCreateUniqueID().rawID ? "owner" : "child"));
+    ctx.check(attacker == &owner, "the attacker is the owner");
+    ctx.check(direct == &child, "the direct entity is the projectile");
+    ActorDamageByActorSource melee(owner, SharedTypes::Legacy::ActorDamageCause::EntityAttack);
+    auto [a2, d2] = gf::combat::entitiesOf(melee);
+    ctx.check(a2 == &owner && d2 == &owner, "a melee hit: attacker and direct entity are the hitter");
 });
 
 // ---- client build: the toast F12 shows, fx particles through F12's native sink ----------------------------

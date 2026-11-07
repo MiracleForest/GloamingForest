@@ -77,6 +77,7 @@
 #include "feature/boss/Boss.h"
 #include "feature/common/Interactions.h"
 #include "feature/common/BlockData.h"
+#include "feature/ext/combat/Handles.h"
 #include "feature/inventory/Inventory.h"
 #include "feature/loot/JavaRandom.h"
 #include "feature/loot/LootInternal.h"
@@ -104,6 +105,8 @@ struct Registry {
     std::unordered_map<std::string, FunctionFn>   functions;
     std::vector<std::pair<std::string, ModifierFn>> modifiers;
     std::vector<EntityDropsFn>                    entityDrops;
+    std::vector<std::uint64_t>                    entityDropIds; ///< parallel to entityDrops (ext handles; 0: none)
+    std::uint64_t                                 nextDropId = 0;
     std::set<std::string>                         warned;
     int                                           testParticipants = -1;
     std::optional<bool>                           testAdjusts;
@@ -407,10 +410,33 @@ void addGlobalModifier(std::string const& id, ModifierFn fn) {
     list.emplace_back(id, std::move(fn));
 }
 
-void onEntityDrops(EntityDropsFn fn) {
+void onEntityDrops(EntityDropsFn fn) { (void)ext::addEntityDrops(std::move(fn)); }
+
+namespace ext {
+DropsHandle addEntityDrops(EntityDropsFn fn) {
+    if (!fn) return 0;
     std::lock_guard lock(registry().mutex);
+    auto            id = ++registry().nextDropId;
     registry().entityDrops.push_back(std::move(fn));
+    registry().entityDropIds.push_back(id);
+    return id;
 }
+bool removeEntityDrops(DropsHandle handle) {
+    if (handle == 0) return false;
+    EntityDropsFn gone; // destroyed outside the lock
+    {
+        std::lock_guard lock(registry().mutex);
+        auto&           ids = registry().entityDropIds;
+        auto            it  = std::find(ids.begin(), ids.end(), handle);
+        if (it == ids.end()) return false;
+        auto i = static_cast<std::size_t>(it - ids.begin());
+        gone   = std::move(registry().entityDrops[i]);
+        registry().entityDrops.erase(registry().entityDrops.begin() + static_cast<std::ptrdiff_t>(i));
+        ids.erase(it);
+    }
+    return true;
+}
+} // namespace ext
 
 // ---- containers ------------------------------------------------------------------------------------
 
