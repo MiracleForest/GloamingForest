@@ -134,6 +134,7 @@ struct SavedPlayer {
     Vec2                     rot{};
     std::map<int, ItemStack> slots; ///< inventory slot -> its stack before the first step that changed it
     std::optional<ItemStack> head;
+    std::map<int, ItemStack> armor; ///< armour slot (1..3) -> its stack before setArmorPiece
     bool                     simulated = false; ///< a test player: not kept across sessions
 };
 struct SavedPlayers {
@@ -155,6 +156,11 @@ Json savedJson() {
         for (auto const& [slot, stack] : s.slots) slots[std::to_string(slot)] = game::items::toJson(stack);
         Json j = {{"dim", s.dim}, {"feet", vecJson(s.feet)}, {"rot", Json::array({s.rot.x, s.rot.y})}, {"slots", slots}};
         if (s.head) j["head"] = game::items::toJson(*s.head);
+        if (!s.armor.empty()) {
+            Json armor = Json::object();
+            for (auto const& [slot, stack] : s.armor) armor[std::to_string(slot)] = game::items::toJson(stack);
+            j["armor"] = std::move(armor);
+        }
         out[std::to_string(id)] = std::move(j);
     }
     return out;
@@ -177,6 +183,8 @@ void loadSaved() {
             p.rot  = Vec2{j.at("rot").at(0).get<float>(), j.at("rot").at(1).get<float>()};
             for (auto const& [slot, item] : j.at("slots").items()) p.slots.emplace(std::stoi(slot), game::items::fromJson(item));
             if (j.contains("head")) p.head = game::items::fromJson(j.at("head"));
+            if (j.contains("armor"))
+                for (auto const& [slot, item] : j.at("armor").items()) p.armor.emplace(std::stoi(slot), game::items::fromJson(item));
             s.byId.emplace(id, std::move(p));
         } catch (...) {
             log().warn("ui fixture: a saved player entry could not be read: {}", key);
@@ -240,6 +248,21 @@ void setHead(Player& p, ItemStack const& stack) {
     p.setArmor(ArmorSlot::Head, stack);
 }
 
+void setArmorPiece(Player& p, int slot, ItemStack const& stack) {
+    if (slot <= 0) {
+        setHead(p, stack);
+        return;
+    }
+    if (slot > 3) return;
+    bool  fresh = false;
+    auto& s     = savedFor(p, &fresh);
+    if (!s.armor.contains(slot)) { // (a fresh entry has none: it is stored here too)
+        s.armor.emplace(slot, p.getArmor(static_cast<ArmorSlot>(slot)));
+        storeSaved();
+    }
+    p.setArmor(static_cast<ArmorSlot>(slot), stack);
+}
+
 int restorePlayers() {
     loadSaved();
     int n = 0;
@@ -251,10 +274,12 @@ int restorePlayers() {
         }
         auto const& s = it->second;
         if (s.head) p->setArmor(ArmorSlot::Head, *s.head);
+        for (auto const& [slot, stack] : s.armor)
+            if (slot >= 1 && slot <= 3) p->setArmor(static_cast<ArmorSlot>(slot), stack); // a stored entry may be anything
         for (auto const& [slot, stack] : s.slots) p->getInventory().setItem(slot, stack);
         p->sendInventory(false);
         p->teleport(s.feet, DimensionType(s.dim), s.rot);
-        if (!p->isSimulated()) log().info("ui fixture: {} put back (position, {} inventory slot(s), helmet)", p->getRealName(), s.slots.size());
+        if (!p->isSimulated()) log().info("ui fixture: {} put back (position, {} inventory slot(s), helmet, {} armour piece(s))", p->getRealName(), s.slots.size(), s.armor.size());
         ++n;
         it = saved().byId.erase(it);
     }

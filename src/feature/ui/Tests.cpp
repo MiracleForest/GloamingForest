@@ -364,8 +364,15 @@ GF_REGISTER_SELFTEST("ui.fixture_head", [](Context& ctx) -> ll::coro::CoroTask<>
         for (auto* rp : players) {
             fx::standOnStage(*rp, *st->region, st->origin, 1.62f); // level head: the front view looks the player in the face
             fx::setHead(*rp, *block);
+            // render::hideArmor: the client fixture hides the chestplate (kHiddenArmorData, as the
+            // emperor's cloth) and leaves the boots drawn
+            if (auto chest = gf::game::items::make("minecraft:diamond_chestplate")) {
+                gf::game::items::setData(*chest, fx::kHiddenArmorData, true);
+                fx::setArmorPiece(*rp, 1, *chest);
+            }
+            if (auto boots = gf::game::items::make("minecraft:golden_boots")) fx::setArmorPiece(*rp, 3, *boots);
         }
-        ctx.info("fixture block put on " + names(players));
+        ctx.info("fixture block, a hidden diamond chestplate and golden boots put on " + names(players));
     }
     (void)ctx.player();
     co_await ctx.ticks(1);

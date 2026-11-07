@@ -23,7 +23,8 @@
 #   from before the restart: ui.fixture_clear and /tag remove first).
 #   Screenshots: out/ui/<mode>-hud-toast-world.png, <mode>-gui-hidden.png, <mode>-fog.png,
 #   <mode>-screen(-clicked).png, <mode>-chest-skin.png, <mode>-chest-plain.png, <mode>-frame.png,
-#   <mode>-map.png, <mode>-map-frame.png, <mode>-head.png.
+#   <mode>-map.png, <mode>-map-frame.png, <mode>-head.png (the fixture block on the head, golden boots,
+#   the diamond chestplate that render::hideArmor is meant to hide: recorded, see Invoke-UiItems).
 # remote-vanilla: a vanilla client gets the form and the DDUI fallback of the fixture screen (no
 #   companion packets) and the vanilla chests (plain titles). Screenshots: out/ui/vanilla-form.png,
 #   vanilla-ddui.png, vanilla-chest-skin.png, vanilla-chest-plain.png.
@@ -285,6 +286,8 @@ function Invoke-UiFixture([string]$mode) {
     # an onWorld callback gets no lightAt (drawGeo lights each geometry at its own place)
     Wait-LogLine 'ui fixture: world lines drawn \(lightAt none\)' 30 -Since $mark | Out-Null
     Start-Sleep -Seconds 2
+    # the cell right of the HUD panel: ui::Blend::Invert (the crosshair material) over the world
+    Wait-UiLine 'ui: sprite drawn with the inverting crosshair blend' 30 0 | Out-Null   # once per game session
     $shot = Save-Screenshot "$mode-hud-toast-world"
     # the HUD layer's block items (drawn after the game's UI pass): a vanilla and a TF block, cubes
     Assert-UiHudCubes $shot $hud
@@ -387,6 +390,17 @@ function Invoke-UiItems([string]$mode) {
     Focus-Game
     Press-VK 0x74; Start-Sleep -Milliseconds 400; Press-VK 0x74   # F5 twice: third person, front
     Wait-UiLine 'ui fixture: head item drawn' 20 $mark | Out-Null
+    # render::hideArmor (TF's emperor's cloth): the fixture's rule would hide the worn chestplate with the
+    # fixture's data key. On 1.26.51 the actor renderer (v2) does not ask DataDrivenModel::
+    # shouldRenderAttachableOnActor for the player's armour, so the chestplate is still drawn: recorded,
+    # not failed, until the hook reaches the v2 path (docs/spikes/S5.md, Audit round 1)
+    if (-not $remote -or (Test-ClientTrace)) {
+        $armorMark = $mark
+        try {
+            $armor = Wait-LogLine '^(?!\[host\]).*ui fixture: worn minecraft:diamond_chestplate hidden by the fixture''s armour rule' 10 -Since $armorMark
+            Write-Step "${mode}: armour hidden: $armor"
+        } catch { Write-Step "${mode}: the worn chestplate was not hidden (the attachable check is not reached on this game version; recorded)" }
+    }
     Start-Sleep -Seconds 2
     Save-Screenshot "$mode-head" | Out-Null
     Press-VK 0x74   # back to first person

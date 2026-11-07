@@ -2,7 +2,8 @@
 // only, development builds only (gf::ui::fixture::enabled: the gf_test packs are deployed). The server
 // turns it on with "ui.fixture" {show, hud, toast, world, fog, map} (feature/ui/Fixture.cpp):
 //
-// - HUD layer "ui.fixture": a panel with an item, the graphics mode and the three blit methods;
+// - HUD layer "ui.fixture": a panel with an item, the graphics mode, the three blit methods and the
+//   inverting blend (ui::Blend::Invert, right of the panel over the world);
 // - two toasts (Java's toast layout on the game's toast frame): LockedBiomeToast's colours (yellow
 //   title) with a flat icon (a map) and MissingAdvancementToast's (white title) with a TF block
 //   icon (twilight oak planks) and a literal body;
@@ -11,6 +12,8 @@
 //   leaves right of it built on the game's foliage colour (red and blue swapped on the stage only),
 //   and a name tag rule for the two named simulated players behind them (render::hideNameTag by type
 //   and predicate: the one named GF_UI_hidden_tag loses its name tag, the other keeps it);
+// - armour rule (render::hideArmor, registered with the item renderers): worn stacks with
+//   gf::ui::fixture::kHiddenArmorData (the head step's chestplate) are not drawn;
 // - world: a line box around the block below the player, a line up to the sky and the fixture
 //   geometry (geometry.gf_ui.fixture) drawn with drawGeo in front of the player;
 // - fog: a provider for the player's dimension (red fog 4..24 blocks, clouds at y 160), and a sky
@@ -164,6 +167,13 @@ void drawHud(screen::Canvas& c, float) {
         c.text(r.x + 2, r.y + r.h + 2, std::to_string(m) + (ok ? "" : " -"), 0xFFFFFFFF);
     }
     ui::setBlitMethod(keep);
+    // the inverting blend (ui::Blend::Invert, the crosshair's; TF's quest ram indicator) right of the panel,
+    // over the world (the sky in the screenshots): the light panel texture turns the sky dark there
+    {
+        screen::Rect r{panel.x + panel.w + 62, panel.y, 44, 41};
+        bool ok = ui::blit(c, tex().skin, r, 0, 0, 88, 83, 256, 256, ui::Blend::Invert);
+        c.text(r.x + 2, r.y + r.h + 2, std::string("inv") + (ok ? "" : " -"), 0xFFFFFFFF);
+    }
     // block items on a HUD layer (drawn after the game's UI pass, as toast icons): a vanilla block and
     // a data-driven TF block, each in a grey 18 x 18 cell, an empty cell between them (the client
     // scenario checks they are GUI cubes, as in the inventory)
@@ -237,6 +247,7 @@ struct StageAt {
     std::atomic<bool> loggedBlock{false}, loggedTint{false}, loggedHiddenTag{false}, loggedShownTag{false};
     int               ticks = 0; // client thread: ticks since the stage renderers came on
     std::optional<render::NameTagFn> keptStandRule; // client thread: the player rule before the stage
+    std::atomic<bool>                loggedArmor{false};
 };
 StageAt& stageAt() {
     static StageAt s;
@@ -273,6 +284,17 @@ unsigned tintStageLeaves(BlockPos const& p, tint::GameColors const& game) {
 }
 
 constexpr char kStageStand[] = "minecraft:player";
+
+/// The fixture's armour rule (render::hideArmor, as the emperor's cloth; registered with the fixture's
+/// renderers): worn stacks with the fixture's data key are not drawn (render thread).
+bool hideStageArmor(ItemStack const& stack) {
+    static std::atomic<bool> traced{false};
+    if (stack.getTypeName() == "minecraft:diamond_chestplate" && !traced.load(std::memory_order_relaxed) && !traced.exchange(true))
+        log().info("ui fixture: armour rule sees {} (user data: {})", stack.getTypeName(), stack.mUserData ? stack.mUserData->toSnbt(SnbtFormat::Minimize, 0) : std::string("none"));
+    if (game::items::getData(stack, gf::ui::fixture::kHiddenArmorData).is_null()) return false;
+    if (!stageAt().loggedArmor.exchange(true)) log().info("ui fixture: worn {} hidden by the fixture's armour rule", game::items::idOf(stack));
+    return true;
+}
 
 /// The name tag rule of the stage's players (gf::ui::fixture::placeNameTagPlayers): the one named
 /// kHiddenNameTag is hidden, the one named kShownNameTag keeps its name tag (render thread).
@@ -480,6 +502,8 @@ public:
         keys::registerKey("ui.fixture_late", kLateKey, "key.categories.gloamingforest.fixture", [] { log().info("ui fixture: late key pressed (client)"); });
         // a native particle the client scenario spawns with /particle (SpawnParticleEffectPacket) and
         // the server with gf::fx::particle (fx.particle)
+        // worn stacks with the fixture's data key (the head step's chestplate) are hidden; no real stack has it
+        render::hideArmor(hideStageArmor);
         particles::registerNative(kParticle, [](Vec3 const& pos, Vec3 const&, Json const&) {
             static std::atomic<bool> logged{false};
             if (!logged.exchange(true)) log().info("ui fixture: particle factory ran at {:.1f} {:.1f} {:.1f}", pos.x, pos.y, pos.z);
