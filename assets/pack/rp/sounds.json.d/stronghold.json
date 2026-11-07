@@ -53,6 +53,13 @@
             "pitch": 1.0
           }
         }
+      },
+      "twilightforest:lower_goblin_knight": {
+        "events": {
+          "ambient": "",
+          "hurt": "",
+          "death": ""
+        }
       }
     }
   }
