@@ -17,7 +17,9 @@
 //
 // Deviations: TF multiplies the recipe's shared result stack (its count grows with every smelt); the
 // result here is a copy. Hoppers see one plain container (no furnace faces: they fill and empty any
-// slot). The client-side crackle / smoke / flame of animateTick are not drawn.
+// slot). The client-side crackle / smoke / flame of animateTick (FurnaceBlock's vanilla copy) are
+// sent by the server while the furnace burns, at the rate Java's ClientLevel#animateTick samples the
+// block for the nearest player (one 32^3 and one 64^3 cube around it, 667 picks each, every tick).
 #include <algorithm>
 #include <cmath>
 #include <map>
@@ -37,6 +39,7 @@
 #include "feature/common/Redstone.h"
 #include "feature/ext/families/Hoppers.h"
 #include "feature/families/BlockEvents.h"
+#include "feature/fx/Fx.h"
 #include "feature/finalcastle/BlocksCommon.h"
 #include "feature/inventory/Inventory.h"
 #include "feature/recipes/Recipes.h"
@@ -57,6 +60,35 @@ constexpr char kLit[]              = "twilightforest:lit";
 constexpr char kFacing[]           = "twilightforest:facing";
 constexpr int  kSmeltLogFactor     = 10;
 constexpr int  kDefaultCookingTime = 200;
+/// ClientLevel#animateTick's chance to pick a given block in a tick: 667 picks in the 32^3 cube
+/// around the player (|d| < 16) and 667 in the 64^3 cube (|d| < 32).
+constexpr float kAnimateNear = 667.0F / (32.0F * 32.0F * 32.0F);
+constexpr float kAnimateFar  = 667.0F / (64.0F * 64.0F * 64.0F);
+
+/// The chance for the player nearest (by cube distance) to `pos` in its dimension: 0 without one
+/// within 32 blocks.
+float animateChance(BlockSource& region, BlockPos const& pos) {
+    auto* l = level();
+    if (!l) return 0.0F;
+    int  dim  = static_cast<int>(region.getDimensionId());
+    float best = 0.0F;
+    l->forEachPlayer(std::function<bool(Player&)>([&](Player& p) {
+        if (static_cast<int>(p.getDimensionId()) != dim || !p.isAlive()) return true;
+        auto  q = p.getFeetPos();
+        float d = std::max({std::abs(q.x - (static_cast<float>(pos.x) + 0.5F)), std::abs(q.y - static_cast<float>(pos.y)),
+                            std::abs(q.z - (static_cast<float>(pos.z) + 0.5F))});
+        if (d < 16.0F) best = std::max(best, kAnimateNear + kAnimateFar);
+        else if (d < 32.0F) best = std::max(best, kAnimateFar);
+        return true;
+    }));
+    return best;
+}
+
+/// The visuals' own random (the effects must not shift the furnace's gameplay random).
+core::jrand::RandomSource& visualRandom() {
+    static core::jrand::LegacyRandom r(0x43494E444552LL);
+    return r;
+}
 
 /// The c:ores members of NeoForge 21.1 as Bedrock item ids (docs/spec/finalcastle.md), for when the
 /// tag data does not answer.
@@ -194,6 +226,27 @@ struct Furnace {
         sound(region, at, "block.fire.ambient", 1.0f, 1.0f);
     }
 
+    /// CinderFurnaceBlock#animateTick ([VanillaCopy] FurnaceBlock#animateTick) while LIT.
+    void animate() {
+        auto& rand = visualRandom();
+        if (rand.nextFloat() >= animateChance(region, pos)) return;
+        auto& dim = region.getDimension();
+        float d0  = static_cast<float>(pos.x) + 0.5F;
+        float d1  = static_cast<float>(pos.y);
+        float d2  = static_cast<float>(pos.z) + 0.5F;
+        if (rand.nextDouble() < 0.1) fx::sound(dim, "block.furnace.fire_crackle", Vec3{d0, d1, d2}, 1.0F, 1.0F);
+        auto   facing = textState(region.getBlock(pos), kFacing);
+        int    stepX  = facing == "east" ? 1 : facing == "west" ? -1 : 0;
+        int    stepZ  = facing == "south" ? 1 : facing == "north" ? -1 : 0;
+        double d4     = rand.nextDouble() * 0.6 - 0.3;
+        double d5     = stepX != 0 ? stepX * 0.52 : d4;
+        double d6     = rand.nextDouble() * 6.0 / 16.0;
+        double d7     = stepZ != 0 ? stepZ * 0.52 : d4;
+        Vec3   at{static_cast<float>(d0 + d5), static_cast<float>(d1 + d6), static_cast<float>(d2 + d7)};
+        particle(region, "minecraft:smoke", at);
+        particle(region, "minecraft:flame", at);
+    }
+
     void tick() {
         bool wasBurning = burning();
         bool changed    = false;
@@ -257,6 +310,7 @@ struct Furnace {
         }
         // TF: occasionally cinderize nearby logs
         if (burning() && st.litTime % 5 == 0) cinderize();
+        if (burning()) animate();
         if (changed) setFurnaceState(gpos, st);
     }
 };
