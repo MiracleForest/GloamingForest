@@ -10,14 +10,17 @@
 // at a quest ram while holding a quest item draws questing_ram_x (that colour is still missing) or
 // questing_ram_check, 7 x 7 at ((guiHeight - 1) / 2 - 3, (guiHeight - 1) / 2 - 11) as TF does (it
 // uses the GUI height for both coordinates). The quest comes over questcamps.sync_quests; the
-// ram's colours over F8's entity data sync. Bedrock note: the sprite is drawn with normal alpha
-// blending (F12's sprite blit has no ONE_MINUS_DST_COLOR mode).
+// ram's colours over F8's entity data sync. The sprite is drawn with the crosshair's inverting blend
+// (blendFuncSeparate(ONE_MINUS_DST_COLOR, ONE_MINUS_SRC_COLOR, ONE, ZERO): F12's Blend::Invert), only
+// in first person (Options#getCameraType().isFirstPerson(): Bedrock's view perspective 0).
 
 #ifdef GF_CLIENT
 
 #include <mutex>
 #include <optional>
 
+#include "mc/client/game/ClientInstance.h"
+#include "mc/client/options/IOptionRegistry.h"
 #include "mc/client/player/LocalPlayer.h"
 #include "mc/world/actor/Actor.h"
 #include "mc/world/item/ItemStack.h"
@@ -28,8 +31,8 @@
 #include "client/Client.h"
 #include "client/ui/Ui.h"
 #include "core/questcamps/Questcamps.h"
-#include "feature/ext/dimension/HudSprite.h"
 #include "feature/ext/entity/EntityClientExt.h"
+#include "feature/ext/ui/Client.h"
 #include "feature/net/Net.h"
 #include "feature/questcamps/Questcamps.h"
 #include "game/Items.h"
@@ -78,8 +81,12 @@ int questColour(std::string const& itemId) {
 void draw(screen::Canvas& canvas, float) {
     if (!gf::config::get<fq::QuestcampsConfig>().questRamWoolIndicator) return;
     auto* player = currentPlayer();
-    // TF: not hidden GUI (the HUD layer is not drawn then), first person, not a spectator
+    // TF: not hidden GUI (the HUD layer is not drawn then), first person, not a spectator (for one,
+    // Gui#canRenderCrosshairForSpectator answers an entity hit only for a MenuProvider, which the
+    // ram is not)
     if (!player || player->isSpectator()) return;
+    auto* client = currentClient();
+    if (!client || static_cast<IClientInstance&>(*client).getOptions().getPlayerViewPerspective() != 0) return;
     auto const& stack = player->getSelectedItem();
     if (game::items::isEmpty(stack)) return;
     auto&  hit = player->getLevel().getHitResult();
@@ -94,7 +101,7 @@ void draw(screen::Canvas& canvas, float) {
     int   gh = static_cast<int>(h);
     float x  = static_cast<float>((gh - 1) / 2 - 3) - canvas.originX();
     float y  = static_cast<float>((gh - 1) / 2 - 11) - canvas.originY();
-    hud::ext::blitSprite(canvas, cq::colorPresent(flags, colour) ? kCheck : kX, screen::Rect{x, y, 7, 7}, 1.0f, 0);
+    (void)ui::blitSprite(canvas, cq::colorPresent(flags, colour) ? kCheck : kX, screen::Rect{x, y, 7, 7}, ui::Blend::Invert);
 }
 
 } // namespace
