@@ -38,3 +38,19 @@ Implementation notes of U16 against [docs/spec/fauna.md](../spec/fauna.md).
 - The mosquito swarm still shows the fire overlay when burning (no render hook for it).
 - Babies are drawn at half scale (Bedrock's `minecraft:scale`), without Java's bigger baby heads.
 - `twilightforest:jeed/hunger` (a JEED compat recipe) is not ported: JEED does not exist on Bedrock.
+
+## Audit round 1
+
+A5 (mobs audit, W2 round 1), against F13's goldens (tests/golden/mobs.json, loot.json) and TF 4.8; U17's
+spawn sweep (`hostiles.spawn_sweep`, `hostiles.mob_assets`) covers the ten fauna mobs too.
+
+- **Checked, matching**: max health, movement speed, attack damage, follow range, box and fire immunity of
+  all ten mobs; the loot tables; hurt / death sounds (the mosquito swarm's are null in Java and absent
+  here); far-away despawn (the kobold and the mosquito swarm despawn, the animals stay); every setupAnim
+  todo of the F2 bones files (horns / antlers hidden on babies, the bighorn's grazing, the flying birds'
+  landed feet, the kobold's jaw while rising); the bighorn's fleece (vanilla SheepFurModel on Bedrock's
+  64 x 64 sheep texture: the wool UVs are already the +32 rows).
+- **Fixed**: dyeing a bighorn plays `item.dye.use` (DyeItem#interactLivingEntity; Bedrock's `sign.dye.use`).
+  The kobold and the mosquito swarm leave on Peaceful (Monster#shouldDespawnInPeaceful; Bedrock kept
+  them), with the selftest `fauna.peaceful`.
+- **Still open**: none found beyond the Bedrock limits above.
