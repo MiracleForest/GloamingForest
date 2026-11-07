@@ -1,0 +1,44 @@
+{
+  "about": "U11 tgear: refinements of the baseline (tools/sounds/baseline/tgear.json). Original sound designs; TF's audio is never read. The events (ids, subtitles, categories, volumes, pitches, variant counts) stay TF's. The Traveller's Gear moves are light and airy: the double jump is an upward whoosh with a soft push and a faint sparkle, the perfect dodge a fast falling swish with a bright ting, the side step a quick swish with a light footfall, and the recharged side step a small pop and a clear ding.",
+  "patches": {
+    "travellers/double_jump": {
+      "params": {},
+      "length": 0.35, "tail": 0.5,
+      "layers": [
+        {"type": "patch", "patch": "object/whoosh", "length": 0.5, "params": {"len": 0.32, "f0": 250, "f1": 2600, "q": 1.2}},
+        {"type": "patch", "patch": "object/pop", "length": 0.3, "gain": -11, "params": {"pitch": 480, "len": 0.07}},
+        {"type": "patch", "patch": "magic/shimmer", "start": 0.08, "length": 0.9, "gain": -19, "params": {"freq": 1320, "len": 0.3, "sparkle": 0.3}}
+      ]
+    },
+    "travellers/perfect_dodge": {
+      "params": {},
+      "length": 0.25, "tail": 0.7,
+      "layers": [
+        {"type": "patch", "patch": "object/whoosh", "length": 0.4, "params": {"len": 0.22, "f0": 3200, "f1": 500, "q": 2.5}},
+        {"type": "patch", "patch": "impact/knock_bell", "start": 0.04, "length": 0.9, "gain": -10, "params": {"freq": 2640, "decay": 0.6}}
+      ]
+    },
+    "travellers/side_step": {
+      "params": {},
+      "length": 0.2, "tail": 0.25,
+      "layers": [
+        {"type": "patch", "patch": "object/whoosh", "length": 0.35, "params": {"len": 0.18, "f0": 900, "f1": 3200, "q": 1.8}},
+        {"type": "patch", "patch": "impact/step", "start": 0.1, "length": 0.3, "gain": -10, "params": {"weight": 0.4, "bright": 1.2, "len": 0.07}}
+      ]
+    },
+    "travellers/side_step_ready": {
+      "params": {},
+      "length": 0.1, "tail": 0.7,
+      "layers": [
+        {"type": "patch", "patch": "object/pop", "length": 0.25, "params": {"pitch": 1200, "len": 0.06}},
+        {"type": "patch", "patch": "impact/knock_bell", "start": 0.04, "length": 0.9, "gain": -6, "params": {"freq": 1760, "decay": 0.5}}
+      ]
+    }
+  },
+  "files": {
+    "random/travellers/double_jump": {"patch": "travellers/double_jump", "seed": 1101},
+    "random/travellers/perfect_dodge": {"patch": "travellers/perfect_dodge", "seed": 1102},
+    "random/travellers/side_step": {"patch": "travellers/side_step", "seed": 1103},
+    "random/travellers/side_step_ready": {"patch": "travellers/side_step_ready", "seed": 1104}
+  }
+}
