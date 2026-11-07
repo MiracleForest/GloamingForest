@@ -160,6 +160,29 @@ std::optional<std::set<std::string>> checkGeometry(Context& ctx, Json const& ent
     return names;
 }
 
+// The names a resource-pack folder defines under `key` ("animations", "render_controllers", ...), every file
+// of it (a W1 unit's manual files sit next to F2's generated ones).
+std::set<std::string> definedIn(char const* folder, char const* key) {
+    std::set<std::string> names;
+    std::error_code       ec;
+    auto                  dir = rpDir() / folder;
+    if (!fs::exists(dir, ec)) return names;
+    for (auto it = fs::recursive_directory_iterator(dir, ec); !ec && it != fs::recursive_directory_iterator(); it.increment(ec)) {
+        if (!it->is_regular_file(ec) || it->path().extension() != ".json") continue;
+        auto doc = readJson(it->path());
+        if (!doc) continue;
+        if (std::string(key) == "minecraft:geometry") {
+            for (auto const& g : member(*doc, "minecraft:geometry")) names.insert(str(member(g, "description"), "identifier"));
+            if (doc->is_object()) // the legacy format: "geometry.x" or "geometry.x:parent" keys
+                for (auto const& [name, _] : doc->items())
+                    if (name.starts_with("geometry.")) names.insert(name.substr(0, name.find(':')));
+        } else {
+            for (auto const& [name, _] : member(*doc, key).items()) names.insert(name);
+        }
+    }
+    return names;
+}
+
 } // namespace
 
 GF_REGISTER_SELFTEST("models.index", [](Context& ctx) {
@@ -245,24 +268,58 @@ GF_REGISTER_SELFTEST("models.animations", [](Context& ctx) {
 });
 
 GF_REGISTER_SELFTEST("models.attachables", [](Context& ctx) {
-    auto const            idx = index(ctx);
+    auto const idx = index(ctx);
+    // what the pack defines, F2's generated files and the units' manual ones alike: assemble keeps one attachable
+    // per identifier and a unit's manual attachable replaces F2's (its own file name, geometry, animations and render
+    // controllers), so every name is looked up across the pack, not in the index only
+    // (the models folder holds every block and entity geometry: read only when an attachable names one F2 did not)
     std::set<std::string> geometries;
     for (auto const& e : member(idx, "geometries")) geometries.insert(str(e, "identifier"));
-    std::set<std::string> animations;
+    bool scanned  = false;
+    auto geometry = [&](std::string const& id) {
+        if (!geometries.contains(id) && !scanned) {
+            scanned = true;
+            geometries.merge(definedIn("models", "minecraft:geometry"));
+        }
+        return geometries.contains(id);
+    };
+    std::set<std::string> animations = definedIn("animations", "animations");
     for (auto const& a : member(idx, "animations")) animations.insert(str(a, "identifier"));
+    std::set<std::string> controllers = definedIn("render_controllers", "render_controllers");
+    controllers.insert({"controller.render.armor", "controller.render.item_default"}); // vanilla
     // the shared render controllers (F2's partition) must be there
-    std::set<std::string> controllers{"controller.render.armor", "controller.render.item_default"};
     auto rc = readJson(rpDir() / "render_controllers" / "twilightforest.models.render_controllers.json");
     ctx.require(rc.has_value(), "render_controllers/twilightforest.models.render_controllers.json is in the pack");
-    for (auto const& [name, _] : member(*rc, "render_controllers").items()) controllers.insert(name);
-    int present = 0, expected = 0;
+    // every attachable of the pack by identifier
+    std::map<std::string, std::string> byItem; // identifier -> pack-relative file
+    {
+        std::error_code ec;
+        auto            dir = rpDir() / "attachables";
+        if (fs::exists(dir, ec))
+            for (auto it = fs::recursive_directory_iterator(dir, ec); !ec && it != fs::recursive_directory_iterator(); it.increment(ec)) {
+                if (!it->is_regular_file(ec) || it->path().extension() != ".json") continue;
+                auto doc = readJson(it->path());
+                if (!doc) continue;
+                auto id = str(member(member(*doc, "minecraft:attachable"), "description"), "identifier");
+                if (id.empty()) continue;
+                auto rel = fs::relative(it->path(), rpDir(), ec).generic_string();
+                auto [at, fresh] = byItem.emplace(id, rel);
+                ctx.check(fresh, id + " has two attachables: " + (fresh ? "" : at->second + " and " + rel));
+            }
+    }
+    int present = 0, expected = 0, overridden = 0;
     for (auto const& a : member(idx, "attachables")) {
         ++expected;
-        std::string const   file = str(a, "file");
+        std::string const item = str(a, "item");
+        std::string       file = str(a, "file");
+        if (auto it = byItem.find(item); it != byItem.end() && it->second != file) {
+            file = it->second; // a unit's manual override (assemble dropped the generated file)
+            ++overridden;
+        }
         std::optional<Json> doc;
         if (!file.empty()) doc = readJson(rpDir() / file);
         if (!doc) {
-            ctx.check(false, (file.empty() ? "index attachable without a file" : file + missingOrBroken(rpDir() / file)));
+            ctx.check(false, (file.empty() ? "index attachable without a file" : file + missingOrBroken(rpDir() / file)) + " (" + item + ")");
             continue;
         }
         auto const& desc = member(member(*doc, "minecraft:attachable"), "description");
@@ -271,7 +328,7 @@ GF_REGISTER_SELFTEST("models.attachables", [](Context& ctx) {
         ctx.check(geometry.is_object() && !geometry.empty(), file + ": names a geometry");
         for (auto const& [key, geo] : geometry.items()) {
             auto id = geo.is_string() ? geo.get<std::string>() : std::string();
-            ctx.check(geometries.contains(id) || id.starts_with("geometry.humanoid.armor."), file + ": unknown geometry " + id);
+            ctx.check(id.starts_with("geometry.humanoid.armor.") || geometry(id), file + ": unknown geometry " + id);
             ctx.check(member(desc, "textures").contains(key) && member(desc, "materials").contains(key), file + ": " + key + " has a texture and a material");
         }
         for (auto const& [key, anim] : member(desc, "animations").items()) {
@@ -288,5 +345,6 @@ GF_REGISTER_SELFTEST("models.attachables", [](Context& ctx) {
         }
         ++present;
     }
-    ctx.info("attachables present " + std::to_string(present) + "/" + std::to_string(expected));
+    ctx.info("attachables present " + std::to_string(present) + "/" + std::to_string(expected)
+             + (overridden ? " (" + std::to_string(overridden) + " replaced by their owners' manual attachables)" : ""));
 });
