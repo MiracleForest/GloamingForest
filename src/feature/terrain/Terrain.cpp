@@ -31,6 +31,7 @@
 #include <condition_variable>
 #include <deque>
 #include <filesystem>
+#include <intrin.h>
 #include <fstream>
 #include <list>
 #include <mutex>
@@ -443,6 +444,35 @@ void recordChunkMs(double ms) {
     if (times().size() > 4096) times().pop_front();
 }
 void addChunkMs(double ms) { tChunkMs += ms; }
+
+namespace {
+extern "C" __declspec(dllimport) void* __stdcall GetCurrentThread();
+extern "C" __declspec(dllimport) int __stdcall   QueryThreadCycleTime(void* thread, unsigned long long* cycles);
+
+/// Time-stamp counter ticks per millisecond (the unit of QueryThreadCycleTime on invariant-TSC
+/// processors), measured once against the steady clock (the performance counter) over 20 ms.
+double cyclesPerMs() {
+    static double const rate = [] {
+        auto               t0 = std::chrono::steady_clock::now();
+        unsigned long long c0 = __rdtsc();
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        unsigned long long c1 = __rdtsc();
+        double             ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
+        return ms > 0 ? static_cast<double>(c1 - c0) / ms : 0.0;
+    }();
+    return rate;
+}
+} // namespace
+
+double threadCpuMs() {
+    unsigned long long cycles = 0;
+    double             rate   = cyclesPerMs();
+    if (rate <= 0 || !QueryThreadCycleTime(GetCurrentThread(), &cycles)) {
+        // no cycle counter: wall time
+        return std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    }
+    return static_cast<double>(cycles) / rate;
+}
 std::uint64_t chunkTimesRecorded() { return recorded().load(); }
 std::vector<double> chunkTimes() {
     std::lock_guard lock(timesMutex());
@@ -451,8 +481,8 @@ std::vector<double> chunkTimes() {
 
 namespace {
 struct StageTimer {
-    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
-    ~StageTimer() { tChunkMs += std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count(); }
+    double start = threadCpuMs();
+    ~StageTimer() { tChunkMs += threadCpuMs() - start; }
 };
 
 int twilightDim() {
