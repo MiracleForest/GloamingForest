@@ -684,12 +684,55 @@ std::string textFor(Player const& player, Json const& component) {
     });
 }
 
+namespace {
+
+/// Java potion ids -> Bedrock potion aux values (the flask icon's potion).
+int potionAux(std::string const& javaId) {
+    static std::unordered_map<std::string, int> const m{
+        {"minecraft:water", 0},           {"minecraft:mundane", 1},          {"minecraft:thick", 3},
+        {"minecraft:awkward", 4},         {"minecraft:night_vision", 5},     {"minecraft:long_night_vision", 6},
+        {"minecraft:invisibility", 7},    {"minecraft:long_invisibility", 8}, {"minecraft:leaping", 9},
+        {"minecraft:long_leaping", 10},   {"minecraft:strong_leaping", 11},  {"minecraft:fire_resistance", 12},
+        {"minecraft:long_fire_resistance", 13}, {"minecraft:swiftness", 14}, {"minecraft:long_swiftness", 15},
+        {"minecraft:strong_swiftness", 16}, {"minecraft:slowness", 17},      {"minecraft:long_slowness", 18},
+        {"minecraft:water_breathing", 19}, {"minecraft:long_water_breathing", 20}, {"minecraft:healing", 21},
+        {"minecraft:strong_healing", 22}, {"minecraft:harming", 23},          {"minecraft:strong_harming", 24},
+        {"minecraft:poison", 25},         {"minecraft:long_poison", 26},      {"minecraft:strong_poison", 27},
+        {"minecraft:regeneration", 28},   {"minecraft:long_regeneration", 29}, {"minecraft:strong_regeneration", 30},
+        {"minecraft:strength", 31},       {"minecraft:long_strength", 32},    {"minecraft:strong_strength", 33},
+        {"minecraft:weakness", 34},       {"minecraft:long_weakness", 35},    {"minecraft:turtle_master", 37},
+        {"minecraft:long_turtle_master", 38}, {"minecraft:strong_turtle_master", 39}, {"minecraft:slow_falling", 40},
+        {"minecraft:long_slow_falling", 41}, {"minecraft:strong_slowness", 42}, {"minecraft:wind_charged", 43},
+        {"minecraft:weaving", 44},        {"minecraft:oozing", 45},           {"minecraft:infested", 46},
+    };
+    auto it = m.find(javaId);
+    return it == m.end() ? -1 : it->second;
+}
+
+/// An icon component as the item data the port keeps: TF's potion flask component becomes U9's
+/// flask data ("flask_contents" {potion: Bedrock potion aux, doses, breakage, breakable}), so the
+/// icon draws the filled flask; other components keep their id.
+std::pair<std::string, Json> iconData(std::string const& component, Json const& value) {
+    if (component == "twilightforest:flask_contents" && value.is_object()) {
+        auto        pot  = value.value("potion", Json::object());
+        std::string java = pot.is_object() ? pot.value("potion", std::string{}) : pot.is_string() ? pot.get<std::string>() : std::string{};
+        return {"flask_contents",
+                Json{{"potion", potionAux(java)}, {"doses", value.value("doses", 0)}, {"breakage", value.value("breakage", 0)}, {"breakable", value.value("breakable", true)}}};
+    }
+    return {component, value};
+}
+
+} // namespace
+
 Json iconItem(Advancement const& adv) {
     if (adv.icon.empty()) return nullptr;
     auto stack = game::items::make(adv.icon, 1);
     if (!stack) return Json{{"id", adv.icon}, {"count", 1}, {"aux", 0}};
     if (adv.iconComponents.is_object())
-        for (auto const& [component, value] : adv.iconComponents.items()) game::items::setData(*stack, component, value);
+        for (auto const& [component, value] : adv.iconComponents.items()) {
+            auto [key, data] = iconData(component, value);
+            game::items::setData(*stack, key, data);
+        }
     return game::items::toJson(*stack);
 }
 

@@ -700,7 +700,8 @@ GF_REGISTER_SELFTEST("progression.icon_variants", [](Context& ctx) {
     };
     check("experiment_115_115", "twilightforest:e115_variant", "think");
     check("experiment_115_self_replenishing", "twilightforest:e115_variant", "full");
-    check("full_mettle_alchemist", "twilightforest:flask_contents", Json{{"breakable", false}, {"doses", 4}, {"potion", {{"potion", "minecraft:strong_harming"}}}});
+    // TF's flask component as U9's flask data (Bedrock's strong harming potion: aux 24)
+    check("full_mettle_alchemist", "flask_contents", Json{{"potion", 24}, {"doses", 4}, {"breakage", 0}, {"breakable", false}});
     check("modify_travellers_gear", "twilightforest:water_walk", Json::object());
 });
 
