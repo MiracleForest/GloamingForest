@@ -14,18 +14,32 @@
       },
       "scripts": {
         "pre_animation": [
+          "variable.dt = math.clamp((query.life_time - variable.prev_time) * 20.0, 0.0, 5.0);",
+          "variable.prev_time = query.life_time;",
           "variable.charging = query.property('twilightforest:charging');",
-          "variable.limb = variable.charging ? query.life_time * 24.0 : query.modified_distance_moved;",
+          "variable.charge_extra = variable.charge_extra + (variable.charging ? 0.9 * variable.dt : 0.0);",
+          "variable.limb = query.modified_distance_moved + variable.charge_extra;",
           "variable.amount = variable.charging ? 1.0 : query.modified_move_speed;"
         ],
-        "animate": ["base", { "attack": "variable.attack_time > 0.0" }]
+        "animate": [
+          "base",
+          {
+            "attack": "variable.attack_time > 0.0"
+          }
+        ],
+        "initialize": [
+          "variable.prev_time = query.life_time;",
+          "variable.charge_extra = 0.0;"
+        ]
       },
       "animations": {
         "base": "animation.twilightforest.minotaur.walk",
         "attack": "animation.humanoid.attack.rotations"
       },
       "enable_attachables": true,
-      "render_controllers": ["controller.render.default"],
+      "render_controllers": [
+        "controller.render.default"
+      ],
       "spawn_egg": {
         "base_color": "#3f3024",
         "overlay_color": "#aa7d66"

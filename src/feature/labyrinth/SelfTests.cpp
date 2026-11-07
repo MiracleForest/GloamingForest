@@ -53,6 +53,14 @@
 #include "game/Blocks.h"
 #include "game/Items.h"
 #include "selftest/SelfTest.h"
+#include <optional>
+#include <utility>
+#include "mc/server/SimulatedPlayer.h"
+#include "feature/boss/BossInternal.h"
+#include "feature/ext/landmark/LandmarkExt.h"
+#include "feature/gamerules/GameRules.h"
+#include "feature/inventory/Inventory.h"
+#include "feature/progression/Progression.h"
 
 namespace gf::feature::labyrinth::tests {
 
@@ -492,6 +500,26 @@ GF_REGISTER_SELFTEST("labyrinth.slime_block", [](Context& ctx) -> ll::coro::Coro
     // SlimeBlock#bounceUp: a living entity keeps its speed, others lose a fifth
     ctx.check(std::abs(blocks::bounceSpeed(-0.8, true) - 0.8) < 1e-9 && std::abs(blocks::bounceSpeed(-0.5, false) - 0.4) < 1e-9 && blocks::bounceSpeed(0.3, true) == 0.0,
               "the bounce speed");
+    // a mob dropped onto the block bounces (updateEntityAfterFallOn from its last airborne speed)
+    ctx.player().teleportTo(Vec3{pos.x + 3.5f, float(pos.y + 1), pos.z + 0.5f}, true, 0, 1, false);
+    if (auto* pig = spawnAt(pos, "minecraft:pig", 0.5f, 7.0f, 0.5f)) {
+        auto  uid     = pig->getOrCreateUniqueID().rawID;
+        float landedY = 0.0f, peak = -1.0f;
+        bool  landed  = false;
+        for (int t = 0; t < 60; ++t) {
+            co_await ctx.ticks(1);
+            auto* m = mobById(uid);
+            if (!m) break;
+            float y = m->getFeetPos().y;
+            if (!landed && m->isOnGround()) {
+                landed  = true;
+                landedY = y;
+            } else if (landed) peak = std::max(peak, y - landedY);
+        }
+        ctx.info("a pig dropped from 6 blocks rose " + std::to_string(peak) + " blocks after landing");
+        ctx.check(landed && peak > 1.0f, "a mob bounces on a maze slime block");
+        if (auto* m = mobById(uid)) m->remove();
+    } else ctx.fail("a pig spawns");
     // the sticky piston and the other maze slime recipes are loaded
     ctx.check(gf::recipes::byId("twilightforest:compressed_blocks/maze_slime") != nullptr, "maze slime block recipe");
     ctx.check(gf::recipes::byId("twilightforest:sticky_piston_maze_ver") != nullptr, "sticky piston recipe");
@@ -609,6 +637,151 @@ GF_REGISTER_SELFTEST("labyrinth.client_showcase", [](Context& ctx) -> ll::coro::
     for (auto id : shown)
         if (auto* a = fe::actorById(id)) a->remove();
     discardAround(mobsAt, 20);
+});
+
+// ---- landmark walk-through (audit A3) ------------------------------------------------------------------
+
+namespace {
+
+/// tfEnforcedProgression for the length of a test.
+struct WalkEnforcedScope {
+    bool previous = false;
+    WalkEnforcedScope() {
+        previous = gf::gamerules::getBool("tfEnforcedProgression");
+        gf::gamerules::set("tfEnforcedProgression", true);
+    }
+    ~WalkEnforcedScope() { gf::gamerules::set("tfEnforcedProgression", previous); }
+};
+
+/// The landmark of a boss against TF's structure record (LandmarkStructure: AdvancementLockConfig,
+/// HintConfig, ConquerableStructure) and what the lock does to a survival player: a start forced far
+/// from the test rows (its chunks never load: nothing is placed) refuses a player without the lock's
+/// advancement inside its protected pieces (ProgressionEvents#isAreaProtected) and lets him in once
+/// he has it. `lock` empty: the landmark has no lock and protects nothing.
+void walkLandmark(Context& ctx, std::string const& key, std::string const& lock, std::string const& hintBook, int farX) {
+    auto const* d = gf::landmark::descriptor(key);
+    ctx.require(d != nullptr, key + " has a descriptor");
+    ctx.check(d->conquerable, key + " is conquerable");
+    if (lock.empty()) ctx.check(d->lockAdvancements.empty(), key + " has no progression lock");
+    else ctx.check(d->lockAdvancements == std::vector<std::string>{lock}, key + " is locked by " + lock + " (" + std::to_string(d->lockAdvancements.size()) + " locks)");
+    ctx.check(d->hintBookKey == (hintBook.empty() ? std::string() : "twilightforest.book." + hintBook), key + "'s hint book (" + d->hintBookKey + ")");
+    WalkEnforcedScope enforced;
+    core::GlobalPos   site{ctx.dimension(), farX, 80, 150007};
+    gf::landmark::ext::ScopedStart forced(key, site);
+    ctx.require(forced && forced->generated, "forced a " + key + " start");
+    auto pieces = gf::landmark::ext::startPieces(*forced);
+    ctx.require(!pieces.empty(), key + " has pieces");
+    auto& sp = ctx.spawnPlayer("gf_walk");
+    sp.setPlayerGameType(GameType::Survival);
+    int protectedPieces = 0, refused = 0;
+    std::optional<BlockPos> probe;
+    for (auto const& p : pieces) {
+        if (!p.protectedPiece) continue;
+        ++protectedPieces;
+        BlockPos c{(p.box.minX + p.box.maxX) / 2, (p.box.minY + p.box.maxY) / 2, (p.box.minZ + p.box.maxZ) / 2};
+        if (gf::landmark::isProtectedFor(sp, c)) {
+            ++refused;
+            if (!probe) probe = c;
+        }
+    }
+    ctx.info(key + ": " + std::to_string(pieces.size()) + " pieces, " + std::to_string(protectedPieces) + " protected, " + std::to_string(refused) +
+             " refuse a player without " + (lock.empty() ? std::string("a lock") : lock));
+    BlockPos outside{forced->box.maxX + 40, forced->center.y, forced->box.maxZ + 40};
+    ctx.check(!gf::landmark::isProtectedFor(sp, outside), "nothing is protected outside the start");
+    if (lock.empty()) {
+        ctx.check(refused == 0, key + " protects nothing");
+        return;
+    }
+    ctx.check(protectedPieces > 0 && refused > 0, key + "'s protected pieces refuse a player without " + lock);
+    if (!probe) return;
+    gf::progression::grant(sp, lock);
+    ctx.check(!gf::landmark::isProtectedFor(sp, *probe), "with " + lock + " the landmark is open");
+    gf::progression::revoke(sp, lock);
+    ctx.check(gf::landmark::isProtectedFor(sp, *probe), "without it the landmark is locked again");
+    sp.setPlayerGameType(GameType::Creative);
+    ctx.check(!gf::landmark::isProtectedFor(sp, *probe), "creative players are never refused");
+}
+
+} // namespace
+
+// The labyrinth against TF's LabyrinthStructure record: locked by progress_lich, the labyrinth hint
+// book, conquerable; its protected pieces refuse a player without progress_lich.
+GF_REGISTER_SELFTEST("labyrinth.landmark_walk", [](Context& ctx) { walkLandmark(ctx, maze::kLabyrinth, "twilightforest:progress_lich", "labyrinth", 150307); });
+
+// The boss gauntlet (audit A3): a player in range wakes the Minoshroom at its spawner (home = the
+// spawner), hits it and kills it; the mangrove death chest at the home point holds the trophy and
+// the meef stroganoff, the labyrinth is the conquered home landmark, and progress_labyrinth's inputs
+// fired (player_killed_entity of the Minoshroom, hurt_boss).
+GF_REGISTER_SELFTEST("labyrinth.gauntlet", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope easy(Difficulty::Easy);
+    static std::map<std::string, int> triggers;
+    static std::string                killedEntity;
+    static bool                       listening = false;
+    if (!std::exchange(listening, true))
+        for (char const* id : {"minecraft:player_killed_entity", "twilightforest:hurt_boss"})
+            gf::progression::onTrigger(id, [id = std::string(id)](Player& player, nlohmann::json const& data) {
+                if (player.getNameTag() != "gf_minoshroom_gauntlet") return;
+                triggers[id]++;
+                if (id == "minecraft:player_killed_entity") killedEntity = data.value("entity", std::string());
+            });
+    triggers.clear();
+    killedEntity.clear();
+    gf::feature::boss::resetTestRecords();
+    auto box     = co_await ctx.flatArea(2320, 16);
+    auto spawner = ctx.testPos(2328, 2).offset(0, 1, 0);
+    ctx.require(ctx.setBlock(spawner, "twilightforest:minoshroom_boss_spawner"), "the minoshroom boss spawner is placed");
+    auto& sp  = ctx.spawnPlayer("gf_minoshroom_gauntlet");
+    auto  pid = sp.getOrCreateUniqueID().rawID;
+    sp.teleport(Vec3{spawner.x + 0.5f, float(spawner.y), spawner.z + 4.5f}, DimensionType(spawner.dim));
+    (void)gf::selftest::runServerCommand("effect \"" + sp.getRealName() + "\" resistance 60 255 true", spawner.dim);
+    std::int64_t uid = 0;
+    for (int t = 0; t < 80 && !uid; ++t) {
+        co_await ctx.ticks(1);
+        auto found = around(spawner, mobs::kMinoshroom, 8.0f);
+        if (!found.empty()) uid = found.front()->getOrCreateUniqueID().rawID;
+    }
+    ctx.require(uid != 0, "the spawner woke the Minoshroom");
+    ctx.check(ctx.blockAt(spawner) != "twilightforest:minoshroom_boss_spawner", "the spawner is gone");
+    auto* m = mobById(uid);
+    ctx.require(m != nullptr, "the Minoshroom is there");
+    auto home = gf::entity::home(*m);
+    ctx.check(home.has_value() && home->pos.x == spawner.x && home->pos.z == spawner.z, "its home is the spawner");
+    auto* p = fe::actorById(pid);
+    ctx.require(p != nullptr, "the player is there");
+    gf::combat::hurt(*m, 5.0f, "minecraft:player_attack", p);
+    co_await ctx.ticks(12);
+    m = mobById(uid);
+    p = fe::actorById(pid);
+    ctx.require(m && p, "the Minoshroom and the player are there");
+    gf::combat::hurt(*m, 1000.0f, "minecraft:player_attack", p);
+    std::optional<core::GlobalPos> chest;
+    for (int t = 0; t < 200 && !chest; ++t) {
+        co_await ctx.ticks(1);
+        chest = gf::feature::boss::lastDeathChest();
+    }
+    ctx.require(chest.has_value(), "the death chest was placed");
+    co_await ctx.ticks(3);
+    ctx.check(ctx.blockAt(*chest) == "twilightforest:mangrove_chest", "a mangrove death chest (" + ctx.blockAt(*chest) + ")");
+    bool trophy = false, stroganoff = false;
+    if (auto* region = game::regionOf(chest->dim))
+        if (auto inv = gf::inventory::find(*region, game::blockPos(*chest)); inv && inv->get) {
+            for (int i = 0; i < inv->slots; ++i) {
+                auto id = game::items::idOf(inv->get(*chest, i));
+                trophy |= id == "twilightforest:minoshroom_trophy";
+                stroganoff |= id == "twilightforest:meef_stroganoff";
+            }
+            if (inv->set)
+                for (int i = 0; i < inv->slots; ++i) inv->set(*chest, i, game::items::empty());
+        }
+    ctx.check(trophy, "the chest holds the minoshroom trophy");
+    ctx.check(stroganoff, "the chest holds the meef stroganoff");
+    auto conquest = gf::feature::boss::lastConquest();
+    ctx.check(conquest && conquest->second == maze::kLabyrinth, "the Minoshroom's postmortem conquers its home structure key, the labyrinth, at its home (no start stands in the test area) (" + (conquest ? conquest->second : std::string("none")) + ")");
+    ctx.check(triggers["minecraft:player_killed_entity"] >= 1 && killedEntity == mobs::kMinoshroom, "player_killed_entity fired for " + killedEntity);
+    ctx.check(triggers["twilightforest:hurt_boss"] >= 1, "hurt_boss fired");
+    ctx.cleanupBlock(*chest);
+    discardAround(spawner, 16.0f);
+    (void)box;
 });
 
 } // namespace gf::feature::labyrinth::tests

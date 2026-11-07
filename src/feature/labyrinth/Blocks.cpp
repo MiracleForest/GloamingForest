@@ -39,6 +39,7 @@
 #include "feature/ext/labyrinth/W0Internals.h"
 #include "feature/families/BlockEvents.h"
 #include "feature/movement/Movement.h"
+#include "feature/net/Net.h"
 #include "game/Blocks.h"
 #include "game/WorldDb.h"
 #include "mod/Log.h"
@@ -59,6 +60,17 @@ struct Fall {
 };
 std::unordered_map<std::int64_t, Fall>& falls() {
     static std::unordered_map<std::int64_t, Fall> m;
+    return m;
+}
+
+/// Every other actor in the air: its vertical speed of the last tick and that tick (Entity#move
+/// calls updateEntityAfterFallOn with the speed it collided with; Bedrock zeroes it on landing).
+struct Airborne {
+    double        dy   = 0.0;
+    std::uint64_t tick = 0;
+};
+std::unordered_map<std::int64_t, Airborne>& airborne() {
+    static std::unordered_map<std::int64_t, Airborne> m;
     return m;
 }
 
@@ -124,11 +136,22 @@ void install() {
             return true;
         }));
         if (falls().size() > 512) falls().clear();
+        // the other actors' fall speed while they fall (kept two ticks after landing: the stepped-on
+        // dispatch may run before or after this listener). Only a real fall is kept: a step down or
+        // a hovering flyer (|dy| < 0.1) lands as stepOn sees it, slowed instead of bounced
+        auto now = fe::currentTick();
+        for (Actor* a : level->getRuntimeActorList()) {
+            if (!a || a->isPlayer() || a->isOnGround() || !(a->getPosDelta().y < -0.1F) || !a->isAlive()) continue;
+            airborne()[fe::uidOf(*a)] = Airborne{a->getPosDelta().y, now};
+        }
+        std::erase_if(airborne(), [now](auto const& e) { return e.second.tick + 2 < now; });
     });
 
     // SlimeBlock#updateEntityAfterFallOn (bounceUp) and #stepOn
     gf::blockevents::onSteppedOn(kMazeSlimeBlock, [](BlockSource&, BlockPos const&, Actor& entity) {
         if (suppressingBounce(entity)) return;
+        // a companion's own client bounces and slows its player (src/client/labyrinth)
+        if (entity.isPlayer() && gf::net::isCompanion(static_cast<Player const&>(entity))) return;
         if (entity.isPlayer()) {
             auto it = falls().find(entity.getOrCreateUniqueID().rawID);
             if (it == falls().end() || it->second.dy > -0.1) return;
@@ -139,7 +162,17 @@ void install() {
             it->second.dy = 0.0;
             return;
         }
-        auto   v  = entity.getPosDelta();
+        auto v = entity.getPosDelta();
+        // updateEntityAfterFallOn: the first tick on the block after a fall turns the speed up
+        // (living entities keep all of it, others 80 %)
+        if (auto it = airborne().find(fe::uidOf(entity)); it != airborne().end()) {
+            double dy = it->second.dy;
+            airborne().erase(it);
+            if (dy < 0.0) {
+                fe::setMotion(entity, Vec3{v.x, static_cast<float>(bounceSpeed(dy, fe::asMob(entity) != nullptr)), v.z});
+                return;
+            }
+        }
         double d0 = std::fabs(v.y);
         if (d0 < 0.1) {
             double d1 = 0.4 + d0 * 0.2;
@@ -147,7 +180,10 @@ void install() {
         }
     });
 
-    gf::game::db::onWorldClosed([] { falls().clear(); });
+    gf::game::db::onWorldClosed([] {
+        falls().clear();
+        airborne().clear();
+    });
 }
 
 } // namespace gf::feature::labyrinth::blocks
