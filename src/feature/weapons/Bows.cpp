@@ -345,7 +345,8 @@ void registerBows() {
     for (char const* id : {kTripleBow, kSeekerBow, kIceBow, kEnderBow}) gf::item::ext::setRarity(id, gf::item::ext::Rarity::Uncommon);
 
     gf::combat::onDealt(gf::combat::priority::Normal, [](gf::combat::DamageInfo const& d) {
-        auto [causing, direct] = causingAndDirect(d.attacker, d.direct);
+        Actor* causing = d.attacker; // DamageSource#getEntity
+        Actor* direct  = d.direct;   // #getDirectEntity
         if (!causing || !causing->isPlayer() || !direct || direct == causing) return;
         auto& player = static_cast<Player&>(*causing);
         // EntityEvents#entityHurts: an arrow from a player whose used hand holds the triple bow

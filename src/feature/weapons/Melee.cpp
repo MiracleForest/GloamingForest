@@ -32,6 +32,7 @@
 
 #include "feature/combat/Combat.h"
 #include "feature/ext/entity/EntityExt.h"
+#include "feature/ext/entity/Handles.h"
 #include "feature/ext/item/Item.h"
 #include "feature/fx/Fx.h"
 #include "feature/item/Item.h"
@@ -40,7 +41,6 @@
 #include "feature/stats/Stats.h"
 #include "feature/tags/Tags.h"
 #include "feature/weapons/World.h"
-#include "feature/common/Interactions.h"
 #include "game/Items.h"
 #include "game/WorldDb.h"
 #include "mod/I18n.h"
@@ -106,11 +106,13 @@ gf::combat::Verdict blockAndParry(gf::combat::DamageInfo& d) {
     auto& player = static_cast<Player&>(d.victim);
     int   ticks  = 0;
     if (!isBlocking(player, &ticks)) return gf::combat::Verdict::Pass;
-    auto [causing, direct] = causingAndDirect(d.attacker, d.direct);
+    Actor* causing = d.attacker; // DamageSource#getEntity
+    Actor* direct  = d.direct;   // #getDirectEntity
     Actor* source          = direct ? direct : causing;
     if (!source) return gf::combat::Verdict::Pass;
     // parrying: a projectile within the window
-    bool projectile = direct && direct != causing && !isLiving(*direct);
+    // (a shooterless projectile is its own causing entity: parried all the same)
+    bool projectile = direct && !isLiving(*direct);
     if (projectile && ticks <= config().shieldParryTicksArrow) {
         bool tf = gf::projectile::ext::isProjectile(*direct);
         if (tf || config().parryNonTwilightAttacks) {
@@ -118,15 +120,12 @@ gf::combat::Verdict blockAndParry(gf::combat::DamageInfo& d) {
             double speed = std::sqrt(double(v.x) * v.x + double(v.y) * v.y + double(v.z) * v.z);
             auto   look  = lookOf(player);
             Vec3   nv{static_cast<float>(look.x * speed), static_cast<float>(look.y * speed), static_cast<float>(look.z * speed)};
-            // the projectile kit handles the cancelled hit after this (an arrow's REVERSE
-            // deflection): the parry's aim goes in on the next tick. Bedrock's kit has no owner
-            // setter, so the projectile keeps its shooter (Java makes the blocker its owner).
-            auto uid = world::uidOf(*direct);
+            // TF's projectiles: the kit's ProjectileImpactEvent#setCanceled and Projectile#setOwner
+            // (AIM_DEFLECT; the blocker owns the projectile from now on)
             if (tf) {
                 gf::projectile::ext::setVelocity(*direct, nv);
-                gf::interactions::nextTick([uid, nv] {
-                    if (auto* a = world::actorById(uid)) gf::projectile::ext::setVelocity(*a, nv);
-                });
+                gf::projectile::ext::setOwner(*direct, &player);
+                gf::projectile::ext::cancelImpact(*direct);
             } else world::setMotion(*direct, nv);
             ++gParries;
             log().info("weapons: {} parried a {}", player.getRealName(), direct->getTypeName());

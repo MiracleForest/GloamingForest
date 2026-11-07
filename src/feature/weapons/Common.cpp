@@ -128,15 +128,6 @@ bool isLiving(Actor& actor) {
     return actor.isPlayer() || actor.hasCategory(ActorCategory::Mob);
 }
 
-CausingDirect causingAndDirect(Actor* attacker, Actor* direct) {
-    // F10 reports a projectile's pair as (projectile, shooter); TF's projectile entities count as
-    // mobs to the engine, so the shared swap misses them: a projectile is always the direct one
-    auto projectile = [](Actor* a) { return a && (gf::projectile::ext::isProjectile(*a) || a->hasFamily(HashedString("inanimate"))); };
-    if (attacker && direct && projectile(attacker) && !projectile(direct)) std::swap(attacker, direct);
-    auto r = world::causingAndDirect(attacker, direct);
-    return {r.causing, r.direct};
-}
-
 bool freezeImmune(Actor const& actor) {
     static constexpr std::string_view kVanilla[] = {"minecraft:stray", "minecraft:polar_bear", "minecraft:snow_golem", "minecraft:wither"};
     auto const& type = actor.getTypeName();

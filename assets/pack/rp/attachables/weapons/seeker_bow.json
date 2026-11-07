@@ -1,0 +1,44 @@
+{
+  "format_version": "1.10.0",
+  "minecraft:attachable": {
+    "description": {
+      "identifier": "twilightforest:seeker_bow",
+      "materials": {
+        "default": "entity_alphatest",
+        "enchanted": "entity_alphatest_glint"
+      },
+      "textures": {
+        "default": "textures/twilightforest/item/seeker_bow",
+        "bow_pulling_0": "textures/twilightforest/item/seeker_bow_pulling_0",
+        "bow_pulling_1": "textures/twilightforest/item/seeker_bow_pulling_1",
+        "bow_pulling_2": "textures/twilightforest/item/seeker_bow_pulling_2",
+        "enchanted": "textures/misc/enchanted_item_glint"
+      },
+      "geometry": {
+        "default": "geometry.bow_standby",
+        "bow_pulling_0": "geometry.bow_pulling_0",
+        "bow_pulling_1": "geometry.bow_pulling_1",
+        "bow_pulling_2": "geometry.bow_pulling_2"
+      },
+      "animations": {
+        "wield": "animation.bow.wield",
+        "wield_first_person_pull": "animation.bow.wield_first_person_pull"
+      },
+      "scripts": {
+        "pre_animation": [
+          "v.gf_pull = (c.item_slot == 'main_hand' && q.is_using_item) ? q.item_in_use_duration : -1.0;",
+          "v.gf_bow_frame = v.gf_pull < 0.0 ? 0 : (v.gf_pull < 0.65 ? 1 : (v.gf_pull < 0.9 ? 2 : 3));"
+        ],
+        "animate": [
+          "wield",
+          {
+            "wield_first_person_pull": "c.is_first_person && v.gf_bow_frame > 0"
+          }
+        ]
+      },
+      "render_controllers": [
+        "controller.render.twilightforest.bow"
+      ]
+    }
+  }
+}

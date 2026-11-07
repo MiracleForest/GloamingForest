@@ -6,7 +6,8 @@
 # guardian zone). Every client draws the projectiles as RP entities; the chain links and the bow
 # FOV zoom are the client mod's.
 # Screenshots: out/weapons*/weapons-items-<mode>.png (hotbar), weapons-chain-<mode>.png,
-# weapons-cube-<mode>.png, weapons-icebomb-<mode>.png. Local mode also runs the weapons.* selftests.
+# weapons-cube-<mode>.png, weapons-icebomb-<mode>.png, weapons-bow-{standby,pulling0,pulling2}-<mode>.png
+# (the held ender bow and its pull frames). Local mode also runs the weapons.* selftests.
 Save-Screenshot 'hud' | Out-Null
 $remote = $script:Mode -ne 'local'
 $hostLine = if ($remote) { '\[host\].*' } else { '' }
@@ -30,6 +31,22 @@ Save-Screenshot "weapons-icebomb-$($script:Mode)" | Out-Null
 Wait-LogLine "${hostLine}$script:SelfTestDoneRegex" 60 -Since $mark | Out-Null
 $r = ConvertFrom-SelfTestLines (Get-LeviLog -Since $mark) 'weapons.client_showcase'
 if (-not (Register-SelfTestResult $r)) { throw 'weapons.client_showcase failed' }
+
+# The bows' held model (RP attachables, every client): slot 5 holds the ender bow (standby), then the
+# use button held for ~1.2 s draws it (pulling_0 -> _1 at 0.65 s -> _2 at 0.9 s, ItemModelGenerator
+# bowTex): compare with TF's ender_bow / ender_bow_pulling_2 textures, held like a vanilla bow.
+Focus-Game
+Press-Key '5'
+Start-Sleep -Milliseconds 500
+Save-Screenshot "weapons-bow-standby-$($script:Mode)" | Out-Null
+[BsE2E.Native]::MouseButton(1, $false)
+try {
+    Start-Sleep -Milliseconds 400
+    Save-Screenshot "weapons-bow-pulling0-$($script:Mode)" | Out-Null
+    Start-Sleep -Milliseconds 900
+    Save-Screenshot "weapons-bow-pulling2-$($script:Mode)" | Out-Null
+} finally { [BsE2E.Native]::MouseButton(1, $true) }
+Start-Sleep -Milliseconds 500
 
 if (-not $remote) {
     $r = Invoke-SelfTest 'weapons.*'
