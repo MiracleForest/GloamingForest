@@ -31,8 +31,8 @@
 #include <condition_variable>
 #include <deque>
 #include <filesystem>
-#include <intrin.h>
 #include <fstream>
+#include <intrin.h>
 #include <list>
 #include <mutex>
 #include <sstream>
@@ -464,14 +464,19 @@ double cyclesPerMs() {
 }
 } // namespace
 
+// QueryThreadCycleTime counts the processor's time-stamp ticks while the thread runs on the
+// invariant-TSC desktops the budget is checked on (Microsoft does not promise that unit everywhere:
+// on a VM or a processor without it the times are off by the rate, and the budget with them). The
+// mode is chosen once, so the two ends of a measurement never mix cycle and wall times.
 double threadCpuMs() {
-    unsigned long long cycles = 0;
-    double             rate   = cyclesPerMs();
-    if (rate <= 0 || !QueryThreadCycleTime(GetCurrentThread(), &cycles)) {
-        // no cycle counter: wall time
-        return std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now().time_since_epoch()).count();
-    }
-    return static_cast<double>(cycles) / rate;
+    static bool const cycles = [] {
+        unsigned long long c = 0;
+        return cyclesPerMs() > 0 && QueryThreadCycleTime(GetCurrentThread(), &c) != 0;
+    }();
+    if (!cycles) return std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    unsigned long long c = 0;
+    QueryThreadCycleTime(GetCurrentThread(), &c); // the current thread's pseudo handle: cannot fail
+    return static_cast<double>(c) / cyclesPerMs();
 }
 std::uint64_t chunkTimesRecorded() { return recorded().load(); }
 std::vector<double> chunkTimes() {
@@ -1057,6 +1062,7 @@ void onWorldReady() {
 
 struct TerrainModule {
     void install() {
+        (void)threadCpuMs(); // calibrates the cycle rate (20 ms) here, not in the first chunk's stage
         noteLifecycleThread();
         installed() = true;
         registerDensityTypes();
