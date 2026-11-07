@@ -31,56 +31,43 @@
         "damage_nearby_mobs": "animation.humanoid.damage_nearby_mobs",
         "swimming": "animation.zombie.swimming",
         "use_item_progress": "animation.humanoid.use_item_progress",
-        "skeleton_attack": "animation.skeleton.attack"
+        "skeleton_attack": "animation.skeleton.attack",
+        "look_at_target": "controller.animation.humanoid.look_at_target",
+        "move_controller": "controller.animation.humanoid.move",
+        "riding": "controller.animation.humanoid.riding",
+        "holding_controller": "controller.animation.humanoid.holding",
+        "brandish_spear_controller": "controller.animation.humanoid.brandish_spear",
+        "charging_controller": "controller.animation.humanoid.charging",
+        "attack": "controller.animation.humanoid.attack",
+        "sneaking_controller": "controller.animation.humanoid.sneaking",
+        "bob_controller": "controller.animation.humanoid.bob",
+        "damage_nearby_mobs_controller": "controller.animation.humanoid.damage_nearby_mobs",
+        "swimming_controller": "controller.animation.zombie.swimming",
+        "use_item_progress_controller": "controller.animation.humanoid.use_item_progress",
+        "skeleton_attack_controller": "controller.animation.skeleton.attack"
       },
       "scripts": {
         "pre_animation": [
           "variable.tcos0 = (Math.cos(query.modified_distance_moved * 38.17) * query.modified_move_speed / variable.gliding_speed_value) * 57.3;",
           "variable.gliding_speed_value = 1.0;"
         ],
-        "scale": "query.is_baby ? 0.5 : 1.0"
+        "scale": "query.is_baby ? 0.5 : 1.0",
+        "animate": [
+          "look_at_target",
+          "move_controller",
+          "riding",
+          "holding_controller",
+          "brandish_spear_controller",
+          "charging_controller",
+          "attack",
+          "sneaking_controller",
+          "bob_controller",
+          "damage_nearby_mobs_controller",
+          "swimming_controller",
+          "use_item_progress_controller",
+          "skeleton_attack_controller"
+        ]
       },
-      "animation_controllers": [
-        {
-          "look_at_target": "controller.animation.humanoid.look_at_target"
-        },
-        {
-          "move": "controller.animation.humanoid.move"
-        },
-        {
-          "riding": "controller.animation.humanoid.riding"
-        },
-        {
-          "holding": "controller.animation.humanoid.holding"
-        },
-        {
-          "brandish_spear": "controller.animation.humanoid.brandish_spear"
-        },
-        {
-          "charging": "controller.animation.humanoid.charging"
-        },
-        {
-          "attack": "controller.animation.humanoid.attack"
-        },
-        {
-          "sneaking": "controller.animation.humanoid.sneaking"
-        },
-        {
-          "bob": "controller.animation.humanoid.bob"
-        },
-        {
-          "damage_nearby_mobs": "controller.animation.humanoid.damage_nearby_mobs"
-        },
-        {
-          "swimming": "controller.animation.zombie.swimming"
-        },
-        {
-          "use_item_progress": "controller.animation.humanoid.use_item_progress"
-        },
-        {
-          "skeleton_attack": "controller.animation.skeleton.attack"
-        }
-      ],
       "enable_attachables": true,
       "spawn_egg": {
         "base_color": "#a3a3a3",

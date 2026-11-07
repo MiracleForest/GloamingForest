@@ -18,16 +18,15 @@
       "animations": {
         "default_leg_pose": "animation.spider.default_leg_pose",
         "look_at_target": "animation.spider.look_at_target",
-        "walk": "animation.spider.walk"
+        "walk": "animation.spider.walk",
+        "move": "controller.animation.spider.move"
       },
       "scripts": {
-        "scale": "0.5"
+        "scale": "0.5",
+        "animate": [
+          "move"
+        ]
       },
-      "animation_controllers": [
-        {
-          "move": "controller.animation.spider.move"
-        }
-      ],
       "spawn_egg": {
         "base_color": "#32022e",
         "overlay_color": "#17251e"
