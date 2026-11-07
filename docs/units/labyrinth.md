@@ -66,4 +66,34 @@ Open:
 
 ## Audit round 2
 
+Checked (W2 round 2, A5's sweep findings and round 1's open items):
+
+- `twilightforest:maze_slime` attributes: A5's sweep compares a freshly created entity with F13's golden (20 / 0.7 /
+  2: `Monster.createMonsterAttributes` before any `Slime#setSize`). Every maze slime in TF goes through
+  `Slime#finalizeSpawn` -> `MazeSlime#setSize` (MAX_HEALTH size^2 + the double_health modifier = 3 size^2, speed
+  0.2 + 0.1 size, attack = size), which is what the BP's size groups give (3 / 0.3 / 1 at size 1). Unchanged: the
+  sweep's row stays a known deviation of an unsized Java entity, not a bug.
+- Maze slime hurt / death / squish sounds: played by the code (`Mobs.cpp`: `MAZE_SLIME_*(_SMALL)` by size at
+  `0.1 x size` volume), which sounds.json cannot express (one sound per event, no size). The sweep only reads
+  sounds.json, so it keeps reporting them; correct as they are.
+
+Fixed:
+
+- A vanilla player on a maze slime block is slowed (`SlimeBlock#stepOn`). The server cannot scale a vanilla
+  client's speed each tick, so while one stands on the block (on the ground, not sneaking) its movement speed gets a
+  multiply-total modifier `twilightforest:maze_slime_step` of `core::labyrinth::slimeStepSpeedFactor(0.8)` (about
+  0.39: the steady walking speed with stepOn's x(0.4 + |dy| x 0.2) on the block's friction 0.8 over the speed
+  without; gtest `Labyrinth.SlimeStepSpeedFactor`); the BP's `minecraft:friction` 0.2 already is Java's 0.8.
+  Companions keep slowing themselves on their client. `labyrinth.slime_block` checks the SimulatedPlayer's speed on
+  and off the block.
+- A vanilla player teleported onto the block was bounced by the whole teleport height (the server's per-tick
+  position change counted as a fall): a drop faster than Java's terminal speed (4 blocks a tick) is no fall now.
+- Real conquest: `labyrinth.conquest` forces a labyrinth start far from the test rows (nothing placed), gives a
+  Minoshroom its home at the start's center and kills it: the start is conquered (the boss kit's postmortem,
+  `lastConquestFound`). The death chest at the unloaded home is dropped (`labyrinth.gauntlet` checks the chest).
+
+Open:
+
+- The mushrooms' look on a real client (no client run this round).
+
 Sounds (W2 round 2, audio pass): the maze slime's hurt, death and squish sounds are played from `Mobs.cpp` (MAZE_SLIME_*(_SMALL) by size, at TF's volume); `assets/pack/rp/sounds.json.d/labyrinth.json` now gives `twilightforest:maze_slime` an entry with empty `hurt` / `death` so Bedrock's `entity_sounds.defaults` (`game.player.hurt` / `game.player.die`) cannot add generic sounds on top. Open: nothing for audio.
