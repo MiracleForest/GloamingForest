@@ -31,6 +31,7 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <chrono>
 #include <optional>
 #include <string>
 #include <utility>
@@ -291,6 +292,14 @@ void setEvaluationBusy(int dim, int chunkX, int chunkZ, bool busy);
 /// Test seam: forgets that start chunk (cx, cz) was evaluated (and the probes and the
 /// ensureStartsAround runs that relied on it).
 void forgetEvaluation(int dim, int chunkX, int chunkZ);
+/// Test seam: how many threads wait in ensureStartsIn for another thread's evaluation of start
+/// chunk (cx, cz) right now.
+[[nodiscard]] int evaluationWaiters(int dim, int chunkX, int chunkZ);
+/// Test seam: whether start chunk (cx, cz) is being evaluated (claimed) by some thread.
+[[nodiscard]] bool evaluationBusy(int dim, int chunkX, int chunkZ);
+/// Test seam: how long a generation thread waits for another thread's evaluation (nullopt: the
+/// default, 2 s). A test that observes the wait lengthens it so a slow server tick cannot outlast it.
+void setEvaluationWaitForTest(std::optional<std::chrono::milliseconds> wait);
 /// The structure of `set` that starts in start chunk (cx, cz) ("": none), as the Starts stage would
 /// make it there (placement, weighted pick, layout and biome check), computed without storing a
 /// start: /twilightforest locate's CHUNK_LOAD_NEEDED for a chunk nobody generated. Remembered per
