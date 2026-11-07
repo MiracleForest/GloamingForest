@@ -497,6 +497,7 @@ GF_REGISTER_SELFTEST("stronghold.blockchain_throw", [](Context& ctx) -> ll::coro
 });
 
 GF_REGISTER_SELFTEST("stronghold.helmet_crab_blue", [](Context& ctx) -> ll::coro::CoroTask<> {
+    DifficultyScope normal(Difficulty::Normal); // Peaceful removes the crab (Monster) at its first tick
     auto  box = co_await ctx.flatArea(2580, 6);
     auto  at  = ctx.testPos(2583, 2);
     auto* c   = spawnAt(at, id::HelmetCrab);
