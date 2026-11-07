@@ -32,3 +32,32 @@ the unit reproduces in a different way than TF, with the reason and the workarou
 | `Mob#doHurtTarget` replacements (`Wraith` haunt, `PinchBeetle` clamped, `FireBeetle` breathing scorched) | one tick later | the replacement damage cannot run inside the engine's melee hurt (the combat pipeline runs one hurt per victim) | the vanilla hit is cancelled and the TF damage (with its type, death message and effects) applied on the next tick |
 | Spider jockeys of a druid on top of a vanilla skeleton (king spider with a 1-in-100 skeleton) | degraded | Bedrock skeletons cannot carry riders | the druid rides the spider when the skeleton refuses it |
 | Wraith home for `MobSpawnType.STRUCTURE` | by the placer | Bedrock keeps no spawn reason | a wraith from a spawner (`MobSpawnMethod::Spawner`) keeps its spawn position as home; a structure that places a wraith directly sets its home with `gf::entity::setHome(mob, pos, 20)`, which the wraith keeps |
+
+## Audit round 1
+
+A5 (mobs audit, W2 round 1). Checked against F13's goldens (tests/golden/mobs.json, loot.json) and TF 4.8.
+
+- **Spawn sweep** (new): `src/core/hostiles/MobSweep.h` lists all 80 TF entity types (attributes, box, fire
+  immunity, summonability, loot table, Peaceful despawn, null sounds, bosses), kept equal to the goldens by
+  `tests/hostiles/MobSweepTest.cpp`. Selftests in `src/feature/hostiles/SpawnSweep.cpp`:
+  `hostiles.spawn_sweep` (every type spawns; living: max health, movement speed, attack damage, follow
+  range, knockback resistance, box, fire immunity; others: box, fire immunity), `hostiles.mob_assets`
+  (loot table file, hurt / death entity sounds, far-away despawn component, `/summon` refusal),
+  `hostiles.peaceful_despawn` (Peaceful removes every non-boss monster, keeps the rest) and
+  `hostiles.multiplayer_target` (two SimulatedPlayers: a hostile wolf takes the nearer one and switches
+  to the other when the first goes creative). Other units' entities are audited too; their known
+  deviations are info lines (`AUDIT <owner> <id>: ...`), anything new fails.
+- **setupAnim todos**: the redcap's `FixedHumanoidModel#setupAttackAnimation` arm offsets
+  (`rightArm.x/z`, `leftArm.x/z` from `armWidth` 3 and the body turn) are
+  `animation.twilightforest.redcap.attack_arms` (redcap and sapper). The other todos of U17's models were
+  already covered: the wraith's vanilla `HumanoidModel.setupAnim` (look-at plus `wraith.legs`), the pinch
+  beetle's `isVehicle` pincers (`pincers_open`), the redcap's `isUsingItem` (redcaps never use items) and
+  `swimAmount` (mobs never take the swimming pose: always 0).
+- **Still open**: a left-handed redcap (Mob#finalizeSpawn, 5 %) swings and holds its item in the right
+  hand (Bedrock renders a mob's main hand on the right bone only). The breath particles stay server
+  sent (same particles, every client); an entity-side emitter would need head rotation in
+  `pre_effect_script` that cannot be verified without a client run. The haunt / clamped / scorched hits
+  stay one tick late (the combat contract cannot change a hurt's damage type: F10). The wraith's
+  STRUCTURE home still needs the spawn reason on the actor (F5 `spawn::spawnMob` / F7 `runEntity`).
+- **Client scenario**: `tools/e2e/client/scenarios/hostiles.ps1` adds the redcap swing frames and an
+  animation review of every living non-boss TF mob (`anim_<name>`); written, not run (A5).
