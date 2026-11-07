@@ -36,6 +36,7 @@
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/actor/BlockActor.h"
 #include "mc/world/level/block/actor/BlockActorType.h"
+#include "mc/world/level/block/actor/BedBlockActor.h"
 #include "mc/world/level/block/actor/FlowerPotBlockActor.h"
 #include "mc/world/Container.h"
 #include "mc/world/level/block/BlockType.h"
@@ -1251,6 +1252,59 @@ GF_REGISTER_SELFTEST("structure.flower_pot", [](Context& ctx) -> ll::coro::CoroT
     ctx.check(game::blockIdAt(*source, byPiece) == "minecraft:flower_pot", "the piece placed a flower pot");
     ctx.check(plantAt(byPiece) == blocks::bedrockId("minecraft:red_mushroom"), "the piece's pot holds a red mushroom (" + plantAt(byPiece) + ")");
     ctx.check(plantAt(byTemplate) == blocks::bedrockId("minecraft:oak_sapling"), "the template's pot holds an oak sapling (" + plantAt(byTemplate) + ")");
+});
+
+// ---- beds ------------------------------------------------------------------------------------------------------------
+
+GF_REGISTER_SELFTEST("structure.bed_color", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto area = co_await ctx.flatArea(5725, 6, 4);
+    ctx.require(co_await ctx.ensureLoaded(ctx.testPos(5725)), "test area loaded");
+    auto* source = ctx.region();
+    ctx.require(source != nullptr, "block source");
+    // Java's 16 <colour>_bed blocks are Bedrock's one bed block (DyeColor numbering)
+    ctx.check(blocks::bedColor("minecraft:white_bed") == 0 && blocks::bedColor("minecraft:light_blue_bed") == 3 &&
+                  blocks::bedColor("minecraft:red_bed") == 14 && blocks::bedColor("minecraft:black_bed") == 15 && blocks::bedColor("minecraft:bed") < 0,
+              "bed colours follow DyeColor");
+    for (auto const* c : {"white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray", "light_gray", "cyan", "purple", "blue",
+                          "brown", "green", "red", "black"})
+        ctx.check(blocks::bedrockId(std::string("minecraft:") + c + "_bed") == "minecraft:bed", std::string(c) + "_bed is a Bedrock bed");
+    // a red bed turned lime by a rule processor (CampStructureDefinitionGenerator's bed colours)
+    Json lime{{"processor_type", "minecraft:rule"},
+              {"rules", Json::array({Json{{"input_predicate", {{"predicate_type", "minecraft:block_match"}, {"block", "minecraft:red_bed"}}},
+                                          {"location_predicate", {{"predicate_type", "minecraft:always_true"}}},
+                                          {"output_state", {{"Name", "minecraft:lime_bed"}, {"Properties", {{"part", "foot"}, {"facing", "east"}}}}}}})}};
+    std::string error;
+    ctx.require(templates::add(makeTemplate("gf_test:structure/bed",
+                                            {state("minecraft:air"), state("minecraft:red_bed", {{"part", "foot"}, {"facing", "east"}}),
+                                             state("minecraft:red_bed", {{"part", "head"}, {"facing", "east"}})},
+                                            {{"12"}}),
+                               &error),
+                "the bed fixture registers " + error);
+    BlockPos byPiece{area.minX + 1, area.minY, area.minZ + 3};
+    BlockPos plain{area.minX + 3, area.minY, area.minZ + 2};
+    BlockPos processed{area.minX + 3, area.minY, area.minZ + 3};
+    {
+        BlockSourceRegion region(*source, byPiece);
+        TestPiece         piece(BlockBox{area.minX, area.minY, area.minZ, area.maxX, area.maxY, area.maxZ}, std::nullopt);
+        piece.placeBlock(region, "minecraft:light_blue_bed", Json{{"part", "foot"}, {"facing", "east"}}, byPiece.x, byPiece.y, byPiece.z, piece.bbox);
+        piece.placeBlock(region, "minecraft:light_blue_bed", Json{{"part", "head"}, {"facing", "east"}}, byPiece.x + 1, byPiece.y, byPiece.z, piece.bbox);
+        ctx.require(templates::place("gf_test:structure/bed", region, plain, TemplateSettings{}), "the bed template places");
+        TemplateSettings settings;
+        settings.processors = {lime.dump()};
+        ctx.require(templates::place("gf_test:structure/bed", region, processed, settings), "the processed bed template places");
+    }
+    co_await ctx.ticks(8); // the bed's block actor exists a tick later; queued work runs every 5 ticks
+    source = ctx.region();
+    ctx.require(source != nullptr, "block source");
+    auto colorAt = [&](BlockPos const& p) -> int {
+        auto* actor = source->getBlockEntity(p);
+        if (!actor || actor->getType() != BlockActorType::Bed) return -1;
+        return static_cast<BedBlockActor&>(*actor).mDyeColor;
+    };
+    ctx.check(game::blockIdAt(*source, byPiece) == "minecraft:bed", "the piece placed a bed");
+    ctx.check(colorAt(byPiece) == 3, "the piece's bed is light blue (" + std::to_string(colorAt(byPiece)) + ")");
+    ctx.check(colorAt(plain) == 14, "the template's bed is red (" + std::to_string(colorAt(plain)) + ")");
+    ctx.check(colorAt(processed) == 5, "the processed bed is lime (" + std::to_string(colorAt(processed)) + ")");
 });
 
 // ---- paintings -------------------------------------------------------------------------------------------------------

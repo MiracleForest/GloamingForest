@@ -181,6 +181,7 @@ std::unordered_map<std::string, std::vector<std::string>> const& renames() {
         {"minecraft:grass_block", {"minecraft:grass_block", "minecraft:grass"}},
         {"minecraft:short_grass", {"minecraft:short_grass", "minecraft:tallgrass"}},
         {"minecraft:dirt_path", {"minecraft:grass_path"}},
+        {"minecraft:rooted_dirt", {"minecraft:dirt_with_roots"}},
         {"minecraft:snow", {"minecraft:snow_layer"}},
         {"minecraft:snow_block", {"minecraft:snow"}},
         {"minecraft:jack_o_lantern", {"minecraft:lit_pumpkin"}},
@@ -226,8 +227,6 @@ std::unordered_map<std::string, std::vector<std::string>> const& renames() {
         {"minecraft:bamboo_sign", {"minecraft:bamboo_standing_sign"}},
         {"minecraft:crimson_sign", {"minecraft:crimson_standing_sign"}},
         {"minecraft:warped_sign", {"minecraft:warped_standing_sign"}},
-        {"minecraft:white_bed", {"minecraft:bed"}},
-        {"minecraft:red_bed", {"minecraft:bed"}},
         {"minecraft:skeleton_wall_skull", {"minecraft:skeleton_skull"}},
         {"minecraft:wither_skeleton_wall_skull", {"minecraft:wither_skeleton_skull"}},
         {"minecraft:zombie_wall_head", {"minecraft:zombie_head"}},
@@ -673,9 +672,12 @@ std::string resolveId(std::string_view javaId, Json const& props) {
         if (auto it = gIdCache.find(id); it != gIdCache.end()) return it->second;
     }
     std::string result;
-    // Java's potted_* blocks are one flower pot block on Bedrock (the plant is the pot's content)
+    // Java's potted_* blocks are one flower pot block on Bedrock (the plant is the pot's content);
+    // its 16 <colour>_bed blocks are one bed block (the colour is the bed block actor's)
     if (id.starts_with("minecraft:potted_")) {
         if (lookup("minecraft:flower_pot")) result = "minecraft:flower_pot";
+    } else if (bedColor(id) >= 0) {
+        if (lookup("minecraft:bed")) result = "minecraft:bed";
     } else if (auto it = renames().find(id); it != renames().end()) {
         for (auto const& c : it->second)
             if (lookup(c)) {
@@ -754,6 +756,20 @@ std::string pottedPlant(std::string_view javaId) {
     auto id = bedrockId("minecraft:" + plant);
     if (id.empty()) warnOnce("potted:" + plant, "structure: no Bedrock block for the potted plant minecraft:" + plant + " (empty pot)");
     return id;
+}
+
+int bedColor(std::string_view javaId) {
+    // DyeColor order (white 0 .. black 15), which is also the Bedrock bed block actor's colour
+    static constexpr std::array<std::string_view, 16> kColours = {"white", "orange", "magenta", "light_blue", "yellow", "lime",
+                                                                  "pink",  "gray",   "light_gray", "cyan",   "purple", "blue",
+                                                                  "brown", "green",  "red",        "black"};
+    constexpr std::string_view ns = "minecraft:";
+    if (javaId.starts_with(ns)) javaId.remove_prefix(ns.size());
+    if (!javaId.ends_with("_bed")) return -1;
+    javaId.remove_suffix(4);
+    for (std::size_t i = 0; i < kColours.size(); i++)
+        if (kColours[i] == javaId) return static_cast<int>(i);
+    return -1;
 }
 
 bool isRegisteredBlock(std::string_view id) {
