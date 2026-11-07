@@ -163,8 +163,9 @@ std::pair<float, float> anglesTo(Mob& m, Actor& t) {
 }
 
 /// Mob#lookAt(target, maxYRot, maxXRot): turns only the yaw and pitch themselves (rotlerp). The head
-/// (yHeadRot, which her view vector reads) is turned by the LookControl alone (mobs::lookAt), as in
-/// Java. Writes the rotation component directly: Actor::setRotationWrapped is client-only.
+/// (yHeadRot, which her view vector reads) is turned by the LookControl (mobs::lookAt), as in Java;
+/// HoverBeamGoal runs Java's LookControl step itself (lookControlTick). Writes the rotation
+/// component directly: Actor::setRotationWrapped is client-only.
 void mobLookAt(Mob& m, Actor& t, float maxY, float maxX) {
     auto [yaw, pitch] = anglesTo(m, t);
     auto& rc          = *m.mBuiltInComponents->mActorRotationComponent;
@@ -604,13 +605,16 @@ private:
     double mDropY      = 0;
 };
 
-/// Entity#calculateViewVector(xRot, yHeadRot) (LivingEntity#getViewYRot is the head's yaw).
-Vec3 viewVector(Mob const& m) {
-    double pitch = m.getRotation().x * std::numbers::pi / 180.0;
-    double yaw   = -m.getYHeadRot() * std::numbers::pi / 180.0;
+/// Entity#calculateViewVector(xRot, yRot).
+Vec3 viewVector(float xRot, float yRot) {
+    double pitch = xRot * std::numbers::pi / 180.0;
+    double yaw   = -yRot * std::numbers::pi / 180.0;
     double cy = std::cos(yaw), sy = std::sin(yaw), cp = std::cos(pitch), sp = std::sin(pitch);
     return Vec3{static_cast<float>(sy * cp), static_cast<float>(-sp), static_cast<float>(cy * cp)};
 }
+
+/// Entity#getViewVector: (xRot, yHeadRot) (LivingEntity#getViewYRot is the head's yaw).
+Vec3 viewVector(Mob const& m) { return viewVector(m.getRotation().x, m.getYHeadRot()); }
 
 /// AABB#clip (the slab test): the entry point of the segment from -> to, nullopt when it misses.
 std::optional<Vec3> clip(AABB const& b, Vec3 const& from, Vec3 const& to) {
@@ -647,6 +651,13 @@ public:
         if (mSeekTimer >= mMaxSeekTime) return false;
         return mBeamTimer < mMaxBeamTime;
     }
+    void start() override {
+        HoverBase::start();
+        if (auto* m = mob()) {
+            mHeadYaw = m->getYHeadRot();
+            mXRot    = m->getRotation().x;
+        }
+    }
     void stop() override {
         mSeekTimer    = 0;
         mHoverTimer   = 0;
@@ -663,7 +674,8 @@ public:
         if (mHoverTimer >= mMaxHoverTime) {
             mBeamTimer++;
             setBreathing(*m, true);
-            doRayAttack(*m);
+            // along her view as her LookControl left it last tick
+            doRayAttack(*m, viewVector(mXRot, mHeadYaw));
             // descend
             mHoverPosY -= 0.05F;
             if (mHoverPosY < mBeamY) mHoverPosY = mBeamY;
@@ -676,7 +688,27 @@ public:
             float tracking = mIsInPosition ? 1.0F : 20.0F;
             mobLookAt(*m, *t, tracking, tracking);
             mobs::lookAt(*m, *t, tracking, tracking);
+            lookControlTick(*m, *t, tracking, tracking);
         }
+    }
+
+    /// LookControl#tick after setLookAt(target, maxY, maxX), run by the goal itself: Bedrock's own
+    /// look control leaves the head where it is at a 1 degree turn rate (the in-position tracking),
+    /// so her beam would stay on a stale aim. resetXRotOnTick: xRot = 0, then turned towards the
+    /// target's eyes by at most maxX; yHeadRot turned by at most maxY (no clamp to the body: the
+    /// hover goals use no navigation, so getNavigation().isDone()).
+    void lookControlTick(Mob& m, Actor& t, float maxY, float maxX) {
+        auto me = m.getEyePos();
+        auto te = t.getEyePos();
+        double dx = te.x - me.x, dz = te.z - me.z;
+        auto [yaw, pitch] = anglesTo(m, t);
+        bool aimable = std::abs(dx) > 1.0E-5 || std::abs(dz) > 1.0E-5; // getYRotD / getXRotD present
+        if (aimable) mHeadYaw = wrapDegrees(rotlerp(mHeadYaw, yaw, maxY));
+        mXRot = aimable ? rotlerp(0.0F, pitch, maxX) : 0.0F;
+        m.setYHeadRot(mHeadYaw);
+        auto& rc = *m.mBuiltInComponents->mActorRotationComponent;
+        Vec2  rot = rc.mRot;
+        rc.mRot   = Vec2{mXRot, rot.y};
     }
 
 private:
@@ -686,11 +718,10 @@ private:
         mSeekTimer = 0;
     }
 public:
-    static void doRayAttack(Mob& m) {
+    static void doRayAttack(Mob& m, Vec3 const& look) {
         double range = 20.0, offset = 10.0;
         auto   p     = feet(m);
         Vec3   src{p.x, p.y + 0.25f, p.z};
-        Vec3   look = viewVector(m);
         Vec3   dest{src.x + look.x * static_cast<float>(range), src.y + look.y * static_cast<float>(range), src.z + look.z * static_cast<float>(range)};
         auto   b = boxOf(m);
         AABB   search{Vec3{b.min.x + look.x * 10 - 20, b.min.y + look.y * 10 - 20, b.min.z + look.z * 10 - 20},
@@ -719,6 +750,7 @@ public:
     int    mHoverTimer = 0, mBeamTimer = 0, mSeekTimer = 0;
     double mBeamY        = 0;
     bool   mIsInPosition = false;
+    float  mHeadYaw = 0, mXRot = 0; ///< her yHeadRot / xRot as the LookControl left them
 };
 
 // ---- the shields ----------------------------------------------------------------------------------
@@ -1020,7 +1052,7 @@ int  queenDropsForTest(Actor& queen, int* maxDrops) {
 }
 int  queenBeamDamageForTest(Actor& queen) { return stateOf(queen).damageWhileBeaming; }
 bool queenBreathingForTest(Actor& queen) { return stateOf(queen).breathing; }
-void rayAttackForTest(Mob& queen) { HoverBeamGoal::doRayAttack(queen); }
+void rayAttackForTest(Mob& queen) { HoverBeamGoal::doRayAttack(queen, viewVector(queen)); }
 int  pierceLevelForTest(Actor& projectile) { return pierceLevel(projectile); }
 
 } // namespace gf::feature::aurora
