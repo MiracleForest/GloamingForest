@@ -111,6 +111,7 @@
 #include "feature/common/Redstone.h"
 #include "feature/common/Screens.h"
 #include "feature/ext/combat/InventoryChanges.h"
+#include "feature/ext/combat/InventoryFaces.h"
 #include "feature/ext/combat/InventoryMigrate.h"
 #include "feature/ext/combat/InventoryViewers.h"
 #include "feature/fx/Fx.h"
@@ -201,6 +202,10 @@ public:
     }
     int  getContainerSize() const override { return static_cast<int>(mItems.size()); }
     int  getMaxStackSize() const override { return 64; }
+    // the game's hoppers, hopper minecarts and droppers ask these with the side they touch: the
+    // block's WorldlyContainer rules (feature/ext/combat/InventoryFaces.h)
+    bool canPushInItem(int slot, int face, ItemStack const& item) const override { return faceRule(slot, face, item, true); }
+    bool canPullOutItem(int slot, int face, ItemStack const& item) const override { return faceRule(slot, face, item, false); }
     void startOpen(Actor&) override {}
     void stopOpen(Actor&) override {}
     void serverInitItemStackIds(int slot, int count, std::function<void(int, ItemStack const&)> onNetIdChanged) override {
@@ -214,6 +219,14 @@ public:
 
     std::vector<ItemStack>   mItems;
     std::optional<GlobalPos> where; ///< the block, once looked up (nativeContainer)
+
+private:
+    bool faceRule(int slot, int face, ItemStack const& item, bool place) const {
+        if (!where) return true;
+        auto* region = game::regionOf(where->dim);
+        if (!region || !region->hasChunksAt(game::blockPos(*where), 0, false)) return true;
+        return ext::faceAllows(game::blockIdAt(*region, game::blockPos(*where)), *where, slot, item, face, place);
+    }
 };
 
 struct GfContainerComponent;
