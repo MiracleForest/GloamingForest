@@ -128,11 +128,11 @@ void loadGrowers() {
 }
 
 /// The client-side part of GrowingBeanstalkBlockEntity#tick for ticks < 100: dust of the solid
-/// block below random points around the grower (TF: 20 a tick on each client; 5 a tick here,
-/// sent as block particles).
+/// block below random points around the grower (20 a tick like TF; Java draws them on each client, here
+/// they are sent as block particles).
 void rumbleDust(BlockSource& region, BlockPos const& pos) {
     auto& r = random();
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < 20; i++) {
         float x = (static_cast<float>(pos.x) + r.nextFloat()) + static_cast<float>(r.nextInt(5) * (r.nextBoolean() ? -1 : 1));
         float z = (static_cast<float>(pos.z) + r.nextFloat()) + static_cast<float>(r.nextInt(5) * (r.nextBoolean() ? -1 : 1));
         BlockPos under{static_cast<int>(std::floor(x)), pos.y - 1, static_cast<int>(std::floor(z))};

@@ -523,9 +523,9 @@ private:
     std::unordered_map<long long, Block const*> mBlocks;
 };
 
-/// The golden of the cloud castle (start chunk (3, -2), y 0, the e2e seed): "" records it (one info
-/// line, reviewed once with screenshots after U27's pieces merged), else it must match.
-constexpr char kCastleHash[] = "";
+/// The golden of the cloud castle (start chunk (3, -2), y 0, the e2e seed), recorded in W2 audit round 1
+/// (the screenshot review of a placed castle is the client scenario giants.ps1); "" records it.
+constexpr char kCastleHash[] = "18f7c25dab5940c5";
 
 } // namespace
 
@@ -539,9 +539,6 @@ GF_REGISTER_SELFTEST("giants.cloud_castle_hash", [](Context& ctx) {
         return;
     }
     int const cx = 3, cz = -2;
-    auto seed = static_cast<std::int64_t>(static_cast<std::uint64_t>(kSeed) + static_cast<std::uint64_t>(static_cast<std::int64_t>(cx)) * 25117ULL +
-                                          static_cast<std::uint64_t>(static_cast<std::int64_t>(cz)) * 151121ULL);
-    (void)seed;
     core::jrand::WorldgenRandom context(std::make_unique<core::jrand::LegacyRandom>(0));
     context.setLargeFeatureSeed(kSeed, cx, cz);
     structure::bases::PieceList pieces;
