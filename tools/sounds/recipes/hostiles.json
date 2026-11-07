@@ -1,0 +1,121 @@
+{
+  "about": "U17 hostiles: refinements of the baseline (tools/sounds/baseline/hostiles.json). Original sound designs; TF's audio is never read. The events (ids, subtitles, categories, volumes, pitches, variant counts) stay TF's; as in TF the hostile, mist and winter wolves share one set of wolf files and the Wraith's ambient, hurt and death share its four gasps. The Fire Beetle chitters with a smouldering crackle under its buzz; the Pinch Beetle's buzz carries pincer clicks and its attack is a hard double snap with a thump; the Slime Beetle chitters wetly. The Redcap chuckles in short breathy 'heh' syllables, screeches when hurt and groans long when it dies. The wolves growl low and wet, yelp when hurt and snarl (a growl over a hiss) when they take notice. The Wraith gasps: a sharp whispered inhale and a falling ghostly moan in a large room.",
+  "patches": {
+    "fire_beetle/voice": {
+      "about": "Fire Beetle: an insect buzz over smouldering crackles.",
+      "params": {"pitch": 140, "len": 0.6, "bend": 0, "band": 900, "wing": 45, "fire": -13},
+      "length": "$len", "tail": 0.25,
+      "layers": [
+        {"type": "patch", "patch": "creature/insect", "length": "$len+0.2", "params": {"pitch": "$pitch", "len": "$len", "wing": "$wing", "band": "$band", "q": 1.3, "bend": "$bend"}},
+        {"type": "patch", "patch": "ambient/crackle", "length": "$len+0.3", "gain": "$fire", "params": {"len": "$len", "density": 22, "ping": 0.1}}
+      ]
+    },
+    "pinch_beetle/voice": {
+      "about": "Pinch Beetle: a buzz with pincer clicks.",
+      "params": {"pitch": 180, "len": 0.5, "bend": 0, "clicks": 2},
+      "length": "$len", "tail": 0.2,
+      "layers": [
+        {"type": "patch", "patch": "creature/insect", "length": "$len+0.2", "params": {"pitch": "$pitch", "len": "$len", "wing": 60, "band": 1500, "bend": "$bend"}},
+        {"type": "patch", "patch": "creature/clack", "start": "$len*0.2", "length": 0.6, "gain": -8, "params": {"freq": 1300, "count": "$clicks", "gap": 0.06, "decay": 0.7}}
+      ]
+    },
+    "pinch_beetle/snap": {
+      "about": "Pinch Beetle clamp: a hard double snap of chitin with a body thump.",
+      "params": {"freq": 1200},
+      "length": 0.25, "tail": 0.4,
+      "layers": [
+        {"type": "patch", "patch": "creature/clack", "length": 0.6, "params": {"freq": "$freq", "count": 2, "gap": 0.04, "decay": 1.4}},
+        {"type": "patch", "patch": "impact/thud", "length": 0.6, "gain": -7, "params": {"pitch": 150, "len": 0.14, "crack": 0.8}}
+      ]
+    },
+    "slime_beetle/voice": {
+      "about": "Slime Beetle: a wet blorp with a muffled buzz.",
+      "params": {"pitch": 140, "len": 0.35, "wet": 0.75, "bend": 0},
+      "length": "$len", "tail": 0.25,
+      "layers": [
+        {"type": "patch", "patch": "creature/squish", "length": "$len+0.3", "params": {"pitch": "$pitch", "len": "$len", "wet": "$wet"}},
+        {"type": "patch", "patch": "creature/insect", "length": "$len+0.2", "gain": -9, "params": {"pitch": "$pitch*1.1", "len": "$len*0.9", "wing": 50, "band": 800, "bend": "$bend"}}
+      ]
+    },
+    "redcap/chuckle": {
+      "about": "Goblin chuckle: short breathy 'heh' syllables falling in pitch.",
+      "params": {"pitch": 260, "count": 5, "syll": 0.085, "size": 1.35, "rough": 2.0},
+      "length": "$count*$syll*1.3", "tail": 0.2,
+      "layers": [
+        {"type": "osc", "wave": "saw", "length": "$syll", "freq": {"env": [[0, "$pitch*semi(rand(1,4))"], ["$syll", "$pitch*semi(rand(-3,0))"]], "curve": "exp"}, "env": {"a": 0.006, "d": "$syll*0.6", "s": 0.4, "r": 0.03}, "formant": {"vowel": "rand(0.7,1.4)", "shift": "$size", "mix": 0.85}, "drive": "$rough", "repeat": {"count": "$count", "every": "$syll*1.3", "jitter": 0, "decay": 0.88}},
+        {"type": "noise", "color": "pink", "amp": 0.3, "length": "$syll*0.7", "env": {"a": 0.004, "d": "$syll*0.5", "s": 0.1, "r": 0.02}, "filter": [{"type": "bp", "freq": "2200*$size", "q": 1.2}], "repeat": {"count": "$count", "every": "$syll*1.3", "jitter": 0, "decay": 0.88}}
+      ],
+      "fx": [{"type": "filter", "filter": "hp", "freq": 140}, {"type": "filter", "filter": "lp", "freq": "5200*$size", "stages": 2}, {"type": "reverb", "room": 0.2, "mix": 0.06}]
+    },
+    "wolf/snarl": {
+      "about": "Wolf taking notice: a rough rising growl over a bared-teeth hiss.",
+      "params": {"pitch": 115, "len": 1.2},
+      "length": "$len", "tail": 0.3,
+      "layers": [
+        {"type": "patch", "patch": "creature/growl", "length": "$len+0.3", "params": {"pitch": "$pitch", "len": "$len", "size": 0.95, "rough": 5, "rasp": 0.6, "wobble": 1.0, "vowelA": 2, "vowelB": 4, "rumble": 34}},
+        {"type": "patch", "patch": "creature/hiss", "length": "$len", "gain": -13, "params": {"len": "$len*0.6", "bright": 0.7, "attack": 0.1}}
+      ]
+    },
+    "wraith/gasp": {
+      "about": "Wraith gasp: a sharp whispered inhale, then a falling ghostly moan in a large room.",
+      "params": {"pitch": 200, "len": 1.3, "glide": -6},
+      "length": "$len+0.3", "tail": 0.6,
+      "layers": [
+        {"type": "noise", "color": "white", "length": 0.32, "env": {"env": [[0, 0], [0.26, 1], [0.32, 0]], "curve": "smooth"}, "filter": [{"type": "bp", "freq": {"from": 1400, "to": 3200, "time": 0.3}, "q": 1.6}], "gain": -3},
+        {"type": "patch", "patch": "creature/ghost", "start": 0.28, "length": "$len+1.2", "params": {"pitch": "$pitch", "len": "$len", "glide": "$glide", "whisper": 0.5, "room": 0.85, "vowelA": 0, "vowelB": 4}}
+      ]
+    }
+  },
+  "files": {
+    "mob/fire_beetle/idle1": {"patch": "fire_beetle/voice", "params": {"pitch": 132, "len": 0.6}, "seed": 1701},
+    "mob/fire_beetle/idle2": {"patch": "fire_beetle/voice", "params": {"pitch": 140, "len": 0.55, "wing": 42}, "seed": 1702},
+    "mob/fire_beetle/idle3": {"patch": "fire_beetle/voice", "params": {"pitch": 148, "len": 0.65, "wing": 48}, "seed": 1703},
+    "mob/fire_beetle/idle4": {"patch": "fire_beetle/voice", "params": {"pitch": 155, "len": 0.5}, "seed": 1704},
+    "mob/fire_beetle/death": {"patch": "fire_beetle/voice", "params": {"pitch": 135, "len": 0.9, "bend": -14, "wing": 38, "fire": -9}, "seed": 1705},
+    "mob/fire_beetle/hurt1": {"patch": "fire_beetle/voice", "params": {"pitch": 165, "len": 0.22, "bend": 6, "band": 1100, "wing": 55, "fire": -15}, "seed": 1706},
+    "mob/fire_beetle/hurt2": {"patch": "fire_beetle/voice", "params": {"pitch": 172, "len": 0.2, "bend": 7, "band": 1100, "wing": 55, "fire": -15}, "seed": 1707},
+    "mob/fire_beetle/hurt3": {"patch": "fire_beetle/voice", "params": {"pitch": 180, "len": 0.24, "bend": 5, "band": 1100, "wing": 55, "fire": -15}, "seed": 1708},
+    "mob/mist_wolf/idle1": {"patch": "creature/growl", "params": {"pitch": 108, "len": 0.85, "size": 0.95, "rough": 3.5, "rasp": 0.4, "wobble": 0.8, "vowelA": 3, "vowelB": 4, "rumble": 34}, "seed": 1711},
+    "mob/mist_wolf/idle2": {"patch": "creature/growl", "params": {"pitch": 115, "len": 0.95, "size": 0.95, "rough": 3.5, "rasp": 0.45, "wobble": 0.9, "vowelA": 2, "vowelB": 4, "rumble": 36}, "seed": 1712},
+    "mob/mist_wolf/idle3": {"patch": "creature/growl", "params": {"pitch": 122, "len": 0.75, "size": 1.0, "rough": 3.5, "rasp": 0.4, "wobble": 0.7, "vowelA": 3, "vowelB": 3, "rumble": 32}, "seed": 1713},
+    "mob/mist_wolf/hurt1": {"patch": "creature/call", "params": {"pitch": 600, "len": 0.22, "rise": 7, "fall": -10, "vowelA": 2, "vowelB": 0, "size": 1.1, "rough": 1.8, "breath": 0.2}, "seed": 1714},
+    "mob/mist_wolf/hurt2": {"patch": "creature/call", "params": {"pitch": 640, "len": 0.2, "rise": 8, "fall": -9, "vowelA": 1, "vowelB": 0, "size": 1.1, "rough": 1.8, "breath": 0.2}, "seed": 1715},
+    "mob/mist_wolf/target": {"patch": "wolf/snarl", "params": {"pitch": 115, "len": 1.2}, "seed": 1716},
+    "mob/pinch_beetle/idle1": {"patch": "pinch_beetle/voice", "params": {"pitch": 170, "len": 0.5, "clicks": 2}, "seed": 1721},
+    "mob/pinch_beetle/idle2": {"patch": "pinch_beetle/voice", "params": {"pitch": 178, "len": 0.45, "clicks": 3}, "seed": 1722},
+    "mob/pinch_beetle/idle3": {"patch": "pinch_beetle/voice", "params": {"pitch": 186, "len": 0.55, "clicks": 2}, "seed": 1723},
+    "mob/pinch_beetle/idle4": {"patch": "pinch_beetle/voice", "params": {"pitch": 195, "len": 0.5, "clicks": 1}, "seed": 1724},
+    "mob/pinch_beetle/attack1": {"patch": "pinch_beetle/snap", "params": {"freq": 1120}, "seed": 1725},
+    "mob/pinch_beetle/attack2": {"patch": "pinch_beetle/snap", "params": {"freq": 1200}, "seed": 1726},
+    "mob/pinch_beetle/attack3": {"patch": "pinch_beetle/snap", "params": {"freq": 1280}, "seed": 1727},
+    "mob/pinch_beetle/death": {"patch": "pinch_beetle/voice", "params": {"pitch": 160, "len": 0.9, "bend": -14, "clicks": 3}, "seed": 1728},
+    "mob/pinch_beetle/hurt1": {"patch": "pinch_beetle/voice", "params": {"pitch": 195, "len": 0.2, "bend": 6, "clicks": 1}, "seed": 1729},
+    "mob/pinch_beetle/hurt2": {"patch": "pinch_beetle/voice", "params": {"pitch": 205, "len": 0.18, "bend": 7, "clicks": 1}, "seed": 1730},
+    "mob/pinch_beetle/hurt3": {"patch": "pinch_beetle/voice", "params": {"pitch": 214, "len": 0.22, "bend": 5, "clicks": 1}, "seed": 1731},
+    "mob/redcap/redcap1": {"patch": "redcap/chuckle", "params": {"pitch": 235, "count": 4}, "seed": 1741},
+    "mob/redcap/redcap2": {"patch": "redcap/chuckle", "params": {"pitch": 245, "count": 5}, "seed": 1742},
+    "mob/redcap/redcap3": {"patch": "redcap/chuckle", "params": {"pitch": 255, "count": 3, "syll": 0.1}, "seed": 1743},
+    "mob/redcap/redcap4": {"patch": "redcap/chuckle", "params": {"pitch": 265, "count": 6, "syll": 0.075}, "seed": 1744},
+    "mob/redcap/redcap5": {"patch": "redcap/chuckle", "params": {"pitch": 275, "count": 4, "syll": 0.09}, "seed": 1745},
+    "mob/redcap/redcap6": {"patch": "redcap/chuckle", "params": {"pitch": 285, "count": 5, "syll": 0.08}, "seed": 1746},
+    "mob/redcap/die1": {"patch": "creature/call", "params": {"pitch": 290, "len": 0.8, "rise": 2, "fall": -16, "size": 1.3, "rough": 2.6, "breath": 0.3, "vowelA": 0, "vowelB": 4}, "seed": 1747},
+    "mob/redcap/die2": {"patch": "creature/call", "params": {"pitch": 305, "len": 0.75, "rise": 3, "fall": -14, "size": 1.3, "rough": 2.6, "breath": 0.3, "vowelA": 1, "vowelB": 4}, "seed": 1748},
+    "mob/redcap/die3": {"patch": "creature/call", "params": {"pitch": 320, "len": 0.85, "rise": 2, "fall": -17, "size": 1.3, "rough": 2.6, "breath": 0.3, "vowelA": 0, "vowelB": 3}, "seed": 1749},
+    "mob/redcap/hurt1": {"patch": "creature/call", "params": {"pitch": 330, "len": 0.2, "rise": 7, "fall": -4, "size": 1.35, "rough": 3, "bright": 1.3, "vowelA": 1, "vowelB": 0}, "seed": 1750},
+    "mob/redcap/hurt2": {"patch": "creature/call", "params": {"pitch": 345, "len": 0.22, "rise": 6, "fall": -5, "size": 1.35, "rough": 3, "bright": 1.3, "vowelA": 2, "vowelB": 0}, "seed": 1751},
+    "mob/redcap/hurt3": {"patch": "creature/call", "params": {"pitch": 360, "len": 0.18, "rise": 8, "fall": -3, "size": 1.35, "rough": 3, "bright": 1.3, "vowelA": 1, "vowelB": 1}, "seed": 1752},
+    "mob/redcap/hurt4": {"patch": "creature/call", "params": {"pitch": 375, "len": 0.21, "rise": 7, "fall": -6, "size": 1.35, "rough": 3, "bright": 1.3, "vowelA": 0, "vowelB": 1}, "seed": 1753},
+    "mob/slime_beetle/idle1": {"patch": "slime_beetle/voice", "params": {"pitch": 130, "len": 0.35}, "seed": 1761},
+    "mob/slime_beetle/idle2": {"patch": "slime_beetle/voice", "params": {"pitch": 138, "len": 0.4, "wet": 0.85}, "seed": 1762},
+    "mob/slime_beetle/idle3": {"patch": "slime_beetle/voice", "params": {"pitch": 146, "len": 0.3}, "seed": 1763},
+    "mob/slime_beetle/idle4": {"patch": "slime_beetle/voice", "params": {"pitch": 155, "len": 0.38, "wet": 0.65}, "seed": 1764},
+    "mob/slime_beetle/death": {"patch": "slime_beetle/voice", "params": {"pitch": 95, "len": 0.7, "wet": 1.0, "bend": -12}, "seed": 1765},
+    "mob/slime_beetle/hurt1": {"patch": "slime_beetle/voice", "params": {"pitch": 190, "len": 0.17, "wet": 0.7, "bend": 6}, "seed": 1766},
+    "mob/slime_beetle/hurt2": {"patch": "slime_beetle/voice", "params": {"pitch": 200, "len": 0.16, "wet": 0.7, "bend": 7}, "seed": 1767},
+    "mob/slime_beetle/hurt3": {"patch": "slime_beetle/voice", "params": {"pitch": 212, "len": 0.18, "wet": 0.7, "bend": 5}, "seed": 1768},
+    "mob/wraith/wraith1": {"patch": "wraith/gasp", "params": {"pitch": 190, "len": 1.3, "glide": -5}, "seed": 1771},
+    "mob/wraith/wraith2": {"patch": "wraith/gasp", "params": {"pitch": 200, "len": 1.2, "glide": -7}, "seed": 1772},
+    "mob/wraith/wraith3": {"patch": "wraith/gasp", "params": {"pitch": 210, "len": 1.4, "glide": -6}, "seed": 1773},
+    "mob/wraith/wraith4": {"patch": "wraith/gasp", "params": {"pitch": 222, "len": 1.25, "glide": -9}, "seed": 1774}
+  }
+}
