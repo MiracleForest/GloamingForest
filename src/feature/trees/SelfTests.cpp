@@ -22,6 +22,7 @@
 #include <memory>
 #include <set>
 #include <tuple>
+#include <variant>
 
 #include "ll/api/chrono/GameChrono.h"
 #include "ll/api/coro/CoroTask.h"
@@ -54,6 +55,8 @@
 #include "mc/world/level/chunk/LevelChunk.h"
 #include "mc/world/level/chunk/LevelChunkDataField.h"
 #include "mc/world/level/chunk/SubChunk.h"
+#include "mc/world/level/storage/GameRule.h"
+#include "mc/world/level/storage/GameRules.h"
 
 #include "core/jrand/JRand.h"
 #include "feature/ext/trees/ChunkDirty.h"
@@ -203,10 +206,46 @@ int countBlocks(BlockSource& region, BlockBox const& box, std::string_view needl
 bool compareWithJava(Context& ctx, std::string const& name, BlockBox const& box, std::vector<std::string> const& cells = {});
 void resetGround(BlockSource& region, int minX, int minZ, int maxX, int maxZ, int grassY);
 
+/// The world's randomTickSpeed (1 when it can't be read).
+int randomTickSpeed() {
+    auto level = ll::service::getLevel();
+    if (!level) return 1;
+    auto const& rules = level->getGameRules().mGameRules.get();
+    auto        idx   = static_cast<std::size_t>(GameRules::GameRulesIndex::RandomTickSpeed);
+    if (idx >= rules.size()) return 1;
+    auto const* v = std::get_if<int>(&rules[idx].mValue.get());
+    return v ? *v : 1;
+}
+
+/// Stops random ticks for the guard's life (the world's own value back afterwards, also when the
+/// coroutine frame goes early). The features leave the leaves TF's updateLeaves does not reach at
+/// distance 0 ("not computed", F11), which the comparison takes for Java's 7; a random tick on one of
+/// them while placeAll waits for the next cell's chunks computes its true distance (F11's random tick
+/// for distance 0): one flaky leaf (`mega_canopy_tree ... Java distance 7, here 2`). The Java oracle
+/// dumps its box without ticking in between.
+class RandomTicksStopped {
+public:
+    RandomTicksStopped() : mBefore(randomTickSpeed()) {
+        if (mBefore != 0) mOk = static_cast<bool>(gf::selftest::runServerCommand("gamerule randomtickspeed 0"));
+    }
+    ~RandomTicksStopped() {
+        if (mBefore != 0 && mOk) gf::selftest::runServerCommand("gamerule randomtickspeed " + std::to_string(mBefore));
+    }
+    RandomTicksStopped(RandomTicksStopped const&)            = delete;
+    RandomTicksStopped& operator=(RandomTicksStopped const&) = delete;
+    [[nodiscard]] bool ok() const { return mOk; }
+
+private:
+    int  mBefore;
+    bool mOk = true;
+};
+
 /// Places every feature of `ids` on a 4 x 4 grid of 36-block cells in one flat area, then compares the
 /// area with the Java oracle's `name` case.
 ll::coro::CoroTask<> placeAll(Context& ctx, int dx, std::string name, std::vector<std::string> const& ids) {
-    auto box = co_await ctx.flatArea(dx, 144, 72);
+    auto               box = co_await ctx.flatArea(dx, 144, 72);
+    RandomTicksStopped noRandomTicks; // until the comparison is done
+    ctx.check(noRandomTicks.ok(), "random ticks stopped for the placement (gamerule randomtickspeed 0)");
     // the flat world's ground under the grass first, as the oracle resets it per case: the trees' roots
     // reach below what flatArea restores, and roots or holes an earlier run or test left there stop or
     // redirect the mangrove's roots (#tree_roots_skip, canRootGrowIn) and shift every later draw

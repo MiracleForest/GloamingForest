@@ -181,10 +181,14 @@ everything (blocks, biomes, the stand-in) back at once.
   stays, as TF's grower leaves it without a valid start. The landmark contract has no validate-only
   step, so the sapling stays in place while `generateAt` builds the start: a failed start changes
   nothing (no block update, no F11 events); after a valid one the sapling goes unless a piece put
-  something else there (TF removes it before placing; its pieces overwrite that air). When a valid
-  start leaves the sapling's cell untouched (a piece that places only into air or replaceable cells
-  would, since the sapling is still there), the grower logs a warning
-  (`the ... start did not fill the robust twilight oak sapling's cell`) before clearing it.
+  something else there (TF removes it before placing; its pieces overwrite that air). A valid start
+  normally leaves the sapling's cell untouched: the hollow trunk is hollow (HollowTreeTrunk fills only
+  `radius / 2 < dist <= radius`), so its center is the air TF's grower left; the grower then clears
+  the sapling (a debug line, no warning).
+- Hollow oak sapling at a chunk corner: U18 tells a placed hollow tree start from a natural one by its
+  center (a natural start arrives at its chunk's corner, +7 or the point it found), so a sapling at
+  exactly `(16 cx, 16 cz)` or `(16 cx + 7, 16 cz + 7)` grows the tree at a random point of its chunk
+  instead of at the sapling until F6 records `forced` in the start's data (see U18's audit notes).
 - Transformation core: needs U1's enchanted forest biome.
 - F11 recomputes leaf distances when leaves are placed (Java's tree placement uses
   UPDATE_KNOWN_SHAPE, which does not); TF's distances from `updateLeaves` are therefore replaced by
@@ -199,3 +203,29 @@ everything (blocks, biomes, the stand-in) back at once.
   PR's routing notes).
 - F5's natural spawner does not check `BlockState#isValidSpawn`; TF's leaves (hardened dark leaves
   and the eight LeavesBlock leaves) use the special spawn list instead (a landmark's own list registered before it wins there).
+
+## Audit round 1
+
+Checked against TF 4.8 and the goldens (A1, W2 round 1):
+
+- **`trees.features_a` flake** (one mega canopy leaf `distance 7` in Java, `2` here, at `89 -35 19`
+  in some full runs): the features leave the leaves TF's `updateLeaves` does not reach at distance 0
+  ("not computed"; the comparison takes 0 for Java's 7), and F11's random tick computes the true
+  distance of a distance-0 leaf. A random tick landing on one while `placeAll` waits for the next
+  cell's chunks changed that leaf. Not a generation difference: the Java oracle dumps its box without
+  ticking. Fixed in the test: `placeAll` stops random ticks (`gamerule randomtickspeed 0`, the world's
+  value put back afterwards) until its comparison is done.
+- **Vanilla configured features TF references**: `tree/selector/highlands_trees` (25 % `minecraft:spruce`,
+  10 % `minecraft:pine`) and `tree/selector/vanilla/vanilla_mushrooms` (`minecraft:huge_brown_mushroom`
+  / `huge_red_mushroom`) named vanilla configured features F5's vanilla set lacks
+  (`worldgen: unknown configured feature ...` in every full run): the highlands lost a third of
+  their trees and the vanilla mushroom selector placed nothing. `tools/import/overrides/trees.json`
+  now inlines Minecraft 1.21.1's values (TreeFeatures SPRUCE / PINE with `gf_trees:update_leaves`,
+  HUGE_BROWN_MUSHROOM / HUGE_RED_MUSHROOM). F5 should add them to its vanilla set (then the patch
+  is redundant and A8 can drop it).
+- **Sapling warning**: the hollow oak sapling's `did not fill the ... cell` warning fired on every
+  hollow tree (its trunk is hollow, see Known gaps): now a debug line.
+
+Still open: the hollow oak sapling at a chunk corner (F6's `forced` flag, Known gaps); plants placed by
+the tree features and the canopy mushrooms are to be re-checked once F5's `canSurvive` fix lands
+(nothing floats in `trees.features_*`, which compare with Java block for block on flat ground).

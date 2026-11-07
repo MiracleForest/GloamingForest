@@ -161,11 +161,13 @@ bool growHollowTree(BlockSource& region, BlockPos const& pos, std::string const&
         return false;
     }
     if (&region.getBlock(pos) == sapling) {
-        // no piece put a block into the sapling's cell: TF's pieces would have found air there (the
-        // grower removes the sapling first), so a piece that places only into air or replaceable
-        // cells left it out here. Reported until F6 has a validate-then-place step.
-        gf::log().warn("trees: the {} start did not fill the robust twilight oak sapling's cell {} {} {} (TF clears it before placing)", structureId, pos.x, pos.y,
-                       pos.z);
+        // no piece put a block into the sapling's cell: the hollow tree's trunk is hollow
+        // (HollowTreeTrunk#postProcess fills only radius / 2 < dist <= radius), so its center is the
+        // air TF's grower left when it removed the sapling: the usual case, not a problem. (A sapling
+        // at a chunk corner grows the tree elsewhere until F6 records `forced` starts, see
+        // docs/units/trees.md; the start is `placed`, so landmark::startAt cannot tell here.)
+        gf::log().debug("trees: the {} start left the robust twilight oak sapling's cell {} {} {} alone (its hollow trunk; TF cleared it before placing)",
+                        structureId, pos.x, pos.y, pos.z);
         if (auto const* air = game::blockWith("minecraft:air")) game::setBlock(region, pos, *air);
     }
     gf::log().info("trees: the robust twilight oak sapling at {} {} {} grew {}", pos.x, pos.y, pos.z, structureId);
