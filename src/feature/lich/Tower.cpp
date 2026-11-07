@@ -1190,7 +1190,7 @@ void WingRoom::handleDataParams(BlockPos const& pos, Region& region, RandomSourc
     }
     static std::map<std::string, char const*> const kCandleHeads{{"creeper_candle", "twilightforest:creeper_skull_candle"},
                                                                  {"skeleton_candle", "twilightforest:skeleton_skull_candle"},
-                                                                 {"wither_candle", "twilightforest:wither_skele_skull_candle"},
+                                                                 {"wither_candle", "twilightforest:wither_skeleton_skull_candle"},
                                                                  {"zombie_candle", "twilightforest:zombie_skull_candle"}};
     auto putHeadCandles = [&](BlockPos const& at, char const* id) {
         int amount = std::min(4, params.size() >= 2 ? parseRange(params[1], random, 1, 3) : random.nextIntBetweenInclusive(1, 3));
