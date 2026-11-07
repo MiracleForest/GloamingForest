@@ -21,6 +21,7 @@
 #include "core/jrand/BiomeManager.h"
 #include "core/jrand/Mth.h"
 #include "feature/worldgen/Internal.h"
+#include "feature/ext/worldgen/NoiseBiome.h"
 #include "mod/Log.h"
 
 namespace gf::worldgen {
@@ -193,6 +194,13 @@ std::string biomeAt(BlockPos const& pos) {
     if (!p->biomeSource) return {};
     int lo = core::mth::fromBlock(detail::twilightMinY()), hi = core::mth::fromBlock(detail::twilightMaxY() - 1);
     return detail::zoomedBiome(detail::currentSeed(), pos, [&](int qx, int qy, int qz) { return p->biomeSource(qx, std::clamp(qy, lo, hi), qz); });
+}
+
+std::string ext::noiseBiomeAt(int quartX, int quartY, int quartZ) {
+    auto p = detail::providers();
+    if (!p->biomeSource) return {};
+    int lo = core::mth::fromBlock(detail::twilightMinY()), hi = core::mth::fromBlock(detail::twilightMaxY() - 1);
+    return p->biomeSource(quartX, std::clamp(quartY, lo, hi), quartZ);
 }
 
 std::string mainBiomeAt(int blockX, int blockZ) {
