@@ -9,7 +9,7 @@ Wait-LogLine 'GloamingForest world ready' 120 | Out-Null
 $mark = Get-LogMark
 $r = Invoke-SelfTest 'lichdecor.*'
 if ($r.Fail -gt 0) { throw "$($r.Fail) lichdecor selftest(s) failed" }
-if ($r.Pass -lt 10) { throw "expected at least 10 lichdecor selftests to pass, got $($r.Pass)" }
+if ($r.Pass -lt 11) { throw "expected at least 11 lichdecor selftests to pass, got $($r.Pass)" }
 $log = Get-ServerLog -Since $mark
 foreach ($size in '3x3', '5x5', '7x7', '9x9') {
     if (-not ($log | Select-String -SimpleMatch "${size}: ")) { throw "missing the room summary of $size" }
