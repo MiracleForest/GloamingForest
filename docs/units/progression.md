@@ -99,11 +99,9 @@ that the trigger fires for `full_mettle_alchemist` only and that U14 leaves the 
   slots, 600 ms slides, over the HUD and over the advancement screen (exactly one of the two draws
   them in a frame, decided by draw order: the screen tells the toasts when it opens and closes, and
   while it is open and drawing the HUD layer leaves them to it; leaving a level, ClientExitLevelEvent,
-  drops them, as F12's queue). F12's toast queue only has TF's layout; the
-  slots it holds (other units' toasts) when a U14 toast takes a slot are left free, but an F12 toast
-  that arrives later takes slot 0 even under a U14 toast: F12's slot table is internal to
-  `src/client/ui/Ui.cpp`, so one shared table needs an F12 API (slot reservation, or an icon-stack
-  field and the advancement layout in `toast::show`), routed to A8/F12.
+  drops them, as F12's queue). F12's toast queue only has TF's layout,
+  so U14 draws its own toasts, but the slots are one table: F12's `toast::claimSlot` / `releaseSlot`
+  (feature/ext/ui/Client.h), from which F12's queue takes its slots too (Java's one ToastComponent).
 - Locked biome toast: the client mod runs TF's static countdown; vanilla clients get the same
   countdown per player on the server and the game's toast.
 - A challenge's sound (Challenge sound): Java's `ui.toast.challenge_complete` is Mojang's (All Rights
@@ -142,3 +140,16 @@ player's exact progress and `progression.demo_reset` restores it quietly (no toa
 experience or message for the re-granted advancements: `setQuietGrants`), so a `full` or glob run
 never changes a real player's progression. Other units' `progression::onGranted` listeners still
 see the re-grants.
+
+## Audit round 1
+
+- Server scenario `progression`: PASSED; client run (`-Scenario progression -Mode local`, 2026-11-07): PASSED. The
+  screenshots were compared with TF / Java: the tree (TF's tab with the root advancement's icon, the mazestone
+  background, gold frames of earned nodes and grey ones of unearned, the connecting lines, the header "Twilight
+  Forest" at (8, 6) in 0x404040), the hover (dimmed tree, the blue title bar of an unearned advancement with its
+  progress 0/3, the green task description above the node as AdvancementWidget), the drag (nodes clipped at the
+  tree's edge), AdvancementToast ("Goal Reached!" in yellow, the title in white, the icon at 8, 8), the challenge
+  toast and its long-title variant, and LockedBiomeToast: they match.
+- Fixed: one toast slot table. U14's toasts and F12's toast queue each had their own table, so an F12 toast arriving
+  later took slot 0 under a U14 toast. F12 now exposes `toast::claimSlot` / `releaseSlot` (feature/ext/ui/Client.h)
+  and U14 takes its slots from it (`src/client/progression/Toasts.cpp`); this needs F12's PR merged first.
