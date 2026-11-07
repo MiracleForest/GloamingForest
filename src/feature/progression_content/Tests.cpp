@@ -729,7 +729,7 @@ GF_REGISTER_SELFTEST("progression.chicken_jockey", [](Context& ctx) -> ll::coro:
     // a baby zombie (spawn event minecraft:as_baby) riding a chicken, both summoned by name
     auto jockey = [&](std::string const& name) -> bool {
         auto at = std::to_string(base.x) + " " + std::to_string(base.y + 1) + " " + std::to_string(base.z);
-        auto c1 = gf::selftest::runServerCommand("summon minecraft:chicken " + at + " 0 0 minecraft:entity_spawned " + name + "_mount", base.dim);
+        auto c1 = gf::selftest::runServerCommand("summon minecraft:chicken " + at + " 0 0 minecraft:spawn_adult " + name + "_mount", base.dim);
         auto c2 = gf::selftest::runServerCommand("summon minecraft:zombie " + at + " 0 0 minecraft:as_baby " + name, base.dim);
         auto c3 = gf::selftest::runServerCommand("ride @e[name=" + name + "] start_riding @e[name=" + name + "_mount] teleport_rider", base.dim);
         if (!c1 || !c2 || !c3) ctx.info("jockey commands: " + c1.messages + " / " + c2.messages + " / " + c3.messages);
