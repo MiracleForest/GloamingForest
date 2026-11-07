@@ -7,6 +7,8 @@
 #include <cmath>
 #include <list>
 #include <map>
+#include <atomic>
+#include <mutex>
 #include <numbers>
 #include <random>
 
@@ -426,16 +428,26 @@ struct Scheduled {
     std::int64_t          due;
     std::function<void()> fn;
 };
-std::vector<std::function<void()>>& deferred() {
-    static std::vector<std::function<void()>> d;
-    return d;
+/// The deferred and scheduled work. Lifetime: the queues live on the heap for the whole process
+/// and are never destroyed, so nothing that runs late (a world-closed listener at server stop, a
+/// static destructor at unload) meets destroyed containers. Thread safety: the server thread runs
+/// and fills them; a world close (ServerStoppingEvent, which BDS may raise on another thread while
+/// the level still ticks) only hands the pending work to `retired` under the lock, and the work is
+/// destroyed by the next tick on the server thread (or never, when no tick comes: the process ends).
+struct Queues {
+    std::mutex                         mutex;
+    std::vector<std::function<void()>> deferred;
+    std::list<Scheduled>               scheduled;
+    std::vector<std::function<void()>> retired;
+    std::list<Scheduled>               retiredScheduled;
+};
+Queues& queues() {
+    static auto* q = new Queues(); // never destroyed (see above)
+    return *q;
 }
-std::list<Scheduled>& scheduled() {
-    static std::list<Scheduled> s;
-    return s;
-}
-std::int64_t& tickCounter() {
-    static std::int64_t t = 0;
+/// The kit's tick count (atomic: schedule() may be called off the server thread).
+std::atomic<std::int64_t>& tickCounter() {
+    static std::atomic<std::int64_t> t{0};
     return t;
 }
 } // namespace
@@ -449,7 +461,7 @@ bool repeatedUse(Player& player, GlobalPos const& pos, bool firstEvent) {
     };
     static std::map<std::int64_t, LastUse> last;
     auto  uid  = player.getOrCreateUniqueID().rawID;
-    auto  now  = tickCounter();
+    auto  now  = tickCounter().load();
     auto  it   = last.find(uid);
     bool  held = !firstEvent && it != last.end() && it->second.pos == pos && now - it->second.tick < 5;
     last[uid]  = {pos, now};
@@ -457,13 +469,33 @@ bool repeatedUse(Player& player, GlobalPos const& pos, bool firstEvent) {
     return held;
 }
 
-void defer(std::function<void()> fn) { deferred().push_back(std::move(fn)); }
+void defer(std::function<void()> fn) {
+    auto&           q = queues();
+    std::lock_guard lock(q.mutex);
+    q.deferred.push_back(std::move(fn));
+}
 
-void schedule(int ticks, std::function<void()> fn) { scheduled().push_back({tickCounter() + std::max(1, ticks), std::move(fn)}); }
+void schedule(int ticks, std::function<void()> fn) {
+    auto&           q = queues();
+    std::lock_guard lock(q.mutex);
+    q.scheduled.push_back({tickCounter() + std::max(1, ticks), std::move(fn)});
+}
 
 namespace detail {
-/// One server tick of the deferred / scheduled queues (Module.cpp).
+/// One server tick of the deferred / scheduled queues (Module.cpp). The work runs outside the lock
+/// (it defers and schedules more).
 void runQueues() {
+    auto& q = queues();
+    {
+        // the work of a closed world goes here, on the server thread
+        std::vector<std::function<void()>> retired;
+        std::list<Scheduled>               retiredScheduled;
+        {
+            std::lock_guard lock(q.mutex);
+            retired.swap(q.retired);
+            retiredScheduled.swap(q.retiredScheduled);
+        }
+    }
     ++tickCounter();
     auto run = [](std::function<void()>& fn) {
         try {
@@ -473,26 +505,37 @@ void runQueues() {
         }
     };
     // deferred work may defer more (a door half updating the other): a few rounds per tick
-    for (int round = 0; round < 8 && !deferred().empty(); ++round) {
-        auto work = std::move(deferred());
-        deferred().clear();
+    for (int round = 0; round < 8; ++round) {
+        std::vector<std::function<void()>> work;
+        {
+            std::lock_guard lock(q.mutex);
+            work.swap(q.deferred);
+        }
+        if (work.empty()) break;
         for (auto& fn : work) run(fn);
     }
-    auto& s = scheduled();
     std::vector<std::function<void()>> due;
-    for (auto it = s.begin(); it != s.end();) {
-        if (it->due <= tickCounter()) {
-            due.push_back(std::move(it->fn));
-            it = s.erase(it);
-        } else {
-            ++it;
+    {
+        std::lock_guard lock(q.mutex);
+        for (auto it = q.scheduled.begin(); it != q.scheduled.end();) {
+            if (it->due <= tickCounter()) {
+                due.push_back(std::move(it->fn));
+                it = q.scheduled.erase(it);
+            } else {
+                ++it;
+            }
         }
     }
     for (auto& fn : due) run(fn);
 }
+/// A world closed (or the module uninstalls): the pending work is dropped. It is only handed aside
+/// here and destroyed by the next tick on the server thread (see Queues).
 void clearQueues() {
-    deferred().clear();
-    scheduled().clear();
+    auto&           q = queues();
+    std::lock_guard lock(q.mutex);
+    for (auto& fn : q.deferred) q.retired.push_back(std::move(fn));
+    q.deferred.clear();
+    q.retiredScheduled.splice(q.retiredScheduled.end(), q.scheduled);
 }
 } // namespace detail
 

@@ -21,6 +21,7 @@
 // and switches re-arm, sign display entities are checked) and which block a placement replaced.
 
 #include "feature/families/BlockEvents.h"
+#include "feature/ext/families/BlockEventsHandles.h"
 
 #include <algorithm>
 #include <cmath>
@@ -109,14 +110,30 @@ TickRandom& tickRandom() {
 
 enum Kind { RandomTickK, NeighborK, InsideK, StepK, ProjectileK, PlacedK, RemovedK, KindCount };
 
+/// One registration: its target ("" once removed: it matches nothing), the handler and its handle.
+template <class Fn>
+struct Registration {
+    std::string   first;
+    Fn            second;
+    std::uint64_t id = 0;
+};
+template <class Fn>
+using HandlerList = std::deque<Registration<Fn>>;
+
 struct Handlers {
-    std::deque<std::pair<std::string, RandomTickFn>> randomTick;
-    std::deque<std::pair<std::string, NeighborFn>>   neighbor;
-    std::deque<std::pair<std::string, EntityFn>>     inside;
-    std::deque<std::pair<std::string, EntityFn>>     step;
-    std::deque<std::pair<std::string, EntityFn>>     projectile;
-    std::deque<std::pair<std::string, PlacedFn>>     placed;
-    std::deque<std::pair<std::string, RemovedFn>>    removed;
+    HandlerList<RandomTickFn> randomTick;
+    HandlerList<NeighborFn>   neighbor;
+    HandlerList<EntityFn>     inside;
+    HandlerList<EntityFn>     step;
+    HandlerList<EntityFn>     projectile;
+    HandlerList<PlacedFn>     placed;
+    HandlerList<RemovedFn>    removed;
+    std::uint64_t             nextId = 0;
+    /// registrations removed since the last compaction (their slots stay until the next tick:
+    /// a dispatch may be running one of them)
+    std::size_t               retired = 0;
+    /// dispatches running now (no compaction then)
+    int                       dispatching = 0;
     /// per kind: block type -> indices of the matching handlers, ascending (filled on the server
     /// thread)
     std::array<std::unordered_map<BlockType const*, std::vector<std::size_t>>, KindCount> cache;
@@ -130,26 +147,26 @@ Handlers& handlers() {
 }
 
 template <class Fn>
-std::deque<std::pair<std::string, Fn>>& listOf(Kind k);
+HandlerList<Fn>& listOf(Kind k);
 template <>
-std::deque<std::pair<std::string, RandomTickFn>>& listOf<RandomTickFn>(Kind) {
+HandlerList<RandomTickFn>& listOf<RandomTickFn>(Kind) {
     return handlers().randomTick;
 }
 template <>
-std::deque<std::pair<std::string, NeighborFn>>& listOf<NeighborFn>(Kind) {
+HandlerList<NeighborFn>& listOf<NeighborFn>(Kind) {
     return handlers().neighbor;
 }
 template <>
-std::deque<std::pair<std::string, EntityFn>>& listOf<EntityFn>(Kind k) {
+HandlerList<EntityFn>& listOf<EntityFn>(Kind k) {
     auto& h = handlers();
     return k == InsideK ? h.inside : (k == StepK ? h.step : h.projectile);
 }
 template <>
-std::deque<std::pair<std::string, PlacedFn>>& listOf<PlacedFn>(Kind) {
+HandlerList<PlacedFn>& listOf<PlacedFn>(Kind) {
     return handlers().placed;
 }
 template <>
-std::deque<std::pair<std::string, RemovedFn>>& listOf<RemovedFn>(Kind) {
+HandlerList<RemovedFn>& listOf<RemovedFn>(Kind) {
     return handlers().removed;
 }
 
@@ -187,13 +204,58 @@ TypeFlagCache& randomTickTypes() {
     return c;
 }
 
-template <class Fn>
-void add(Kind k, std::string const& target, Fn fn) {
-    if (!fn || target.empty()) return;
-    listOf<Fn>(k).emplace_back(target, std::move(fn));
+/// Forgets which block types match (a registration came or went).
+void invalidate(Kind k) {
     handlers().cache[k].clear();
     ++handlers().generation;
     if (k == RandomTickK) randomTickTypes().clear();
+}
+
+template <class Fn>
+std::uint64_t add(Kind k, std::string const& target, Fn fn) {
+    if (!fn || target.empty()) return 0;
+    auto id = ++handlers().nextId;
+    listOf<Fn>(k).push_back({target, std::move(fn), id});
+    invalidate(k);
+    return id;
+}
+
+/// Unmatches the registration `id` of one list; its slot goes at the next compaction (a dispatch
+/// may be running its handler now).
+template <class Fn>
+bool retire(Kind k, std::uint64_t id) {
+    for (auto& r : listOf<Fn>(k))
+        if (r.id == id && !r.first.empty()) {
+            r.first.clear();
+            ++handlers().retired;
+            invalidate(k);
+            return true;
+        }
+    return false;
+}
+
+bool removeHandler(std::uint64_t id) {
+    if (id == 0) return false;
+    return retire<RandomTickFn>(RandomTickK, id) || retire<NeighborFn>(NeighborK, id) || retire<EntityFn>(InsideK, id)
+        || retire<EntityFn>(StepK, id) || retire<EntityFn>(ProjectileK, id) || retire<PlacedFn>(PlacedK, id) || retire<RemovedFn>(RemovedK, id);
+}
+
+/// Drops the slots of removed registrations (only between dispatches: the indices change).
+template <class Fn>
+void compact(Kind k) {
+    if (std::erase_if(listOf<Fn>(k), [](auto const& r) { return r.first.empty(); })) invalidate(k);
+}
+void compactAll() {
+    auto& h = handlers();
+    if (h.retired == 0 || h.dispatching > 0) return;
+    compact<RandomTickFn>(RandomTickK);
+    compact<NeighborFn>(NeighborK);
+    compact<EntityFn>(InsideK);
+    compact<EntityFn>(StepK);
+    compact<EntityFn>(ProjectileK);
+    compact<PlacedFn>(PlacedK);
+    compact<RemovedFn>(RemovedK);
+    h.retired = 0;
 }
 
 /// Runs the handlers of `block` in registration order, without copying them (entity-inside and
@@ -209,6 +271,11 @@ void call(Kind k, Block const& block, char const* what, Args&&... args) {
     std::size_t const known = list.size();
     auto              gen   = h.generation;
     std::size_t       j     = 0;
+    struct Dispatching {
+        int& n;
+        explicit Dispatching(int& c) : n(c) { ++n; }
+        ~Dispatching() { --n; }
+    } dispatching(h.dispatching);
     while (j < idx->size()) {
         std::size_t const i = (*idx)[j];
         if (i >= known) break;
@@ -548,6 +615,17 @@ void onProjectileHit(std::string const& target, EntityFn fn) { add(ProjectileK, 
 void onPlaced(std::string const& target, PlacedFn fn) { add(PlacedK, target, std::move(fn)); }
 void onRemoved(std::string const& target, RemovedFn fn) { add(RemovedK, target, std::move(fn)); }
 
+namespace ext {
+HandlerHandle addRandomTick(std::string const& target, RandomTickFn fn) { return add(RandomTickK, target, std::move(fn)); }
+HandlerHandle addNeighborChanged(std::string const& target, NeighborFn fn) { return add(NeighborK, target, std::move(fn)); }
+HandlerHandle addEntityInside(std::string const& target, EntityFn fn) { return add(InsideK, target, std::move(fn)); }
+HandlerHandle addSteppedOn(std::string const& target, EntityFn fn) { return add(StepK, target, std::move(fn)); }
+HandlerHandle addProjectileHit(std::string const& target, EntityFn fn) { return add(ProjectileK, target, std::move(fn)); }
+HandlerHandle addPlaced(std::string const& target, PlacedFn fn) { return add(PlacedK, target, std::move(fn)); }
+HandlerHandle addRemoved(std::string const& target, RemovedFn fn) { return add(RemovedK, target, std::move(fn)); }
+bool          remove(HandlerHandle handle) { return removeHandler(handle); }
+} // namespace ext
+
 } // namespace gf::blockevents
 
 namespace gf::feature::families::detail {
@@ -578,6 +656,7 @@ void installBlockEvents() {
 }
 
 void tickBlockEvents() {
+    gf::blockevents::compactAll();
     try {
         gf::blockevents::entityTick();
     } catch (std::exception const& e) {

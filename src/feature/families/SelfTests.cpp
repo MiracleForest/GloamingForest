@@ -9,6 +9,7 @@
 // never saw fails the test. (SimulatedPlayer's own use / interact calls drop uses inside Bedrock's
 // build delay and empty-hand interactions, so they are not used.)
 
+#include <format>
 #include <cmath>
 #include <fstream>
 #include <random>
@@ -49,6 +50,7 @@
 #include "feature/common/Redstone.h"
 #include "feature/ext/combat/InventoryMigrate.h"
 #include "feature/ext/combat/InventoryViewers.h"
+#include "feature/ext/families/BlockEventsHandles.h"
 #include "feature/ext/families/Growers.h"
 #include "feature/families/BlockEvents.h"
 #include "feature/families/Families.h"
@@ -1147,7 +1149,27 @@ GF_REGISTER_SELFTEST("families.blockevents", [](Context& ctx) -> ll::coro::CoroT
     ctx.setBlock(p, "minecraft:air");
     co_await ctx.ticks(2);
     ctx.check(removed == 1, "onRemoved ran once (" + std::to_string(removed) + ")");
+    // a registration with a handle comes off again (ext::remove): a removed handler hears nothing
+    static int handled = 0;
+    handled            = 0;
+    auto handle        = gf::blockevents::ext::addPlaced("gf_test:fixture_block", [](BlockSource& r, BlockPos const& pos, Block const&, Actor*) {
+        if (gf::game::globalPos(r, pos) == probe) ++handled;
+    });
+    ctx.require(handle != 0, "ext::addPlaced gives a handle");
+    ctx.setBlock(p, "gf_test:fixture_block");
+    co_await ctx.ticks(2);
+    ctx.check(handled == 1, "the handle's handler ran (" + std::to_string(handled) + ")");
+    ctx.check(gf::blockevents::ext::remove(handle), "ext::remove finds it");
+    ctx.check(!gf::blockevents::ext::remove(handle), "a second removal finds nothing");
+    ctx.setBlock(p, "minecraft:air");
+    co_await ctx.ticks(2);
+    ctx.setBlock(p, "gf_test:fixture_block");
+    co_await ctx.ticks(2);
+    ctx.check(handled == 1, "a removed handler is not called (" + std::to_string(handled) + ")");
+    ctx.check(placed == 3, "the other handlers of the block stay (" + std::to_string(placed) + ")");
+    ctx.setBlock(p, "minecraft:air");
     ctx.setBlock(at(p, 1, 0, 0), "minecraft:air");
+    co_await ctx.ticks(1);
     probe = GlobalPos{-1, 0, -100000, 0};
 });
 
@@ -1179,6 +1201,21 @@ GF_REGISTER_SELFTEST("families.waterlogging", [](Context& ctx) -> ll::coro::Coro
     }
     ctx.check(wet(cases[0].first), "the waterloggable slab keeps the water");
     ctx.check(!wet(cases[1].first), "a family block without the modifier does not");
+    // flowing water stops at a dry waterloggable block (Java: only a source waterlogs,
+    // FlowingFluid#canHoldFluid -> SimpleWaterloggedBlock#canPlaceLiquid(FLOWING_WATER) is false)
+    auto dry    = at(p, 2, 0, 2);
+    auto source = at(dry, -1, 0, 0);
+    ctx.require(ctx.setBlock(dry, "gf_test:family_slab"), "a dry waterloggable slab");
+    // (the command's setblock updates the neighbours, so the source starts to flow)
+    auto placedWater = gf::selftest::runServerCommand(std::format("setblock {} {} {} water", source.x, source.y, source.z), source.dim);
+    ctx.require(static_cast<bool>(placedWater), "a water source beside it");
+    co_await ctx.ticks(20);
+    auto const& besideId = region.getBlock(gf::game::blockPos(at(source, -1, 0, 0))).getTypeName();
+    bool flowed = besideId == "minecraft:flowing_water" || besideId == "minecraft:water";
+    ctx.check(!wet(dry), "the flow does not enter the dry waterloggable slab");
+    if (!flowed)
+        ctx.info("the source did not spread in the test area (source " + ctx.blockAt(source) + ", beside " + besideId + "): the dry check proves little");
+    ctx.setBlock(source, "minecraft:air");
     (void)box;
 });
 
