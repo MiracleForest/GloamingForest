@@ -41,3 +41,14 @@ TF 4.8's armour sets, tool tiers and their materials (behaviour: [docs/spec/armo
 - **Trims.** TF's six trim materials are not registered for the smithing table: Bedrock's client draws no inventory
   icon for armour trimmed with a material outside its own list (F9's spike S6), and drawing them is client-mod work not
   done here.
+
+## Audit round 1
+
+- The yeti set's chill aura now goes through U10's frosted helper
+  (`gf::provisions::ext::doChillAuraEffect`, ApplyFrostedEffect#doChillAuraEffect) instead of a copy of its
+  immunity rules (behaviour unchanged).
+- Open: TF's six trim materials (client icon drawing), the arctic dye tint on the worn model and the fiery
+  set's full-bright attachables (both wait for F2's attachable check to accept a unit's attachable).
+- Report: `armory.mazebreaker` failed twice in W1 full runs with 33 durability lost (1 + 16 + 16): U23's
+  `ToolEvents#damageNonMazebreakerToolsMore` (`src/feature/labyrinth/Blocks.cpp`, `ia::onDestroy`) ran
+  twice for one break; not seen on main's latest full run.
