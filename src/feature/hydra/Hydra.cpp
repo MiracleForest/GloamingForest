@@ -1192,10 +1192,8 @@ bool hurt(Actor& self, float& amount, std::string const& type, Actor* attacker) 
     // player's TNT, a creeper, a reflected mortar; the hydra's own mortars are refused just below
     // (their causing entity is the hydra)
     auto   uid    = fe::uidOf(self);
-    // DamageSource#getEntity / #getDirectEntity (world::causingAndDirect undoes F10's swap)
-    auto const pair   = fe::causingAndDirect(attacker, directId && noteMatches ? fe::actorById(directId) : nullptr);
-    attacker          = pair.causing;
-    Actor*     direct = pair.direct;
+    // DamageSource#getEntity (attacker) / #getDirectEntity (the note of this hit)
+    Actor* direct = directId && noteMatches ? fe::actorById(directId) : nullptr;
     // environmental fire (lava, a fire block, burning) never reaches a part in TF: the parts share
     // the hydra's fire-immune type, so Entity#lavaHurt, BaseFireBlock#entityInside and the burning
     // tick skip them; only an entity's fire hit (a fireball) gets to attackEntityFromPart

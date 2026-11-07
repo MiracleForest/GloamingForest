@@ -263,7 +263,8 @@ bool projectileReachesJavaBox(Actor& mortar, Actor& projectile) {
 /// look; the owner changes only for a living one. The mortar itself never takes damage.
 gf::combat::Verdict onIncoming(gf::combat::DamageInfo& d) {
     if (d.victim.getTypeName() != kMortar) return gf::combat::Verdict::Pass;
-    auto [causing, direct] = fe::causingAndDirect(d.attacker, d.direct);
+    Actor* causing = d.attacker; // DamageSource#getEntity
+    Actor* direct  = d.direct;   // #getDirectEntity
     // a vanilla projectile inside the pick box but outside Java's projectile box missed in Java:
     // no reflection (the Bedrock projectile still stops on the hit test)
     Actor* projectile = direct && direct != &d.victim && !fe::asMob(*direct) ? direct : (causing && !fe::asMob(*causing) ? causing : nullptr);

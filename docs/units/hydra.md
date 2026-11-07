@@ -16,3 +16,20 @@ Checked (A3, landmarks and bosses I):
 Fixed: nothing in the unit's code needed a change.
 
 Open: none found in this round.
+
+## Audit round 2
+
+Checked against TF 4.8 (`Hydra#knockback`, `Hydra#checkDespawn`, `TFEntities.HYDRA_MORTAR`) and the round-1 F10
+damage pair (S3 / S4 "Open").
+
+Fixed:
+
+- `World.cpp causingAndDirect` is removed (F10 reports attacker = the owner, direct = the projectile now):
+  the parts' hurt reads the attacker and the noted direct entity as is, the mortar's reflection reads the pair
+  as is.
+- The hydra mortar is fire immune (`buildNoEgg(..., true)`: `fireImmune()`): `minecraft:fire_immune` in its BP.
+
+Verified, no change: the hydra's knockback resistance 1 is TF's behaviour (`Hydra#knockback` is empty and
+`isPushable` false: Java's attribute is 0 but the hydra never moves from a hit). Peaceful: `Hydra#checkDespawn`
+discards the heads before `BaseTFBoss#checkDespawn`; the heads here are F8 parts of the hydra, removed with it
+by the boss kit's Peaceful rule.
