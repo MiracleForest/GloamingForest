@@ -20,9 +20,15 @@
 //   damage lowers the amplifier by one (the effect ends below 0), keeping the remaining time.
 // - ApplyFrostedEffect#doChillAuraEffect (ext/provisions): not freeze-immune types, not wearers of
 //   #minecraft:freeze_immune_wearables, not creative players.
-// TF's IceLayer (ice cubes drawn on a frosted entity) is a client render layer: not drawn yet.
+// - IceLayer (ice cubes drawn on a frosted entity) reads the frosted_slowdown modifier of the entity's
+//   attributes, which Java syncs to every client; Bedrock clients see only their own effects, so the
+//   server tells the client mod which entities near it are frosted (provisions.frosted, syncFrosted)
+//   and src/client/provisions/Frosted.cpp draws the cubes. Vanilla clients see the Slowness carrier only.
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
+#include <string>
+#include <vector>
 #include <mutex>
 #include <unordered_map>
 
@@ -42,6 +48,7 @@
 #include "mc/world/actor/DataItem2.h"
 #include "mc/world/actor/SynchedActorData.h"
 #include "mc/world/actor/SynchedActorDataEntityWrapper.h"
+#include "mc/platform/UUID.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/Level.h"
@@ -53,6 +60,7 @@
 #include "feature/effects/EffectsInternal.h"
 #include "feature/ext/item/Effects.h"
 #include "feature/ext/provisions/Provisions.h"
+#include "feature/net/Net.h"
 #include "feature/provisions/Internal.h"
 #include "feature/tags/Tags.h"
 #include "game/Items.h"
@@ -147,6 +155,57 @@ void thawFrozen() {
     }
 }
 
+static std::unordered_map<std::string, std::string>& frostedSent() {
+    static std::unordered_map<std::string, std::string> m; ///< companion uuid -> the list last sent (server thread)
+    return m;
+}
+
+void syncFrosted() {
+    using Json = nlohmann::json;
+    static std::uint64_t calls = 0;
+    auto& lastSent = frostedSent();
+    if (calls++ % kFrostedSyncInterval != 0) return;
+    auto level = ll::service::getLevel();
+    if (!level) return;
+    struct Frosted {
+        Actor*       actor;
+        std::int64_t uid;
+        int          amp;
+    };
+    std::vector<std::int64_t> uids;
+    {
+        std::lock_guard lock(frozen().mutex);
+        for (auto const& [uid, _] : frozen().ticks) uids.push_back(uid);
+    }
+    std::vector<Frosted> list;
+    for (auto uid : uids) {
+        auto* a = level->fetchEntity(ActorUniqueID{uid}, false);
+        if (!a || !a->isAlive()) continue;
+        int amp = ::gf::effects::amplifier(*a, ids::kFrosted);
+        if (amp >= 0) list.push_back({a, uid, amp});
+    }
+    std::unordered_map<std::string, std::string> seen;
+    level->forEachPlayer([&](Player& p) {
+        if (p.isClientSide() || !::gf::feature::net::isCompanion(p)) return true;
+        auto key = p.getUuid().asString();
+        Json entities = Json::array();
+        for (auto const& f : list)
+            if (f.actor->getDimensionId() == p.getDimensionId() && f.actor->distanceToSqr(p) <= kFrostedSyncRange * kFrostedSyncRange)
+                entities.push_back(Json::array({f.uid, f.amp}));
+        auto dump = entities.dump();
+        auto it   = lastSent.find(key);
+        // nothing to say to a companion that never heard of a frosted entity and still has none
+        if ((it == lastSent.end() && entities.empty()) || (it != lastSent.end() && it->second == dump)) {
+            if (it != lastSent.end()) seen.emplace(key, dump);
+            return true;
+        }
+        ::gf::feature::net::send(p, kChanFrosted, Json{{"entities", entities}});
+        seen.emplace(key, dump);
+        return true;
+    });
+    lastSent = std::move(seen); // players who left are forgotten
+}
+
 namespace {
 
 int remainingTicks(Actor& a, std::string const& id) {
@@ -199,6 +258,8 @@ void installFrosted() {
          .tickInterval         = 1}
     );
     ::gf::effects::ext::setIcon(ids::kFrosted, "textures/twilightforest/mob_effect/frosted");
+    // a companion that joins again has an empty list: tell it again
+    ::gf::feature::net::onCompanionJoined([](Player& p) { frostedSent().erase(p.getUuid().asString()); });
     ::gf::combat::onIncoming(::gf::combat::priority::Low, &onIncoming);
 }
 

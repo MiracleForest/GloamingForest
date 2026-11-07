@@ -127,6 +127,7 @@ void levelTick() {
         return true;
     });
     thawFrozen();
+    syncFrosted();
 }
 
 class ProvisionsModule {

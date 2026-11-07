@@ -4,7 +4,8 @@
 # bread, the nine music discs), gives frosted II and builds Experiment 115 in its 16 states (bites 0..7,
 # plain and regenerating with sprinkles) on a stone floor 3 blocks ahead. Then:
 # 1. out/provisions/e115.png: the 16 cake states, with the frosted overlay (freezing vignette) and, with
-#    the client mod, the frosted icon in the HUD effect list;
+#    the client mod, the frosted icon in the HUD effect list and IceLayer's ice cubes on the frosted III
+#    pig 5 blocks ahead (provisions.frosted; "provisions: ice cubes drawn" in the client log);
 # 2. out/provisions/inventory.png: the inventory with every food, stale bread and disc icon (TF's textures),
 #    names coloured by rarity (uncommon hydra chop / stroganoff, rare discs);
 # 3. a disc in a jukebox: out/provisions/jukebox.png (the "now playing" line names TF's song key);
@@ -28,6 +29,7 @@ if ($r.Fail -gt 0) { throw 'provisions.real_arm failed' }
 Wait-LogLine "${hostPrefix}provisions: armed " 20 -Since $mark | Out-Null
 Start-Sleep -Seconds 3
 Save-Screenshot 'e115' | Out-Null
+if ($script:Mode -ne 'remote-vanilla') { Wait-LogLine 'provisions: ice cubes drawn on' 20 -Since $mark | Out-Null }
 
 Open-Inventory
 Save-Screenshot 'inventory' | Out-Null
