@@ -2,7 +2,8 @@
 # client. The selftest labyrinth.client_showcase generates a level 1 maze (rooms, dead ends,
 # corridors: mazestone walls, mosaic floors, fences, iron bars, roots, fountains, chests) in a flat
 # area open to the sky, the boss room (the minoshroom spawner between four mushroom chest shelves)
-# and the vault beside it, and shows the Minoshroom (TF's minoshroomtaur texture, the axe in hand),
+# and the vault beside it, and shows the Minoshroom (TF's minoshroomtaur texture, the axe in hand, the
+# three red mushrooms of MinoshroomMushroomLayer on its back and head),
 # a minotaur, three maze slimes of size 1, 2 and 4 (the translucent outer layer) and the maze slime
 # block; then the Minoshroom's ground slam pose and the items and spawn eggs in the hotbar.
 # Screenshots: out/labyrinth*/labyrinth-maze-<mode>.png (the maze from above),
@@ -35,7 +36,7 @@ if (-not (Register-SelfTestResult $r)) { throw 'labyrinth.client_showcase failed
 if (-not $remote) {
     $r = Invoke-SelfTest 'labyrinth.*'
     if ($r.Fail -gt 0) { throw "$($r.Fail) labyrinth selftest(s) failed" }
-    if ($r.Pass -lt 11) { throw "expected at least 11 labyrinth selftests to pass, got $($r.Pass)" }
+    if ($r.Pass -lt 13) { throw "expected at least 13 labyrinth selftests to pass, got $($r.Pass)" }
 } elseif (-not (Get-GameProcess)) {
     throw 'the game closed while connected to the host'
 }
