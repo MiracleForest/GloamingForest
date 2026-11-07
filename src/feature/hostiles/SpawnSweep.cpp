@@ -11,8 +11,9 @@
 //                               the rest (bosses: entity.boss_peaceful)
 //   hostiles.multiplayer_target two players: a hostile wolf takes the nearer one and turns to the
 //                               other when the first goes creative
-// Other units' entities are audited here too: a mismatch listed in kKnown (owner, reason) is reported
-// as an info line ("AUDIT <owner> <id>: ..."), anything else fails, so new regressions show.
+// Other units' entities are audited here too: a mismatch listed in known() (owner, reason) is reported
+// as an info line ("AUDIT <owner> <id>: ..."), anything else fails, so new regressions show; U17's
+// own rows always fail (U16 checks its mobs in fauna.*).
 
 #include <algorithm>
 #include <cmath>
@@ -85,16 +86,52 @@ std::map<std::string, std::string, std::less<>> const& known() {
         {"twilightforest:charm_effect|height", "U9: Bedrock's smallest box"},
         {"twilightforest:protection_box|width", "F6: Bedrock's smallest box"},
         {"twilightforest:protection_box|height", "F6: Bedrock's smallest box"},
+        // Bedrock keeps custom monsters on Peaceful: each owner needs Mob#checkDespawn's Peaceful
+        // branch (U16 / U17 remove theirs in their ticks; bosses: F8's boss kit)
+        {"*|peaceful", "Bedrock keeps custom monsters on Peaceful; the owner must remove them (U17: despawnInPeaceful)"},
+        // attributes and fire immunity that differ from the Java goldens
+        {"twilightforest:alpha_yeti|fire_immune", "U27: fire immune here, AlphaYeti is not fireImmune in Java"},
+        {"twilightforest:hydra|knockback_resistance", "U24: knockback resistance 1 here, Java 0"},
+        {"twilightforest:rising_zombie|knockback_resistance", "U21: knockback resistance 1 here, Java 0"},
+        {"twilightforest:hydra_mortar|fire_immune", "U24: the mortar is fireImmune in Java; the BP lacks minecraft:fire_immune"},
+        {"twilightforest:maze_slime|max_health", "U23: a size-1 slime's 3 / 0.3 / 1 here; Java's created maze slime has 20 / 0.7 / 2"},
+        {"twilightforest:maze_slime|movement_speed", "U23: see max_health"},
+        {"twilightforest:maze_slime|attack_damage", "U23: see max_health"},
+        // entity sounds missing from sounds.json (Java: Monster's entity.hostile.hurt / death, or the class's own)
+        {"twilightforest:adherent|sound.hurt", "U30: Monster default entity.hostile.hurt"},
+        {"twilightforest:adherent|sound.death", "U30: Monster default entity.hostile.death"},
+        {"twilightforest:armored_giant|sound.hurt", "U29: Monster default entity.hostile.hurt"},
+        {"twilightforest:armored_giant|sound.death", "U29: Monster default entity.hostile.death"},
+        {"twilightforest:giant_miner|sound.hurt", "U29: Monster default entity.hostile.hurt"},
+        {"twilightforest:giant_miner|sound.death", "U29: Monster default entity.hostile.death"},
+        {"twilightforest:harbinger_cube|sound.hurt", "U30: Monster default entity.hostile.hurt"},
+        {"twilightforest:harbinger_cube|sound.death", "U30: Monster default entity.hostile.death"},
+        {"twilightforest:roving_cube|sound.hurt", "U30: Monster default entity.hostile.hurt"},
+        {"twilightforest:roving_cube|sound.death", "U30: Monster default entity.hostile.death"},
+        {"twilightforest:plateau_boss|sound.hurt", "U30: Monster default entity.hostile.hurt"},
+        {"twilightforest:plateau_boss|sound.death", "U30: Monster default entity.hostile.death"},
+        {"twilightforest:lower_goblin_knight|sound.hurt", "U25: Monster default entity.hostile.hurt (ambient too: muffled by hasArmor)"},
+        {"twilightforest:lower_goblin_knight|sound.death", "U25: GOBLIN_KNIGHT_(MUFFLED_)DEATH by hasArmor"},
+        {"twilightforest:maze_slime|sound.hurt", "U23: MAZE_SLIME_HURT(_SMALL) by size"},
+        {"twilightforest:maze_slime|sound.death", "U23: MAZE_SLIME_DEATH(_SMALL) by size"},
+        {"twilightforest:unstable_ice_core|sound.death", "U28: BaseIceMob keeps Monster's entity.hostile.death"},
+        // far-away despawn (Mob#checkDespawn / removeWhenFarAway)
+        {"twilightforest:death_tome|despawn", "U21: a Monster that Java despawns far away; the BP has no minecraft:despawn"},
+        {"twilightforest:lich_minion|despawn", "U21: a Zombie that Java despawns far away; the BP has no minecraft:despawn"},
+        {"twilightforest:rising_zombie|despawn", "U21: a Monster that Java despawns far away; the BP has no minecraft:despawn"},
+        {"twilightforest:loyal_zombie|despawn", "U9: LoyalZombie#removeWhenFarAway is !isTame (only an untamed one despawns): check the BP's filter"},
     };
     return m;
 }
 
-/// A finding: fails unless it is a known deviation of another unit (U16 / U17 always fail).
+/// A finding: fails unless it is a known deviation of another unit (U17's own always fail).
 void finding(Context& ctx, MobSweepRow const& row, std::string_view check, std::string const& what) {
     std::string key = std::string(row.id) + "|" + std::string(check);
-    bool        own = std::string_view(row.owner) == "U16" || std::string_view(row.owner) == "U17";
+    bool        own = std::string_view(row.owner) == "U17"; // U16 checks its own in fauna.*
     if (!own) {
-        if (auto it = known().find(key); it != known().end()) {
+        auto it = known().find(key);
+        if (it == known().end()) it = known().find("*|" + std::string(check));
+        if (it != known().end()) {
             ctx.info(std::string("AUDIT ") + row.owner + " " + row.id + ": " + what + " (known: " + it->second + ")");
             return;
         }
@@ -162,8 +199,8 @@ GF_REGISTER_SELFTEST("hostiles.spawn_sweep", [](Context& ctx) -> ll::coro::CoroT
     int spawned = 0;
     for (auto const& row : kMobSweep) {
         Actor* a = nullptr;
-        if (row.living) a = spawnMob(*region, row.id, pos, gf::spawn::SpawnReason::Command);
-        else a = spawnActor(*region, row.id, pos);
+        if (row.living) a = hostiles::spawnMob(*region, row.id, pos, gf::spawn::SpawnReason::Command);
+        else a = hostiles::spawnActor(*region, row.id, pos);
         if (!a) {
             finding(ctx, row, "spawn", "does not spawn");
             continue;
@@ -172,7 +209,9 @@ GF_REGISTER_SELFTEST("hostiles.spawn_sweep", [](Context& ctx) -> ll::coro::CoroT
         auto const& b = a->getAABB();
         expectNear(ctx, row, "width", b.max.x - b.min.x, row.width);
         expectNear(ctx, row, "height", b.max.y - b.min.y, row.height);
-        if (a->isFireImmune() != row.fireImmune) finding(ctx, row, "fire_immune", row.fireImmune ? "not fire immune" : "fire immune");
+        // Bedrock reports projectile-like actors fire immune anyway: only a Java fire-immune one is checked
+        if ((row.living || row.fireImmune) && a->isFireImmune() != row.fireImmune)
+            finding(ctx, row, "fire_immune", row.fireImmune ? "not fire immune" : "fire immune");
         if (row.living) {
             auto* m = fe::asMob(*a);
             if (!m) {
@@ -223,8 +262,10 @@ GF_REGISTER_SELFTEST("hostiles.mob_assets", [](Context& ctx) {
     }
     ctx.require(!bp.empty(), "the behavior pack's entities");
     auto hasComponent = [](nlohmann::json const& e, char const* name) {
-        if (e.value("components", nlohmann::json::object()).contains(name)) return true;
-        for (auto const& [_, g] : e.value("component_groups", nlohmann::json::object()).items())
+        if (auto c = e.find("components"); c != e.end() && c->is_object() && c->contains(name)) return true;
+        auto groups = e.find("component_groups");
+        if (groups == e.end() || !groups->is_object()) return false;
+        for (auto const& [_, g] : groups->items())
             if (g.is_object() && g.contains(name)) return true;
         return false;
     };
@@ -262,7 +303,10 @@ GF_REGISTER_SELFTEST("hostiles.mob_assets", [](Context& ctx) {
     for (auto const& row : kMobSweep) {
         if (row.canSummon) continue;
         auto r = selftest::runServerCommand("summon " + std::string(row.id) + " " + std::to_string(at.x) + " " + std::to_string(at.y + 1) + " " + std::to_string(at.z), ctx.dimension());
-        if (r.ok && r.successCount > 0) finding(ctx, row, "summonable", "/summon spawns it (Java: canSummon false)");
+        if (r.ok && r.successCount > 0) {
+            finding(ctx, row, "summonable", "/summon spawns it (Java: canSummon false)");
+            (void)selftest::runServerCommand("kill @e[type=" + std::string(row.id) + "]", ctx.dimension());
+        }
     }
 });
 
@@ -278,9 +322,9 @@ GF_REGISTER_SELFTEST("hostiles.peaceful_despawn", [](Context& ctx) -> ll::coro::
         int k = 0;
         for (auto const& row : kMobSweep) {
             if (!row.living || row.boss) continue;
-            auto p = base.offset((k % 10) * 2, 0, (k / 10) % 5);
+            auto p = base.offset((k % 10) * 2, 0, k / 10); // 51 types: rows dz 0..5 inside the flat area
             ++k;
-            if (auto* m = spawnMob(*region, row.id, Vec3{p.x + 0.5f, float(p.y), p.z + 0.5f}, gf::spawn::SpawnReason::Command)) mobs.emplace_back(&row, uidOf(*m));
+            if (auto* m = hostiles::spawnMob(*region, row.id, Vec3{p.x + 0.5f, float(p.y), p.z + 0.5f}, gf::spawn::SpawnReason::Command)) mobs.emplace_back(&row, uidOf(*m));
             else finding(ctx, row, "spawn", "does not spawn");
         }
         co_await ctx.ticks(2);
@@ -323,7 +367,7 @@ GF_REGISTER_SELFTEST("hostiles.multiplayer_target", [](Context& ctx) -> ll::coro
     auto secondId = second.getOrCreateUniqueID().rawID;
     auto* region  = ctx.region();
     ctx.require(region != nullptr, "region");
-    auto* wolf = spawnMob(*region, id::HostileWolf, center(at), gf::spawn::SpawnReason::Command);
+    auto* wolf = hostiles::spawnMob(*region, id::HostileWolf, center(at), gf::spawn::SpawnReason::Command);
     ctx.require(wolf != nullptr, "a hostile wolf");
     auto wid = uidOf(*wolf);
     auto playerById = [](std::int64_t uid) -> Player* {

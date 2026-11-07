@@ -53,6 +53,12 @@ A5 (mobs audit, W2 round 1). Checked against F13's goldens (tests/golden/mobs.js
   already covered: the wraith's vanilla `HumanoidModel.setupAnim` (look-at plus `wraith.legs`), the pinch
   beetle's `isVehicle` pincers (`pincers_open`), the redcap's `isUsingItem` (redcaps never use items) and
   `swimAmount` (mobs never take the swimming pose: always 0).
+- **Fixed: Peaceful** (`Monster#shouldDespawnInPeaceful`, `HostileWolf` / `Wraith` too): Bedrock kept every
+  custom monster on Peaceful; each U17 mob's tick now removes it first thing (`despawnInPeaceful`,
+  Common.cpp). The sweep showed the same for every other unit's monsters (reported, not fixed here).
+- **Sweep notes**: Bedrock reports projectile-like actors fire immune whatever the BP says, so only the
+  Java fire-immune non-living types are checked. The other units' deviations the sweep reports are
+  listed in `known()` of SpawnSweep.cpp with their owners.
 - **Still open**: a left-handed redcap (Mob#finalizeSpawn, 5 %) swings and holds its item in the right
   hand (Bedrock renders a mob's main hand on the right bone only). The breath particles stay server
   sent (same particles, every client); an entity-side emitter would need head rotation in

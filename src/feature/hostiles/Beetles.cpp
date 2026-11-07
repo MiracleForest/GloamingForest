@@ -84,6 +84,7 @@ void fireBreath(Mob& m) {
 }
 
 void fireBeetleTick(Actor& self) {
+    if (despawnInPeaceful(self)) return;
     auto* m = asMob(self);
     if (!m || !self.isAlive()) return;
     if (!nativeGoalsPresent(self))
@@ -106,6 +107,7 @@ void blobDie(Actor& blob) {
 }
 
 void slimeBeetleTick(Actor& self) {
+    if (despawnInPeaceful(self)) return;
     auto* m = asMob(self);
     if (!m || !self.isAlive()) return;
     if (!nativeGoalsPresent(self)) {
@@ -133,6 +135,7 @@ void spawnAt(Actor& at, char const* item) {
 }
 
 void pinchBeetleTick(Actor& self) {
+    if (despawnInPeaceful(self)) return;
     auto* m = asMob(self);
     if (!m || !self.isAlive()) return;
     if (!nativeGoalsPresent(self)) ge::addGoal(*m, 2, std::make_shared<LockedGoal>(*m, ge::goals::charge(*m, {.speed = 1.5, .canBreak = false})));
