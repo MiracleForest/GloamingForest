@@ -381,6 +381,30 @@ bool persistent(Actor& a) { return a.getEntityContext().hasComponent<PersistentC
 
 } // namespace
 
+std::string detail::bedrockEntityId(std::string_view javaId) {
+    // Java 1.21.1 entity ids whose Bedrock entity has another name
+    static std::unordered_map<std::string_view, std::string_view> const kRenames{
+        {"minecraft:zombified_piglin", "minecraft:zombie_pigman"},
+        {"minecraft:evoker", "minecraft:evocation_illager"},
+        {"minecraft:end_crystal", "minecraft:ender_crystal"},
+        {"minecraft:experience_orb", "minecraft:xp_orb"},
+        {"minecraft:eye_of_ender", "minecraft:eye_of_ender_signal"},
+        {"minecraft:firework_rocket", "minecraft:fireworks_rocket"},
+        {"minecraft:potion", "minecraft:splash_potion"},
+        {"minecraft:experience_bottle", "minecraft:xp_bottle"},
+        {"minecraft:furnace_minecart", "minecraft:minecart"},
+        {"minecraft:spawner_minecart", "minecraft:minecart"},
+        {"minecraft:fishing_bobber", "minecraft:fishing_hook"},
+        {"minecraft:trident", "minecraft:thrown_trident"},
+        {"minecraft:glow_item_frame", "minecraft:glow_frame"},
+        {"minecraft:item_frame", "minecraft:frame"},
+    };
+    std::string id(javaId);
+    if (!id.empty() && id.find(':') == std::string::npos) id = "minecraft:" + id;
+    if (auto it = kRenames.find(id); it != kRenames.end()) return std::string(it->second);
+    return id;
+}
+
 // ==== contract ========================================================================================
 
 void registerPlacement(std::string const& entityId, PlacementRule rule, PredicateFn predicate) {
@@ -391,10 +415,17 @@ void registerPlacement(std::string const& entityId, PlacementRule rule, Predicat
 Actor* spawnMob(BlockSource& region, std::string const& entityId, Vec3 const& pos, SpawnReason reason, InitFn init) {
     auto level = ll::service::getLevel();
     if (!level) return nullptr;
-    bool natural = reason == SpawnReason::Natural || reason == SpawnReason::ChunkGeneration;
-    Mob* mob     = level->getSpawner().spawnMob(region, ActorDefinitionIdentifier(entityId), nullptr, pos, natural, true, reason == SpawnReason::Spawner);
+    std::string id      = detail::bedrockEntityId(entityId);
+    bool        natural = reason == SpawnReason::Natural || reason == SpawnReason::ChunkGeneration;
+    bool        spawner = reason == SpawnReason::Spawner;
+    Mob*        mob     = level->getSpawner().spawnMob(region, ActorDefinitionIdentifier(id), nullptr, pos, natural, true, spawner);
+    // a natural spawn makes Bedrock check its own spawn rules again (a spider's brightness and
+    // room, ...): the caller already checked Java's (SpawnPlacements, checkSpawnRules), so the
+    // spawn stands as any other
+    if (!mob && natural) mob = level->getSpawner().spawnMob(region, ActorDefinitionIdentifier(id), nullptr, pos, false, true, spawner);
     if (!mob) {
-        features::detail::warnOnce("spawn " + entityId, "cannot spawn " + entityId + " (unknown entity?)");
+        features::detail::warnOnce("spawn " + id, "cannot spawn " + id + (id != entityId ? " (" + entityId + ")" : std::string{}) +
+                                                      " (unknown entity, or Bedrock refused the spawn)");
         return nullptr;
     }
     if (init) init(*mob);

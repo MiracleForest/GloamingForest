@@ -28,6 +28,7 @@
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/ChunkBlockPos.h"
 #include "mc/world/level/ChunkLocalHeight.h"
+#include "mc/deps/shared_types/legacy/Difficulty.h"
 #include "mc/world/level/Level.h"
 #include "mc/world/level/biome/Biome.h"
 #include "mc/world/level/biome/registry/BiomeRegistry.h"
@@ -1410,6 +1411,21 @@ GF_REGISTER_SELFTEST("worldgen.spawn", [](Context& ctx) -> ll::coro::CoroTask<> 
     a->remove();
     ctx.check(gf::spawn::spawnMob(*bs, "gf_test:no_such_entity", Vec3{box.minX + 2.5f, static_cast<float>(box.minY + 1), box.minZ + 2.5f},
                                   gf::spawn::SpawnReason::Command) == nullptr, "an unknown entity is refused");
+    // vanilla ids: a bare id and Java's names of Bedrock entities; a natural spawn the caller
+    // decided stands even where Bedrock's own spawn rules refuse it (a spider in daylight)
+    ctx.check(gf::spawn::detail::bedrockEntityId("spider") == "minecraft:spider", "a bare id gets minecraft:");
+    ctx.check(gf::spawn::detail::bedrockEntityId("minecraft:zombified_piglin") == "minecraft:zombie_pigman", "Java's zombified piglin is Bedrock's zombie pigman");
+    // (monsters need a difficulty above peaceful, the e2e worlds' default: Java's Monster spawn rules)
+    auto level            = ll::service::getLevel();
+    auto previousDifficulty = level ? level->getDifficulty() : SharedTypes::Legacy::Difficulty::Peaceful;
+    if (level) level->setDifficulty(SharedTypes::Legacy::Difficulty::Normal);
+    for (auto reason : {gf::spawn::SpawnReason::Natural, gf::spawn::SpawnReason::ChunkGeneration, gf::spawn::SpawnReason::Spawner}) {
+        Actor* spider = gf::spawn::spawnMob(*bs, "minecraft:spider", Vec3{box.minX + 4.5f, static_cast<float>(box.minY + 1), box.minZ + 4.5f}, reason);
+        ctx.check(spider != nullptr && spider->getTypeName() == "minecraft:spider",
+                  "minecraft:spider spawns (reason " + std::to_string(static_cast<int>(reason)) + ")");
+        if (spider) spider->remove();
+    }
+    if (level) level->setDifficulty(previousDifficulty);
 
     // NaturalSpawner#getRandomPosWithin's ChunkAccess#getHeight(WORLD_SURFACE): the highest
     // non-air block of a known column, compared with the engine's heightmap (which counts only
@@ -1751,4 +1767,63 @@ GF_REGISTER_SELFTEST("worldgen.biome_zoom", [](Context& ctx) -> ll::coro::CoroTa
     auto     q = bm::zoom(bm::obfuscateSeed(1234), at.x, at.y, at.z);
     ctx.check(view.biome(at) == view.noiseBiome(q.x, q.y, q.z), "the BlockSource region zooms too");
     gf::log().info("worldgen biome zoom: {} of {} sample positions read a neighbouring quart", moved, total);
+});
+
+// Java block states in Bedrock terms for the feature kit: renamed vanilla ids, stairs / slabs /
+// walls / doors / fences / mushroom blocks, property variants (lit furnace, double slabs); and the
+// survival rules of TF's JSON blocks (BushBlock, MossPatchBlock, TorchberryPlantBlock, ...) that
+// kit::canSurvive answers from their Java classes.
+GF_REGISTER_SELFTEST("worldgen.java_states", [](Context& ctx) {
+    auto name = [](JsonT const& state) -> std::string {
+        auto const* b = kit::javaState(state);
+        return b ? b->getTypeName() : std::string("<none>");
+    };
+    auto stateOf = [](JsonT const& state, char const* key) -> std::string {
+        auto const* b = kit::javaState(state);
+        if (!b) return "<none>";
+        auto s  = gf::game::statesOf(*b);
+        auto it = s.find(key);
+        return it == s.end() ? std::string("<absent>") : it->second;
+    };
+    ctx.check(name({{"Name", "minecraft:cobblestone_stairs"}}) == "minecraft:stone_stairs", "cobblestone stairs: " + name({{"Name", "minecraft:cobblestone_stairs"}}));
+    ctx.check(name({{"Name", "minecraft:rooted_dirt"}}) == "minecraft:dirt_with_roots", "rooted dirt");
+    ctx.check(name({{"Name", "minecraft:red_bed"}}) == "minecraft:bed", "beds are minecraft:bed");
+    ctx.check(name({{"Name", "minecraft:furnace"}, {"Properties", {{"lit", "true"}, {"facing", "north"}}}}) == "minecraft:lit_furnace", "a lit furnace");
+    ctx.check(name({{"Name", "minecraft:cobblestone_slab"}, {"Properties", {{"type", "double"}}}}) == "minecraft:cobblestone_double_slab", "a double slab");
+    ctx.check(stateOf({{"Name", "minecraft:oak_stairs"}, {"Properties", {{"facing", "north"}, {"half", "top"}, {"shape", "straight"}}}}, "weirdo_direction") == "3",
+              "stairs facing north: weirdo_direction 3");
+    ctx.check(stateOf({{"Name", "minecraft:oak_stairs"}, {"Properties", {{"facing", "east"}, {"half", "top"}}}}, "upside_down_bit") == "true", "upside-down stairs");
+    ctx.check(stateOf({{"Name", "minecraft:mossy_cobblestone_slab"}, {"Properties", {{"type", "top"}}}}, "minecraft:vertical_half") == "top", "a top slab");
+    ctx.check(stateOf({{"Name", "minecraft:cobblestone_wall"}, {"Properties", {{"north", "low"}, {"up", "true"}}}}, "wall_connection_type_north") == "short",
+              "a wall's low side is short");
+    ctx.check(kit::javaState({{"Name", "minecraft:oak_fence"}, {"Properties", {{"north", "true"}, {"east", "false"}}}}) == gf::game::blockWith("minecraft:oak_fence"),
+              "fence connections are Bedrock's own");
+    ctx.check(stateOf({{"Name", "minecraft:brown_mushroom_block"}, {"Properties", {{"up", "true"}, {"down", "false"}, {"north", "true"}, {"west", "true"}, {"east", "false"}, {"south", "false"}}}},
+                      "huge_mushroom_bits") == "1",
+              "a north-west cap corner: huge_mushroom_bits 1");
+    ctx.check(kit::javaId(*gf::game::blockWith("minecraft:stone_stairs")) == "minecraft:cobblestone_stairs", "Bedrock's stone stairs are Java's cobblestone stairs");
+
+    // survival of TF's blocks on an in-memory region (grass top at y 3)
+    auto world  = flatMemoryWorld(7);
+    auto region = world->region(0, 0, 1);
+    auto const* stone   = gf::game::blockWith("minecraft:stone");
+    auto const* air     = gf::game::blockWith("minecraft:air");
+    auto const* mayapple = kit::javaBlock("twilightforest:mayapple");
+    auto const* moss     = kit::javaBlock("twilightforest:moss_patch");
+    auto const* torch    = kit::javaBlock("twilightforest:torchberry_plant");
+    auto const* sapling  = kit::javaBlock("twilightforest:twilight_oak_sapling");
+    ctx.require(stone && air && mayapple && moss && torch && sapling, "blocks");
+    ctx.check(gf::features::detail::survivalRule(*mayapple) == gf::features::detail::Survival::Bush, "the mayapple is a BushBlock (skeleton classes)");
+    BlockPos onGrass{4, 4, 4};
+    ctx.check(kit::canSurvive(*region, onGrass, *mayapple), "a mayapple stands on grass");
+    ctx.check(kit::canSurvive(*region, onGrass, *sapling), "a sapling stands on grass");
+    ctx.check(!kit::canSurvive(*region, BlockPos{4, 6, 4}, *mayapple), "a mayapple in the air does not");
+    region->setBlock({6, 4, 6}, *stone);
+    ctx.check(!kit::canSurvive(*region, BlockPos{6, 5, 6}, *mayapple), "nor on stone");
+    ctx.check(kit::canSurvive(*region, BlockPos{6, 5, 6}, *moss), "a moss patch stands on stone (sturdy face)");
+    ctx.check(!kit::canSurvive(*region, BlockPos{6, 6, 6}, *moss), "but not in the air");
+    // a torchberry plant hangs under #twilightforest:plants_hang_on (#minecraft:dirt: the grass block)
+    region->setBlock({8, 2, 8}, *air);
+    ctx.check(kit::canSurvive(*region, BlockPos{8, 2, 8}, *torch), "a torchberry plant hangs under grass");
+    ctx.check(!kit::canSurvive(*region, BlockPos{8, 6, 8}, *torch), "not under air");
 });
