@@ -61,3 +61,9 @@ on screenshots: `troll-rock`, `thrown-block`, `falling-ice` of `tools/e2e/client
 this round).
 
 Open: those client screenshots; the yeti's own fall damage is the engine's (Bedrock's 3-block threshold).
+
+## Audit round 2
+
+Sounds (W2 round 2, audio pass). Checked with `tools/sounds/lint.ps1` on the assembled pack (`tools/assemble.ps1 -Check`): before this round 18 of this unit's sound events still played F3's name-derived baseline placeholder. Alpha Yeti and Yeti (shared files, as in TF) and Troll. `tools/sounds/recipes/caves.json` now designs every one of them (original synthesized sounds, unit-local patches layered from the shared library; TF's audio never read; ids, subtitles, categories, volumes, pitches and variant counts unchanged), rendered with `pwsh tools/sounds/synth.ps1 -Unit caves` into `assets/gen/audio/caves/`. `synth.ps1 -Check` and `lint.ps1` pass; with the other round-2 audio PRs (one per owning unit) the lint reports 0 baseline-only events for the whole pack.
+
+Open: nothing for audio.
