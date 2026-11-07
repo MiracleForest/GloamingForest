@@ -90,4 +90,4 @@ Open (C++, not edited in this audio-only round): `src/feature/hostiles/SpawnSwee
 - **Spawn sweep sound rows**: the `known()` rows of the lower goblin knight's `sound.hurt` / `sound.death` are gone (U25's
   audio PR #149 maps them). The rows of U23's maze slime, U29's giants and U30's final castle mobs stay until their
   audio PRs (#161, #158, #160) are on main; the unstable ice core's `sound.death` row stays (U28 keeps its death
-  single, played by code). Drop each row with its PR: the sweep fails on a known row only if the sound is missing.
+  single, played by code). A stale row is harmless (it only turns a mismatch into an info line); drop each with its PR.
