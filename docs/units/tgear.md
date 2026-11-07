@@ -215,8 +215,10 @@ Open: nothing for audio.
 - **Perfect dodge of TF projectiles**: a projectile simulated by `gf::projectile` (TF's bolts, arrows, snowballs, ...)
   now has its impact cancelled through F8's `gf::projectile::ext::cancelImpact` (NeoForge's
   `ProjectileImpactEvent#setCanceled`, as TF's `TravellersGearEvents#performPerfectDodge`): no hit, no removal, it flies
-  on with its velocity. Its hit counts as an impact when it deals a projectile damage type or one of TF's own
-  (`twilightforest:*`: a TF projectile's hit deals its own type). Vanilla projectiles keep the round-1 path (the damage
+  on with its velocity. Its hit counts as an impact when it deals a projectile damage type or one of the types TF's
+  projectiles deal in `onHitEntity` (lich bolt / bomb, moonworm, nature bolt, thrown block / axe / pickaxe, tome bolt,
+  wand bolt, ice snowball, chain block); the ice bomb's area freeze, falling ice and the mortar's blast are never
+  dodged. Vanilla projectiles keep the round-1 path (the damage
   cancelled, the motion restored a tick later). Not covered by a selftest of its own: the only fixture projectile
   type (`gf_test:boss_part`, F8's) is also the boss fixture's part and its registration is F8-internal; `tgear.perfect_dodge`
   still checks the vanilla arrow path.

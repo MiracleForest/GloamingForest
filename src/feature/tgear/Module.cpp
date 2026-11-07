@@ -580,8 +580,15 @@ combat::Verdict onIncoming(combat::DamageInfo& d) {
         }
         // only the projectile's own impact (ProjectileImpactEvent with an EntityHitResult on the wearer),
         // never the explosion, fire or magic damage a projectile causes
-        // (a TF projectile's hit deals its own TF damage type: twilightforest:lich_bolt, ...)
-        bool impact = core::tgear::isProjectileImpactType(d.type) || (simulated && d.type.starts_with("twilightforest:"));
+        // (a TF projectile's hit deals its own TF damage type: the types TF's projectiles deal in
+        // onHitEntity; not the ice bomb's area freeze, the falling ice or the mortar's blast)
+        static std::unordered_set<std::string> const kTfImpacts{
+            "twilightforest:lich_bolt",      "twilightforest:lich_bomb",     "twilightforest:moonworm",
+            "twilightforest:leaf_brain",     "twilightforest:thrown_block",  "twilightforest:thrown_axe",
+            "twilightforest:thrown_pickaxe", "twilightforest:lost_words",    "twilightforest:schooled",
+            "twilightforest:twilight_scepter", "twilightforest:snowball_fight", "twilightforest:spiked",
+        };
+        bool impact = core::tgear::isProjectileImpactType(d.type) || (simulated && kTfImpacts.contains(d.type));
         if (impact && rollPerfectDodge(d.victim, projectile)) {
             {
                 std::lock_guard lock(state().mutex);
