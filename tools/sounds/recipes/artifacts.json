@@ -1,0 +1,34 @@
+{
+  "about": "U9 artifacts: refinements of the baseline (tools/sounds/baseline/artifacts.json). Original sound designs; TF's audio is never read. The events (ids, subtitles, categories, volumes, pitches, variant counts) stay TF's. A file TF shares with another owner keeps one design in every owner's recipe (the same patch, parameters and seed), so it sounds the same wherever TF plays it. The Keepsake Casket is a heavy metal-bound box: it opens with a creaking hinge after the latch clicks, shuts with a dull thud and a latch, and a repair is three anvil-like blows with a ringing settle (U22 lichdecor's skull chest and wrought iron fence play the same files). The Fortification Shields rise with a stony clatter inside a shimmer, break like crystal (a crunch and a spray of glassy shards) and expire in a falling shimmer; a deflected blow is TF's Java zombie-on-iron-door bang, which Bedrock lacks: a heavy metal bang with a short rattle (the same stand-in as U8 weapons' knightmetal shield). The Twilight Scepter's pearl hits with a falling zap and a soft pop. The scepter files the Lich plays as well (drain, twilight_use, zombie) keep U21 lich's designs.",
+  "patches": {
+    "casket/open": {"params": {}, "length": 0.75, "tail": 0.35, "layers": [{"type": "patch", "patch": "impact/knock_metal", "length": 0.6, "gain": -10, "params": {"freq": 1600, "decay": 0.3}}, {"type": "patch", "patch": "object/creak", "start": 0.06, "length": 1.0, "params": {"pitch": 62, "len": 0.65, "jitter": 0.4, "bend": 6}}]},
+    "casket/close": {"params": {}, "length": 0.35, "tail": 0.5, "layers": [{"type": "patch", "patch": "impact/thud", "length": 0.6, "params": {"pitch": 85, "len": 0.3, "crack": 0.3}}, {"type": "patch", "patch": "impact/knock_metal", "start": 0.05, "length": 0.7, "gain": -10, "params": {"freq": 1400, "decay": 0.4, "count": 2, "gap": 0.06}}]},
+    "casket/repair": {"params": {}, "length": 0.8, "tail": 1.0, "layers": [{"type": "patch", "patch": "impact/knock_metal", "length": 1.6, "params": {"freq": 1100, "decay": 1.2, "count": 3, "gap": 0.22, "spread": 0.1}}, {"type": "patch", "patch": "impact/clang", "length": 0.8, "gain": -8, "params": {"freq": 520, "pitch": 90, "decay": 0.5, "ring": 0.4}}, {"type": "patch", "patch": "magic/shimmer", "start": 0.6, "length": 1.4, "gain": -12, "params": {"freq": 880, "len": 0.6, "sparkle": 0.3}}]},
+    "shield/raise": {"params": {}, "length": 0.9, "tail": 0.8, "layers": [{"type": "patch", "patch": "magic/shimmer", "length": 1.8, "params": {"freq": 660, "len": 0.9, "sparkle": 0.5}}, {"type": "patch", "patch": "impact/knock_stone", "length": 1.0, "gain": -10, "params": {"freq": 500, "decay": 0.6, "count": 4, "gap": 0.08, "spread": 0.3}}, {"type": "patch", "patch": "object/whoosh", "length": 0.6, "gain": -10, "params": {"len": 0.4, "f0": 300, "f1": 1500, "q": 1.2}}]},
+    "shield/break": {"params": {}, "length": 0.55, "tail": 1.2, "layers": [{"type": "patch", "patch": "impact/crunch", "length": 0.8, "params": {"len": 0.5, "freq": 1500, "bright": 1.3}}, {"type": "patch", "patch": "impact/knock_glass", "start": 0.04, "length": 1.6, "gain": -3, "params": {"freq": 1700, "decay": 0.7, "count": 6, "gap": 0.035, "spread": 0.7}}, {"type": "patch", "patch": "impact/knock_stone", "length": 1.0, "gain": -8, "params": {"freq": 600, "decay": 0.6, "count": 2, "gap": 0.07}}]},
+    "shield/expire": {"params": {}, "length": 1.0, "tail": 0.8, "layers": [{"type": "patch", "patch": "magic/shimmer", "length": 1.8, "params": {"freq": 520, "len": 1.0, "sparkle": 0.15}}, {"type": "patch", "patch": "magic/drain", "length": 1.2, "gain": -14, "params": {"pitch": 300, "len": 0.6, "fall": -12}}]},
+    "scepter/pearl_hit": {"params": {"pitch": 400}, "length": 0.3, "tail": 0.8, "layers": [{"type": "patch", "patch": "magic/zap", "length": 0.8, "params": {"pitch": "$pitch", "len": 0.3, "sweep": -14}}, {"type": "patch", "patch": "object/pop", "length": 0.3, "gain": -6, "params": {"pitch": 300, "len": 0.1}}, {"type": "patch", "patch": "magic/shimmer", "length": 1.0, "gain": -16, "params": {"freq": 1320, "len": 0.3, "sparkle": 0.4}}]},
+    "iron_door/bang": {"about": "Stand-in for Java's zombie bashing an iron door (Bedrock has no file): a heavy metal bang with a short rattle of the door.", "params": {"freq": 380, "pitch": 75}, "length": 0.4, "tail": 1.0, "layers": [{"type": "patch", "patch": "impact/clang", "length": 1.4, "params": {"freq": "$freq", "pitch": "$pitch", "decay": 0.7, "ring": 0.7}}, {"type": "patch", "patch": "impact/crunch", "start": 0.01, "length": 0.5, "gain": -12, "params": {"len": 0.15, "freq": 900, "bright": 0.8}}]}
+  },
+  "files": {
+    "random/casket/open": {"patch": "casket/open", "seed": 901},
+    "random/casket/close": {"patch": "casket/close", "seed": 902},
+    "random/casket/repair": {"patch": "casket/repair", "seed": 903},
+    "random/scepter/shield_use": {"patch": "shield/raise", "seed": 911},
+    "vanilla/mob/zombie/metal1": {"patch": "iron_door/bang", "params": {"freq": 380, "pitch": 75}, "seed": 811},
+    "vanilla/mob/zombie/metal2": {"patch": "iron_door/bang", "params": {"freq": 430, "pitch": 80}, "seed": 812},
+    "vanilla/mob/zombie/metal3": {"patch": "iron_door/bang", "params": {"freq": 340, "pitch": 70}, "seed": 813},
+    "random/scepter/shield_break": {"patch": "shield/break", "seed": 915},
+    "random/scepter/shield_stop": {"patch": "shield/expire", "seed": 916},
+    "random/scepter/drain1": {"patch": "magic/drain", "params": {"len": 0.9, "pitch": 270}, "seed": 2141},
+    "random/scepter/drain2": {"patch": "magic/drain", "params": {"len": 0.9, "pitch": 300}, "seed": 2142},
+    "random/scepter/drain3": {"patch": "magic/drain", "params": {"len": 0.9, "pitch": 330}, "seed": 2143},
+    "random/scepter/twilight_hit1": {"patch": "scepter/pearl_hit", "params": {"pitch": 380}, "seed": 931},
+    "random/scepter/twilight_hit2": {"patch": "scepter/pearl_hit", "params": {"pitch": 400}, "seed": 932},
+    "random/scepter/twilight_hit3": {"patch": "scepter/pearl_hit", "params": {"pitch": 420}, "seed": 933},
+    "random/scepter/twilight_use1": {"patch": "magic/zap", "params": {"len": 0.45, "pitch": 640, "sweep": 14}, "seed": 2131},
+    "random/scepter/twilight_use2": {"patch": "magic/zap", "params": {"len": 0.45, "pitch": 700, "sweep": 14}, "seed": 2132},
+    "random/scepter/twilight_use3": {"patch": "magic/zap", "params": {"len": 0.45, "pitch": 760, "sweep": 14}, "seed": 2133},
+    "random/scepter/zombie": {"patch": "creature/growl", "params": {"len": 1.1, "pitch": 90, "size": 0.9}, "seed": 2150}
+  }
+}
