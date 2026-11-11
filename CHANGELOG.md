@@ -5,6 +5,12 @@ All notable changes to GloamingForest are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.1.0-beta.1] - 2026-11-11
+
+First beta, for Minecraft 1.26.51 with LeviLamina 26.51.x, on dedicated servers and on clients through
+LeviLauncher. Minecraft 1.26.60 (LeviLamina 26.60) is not supported yet: LeviLamina 26.60 does not give
+mods access to parts of the game GloamingForest is built on, the Twilight Forest dimension among them.
+
 Status: **Preview** — every unit of The Twilight Forest 4.8 is ported and passes the server selftests;
 client screenshot review pending; Bedrock gaps in `docs/spec/not-ported.md`.
 

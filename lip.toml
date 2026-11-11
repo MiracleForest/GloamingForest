@@ -1,6 +1,6 @@
 format = 4
 id = "github.com/MiracleForest/GloamingForest"
-version = "0.1.0"
+version = "0.1.0-beta.1"
 
 [info]
 name = "GloamingForest"
