@@ -3,7 +3,7 @@
   "units": {
     "F0":  { "name": "core", "wave": "W0a", "title": "Scaffold, contract headers, owners", "dx": [5000, 5099],
              "paths": [
-               "xmake.lua", "xmake-requires.lock", "manifest.json", "tooth.json", ".clang-format", ".editorconfig", ".gitattributes", ".gitignore",
+               "xmake.lua", "xmake-requires.lock", "locks/**", "manifest.json", "lip.toml", "tooth.json", ".clang-format", ".editorconfig", ".gitattributes", ".gitignore",
                "AGENTS.md", "CONTRIBUTING.md", "README.md", "README.zh-CN.md", "CHANGELOG.md", "COPYING", "COPYING.LESSER", "NOTICE",
                ".github/**", "assets/LICENSE", "assets/pack/{bp,rp}/manifest.json", "assets/lang/*/core.json", "assets/test/**", "assets/gen/*/README.md",
                "src/mod/**", "src/game/**", "src/selftest/**", "src/pack/**",

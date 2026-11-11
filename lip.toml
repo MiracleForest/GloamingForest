@@ -1,0 +1,83 @@
+format = 4
+id = "github.com/MiracleForest/GloamingForest"
+version = "0.1.0-beta.1"
+
+[info]
+name = "GloamingForest"
+description = "The Twilight Forest for Minecraft Bedrock Edition (unofficial port of The Twilight Forest 4.8)"
+tags = ["adventure", "world-generation", "dimension"]
+
+# GloamingForest is compiled against one LeviLamina line at a time, so every supported line is a
+# variant named after it: 26_51 for LeviLamina 26.51.x (Minecraft 1.26.51). Variant names may only
+# hold [a-z0-9_], hence 26_51 and not 26.51. Each line has a server build (BDS) and a client build
+# (LeviLauncher).
+#
+# The default variant and the variant "client", which is the one LeviLauncher reaches for first
+# and the one the client build was installed as before, are the newest supported line.
+#
+# A LeviLamina 26.51 server loads its mods from plugins/ (where lip puts LeviLamina itself), so the
+# server builds are placed there; the client builds are lip mod archives, which go to mods/.
+
+# --- 26.51 (Minecraft 1.26.51) ------------------------------------------------------------------
+
+[[variants.""]]
+side = "server"
+platform = "win-x64"
+preserve = ["plugins/GloamingForest/config/"]
+
+[variants."".deps]
+"github.com/LiteLDev/LeviLamina" = "26.51.*"
+
+[[variants."".assets]]
+type = "zip"
+urls = ["https://{{id}}/releases/download/v{{version}}/gloamingforest-server-win-x64-ll26.51.zip"]
+place = [{ src = "", dest = "plugins/GloamingForest/" }]
+
+[[variants.""]]
+side = "client"
+platform = "win-x64"
+preserve = ["mods/GloamingForest/config/"]
+
+[variants."".deps]
+"github.com/LiteLDev/LeviLamina#client" = "26.51.*"
+
+[[variants."".assets]]
+type = "mcmod"
+urls = ["https://{{id}}/releases/download/v{{version}}/gloamingforest-client-win-x64-ll26.51.zip"]
+
+[[variants.client]]
+side = "client"
+platform = "win-x64"
+preserve = ["mods/GloamingForest/config/"]
+
+[variants.client.deps]
+"github.com/LiteLDev/LeviLamina#client" = "26.51.*"
+
+[[variants.client.assets]]
+type = "mcmod"
+urls = ["https://{{id}}/releases/download/v{{version}}/gloamingforest-client-win-x64-ll26.51.zip"]
+
+[[variants."26_51"]]
+side = "server"
+platform = "win-x64"
+preserve = ["plugins/GloamingForest/config/"]
+
+[variants."26_51".deps]
+"github.com/LiteLDev/LeviLamina" = "26.51.*"
+
+[[variants."26_51".assets]]
+type = "zip"
+urls = ["https://{{id}}/releases/download/v{{version}}/gloamingforest-server-win-x64-ll26.51.zip"]
+place = [{ src = "", dest = "plugins/GloamingForest/" }]
+
+[[variants."26_51"]]
+side = "client"
+platform = "win-x64"
+preserve = ["mods/GloamingForest/config/"]
+
+[variants."26_51".deps]
+"github.com/LiteLDev/LeviLamina#client" = "26.51.*"
+
+[[variants."26_51".assets]]
+type = "mcmod"
+urls = ["https://{{id}}/releases/download/v{{version}}/gloamingforest-client-win-x64-ll26.51.zip"]
