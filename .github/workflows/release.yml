@@ -131,10 +131,19 @@ jobs:
           $body = if ($end) { $rest[0..($end - 2)] } else { $rest }
           ($body -join "`n").Trim() | Set-Content RELEASE_NOTES.md -Encoding utf8
 
+      - name: Check assets
+        shell: pwsh
+        run: |
+          # Every asset lip.toml points at must be among the built ZIPs, or installs would 404.
+          $names = Select-String -Path lip.toml -Pattern 'releases/download/v\{\{version\}\}/([^"]+)"' -AllMatches |
+            ForEach-Object { $_.Matches } | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique
+          if (-not $names) { throw "lip.toml references no release assets" }
+          foreach ($name in $names) {
+            if (-not (Test-Path (Join-Path dist $name))) { throw "lip.toml references $name, which the build did not produce" }
+          }
+
       - uses: softprops/action-gh-release@v3
         with:
-          files: |
-            dist/gloamingforest-server-win-x64-ll26.51.zip
-            dist/gloamingforest-client-win-x64-ll26.51.zip
+          files: dist/gloamingforest-*-win-x64-ll*.zip
           body_path: RELEASE_NOTES.md
           prerelease: ${{ contains(github.ref_name, '-') }}

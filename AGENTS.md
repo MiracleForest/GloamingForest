@@ -270,6 +270,9 @@ pwsh -NoProfile -File tools/e2e/client/run-all.ps1 [-RemoteVanilla]   # every cl
   `xmake-requires.lock` and keeps it as committed (xmake would rewrite it per configure).
   `-UpdateLock` (with `-Target all`) re-resolves both into `locks/<variant>.lock`. A build runs in a kill-on-exit job: killing `tools/build.ps1` also stops its xmake and
   clang-cl processes, so a released slot never leaves compiles running.
+- A release bumps `version` in both `lip.toml` and `manifest.json` to the tag without its `v`
+  (e.g. `0.1.0-beta.1` for `v0.1.0-beta.1`) and adds its `CHANGELOG.md` section; the release workflow
+  fails when either version differs from the tag.
 - In game: `/twilightforest selftest ["glob"]` (op or console; quote globs). Output lines:
   `SELFTEST PASS <name>`, `SELFTEST FAIL <name>: <reason>`, `SELFTEST DONE pass=<N> fail=<M>`.
   `/twilightforest stubs` lists the contract stubs that were called.
