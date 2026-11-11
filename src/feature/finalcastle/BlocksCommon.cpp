@@ -31,6 +31,7 @@
 #include "feature/fx/Fx.h"
 #include "feature/tags/Tags.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "game/WorldDb.h"
 #include "mod/Log.h"
 
@@ -158,7 +159,7 @@ bool exceptionForConnection(Block const& block) {
 
 bool powered(BlockSource& region, BlockPos const& pos) { return redstone::powered(region, pos); }
 
-void destroy(BlockSource& region, BlockPos const& pos, bool drops) { region.getLevel().destroyBlock(region, pos, drops, BlockChangeContext{}); }
+void destroy(BlockSource& region, BlockPos const& pos, bool drops) { gf::game::compat::destroyBlock(region, pos, drops, BlockChangeContext{}); }
 
 Vec3 center(BlockPos const& p) { return Vec3{p.x + 0.5f, p.y + 0.5f, p.z + 0.5f}; }
 

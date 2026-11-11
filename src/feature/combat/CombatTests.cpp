@@ -78,6 +78,7 @@
 #include "feature/progression/Progression.h"
 #include "feature/tags/Tags.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "game/Items.h"
 #include "game/WorldDb.h"
 #include "selftest/SelfTest.h"
@@ -1553,7 +1554,7 @@ GF_REGISTER_SELFTEST("combat.loot_slime_size", [](Context& ctx) -> ll::coro::Cor
     auto sizeEvent = [](Actor& a, std::string const& size) {
         VariantParameterList params{};
         params.mSelf = &a;
-        return a.executeEvent("minecraft:spawn_" + size, params) || a.executeEvent("spawn_" + size, params);
+        return gf::game::compat::executeEvent(a, "minecraft:spawn_" + size, params) || gf::game::compat::executeEvent(a, "spawn_" + size, params);
     };
     ctx.require(sizeEvent(*small, "small") && sizeEvent(*medium, "medium"), "the slimes took their size events");
     co_await ctx.ticks(2);

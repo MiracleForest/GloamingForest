@@ -14,6 +14,10 @@
     bin/<target>/GloamingForest/  (dll, pdb, manifest.json, lang/, data/, behavior_packs/, resource_packs/)
   Copy that folder to `plugins/` (BDS) or `mods/` (LeviLauncher client).
 
+  -LeviLamina picks the LeviLamina version (and so the line) to build against. Every supported line
+  is a lip variant (26.60 -> 26_60, 26.51 -> 26_51, lip.toml) with its own package lock,
+  locks/<variant>.lock, which is copied over xmake-requires.lock before configuring.
+
   Exit code 0 = built, 1 = failed, 2 = NOT RUN (no build slot within -SlotTimeoutMinutes).
 
 .EXAMPLE
@@ -21,6 +25,7 @@
   pwsh tools/build.ps1 -Target server           # one platform (iterate with this)
   pwsh tools/build.ps1 -Target all -Tests       # both platforms + gtest (before a PR)
   pwsh tools/build.ps1 -Target server -KeepGoing # on a compile error, report every failing file
+  pwsh tools/build.ps1 -Target all -LeviLamina 26.51.7 # the older supported line
 #>
 param(
     [ValidateSet('server', 'client', 'all')][string]$Target = 'all',
@@ -28,8 +33,10 @@ param(
     [switch]$Tests,
     [int]$Jobs = 6,
     [string]$Unit = $env:GF_UNIT,
+    # The LeviLamina version to build against; its line names the lip variant and the lock file.
+    [ValidatePattern('^\d+\.\d+\.\d+$')][string]$LeviLamina = '26.60.6',
     [int]$SlotTimeoutMinutes = 180,
-    # Re-resolve the packages and rewrite xmake-requires.lock with the entries of every target type (-Target all only).
+    # Re-resolve the packages and rewrite locks/<variant>.lock with the entries of every target type (-Target all only).
     [switch]$UpdateLock,
     # After a failed compile, check every other out-of-date translation unit too (in the same slot) and
     # print all their errors: one slot wait surfaces every compile error, not just the first file's.
@@ -64,11 +71,21 @@ foreach ($pf in $env:ProgramFiles, ${env:ProgramFiles(x86)}) {
     if ($pf -and (Test-Path (Join-Path $pf 'Microsoft Visual Studio\18'))) { $vsArgs = @('--vs=2026'); break }
 }
 
+# The packages of each LeviLamina line are pinned by locks/<variant>.lock (26.60.6 -> 26_60), which
+# xmake reads as xmake-requires.lock (not committed).
+$llParts = $LeviLamina.Split('.')
+$variant = "$($llParts[0])_$($llParts[1])"
+$variantLock = Join-Path $root "locks/$variant.lock"
+if (-not (Test-Path $variantLock) -and -not $UpdateLock) {
+    Write-Host "==> no lock file locks/$variant.lock for LeviLamina $LeviLamina (create it with -Target all -UpdateLock)" -ForegroundColor Red
+    exit 1
+}
 # xmake rewrites xmake-requires.lock on every configure with the entries of the configured target
 # type only. The committed lock holds the entries of both (server and client): keep it as it is,
 # or, with -UpdateLock, write the union of what both configures resolved.
 $lockFile = Join-Path $root 'xmake-requires.lock'
-$lockText = if (Test-Path $lockFile) { [IO.File]::ReadAllText($lockFile) } else { $null }
+$lockText = if (Test-Path $variantLock) { [IO.File]::ReadAllText($variantLock) } else { $null }
+if ($null -ne $lockText) { [IO.File]::WriteAllText($lockFile, $lockText) }
 $lockEntries = [ordered]@{}
 function Read-LockEntries([string]$text) {
     $out = [ordered]@{}
@@ -80,6 +97,8 @@ function Write-MergedLock {
     $body = ($keys | ForEach-Object { $lockEntries[$_] }) -join ",`n"
     $text = "{`n    __meta__ = {`n        version = `"1.0`"`n    },`n    [`"windows|x64`"] = {`n$body`n    }`n}"
     [IO.File]::WriteAllText($lockFile, $text)
+    New-Item -ItemType Directory -Force (Split-Path $variantLock) | Out-Null
+    [IO.File]::WriteAllText($variantLock, $text)
 }
 # -UpdateLock re-resolves both target types from scratch: a lock entry does not record its target
 # type (only the package hash differs), so the stale entries of one target could not be told apart
@@ -194,12 +213,12 @@ try {
         # otherwise make xmake pick the outer project.
         $targets = if ($Target -eq 'all') { @('server', 'client') } else { @($Target) }
         foreach ($t in $targets) {
-            Write-Host "==> configuring $t ($Mode)"
+            Write-Host "==> configuring $t ($Mode, LeviLamina $LeviLamina)"
             # The package cache is shared by every worktree: one 'xmake f' (package install) at a time.
             $req = Enter-GfLock -Path (Join-Path (Get-GfThrottleHome) 'xmake-require.lock') -What 'xmake package lock' -TimeoutMinutes 60 -Unit $Unit
             try {
                 if ($UpdateLock -and (Test-Path $lockFile)) { Remove-Item $lockFile }
-                xmake f -P $root -a x64 -m $Mode -p windows --target_type=$t -o "build/$t" @vsArgs -y
+                xmake f -P $root -a x64 -m $Mode -p windows --target_type=$t --levilamina=$LeviLamina -o "build/$t" @vsArgs -y
                 if ($LASTEXITCODE) { throw "xmake config failed for $t" }
                 if ($UpdateLock) {
                     $resolved = Read-LockEntries ([IO.File]::ReadAllText($lockFile))

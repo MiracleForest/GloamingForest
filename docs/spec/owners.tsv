@@ -5670,6 +5670,8 @@ path	docs/units/trees.md	U3	manual
 path	docs/units/uncraftmaps.md	U13	manual
 path	docs/units/weapons.md	U8	manual
 path	docs/units/woodwork.md	U4	manual
+path	lip.toml	F0	manual
+path	locks/**	F0	manual
 path	manifest.json	F0	manual
 path	NOTICE	F0	manual
 path	README.md	F0	manual
@@ -6079,8 +6081,6 @@ path	tools/structures/weapons/**	U8	manual
 path	tools/structures/woodwork/**	U4	manual
 path	tools/tf/**	F0	manual
 path	tools/xmake/**	F0	manual
-path	tooth.json	F0	manual
-path	xmake-requires.lock	F0	manual
 path	xmake.lua	F0	manual
 placed_feature	twilightforest:big_mushgloom	U27	gen
 placed_feature	twilightforest:blackberry_bushes	U6	gen

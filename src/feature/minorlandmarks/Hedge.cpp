@@ -35,6 +35,7 @@
 #include "feature/common/Interactions.h"
 #include "feature/families/BlockEvents.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "mod/Log.h"
 
 namespace gf::feature::minorlandmarks {
@@ -106,7 +107,7 @@ void tickHedge(Pending const& p) {
         // new AABB(pos).inflate(8.0)
         if (at.x < p.pos.x - 8 || at.x > p.pos.x + 9 || at.y < p.pos.y - 8 || at.y > p.pos.y + 9 || at.z < p.pos.z - 8 || at.z > p.pos.z + 9) return true;
         // player.swinging: Bedrock's swing flag, or the player still mining the hedge
-        bool swinging = static_cast<Mob&>(player).mSwinging;
+        bool swinging = gf::game::compat::isSwinging(player);
         if (!swinging && player.mGameMode && player.mGameMode->getDestroyBlockPos() == p.pos && player.mGameMode->mDestroyProgress > 0.0F) swinging = true;
         if (swinging && looksAt(player, p.pos)) {
             hurt(player);

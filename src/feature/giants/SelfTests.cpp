@@ -46,6 +46,7 @@
 #include "feature/progression/Progression.h"
 #include "feature/spawn/Spawn.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "game/Items.h"
 #include "selftest/SelfTest.h"
 
@@ -259,7 +260,7 @@ GF_REGISTER_SELFTEST("giants.giant_blocks", [](Context& ctx) -> ll::coro::CoroTa
     countItems(*region, cell);
     // breaking one removes all 64, with one drop
     BlockPos one{cell.minX + 1, cell.minY + 2, cell.minZ + 3};
-    region->getLevel().destroyBlock(*region, one, true, BlockChangeContext{});
+    gf::game::compat::destroyBlock(*region, one, true, BlockChangeContext{});
     co_await ctx.ticks(4);
     int left = 0;
     for (int x = cell.minX; x <= cell.maxX; ++x)

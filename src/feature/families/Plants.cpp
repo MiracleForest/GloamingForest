@@ -48,6 +48,7 @@
 #include "feature/features/Features.h"
 #include "feature/tags/Tags.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "game/Items.h"
 #include "mod/Log.h"
 
@@ -524,7 +525,7 @@ void installPlants() {
             if (repeatedUse(c.player, c.pos, c.firstEvent)) return ia::Result::Consume;
             // SnowLoggable.isColliding: nobody inside the new snow
             AABB box{Vec3{float(bp.x), float(bp.y), float(bp.z)}, Vec3{bp.x + 1.f, bp.y + (layers + 1) * 2 / 16.f, bp.z + 1.f}};
-            if (!region.isUnobstructedByEntities(box, nullptr)) return ia::Result::Deny;
+            if (!gf::game::compat::isUnobstructedByEntities(region, box, nullptr)) return ia::Result::Deny;
             setStates(c.pos, {{state::Layers, layers + 1}});
             consumeHeld(c.player, c.item);
             // SoundEvents.SNOW_PLACE: the snow layer's place sound

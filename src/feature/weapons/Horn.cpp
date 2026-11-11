@@ -32,6 +32,7 @@
 #include "feature/stats/Stats.h"
 #include "feature/weapons/World.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "game/Items.h"
 #include "mod/Log.h"
 
@@ -85,7 +86,7 @@ bool crumbleBlock(Player& player, BlockSource& region, BlockPos const& pos) {
         if (world::random().nextFloat() < c->chance) {
             // Block#canHarvestBlock: the horn is no tool, so only blocks that need none
             if (!block.getBlockType().mRequiresCorrectToolForDrops) {
-                region.getLevel().destroyBlock(region, pos, !player.isCreative(), BlockChangeContext{});
+                gf::game::compat::destroyBlock(region, pos, !player.isCreative(), BlockChangeContext{});
                 return true;
             }
         }
@@ -153,7 +154,7 @@ void registerHorn() {
         Block const& block = region.getBlock(pos);
         auto         c     = crumbleOf(game::blockId(block));
         if (!c) return false;
-        if (c->result == "minecraft:air") region.getLevel().destroyBlock(region, pos, true, BlockChangeContext{});
+        if (c->result == "minecraft:air") gf::game::compat::destroyBlock(region, pos, true, BlockChangeContext{});
         else replaceKeeping(region, pos, block, c->result);
         stack.hurtAndBreak(1, nullptr);
         return true;

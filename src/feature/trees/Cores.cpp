@@ -81,6 +81,7 @@
 #include "feature/tags/VanillaTags.h"
 #include "feature/trees/TreeUtil.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "game/Items.h"
 #include "game/WorldDb.h"
 #include "mod/I18n.h"
@@ -679,7 +680,7 @@ std::vector<Slots> vanillaFaces(std::string const& id, std::function<Container*(
         auto canPlace = [get, idOf](int slot, ItemStack const& s) {
             if (slot == 2) return false;
             if (slot != 1) return true;
-            bool fuel = FurnaceBlockActor::getBurnDuration(s, 200.0f) > 0.0f;
+            bool fuel = gf::game::compat::burnDuration(s, 200.0f) > 0.0f;
             return fuel || (idOf(s) == "minecraft:bucket" && idOf(get(1)) != "minecraft:bucket");
         };
         auto takeDown = [idOf](int slot, ItemStack const& s) { return slot != 1 || idOf(s) == "minecraft:water_bucket" || idOf(s) == "minecraft:bucket"; };

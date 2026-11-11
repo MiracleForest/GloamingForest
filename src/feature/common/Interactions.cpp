@@ -32,6 +32,7 @@
 
 #include "feature/tags/Tags.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "game/WorldDb.h"
 #include "mod/Log.h"
 #include "mod/Module.h"
@@ -513,10 +514,7 @@ LL_TYPE_INSTANCE_HOOK(
     EntityContext ctx{*this, item, itemId, entity, entityId, vecOf(entity.getPosition()), isSneaking()};
     auto          r = registry().attack.empty() ? Result::Pass : dispatchAttack(ctx);
     if (r != Result::Pass) {
-        ActorHurtResult res{};
-        res.mHurtOrDamage         = std::variant<bool, float>(r == Result::Consume);
-        res.mShouldAllowKnockback = false;
-        return res;
+        return gf::game::compat::hurtResult(r == Result::Consume, false);
     }
     auto res = origin(entity, cause);
     notify(registry().attacked, entityId, itemId, ctx, static_cast<bool>(res), "attacked", true);

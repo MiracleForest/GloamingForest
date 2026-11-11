@@ -251,11 +251,20 @@ std::vector<std::string> tfBlocks() {
     auto                     level = ll::service::getLevel();
     if (!level) return out;
     auto registry = level->getBlockTypeRegistry();
+#if GF_LL_VERSION >= 2660
+    // 26.60 has no forEachBlockType: the registry's own name map
+    for (auto const& [key, type] : *registry.get().get()->mBlockLookupMap) {
+        if (!type) continue;
+        auto const& name = type->getTypeName();
+        if (name.rfind(kPrefix, 0) == 0) out.push_back(name);
+    }
+#else
     registry.get().get()->forEachBlockType([&](BlockType const& type) {
         auto const& name = type.getTypeName();
         if (name.rfind(kPrefix, 0) == 0) out.push_back(name);
         return true;
     });
+#endif
     std::sort(out.begin(), out.end());
     out.erase(std::unique(out.begin(), out.end()), out.end());
     return out;
@@ -441,7 +450,11 @@ GF_REGISTER_SELFTEST("item.sweep_recipes", [](Context& ctx) {
                     for (auto const& [rid, r] : *table) {
                         if (!r || !resultIs(*r, results, g.count)) continue;
                         for (auto const& ri : r->mMyIngredients.get())
+                            #if GF_LL_VERSION >= 2660
+                            if (r->itemValidForRecipe(ri, *input, nullptr)) ok = true;
+#else
                             if (r->itemValidForRecipe(ri, *input)) ok = true;
+#endif
                         if (ok) break;
                     }
             if (!ok) rep.report(id, "", id + ": no stonecutter recipe of the game makes " + std::to_string(g.count) + " " + g.result + " from " + (ings.empty() ? "?" : ings[0]));

@@ -20,6 +20,7 @@
 
 #include "feature/ext/worldgen/FeatureKit.h"
 #include "feature/worldgen/Internal.h"
+#include "game/Compat.h"
 #include "mod/Log.h"
 
 namespace gf::terrain::ext {
@@ -242,7 +243,7 @@ Block const* LiquidLayer::at(int lx, int y, int lz) const {
 
 void LiquidLayer::clear(int lx, int y, int lz, Block const& air) const {
     if (!at(lx, y, lz)) return;
-    mChunk->setExtraBlockSimple(chunkPos(lx, y, lz, mMinY), air);
+    gf::game::compat::setExtraBlockSimple(*mChunk, chunkPos(lx, y, lz, mMinY), air);
 }
 
 std::unique_ptr<worldgen::Chunk> loadedGameChunk(BlockSource& source, int chunkX, int chunkZ) {

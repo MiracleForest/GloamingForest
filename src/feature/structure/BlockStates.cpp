@@ -779,7 +779,11 @@ bool isRegisteredBlock(std::string_view id) {
 
 bool blocksMotion(Block const& block) {
     if (block.isAir()) return false;
+    #if GF_LL_VERSION >= 2660
+    return block.getBlockType().mMaterial->mBlocksMotion;
+#else
     return block.getBlockType().mMaterial.mBlocksMotion;
+#endif
 }
 
 Block const* fromJavaState(Json const& state) {

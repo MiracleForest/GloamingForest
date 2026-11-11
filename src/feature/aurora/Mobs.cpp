@@ -71,6 +71,7 @@
 #include "feature/tags/Tags.h"
 #include "feature/worldgen/Worldgen.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "game/Items.h"
 #include "game/WorldDb.h"
 #include "mod/Log.h"
@@ -429,7 +430,7 @@ void transformBlock(BlockSource& region, BlockPos const& pos) {
     if (state.isAir()) return;
     auto const& type = state.getBlockType();
     // getExplosionResistance() < 8 and breakable (destroy speed >= 0)
-    if (type.getExplosionResistance() >= 8.0f * 5.0f || type.getDestroySpeed() < 0.0f) return; // Bedrock keeps Java resistance x 5
+    if (gf::game::compat::explosionResistance(type) >= 8.0f * 5.0f || gf::game::compat::destroySpeed(type) < 0.0f) return; // Bedrock keeps Java resistance x 5
     // MapColor#col: Java's colour for the vanilla blocks of javaMapColor's table (Bedrock tints grass
     // and leaves by biome), else Bedrock's own map colour (Java's palette for most vanilla blocks)
     auto     id    = gf::game::blockId(state);

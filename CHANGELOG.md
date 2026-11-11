@@ -32,3 +32,13 @@ client screenshot review pending; Bedrock gaps in `docs/spec/not-ported.md`.
 - The W0 contract headers with neutral stubs, the `gf_test:*` fixture packs, the asset assembler with its
   checks, the ownership manifest (`docs/spec/owners.tsv`) and the CI guards.
 - The server and client end-to-end harnesses with the `smoke` scenarios.
+- Support for **Minecraft 1.26.60** with LeviLamina 26.60.x, the version GloamingForest is installed as by
+  default, next to Minecraft 1.26.51 with LeviLamina 26.51.x. GloamingForest is compiled against one
+  LeviLamina line at a time, so every release ships one download per side and line:
+  `gloamingforest-<server|client>-win-x64-ll26.60.zip` and `gloamingforest-<server|client>-win-x64-ll26.51.zip`.
+  The downloads are lip mod archives: the files sit at the root of the ZIP, not inside a `GloamingForest/` folder.
+- The lip package `github.com/MiracleForest/GloamingForest`, described by `lip.toml` of format 4 (lip
+  **0.40.0** or later, or LeviLauncher). Each supported LeviLamina line is a variant named after it, `26_60`
+  and `26_51`, with a server and a client build; the default variant and `client` are the newest line. To
+  stay on Minecraft 1.26.51, install `github.com/MiracleForest/GloamingForest#26_51`. Settings in
+  `mods/GloamingForest/config/` are kept across updates.

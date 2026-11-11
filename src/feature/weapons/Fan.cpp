@@ -43,6 +43,7 @@
 #include "feature/tags/Tags.h"
 #include "feature/weapons/World.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "game/Items.h"
 #include "mod/Log.h"
 
@@ -73,7 +74,7 @@ int fanBlock(Player& player, BlockSource& region, BlockPos const& pos) {
     auto         id = game::blockId(b);
     if (gf::tags::has(gf::tags::Registry::Block, "minecraft:small_flowers", id)) {
         if (world::random().nextInt(3) == 0 && mayBreak(player, pos)) {
-            region.getLevel().destroyBlock(region, pos, true, BlockChangeContext{});
+            gf::game::compat::destroyBlock(region, pos, true, BlockChangeContext{});
             return 1;
         }
         return 0;

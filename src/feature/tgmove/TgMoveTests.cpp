@@ -32,6 +32,7 @@
 #include "mc/world/attribute/AttributeInstanceRef.h"
 #include "mc/world/attribute/SharedAttributes.h"
 #include "mc/world/effect/MobEffectInstance.h"
+#include "mc/world/item/HandSlot.h"
 #include "mc/world/item/Item.h"
 #include "mc/world/item/ItemStack.h"
 #include "mc/world/level/BlockPos.h"
@@ -779,7 +780,11 @@ GF_REGISTER_SELFTEST("tgmove.agile_restore", [](Context& ctx) -> ll::coro::CoroT
         auto& sp = static_cast<SimulatedPlayer&>(p);
         (void)sp.simulateSetItem(*bow, true, 0);
         (void)sp.simulateUseItemInSlot(0);
+        #if GF_LL_VERSION >= 2660
+        if (p.getItemUseDuration() <= 0) p.startUsingItem(p.getCarriedItem(), 72000, HandSlot::Mainhand);
+#else
         if (p.getItemUseDuration() <= 0) p.startUsingItem(p.getCarriedItem(), 72000);
+#endif
     }
     co_await ctx.ticks(3);
     auto& q = ctx.player();

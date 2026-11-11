@@ -46,6 +46,7 @@
 #include "feature/fx/Fx.h"
 #include "feature/net/Net.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 
 namespace gf::feature::darktower {
 
@@ -110,7 +111,7 @@ void destroy(BlockSource& region, BlockPos const& pos, bool drops) {
     // destroyBlock(pos, false) runs no dropResources (no spawnAfterBreak): quiet like removeBlock
     std::optional<QuietScope> quiet;
     if (!drops) quiet.emplace();
-    region.getLevel().destroyBlock(region, pos, drops, BlockChangeContext{});
+    gf::game::compat::destroyBlock(region, pos, drops, BlockChangeContext{});
 }
 
 void breakEffect(BlockSource& region, BlockPos const& pos, Block const& block) {
@@ -153,7 +154,7 @@ bool hasCollision(BlockSource& region, BlockPos const& pos) {
     return !boxes.empty();
 }
 
-bool unbreakable(Block const& block) { return block.getBlockType().getDestroySpeed() < 0.0f; }
+bool unbreakable(Block const& block) { return gf::game::compat::destroySpeed(block.getBlockType()) < 0.0f; }
 
 bool loaded(BlockSource& region, BlockPos const& pos, int radius) { return region.hasChunksAt(pos, radius, false); }
 

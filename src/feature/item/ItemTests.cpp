@@ -71,6 +71,7 @@
 #include "feature/tags/TagsInternal.h"
 #include "feature/traits/Traits.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "game/Items.h"
 #include "game/WorldDb.h"
 #include "selftest/SelfTest.h"
@@ -326,8 +327,8 @@ GF_REGISTER_SELFTEST("item.data_reload", [](Context& ctx) {
         ctx.check(gf::datamaps::keys("gf_test:crumble").size() == 2, "keys lists ids and tag members");
         // the NeoForge maps the game applies: the composter's chance, the furnace's fuel value
         ctx.check(ComposterBlock::getFillChance(items::make(kFixture).value_or(ItemStack::EMPTY_ITEM())) == 65, "compostables: the composter takes the item at 65 %");
-        auto coal    = FurnaceBlockActor::getBurnDuration(items::make("minecraft:coal").value_or(ItemStack::EMPTY_ITEM()), 200.f);
-        auto fixture = FurnaceBlockActor::getBurnDuration(items::make(kFixture).value_or(ItemStack::EMPTY_ITEM()), 200.f);
+        auto coal    = gf::game::compat::burnDuration(items::make("minecraft:coal").value_or(ItemStack::EMPTY_ITEM()), 200.f);
+        auto fixture = gf::game::compat::burnDuration(items::make(kFixture).value_or(ItemStack::EMPTY_ITEM()), 200.f);
         ctx.check(coal > 0 && std::abs(fixture - coal / 2) < 0.01f * coal, "furnace_fuels: 800 ticks burn half as long as coal (" + std::to_string(fixture) + " / " + std::to_string(coal) + ")");
         ctx.check(ComposterBlock::getFillChance(items::make("minecraft:stone").value_or(ItemStack::EMPTY_ITEM())) == 0, "vanilla items keep Bedrock's (stone: none)");
         // a value handed out survives a reload (the old snapshot is kept)

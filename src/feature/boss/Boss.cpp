@@ -99,6 +99,7 @@
 #include "mc/world/level/block/Block.h"
 #include "mc/world/level/block/BrightnessPair.h"
 #include "mc/world/level/dimension/Dimension.h"
+#include "mc/deps/ecs/gamerefs_entity/EntityContext.h"
 #include "mc/entity/components/death/DeathTickingComponent.h"
 #include "mc/entity/systems/death/ServerMobTickDeathSystemImpl.h"
 #include "mc/entity/components/ActorUniqueIDComponent.h"
@@ -129,6 +130,7 @@
 #include "feature/progression/Progression.h"
 #include "feature/tags/Tags.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "game/Items.h"
 #include "game/WorldDb.h"
 #include "mod/Config.h"
@@ -412,7 +414,7 @@ void adjustHealth(Mob& mob) {
         AttributeOperands::OperandMax,
         true
     );
-    inst->addModifier(mod, attr.mContext);
+    gf::game::compat::addModifier(*inst, mod, attr.mContext);
     log().info("boss: {} got {} extra health for {} players", mob.getTypeName(), perPlayer * (n - 1), n);
 }
 
@@ -738,7 +740,7 @@ bool fillContainer(core::GlobalPos const& gpos, std::vector<ItemStack> const& it
 bool pistonMovable(BlockSource& region, BlockPos const& pos) {
     Block const& block = region.getBlock(pos);
     if (block.isAir()) return true;
-    if (block.getBlockType().getDestroySpeed() < 0.0f) return false;
+    if (gf::game::compat::destroySpeed(block.getBlockType()) < 0.0f) return false;
     static std::unordered_set<std::string> const blocked{
         // vanilla (Blocks: .pushReaction(PushReaction.BLOCK))
         "minecraft:obsidian", "minecraft:crying_obsidian", "minecraft:respawn_anchor", "minecraft:reinforced_deepslate",
@@ -1167,6 +1169,27 @@ int deathHold(std::int64_t uid) {
 /// engine then removes the body. A body whose chunk is not loaded waits (Java's dying boss is saved
 /// with its chunk and ticks again when it loads); a body that did not come back with its loaded
 /// chunk finishes its death without it (the defaults, with what was known at its last tick).
+#if GF_LL_VERSION >= 2660
+/// deathHold without its hook: LeviLamina 26.60 does not export ServerMobTickDeathSystemImpl::_tick,
+/// so the engine's death ticks of the dying bosses are held from the level tick instead. A held body
+/// stays at death time 0 (the engine removes a body at 20); a released one is put at 19, so that the
+/// engine's next death tick removes it.
+void holdEngineDeathTicks() {
+    for (auto const& d : S().dying) {
+        Actor* actor = fe::actorById(d.uid);
+        if (!actor) continue;
+        auto* ticking = actor->getEntityContext().tryGetComponent<DeathTickingComponent>().as_ptr();
+        if (!ticking) continue;
+        if (d.released) {
+            if (ticking->mTicks < 19) ticking->mTicks = 19; // removed on the engine's next tick
+        } else {
+            ticking->mTicks = 0; // the boss's own animation runs on: the body stays
+            ++S().heldDeathTicks;
+        }
+    }
+}
+#endif
+
 void tickDying() {
     auto& dying   = S().dying;
     bool  changed = false;
@@ -1813,7 +1836,7 @@ void tickSpawners() {
         if (spawnMyBoss(*region, gp.dim, pos, spec->second, it->second)) {
             if (auto* lv = level()) {
                 BlockChangeContext ctx{};
-                lv->destroyBlock(*region, pos, false, ctx);
+                gf::game::compat::destroyBlock(*region, pos, false, ctx);
             }
             log().info("boss: {} spawned {} at {} {} {}", id, spec->second.entityId, pos.x, pos.y, pos.z);
             it = s.activeSpawners.erase(it);
@@ -1870,6 +1893,7 @@ std::vector<VariantRow> const& variants() {
 // death ticking system (ServerMobTickDeathSystemImpl, which also drops the XP); a dying TF boss
 // keeps its body until its own animation finished, then the engine's tick runs from 19 and removes
 // it (with the XP and the death particles).
+#if GF_LL_VERSION < 2660 // 26.60 does not export the system's _tick: holdEngineDeathTicks
 LL_STATIC_HOOK(
     BossDeathTickHook,
     ll::memory::HookPriority::Normal,
@@ -1920,6 +1944,7 @@ LL_STATIC_HOOK(
         soundRequestQueueView
     );
 }
+#endif
 
 namespace gf::feature::boss {
 namespace {
@@ -1934,7 +1959,9 @@ public:
     // (registered once).
     void install() {
         if (std::exchange(mInstalled, true)) return; // a second install without an uninstall: no-op
+#if GF_LL_VERSION < 2660
         BossDeathTickHook::hook();
+#endif
         // EntityEvents#addQualifiedGroupPlayerIfNeeded: melee hits now, every damage through combat
         S().handlers.push_back(ia::onAttacked({}, [](ia::EntityContext const& c, bool hit) {
             if (hit) qualify(c.entity, &c.player);
@@ -1959,6 +1986,9 @@ public:
         });
         fe::onLevelTick([] {
             tickDying();
+#if GF_LL_VERSION >= 2660
+            holdEngineDeathTicks();
+#endif
             tickDeposits();
             tickFills();
             tickSpawners();
@@ -2043,7 +2073,9 @@ public:
         if (!std::exchange(mInstalled, false)) return;
         for (auto id : S().handlers) ia::remove(id);
         S().handlers.clear();
+#if GF_LL_VERSION < 2660
         BossDeathTickHook::unhook();
+#endif
     }
 
 private:

@@ -2,9 +2,11 @@
 
 GloamingForest is an unofficial port of **The Twilight Forest 4.8** (TeamTwilight/twilightforest,
 branch `1.21.1`, commit `9e40a75721c716b2fdf80c16d1058fe718825e9f`, MC 1.21.1) to Minecraft: Bedrock
-Edition, written as a LeviLamina native mod. It targets MC **1.26.51** / LeviLamina **26.51.7**,
-builds with xmake + clang-cl on Windows x64, and runs on **both** the dedicated server (BDS) and the
-client (local worlds through LeviLauncher): one code base, two builds (`--target_type=server|client`).
+Edition, written as a LeviLamina native mod. It targets MC **1.26.60** / LeviLamina **26.60.6** and
+still builds for MC 1.26.51 / LeviLamina 26.51.7 (`--levilamina`; `GF_LL_VERSION` is 2660 or 2651 for
+the few source guards), builds with xmake + clang-cl on Windows x64, and runs on **both** the dedicated
+server (BDS) and the client (local worlds through LeviLauncher): one code base, two builds
+(`--target_type=server|client`) per LeviLamina line.
 
 The bar: with the client mod installed, every feature, interaction and screen matches TF. Vanilla
 Bedrock clients joining a BDS are best effort (fallbacks: forms, DDUI, lore, carriers, vanilla
@@ -239,6 +241,7 @@ In a fresh pwsh refresh PATH first (the build script does it too and adds LLVM i
 git config --global core.longpaths true                       # once (long LeviLamina header paths)
 pwsh tools/build.ps1 -Target server                            # iterate (one target, a build slot)
 pwsh tools/build.ps1 -Target all -Tests                        # before a PR: both targets + gtest
+pwsh tools/build.ps1 -Target all -LeviLamina 26.51.7           # the older LeviLamina line
 xmake run -P . gf-tests                                        # -P .: worktrees nest in another checkout
 pwsh tools/assemble.ps1 -Check                                 # packs + checks without building
 pwsh -NoProfile -File tools/e2e/server/run.ps1 -Scenario <unit>
@@ -263,9 +266,11 @@ pwsh -NoProfile -File tools/e2e/client/run-all.ps1 [-RemoteVanilla]   # every cl
 - Builds and e2e runs go only through `tools/build.ps1` and `tools/e2e/*/run.ps1` (R23): they take
   slots of `tools/lib/Throttle.psm1` (build 3 with a 10 GB free-memory gate, bds 5, client 2). Exit
   code 2 means **NOT RUN** (no slot in time): retry, never count it as a pass.
-- `xmake-requires.lock` holds the package entries of both target types; `tools/build.ps1` keeps it
-  as committed (xmake would rewrite it per configure). `-UpdateLock` (with `-Target all`) re-resolves
-  both. A build runs in a kill-on-exit job: killing `tools/build.ps1` also stops its xmake and
+- Every supported LeviLamina line is a lip variant (`26_60`, `26_51` in `lip.toml`; `""` and `client`
+  are the newest line) with its own package lock `locks/<variant>.lock`, holding the entries of both
+  target types. `tools/build.ps1 -LeviLamina <version>` (default 26.60.6) copies it over the
+  uncommitted `xmake-requires.lock` and keeps it as committed (xmake would rewrite it per configure).
+  `-UpdateLock` (with `-Target all`) re-resolves both into `locks/<variant>.lock`. A build runs in a kill-on-exit job: killing `tools/build.ps1` also stops its xmake and
   clang-cl processes, so a released slot never leaves compiles running.
 - In game: `/twilightforest selftest ["glob"]` (op or console; quote globs). Output lines:
   `SELFTEST PASS <name>`, `SELFTEST FAIL <name>: <reason>`, `SELFTEST DONE pass=<N> fail=<M>`.
@@ -273,7 +278,7 @@ pwsh -NoProfile -File tools/e2e/client/run-all.ps1 [-RemoteVanilla]   # every cl
 - Log contract: `GloamingForest enabled` on enable; `GloamingForest world ready` when a world is
   available.
 - clang-cl must be on PATH (`C:\Program Files\LLVM\bin`). LeviLamina headers:
-  `%LOCALAPPDATA%\.xmake\packages\l\levilamina\26.51.7\<hash>\include\{ll,mc}` (one hash per target type).
+  `%LOCALAPPDATA%\.xmake\packages\l\levilamina\<version>\<hash>\include\{ll,mc}` (one hash per target type).
 
 ## Bedrock / LeviLamina rules (learned the hard way)
 

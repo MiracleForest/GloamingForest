@@ -33,6 +33,7 @@
 #include "ll/api/event/EventBus.h"
 #include "ll/api/event/client/ClientExitLevelEvent.h"
 
+#include "mc/client/game/IClientInstance.h"
 #include "mc/client/gui/Font.h"
 #include "mc/client/gui/FontHandle.h"
 #include "mc/client/gui/screens/ScreenContext.h"
@@ -161,8 +162,15 @@ bool drawWorldText(RenderContext& ctx, WorldText const& text) {
     glm::vec3 const eye       = glm::vec3(glm::inverse(viewWorld) * glm::vec4{0.0f, 0.0f, 0.0f, 1.0f});
     glm::vec3 const toEye     = eye - p;
     if (glm::length(toEye) > text.viewRange) return false;
+#if GF_LL_VERSION >= 2660
+    // 26.60 has neither BaseActorRenderContext::getFontHandle nor FontHandle::getFont: the client's
+    // handle carries the font it was built with (the font repository keeps it alive)
+    auto  handle = static_cast<IClientInstance&>(ctx.actors->mClientInstance).getFontHandle();
+    auto& font   = *handle.mDefaultFont.get();
+#else
     auto  handle = ctx.actors->getFontHandle();
     auto& font   = handle->getFont();
+#endif
     auto const* material = textMaterial(*ctx.actors, text.fullBright);
     if (!material) return false;
 

@@ -40,6 +40,7 @@
 #include "feature/fx/Fx.h"
 #include "feature/tags/Tags.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "game/Items.h"
 
 namespace gf::feature::flora {
@@ -209,7 +210,7 @@ int rawBrightness(BlockSource& region, BlockPos const& pos) {
 
 int blockLight(BlockSource& region, BlockPos const& pos) { return region.getBrightnessPair(pos).block->mValue; }
 
-void destroyBlock(BlockSource& region, BlockPos const& pos, bool drops) { region.getLevel().destroyBlock(region, pos, drops, BlockChangeContext{}); }
+void destroyBlock(BlockSource& region, BlockPos const& pos, bool drops) { gf::game::compat::destroyBlock(region, pos, drops, BlockChangeContext{}); }
 
 void removeBlock(BlockSource& region, BlockPos const& pos) { region.removeBlock(pos, BlockChangeContext{}); }
 

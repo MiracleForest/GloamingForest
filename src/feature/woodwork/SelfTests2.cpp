@@ -47,6 +47,7 @@
 #include "feature/woodwork/DryingRack.h"
 #include "feature/woodwork/Woodwork.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "game/Items.h"
 #include "mod/Log.h"
 #include "selftest/SelfTest.h"
@@ -315,7 +316,7 @@ GF_REGISTER_SELFTEST("woodwork.fuel", [](Context& ctx) {
     // Java's fuel values (vanilla fuel tags, TF's banister row, HollowLogItem), as a part of coal's
     auto burn = [](char const* id) -> float {
         auto s = gf::game::items::make(id);
-        return s ? FurnaceBlockActor::getBurnDuration(*s, 200.0f) : -1.0f;
+        return s ? gf::game::compat::burnDuration(*s, 200.0f) : -1.0f;
     };
     float coal = burn("minecraft:coal");
     ctx.require(coal > 0, "coal burns");

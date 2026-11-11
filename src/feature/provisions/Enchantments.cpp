@@ -53,6 +53,7 @@
 #include "feature/recipes/Recipes.h"
 #include "feature/tags/Tags.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "game/Items.h"
 #include "mod/Log.h"
 
@@ -236,7 +237,7 @@ int smashBlocks(Player& owner, Actor& projectile, ItemStack const& stack, Vec3 c
             if (!destructionCanBreak(stack, block)) continue;
             if (owner.isAdventure()) continue;
             if (gf::landmark::isProtectedFor(owner, p)) continue;
-            region.getLevel().destroyBlock(region, p, !creative, BlockChangeContext{});
+            gf::game::compat::destroyBlock(region, p, !creative, BlockChangeContext{});
             ++smashed;
         }
     }

@@ -45,6 +45,7 @@
 #include "feature/item/Item.h"
 #include "feature/loot/Loot.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "game/Items.h"
 #include "mod/I18n.h"
 #include "mod/Log.h"
@@ -84,7 +85,7 @@ void destroyCell(BlockSource& region, BlockPos const& pos, std::string const& bl
     selfDestructing() = true;
     forCell(pos, [&](BlockPos const& p) {
         if (p == pos || !region.hasChunksAt(p, 0, false)) return;
-        if (game::blockId(region.getBlock(p)) == blockId) region.getLevel().destroyBlock(region, p, false, BlockChangeContext{});
+        if (game::blockId(region.getBlock(p)) == blockId) gf::game::compat::destroyBlock(region, p, false, BlockChangeContext{});
     });
     selfDestructing() = false;
 }

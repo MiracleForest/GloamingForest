@@ -72,6 +72,7 @@
 #include "feature/death/DeathInternal.h"
 #include "feature/fx/Fx.h"
 #include "feature/tags/Tags.h"
+#include "game/Compat.h"
 #include "mod/Log.h"
 #include "mod/Main.h"
 #include "mod/Module.h"
@@ -977,10 +978,7 @@ ActorHurtResult runPipeline(Actor& self, ActorDamageSource const& source, float 
             }
             tInHandlers.back().ran.push_back(e.seq);
             if (v == Verdict::Cancel) {
-                ActorHurtResult cancelled{};
-                cancelled.mHurtOrDamage         = std::variant<bool, float>(false);
-                cancelled.mShouldAllowKnockback = false;
-                return cancelled;
+                return gf::game::compat::hurtResult(false, false);
             }
         }
         // a handler changed the damage type: the hit lands as that type (its cause, knockback,
@@ -994,10 +992,7 @@ ActorHurtResult runPipeline(Actor& self, ActorDamageSource const& source, float 
             // the gf::combat::hurt this hit runs in (if any) leaves the exhaustion to the new type
             if (!tPending.empty() && tPending.back().victim == &self) tPending.back().converted = true;
             bool landed = hurt(self, info.amount, info.type, info.attacker, info.direct);
-            ActorHurtResult converted{};
-            converted.mHurtOrDamage         = std::variant<bool, float>(landed);
-            converted.mShouldAllowKnockback = landed;
-            return converted;
+            return gf::game::compat::hurtResult(landed, landed);
         }
     }
     float before   = healthOf(self);
@@ -1015,7 +1010,7 @@ ActorHurtResult runPipeline(Actor& self, ActorDamageSource const& source, float 
     if (dealt.empty()) return result;
     float after = healthOf(self);
     DamageInfo applied{self, info.type, info.attacker, info.direct, info.amount};
-    if (auto const* f = std::get_if<float>(&*result.mHurtOrDamage); f && *f > 0) applied.amount = *f;
+    if (auto f = gf::game::compat::hurtDamage(result); f && *f > 0) applied.amount = *f;
     else if (before > after) applied.amount = before - after;
     HandlerScope scope(std::move(attack));
     for (auto const& fn : dealt) {

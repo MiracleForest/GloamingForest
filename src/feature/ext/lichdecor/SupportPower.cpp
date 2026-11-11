@@ -15,6 +15,15 @@
 #include <map>
 #include <memory>
 
+#if GF_LL_VERSION >= 2660
+// LeviLamina 26.60 exports neither the producer components' constructors and vtables nor
+// CircuitSystem::createComponent: no producer can be put into the circuit graph there, and the
+// candelabra powers its support for GloamingForest's own redstone only (gf::redstone).
+namespace gf::feature::ext::lichdecor {
+bool setDirectedPower(BlockSource&, BlockPos const&, int, int) { return false; }
+int  directedPower(BlockSource&, BlockPos const&) { return 0; }
+} // namespace gf::feature::ext::lichdecor
+#else
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
 #include "mc/world/level/dimension/Dimension.h"
@@ -94,3 +103,4 @@ int directedPower(BlockSource& region, BlockPos const& at) {
 }
 
 } // namespace gf::feature::ext::lichdecor
+#endif

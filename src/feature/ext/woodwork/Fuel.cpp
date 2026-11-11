@@ -14,6 +14,7 @@
 #include "mc/world/level/block/actor/FurnaceBlockActor.h"
 
 #include "feature/datamaps/DataMaps.h"
+#include "game/Compat.h"
 #include "game/Items.h"
 
 namespace gf::woodwork_ext::fuel {
@@ -47,6 +48,21 @@ std::optional<int> burnTicks(std::string const& itemId) {
 
 } // namespace gf::woodwork_ext::fuel
 
+#if GF_LL_VERSION >= 2660
+// LeviLamina 26.60 dropped FurnaceBlockActor::getBurnDuration: the game asks getItemBurnDuration for
+// an item without a minecraft:fuel component.
+LL_STATIC_HOOK(
+    WoodworkExtFuelHook,
+    ll::memory::HookPriority::Normal,
+    &FurnaceBlockActor::getItemBurnDuration,
+    float,
+    Item const& item,
+    float       burnInterval
+) {
+    try {
+        {
+            if (auto ticks = gf::woodwork_ext::fuel::burnTicks(item.mFullName->getString()); ticks && *ticks > 0) {
+#else
 LL_STATIC_HOOK(
     WoodworkExtFuelHook,
     ll::memory::HookPriority::Normal,
@@ -58,12 +74,18 @@ LL_STATIC_HOOK(
     try {
         if (!item.isNull() && item.mItem) {
             if (auto ticks = gf::woodwork_ext::fuel::burnTicks(item.getTypeName()); ticks && *ticks > 0) {
+#endif
                 // never destroyed: an ItemStack must not outlive the item registry at thread exit
                 static thread_local ItemStack const* coal = [] {
                     auto s = gf::game::items::make("minecraft:coal");
                     return s ? new ItemStack(*s) : nullptr;
                 }();
+#if GF_LL_VERSION >= 2660
+                // coal is a data-driven fuel there: its minecraft:fuel component, not this function
+                if (coal) return gf::game::compat::burnDuration(*coal, burnInterval) * static_cast<float>(*ticks) / 1600.0f;
+#else
                 if (coal) return origin(*coal, burnInterval) * static_cast<float>(*ticks) / 1600.0f;
+#endif
             }
         }
     } catch (...) {

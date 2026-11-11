@@ -20,7 +20,26 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target_type: [server, client]
+        # One job per supported LeviLamina line and target type; the lip variant has the line's
+        # name (lip.toml). The checks that depend on neither run once, in the job with 'checks'.
+        include:
+          - variant: "26_60"
+            levilamina: 26.60.6
+            target_type: server
+            checks: true
+          - variant: "26_60"
+            levilamina: 26.60.6
+            target_type: client
+            checks: false
+          - variant: "26_51"
+            levilamina: 26.51.7
+            target_type: server
+            checks: false
+          - variant: "26_51"
+            levilamina: 26.51.7
+            target_type: client
+            checks: false
+    name: build (${{ matrix.target_type }}, LeviLamina ${{ matrix.levilamina }})
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v7
@@ -33,9 +52,9 @@ jobs:
         with:
           path: |
             ~/AppData/Local/.xmake
-          key: xmake-${{ matrix.target_type }}-${{ hashFiles('xmake.lua', 'xmake-requires.lock') }}
+          key: xmake-${{ matrix.variant }}-${{ matrix.target_type }}-${{ hashFiles('xmake.lua', 'locks/*.lock') }}
           restore-keys: |
-            xmake-${{ matrix.target_type }}-
+            xmake-${{ matrix.variant }}-${{ matrix.target_type }}-
 
       # The action's release lookup fails intermittently on the runners; retry once before failing.
       - name: Setup LLVM
@@ -57,7 +76,7 @@ jobs:
 
       - name: Build
         shell: pwsh
-        run: pwsh tools/build.ps1 -Target ${{ matrix.target_type }}
+        run: pwsh tools/build.ps1 -Target ${{ matrix.target_type }} -LeviLamina ${{ matrix.levilamina }}
 
       - name: Dump xmake package install logs
         if: failure()
@@ -67,33 +86,33 @@ jobs:
             ForEach-Object { Write-Host "::group::$($_.FullName)"; Get-Content $_.FullName -Tail 400; Write-Host '::endgroup::' }
 
       - name: Unit tests
-        if: matrix.target_type == 'server'
+        if: matrix.checks
         run: |
           xmake build -P . -y gf-tests
           xmake run -P . gf-tests
 
       - name: Assemble checks
-        if: matrix.target_type == 'server'
+        if: matrix.checks
         shell: pwsh
         run: pwsh tools/assemble.ps1 -Check
 
       # The shared TF checkout the tool checks read (tools/tf/fetch.ps1: git with a blob-less
       # partial clone of the pinned commit, never the GitHub API; no .ogg / .nbt), cached per commit.
       - uses: actions/cache@v6
-        if: matrix.target_type == 'server'
+        if: matrix.checks
         with:
           path: ~/AppData/Local/gf-tf
           key: gf-tf-9e40a75721c716b2fdf80c16d1058fe718825e9f-${{ hashFiles('tools/tf/fetch.ps1') }}
 
       - name: TF checkout
-        if: matrix.target_type == 'server'
+        if: matrix.checks
         shell: pwsh
         run: |
           pwsh -NoProfile -File tools/tf/fetch.ps1
           if ($LASTEXITCODE) { exit 1 }
 
       - name: Tool checks (owners, import, synth, models, template)
-        if: matrix.target_type == 'server'
+        if: matrix.checks
         shell: pwsh
         run: |
           # every check runs; the step fails at the end when any of them failed
@@ -123,7 +142,7 @@ jobs:
       # game has it). That list lacks some sound files the game ships (basalt_deltas clicks, ...), so the
       # sound lint leaves vanilla sound names unverified there (it checks them against a real game locally).
       - name: Asset lints (import, sounds)
-        if: matrix.target_type == 'server'
+        if: matrix.checks
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
@@ -150,7 +169,7 @@ jobs:
           if ($failed) { exit 1 }
 
       - name: ARR guard
-        if: matrix.target_type == 'server'
+        if: matrix.checks
         shell: pwsh
         env:
           BASE_REF: ${{ github.base_ref }}
@@ -166,7 +185,7 @@ jobs:
 
       - uses: actions/upload-artifact@v7
         with:
-          name: ${{ github.event.repository.name }}-${{ github.sha }}-${{ matrix.target_type }}-windows-x64
+          name: ${{ github.event.repository.name }}-${{ github.sha }}-${{ matrix.target_type }}-win-x64-ll${{ matrix.variant }}
           path: |
             bin/${{ matrix.target_type }}/GloamingForest/
 

@@ -54,6 +54,7 @@
 #include "feature/tags/Tags.h"
 #include "feature/worldgen/Internal.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "game/WorldDb.h"
 #include "mod/Config.h"
 #include "mod/Log.h"
@@ -521,7 +522,7 @@ int worldSurfaceY(BlockSource& region, int x, int z) {
     auto const* lc = region.getChunk(x >> 4, z >> 4);
     if (!lc) return minY - 1;
     // every block above the highest non-air sub-chunk is air: scan down from its top
-    int top = std::min(maxY, minY + lc->getSubChunkCountUpToHighestNonAirBlock() * 16);
+    int top = std::min(maxY, minY + gf::game::compat::subChunkCountUpToHighestNonAirBlock(*lc) * 16);
     for (int y = top - 1; y >= minY; --y)
         if (!region.getBlock(BlockPos{x, y, z}).isAir()) return y;
     return minY - 1;

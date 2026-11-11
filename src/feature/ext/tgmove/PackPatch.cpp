@@ -21,6 +21,7 @@
 #include "ll/api/memory/Hook.h"
 
 #include "mc/deps/core/file/Path.h"
+#include "mc/deps/core/file/PathView.h"
 #include "mc/deps/core/resource/ResourceLocation.h"
 #include "mc/resources/ResourcePack.h"
 #include "mc/resources/ResourcePackManager.h"
@@ -98,7 +99,11 @@ LL_TYPE_INSTANCE_HOOK(
     ResourcePack,
     &ResourcePack::getResource,
     bool,
+#if GF_LL_VERSION >= 2660
+    ::Core::PathView const& resourceName,
+#else
     ::Core::Path const& resourceName,
+#endif
     std::string&        resourceStream,
     int                 subpackIndex
 ) {
@@ -107,6 +112,7 @@ LL_TYPE_INSTANCE_HOOK(
     return ok;
 }
 
+#if GF_LL_VERSION < 2660 // 26.60's client does not export ResourcePackManager::load: packs only
 LL_TYPE_INSTANCE_HOOK(
     PackPatchManagerHook,
     ll::memory::HookPriority::Normal,
@@ -124,6 +130,7 @@ LL_TYPE_INSTANCE_HOOK(
     return ok;
 }
 #endif
+#endif
 
 class PackPatchModule {
 public:
@@ -134,7 +141,9 @@ public:
 #ifdef GF_CLIENT
         if (mHooked) {
             PackPatchResourceHook::unhook();
+#if GF_LL_VERSION < 2660
             PackPatchManagerHook::unhook();
+#endif
             mHooked = false;
         }
 #endif
@@ -145,7 +154,9 @@ private:
 #ifdef GF_CLIENT
         if (mHooked) return;
         PackPatchResourceHook::hook();
+#if GF_LL_VERSION < 2660
         PackPatchManagerHook::hook();
+#endif
         mHooked = true;
 #endif
     }

@@ -23,16 +23,25 @@ client-mod screenshot review is still pending, and what Bedrock cannot do (or do
 
 | | |
 |---|---|
-| Minecraft | Bedrock 1.26.51 |
-| LeviLamina | 26.51.7 |
+| Minecraft | Bedrock 1.26.60 and 1.26.51 |
+| LeviLamina | 26.60.x (lip variant `26_60`, the default) and 26.51.x (`26_51`) |
 | Reference | The Twilight Forest 4.8 (branch `1.21.1`, commit `9e40a757`) |
 | Platforms | Windows x64: BDS (`server`) and client (`client`) |
 
 ## Install
 
-Download `gloamingforest-server-windows-x64.zip` or `gloamingforest-client-windows-x64.zip` from the
-releases and extract the `GloamingForest` folder into `plugins/` of a LeviLamina BDS, or into `mods/` of
-a LeviLamina client instance. Players with the client mod get the full experience; vanilla Bedrock
+Install it with [lip](https://github.com/LiteLDev/lip) (0.40 or later) in the folder of a LeviLamina BDS or
+client instance, or from the mod list of LeviLauncher:
+
+```sh
+lip install github.com/MiracleForest/GloamingForest          # the newest LeviLamina line (26.60)
+lip install github.com/MiracleForest/GloamingForest#26_51    # LeviLamina 26.51
+```
+
+lip picks the server or the client build for the workspace. Each release also has one ZIP per side and
+line, `gloamingforest-<server|client>-win-x64-ll<line>.zip` (for example
+`gloamingforest-client-win-x64-ll26.60.zip`), to extract by hand into a `GloamingForest` folder next to
+`LeviLamina` in the mods folder. Players with the client mod get the full experience; vanilla Bedrock
 clients can join a server running the mod with best-effort fallbacks.
 
 In game: `/twilightforest` (aliases `/tf`, `/tffeature`); operators can edit the settings with
@@ -46,6 +55,7 @@ Windows x64 with [xmake](https://xmake.io) 3.x and LLVM (clang-cl):
 git config --global core.longpaths true
 pwsh tools/build.ps1 -Target all -Tests     # bin/server/GloamingForest, bin/client/GloamingForest + gtest
 xmake run -P . gf-tests
+pwsh tools/build.ps1 -Target all -LeviLamina 26.51.7   # the older supported line (locks/26_51.lock)
 ```
 
 Contributors and agents: read [CONTRIBUTING.md](CONTRIBUTING.md) and [AGENTS.md](AGENTS.md).

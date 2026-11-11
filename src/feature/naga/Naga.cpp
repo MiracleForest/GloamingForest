@@ -92,6 +92,7 @@
 #include "feature/movement/Movement.h"
 #include "feature/tags/Tags.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "game/Items.h"
 #include "game/WorldDb.h"
 #include "mod/Log.h"
@@ -251,7 +252,7 @@ bool boolState(Block const& block, std::string const& name) {
 float javaHardness(Block const& block) {
     auto id = game::blockId(block);
     if (id == "minecraft:obsidian" || id == "minecraft:crying_obsidian") return 50.0F;
-    return block.getBlockType().getDestroySpeed();
+    return gf::game::compat::destroySpeed(block.getBlockType());
 }
 
 /// `world.getBlockEntity(pos) instanceof Container`: a TF container (gf::inventory, custom blocks
@@ -336,7 +337,7 @@ void destroyBlock(BlockSource& region, BlockPos const& pos, bool drop) {
     auto level = ll::service::getLevel();
     if (!level) return;
     BlockChangeContext ctx{};
-    level->destroyBlock(region, pos, drop, ctx);
+    gf::game::compat::destroyBlock(region, pos, drop, ctx);
 }
 
 float voicePitch(core::jrand::RandomSource& r) { return (r.nextFloat() - r.nextFloat()) * 0.2F + 1.0F; }
@@ -547,7 +548,7 @@ void applySpeedBoost(Mob& naga, int segments) {
     double speedMod = static_cast<float>(kMaxSegments) / segments * 0.02F;
     AttributeModifier mod(id, "twilightforest:segment_speed_boost", static_cast<float>(speedMod), AttributeModifierOperation::OperationAddition,
                           AttributeOperands::OperandCurrent, false);
-    inst->addModifier(mod, attr.mContext);
+    gf::game::compat::addModifier(*inst, mod, attr.mContext);
 }
 
 } // namespace
@@ -1507,7 +1508,7 @@ void applyHealthBoost(Mob& naga) {
     for (auto const& m : inst->getModifiers())
         if (m.mId.get() == id) return; // already there (Bedrock saved it)
     AttributeModifier mod(id, "twilightforest:difficulty_health_boost", boost, AttributeModifierOperation::OperationAddition, AttributeOperands::OperandMax, true);
-    inst->addModifier(mod, attr.mContext);
+    gf::game::compat::addModifier(*inst, mod, attr.mContext);
     if (fresh) naga.heal(naga.getMaxHealth());
 }
 
@@ -1650,6 +1651,10 @@ std::string shieldCooldownCategory(ItemStack const& stack) {
 /// player blocks with (Bedrock blocks with a shield in either hand); it is the offhand slot itself
 /// when the offhand blocks. Without an active shield, the offhand when it holds minecraft:shield.
 bool shieldInOffhand(Player const& player) {
+#if GF_LL_VERSION >= 2660
+    // 26.60 has no getCurrentActiveShield: Bedrock blocks with the offhand shield first
+    return game::items::idOf(player.getOffhandSlot()) == "minecraft:shield";
+#else
     auto const& active  = player.getCurrentActiveShield();
     auto const& offhand = player.getOffhandSlot();
     if (&active == &offhand) return true;
@@ -1657,6 +1662,7 @@ bool shieldInOffhand(Player const& player) {
     // a copy: Bedrock looks at the offhand shield first
     if (!game::items::isEmpty(active)) return game::items::idOf(active) == game::items::idOf(offhand);
     return game::items::idOf(offhand) == "minecraft:shield";
+#endif
 }
 
 int playerMotionCountForTest() { return gPlayerMotions; }

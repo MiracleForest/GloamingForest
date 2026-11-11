@@ -63,6 +63,7 @@
 #include "ll/api/thread/ClientThreadExecutor.h"
 
 #include "mc/client/game/IClientInstance.h"
+#include "mc/common/Brightness.h"
 #include "mc/client/gui/Font.h"
 #include "mc/client/gui/FontHandle.h"
 #include "mc/client/options/IOptionRegistry.h"
@@ -387,7 +388,13 @@ public:
         auto*            region = client.getRegion();
         auto*            light  = client.getLightTexture();
         if (region && light)
+#if GF_LL_VERSION >= 2660
+            // 26.60 dropped the overload that samples the light at a position (with the light
+            // volumes): the light at the position, and an uncoloured (white) block light
+            ActorShaderManager::setupShaderParameters(ctx.screen, *region, region->getLightColor(pos, Brightness::MIN()), glm::vec4{1.0f}, ctx.partialTicks, false, *light, Vec2{1.0f, 1.0f}, Vec4{0.0f, 0.0f, 0.0f, 0.0f});
+#else
             ActorShaderManager::setupShaderParameters(ctx.screen, *region, pos, ctx.partialTicks, false, *light, ctx.actors->mLightVolumeManager, Vec2{1.0f, 1.0f}, Vec4{0.0f, 0.0f, 0.0f, 0.0f});
+#endif
     }
     ~SignTextState() {
         ShaderColor& color = mScreen.currentShaderColor;
@@ -471,8 +478,15 @@ void drawSign(render::RenderContext& ctx, BlockPos const& pos, Block const& bloc
     // isOutlineVisible: the local player looking through a spyglass in first person, or the camera
     // entity (its feet) within 16 blocks of the sign's centre
     bool outlineNear = outlineVisible(ctx, *player, pos);
+#if GF_LL_VERSION >= 2660
+    // 26.60 has neither BaseActorRenderContext::getFontHandle nor FontHandle::getFont: the client's
+    // handle carries the font it was built with (the font repository keeps it alive)
+    auto  handle = static_cast<IClientInstance&>(ctx.actors->mClientInstance).getFontHandle();
+    auto& font   = *handle.mDefaultFont.get();
+#else
     auto handle      = ctx.actors->getFontHandle();
     auto& font       = handle->getFont();
+#endif
     // the light at the sign even when only glowing text is drawn (the glow material ignores it; a pack
     // without that material falls back to the lit one)
     SignTextState state(ctx, pos, true);

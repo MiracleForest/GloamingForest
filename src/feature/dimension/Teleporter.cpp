@@ -46,6 +46,7 @@
 #include "feature/progression/Progression.h"
 #include "feature/worldgen/Worldgen.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "game/WorldDb.h"
 #include "mod/Config.h"
 #include "mod/Log.h"
@@ -324,7 +325,7 @@ int scanHeight(BlockSource& world, int x, int z) {
     int   worldHeight = world.getMaxHeight() - 1;
     int   minY        = world.getMinHeight();
     auto* chunk       = world.getChunk(x >> 4, z >> 4);
-    int   sections    = chunk ? chunk->getSubChunkCountUpToHighestNonAirBlock() : 0;
+    int   sections    = chunk ? gf::game::compat::subChunkCountUpToHighestNonAirBlock(*chunk) : 0;
     int   highest     = sections > 0 ? minY + (sections - 1) * 16 : minY;
     return std::min(worldHeight, highest + 15);
 }

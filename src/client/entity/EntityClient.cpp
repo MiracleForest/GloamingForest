@@ -46,6 +46,7 @@
 #include "ll/api/event/EventBus.h"
 #include "ll/api/event/ListenerBase.h"
 #include "ll/api/event/render/UIRenderEvent.h"
+#include "ll/api/event/world/ClientLevelTickEvent.h"
 #include "ll/api/memory/Hook.h"
 
 #include "mc/client/gui/controls/RenderableComponent.h"
@@ -58,12 +59,15 @@
 #include "mc/client/player/LocalPlayer.h"
 #include "mc/client/renderer/screen/MinecraftUIRenderContext.h"
 #include "mc/entity/components/ActorUniqueIDComponent.h"
+#include "mc/deps/ecs/gamerefs_entity/EntityContext.h"
 #include "mc/entity/components/death/DeathTickingComponent.h"
 #include "mc/entity/systems/death/ClientMobTickDeathSystemImpl.h"
 #include "mc/deps/core/file/PathView.h"
 #include "mc/deps/core/math/Color.h"
 #include "mc/deps/core/resource/ResourceLocation.h"
 #include "mc/safety/RedactableString.h"
+#include "mc/world/actor/Actor.h"
+#include "mc/world/level/Level.h"
 
 #include "client/Client.h"
 #include "feature/net/Net.h"
@@ -139,6 +143,13 @@ bool holdsDyingBody(std::int64_t uid) {
 /// The bar's title is matched against the TF bars once per change (a new raw title at the index or
 /// a "boss.bar" message), not on every frame.
 std::optional<mce::Color> exactColour(ClientInstanceScreenModel const& model, int index) {
+#if GF_LL_VERSION >= 2660
+    // 26.60's client exports neither the screen model's boss bar accessors nor getBossBarColor (the
+    // hook that asks this): the HUD shows the vanilla colours and no notches there
+    (void)model;
+    (void)index;
+    return std::nullopt;
+#else
     auto& s = C();
     {
         std::scoped_lock lock(s.mutex);
@@ -167,6 +178,7 @@ std::optional<mce::Color> exactColour(ClientInstanceScreenModel const& model, in
     if (!match.boss || it == s.bars.end()) return std::nullopt;
     if (s.logged.insert(match.boss).second) log().info("client boss bar {} coloured #{:06X}", match.boss, it->second.rgb);
     return mce::Color(static_cast<uint>(it->second.rgb));
+#endif
 }
 
 namespace {
@@ -228,7 +240,9 @@ void setTexture(UIControl& image, std::shared_ptr<UIControl> const& owner, std::
     }
     if (it->applied == texture) return;
     std::string const& path = texture.empty() ? it->vanilla : texture;
+#if GF_LL_VERSION < 2660 // not exported by 26.60's client (no bar is notched there: exactColour)
     sprite->setResourceLocation(ResourceLocation(Core::PathView(path)));
+#endif
     it->applied = texture;
 }
 
@@ -307,6 +321,7 @@ void applyNotches(ScreenView& view) {
 
 } // namespace gf::client::entity
 
+#if GF_LL_VERSION < 2660 // 26.60's client exports none of the three: see exactColour, holdDyingBodies
 // The HUD reads each bar's colour through the screen model: the TF bosses' bars get their RGB.
 LL_TYPE_INSTANCE_HOOK(
     EntityClientBossColourHook,
@@ -378,6 +393,7 @@ LL_TYPE_INSTANCE_HOOK(
     if (gf::client::entity::ridingUnfriendly()) return; // removeHostileMountHealth
     origin(renderContext, client, owner, pass);
 }
+#endif
 
 namespace gf::client::entity {
 
@@ -551,6 +567,26 @@ void registerHandlers() {
     });
 }
 
+#if GF_LL_VERSION >= 2660
+/// The client's own death ticking of a held body (26.60's client does not export
+/// ClientMobTickDeathSystemImpl::_tick to hook): every client tick puts a body the server still
+/// animates back to death tick 18, so the client's ticking never ends it at 20.
+void holdDyingBodies(Level& level) {
+    std::vector<std::int64_t> held;
+    {
+        auto&            s = C();
+        std::scoped_lock lock(s.mutex);
+        for (auto const& [uid, time] : s.deathTimes) held.push_back(uid);
+    }
+    for (auto uid : held) {
+        Actor* actor = level.fetchEntity(ActorUniqueID{uid}, false);
+        if (!actor) continue;
+        auto* ticking = actor->getEntityContext().tryGetComponent<DeathTickingComponent>().as_ptr();
+        if (ticking && ticking->mTicks > 18) ticking->mTicks = 18;
+    }
+}
+#endif
+
 class EntityClientModule {
 public:
     // the render listener is added at mod load, before the game's threads run (as the screen
@@ -565,19 +601,34 @@ public:
     void install() {
         static bool handlers = false;
         if (!std::exchange(handlers, true)) registerHandlers();
+#if GF_LL_VERSION >= 2660
+        mTick = ll::event::EventBus::getInstance().emplaceListener<ll::event::ClientLevelTickEvent>([](ll::event::ClientLevelTickEvent& ev) {
+            holdDyingBodies(ev.level());
+        });
+        static bool once = false;
+        if (!std::exchange(once, true))
+            log().info("client entity: LeviLamina 26.60 has no boss bar colours or notches and keeps hostile mount hearts");
+#else
         EntityClientBossColourHook::hook();
         EntityClientMountHeartsHook::hook();
         EntityClientDeathTickHook::hook();
+#endif
     }
     void uninstall() {
+#if GF_LL_VERSION >= 2660
+        if (mTick) ll::event::EventBus::getInstance().removeListener(mTick);
+        mTick.reset();
+#else
         EntityClientDeathTickHook::unhook();
         EntityClientMountHeartsHook::unhook();
         EntityClientBossColourHook::unhook();
+#endif
         clearState();
     }
 
 private:
     ll::event::ListenerPtr mListener;
+    ll::event::ListenerPtr mTick;
 };
 
 } // namespace

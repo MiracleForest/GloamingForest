@@ -48,6 +48,7 @@
 #include "feature/families/Families.h"
 #include "feature/fx/Fx.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "game/Items.h"
 #include "mod/Log.h"
 
@@ -404,7 +405,7 @@ void consumeHeld(Player& player, ItemStack const& contextItem) {
     player.sendInventory(false);
 }
 
-void destroyWithDrops(BlockSource& region, BlockPos const& pos) { region.getLevel().destroyBlock(region, pos, true, BlockChangeContext{}); }
+void destroyWithDrops(BlockSource& region, BlockPos const& pos) { gf::game::compat::destroyBlock(region, pos, true, BlockChangeContext{}); }
 
 void dropAndRemove(BlockSource& region, BlockPos const& pos) {
     Block const& block = region.getBlock(pos);

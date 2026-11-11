@@ -121,6 +121,7 @@
 #include "feature/stats/Stats.h"
 #include "feature/ui/Ui.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "game/Items.h"
 #include "game/WorldDb.h"
 #include "mod/I18n.h"
@@ -1572,7 +1573,7 @@ int angerNearbyPiglins(Player& player, bool angerOnlyIfCanSee) {
         if (!piglin.getEntityContext().hasComponent<AngryComponent>() && !piglin.getStatusFlag(ActorFlags::Angry)) {
             VariantParameterList params{};
             params.mSelf = &piglin;
-            if (piglin.executeEvent("become_angry_event", params)) ++byEvent;
+            if (gf::game::compat::executeEvent(piglin, "become_angry_event", params)) ++byEvent;
         }
         ++n;
     }

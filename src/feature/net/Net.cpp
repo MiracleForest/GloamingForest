@@ -147,7 +147,11 @@ void handleHello(Player& player, Json const& payload) {
 
 class GloamingForestC2SHandler : public ll::network::PacketHandlerBase<GloamingForestC2SHandler, GloamingForestC2SPacket> {
 public:
+#if GF_LL_VERSION >= 2660
+    void handlePacket(NetworkIdentifier const& id, NetEventCallback& callback, ll::network::PacketSide, GloamingForestC2SPacket const& packet) const {
+#else
     void handlePacket(NetworkIdentifier const& id, NetEventCallback& callback, GloamingForestC2SPacket const& packet) const {
+#endif
         auto* player = static_cast<ServerNetworkHandler&>(callback)._getServerPlayer(id, packet.mSenderSubId);
         if (!player) return;
         if (!core::validChannel(packet.channel)) return;
@@ -268,7 +272,11 @@ void onConnected(std::function<void()> fn) { state().connectedListeners.push_bac
 
 class GloamingForestS2CHandler : public ll::network::PacketHandlerBase<GloamingForestS2CHandler, GloamingForestS2CPacket> {
 public:
+#if GF_LL_VERSION >= 2660
+    void handlePacket(NetworkIdentifier const&, NetEventCallback&, ll::network::PacketSide, GloamingForestS2CPacket const& packet) const {
+#else
     void handlePacket(NetworkIdentifier const&, NetEventCallback&, GloamingForestS2CPacket const& packet) const {
+#endif
         auto payload = decodePayload(packet.payload);
         if (!payload) return;
         auto& s = client::state();

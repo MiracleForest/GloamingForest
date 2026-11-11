@@ -50,6 +50,7 @@
 #include "feature/movement/Movement.h"
 #include "feature/net/Net.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "game/WorldDb.h"
 #include "mod/Log.h"
 
@@ -118,7 +119,7 @@ void setSlowed(Player& p, bool want) {
     float factor = gf::core::labyrinth::slimeStepSpeedFactor(0.8F);
     AttributeModifier mod(uuid, kSlowName, factor - 1.0F, AttributeModifierOperation::OperationMultiplyTotal,
                           AttributeOperands::OperandCurrent, false);
-    inst->addModifier(mod, attr.mContext);
+    gf::game::compat::addModifier(*inst, mod, attr.mContext);
 }
 
 } // namespace

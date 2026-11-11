@@ -43,6 +43,7 @@
 #include "feature/ext/fauna/W0Internals.h"
 #include "feature/tags/Tags.h"
 #include "feature/worldgen/Worldgen.h"
+#include "game/Compat.h"
 #include "mod/Log.h"
 
 namespace gf::feature::fauna {
@@ -87,7 +88,7 @@ std::string biomeIdAt(Actor& actor) {
 
 bool fireEvent(Actor& actor, std::string const& event) {
     VariantParameterList params{};
-    return actor.executeEvent(event, params);
+    return gf::game::compat::executeEvent(actor, event, params);
 }
 
 namespace {

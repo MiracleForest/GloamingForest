@@ -72,7 +72,11 @@ mce::MaterialPtr const* starsMaterial() {
 mce::MaterialPtr const* particleBlendMaterial() {
     auto* lr = levelRenderer();
     if (!lr) return nullptr;
+#if GF_LL_VERSION >= 2660
+    auto const& m = lr->mParticleEngine->get()->blendMat.get(); // 26.60: no getParticleEngine
+#else
     auto const& m = lr->getParticleEngine().blendMat.get();
+#endif
     return m.mRenderMaterialInfoPtr.get() ? &m : nullptr;
 }
 
@@ -174,7 +178,12 @@ mce::MaterialPtr const* materialFor(std::string const& name) {
     if (name == "@particles_opaque" || name == "@particles_alpha") {
         auto* lr = levelRenderer();
         if (!lr) return nullptr;
-        auto const& m = name == "@particles_opaque" ? lr->getParticleEngine().opaqueMat.get() : lr->getParticleEngine().alphaTestMat.get();
+#if GF_LL_VERSION >= 2660
+        auto& engine = *lr->mParticleEngine->get(); // 26.60: no getParticleEngine
+#else
+        auto& engine = lr->getParticleEngine();
+#endif
+        auto const& m = name == "@particles_opaque" ? engine.opaqueMat.get() : engine.alphaTestMat.get();
         return m.mRenderMaterialInfoPtr.get() ? &m : nullptr;
     }
     if (name == "@stars") return starsMaterial();

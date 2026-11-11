@@ -41,6 +41,7 @@
 #include "feature/ext/item/Item.h"
 #include "feature/recipes/Recipes.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "game/Items.h"
 #include "mod/Main.h"
 #include "selftest/SelfTest.h"
@@ -164,7 +165,7 @@ GF_REGISTER_SELFTEST("building.blocks", [](Context& ctx) {
         auto const* sp = gf::game::blockWith(std::string("twilightforest:") + boss + "_boss_spawner");
         ctx.check(sp != nullptr, std::string("boss spawner of ") + boss);
         // strength(-1.0, 3600000.8): unbreakable
-        if (sp) ctx.check(sp->getBlockType().getDestroySpeed() < 0, std::string("the boss spawner of ") + boss + " is unbreakable");
+        if (sp) ctx.check(gf::game::compat::destroySpeed(sp->getBlockType()) < 0, std::string("the boss spawner of ") + boss + " is unbreakable");
     }
     ctx.info("building blocks registered: " + std::to_string(std::size(ids) - missing) + " of " + std::to_string(std::size(ids)));
 });
@@ -207,7 +208,7 @@ GF_REGISTER_SELFTEST("building.block_properties", [](Context& ctx) {
     // Bedrock keeps the explosion resistance in its own units: scale by vanilla stone (Java 6.0)
     auto const* stone = gf::game::blockWith("minecraft:stone");
     ctx.require(stone != nullptr, "minecraft:stone");
-    float unit = stone->getBlockType().getExplosionResistance() / 6.0f;
+    float unit = gf::game::compat::explosionResistance(stone->getBlockType()) / 6.0f;
     int   good = 0, bad = 0;
     for (auto const& r : rows) {
         std::string id  = std::string("twilightforest:") + r.id;
@@ -219,13 +220,13 @@ GF_REGISTER_SELFTEST("building.block_properties", [](Context& ctx) {
         }
         auto const& type = blk->getBlockType();
         bool        ok   = true;
-        float       h    = type.getDestroySpeed();
+        float       h    = gf::game::compat::destroySpeed(type);
         // strength(-1, ...): unbreakable (Bedrock: a negative destroy time)
         if (r.hardness < 0 ? h >= 0 : std::abs(h - r.hardness) > 0.01f) {
             ctx.check(false, id + " hardness " + std::to_string(r.hardness) + " (got " + std::to_string(h) + ")");
             ok = false;
         }
-        float res  = type.getExplosionResistance() / unit;
+        float res  = gf::game::compat::explosionResistance(type) / unit;
         bool  huge = r.resistance >= 1000.0f; // Bedrock caps the unbreakable ones; only "blast proof" matters
         if (huge ? res < 1000.0f : std::abs(res - r.resistance) > std::max(0.01f, r.resistance * 0.001f)) {
             ctx.check(false, id + " explosion resistance " + std::to_string(r.resistance) + " (got " + std::to_string(res) + ")");

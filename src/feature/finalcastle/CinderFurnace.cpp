@@ -45,6 +45,7 @@
 #include "feature/recipes/Recipes.h"
 #include "feature/tags/Tags.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "game/Items.h"
 #include "mod/Log.h"
 
@@ -136,7 +137,7 @@ std::optional<Smelt> recipeFor(ItemStack const& input) {
 
 int burnDuration(ItemStack const& fuel) {
     if (items::isEmpty(fuel)) return 0;
-    return static_cast<int>(FurnaceBlockActor::getBurnDuration(fuel, 200.0f));
+    return static_cast<int>(gf::game::compat::burnDuration(fuel, 200.0f));
 }
 
 /// AbstractFurnaceBlockEntity#canPlaceItem.

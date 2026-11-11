@@ -153,7 +153,12 @@ std::optional<Found> search(int dim, std::string const& printable, std::vector<s
         auto feature = bedrockFeature(k);
         if (feature.empty()) continue;
         BlockPos out{};
+#if GF_LL_VERSION >= 2660
+        // 26.60 bounds the search: the radius TF's own search uses (100)
+        if (!dimension->mWorldGenerator->findNearestStructureFeature(HashedString(feature), BlockPos{x, 0, z}, out, skip, std::nullopt, 100)) continue;
+#else
         if (!dimension->mWorldGenerator->findNearestStructureFeature(HashedString(feature), BlockPos{x, 0, z}, out, skip, std::nullopt)) continue;
+#endif
         double d = std::pow(out.x - x, 2) + std::pow(out.z - z, 2);
         if (!best || d < bestDist) best = Found{k, out.x, out.z}, bestDist = d;
     }

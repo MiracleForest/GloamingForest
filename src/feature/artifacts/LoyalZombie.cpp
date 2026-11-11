@@ -30,6 +30,7 @@
 #include "feature/combat/Combat.h"
 #include "feature/entity/Entity.h"
 #include "feature/tags/Tags.h"
+#include "game/Compat.h"
 #include "game/Items.h"
 #include "mod/Log.h"
 
@@ -57,7 +58,7 @@ void renewStrength(Actor& zombie) {
 bool fireEvent(Actor& a, char const* event) {
     VariantParameterList params{};
     params.mSelf = &a;
-    return a.executeEvent(event, params);
+    return gf::game::compat::executeEvent(a, event, params);
 }
 
 /// LoyalZombie#aiStep: decay without Strength.

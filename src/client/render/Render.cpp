@@ -64,6 +64,7 @@
 #include "ll/api/memory/Hook.h"
 
 #include "mc/client/game/ClientInstance.h"
+#include "mc/common/Brightness.h"
 #include "mc/client/model/models/DataDrivenModel.h"
 #include "mc/world/actor/animation/AttachableSlotIndex.h"
 #include "mc/client/game/IClientInstance.h"
@@ -450,7 +451,13 @@ bool setupLight(RenderContext& ctx, Vec3 const& at, bool fullBright) {
     auto*            light  = client.getLightTexture();
     if (!region || !light) return false;
     BlockPos pos{static_cast<int>(std::floor(at.x)), static_cast<int>(std::floor(at.y)), static_cast<int>(std::floor(at.z))};
+#if GF_LL_VERSION >= 2660
+    // 26.60 dropped the overload that samples the light at a position (with the light volumes):
+    // the light at the position, and an uncoloured (white) block light
+    ActorShaderManager::setupShaderParameters(ctx.screen, *region, region->getLightColor(pos, Brightness::MIN()), glm::vec4{1.0f}, ctx.partialTicks, fullBright, *light, Vec2{1.0f, 1.0f}, Vec4{0.0f, 0.0f, 0.0f, 0.0f});
+#else
     ActorShaderManager::setupShaderParameters(ctx.screen, *region, pos, ctx.partialTicks, fullBright, *light, ctx.actors->mLightVolumeManager, Vec2{1.0f, 1.0f}, Vec4{0.0f, 0.0f, 0.0f, 0.0f});
+#endif
     gLightSetups.fetch_add(1, std::memory_order_relaxed);
     return true;
 }

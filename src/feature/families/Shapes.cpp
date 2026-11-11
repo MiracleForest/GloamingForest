@@ -43,6 +43,7 @@
 #include "feature/families/BlockEvents.h"
 #include "feature/families/Families.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "mod/Log.h"
 
 namespace gf::feature::families {
@@ -344,7 +345,7 @@ ia::Result slabUseOn(ia::UseOnContext const& c) {
     if (mergeAt) {
         // vanilla placement rules: no adventure mode, nobody standing in the block
         AABB box{Vec3{float(mergeAt->x), float(mergeAt->y), float(mergeAt->z)}, Vec3{mergeAt->x + 1.0f, mergeAt->y + 1.0f, mergeAt->z + 1.0f}};
-        if (!mayBuild(player) || !region.isUnobstructedByEntities(box, nullptr)) mergeAt.reset();
+        if (!mayBuild(player) || !gf::game::compat::isUnobstructedByEntities(region, box, nullptr)) mergeAt.reset();
     }
     if (!mergeAt || !mergeSlab(region, *mergeAt)) return ia::Result::Pass;
     consumeHeld(player, c.item);

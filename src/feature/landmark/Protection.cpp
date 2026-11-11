@@ -57,6 +57,7 @@
 #include "feature/progression/Progression.h"
 #include "feature/tags/Tags.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "mod/Config.h"
 #include "mod/Log.h"
 
@@ -157,7 +158,7 @@ std::uint64_t now() {
 void raise(Actor& actor, std::string const& event) {
     VariantParameterList params{};
     params.mSelf = &actor;
-    actor.executeEvent(event, params);
+    gf::game::compat::executeEvent(actor, event, params);
 }
 
 /// Queues an int entity property of the box entity (false: refused).

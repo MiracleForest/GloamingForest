@@ -113,6 +113,15 @@ std::pair<CreativeGroupInfo*, std::size_t> groupOfEntry(CreativeItemRegistry& re
 
 /// Appends a registry entry for `item` (see the file comment).
 CreativeItemEntry* appendEntry(CreativeItemRegistry& reg, ItemInstance const& item) {
+#if GF_LL_VERSION >= 2660
+    // LeviLamina 26.60 exports no CreativeItemEntry constructor (nor, on the client, newItemEntry):
+    // no entry can be added, and the variants are not listed in the creative inventory there
+    (void)reg;
+    (void)item;
+    static bool once = false;
+    if (!std::exchange(once, true)) log().warn("catalog: LeviLamina 26.60 cannot add creative entries: the item variants are not listed");
+    return nullptr;
+#else
     auto&    entries = reg.mCreativeItems.get();
     unsigned rawId   = 0;
     for (auto const& e : entries) rawId = std::max(rawId, static_cast<unsigned>(e.mCreativeNetId->mRawId));
@@ -134,6 +143,7 @@ CreativeItemEntry* appendEntry(CreativeItemRegistry& reg, ItemInstance const& it
     if (mapped) reg.mCreativeNetIdIndex.get()[netId] = index;
     else log().warn("catalog: the creative net id map hashes differently: the variant entry is listed but not mapped by net id");
     return &entries.back();
+#endif
 #endif
 }
 
@@ -211,6 +221,9 @@ bool removeVariant(std::string const& itemId, std::string const& key) {
         fn = std::move(it->second);
         v.fns.erase(it);
     }
+#if GF_LL_VERSION >= 2660
+    return false; // no entry was added (appendEntry): nothing to take out
+#else
     auto* reg = registry();
     if (!reg) return false;
     auto& entries = reg->mCreativeItems.get();
@@ -234,6 +247,7 @@ bool removeVariant(std::string const& itemId, std::string const& key) {
 #endif
     invalidate();
     return true;
+#endif
 }
 
 std::vector<std::pair<unsigned, bool>> entriesInGroupOrder(std::string const& itemId) {

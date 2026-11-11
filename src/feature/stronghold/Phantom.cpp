@@ -55,6 +55,7 @@
 #include "feature/stronghold/Util.h"
 #include "feature/tags/Tags.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "game/Items.h"
 #include "game/WorldDb.h"
 #include "mod/I18n.h"
@@ -157,7 +158,7 @@ std::vector<Mob*> allKnightsAround(Actor& self) {
 void event(Mob& m, char const* name) {
     VariantParameterList params{};
     params.mSelf = &m;
-    m.executeEvent(name, params);
+    gf::game::compat::executeEvent(m, name, params);
 }
 
 void setWeapon(Mob& m, char const* item) {

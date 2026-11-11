@@ -51,6 +51,7 @@
 #include "feature/spawn/Spawn.h"
 #include "feature/stats/Stats.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "game/Items.h"
 #include "selftest/SelfTest.h"
 
@@ -508,7 +509,7 @@ GF_REGISTER_SELFTEST("provisions.discs", [](Context& ctx) -> ll::coro::CoroTask<
         auto event = "music_disc.twilightforest." + std::string(s.track);
         auto disc  = make(id);
         ctx.require(!items::isEmpty(disc), id + " exists");
-        auto const* component = disc.mItem->getComponent(RecordItemComponent::getIdentifier());
+        auto const* component = disc.mItem->getComponent(gf::game::compat::recordComponentId());
         ctx.require(component != nullptr, id + " has a record component");
         auto const* record = static_cast<RecordItemComponent const*>(component);
         ctx.check(record->mComparatorSignal == s.comparator, id + ": comparator " + std::to_string(s.comparator));

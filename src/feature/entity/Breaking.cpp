@@ -30,6 +30,7 @@
 #include "feature/entity/EntityInternal.h"
 #include "feature/inventory/Inventory.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 
 namespace gf::feature::entity {
 
@@ -132,7 +133,7 @@ namespace fe = gf::feature::entity;
 
 bool canDestroyBlock(BlockSource& region, BlockPos const& pos, BreakRule rule) {
     Block const& block    = region.getBlock(pos);
-    float        hardness = block.getBlockType().getDestroySpeed();
+    float        hardness = gf::game::compat::destroySpeed(block.getBlockType());
     if (block.isAir() || hardness < 0.0F || hardness >= 50.0F) return false;
     if (auto* be = region.getBlockEntity(pos)) {
         if (fe::isContainerBlockActor(*be)) return false;
@@ -155,7 +156,7 @@ int destroyBlocks(BlockSource& region, BlockPos const& min, BlockPos const& max,
                 BlockPos pos{x, y, z};
                 if (!canDestroyBlock(region, pos, rule)) continue;
                 BlockChangeContext ctx{};
-                if (level->destroyBlock(region, pos, drop, ctx)) ++broken;
+                if (gf::game::compat::destroyBlock(region, pos, drop, ctx)) ++broken;
             }
     return broken;
 }

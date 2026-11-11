@@ -66,6 +66,7 @@
 #include "feature/fx/Fx.h"
 #include "feature/inventory/Inventory.h"
 #include "feature/tags/Tags.h"
+#include "game/Compat.h"
 #include "game/Items.h"
 #include "mod/Log.h"
 
@@ -887,14 +888,14 @@ void destroyBlocksInAABB(Mob& hydra, Runtime& rt, AABB const& b) {
             for (int z = lo.z; z <= hi.z; ++z) {
                 BlockPos     pos{x, y, z};
                 Block const& block    = region.getBlock(pos);
-                float        hardness = block.getBlockType().getDestroySpeed();
+                float        hardness = gf::game::compat::destroySpeed(block.getBlockType());
                 if (block.isAir() || hardness < 0.0F || hardness >= 50.0F) continue;
                 // EntityUtil#canDestroyBlock spares only containers (signs, banners, beds, skulls and
                 // spawners are destroyed); custom containers have no block entity: gf::inventory knows them
                 if (auto* be = region.getBlockEntity(pos); be && isContainer(*be)) continue;
                 if (block.getBlockType().mNameInfo->mNamespaceName.get() != "minecraft" && gf::inventory::find(region, pos)) continue;
                 BlockChangeContext ctx{};
-                level->destroyBlock(region, pos, false, ctx);
+                gf::game::compat::destroyBlock(region, pos, false, ctx);
             }
 }
 

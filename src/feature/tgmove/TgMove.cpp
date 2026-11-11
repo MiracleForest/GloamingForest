@@ -90,6 +90,7 @@
 #include "feature/net/Net.h"
 #include "feature/tags/Tags.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "game/Items.h"
 #include "mod/Config.h"
 #include "mod/I18n.h"
@@ -269,7 +270,7 @@ void setStraightAhead(Actor& a, bool want, bool& flag) {
     inst->removeModifier(uuid, attr.mContext); // idempotent: never twice, whatever `flag` says
     if (want) {
         AttributeModifier mod(uuid, kStraightName, static_cast<float>(tg::kStraightAheadMultiplier - 1), AttributeModifierOperation::OperationMultiplyTotal, AttributeOperands::OperandCurrent, false);
-        inst->addModifier(mod, attr.mContext);
+        gf::game::compat::addModifier(*inst, mod, attr.mContext);
     }
     flag = want;
 }

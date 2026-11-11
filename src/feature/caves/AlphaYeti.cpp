@@ -53,6 +53,7 @@
 #include "feature/spawn/Spawn.h"
 #include "feature/tags/Tags.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "game/WorldDb.h"
 #include "mod/Log.h"
 
@@ -150,7 +151,7 @@ bool isContainer(BlockActor const& be) {
 bool canDestroyBlock(BlockSource& region, BlockPos const& pos) {
     Block const& b = region.getBlock(pos);
     if (b.isAir()) return false;
-    float hardness = b.getBlockType().getDestroySpeed();
+    float hardness = gf::game::compat::destroySpeed(b.getBlockType());
     if (!(hardness >= 0.0F && hardness < 50.0F)) return false;
     if (auto* be = region.getBlockEntity(pos); be && isContainer(*be)) return false;
     if (b.getBlockType().mNameInfo->mNamespaceName.get() != "minecraft" && gf::inventory::find(region, pos)) return false;
@@ -170,7 +171,7 @@ void destroyBlocksInAABB(Mob& yeti, AABB const& box) {
                 BlockPos p{x, y, z};
                 if (!canDestroyBlock(region, p)) continue;
                 BlockChangeContext ctx{};
-                level->destroyBlock(region, p, false, ctx);
+                gf::game::compat::destroyBlock(region, p, false, ctx);
             }
 }
 

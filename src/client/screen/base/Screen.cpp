@@ -17,6 +17,7 @@
 #include "ll/api/event/render/UIRenderEvent.h"
 
 #include "mc/client/game/ClientInstance.h"
+#include "mc/client/gui/Font.h"
 #include "mc/client/gui/FontHandle.h"
 #include "mc/client/gui/GuiData.h"
 #include "mc/client/gui/ScreenSizeData.h"
@@ -502,14 +503,24 @@ void Canvas::text(float x, float y, std::string const& s, unsigned argb, Align a
     TextMeasureData  measure{1.0f, 0.0f, shadow, false, false, ui::TextAlignment::Left};
     CaretMeasureData caret{-1, false};
     auto             col = toColor(argb);
-    mCtx.drawText(font.getFont(), area(mX + left, mY + y, w + 4, kFontHeight + 2), std::string(s), col, col.a, ui::TextAlignment::Left, measure, caret);
+#if GF_LL_VERSION >= 2660
+    Font& face = *font.mDefaultFont.get(); // 26.60 has no FontHandle::getFont: the handle's own font
+#else
+    Font& face = font.getFont();
+#endif
+    mCtx.drawText(face, area(mX + left, mY + y, w + 4, kFontHeight + 2), std::string(s), col, col.a, ui::TextAlignment::Left, measure, caret);
 }
 
 float Canvas::textWidth(std::string const& s) const {
     auto* client = currentClient();
     if (!client) return 0;
     auto font = client->getFontHandle();
-    return static_cast<float>(mCtx.getLineLength(font.getFont(), s, 1.0f, false));
+#if GF_LL_VERSION >= 2660
+    Font& face = *font.mDefaultFont.get(); // 26.60 has no FontHandle::getFont: the handle's own font
+#else
+    Font& face = font.getFont();
+#endif
+    return static_cast<float>(mCtx.getLineLength(face, s, 1.0f, false));
 }
 
 void Canvas::item(ItemStack const& stack, float x, float y, bool showCount) {

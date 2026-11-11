@@ -21,15 +21,24 @@ GloamingForest 是 [暮色森林（The Twilight Forest）](https://github.com/Te
 
 | | |
 |---|---|
-| Minecraft | 基岩版 1.26.51 |
-| LeviLamina | 26.51.7 |
+| Minecraft | 基岩版 1.26.60 与 1.26.51 |
+| LeviLamina | 26.60.x（lip 变体 `26_60`，默认）与 26.51.x（`26_51`） |
 | 参照 | The Twilight Forest 4.8（分支 `1.21.1`，提交 `9e40a757`） |
 | 平台 | Windows x64：BDS（`server`）与客户端（`client`） |
 
 ## 安装
 
-从 Releases 下载 `gloamingforest-server-windows-x64.zip` 或 `gloamingforest-client-windows-x64.zip`，
-把其中的 `GloamingForest` 文件夹解压到 LeviLamina BDS 的 `plugins/`，或 LeviLamina 客户端实例的 `mods/`。
+在 LeviLamina BDS 或客户端实例的目录中用 [lip](https://github.com/LiteLDev/lip)（0.40 或更高版本）安装，
+或在 LeviLauncher 的模组列表中安装：
+
+```sh
+lip install github.com/MiracleForest/GloamingForest          # 最新的 LeviLamina 版本线（26.60）
+lip install github.com/MiracleForest/GloamingForest#26_51    # LeviLamina 26.51
+```
+
+lip 会按工作区选择服务端或客户端构建。每个发行版也为每一端和每条版本线提供一个 ZIP，
+`gloamingforest-<server|client>-win-x64-ll<版本线>.zip`（例如 `gloamingforest-client-win-x64-ll26.60.zip`），
+可手动解压到模组目录中 `LeviLamina` 旁边的 `GloamingForest` 文件夹。
 安装了客户端模组的玩家获得完整体验；原版基岩版客户端也可以加入装有本模组的服务器（尽力兼容）。
 
 游戏内：`/twilightforest`（别名 `/tf`、`/tffeature`）；管理员可以用 `/twilightforest config` 修改设置。
@@ -42,6 +51,7 @@ Windows x64，需要 [xmake](https://xmake.io) 3.x 与 LLVM（clang-cl）：
 git config --global core.longpaths true
 pwsh tools/build.ps1 -Target all -Tests     # bin/server/GloamingForest、bin/client/GloamingForest 与 gtest
 xmake run -P . gf-tests
+pwsh tools/build.ps1 -Target all -LeviLamina 26.51.7   # 较旧的受支持版本线（locks/26_51.lock）
 ```
 
 贡献者与智能体请阅读 [CONTRIBUTING.md](CONTRIBUTING.md) 和 [AGENTS.md](AGENTS.md)。

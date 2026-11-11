@@ -63,6 +63,7 @@
 #include "feature/darktower/Runtime.h"
 #include "feature/net/Net.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "game/Items.h"
 #include "game/WorldDb.h"
 #include "mod/Log.h"
@@ -259,7 +260,7 @@ void setSolid(Mob& m, UrState& s, bool solid) {
     s.solid = solid;
     VariantParameterList params{};
     params.mSelf = &m;
-    m.executeEvent(solid ? "solid" : "noclip", params);
+    gf::game::compat::executeEvent(m, solid ? "solid" : "noclip", params);
     ge::data(m, "darktower:solid") = solid;
 }
 
@@ -1251,7 +1252,7 @@ void install() {
                     stateOf(self).solid = true;
                     VariantParameterList params{};
                     params.mSelf = &self;
-                    self.executeEvent("solid", params);
+                    gf::game::compat::executeEvent(self, "solid", params);
                 }
                 auto& d = ge::data(self, kData);
                 // readAdditionalSaveData: setInTantrum(saved) also resets damageUntilNextPhase to 18

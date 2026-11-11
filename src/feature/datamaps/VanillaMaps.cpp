@@ -3,8 +3,10 @@
 // - neoforge:compostables {"chance": 0..1}: the composter's fill chance of an item
 //   (ComposterBlock::getFillChance, a percentage: hoppers and players alike);
 // - neoforge:furnace_fuels {"burn_time": ticks}: the fuel value of an item in furnaces, smokers and
-//   blast furnaces (FurnaceBlockActor::getBurnDuration), scaled from coal's (Java's 1600 ticks) so
-//   it follows whatever unit and furnace speed the engine uses.
+//   blast furnaces (FurnaceBlockActor::getBurnDuration; on LeviLamina 26.60, which dropped it,
+//   FurnaceBlockActor::getItemBurnDuration, what the game asks for an item without a minecraft:fuel
+//   component), scaled from coal's (Java's 1600 ticks) so it follows whatever unit and furnace speed
+//   the engine uses.
 // Entries of TF's items (and tags of them) only: vanilla items keep Bedrock's values. Both hooks run
 // on the server and in the client mod (its own composter / fuel slot checks); vanilla clients check
 // the fuel slot themselves, which needs the item's minecraft:fuel component in the behaviour pack
@@ -22,6 +24,7 @@
 #include "mc/world/level/block/actor/FurnaceBlockActor.h"
 
 #include "feature/datamaps/DataMaps.h"
+#include "game/Compat.h"
 #include "game/Items.h"
 #include "mod/Log.h"
 #include "mod/Module.h"
@@ -36,6 +39,15 @@ nlohmann::json const* valueOf(char const* mapId, ItemStackBase const& item) {
     if (id.empty() || id.starts_with("minecraft:")) return nullptr;
     return get(mapId, id);
 }
+
+#if GF_LL_VERSION >= 2660
+/// The data map value of a non-vanilla item type (nullptr for vanilla ids and items without one).
+nlohmann::json const* valueOf(char const* mapId, Item const& item) {
+    auto const& id = item.mFullName->getString();
+    if (id.empty() || id.starts_with("minecraft:")) return nullptr;
+    return get(mapId, id);
+}
+#endif
 
 } // namespace
 } // namespace gf::datamaps::vanilla
@@ -53,6 +65,16 @@ LL_STATIC_HOOK(DataMapsCompostHook, ll::memory::HookPriority::Normal, &Composter
     return origin(item);
 }
 
+#if GF_LL_VERSION >= 2660
+LL_STATIC_HOOK(
+    DataMapsFuelHook,
+    ll::memory::HookPriority::Normal,
+    &FurnaceBlockActor::getItemBurnDuration,
+    float,
+    Item const& item,
+    float       burnInterval
+) {
+#else
 LL_STATIC_HOOK(
     DataMapsFuelHook,
     ll::memory::HookPriority::Normal,
@@ -61,6 +83,7 @@ LL_STATIC_HOOK(
     ItemStackBase const& item,
     float                burnInterval
 ) {
+#endif
     try {
         if (auto const* v = dv::valueOf("neoforge:furnace_fuels", item); v && v->is_object()) {
             int burn = v->value("burn_time", 0);
@@ -70,7 +93,12 @@ LL_STATIC_HOOK(
                     auto s = gf::game::items::make("minecraft:coal");
                     return s ? new ItemStack(*s) : nullptr;
                 }();
+#if GF_LL_VERSION >= 2660
+                // coal is a data-driven fuel there: its minecraft:fuel component, not this function
+                if (coal) return gf::game::compat::burnDuration(*coal, burnInterval) * static_cast<float>(burn) / 1600.0f;
+#else
                 if (coal) return origin(*coal, burnInterval) * static_cast<float>(burn) / 1600.0f;
+#endif
             }
         }
     } catch (...) {

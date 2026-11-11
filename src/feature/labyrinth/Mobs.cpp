@@ -70,6 +70,7 @@
 #include "feature/fx/Fx.h"
 #include "feature/spawn/Spawn.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "game/Items.h"
 #include "game/WorldDb.h"
 #include "mod/Log.h"
@@ -709,7 +710,7 @@ void setSlimeSize(Mob& slime, int size) {
     // movement 0.2 + 0.1 x size; experience size + 3
     VariantParameterList params{};
     params.mSelf = &slime;
-    slime.executeEvent("gf:size_" + std::to_string(size), params);
+    gf::game::compat::executeEvent(slime, "gf:size_" + std::to_string(size), params);
 }
 
 int groundSlamForTest(Mob& minoshroom) { return slam(minoshroom); }

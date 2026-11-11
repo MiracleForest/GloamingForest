@@ -36,6 +36,7 @@
 #include "feature/tags/Tags.h"
 #include "feature/weapons/World.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "game/Items.h"
 #include "mod/Log.h"
 
@@ -77,7 +78,7 @@ void removeCube(Actor& cube) {
 /// CubeOfAnnihilation#canAnnihilate.
 bool canAnnihilate(Block const& block) {
     if (gf::tags::has(gf::tags::Registry::Block, "twilightforest:annihilation_inclusions", game::blockId(block))) return true;
-    return javaExplosionResistance(block) < 8.0F && block.getBlockType().getDestroySpeed() >= 0.0F;
+    return javaExplosionResistance(block) < 8.0F && gf::game::compat::destroySpeed(block.getBlockType()) >= 0.0F;
 }
 
 /// CubeOfAnnihilation#annihilateParticles: 27 annihilate particles, gaussian 0.2 velocity.

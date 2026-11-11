@@ -49,6 +49,7 @@
 #include "feature/recipes/RecipesInternal.h"
 #include "feature/tags/Tags.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "game/Items.h"
 #include "game/WorldDb.h"
 #include "selftest/SelfTest.h"
@@ -435,9 +436,9 @@ GF_REGISTER_SELFTEST("armory.mazebreaker", [](Context& ctx) -> ll::coro::CoroTas
     ctx.require(maze && stone, "mazestone and stone");
     ctx.check(gf::tags::has(gf::tags::Registry::Block, ids::kMazebreakerTag, "twilightforest:mazestone"), "mazestone is accelerated");
 #ifdef LL_PLAT_S
-    float fast = make(ids::kMazebreaker).getDestroySpeed(*maze);
-    float slow = make(ids::kMazebreaker).getDestroySpeed(*stone);
-    float dia  = make("minecraft:diamond_pickaxe").getDestroySpeed(*maze);
+    float fast = gf::game::compat::destroySpeed(make(ids::kMazebreaker), *maze);
+    float slow = gf::game::compat::destroySpeed(make(ids::kMazebreaker), *stone);
+    float dia  = gf::game::compat::destroySpeed(make("minecraft:diamond_pickaxe"), *maze);
     ctx.check(std::abs(fast - 128.f) < 0.01f, "the mazebreaker mines mazestone at 8 x 16: " + fmt(fast));
     ctx.check(std::abs(slow - 8.f) < 0.01f, "and stone at 8: " + fmt(slow));
     ctx.check(fast >= dia * 15.f, "16 times a diamond pickaxe there: " + fmt(dia));

@@ -747,7 +747,11 @@ std::vector<std::string> registryIds(Registry registry) {
         out.assign(names.begin(), names.end());
     } else if (registry == Registry::Item) {
         auto ref = ItemRegistryManager::getItemRegistry();
+        #if GF_LL_VERSION >= 2660
+        if (ref.mWeakRegistry.expired()) return out;
+#else
         if (!ref.isRegistryInitialized()) return out;
+#endif
         for (auto const& [name, item] : ref.getNameToItemMap()) out.push_back(name.getString());
     } else {
         // the bridge's id lists (every rule of the registry: the includes are rules of it too)

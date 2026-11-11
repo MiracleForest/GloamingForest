@@ -42,6 +42,7 @@
 #include "feature/projectile/Projectile.h"
 #include "feature/tags/Tags.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "game/Items.h"
 #include "mod/Log.h"
 
@@ -105,7 +106,7 @@ void boltBurst(Actor& bolt) {
 bool canReplaceBlock(BlockSource& region, BlockPos const& pos) {
     Block const& block = region.getBlock(pos);
     if (block.isAir() || region.getBlockEntity(pos)) return false;
-    float hardness = block.getBlockType().getDestroySpeed();
+    float hardness = gf::game::compat::destroySpeed(block.getBlockType());
     if (hardness < 0.0F || hardness >= 50.0F) return false;
     if (!mobs::stableDestination(region, BlockPos{pos.x, pos.y + 1, pos.z})) return false; // isSolidRender
     return gf::tags::has(gf::tags::Registry::Block, "twilightforest:druid_projectile_replaceable", gf::game::blockId(block));

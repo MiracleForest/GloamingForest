@@ -15,6 +15,9 @@
 #include "mc/sound/SoundEventIdentifier.h"
 #include "mc/world/actor/player/Player.h"
 #include "mc/world/item/ItemStack.h"
+#if GF_LL_VERSION >= 2660
+#include "mc/world/item/MusicDiscPlaybackInfo.h"
+#endif
 #include "mc/world/item/components/RecordItemComponent.h"
 #include "mc/world/level/BlockPos.h"
 #include "mc/world/level/BlockSource.h"
@@ -150,6 +153,26 @@ bool serverSide(BlockSource& region) { return !region.getLevel().isClientSide();
 // The jukebox starts its record: a registered disc plays its named sound instead of the record
 // component's (a LevelSoundEvent the BP had to name is not played; without one the game's own start
 // still runs for its bookkeeping).
+#if GF_LL_VERSION >= 2660
+// (26.60 hands the jukebox the disc's playback info instead of its record component.)
+LL_TYPE_INSTANCE_HOOK(
+    ItemRecordStartHook,
+    ll::memory::HookPriority::Normal,
+    JukeboxBlockActor,
+    &JukeboxBlockActor::_startRecordSound,
+    void,
+    BlockSource&                 region,
+    MusicDiscPlaybackInfo const& playback
+) {
+    bool named = false;
+    try {
+        if (serverSide(region)) named = gf::item::internal::startRecord(region, getPosition(), gf::game::items::idOf(*mRecord));
+    } catch (std::exception const& e) {
+        gf::log().error("item: jukebox record sound failed: {}", e.what());
+    }
+    if (!named || playback.mSoundEventName->empty()) origin(region, playback);
+}
+#else
 LL_TYPE_INSTANCE_HOOK(
     ItemRecordStartHook,
     ll::memory::HookPriority::Normal,
@@ -167,6 +190,7 @@ LL_TYPE_INSTANCE_HOOK(
     }
     if (!named || std::holds_alternative<std::monostate>(record.mSoundEvent->mSound.get())) origin(region, record);
 }
+#endif
 
 LL_TYPE_INSTANCE_HOOK(
     ItemRecordStopHook,

@@ -46,6 +46,7 @@
 #include "feature/tags/Tags.h"
 #include "feature/weapons/World.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "game/Items.h"
 #include "mod/Log.h"
 
@@ -137,7 +138,7 @@ void smash(Actor& chain, ItemStack const& stack, Player& player, Vec3 const& at)
             Block const& b = region.getBlock(p);
             if (b.isAir()) continue;
             if (!canBreakBlockAt(stack, b) || !mayBreak(player, p)) continue;
-            region.getLevel().destroyBlock(region, p, !player.isCreative(), BlockChangeContext{});
+            gf::game::compat::destroyBlock(region, p, !player.isCreative(), BlockChangeContext{});
             ++smashed;
         }
     st["smashed"] = smashed;

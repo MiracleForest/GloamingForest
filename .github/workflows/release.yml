@@ -1,6 +1,6 @@
 # Adapted from LiteLDev/Levitate v0.1.0 (.github/workflows/release.yml), LGPL-3.0-or-later.
-# Runs only for a pushed version tag (v<major>.<minor>.<patch>); tags are created by hand by the
-# maintainers, never by automation.
+# Runs only for a pushed version tag (v<major>.<minor>.<patch>[-<pre-release>]); tags are created by
+# hand by the maintainers, never by automation.
 name: Release
 
 on:
@@ -20,7 +20,30 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        target_type: [server, client]
+        # One job per supported LeviLamina line and target type; the lip variant has the line's
+        # name (lip.toml), the ZIP the line's number.
+        include:
+          - variant: "26_60"
+            levilamina: 26.60.6
+            line: "26.60"
+            target_type: server
+            checks: true
+          - variant: "26_60"
+            levilamina: 26.60.6
+            line: "26.60"
+            target_type: client
+            checks: false
+          - variant: "26_51"
+            levilamina: 26.51.7
+            line: "26.51"
+            target_type: server
+            checks: false
+          - variant: "26_51"
+            levilamina: 26.51.7
+            line: "26.51"
+            target_type: client
+            checks: false
+    name: build (${{ matrix.target_type }}, LeviLamina ${{ matrix.levilamina }})
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v7
@@ -33,9 +56,9 @@ jobs:
         with:
           path: |
             ~/AppData/Local/.xmake
-          key: xmake-${{ matrix.target_type }}-${{ hashFiles('xmake.lua', 'xmake-requires.lock') }}
+          key: xmake-${{ matrix.variant }}-${{ matrix.target_type }}-${{ hashFiles('xmake.lua', 'locks/*.lock') }}
           restore-keys: |
-            xmake-${{ matrix.target_type }}-
+            xmake-${{ matrix.variant }}-${{ matrix.target_type }}-
 
       - name: Setup LLVM
         id: llvm
@@ -56,10 +79,10 @@ jobs:
 
       - name: Build
         shell: pwsh
-        run: pwsh tools/build.ps1 -Target ${{ matrix.target_type }}
+        run: pwsh tools/build.ps1 -Target ${{ matrix.target_type }} -LeviLamina ${{ matrix.levilamina }}
 
       - name: Unit tests
-        if: matrix.target_type == 'server'
+        if: matrix.checks
         run: |
           xmake build -P . -y gf-tests
           xmake run -P . gf-tests
@@ -70,8 +93,8 @@ jobs:
           $expected = "${{ github.ref_name }}".TrimStart('v')
           $actual = (Get-Content bin/${{ matrix.target_type }}/GloamingForest/manifest.json | ConvertFrom-Json).version
           if ($actual -ne $expected) { throw "manifest version $actual does not match tag $expected" }
-          $tooth = (Get-Content tooth.json | ConvertFrom-Json).version
-          if ($tooth -ne $expected) { throw "tooth.json version $tooth does not match tag $expected" }
+          $declared = (Select-String -Path lip.toml -Pattern '^version = "(.+)"$' | Select-Object -First 1).Matches[0].Groups[1].Value
+          if ($declared -ne $expected) { throw "lip.toml version $declared does not match tag $expected" }
 
       - name: Package
         shell: pwsh
@@ -79,12 +102,20 @@ jobs:
           $dir = "bin/${{ matrix.target_type }}/GloamingForest"
           Copy-Item COPYING, COPYING.LESSER, NOTICE, README.md -Destination $dir
           Copy-Item assets/LICENSE (Join-Path $dir 'ASSETS_LICENSE')
-          Compress-Archive -Path $dir -DestinationPath gloamingforest-${{ matrix.target_type }}-windows-x64.zip
+          # lip's mcmod asset wants manifest.json at the root of the ZIP, with '/' separators.
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          [System.IO.Compression.ZipFile]::CreateFromDirectory(
+            (Resolve-Path $dir).Path,
+            (Join-Path (Get-Location) "gloamingforest-${{ matrix.target_type }}-win-x64-ll${{ matrix.line }}.zip"),
+            [System.IO.Compression.CompressionLevel]::Optimal,
+            $false
+          )
 
       - uses: actions/upload-artifact@v7
         with:
-          name: gloamingforest-${{ matrix.target_type }}-windows-x64
-          path: gloamingforest-${{ matrix.target_type }}-windows-x64.zip
+          name: zip-${{ matrix.target_type }}-${{ matrix.variant }}
+          path: gloamingforest-${{ matrix.target_type }}-win-x64-ll${{ matrix.line }}.zip
+          if-no-files-found: error
 
   release:
     needs: build
@@ -95,6 +126,7 @@ jobs:
       - uses: actions/download-artifact@v8
         with:
           path: dist
+          pattern: zip-*
           merge-multiple: true
 
       - name: Release notes
@@ -111,5 +143,10 @@ jobs:
 
       - uses: softprops/action-gh-release@v3
         with:
-          files: dist/*.zip
+          files: |
+            dist/gloamingforest-server-win-x64-ll26.60.zip
+            dist/gloamingforest-client-win-x64-ll26.60.zip
+            dist/gloamingforest-server-win-x64-ll26.51.zip
+            dist/gloamingforest-client-win-x64-ll26.51.zip
           body_path: RELEASE_NOTES.md
+          prerelease: ${{ contains(github.ref_name, '-') }}

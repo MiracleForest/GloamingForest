@@ -57,6 +57,7 @@
 #include "feature/ext/hostiles/W0Internals.h"
 #include "feature/fx/Fx.h"
 #include "feature/worldgen/Worldgen.h"
+#include "game/Compat.h"
 #include "game/Items.h"
 #include "game/WorldDb.h"
 
@@ -314,7 +315,7 @@ void prune() {
 bool fireEvent(Actor& actor, std::string const& event) {
     VariantParameterList params{};
     params.mSelf = &actor;
-    return actor.executeEvent(event, params);
+    return gf::game::compat::executeEvent(actor, event, params);
 }
 
 void setGroup(Actor& actor, std::string const& group, bool on) {

@@ -36,6 +36,7 @@
 #include "feature/finalcastle/BlocksCommon.h"
 #include "feature/inventory/Inventory.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "game/Items.h"
 #include "selftest/SelfTest.h"
 
@@ -260,7 +261,7 @@ GF_REGISTER_SELFTEST("finalcastle.force_field", [](Context& ctx) -> ll::coro::Co
     ctx.check(flag(ctx, f, "twilightforest:south"), "a field of the same colour always connects");
     r = ctx.region();
     // unbreakable: not destructible by mining
-    ctx.check(r->getBlock(bp(f)).getBlockType().getDestroySpeed() < 0.0f, "force fields are unbreakable");
+    ctx.check(gf::game::compat::destroySpeed(r->getBlock(bp(f)).getBlockType()) < 0.0f, "force fields are unbreakable");
 });
 
 // brown / green thorns hurt for 4 (thorns), spare the immune items, burst for survival players
@@ -396,7 +397,7 @@ GF_REGISTER_SELFTEST("finalcastle.cinder_furnace", [](Context& ctx) -> ll::coro:
     auto coal = items::make("minecraft:coal", 4);
     auto logs = items::make("minecraft:oak_log", 8);
     ctx.require(coal && logs, "items");
-    ctx.info("coal burns " + std::to_string(static_cast<int>(FurnaceBlockActor::getBurnDuration(*coal, 200.0f))) + " ticks");
+    ctx.info("coal burns " + std::to_string(static_cast<int>(gf::game::compat::burnDuration(*coal, 200.0f))) + " ticks");
     // 20 cinder logs around: speed x10, output x2 (and up to x3)
     int n = 0;
     for (int dx = -1; dx <= 1 && n < 20; ++dx)

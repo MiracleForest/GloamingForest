@@ -50,6 +50,7 @@
 #include "feature/stats/Stats.h"
 #include "feature/tags/Tags.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "mod/I18n.h"
 #include "mod/Log.h"
 
@@ -107,7 +108,7 @@ int removeNearbyShields(BlockSource& region, BlockPos const& pos) {
             for (int sz = -5; sz <= 5; sz++) {
                 BlockPos at{pos.x + sx, pos.y + sy, pos.z + sz};
                 if (game::blockIdAt(region, at) != kShield) continue;
-                region.getLevel().destroyBlock(region, at, false, BlockChangeContext{});
+                gf::game::compat::destroyBlock(region, at, false, BlockChangeContext{});
                 removed++;
             }
     return removed;

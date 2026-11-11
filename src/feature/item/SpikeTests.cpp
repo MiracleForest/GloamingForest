@@ -72,6 +72,7 @@
 #include "feature/item/ItemInternal.h"
 #include "feature/net/Net.h"
 #include "game/Blocks.h"
+#include "game/Compat.h"
 #include "game/Items.h"
 #include "mod/Log.h"
 #include "mod/Main.h"
@@ -337,7 +338,7 @@ GF_REGISTER_MODULE(SpikeTrimFixtureModule);
 // own start of the record plays it through gf::fx and its stop stops it (feature/item/Records.cpp).
 GF_REGISTER_SELFTEST("item.spike_record_sounds", [](Context& ctx) -> ll::coro::CoroTask<> {
     if (auto disc = items::make(kProbeDisc)) {
-        auto const* component = disc->mItem ? disc->mItem->getComponent(RecordItemComponent::getIdentifier()) : nullptr;
+        auto const* component = disc->mItem ? disc->mItem->getComponent(gf::game::compat::recordComponentId()) : nullptr;
         ctx.require(component != nullptr, std::string(kProbeDisc) + " (probe BP item) has its record component");
         auto const* record = static_cast<RecordItemComponent const*>(component);
         auto const& sound  = record->mSoundEvent->mSound.get();
@@ -381,7 +382,7 @@ GF_REGISTER_SELFTEST("item.spike_record_sounds", [](Context& ctx) -> ll::coro::C
                            "minecraft:music_disc_5", "minecraft:music_disc_relic", "minecraft:music_disc_creator", "minecraft:music_disc_precipice"}) {
         auto stack = items::make(id);
         if (!stack || !stack->mItem) continue;
-        auto const* component = stack->mItem->getComponent(RecordItemComponent::getIdentifier());
+        auto const* component = stack->mItem->getComponent(gf::game::compat::recordComponentId());
         if (!component) continue;
         ++components;
         auto const& sound = static_cast<RecordItemComponent const*>(component)->mSoundEvent->mSound.get();
