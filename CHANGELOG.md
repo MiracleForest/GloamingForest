@@ -5,6 +5,15 @@ All notable changes to GloamingForest are documented here. The format follows
 
 ## [Unreleased]
 
+### Removed
+
+- The `client` variant. The variants are now the default, which is the newest supported line, and one per
+  LeviLamina line, `26_51`; each holds a server and a client build, and lip and LeviLauncher pick the one of the
+  side they install to. On a client, install `github.com/MiracleForest/GloamingForest` or
+  `github.com/MiracleForest/GloamingForest#26_51`. An install made as `#client` is not updated to this release:
+  uninstall it (`lip uninstall github.com/MiracleForest/GloamingForest#client`) and install one of the variants
+  above. Settings in `mods/GloamingForest/config/` are kept.
+
 ## [0.1.0-beta.1] - 2026-11-11
 
 First beta, for Minecraft 1.26.51 with LeviLamina 26.51.x, on dedicated servers and on clients through
