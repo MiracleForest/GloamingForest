@@ -12,8 +12,10 @@ tags = ["adventure", "world-generation", "dimension"]
 # hold [a-z0-9_], hence 26_51 and not 26.51. Each line has a server build (BDS) and a client build
 # (LeviLauncher).
 #
-# The default variant and the variant "client", which is the one LeviLauncher reaches for first
-# and the one the client build was installed as before, are the newest supported line.
+# The default variant is the newest supported line. There are no other variants: lip and
+# LeviLauncher pick the server or client entry by the side they install to. LeviLamina releases
+# are still tooth.json packages, whose client build is the variant "client", so the client entries
+# depend on LeviLamina#client and the server entries on plain LeviLamina.
 #
 # A LeviLamina 26.51 server loads its mods from plugins/ (where lip puts LeviLamina itself), so the
 # server builds are placed there; the client builds are lip mod archives, which go to mods/.
@@ -42,18 +44,6 @@ preserve = ["mods/GloamingForest/config/"]
 "github.com/LiteLDev/LeviLamina#client" = "26.51.*"
 
 [[variants."".assets]]
-type = "mcmod"
-urls = ["https://{{id}}/releases/download/v{{version}}/gloamingforest-client-win-x64-ll26.51.zip"]
-
-[[variants.client]]
-side = "client"
-platform = "win-x64"
-preserve = ["mods/GloamingForest/config/"]
-
-[variants.client.deps]
-"github.com/LiteLDev/LeviLamina#client" = "26.51.*"
-
-[[variants.client.assets]]
 type = "mcmod"
 urls = ["https://{{id}}/releases/download/v{{version}}/gloamingforest-client-win-x64-ll26.51.zip"]
 
