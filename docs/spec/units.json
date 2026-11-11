@@ -10,7 +10,7 @@
           "id": "F0",
           "title": "Scaffold (Levitate port renamed to gf) + all contract headers + owners.tsv",
           "paths": [
-            "xmake.lua, xmake-requires.lock, .clang-format, .github/workflows/**",
+            "xmake.lua, xmake-requires.lock (locks/**), lip.toml, .clang-format, .github/workflows/**",
             "AGENTS.md, CONTRIBUTING.md, LICENSE (LGPL-3.0), NOTICE (TF attribution), assets/LICENSE (CC BY-NC-SA 4.0)",
             "src/mod/**, src/game/**, src/selftest/**, src/pack/**, src/core/{Format,Glob,GlobalPos,Holiday}*, src/feature/common/** (Interactions, BlockData, Redstone, ValueBox-style hold), src/feature/net/**, src/client/Client.h, src/client/screen/base/**",
             "every W0 contract header (*.h) plus stub .cpp in the W0b directories listed in the W0b units (headers stay owned by F0; W0b replaces the stubs)",
