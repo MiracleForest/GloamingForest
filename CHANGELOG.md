@@ -5,23 +5,11 @@ All notable changes to GloamingForest are documented here. The format follows
 
 ## [Unreleased]
 
-### Removed
+## [0.1.0] - 2026-11-14
 
-- The `client` variant. The variants are now the default, which is the newest supported line, and one per
-  LeviLamina line, `26_51`; each holds a server and a client build, and lip and LeviLauncher pick the one of the
-  side they install to. On a client, install `github.com/MiracleForest/GloamingForest` or
-  `github.com/MiracleForest/GloamingForest#26_51`. An install made as `#client` is not updated to this release:
-  uninstall it (`lip uninstall github.com/MiracleForest/GloamingForest#client`) and install one of the variants
-  above. Settings in `mods/GloamingForest/config/` are kept.
-
-## [0.1.0-beta.1] - 2026-11-11
-
-First beta, for Minecraft 1.26.51 with LeviLamina 26.51.x, on dedicated servers and on clients through
-LeviLauncher. Minecraft 1.26.60 (LeviLamina 26.60) is not supported yet: LeviLamina 26.60 does not give
-mods access to parts of the game GloamingForest is built on, the Twilight Forest dimension among them.
-
-Status: **Preview** — every unit of The Twilight Forest 4.8 is ported and passes the server selftests;
-client screenshot review pending; Bedrock gaps in `docs/spec/not-ported.md`.
+First public release, for Minecraft 1.26.51 with LeviLamina 26.51.x, on dedicated servers (BDS) and on clients
+through LeviLauncher. Status: preview; what Bedrock cannot do (or does differently) is listed in
+`docs/spec/not-ported.md`.
 
 ### Added
 
@@ -34,23 +22,18 @@ client screenshot review pending; Bedrock gaps in `docs/spec/not-ported.md`.
 - All blocks, items, armour and tool tiers, weapons, scepters, charms, artifacts, provisions, enchantments,
   effects, music discs, the uncrafting table, magic and maze maps, Travellers' Gear and its movement, the 45
   advancements, sky, fog, weather and aurora.
-- Original synthesized sounds for every TF sound event and original structure templates; TF's CC BY-NC-SA
-  textures, models and translations imported for 29 locales.
-- Client-mod screens and renderers with vanilla-client fallbacks (forms, DDUI, lore).
-- About 960 in-game selftests (`/twilightforest selftest`) and the C++ unit tests.
-- The build: xmake targets `gf-core`, `GloamingForest` (server and client builds) and `gf-tests`;
-  `tools/build.ps1` with machine-wide throttle slots; the shared Twilight Forest checkout (`tools/tf/fetch.ps1`).
-- The foundation adapted from Levitate v0.1.0: modules, configs and the in-game config screen,
-  `/twilightforest` (aliases `/tf`, `/tffeature`), translations for 29 locales, world data, the companion
-  protocol, interactions with tag matchers, block data, redstone, click and hold, the pack deployer and the
-  selftest framework.
-- The W0 contract headers with neutral stubs, the `gf_test:*` fixture packs, the asset assembler with its
-  checks, the ownership manifest (`docs/spec/owners.tsv`) and the CI guards.
-- The server and client end-to-end harnesses with the `smoke` scenarios.
-- The lip package `github.com/MiracleForest/GloamingForest`, described by `lip.toml` of format 4 (lip
-  **0.40.0** or later, or LeviLauncher). GloamingForest is compiled against one LeviLamina line at a time,
-  so each supported line is a variant named after it, with a server and a client build: `26_51` for
-  LeviLamina 26.51.x (Minecraft 1.26.51). The default variant and `client` are the newest supported line.
-  Settings in the mod's `config/` folder are kept across updates.
+- Original sounds and structure templates; textures, models and translations for 29 locales (CC BY-NC-SA 4.0,
+  see `assets/LICENSE`).
+- Client-mod screens and renderers, with best-effort fallbacks (forms, DDUI, lore) for vanilla Bedrock clients
+  joining a server.
+- The `/twilightforest` command (aliases `/tf`, `/tffeature`) and an in-game config screen for operators
+  (`/twilightforest config`); settings are kept across updates.
+- About 960 in-game selftests (`/twilightforest selftest`) and C++ unit tests.
+- The lip package `github.com/MiracleForest/GloamingForest` (lip 0.40.0 or later, or LeviLauncher), with the
+  variant `26_51` for LeviLamina 26.51.x and the default variant tracking the newest supported line; each
+  variant has a server and a client build.
 - One download per side and LeviLamina line: `gloamingforest-server-win-x64-ll26.51.zip` and
   `gloamingforest-client-win-x64-ll26.51.zip`, with the mod's files at the root of the ZIP.
+
+[Unreleased]: https://github.com/MiracleForest/GloamingForest/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/MiracleForest/GloamingForest/releases/tag/v0.1.0
