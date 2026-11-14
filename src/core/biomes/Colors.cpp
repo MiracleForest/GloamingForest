@@ -2,7 +2,7 @@
 // Translated from the upstream 4.8 source (commit 9e40a757):
 //   src/main/java/gloamingforest/world/components/BiomeColorAlgorithms.java
 //   src/main/java/gloamingforest/client/FoliageColorHandler.java
-//   src/main/java/gloamingforest/TFEnumExtensions.java
+//   src/main/java/gloamingforest/GloamingEnumExtensions.java
 //   src/main/java/gloamingforest/util/ColorUtil.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
@@ -167,7 +167,7 @@ constexpr WaterColours kWater[] = {
     {"gloamingforest:swamp", 0x95B55F, 0x95B55F},
 };
 
-bool isTf(std::string_view id) { return staticOf(id) != nullptr || hasModifier(id); }
+bool isGloaming(std::string_view id) { return staticOf(id) != nullptr || hasModifier(id); }
 
 } // namespace
 
@@ -192,14 +192,14 @@ std::optional<int> foliageAt(std::string_view id, double x, double z) {
 }
 
 std::optional<int> water(std::string_view id) {
-    if (!isTf(id)) return std::nullopt;
+    if (!isGloaming(id)) return std::nullopt;
     for (auto const& w : kWater)
         if (w.id == id) return w.water;
     return 0x3F76E4;
 }
 
 std::optional<int> waterFog(std::string_view id) {
-    if (!isTf(id)) return std::nullopt;
+    if (!isGloaming(id)) return std::nullopt;
     for (auto const& w : kWater)
         if (w.id == id) return w.fog;
     return 0x050533;

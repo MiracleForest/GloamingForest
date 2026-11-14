@@ -1,9 +1,9 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
 //   src/main/java/gloamingforest/events/RegistrationEvents.java
-//   src/main/java/gloamingforest/world/components/feature/trees/growers/TFTreeGrowers.java
+//   src/main/java/gloamingforest/world/components/feature/trees/growers/GloamingTreeGrowers.java
 //   src/main/java/gloamingforest/world/components/feature/trees/growers/StructureTreeGrower.java
-//   src/main/java/gloamingforest/init/TFBlocks.java
+//   src/main/java/gloamingforest/init/GloamingBlocks.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -16,7 +16,7 @@
 // family and any modifiers (waterloggable, snowloggable, climbable, lightable). F1's entries name
 // the Java class (params.class), which refines the family, and upstream's registrations fill the params
 // units leave out: the wall variant of a sign, the plant of a potted plant, the strippables
-// (RegistrationEvents STRIPPABLES / FlowerPotBlock.addPlant) and the tree growers (TFTreeGrowers).
+// (RegistrationEvents STRIPPABLES / FlowerPotBlock.addPlant) and the tree growers (GloamingTreeGrowers).
 //
 // The server thread (block events, world ready) and the client's threads (collision of the local
 // player, chunk tessellation, client join) read the registry at the same time. The entries are
@@ -133,8 +133,8 @@ std::map<std::string, std::string, std::less<>> const& pottedPlants() {
     return m;
 }
 
-/// TFTreeGrowers (Java TreeGrower: secondaryChance, megaTree, secondaryMegaTree, tree,
-/// secondaryTree) and StructureTreeGrower (the hollow tree structure), by sapling (TFBlocks).
+/// GloamingTreeGrowers (Java TreeGrower: secondaryChance, megaTree, secondaryMegaTree, tree,
+/// secondaryTree) and StructureTreeGrower (the hollow tree structure), by sapling (GloamingBlocks).
 Json growerOf(std::string_view saplingId) {
     auto f = [](char const* path) { return std::string("gloamingforest:tree/") + path; };
     if (saplingId == "gloamingforest:gloaming_oak_sapling")
@@ -331,7 +331,7 @@ void fillDefaults(std::map<std::string, Entry, std::less<>>& all) {
             }
             break;
         case Family::Button:
-            // upstream's buttons: wooden block set types, 30 ticks (TFBlocks: new ButtonBlock(set, 30, ...))
+            // upstream's buttons: wooden block set types, 30 ticks (GloamingBlocks: new ButtonBlock(set, 30, ...))
             if (!p.contains("ticks")) p["ticks"] = 30;
             break;
         default: break;

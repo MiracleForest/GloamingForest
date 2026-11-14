@@ -1,6 +1,6 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Tests of upstream's charm, casket, shield, flask, ore meter, scepter and moon dial rules (U9):
-// CharmEvents, TFItemStackUtils, FortificationShieldAttachment, PotionFlaskComponent,
+// CharmEvents, GloamingItemStackUtils, FortificationShieldAttachment, PotionFlaskComponent,
 // OreScannerComponent, ScepterRepairRecipe, MoonDialItem (upstream commit 9e40a757,
 // LGPL-2.1-or-later).
 #include <gtest/gtest.h>

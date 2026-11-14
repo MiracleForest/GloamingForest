@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_item_tower_key"
+          "default": "gf_item_tower_key"
         }
       },
       "minecraft:display_name": {

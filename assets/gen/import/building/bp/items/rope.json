@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_block_rope"
+          "default": "gf_block_rope"
         }
       },
       "minecraft:display_name": {

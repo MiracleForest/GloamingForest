@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_item_shika_senbei"
+          "default": "gf_item_shika_senbei"
         }
       },
       "minecraft:display_name": {

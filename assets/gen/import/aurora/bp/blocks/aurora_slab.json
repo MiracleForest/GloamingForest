@@ -19,22 +19,22 @@
       },
       "minecraft:tags": ["minecraft:is_pickaxe_item_destructible"],
       "minecraft:map_color": "#a0a0ff",
-      "minecraft:geometry": "geometry.tf.gloamingforest.block.aurora_slab",
+      "minecraft:geometry": "geometry.gf.gloamingforest.block.aurora_slab",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_aurora_baked_aurora_slab_side",
+          "texture": "gf_aurora_baked_aurora_slab_side",
           "render_method": "opaque"
         },
         "bottom": {
-          "texture": "tf_aurora_baked_aurora_pillar_top",
+          "texture": "gf_aurora_baked_aurora_pillar_top",
           "render_method": "opaque"
         },
         "side": {
-          "texture": "tf_aurora_baked_aurora_slab_side",
+          "texture": "gf_aurora_baked_aurora_slab_side",
           "render_method": "opaque"
         },
         "top": {
-          "texture": "tf_aurora_baked_aurora_pillar_top",
+          "texture": "gf_aurora_baked_aurora_pillar_top",
           "render_method": "opaque"
         }
       },
@@ -48,22 +48,22 @@
       },
       "minecraft:light_dampening": 0,
       "minecraft:item_visual": {
-        "geometry": "geometry.tf.gloamingforest.block.aurora_slab",
+        "geometry": "geometry.gf.gloamingforest.block.aurora_slab",
         "material_instances": {
           "*": {
-            "texture": "tf_aurora_item_aurora_slab_side",
+            "texture": "gf_aurora_item_aurora_slab_side",
             "render_method": "opaque"
           },
           "side": {
-            "texture": "tf_aurora_item_aurora_slab_side",
+            "texture": "gf_aurora_item_aurora_slab_side",
             "render_method": "opaque"
           },
           "top": {
-            "texture": "tf_aurora_item_aurora_pillar_top",
+            "texture": "gf_aurora_item_aurora_pillar_top",
             "render_method": "opaque"
           },
           "bottom": {
-            "texture": "tf_aurora_item_aurora_pillar_top",
+            "texture": "gf_aurora_item_aurora_pillar_top",
             "render_method": "opaque"
           }
         }
@@ -73,22 +73,22 @@
       {
         "condition": "q.block_state('gloamingforest:type') == 'bottom'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.aurora_slab",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.aurora_slab",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_aurora_baked_aurora_slab_side",
+              "texture": "gf_aurora_baked_aurora_slab_side",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_aurora_baked_aurora_pillar_top",
+              "texture": "gf_aurora_baked_aurora_pillar_top",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_aurora_baked_aurora_slab_side",
+              "texture": "gf_aurora_baked_aurora_slab_side",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_aurora_baked_aurora_pillar_top",
+              "texture": "gf_aurora_baked_aurora_pillar_top",
               "render_method": "opaque"
             }
           },
@@ -111,31 +111,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_aurora_baked_aurora_slab_side",
+              "texture": "gf_aurora_baked_aurora_slab_side",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_aurora_baked_aurora_pillar_top",
+              "texture": "gf_aurora_baked_aurora_pillar_top",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_aurora_baked_aurora_pillar_top",
+              "texture": "gf_aurora_baked_aurora_pillar_top",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_aurora_baked_aurora_slab_side",
+              "texture": "gf_aurora_baked_aurora_slab_side",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_aurora_baked_aurora_slab_side",
+              "texture": "gf_aurora_baked_aurora_slab_side",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_aurora_baked_aurora_slab_side",
+              "texture": "gf_aurora_baked_aurora_slab_side",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_aurora_baked_aurora_slab_side",
+              "texture": "gf_aurora_baked_aurora_slab_side",
               "render_method": "opaque"
             }
           },
@@ -149,22 +149,22 @@
       {
         "condition": "q.block_state('gloamingforest:type') == 'top'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.aurora_slab",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.aurora_slab",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_aurora_baked_aurora_slab_side",
+              "texture": "gf_aurora_baked_aurora_slab_side",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_aurora_baked_aurora_pillar_top",
+              "texture": "gf_aurora_baked_aurora_pillar_top",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_aurora_baked_aurora_slab_side",
+              "texture": "gf_aurora_baked_aurora_slab_side",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_aurora_baked_aurora_pillar_top",
+              "texture": "gf_aurora_baked_aurora_pillar_top",
               "render_method": "opaque"
             }
           },

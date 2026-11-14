@@ -1,6 +1,6 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/command/TFCommand.java (structure_util branch)
+//   src/main/java/gloamingforest/command/GloamingCommand.java (structure_util branch)
 //   src/main/java/gloamingforest/command/DisplayPiecesCommand.java
 //   src/main/java/gloamingforest/command/ClearDisplayCommand.java
 //   src/main/java/gloamingforest/command/CountLootCommand.java
@@ -161,8 +161,8 @@ void showLabels(Level& level) {
     int  r     = std::max(std::abs(diffX), std::abs(diffZ));
     if (r > 8) return;
     // the two texts above each chunk: "dx, dz" and the radius (center chunk named)
-    std::string radius = r == 0 ? tr("commands.tffeature.generator_radius.center_chunk", "Structure start's center chunk")
-                                : tr("commands.tffeature.generator_radius.radius", "Radius from center chunk: %s", r);
+    std::string radius = r == 0 ? tr("commands.gloamingfeature.generator_radius.center_chunk", "Structure start's center chunk")
+                                : tr("commands.gloamingfeature.generator_radius.radius", "Radius from center chunk: %s", r);
     // a tip (action bar text) while the operator stands in the chunk
     auto        pkt = TextPacket{};
     TextPacketPayload::MessageOnly message;
@@ -249,7 +249,7 @@ std::optional<Where> where(CommandOrigin const& origin, CommandOutput& output) {
 std::optional<landmark::Start> startAt(Where const& w, std::string const& key, CommandOutput& output) {
     auto start = landmark::startAt(w.dim, w.pos);
     if (!start || (start->key != key && !key.empty())) {
-        output.error(tr("commands.tffeature.structure.outside", "You are not in a structure."));
+        output.error(tr("commands.gloamingfeature.structure.outside", "You are not in a structure."));
         return std::nullopt;
     }
     return start;
@@ -268,7 +268,7 @@ void displayPieces(CommandOrigin const& origin, CommandOutput& output, std::stri
     for (auto const& p : landmark::ext::startPieces(*start)) {
         // lime glass for a ProgressionPiece whose isComponentProtected is true, light blue otherwise
         addOutline(w->dim, p.box, p.protectedPiece ? "minecraft:villager_happy" : "minecraft:water_wake_particle");
-        w->player->sendMessage((p.type.empty() ? tr("commands.tffeature.display_pieces.missing_key", "missing key") : p.type) + " " +
+        w->player->sendMessage((p.type.empty() ? tr("commands.gloamingfeature.display_pieces.missing_key", "missing key") : p.type) + " " +
                                boxToJson(p.box).dump());
         successes++;
     }
@@ -303,7 +303,7 @@ void outlineBox(CommandOrigin const& origin, CommandOutput& output, StructureUti
 ///     the server-1.21.1 jar's Items.<clinit>: the Rarity before each item's registration; no other
 ///     class sets one), by Bedrock id where it differs (Java's light is Bedrock's light_block).
 ///     Every other vanilla item is common (trial keys, the ominous bottle, smithing templates).
-///   - upstream 4.8: the UNCOMMON / RARE / EPIC rarities of TFItems and TFBlocks (and fiery_block, whose
+///   - upstream 4.8: the UNCOMMON / RARE / EPIC rarities of GloamingItems and GloamingBlocks (and fiery_block, whose
 ///     registerFireResistantItem sets UNCOMMON).
 int baseRarity(std::string const& id) {
     static std::unordered_map<std::string, int> const table = [] {
@@ -549,7 +549,7 @@ void generatorRadius(CommandOrigin const& origin, CommandOutput& output, std::st
             addOutline(w->dim, box, particles[r], 8.0f, true);
         }
     gLabels = ChunkLabels{w->dim, cx, cz, 60 * 20, w->player->getOrCreateUniqueID().rawID};
-    w->player->sendMessage(tr("commands.tffeature.generator_radius.center_chunk", "Structure start's center chunk") + ": " + std::to_string(cx) + ", " +
+    w->player->sendMessage(tr("commands.gloamingfeature.generator_radius.center_chunk", "Structure start's center chunk") + ": " + std::to_string(cx) + ", " +
                            std::to_string(cz));
     log().info("structure_util generator_radius {}: 289 chunks around {}, {}", start->key, cx, cz);
     output.success("ok");
@@ -623,7 +623,7 @@ void pieceCmd(CommandOrigin const& origin, CommandOutput& output, StructureUtilP
         pieces.push_back(std::move(main));
         raw->addChildren(*raw, pieces, random);
     } else if (p.kind == "hill") {
-        auto hill = std::make_unique<bases::HollowHill>("gloamingforest:TFHill", 0, 1, w->pos.x, w->pos.y, w->pos.z, "gloamingforest:small_hollow_hill");
+        auto hill = std::make_unique<bases::HollowHill>("gloamingforest:GloamingHill", 0, 1, w->pos.x, w->pos.y, w->pos.z, "gloamingforest:small_hollow_hill");
         // the hollow the terrain (U2) digs for the hill: a stone shell around the cave between the
         // component's floor and ceiling heights (HollowHillComponent's floorY / ceilingY curves)
         BlockBox const& b      = hill->bbox;

@@ -630,7 +630,7 @@ void installMobs() {
         return true;
     });
 
-    // IceSnowball (TFThrowable): gravity 0.006, a snowball trail, 2 snowball_fight damage, gone on any hit
+    // IceSnowball (GloamingThrowable): gravity 0.006, a snowball trail, 2 snowball_fight damage, gone on any hit
     gf::projectile::Spec snowball;
     snowball.gravity     = 0.006f;
     snowball.drag        = 0.99f;

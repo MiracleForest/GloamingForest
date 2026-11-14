@@ -47,8 +47,8 @@ namespace {
 namespace fs = std::filesystem;
 using nlohmann::json;
 
-constexpr char const* kTfVersion = "4.8.3802";
-constexpr char const* kTfCommit  = "9e40a75721c716b2fdf80c16d1058fe718825e9f";
+constexpr char const* kGloamingVersion = "4.8.3802";
+constexpr char const* kGloamingCommit  = "9e40a75721c716b2fdf80c16d1058fe718825e9f";
 
 // ---------------------------------------------------------------------------------------------
 // files
@@ -482,8 +482,8 @@ TEST(OracleGolden, ManifestListsEveryFileUnchanged) {
     REQUIRE_GOLDENS();
     json const& m = manifest();
     EXPECT_EQ(m.value("format", 0), 1);
-    EXPECT_EQ(m.at("source").value("gloamingforest", ""), kTfVersion);
-    EXPECT_EQ(m.at("source").value("commit", ""), kTfCommit);
+    EXPECT_EQ(m.at("source").value("gloamingforest", ""), kGloamingVersion);
+    EXPECT_EQ(m.at("source").value("commit", ""), kGloamingCommit);
     EXPECT_EQ(m.at("source").value("minecraft", ""), "1.21.1");
 
     std::set<std::string> listed;
@@ -501,8 +501,8 @@ TEST(OracleGolden, ManifestListsEveryFileUnchanged) {
         ASSERT_TRUE(g.is_object()) << rel;
         EXPECT_EQ(g.value("format", 0), 1) << rel;
         EXPECT_EQ(g.value("kind", ""), e.value("kind", "?")) << rel;
-        EXPECT_EQ(g.at("source").value("gloamingforest", ""), kTfVersion) << rel;
-        EXPECT_EQ(g.at("source").value("commit", ""), kTfCommit) << rel;
+        EXPECT_EQ(g.at("source").value("gloamingforest", ""), kGloamingVersion) << rel;
+        EXPECT_EQ(g.at("source").value("commit", ""), kGloamingCommit) << rel;
         if (e.contains("seed")) EXPECT_EQ(g.at("seed").get<std::int64_t>(), e.at("seed").get<std::int64_t>()) << rel;
     }
     for (auto const& f : fs::recursive_directory_iterator(goldenDir())) {
@@ -1013,7 +1013,7 @@ TEST(OracleGolden, LandmarkGridMatchesLegacyLandmarkPlacements) {
 // =============================================================================================
 // mobs, loot, recipes, uncrafting
 
-TEST(OracleGolden, MobsCoverEveryTfEntity) {
+TEST(OracleGolden, MobsCoverEveryGloamingEntity) {
     REQUIRE_GOLDENS();
     json const& entities = golden("mobs.json").at("entities");
     ASSERT_FALSE(entities.empty());
@@ -1119,7 +1119,7 @@ bool isStack(json const& s) {
 
 } // namespace
 
-TEST(OracleGolden, RecipesCoverTfRecipes) {
+TEST(OracleGolden, RecipesCoverGloamingRecipes) {
     REQUIRE_GOLDENS();
     json const& g       = golden("recipes.json");
     json const& recipes = g.at("recipes");
@@ -1209,9 +1209,9 @@ TEST(OracleGolden, UncraftingOptionsAreWellFormed) {
         EXPECT_TRUE(g.at("config").contains(key)) << key;
     }
     int const maxCycles = g.at("maxCycles");
-    int       tf        = 0;
+    int       upsrc        = 0;
     for (auto const& [id, options] : items.items()) {
-        if (id.starts_with("gloamingforest:")) ++tf;
+        if (id.starts_with("gloamingforest:")) ++upsrc;
         EXPECT_LE(options.size(), std::size_t(maxCycles)) << id;
         for (json const& o : options) {
             markedCells(o.at("grid"), id);
@@ -1222,7 +1222,7 @@ TEST(OracleGolden, UncraftingOptionsAreWellFormed) {
             EXPECT_GT(filled, 0) << id;
         }
     }
-    EXPECT_GT(tf, 50);
+    EXPECT_GT(upsrc, 50);
     for (json const& id : g.at("truncated")) EXPECT_EQ(items.at(id.get<std::string>()).size(), std::size_t(maxCycles)) << id;
 
     // ingredient switching: alternatives grids in order, the same recipe as the option

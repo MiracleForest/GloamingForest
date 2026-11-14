@@ -10,7 +10,7 @@
         "default": "textures/gloamingforest/entity/protectionbox"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.protection_box"
+        "default": "geometry.gf.skeleton.protection_box"
       },
       "render_controllers": ["controller.render.default"]
     }

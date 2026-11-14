@@ -66,7 +66,7 @@ Trigger `gloamingforest:complete_quest_ram` (no conditions besides the player).
 
 ## 2. Quest grove `gloamingforest:quest_grove`
 
-Structure type `gloamingforest:quest_grove` (`QuestGroveStructure`, conquerable), piece `gloamingforest:TFQuest1`
+Structure type `gloamingforest:quest_grove` (`QuestGroveStructure`, conquerable), piece `gloamingforest:GloamingQuest1`
 (`QuestGrove`, a template piece). Structure set `gloamingforest:quest_grove` (landmark grid). Biomes
 `#gloamingforest:valid_quest_grove_biomes`; surface; BEARD_THIN; decoration clearance radius 2, no surface decorations,
 underground and vegetation allowed, elevation adjusted; map icon `gloamingforest:quest_grove`; centre in chunk.
@@ -117,7 +117,7 @@ surface; BEARD_BOX; no spawn overrides.
 - Generation point: random x/z inside the chunk (`lerpDiscrete(rand)`), y `adjustForTerrain(12, 3)`, random rotation
   of SOUTH; start template from pool `gloamingforest:camp/structure_start` joined at a junction named after the pool;
   then the generic jigsaw expansion of `GloamingJigsawPiece` following each template's jigsaw `pool` / `name` /
-  `target`. Its piece type is `gloamingforest:TFJigsawTemplate`; owner F7 is proposed, pending an owners.tsv fix by
+  `target`. Its piece type is `gloamingforest:GloamingJigsawTemplate`; owner F7 is proposed, pending an owners.tsv fix by
   F0/A8 ([issue #4](https://github.com/MiracleForest/GloamingForest/issues/4)).
 - Pools (from `CampPieces`): `gloamingforest:camp/structure_start`, `camp/tent`, `camp/main_path`, `camp/path`,
   `camp/rack_path` (aliases deco -> rack), `camp/deco`, `camp/rack`.
@@ -275,7 +275,7 @@ RNG drawn inside the vanilla template calls. The settings carry `rand` (`setRand
   `LootTableSeed`.
 - No draws come from `SpawnerBlockEntity.setEntityId(rising_zombie, rand)` in step 9 (a new spawner has no spawn
   potentials, so nothing is rolled) or from the trapped chest, whose loot seed is `level.getSeed() * x + y ^ z`
-  (`TFLootTables.generateChestContents`).
+  (`GloamingLootTables.generateChestContents`).
 
 The draws on `rand` therefore come in this order:
 1. rotation, then mirror;

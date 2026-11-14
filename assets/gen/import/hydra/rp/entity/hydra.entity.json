@@ -10,7 +10,7 @@
         "default": "textures/gloamingforest/entity/hydra4"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.hydra"
+        "default": "geometry.gf.skeleton.hydra"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

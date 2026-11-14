@@ -11,7 +11,7 @@
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
 
-// The mushroom tower's pieces ("gloamingforest:TFMT*") on F7's tower base.
+// The mushroom tower's pieces ("gloamingforest:GloamingMT*") on F7's tower base.
 
 #include <memory>
 
@@ -22,7 +22,7 @@ namespace gf::feature::aurora {
 /// MushroomTowerDecorator ("DecoMushroomTower").
 [[nodiscard]] std::unique_ptr<structure::bases::Decorator> mushroomTowerDecorator();
 
-/// MushroomTowerWingComponent ("gloamingforest:TFMTWin").
+/// MushroomTowerWingComponent ("gloamingforest:GloamingMTWin").
 class MushroomTowerWing : public structure::bases::TowerWing {
 public:
     static constexpr int RANGE        = 200;
@@ -63,7 +63,7 @@ private:
     void placeFloor(structure::Region& region, int dy, structure::BlockBox const& sbb);
 };
 
-/// MushroomTowerMainComponent ("gloamingforest:TFMTMai").
+/// MushroomTowerMainComponent ("gloamingforest:GloamingMTMai").
 class MushroomTowerMain : public MushroomTowerWing {
 public:
     /// MushroomTowerMainComponent(rand, index, x, y, z): the tower at (x + 15, y + 4, z + 15), NORTH.
@@ -80,7 +80,7 @@ private:
     std::optional<structure::Rotation> makeAscenderTower(structure::bases::PieceList& list, structure::RandomSource& rand);
 };
 
-/// MushroomTowerBridgeComponent ("gloamingforest:TFMTBri").
+/// MushroomTowerBridgeComponent ("gloamingforest:GloamingMTBri").
 class MushroomTowerBridge : public MushroomTowerWing {
 public:
     MushroomTowerBridge(std::string typeId, int index, int x, int y, int z, int pSize, int pHeight, structure::Orientation direction);
@@ -96,7 +96,7 @@ protected:
     int dHeight = 0;
 };
 
-/// MushroomTowerMainBridgeComponent ("gloamingforest:TFMTMB").
+/// MushroomTowerMainBridgeComponent ("gloamingforest:GloamingMTMB").
 class MushroomTowerMainBridge : public MushroomTowerBridge {
 public:
     MushroomTowerMainBridge(int index, int x, int y, int z, int pHeight, structure::Orientation direction);
@@ -104,7 +104,7 @@ public:
                        structure::Rotation rotation) override;
 };
 
-/// TowerRoofMushroomComponent ("gloamingforest:TFMTRoofMush").
+/// TowerRoofMushroomComponent ("gloamingforest:GloamingMTRoofMush").
 class TowerRoofMushroom : public structure::bases::TowerRoof {
 public:
     TowerRoofMushroom(int index, structure::bases::TowerWing const& wing, float pHang, int x, int y, int z);
@@ -117,7 +117,7 @@ private:
     void makeCircle(structure::Region& region, int y, int radius, int hollow, structure::BlockBox const& sbb);
 };
 
-/// Registers the TFMT* piece types and the decorator.
+/// Registers the GloamingMT* piece types and the decorator.
 void registerMushroomTowerPieces();
 
 } // namespace gf::feature::aurora

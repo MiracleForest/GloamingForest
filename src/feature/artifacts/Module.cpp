@@ -1,6 +1,6 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/init/TFItems.java (rarities)
+//   src/main/java/gloamingforest/init/GloamingItems.java (rarities)
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -37,7 +37,7 @@ public:
             registerFlasks();
             registerOreMeter();
             registerMisc();
-            // TFItems: Rarity.UNCOMMON
+            // GloamingItems: Rarity.UNCOMMON
             for (char const* id : {kCharmEffect, kLife1, kLife2, kKeeping1, kKeeping2, kKeeping3, kCrownSplinter, kEmperorsCloth, kEssence,
                                    kFortificationScepter, kGreaterFlask, kCasket, kLifedrainScepter, kMoonDial, kMysticCrown, kOreMeter, kPocketWatch,
                                    kGloamingScepter, kZombieScepter})

@@ -8,10 +8,10 @@
 // dimension, the colour the clouds are drawn in and hides the sunrise colour band
 // (ViewRenderObject::mCloudState.mCloudColor, mViewData.mSunriseColor, set in
 // LevelRendererCamera::$render before the game draws the frame), and may set the sky object's star
-// brightness (TFSkyRenderer: the stars always at full brightness; Vibrant Visuals draws the level
+// brightness (GloamingSkyRenderer: the stars always at full brightness; Vibrant Visuals draws the level
 // renderer's star mesh with it) and its time of day (Vibrant Visuals' sky, calibration).
 //
-//     gf::feature::ext::atmosphere::client::setViewOverride(tfDim, [] { return ViewOverride{.cloud = rgb, .noSunrise = true}; });
+//     gf::feature::ext::atmosphere::client::setViewOverride(gfDim, [] { return ViewOverride{.cloud = rgb, .noSunrise = true}; });
 
 #pragma once
 

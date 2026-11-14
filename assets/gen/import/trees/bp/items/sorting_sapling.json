@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_block_sorting_sapling"
+          "default": "gf_block_sorting_sapling"
         }
       },
       "minecraft:display_name": {

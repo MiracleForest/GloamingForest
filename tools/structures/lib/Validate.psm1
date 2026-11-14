@@ -184,9 +184,9 @@ function Get-GftDataRoots([string]$Root, [string]$Registry) {
             }
         })
     if ($roots.Count) { return $roots }
-    $tf = Join-Path $env:LOCALAPPDATA 'gf-upstream/view/src/generated/resources/data'
-    if (Test-Path $tf) {
-        return @(Get-ChildItem $tf -Directory | ForEach-Object {
+    $upsrc = Join-Path $env:LOCALAPPDATA 'gf-upstream/view/src/generated/resources/data'
+    if (Test-Path $upsrc) {
+        return @(Get-ChildItem $upsrc -Directory | ForEach-Object {
                 $d = Join-Path $_.FullName "gloaming/$Registry"
                 if (Test-Path $d) { [pscustomobject]@{ Ns = $_.Name; Dir = $d; Source = 'upstream checkout' } }
             })

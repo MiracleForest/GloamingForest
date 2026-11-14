@@ -1,10 +1,10 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/init/TFItems.java
+//   src/main/java/gloamingforest/init/GloamingItems.java
 //   src/main/java/gloamingforest/item/HydraChopItem.java
 //   src/main/java/gloamingforest/item/Experiment115Item.java
 //   src/main/java/gloamingforest/item/CustomDamageSwordItem.java
-//   src/main/java/gloamingforest/init/TFJukeboxSongs.java
+//   src/main/java/gloamingforest/init/GloamingJukeboxSongs.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).

@@ -1,5 +1,5 @@
 // GloamingForest import tool (contract "import", unit F1): state-dependent block light. upstream computes a
-// block's light from its state (BlockBehaviour.Properties.lightLevel lambdas in init/TFBlocks.java or in a
+// block's light from its state (BlockBehaviour.Properties.lightLevel lambdas in init/GloamingBlocks.java or in a
 // block class's constructor, and getLightEmission overrides). These are small expressions over the block's
 // own properties (ternaries, ==, !=, *, switch, the brazier's BrazierLight.getLight(), the candelabra's
 // candle count), so the import evaluates them for every combination of the properties they read and emits
@@ -47,8 +47,8 @@ namespace GfImport
                 string expr = LambdaOf(text);
                 if (expr != null) return Compile(ctx, bi, cls, "expr", expr, cls + " constructor", warn);
             }
-            // 3. the registration's lightLevel lambda (init/TFBlocks.java)
-            if (bi.J.LightExpr != null) return Compile(ctx, bi, bi.Chain[0], "expr", bi.J.LightExpr, "TFBlocks." + bi.J.Const, warn);
+            // 3. the registration's lightLevel lambda (init/GloamingBlocks.java)
+            if (bi.J.LightExpr != null) return Compile(ctx, bi, bi.Chain[0], "expr", bi.J.LightExpr, "GloamingBlocks." + bi.J.Const, warn);
             return null;
         }
 

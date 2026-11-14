@@ -65,34 +65,34 @@ using ::gf::structure::bases::TowerWing;
 inline constexpr char kFinalCastle[] = "gloamingforest:final_castle";
 
 namespace type {
-inline constexpr char Main[]            = "gloamingforest:TFFCMain";
-inline constexpr char Foundation48[]    = "gloamingforest:TFFCToF48";
-inline constexpr char Roof48[]          = "gloamingforest:TFFCRo48Cr";
-inline constexpr char Gazebo[]          = "gloamingforest:TFFCBoGaz";
-inline constexpr char StairTower[]      = "gloamingforest:TFFCStTo";
-inline constexpr char LargeTower[]      = "gloamingforest:TFFCLaTo";
-inline constexpr char MazeTower[]       = "gloamingforest:TFFCSiTo";
-inline constexpr char Bridge[]          = "gloamingforest:TFFCBri";
-inline constexpr char Damaged[]         = "gloamingforest:TFFCDamT";
-inline constexpr char Wrecked[]         = "gloamingforest:TFFCWrT";
-inline constexpr char Foundation13[]    = "gloamingforest:TFFCToF13";
-inline constexpr char Thorns[]          = "gloamingforest:TFFCFTh21";
-inline constexpr char EntranceTower[]   = "gloamingforest:TFFCEnTo";
-inline constexpr char EntranceSide[]    = "gloamingforest:TFFCEnSiTo";
-inline constexpr char EntranceBottom[]  = "gloamingforest:TFFCEnBoTo";
-inline constexpr char EntranceStairs[]  = "gloamingforest:TFFCEnSt";
-inline constexpr char BellTower[]       = "gloamingforest:TFFCBelTo";
-inline constexpr char BellFoundation[]  = "gloamingforest:TFFCBeF21";
-inline constexpr char Roof13Conical[]   = "gloamingforest:TFFCRo13Con";
-inline constexpr char Roof13Cren[]      = "gloamingforest:TFFCRo13Cr";
-inline constexpr char Roof13Peaked[]    = "gloamingforest:TFFCRo13Pk";
-inline constexpr char Roof9Cren[]       = "gloamingforest:TFFCRo9Cr";
-inline constexpr char DungeonSteps[]    = "gloamingforest:TFFCDunSt";
-inline constexpr char DungeonEntrance[] = "gloamingforest:TFFCDunEn";
-inline constexpr char DungeonRoom[]     = "gloamingforest:TFFCDunR31";
-inline constexpr char DungeonExit[]     = "gloamingforest:TFFCDunEx";
-inline constexpr char ForgeRoom[]       = "gloamingforest:TFFCDunBoR";
-inline constexpr char Mural[]           = "gloamingforest:TFFCMur";
+inline constexpr char Main[]            = "gloamingforest:GloamingFCMain";
+inline constexpr char Foundation48[]    = "gloamingforest:GloamingFCToF48";
+inline constexpr char Roof48[]          = "gloamingforest:GloamingFCRo48Cr";
+inline constexpr char Gazebo[]          = "gloamingforest:GloamingFCBoGaz";
+inline constexpr char StairTower[]      = "gloamingforest:GloamingFCStTo";
+inline constexpr char LargeTower[]      = "gloamingforest:GloamingFCLaTo";
+inline constexpr char MazeTower[]       = "gloamingforest:GloamingFCSiTo";
+inline constexpr char Bridge[]          = "gloamingforest:GloamingFCBri";
+inline constexpr char Damaged[]         = "gloamingforest:GloamingFCDamT";
+inline constexpr char Wrecked[]         = "gloamingforest:GloamingFCWrT";
+inline constexpr char Foundation13[]    = "gloamingforest:GloamingFCToF13";
+inline constexpr char Thorns[]          = "gloamingforest:GloamingFCFTh21";
+inline constexpr char EntranceTower[]   = "gloamingforest:GloamingFCEnTo";
+inline constexpr char EntranceSide[]    = "gloamingforest:GloamingFCEnSiTo";
+inline constexpr char EntranceBottom[]  = "gloamingforest:GloamingFCEnBoTo";
+inline constexpr char EntranceStairs[]  = "gloamingforest:GloamingFCEnSt";
+inline constexpr char BellTower[]       = "gloamingforest:GloamingFCBelTo";
+inline constexpr char BellFoundation[]  = "gloamingforest:GloamingFCBeF21";
+inline constexpr char Roof13Conical[]   = "gloamingforest:GloamingFCRo13Con";
+inline constexpr char Roof13Cren[]      = "gloamingforest:GloamingFCRo13Cr";
+inline constexpr char Roof13Peaked[]    = "gloamingforest:GloamingFCRo13Pk";
+inline constexpr char Roof9Cren[]       = "gloamingforest:GloamingFCRo9Cr";
+inline constexpr char DungeonSteps[]    = "gloamingforest:GloamingFCDunSt";
+inline constexpr char DungeonEntrance[] = "gloamingforest:GloamingFCDunEn";
+inline constexpr char DungeonRoom[]     = "gloamingforest:GloamingFCDunR31";
+inline constexpr char DungeonExit[]     = "gloamingforest:GloamingFCDunEx";
+inline constexpr char ForgeRoom[]       = "gloamingforest:GloamingFCDunBoR";
+inline constexpr char Mural[]           = "gloamingforest:GloamingFCMur";
 } // namespace type
 
 namespace id {
@@ -127,8 +127,8 @@ inline constexpr char RoomJigsaw[]       = "gf:final_castle/room";
 /// `this.deco = parent.deco` (Java shares the object; the castle never changes a shared one after
 /// handing it on, so a copy is the same).
 [[nodiscard]] std::unique_ptr<Decorator> copyDecorator(Decorator const* deco);
-/// The decorator of a piece if it is a TFStructureComponentOld (Java's `parent instanceof
-/// TFStructureComponentOld`).
+/// The decorator of a piece if it is a GloamingStructureComponentOld (Java's `parent instanceof
+/// GloamingStructureComponentOld`).
 [[nodiscard]] Decorator const* decoOf(Piece const& piece);
 /// BoundingBoxUtils.getComponentToAddBoundingBox(x, y, z, ..., dir, false).
 [[nodiscard]] BlockBox componentBox(int x, int y, int z, int minX, int minY, int minZ, int spanX, int spanY, int spanZ, Orientation dir);
@@ -137,7 +137,7 @@ inline constexpr char RoomJigsaw[]       = "gf:final_castle/room";
 
 // ==== the keep ===================================================================================================
 
-/// FinalCastleMainComponent ("TFFCMain").
+/// FinalCastleMainComponent ("GloamingFCMain").
 class Main : public ComponentOld {
 public:
     /// FinalCastleMainComponent(i, x, y, z). `overworldSeed` is WorldUtil.getOverworldSeed() for the
@@ -163,7 +163,7 @@ private:
     std::int64_t mOverworldSeed = 0; ///< not saved (only the layout uses it)
 };
 
-/// FinalCastleFoundation48Component ("TFFCToF48").
+/// FinalCastleFoundation48Component ("GloamingFCToF48").
 class Foundation48 : public ComponentOld {
 public:
     Foundation48(int i, ComponentOld const& keep, int x, int y, int z);
@@ -175,7 +175,7 @@ private:
     void makePiling(Region& region, BlockBox const& sbb, int mid, Rotation rotation, int i);
 };
 
-/// FinalCastleRoof48CrenellatedComponent ("TFFCRo48Cr").
+/// FinalCastleRoof48CrenellatedComponent ("GloamingFCRo48Cr").
 class Roof48 : public ComponentOld {
 public:
     Roof48(int i, ComponentOld const& keep, int x, int y, int z);
@@ -184,7 +184,7 @@ public:
     void postProcess(Region& region, RandomSource& rand, BlockBox const& sbb, BlockPos const& pivot) override;
 };
 
-/// FinalCastleBossGazeboComponent ("TFFCBoGaz"): its blocks come from the gazebo template.
+/// FinalCastleBossGazeboComponent ("GloamingFCBoGaz"): its blocks come from the gazebo template.
 class Gazebo : public ComponentOld {
 public:
     Gazebo(int i, ComponentOld const& keep, int x, int y, int z);
@@ -193,7 +193,7 @@ public:
     void postProcess(Region& region, RandomSource& rand, BlockBox const& sbb, BlockPos const& pivot) override;
 };
 
-/// FinalCastleStairTowerComponent ("TFFCStTo").
+/// FinalCastleStairTowerComponent ("GloamingFCStTo").
 class StairTower : public TowerWing {
 public:
     StairTower(int i, int x, int y, int z, Orientation rotation);
@@ -203,7 +203,7 @@ public:
     [[nodiscard]] virtual Block const& getGlyphMeta() const;
 };
 
-/// FinalCastleLargeTowerComponent ("TFFCLaTo").
+/// FinalCastleLargeTowerComponent ("GloamingFCLaTo").
 class LargeTower : public TowerWing {
 public:
     LargeTower(int i, int x, int y, int z, Orientation rotation);
@@ -213,7 +213,7 @@ public:
     [[nodiscard]] virtual Block const& getGlyphMeta() const;
 };
 
-/// FinalCastleMuralComponent ("TFFCMur").
+/// FinalCastleMuralComponent ("GloamingFCMur").
 class MuralPiece : public ComponentOld {
 public:
     MuralPiece(int i, int x, int y, int z, int width, int height, Orientation direction, std::int64_t overworldSeed);
@@ -230,7 +230,7 @@ private:
 
 // ==== the tower mazes ============================================================================================
 
-/// FinalCastleMazeTower13Component ("TFFCSiTo" and its subclasses).
+/// FinalCastleMazeTower13Component ("GloamingFCSiTo" and its subclasses).
 class MazeTower13 : public TowerWing {
 public:
     static constexpr int LOWEST_DOOR  = 108;
@@ -281,7 +281,7 @@ private:
     void addStairsDown(Region& region, BlockBox const& sbb, Rotation rotation, int y);
 };
 
-/// FinalCastleDamagedTowerComponent ("TFFCDamT").
+/// FinalCastleDamagedTowerComponent ("GloamingFCDamT").
 class DamagedTower : public MazeTower13 {
 public:
     DamagedTower(std::string typeId, RandomSource& rand, int i, int x, int y, int z, Orientation direction);
@@ -296,7 +296,7 @@ protected:
     virtual void determineBlockDestroyed(Region& region, std::vector<std::optional<core::finalcastle::DestroyArea>> const& areas, int y, int x, int z);
 };
 
-/// FinalCastleWreckedTowerComponent ("TFFCWrT").
+/// FinalCastleWreckedTowerComponent ("GloamingFCWrT").
 class WreckedTower : public DamagedTower {
 public:
     WreckedTower(RandomSource& rand, int i, int x, int y, int z, Orientation direction);
@@ -309,7 +309,7 @@ protected:
     void determineBlockDestroyed(Region& region, std::vector<std::optional<core::finalcastle::DestroyArea>> const& areas, int y, int x, int z) override;
 };
 
-/// FinalCastleEntranceTowerComponent ("TFFCEnTo").
+/// FinalCastleEntranceTowerComponent ("GloamingFCEnTo").
 class EntranceTower : public MazeTower13 {
 public:
     EntranceTower(int i, int x, int y, int z, Orientation direction);
@@ -321,7 +321,7 @@ private:
     bool buildSideTower(PieceList& list, RandomSource& rand, int middleFloors, Orientation facing, int howFar);
 };
 
-/// FinalCastleEntranceSideTowerComponent ("TFFCEnSiTo").
+/// FinalCastleEntranceSideTowerComponent ("GloamingFCEnSiTo").
 class EntranceSideTower : public MazeTower13 {
 public:
     EntranceSideTower(int i, int x, int y, int z, int floors, int entranceFloor, Orientation direction);
@@ -329,7 +329,7 @@ public:
     void addChildren(Piece& parent, PieceList& list, RandomSource& rand) override;
 };
 
-/// FinalCastleEntranceBottomTowerComponent ("TFFCEnBoTo").
+/// FinalCastleEntranceBottomTowerComponent ("GloamingFCEnBoTo").
 class EntranceBottomTower : public MazeTower13 {
 public:
     EntranceBottomTower(int i, int x, int y, int z, int floors, int entranceFloor, Orientation direction);
@@ -343,7 +343,7 @@ private:
     bool addStairs(PieceList& list, RandomSource& rand, int index, int x, int y, int z, Rotation rotation);
 };
 
-/// FinalCastleEntranceStairsComponent ("TFFCEnSt").
+/// FinalCastleEntranceStairsComponent ("GloamingFCEnSt").
 class EntranceStairs : public ComponentOld {
 public:
     EntranceStairs(int index, int x, int y, int z, Orientation direction);
@@ -355,7 +355,7 @@ private:
     void placeStairs(Region& region, BlockBox const& sbb, int x, int y, int z, Orientation facing);
 };
 
-/// FinalCastleBellTower21Component ("TFFCBelTo").
+/// FinalCastleBellTower21Component ("GloamingFCBelTo").
 class BellTower : public MazeTower13 {
 public:
     BellTower(int i, int x, int y, int z, Orientation direction);
@@ -367,7 +367,7 @@ protected:
     void addFloors(Region&, BlockBox const&) override {} // NO-OP, let the Jigsaw handle it
 };
 
-/// FinalCastleBridgeComponent ("TFFCBri").
+/// FinalCastleBridgeComponent ("GloamingFCBri").
 class Bridge : public ComponentOld {
 public:
     Bridge(int i, int x, int y, int z, int length, Orientation direction);
@@ -376,7 +376,7 @@ public:
     void postProcess(Region& region, RandomSource& rand, BlockBox const& sbb, BlockPos const& pivot) override;
 };
 
-/// FinalCastleFoundation13Component ("TFFCToF13" and its subclasses).
+/// FinalCastleFoundation13Component ("GloamingFCToF13" and its subclasses).
 class Foundation13 : public ComponentOld {
 public:
     Foundation13(std::string typeId, int i, ComponentOld const& sideTower, int x, int y, int z);
@@ -388,7 +388,7 @@ protected:
     int groundLevel = -1; ///< not saved (Java)
 };
 
-/// FinalCastleFoundation13ComponentThorns ("TFFCFTh21").
+/// FinalCastleFoundation13ComponentThorns ("GloamingFCFTh21").
 class ThornFoundation : public Foundation13 {
 public:
     ThornFoundation(int i, ComponentOld const& sideTower, int x, int y, int z);
@@ -400,7 +400,7 @@ private:
     void makeThornBranch(Region& region, int x, int y, int z, Rotation rotation, BlockBox const& sbb);
 };
 
-/// FinalCastleBellFoundation21Component ("TFFCBeF21").
+/// FinalCastleBellFoundation21Component ("GloamingFCBeF21").
 class BellFoundation : public Foundation13 {
 public:
     BellFoundation(int i, ComponentOld const& sideTower, int x, int y, int z);
@@ -410,7 +410,7 @@ public:
 
 // ==== roofs ======================================================================================================
 
-/// FinalCastleRoof13ConicalComponent ("TFFCRo13Con").
+/// FinalCastleRoof13ConicalComponent ("GloamingFCRo13Con").
 class Roof13Conical : public ComponentOld {
 public:
     Roof13Conical(RandomSource& rand, int i, ComponentOld const& sideTower, int x, int y, int z);
@@ -431,7 +431,7 @@ public:
     void addChildren(Piece& parent, PieceList& list, RandomSource& rand) override;
 };
 
-/// FinalCastleRoof13CrenellatedComponent ("TFFCRo13Cr").
+/// FinalCastleRoof13CrenellatedComponent ("GloamingFCRo13Cr").
 class Roof13Cren : public SimpleRoof {
 public:
     Roof13Cren(int i, ComponentOld const& sideTower) : SimpleRoof(type::Roof13Cren, i, sideTower, 5) {}
@@ -439,7 +439,7 @@ public:
     void postProcess(Region& region, RandomSource& rand, BlockBox const& sbb, BlockPos const& pivot) override;
 };
 
-/// FinalCastleRoof13PeakedComponent ("TFFCRo13Pk").
+/// FinalCastleRoof13PeakedComponent ("GloamingFCRo13Pk").
 class Roof13Peaked : public SimpleRoof {
 public:
     Roof13Peaked(int i, ComponentOld const& sideTower) : SimpleRoof(type::Roof13Peaked, i, sideTower, 18) {}
@@ -447,7 +447,7 @@ public:
     void postProcess(Region& region, RandomSource& rand, BlockBox const& sbb, BlockPos const& pivot) override;
 };
 
-/// FinalCastleRoof9CrenellatedComponent ("TFFCRo9Cr").
+/// FinalCastleRoof9CrenellatedComponent ("GloamingFCRo9Cr").
 class Roof9Cren : public SimpleRoof {
 public:
     Roof9Cren(int i, ComponentOld const& sideTower) : SimpleRoof(type::Roof9Cren, i, sideTower, 5) {}
@@ -460,7 +460,7 @@ public:
 class DungeonEntrance;
 class ForgeRoom;
 
-/// FinalCastleDungeonStepsComponent ("TFFCDunSt").
+/// FinalCastleDungeonStepsComponent ("GloamingFCDunSt").
 class DungeonSteps : public ComponentOld {
 public:
     DungeonSteps(int i, int x, int y, int z, Orientation rotation);
@@ -473,7 +473,7 @@ public:
     ForgeRoom*       buildBossRoomUnder(PieceList& list, RandomSource& rand);
 };
 
-/// FinalCastleDungeonRoom31Component ("TFFCDunR31" and its subclasses).
+/// FinalCastleDungeonRoom31Component ("GloamingFCDunR31" and its subclasses).
 class DungeonRoom31 : public TowerWing {
 public:
     DungeonRoom31(std::string typeId, int i, int x, int y, int z, Orientation direction, int level);
@@ -498,7 +498,7 @@ private:
     [[nodiscard]] BlockPos getNewRoomCoords(RandomSource& rand, Rotation rotation) const;
 };
 
-/// FinalCastleDungeonEntranceComponent ("TFFCDunEn").
+/// FinalCastleDungeonEntranceComponent ("GloamingFCDunEn").
 class DungeonEntrance : public DungeonRoom31 {
 public:
     DungeonEntrance(int i, int x, int y, int z, Orientation direction, int level);
@@ -513,7 +513,7 @@ protected:
     [[nodiscard]] Block const& getForceFieldColor(RandomSource& decoRNG) const override;
 };
 
-/// FinalCastleDungeonExitComponent ("TFFCDunEx").
+/// FinalCastleDungeonExitComponent ("GloamingFCDunEx").
 class DungeonExit : public DungeonRoom31 {
 public:
     DungeonExit(int i, int x, int y, int z, Orientation direction, int level);
@@ -527,7 +527,7 @@ protected:
     [[nodiscard]] Block const& getForceFieldColor(RandomSource& decoRNG) const override;
 };
 
-/// FinalCastleDungeonForgeRoomComponent ("TFFCDunBoR").
+/// FinalCastleDungeonForgeRoomComponent ("GloamingFCDunBoR").
 class ForgeRoom : public ComponentOld {
 public:
     ForgeRoom(int i, int x, int y, int z, Orientation direction);

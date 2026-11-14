@@ -9,7 +9,7 @@ lists every id U9 owns with upstream's registration and data; Appendix B the str
 - **Scepters**: `gloaming_scepter`, `lifedrain_scepter`, `zombie_scepter`, `fortification_scepter`; repair recipe
   types `scepter_repair`, `essence_repair_recipe`; `exanimate_essence`; entities `wand_bolt`, `loyal_zombie`;
   fortification shields (attachment `fortification_shields`, attribute `max_shield_strength`, HUD overlay,
-  subcommand `/gloamingforest shield`, function `gloamingforest:give_3_shields`, stat `tf_shields_broken`).
+  subcommand `/gloamingforest shield`, function `gloamingforest:give_3_shields`, stat `gf_shields_broken`).
 - **Charms and death keeping**: `charm_of_life_1/2`, `charm_of_keeping_1/2/3`, the `keepsake_casket` block, item and
   block entity (casket repair recipe type `casket_repair_recipe`, component `casket_damage`, config
   `common.casketUUIDLocking`), `#gloamingforest:kept_on_death`, entity `charm_effect`, stats
@@ -39,12 +39,12 @@ Contracts: item, projectile, entity, death, inventory, recipes, data, client.ui,
 `network/LifedrainParticlePacket.java`, `item/ZombieWandItem.java`, `entity/monster/LoyalZombie.java`,
 `item/FortificationWandItem.java`, `components/entity/FortificationShieldAttachment.java`,
 `events/CapabilityEvents.java` (shield tick/absorb), `client/overlay/ShieldOverlay.java`, `command/ShieldCommand.java`,
-`init/TFAttributes.java`, `item/ExanimateEssenceItem.java`, `item/recipe/{ScepterRepair,EssenceRepair,CasketRepair,EmperorsCloth}Recipe.java`,
+`init/GloamingAttributes.java`, `item/ExanimateEssenceItem.java`, `item/recipe/{ScepterRepair,EssenceRepair,CasketRepair,EmperorsCloth}Recipe.java`,
 `enchantment/RechargeScepterEffect.java`, `events/CharmEvents.java`, `entity/CharmEffect.java`,
 `network/SpawnCharmPacket.java`, `block/KeepsakeCasketBlock.java`, `block/SkullChestBlock.java`,
 `block/entity/{KeepsakeCasket,SkullChest}BlockEntity.java`, `item/KeepsakeCasketItem.java`,
 `client/renderer/block/{KeepsakeCasket,SkullChest}Renderer.java`, `enums/BlockLoggingEnum.java`,
-`util/TFItemStackUtils.java`, `item/BrittleFlaskItem.java`, `item/GreaterFlaskItem.java`,
+`util/GloamingItemStackUtils.java`, `item/BrittleFlaskItem.java`, `item/GreaterFlaskItem.java`,
 `components/item/PotionFlaskComponent.java`, `components/entity/PotionFlaskTrackingAttachment.java`,
 `client/renderer/tooltip/PotionFlaskTooltipComponent.java`, `item/MysticCrownItem.java`, `item/MoonDialItem.java`,
 `item/PocketWatchItem.java`, `events/ToolEvents.java` (pocket watch fatigue), `item/OreMeterItem.java`,
@@ -100,7 +100,7 @@ chance to summon a baby zombie.
   down from **240** (with the mystic crown it skips every third tick) and at 0 one temporary shield expires (sound
   `...fortification_shield.expire`). Incoming damage that does not bypass armor is cancelled while shields remain;
   if the entity is not in invulnerability frames one shield breaks (temporary first; sound
-  `...fortification_shield.break`, pitch 1 +- 0.3; stat `gloamingforest:tf_shields_broken` for players unless
+  `...fortification_shield.break`, pitch 1 +- 0.3; stat `gloamingforest:gf_shields_broken` for players unless
   expired), 16 `gloamingforest:shield_break` particles are sent on the side facing the attacker, and invulnerability
   frames restart. HUD (`ShieldOverlay`, client): when shields > 0, the player can be hurt (or
   `fortificationShieldIndicatorInCreative`) and `fortificationShieldIndicator` is on, draws up to 10
@@ -150,7 +150,7 @@ Only for real, non-creative, non-spectator players; server side.
     outside the scope stay in the inventory as any other unkept item.
   - With or without a charm: items in `#gloamingforest:kept_on_death` (phantom helmet / chestplate, tower key) are
     always kept (checked after the charm, in main, armor and offhand slots). Kept items are stored in the player's
-    persisted NBT (`TFCharmInventory`, only when not empty) and returned on respawn (not after the End credits); the
+    persisted NBT (`GloamingCharmInventory`, only when not empty) and returned on respawn (not after the End credits); the
     consumed charm (`CharmStack`) shows the charm animation with `item.gloamingforest.charm.keep` on respawn, stat
     `keeping_charms_activated` +1.
 - **Keepsake casket**: if the player still has any non-casket item and a casket in the inventory, one casket is
@@ -176,7 +176,7 @@ Only for real, non-creative, non-spectator players; server side.
   normally. Breaking (survival, block
   drops on) drops the casket item with its damage (`casket_damage`) and custom name, plus the logged block; contents
   spill. Item names: `chipped_keepsake_casket` (1), `damaged_keepsake_casket` (2). Placing restores the damage.
-  Renderer (`KeepsakeCasketRenderer` < `SkullChestRenderer`, layer `TFModelLayers.KEEPSAKE_CASKET`): textures
+  Renderer (`KeepsakeCasketRenderer` < `SkullChestRenderer`, layer `GloamingModelLayers.KEEPSAKE_CASKET`): textures
   `textures/model/casket/keepsake_casket_{0,1,2}.png` by damage; chest-like lid opening with eased angle
   1 - (1 - t)^3 times -90 degrees; the animated model is used only when not solidly logged (otherwise the block
   model shows).
@@ -335,19 +335,19 @@ Every id this unit owns in `docs/spec/owners.tsv`, with the upstream 4.8 data th
 
 ### Blocks (1)
 
-Item column: `BlockItem` = upstream registers a plain block item with the block (`TFBlocks.register`), the id is also a `block_item` row; `-` = no item of the same id (the block is placed by another item, or has none).
+Item column: `BlockItem` = upstream registers a plain block item with the block (`GloamingBlocks.register`), the id is also a `block_item` row; `-` = no item of the same id (the block is placed by another item, or has none).
 
 Block states come from upstream's blockstate JSON (`multipart:` lists only the property values the model parts test). Notes collect `RegistrationEvents` (fire, axe stripping, flower pots, jar lids), dispenser behaviours and the `neoforge:compostables` / `neoforge:furnace_fuels` data maps.
 
-| Block | English name | upstream registration (`TFBlocks`) | Block states | Item | Loot (`blocks/<id>`) | Notes |
+| Block | English name | upstream registration (`GloamingBlocks`) | Block states | Item | Loot (`blocks/<id>`) | Notes |
 |---|---|---|---|---|---|---|
 | `gloamingforest:keepsake_casket` | Keepsake Casket | `BLOCKS.register("keepsake_casket", new KeepsakeCasketBlock(Properties.of().lightLevel(state -> state.getValue(BlockLoggingEnum.MULTILOGGED) == BlockLoggingEnum.LAVA ? 15 : 0).mapColor(COLOR_BLACK).noOcclusion().pushReaction(BLOCK).requiresCorrectToolForDrops().sound(NETHERITE_BLOCK).strength(5.0F, 1200.0F)));` | multilogged: air/basalt/lava/obsidian/stone/water | - | rolls 1:  {mc:copy_state{"block":"gloamingforest:keepsake_casket","properties":["damage"]}} | block tags: #mc:dragon_immune, #mc:features_cannot_replace, #mc:mineable/pickaxe, #mc:wither_immune, #antibuilder_ignores, #block_and_chain_never_breaks, #carminite_reactor_immune, #common_protections, #mineable_with_block_and_chain, #progression_allow_breaking, #small_lakes_dont_replace, #tree_roots_skip |
 
 ### Items (20)
 
-| Item | English name | upstream registration (`TFItems`) | Notes |
+| Item | English name | upstream registration (`GloamingItems`) | Notes |
 |---|---|---|---|
-| `gloamingforest:brittle_potion_flask` | Brittle Potion Flask | `ITEMS.register("brittle_potion_flask", new BrittleFlaskItem(new Item.Properties().component(TFDataComponents.POTION_FLASK_CONTENTS, PotionFlaskComponent.EMPTY)));` |  |
+| `gloamingforest:brittle_potion_flask` | Brittle Potion Flask | `ITEMS.register("brittle_potion_flask", new BrittleFlaskItem(new Item.Properties().component(GloamingDataComponents.POTION_FLASK_CONTENTS, PotionFlaskComponent.EMPTY)));` |  |
 | `gloamingforest:charm_of_keeping_1` | Charm of Keeping I | `ITEMS.register("charm_of_keeping_1", new Item(new Item.Properties().rarity(UNCOMMON)));` | item tags: #curios:charm |
 | `gloamingforest:charm_of_keeping_2` | Charm of Keeping II | `ITEMS.register("charm_of_keeping_2", new Item(new Item.Properties().rarity(UNCOMMON)));` | item tags: #alexscaves:ferromagnetic_items, #curios:charm |
 | `gloamingforest:charm_of_keeping_3` | Charm of Keeping III | `ITEMS.register("charm_of_keeping_3", new Item(new Item.Properties().rarity(UNCOMMON)));` | item tags: #curios:charm, #mc:piglin_loved |
@@ -358,33 +358,33 @@ Block states come from upstream's blockstate JSON (`multipart:` lists only the p
 | `gloamingforest:exanimate_essence` | Exanimate Essence | `ITEMS.register("exanimate_essence", new ExanimateEssenceItem(new Item.Properties().rarity(UNCOMMON).stacksTo(16)));` |  |
 | `gloamingforest:fortification_scepter` | Scepter of Fortification | `ITEMS.register("fortification_scepter", new FortificationWandItem(new Item.Properties().durability(9).rarity(UNCOMMON)));` | item tags: #scepters |
 | `gloamingforest:four_leaf_clover` | Four-Leaf Clover | `ITEMS.register("four_leaf_clover", new Item(new Item.Properties()));` |  |
-| `gloamingforest:greater_potion_flask` | Greater Potion Flask | `ITEMS.register("greater_potion_flask", new GreaterFlaskItem(new Item.Properties().stacksTo(1).rarity(UNCOMMON).fireResistant().component(TFDataComponents.POTION_FLASK_CONTENTS, PotionFlaskComponent.EMPTY_UNBREAKABLE)));` |  |
-| `gloamingforest:keepsake_casket` | Keepsake Casket | `ITEMS.register("keepsake_casket", new KeepsakeCasketItem(TFBlocks.KEEPSAKE_CASKET.get(), new Item.Properties().rarity(UNCOMMON).component(TFDataComponents.CASKET_DAMAGE, 0)));` |  |
+| `gloamingforest:greater_potion_flask` | Greater Potion Flask | `ITEMS.register("greater_potion_flask", new GreaterFlaskItem(new Item.Properties().stacksTo(1).rarity(UNCOMMON).fireResistant().component(GloamingDataComponents.POTION_FLASK_CONTENTS, PotionFlaskComponent.EMPTY_UNBREAKABLE)));` |  |
+| `gloamingforest:keepsake_casket` | Keepsake Casket | `ITEMS.register("keepsake_casket", new KeepsakeCasketItem(GloamingBlocks.KEEPSAKE_CASKET.get(), new Item.Properties().rarity(UNCOMMON).component(GloamingDataComponents.CASKET_DAMAGE, 0)));` |  |
 | `gloamingforest:lifedrain_scepter` | Scepter of Life Draining | `ITEMS.register("lifedrain_scepter", new LifedrainScepterItem(new Item.Properties().durability(99).rarity(UNCOMMON)));` | item tags: #scepters |
 | `gloamingforest:moon_dial` | Moon Dial | `ITEMS.register("moon_dial", new MoonDialItem(new Item.Properties().rarity(UNCOMMON)));` |  |
 | `gloamingforest:mystic_crown` | Mystic Crown | `ITEMS.register("mystic_crown", new MysticCrownItem(new Item.Properties().rarity(UNCOMMON).stacksTo(1).attributes(ItemAttributeModifiers.builder().add(Attributes.ARMOR, new AttributeModifier(ResourceLocation.withDefaultNamespace("armor.head"), 2.0F, AttributeModifier.Operation.ADD_VALUE), EquipmentSlotGroup.HEAD).build())));` |  |
 | `gloamingforest:ore_meter` | Ore Meter | `ITEMS.register("ore_meter", new OreMeterItem(new Item.Properties().stacksTo(1).rarity(UNCOMMON)));` |  |
 | `gloamingforest:pocket_watch` | Rabbit's Pocket Watch | `ITEMS.register("pocket_watch", new PocketWatchItem(new Item.Properties().stacksTo(1).rarity(UNCOMMON)));` |  |
-| `gloamingforest:gloaming_scepter` | Scepter of Gloaming | `ITEMS.register("gloaming_scepter", new GloamingWandItem(new Item.Properties().durability(99).rarity(UNCOMMON)));` | dispenser: fires its projectile and damages the stack (TFDispenserBehaviors); item tags: #scepters |
+| `gloamingforest:gloaming_scepter` | Scepter of Gloaming | `ITEMS.register("gloaming_scepter", new GloamingWandItem(new Item.Properties().durability(99).rarity(UNCOMMON)));` | dispenser: fires its projectile and damages the stack (GloamingDispenserBehaviors); item tags: #scepters |
 | `gloamingforest:zombie_scepter` | Zombie Scepter | `ITEMS.register("zombie_scepter", new ZombieWandItem(new Item.Properties().durability(9).rarity(UNCOMMON)));` | item tags: #scepters |
 
 ### Block entity types (1)
 
-| Id | upstream registration (`TFBlockEntities.java`) |
+| Id | upstream registration (`GloamingBlockEntities.java`) |
 |---|---|
-| `gloamingforest:keepsake_casket` | `BLOCK_ENTITIES.register("keepsake_casket", () -> BlockEntityType.Builder.of(KeepsakeCasketBlockEntity::new, TFBlocks.KEEPSAKE_CASKET.get()).build(null));` |
+| `gloamingforest:keepsake_casket` | `BLOCK_ENTITIES.register("keepsake_casket", () -> BlockEntityType.Builder.of(KeepsakeCasketBlockEntity::new, GloamingBlocks.KEEPSAKE_CASKET.get()).build(null));` |
 
 ### Entity types (3)
 
-| Id | upstream registration (`TFEntities.java`) |
+| Id | upstream registration (`GloamingEntities.java`) |
 |---|---|
-| `gloamingforest:charm_effect` (Charm Effect) | `buildNoEgg(TFEntityNames.CHARM_EFFECT, makeCastedBuilder(CharmEffect.class, CharmEffect::new, 0.0F, 0.0F, 16, Integer.MAX_VALUE).noSave().noSummon(), true);` |
-| `gloamingforest:loyal_zombie` (Loyal Zombie) | `make(TFEntityNames.LOYAL_ZOMBIE, LoyalZombie::new, MobCategory.MONSTER, 0.6F, 1.95F, 0, 0, -0.7F);` |
-| `gloamingforest:wand_bolt` (Gloaming Scepter Bolt) | `buildNoEgg(TFEntityNames.WAND_BOLT, makeCastedBuilder(GloamingWandBolt.class, GloamingWandBolt::new, 0.25F, 0.25F, 150, 5), false);` |
+| `gloamingforest:charm_effect` (Charm Effect) | `buildNoEgg(GloamingEntityNames.CHARM_EFFECT, makeCastedBuilder(CharmEffect.class, CharmEffect::new, 0.0F, 0.0F, 16, Integer.MAX_VALUE).noSave().noSummon(), true);` |
+| `gloamingforest:loyal_zombie` (Loyal Zombie) | `make(GloamingEntityNames.LOYAL_ZOMBIE, LoyalZombie::new, MobCategory.MONSTER, 0.6F, 1.95F, 0, 0, -0.7F);` |
+| `gloamingforest:wand_bolt` (Gloaming Scepter Bolt) | `buildNoEgg(GloamingEntityNames.WAND_BOLT, makeCastedBuilder(GloamingWandBolt.class, GloamingWandBolt::new, 0.25F, 0.25F, 150, 5), false);` |
 
 ### Particle types (3)
 
-| Id | upstream registration (`TFParticleType.java`) |
+| Id | upstream registration (`GloamingParticleType.java`) |
 |---|---|
 | `gloamingforest:magic_effect` | `PARTICLE_TYPES.register("magic_effect", new ParticleType<>(false) { @Override public MapCodec<ColorParticleOption> codec() { return ColorParticleOption.codec(MAGIC_EFFECT.get()); } @Override public StreamCodec<? super RegistryFriendlyByteBuf, ColorParticleOption> streamCodec() { return ColorParticleOption.streamCodec(MAGIC_EFFECT.get()); } });` |
 | `gloamingforest:shield_break` | `PARTICLE_TYPES.register("shield_break", new SimpleParticleType(false));` |
@@ -392,7 +392,7 @@ Block states come from upstream's blockstate JSON (`multipart:` lists only the p
 
 ### Data components (8)
 
-| Id | upstream registration (`TFDataComponents.java`) |
+| Id | upstream registration (`GloamingDataComponents.java`) |
 |---|---|
 | `gloamingforest:casket_damage` | `COMPONENTS.register("casket_damage", () -> DataComponentType.<Integer>builder().persistent(Codec.INT).networkSynchronized(ByteBufCodecs.INT).build());` |
 | `gloamingforest:emperors_cloth` | `COMPONENTS.register("emperors_cloth", () -> DataComponentType.<Unit>builder().persistent(Codec.unit(Unit.INSTANCE)).networkSynchronized(StreamCodec.unit(Unit.INSTANCE)).build());` |
@@ -405,7 +405,7 @@ Block states come from upstream's blockstate JSON (`multipart:` lists only the p
 
 ### Data attachments (3)
 
-| Id | upstream registration (`TFDataAttachments.java`) |
+| Id | upstream registration (`GloamingDataAttachments.java`) |
 |---|---|
 | `gloamingforest:flask_doses` | `ATTACHMENT_TYPES.register("flask_doses", () -> AttachmentType.builder(PotionFlaskTrackingAttachment::new).serialize(PotionFlaskTrackingAttachment.CODEC).build());` |
 | `gloamingforest:fortification_shields` | `ATTACHMENT_TYPES.register("fortification_shields", () -> AttachmentType.builder(FortificationShieldAttachment::new).serialize(FortificationShieldAttachment.CODEC).sync(FortificationShieldAttachment.STREAM_CODEC).build());` |
@@ -413,13 +413,13 @@ Block states come from upstream's blockstate JSON (`multipart:` lists only the p
 
 ### Attributes (1)
 
-| Id | upstream registration (`TFAttributes.java`) |
+| Id | upstream registration (`GloamingAttributes.java`) |
 |---|---|
 | `gloamingforest:max_shield_strength` | `ATTRIBUTES.register("max_shield_strength", new RangedAttribute("attribute.name.lich.shield_strength", 6, 0, 1024).setSyncable(true));` |
 
 ### Recipe serializers / types (4)
 
-| Id | upstream registration (`TFRecipes.java`) |
+| Id | upstream registration (`GloamingRecipes.java`) |
 |---|---|
 | `gloamingforest:casket_repair_recipe` | `RECIPE_SERIALIZERS.register("casket_repair_recipe", new SimpleCraftingRecipeSerializer<>(CasketRepairRecipe::new));` |
 | `gloamingforest:emperors_cloth_recipe` | `RECIPE_SERIALIZERS.register("emperors_cloth_recipe", new SimpleCraftingRecipeSerializer<>(EmperorsClothRecipe::new));` |
@@ -428,15 +428,15 @@ Block states come from upstream's blockstate JSON (`multipart:` lists only the p
 
 ### Stats (3)
 
-| Id | upstream registration (`TFStats.java`) |
+| Id | upstream registration (`GloamingStats.java`) |
 |---|---|
 | `gloamingforest:keeping_charms_activated` (Charms of Keeping Used) | `makeTFStat("keeping_charms_activated");` |
 | `gloamingforest:life_charms_activated` (Charms of Life Used) | `makeTFStat("life_charms_activated");` |
-| `gloamingforest:tf_shields_broken` (Fortification Shields Broken) | `makeTFStat("tf_shields_broken");` |
+| `gloamingforest:gf_shields_broken` (Fortification Shields Broken) | `makeTFStat("gf_shields_broken");` |
 
 ### Advancement triggers (1)
 
-| Id | upstream registration (`TFAdvancements.java`) |
+| Id | upstream registration (`GloamingAdvancements.java`) |
 |---|---|
 | `gloamingforest:drink_from_flask` | `TRIGGERS.register("drink_from_flask", DrinkFromFlaskTrigger::new);` |
 

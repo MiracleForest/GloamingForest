@@ -6,7 +6,7 @@
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// TFMaze generation against Java: MazeGolden.inc is the output of oracle/MazeOracle.java (run on
+// GloamingMaze generation against Java: MazeGolden.inc is the output of oracle/MazeOracle.java (run on
 // a JVM with java.util.Random, which LegacyRandomSource reproduces). The drivers below repeat the
 // oracle's (the labyrinth level, the hedge maze, a dark tower door maze) on the C++ grid.
 

@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.red_thread",
   "layer": {
     "name": "red_thread",
-    "field": "TFModelLayers.RED_THREAD",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.RED_THREAD, RedThreadModel::create);"
+    "field": "GloamingModelLayers.RED_THREAD",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.RED_THREAD, RedThreadModel::create);"
   },
   "texture_size": [16, 16],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/red_thread",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/red_thread.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/red_thread.png"
     }
   ],
   "bones": [

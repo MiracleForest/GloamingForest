@@ -42,7 +42,7 @@ Start-Sleep -Seconds 2
 Save-Screenshot 'woodwork-items-hotbar' | Out-Null
 $z = 46
 $f = 'gloamingforest:facing'
-$tf = 'gloaming_oak', 'canopy', 'mangrove', 'dark', 'time', 'transformation', 'mining', 'sorting'
+$upsrc = 'gloaming_oak', 'canopy', 'mangrove', 'dark', 'time', 'transformation', 'mining', 'sorting'
 
 function Get-WoodRow([string]$w, [int]$x0) {
     $wall = if ($w -eq 'gloaming_oak') { 'gloaming_wall_sign' } else { "${w}_wall_sign" }
@@ -91,7 +91,7 @@ function Get-WoodRow([string]$w, [int]$x0) {
 }
 
 $rows = @()
-for ($i = 0; $i -lt $tf.Count; $i++) { $rows += Get-WoodRow $tf[$i] (300 + 50 * $i) }
+for ($i = 0; $i -lt $upsrc.Count; $i++) { $rows += Get-WoodRow $upsrc[$i] (300 + 50 * $i) }
 $vf = 'oak', 'spruce', 'birch', 'jungle', 'acacia', 'dark_oak', 'crimson', 'warped', 'vangrove', 'bamboo', 'cherry'
 $vb = @()
 for ($i = 0; $i -lt $vf.Count; $i++) {

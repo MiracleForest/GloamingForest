@@ -16,13 +16,13 @@ namespace GfImport
         };
 
         /// <summary>Runs the import. Returns 0 (ok), 1 (failure or -Check differences).</summary>
-        public static int Run(string root, string tf, string[] kinds, string unit, bool check, Action<string> log)
+        public static int Run(string root, string upsrc, string[] kinds, string unit, bool check, Action<string> log)
         {
             var sw = Stopwatch.StartNew();
             var sel = new HashSet<string>(kinds.Length == 0 ? AllKinds : kinds, StringComparer.Ordinal);
             foreach (var k in sel) if (!AllKinds.Contains(k)) { log("unknown kind '" + k + "' (kinds: " + string.Join(",", AllKinds) + ")"); return 1; }
             Java.Reset();                 // static caches of an earlier run in the same session
-            var ctx = new Ctx(root, tf);
+            var ctx = new Ctx(root, upsrc);
             if (string.IsNullOrEmpty(unit)) unit = null;
             if (unit != null)
             {

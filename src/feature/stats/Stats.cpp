@@ -1,14 +1,14 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/init/TFStats.java
+//   src/main/java/gloamingforest/init/GloamingStats.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // The statistics part of contract "data" (F9): the custom statistics (Java's Stats.CUSTOM, the
-// registry minecraft:custom_stat): upstream's 10 (TFStats: bugs_squished, uncrafting_table_interactions,
+// registry minecraft:custom_stat): upstream's 10 (GloamingStats: bugs_squished, uncrafting_table_interactions,
 // trophy_pedestals_activated, e115_slices_eaten, torchberries_harvested, blocks_crumbled,
-// life_charms_activated, keeping_charms_activated, skull_candles_made, tf_shields_broken;
+// life_charms_activated, keeping_charms_activated, skull_candles_made, gf_shields_broken;
 // StatFormatter.DEFAULT) and Minecraft 1.21.1's 75 (minecraft:open_chest, which upstream's chests award,
 // minecraft:trigger_trapped_chest, ...), counted per player in the world DB
 // ("gf:stats:<player uuid>" {stat: value}), written at every world save. Bedrock keeps no player
@@ -41,12 +41,12 @@ namespace gf::stats {
 
 namespace {
 
-/// TFStats in registration order.
-constexpr char const* kTfStats[] = {
+/// GloamingStats in registration order.
+constexpr char const* kGloamingStats[] = {
     "gloamingforest:bugs_squished",          "gloamingforest:uncrafting_table_interactions", "gloamingforest:trophy_pedestals_activated",
     "gloamingforest:e115_slices_eaten",      "gloamingforest:torchberries_harvested",        "gloamingforest:blocks_crumbled",
     "gloamingforest:life_charms_activated",  "gloamingforest:keeping_charms_activated",      "gloamingforest:skull_candles_made",
-    "gloamingforest:tf_shields_broken",
+    "gloamingforest:gf_shields_broken",
 };
 
 /// Minecraft 1.21.1's custom statistics (net.minecraft.stats.Stats, its makeCustomStat calls in
@@ -132,7 +132,7 @@ constexpr char const* kVanillaStats[] = {
 /// The custom statistic registry: upstream's statistics and Minecraft's.
 std::set<std::string> const& registered() {
     static std::set<std::string> const s = [] {
-        std::set<std::string> out(std::begin(kTfStats), std::end(kTfStats));
+        std::set<std::string> out(std::begin(kGloamingStats), std::end(kGloamingStats));
         out.insert(std::begin(kVanillaStats), std::end(kVanillaStats));
         return out;
     }();

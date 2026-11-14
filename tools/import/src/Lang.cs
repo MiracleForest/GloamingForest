@@ -23,9 +23,9 @@ namespace GfImport
         }
 
         /// <summary>The Bedrock locale of an upstream lang file name ("de_de" -> "de_DE"), or null.</summary>
-        string BedrockLocale(string tfName)
+        string BedrockLocale(string gloamingName)
         {
-            var p = tfName.Split('_');
+            var p = gloamingName.Split('_');
             if (p.Length != 2) return null;
             string l = p[0].ToLowerInvariant() + "_" + p[1].ToUpperInvariant();
             string a;
@@ -112,14 +112,14 @@ namespace GfImport
                 foreach (var nk in nameKeys)
                 {
                     string text;
-                    string tfKey = nk.Item2 ?? nk.Item1;
-                    if (!map.TryGetValue(tfKey, out text))
+                    string gloamingKey = nk.Item2 ?? nk.Item1;
+                    if (!map.TryGetValue(gloamingKey, out text))
                     {
                         if (loc != "en_US") continue;  // Bedrock falls back to en_US
                         text = nk.Item2 == null ? null : HumanName(nk.Item2);
                         if (text == null) continue;
                     }
-                    if (nk.Item1 == tfKey) continue; // already written as the upstream key itself
+                    if (nk.Item1 == gloamingKey) continue; // already written as the upstream key itself
                     addText(nk.Item3 ?? ImportUnit, nk.Item1, LangValue(text));
                 }
                 foreach (var kv in perUnitJson) EmitJson("lang", kv.Key, "lang/" + loc + "/" + NameOf(kv.Key) + ".json", kv.Value);

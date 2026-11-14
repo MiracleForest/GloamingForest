@@ -1,7 +1,7 @@
 # U30 (finalcastle): the final castle's three template pieces (original GloamingForest designs at upstream's
 # template ids, rule R11 / R19; upstream's .nbt files are All Rights Reserved and never opened).
 #
-# Every template is drawn in the local frame of the piece that places it (TFStructureComponentOld,
+# Every template is drawn in the local frame of the piece that places it (GloamingStructureComponentOld,
 # orientation SOUTH: local x / z = world x / z from the piece's minimum corner), with its jigsaw
 # connector one block inside the host's junction, facing back at it:
 #

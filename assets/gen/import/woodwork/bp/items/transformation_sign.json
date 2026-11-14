@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_item_transformation_sign"
+          "default": "gf_item_transformation_sign"
         }
       },
       "minecraft:display_name": {

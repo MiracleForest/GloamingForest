@@ -1,9 +1,9 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/init/TFArmorMaterials.java
-//   src/main/java/gloamingforest/util/TFToolMaterials.java
-//   src/main/java/gloamingforest/init/TFItems.java
-//   src/main/java/gloamingforest/init/TFTrimMaterials.java
+//   src/main/java/gloamingforest/init/GloamingArmorMaterials.java
+//   src/main/java/gloamingforest/util/GloamingToolMaterials.java
+//   src/main/java/gloamingforest/init/GloamingItems.java
+//   src/main/java/gloamingforest/init/GloamingTrimMaterials.java
 //   src/main/java/gloamingforest/events/ToolEvents.java
 //   src/main/java/gloamingforest/events/EntityEvents.java
 //   src/main/java/gloamingforest/enchantment/ApplyFrostedEffect.java
@@ -34,7 +34,7 @@ enum class Rarity { Common, Uncommon, Rare, Epic };
 /// ArmorItem.Type in Java's order (BOOTS, LEGGINGS, CHESTPLATE, HELMET).
 enum class ArmorType { Boots = 0, Leggings = 1, Chestplate = 2, Helmet = 3 };
 
-/// TFArmorMaterials entry.
+/// GloamingArmorMaterials entry.
 struct ArmorMaterial {
     std::string_view   name;               ///< "ironwood" (gloamingforest:<name>)
     std::array<int, 4> defense;            ///< by ArmorType
@@ -65,7 +65,7 @@ struct ArmorPiece {
 [[nodiscard]] int defenseOf(ArmorPiece const& piece);
 [[nodiscard]] float toughnessOf(ArmorPiece const& piece);
 
-/// Tiers (TFToolMaterials and the vanilla tiers the minotaur axes / mazebreaker use).
+/// Tiers (GloamingToolMaterials and the vanilla tiers the minotaur axes / mazebreaker use).
 struct ToolTier {
     std::string_view name;
     int              uses;
@@ -164,7 +164,7 @@ struct DefaultEnchantments {
 /// The 24 recipes whose result carries minecraft:enchantments.
 [[nodiscard]] std::vector<DefaultEnchantments> const& defaultEnchantments();
 
-// ---- TFTrimMaterials -------------------------------------------------------------------------------
+// ---- GloamingTrimMaterials -------------------------------------------------------------------------------
 struct TrimMaterial {
     std::string_view id;         ///< "gloamingforest:fiery"
     std::string_view ingredient; ///< item id

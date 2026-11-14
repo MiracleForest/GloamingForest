@@ -17,7 +17,7 @@
 // states): vanilla 1.21.1 blocks by family below, upstream 4.8 blocks by their classes
 // (docs/spec/blockstates.md: BaseEntityBlock and the vanilla block entity bases for list 2; the
 // vanilla families with partial shapes, the upstream classes overriding the collision or outline shape
-// and the blocks TFBlocks registers with noCollission for list 1). The ids are frozen (rule R1), so
+// and the blocks GloamingBlocks registers with noCollission for list 1). The ids are frozen (rule R1), so
 // the tables do not go stale.
 // Blocks whose collision shape is full in one state and not in another are decided by the state
 // the template names (javaStateList): a double slab is full (SlabType.DOUBLE: Shapes.block()), an
@@ -43,7 +43,7 @@ using Set = std::unordered_set<std::string_view>;
 
 /// upstream blocks with a block entity (BaseEntityBlock, ChestBlock, the sign blocks, AbstractFurnaceBlock,
 /// ChiseledBookShelfBlock, EntityBlock such as RedThreadBlock), by path.
-Set const& tfEntities() {
+Set const& gloamingEntities() {
     static Set const s{
         "acacia_drying_rack", "alpha_yeti_boss_spawner", "alpha_yeti_trophy", "alpha_yeti_wall_trophy", "antibuilder",
         "bamboo_drying_rack", "beanstalk_grower", "birch_drying_rack", "brazier", "candelabra", "canopy_chest",
@@ -82,7 +82,7 @@ Set const& tfEntities() {
 
 /// upstream blocks without a full collision block (vanilla families with partial shapes, upstream's shape
 /// overrides, noCollission), by path. Double slabs are full (javaStateList checks the state first).
-Set const& tfPartial() {
+Set const& gloamingPartial() {
     static Set const s{
         "acacia_banister", "aurora_slab", "bamboo_banister", "birch_banister", "blackberry_bush", "blightberry_bush",
         "blue_force_field", "blueberry_bush", "bold_castle_brick_stairs", "brown_thorns", "burnt_thorns",
@@ -234,8 +234,8 @@ int javaList(Json const& javaState) {
     std::string_view path  = colon == std::string::npos ? std::string_view(name) : std::string_view(name).substr(colon + 1);
     if (auto byState = javaStateList(ns, path, javaState)) return *byState;
     if (ns == "gloamingforest") {
-        if (tfEntities().contains(path)) return 2;
-        return tfPartial().contains(path) ? 1 : 0;
+        if (gloamingEntities().contains(path)) return 2;
+        return gloamingPartial().contains(path) ? 1 : 0;
     }
     if (ns != "minecraft") return 0; // other namespaces (the gf_test fixtures): plain blocks
     if (vanillaEntities().contains(path) || endsWithAny(path, kEntitySuffixes)) return 2;

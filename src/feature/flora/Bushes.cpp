@@ -1,6 +1,6 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/block/TFBushBlock.java
+//   src/main/java/gloamingforest/block/GloamingBushBlock.java
 //   src/main/java/gloamingforest/block/BerryBushBlock.java
 //   src/main/java/gloamingforest/block/DarkTowerBerryBushBlock.java
 //   src/main/java/gloamingforest/block/OreBerryBlock.java
@@ -9,7 +9,7 @@
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // U6 flora: the 12 berry bushes. The snow inside them (SnowLoggable: layers, adding snow, breaking
-// the snow first, melting) is F11's snowloggable family; this file gives them TFBushBlock's growth
+// the snow first, melting) is F11's snowloggable family; this file gives them GloamingBushBlock's growth
 // (random ticks, light gates, upward growth), bone meal, the harvest into the player's inventory,
 // the dark tower bushes' death on nylium and the oreberries' thorns.
 
@@ -57,16 +57,16 @@ bool in(std::array<char const*, N> const& a, std::string const& id) {
     return std::find_if(a.begin(), a.end(), [&](char const* s) { return id == s; }) != a.end();
 }
 
-/// TFBushBlock#canBePlacedAt: the "placed on" tag of the bush.
+/// GloamingBushBlock#canBePlacedAt: the "placed on" tag of the bush.
 bool canBePlacedAt(Kind kind, BlockSource& region, BlockPos const& below) {
     switch (kind) {
-    case Kind::Overworld: return tagged(region, below, "gloamingforest:tf_berry_bushes_survive");
+    case Kind::Overworld: return tagged(region, below, "gloamingforest:gf_berry_bushes_survive");
     case Kind::DarkTower: return tagged(region, below, "gloamingforest:dark_tower_berry_bushes_survive");
     default: return tagged(region, below, "gloamingforest:oreberry_bushes_survive");
     }
 }
 
-/// TFBushBlock#grow.
+/// GloamingBushBlock#grow.
 void grow(BlockSource& region, BlockPos const& pos, Block const& state, int age) {
     if (auto const* grown = withStates(state, {{st::Age, age}})) game::setBlock(region, pos, *grown);
     if (age == 2 && intState(state, st::Layers, 0) > 0) {
@@ -97,7 +97,7 @@ void tryGrowUpwards(BlockSource& region, BlockPos const& pos, Block const& state
     }
 }
 
-/// Java's harvest (TFBushBlock#useWithoutItem at age 3).
+/// Java's harvest (GloamingBushBlock#useWithoutItem at age 3).
 void harvest(Player& player, BlockSource& region, BlockPos const& pos, Block const& state) {
     loot::LootContext ctx;
     ctx.region = &region;
@@ -134,7 +134,7 @@ std::string berryTable(std::string const& blockId) {
     return "gloamingforest:blocks/" + blockId.substr(15) + "_berries";
 }
 
-/// TFBushBlock#canSurvive (+ OreBerryBlock's light limit).
+/// GloamingBushBlock#canSurvive (+ OreBerryBlock's light limit).
 bool canSurvive(BlockSource& region, BlockPos const& pos, Block const& state) {
     auto        id    = state.getTypeName();
     Kind        kind  = kindOf(id);
@@ -162,7 +162,7 @@ void randomTick(BlockSource& region, BlockPos const& pos, RandomSource& random) 
     if (!b || !isBush(b->getTypeName())) return;
     Block const& state = *b;
     Kind         kind  = kindOf(state.getTypeName());
-    // TFBushBlock#randomTick (the snow melts in F11's snowloggable tick)
+    // GloamingBushBlock#randomTick (the snow melts in F11's snowloggable tick)
     int age = intState(state, st::Age, 0);
     if (age < kMaxAge && random.nextInt(20) == 0 && canGrowAt(region, pos, state)) grow(region, pos, state, age + 1);
     // BerryBushBlock#randomTick: the column below this bush
@@ -199,7 +199,7 @@ void installBushes() {
     for (auto const& bush : all) {
         blockevents::onRandomTick(bush, [](BlockSource& region, BlockPos const& pos, Block const&, RandomSource& random) { randomTick(region, pos, random); });
 
-        // TFBushBlock#useItemOn / useWithoutItem: the harvest at age 3 (any item but the snow F11
+        // GloamingBushBlock#useItemOn / useWithoutItem: the harvest at age 3 (any item but the snow F11
         // layers in, which passes here when it can't), bone meal on the berry bushes
         ia::onUseOn({.block = bush}, [](ia::UseOnContext const& c) {
             // ServerPlayerGameMode#useItemOn: sneaking with an item skips the block's use

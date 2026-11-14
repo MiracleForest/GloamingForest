@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_item_four_leaf_clover"
+          "default": "gf_item_four_leaf_clover"
         }
       },
       "minecraft:display_name": {

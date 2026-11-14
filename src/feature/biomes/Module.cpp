@@ -1,12 +1,12 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/world/components/biomesources/TFBiomeProvider.java
-//   src/main/java/gloamingforest/init/TFBiomes.java
+//   src/main/java/gloamingforest/world/components/biomesources/GloamingBiomeProvider.java
+//   src/main/java/gloamingforest/init/GloamingBiomes.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// U1 `biomes`: installs upstream's biome source (TFBiomeProvider over BiomeDensitySource) into F5's
+// U1 `biomes`: installs upstream's biome source (GloamingBiomeProvider over BiomeDensitySource) into F5's
 // worldgen pipeline, the biome order FeatureSorter uses, and the biomes' spawn tables.
 //
 // Bedrock: the 22 biomes are behavior pack biomes (assets/pack/bp/biomes/biomes/, climate and map
@@ -94,7 +94,7 @@ std::string const& biomeIdOf(Biome const& b) {
     return it->second.id;
 }
 
-bool isTfBiome(std::string_view id) { return id.starts_with("gloamingforest:") && core::biomes::colors::water(id).has_value(); }
+bool isGloamingBiome(std::string_view id) { return id.starts_with("gloamingforest:") && core::biomes::colors::water(id).has_value(); }
 
 namespace {
 
@@ -297,7 +297,7 @@ private:
             auto p = provider();
             return p ? p->noiseBiome(qx, qy, qz) : std::string{};
         });
-        // TFBiomeProvider#getMainBiome takes quart coordinates; the contract passes blocks
+        // GloamingBiomeProvider#getMainBiome takes quart coordinates; the contract passes blocks
         worldgen::setMainBiomeSource([](int blockX, int blockZ) -> std::string {
             auto p = provider();
             return p ? p->mainBiome(blockX >> 2, blockZ >> 2) : std::string{};

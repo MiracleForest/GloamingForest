@@ -26,7 +26,7 @@ Block const& J(char const* javaId, Json const& props) { return ::gf::structure::
 std::unique_ptr<Decorator> castleDecorator() {
     auto d         = std::make_unique<CastleDecorator>();
     auto def       = ::gf::structure::bases::defaultDecorator();
-    d->platformState = def->platformState; // TFStructureDecorator's defaults the castle keeps
+    d->platformState = def->platformState; // GloamingStructureDecorator's defaults the castle keeps
     d->floorState    = def->floorState;
     d->blockState    = &J("gloamingforest:castle_brick");
     d->accentState   = &J("minecraft:chiseled_quartz_block");
@@ -56,7 +56,7 @@ std::unique_ptr<Decorator> copyDecorator(Decorator const* deco) {
 }
 
 Decorator const* decoOf(Piece const& piece) {
-    // Java: parent instanceof TFStructureComponentOld (the castle's own piece types)
+    // Java: parent instanceof GloamingStructureComponentOld (the castle's own piece types)
     if (auto const* c = dynamic_cast<ComponentOld const*>(&piece)) return c->deco.get();
     return nullptr;
 }

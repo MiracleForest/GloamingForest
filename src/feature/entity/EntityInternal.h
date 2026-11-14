@@ -76,7 +76,7 @@ struct PartRecord {
     gf::entity::PartSize             size;
     std::function<Vec3(Mob& parent)> offset;
     int                              index = 0;
-    std::optional<std::pair<float, float>> rotation; ///< TFPart's yRot / xRot set by the parent
+    std::optional<std::pair<float, float>> rotation; ///< GloamingPart's yRot / xRot set by the parent
 };
 
 /// Everything F8 keeps about one actor while it is loaded (keyed by ActorUniqueID, rule R16).
@@ -167,7 +167,7 @@ void removeLater(std::int64_t uid);
 /// Whether Java has a block entity where Bedrock has this block actor (not for flower pots, note
 /// blocks, cauldrons, pistons, ...).
 [[nodiscard]] bool javaHasBlockEntity(BlockActor const& be);
-/// Whether a gloamingforest: block has a block entity in Java (TFBlockEntities' valid blocks, upstream's
+/// Whether a gloamingforest: block has a block entity in Java (GloamingBlockEntities' valid blocks, upstream's
 /// chests and signs): Bedrock's custom blocks have none (gf::entity::ext::BreakRule::SpareBlockEntities).
 [[nodiscard]] bool hasJavaBlockEntity(std::string_view blockId);
 /// Whether the actor is removed on Peaceful right now (Monster#shouldDespawnInPeaceful; queued with
@@ -285,7 +285,7 @@ enum class PathType {
 
 /// The parent actor id of a part actor (0: not a part).
 [[nodiscard]] std::int64_t parentOfPart(Actor const& part);
-/// Whether the parent took the hit the part `partUid` just forwarded through gf::combat (TFPart#hurt's
+/// Whether the parent took the hit the part `partUid` just forwarded through gf::combat (GloamingPart#hurt's
 /// answer); read once, nullopt when that part forwarded nothing since.
 [[nodiscard]] std::optional<bool> takePartForward(std::int64_t partUid);
 /// Moves the parts of `parent` to their offsets (tick hook).

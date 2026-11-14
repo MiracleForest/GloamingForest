@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.lower_goblin_knight",
   "layer": {
     "name": "lower_goblin_knight",
-    "field": "TFModelLayers.LOWER_GOBLIN_KNIGHT",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.LOWER_GOBLIN_KNIGHT, LowerGoblinKnightModel::checkForPack);"
+    "field": "GloamingModelLayers.LOWER_GOBLIN_KNIGHT",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.LOWER_GOBLIN_KNIGHT, LowerGoblinKnightModel::checkForPack);"
   },
   "texture_size": [128, 64],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/doublegoblin",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/doublegoblin.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/doublegoblin.png"
     }
   ],
   "bones": [

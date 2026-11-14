@@ -413,7 +413,7 @@ GF_REGISTER_SELFTEST("building.trophy_powered", [](Context& ctx) -> ll::coro::Co
 });
 
 GF_REGISTER_SELFTEST("building.trophy_dispense", [](Context& ctx) -> ll::coro::CoroTask<> {
-    // TFDispenserBehaviors: a dispenser equips the trophy on the head of the living entity in front
+    // GloamingDispenserBehaviors: a dispenser equips the trophy on the head of the living entity in front
     auto p = ctx.testPos(530, 2);
     ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
     auto  disp = at(p, 0, 1, 0);

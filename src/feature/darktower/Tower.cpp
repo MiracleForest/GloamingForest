@@ -49,7 +49,7 @@ struct DarkTowerDecorator final : Decorator {
 std::unique_ptr<Decorator> darkTowerDecorator() {
     auto d           = std::make_unique<DarkTowerDecorator>();
     auto def         = ::gf::structure::bases::defaultDecorator();
-    d->floorState    = def->floorState; // TFStructureDecorator's defaults the dark tower keeps
+    d->floorState    = def->floorState; // GloamingStructureDecorator's defaults the dark tower keeps
     d->roofState     = def->roofState;
     d->blockState    = &J("gloamingforest:towerwood");
     d->accentState   = &J("gloamingforest:encased_towerwood");

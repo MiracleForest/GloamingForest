@@ -20,14 +20,14 @@
         "destroy_chance_modifier": 100
       },
       "minecraft:collision_box": false,
-      "minecraft:geometry": "geometry.tf.gloamingforest.block.root_strand",
+      "minecraft:geometry": "geometry.gf.gloamingforest.block.root_strand",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_root_strand",
+          "texture": "gf_block_root_strand",
           "render_method": "alpha_test"
         },
         "crop": {
-          "texture": "tf_block_root_strand",
+          "texture": "gf_block_root_strand",
           "render_method": "alpha_test"
         }
       },

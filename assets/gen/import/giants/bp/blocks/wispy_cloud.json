@@ -18,31 +18,31 @@
       "minecraft:geometry": "minecraft:geometry.full_block",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_wispy_cloud",
+          "texture": "gf_block_wispy_cloud",
           "render_method": "blend"
         },
         "up": {
-          "texture": "tf_block_wispy_cloud",
+          "texture": "gf_block_wispy_cloud",
           "render_method": "blend"
         },
         "down": {
-          "texture": "tf_block_wispy_cloud",
+          "texture": "gf_block_wispy_cloud",
           "render_method": "blend"
         },
         "north": {
-          "texture": "tf_block_wispy_cloud",
+          "texture": "gf_block_wispy_cloud",
           "render_method": "blend"
         },
         "south": {
-          "texture": "tf_block_wispy_cloud",
+          "texture": "gf_block_wispy_cloud",
           "render_method": "blend"
         },
         "east": {
-          "texture": "tf_block_wispy_cloud",
+          "texture": "gf_block_wispy_cloud",
           "render_method": "blend"
         },
         "west": {
-          "texture": "tf_block_wispy_cloud",
+          "texture": "gf_block_wispy_cloud",
           "render_method": "blend"
         }
       },

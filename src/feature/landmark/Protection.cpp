@@ -10,7 +10,7 @@
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// Landmark protection (ProgressionEvents). While tfEnforcedProgression is on, a player without the
+// Landmark protection (ProgressionEvents). While gloamingEnforcedProgression is on, a player without the
 // advancements a progression landmark requires cannot break, use or place blocks in its protected
 // pieces, nor hurt its monsters (kobolds excepted). Every refusal shows the protected boxes: upstream
 // sends AreaProtectionPacket to the clients within 64 blocks, which spawn client-side
@@ -289,7 +289,7 @@ bool enforced() {
         std::lock_guard lock(s.mutex);
         if (s.enforcedOverride) return *s.enforcedOverride;
     }
-    bool value = gamerules::getBool("tfEnforcedProgression");
+    bool value = gamerules::getBool("gloamingEnforcedProgression");
     // upstream's default (true) while the gamerule store is the F0 stub
     static bool const storeIsStub = stubHit("gamerules.get");
     return storeIsStub ? true : value;

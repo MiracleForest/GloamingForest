@@ -3,18 +3,18 @@
   "geometry": "geometry.gloamingforest.helmet_crab",
   "layer": {
     "name": "helmet_crab",
-    "field": "TFModelLayers.HELMET_CRAB",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.HELMET_CRAB, HelmetCrabModel::checkForPack);"
+    "field": "GloamingModelLayers.HELMET_CRAB",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.HELMET_CRAB, HelmetCrabModel::checkForPack);"
   },
   "texture_size": [64, 32],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/helmetcrab",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/helmetcrab.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/helmetcrab.png"
     },
     {
       "bedrock": "textures/gloamingforest/entity/helmetcrabblue",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/helmetcrabblue.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/helmetcrabblue.png"
     }
   ],
   "bones": [

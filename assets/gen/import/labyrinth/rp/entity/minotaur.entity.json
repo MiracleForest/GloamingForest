@@ -10,7 +10,7 @@
         "default": "textures/gloamingforest/entity/minotaur"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.minotaur"
+        "default": "geometry.gf.skeleton.minotaur"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

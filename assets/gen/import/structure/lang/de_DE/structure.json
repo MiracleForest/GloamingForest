@@ -1,10 +1,10 @@
 {
-  "commands.tffeature.structure.boundaries": "Strukturgrenzen: %s",
-  "commands.tffeature.structure.conquer.status": "Struktur erobern Flagge: %s",
-  "commands.tffeature.structure.conquer.update": "Struktureroberungsflagge war %s, Änderung auf %s",
-  "commands.tffeature.structure.inside": "Sie befinden sich in einer Meilenstein-Struktur",
-  "commands.tffeature.structure.outside": "Sie befinden sich nicht in einer Meilenstein-Struktur",
-  "commands.tffeature.structure.required": "Du bist nicht in einer Struktur",
-  "commands.tffeature.structure.spawn_info": "%s, Gewichtung %s",
-  "commands.tffeature.structure.spawn_list": "Spawnliste für dieses Gebiet:"
+  "commands.gloamingfeature.structure.boundaries": "Strukturgrenzen: %s",
+  "commands.gloamingfeature.structure.conquer.status": "Struktur erobern Flagge: %s",
+  "commands.gloamingfeature.structure.conquer.update": "Struktureroberungsflagge war %s, Änderung auf %s",
+  "commands.gloamingfeature.structure.inside": "Sie befinden sich in einer Meilenstein-Struktur",
+  "commands.gloamingfeature.structure.outside": "Sie befinden sich nicht in einer Meilenstein-Struktur",
+  "commands.gloamingfeature.structure.required": "Du bist nicht in einer Struktur",
+  "commands.gloamingfeature.structure.spawn_info": "%s, Gewichtung %s",
+  "commands.gloamingfeature.structure.spawn_list": "Spawnliste für dieses Gebiet:"
 }

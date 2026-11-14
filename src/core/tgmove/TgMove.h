@@ -7,7 +7,7 @@
 //   src/main/java/gloamingforest/components/entity/TravellersWingsAnimAttachment.java
 //   src/main/java/gloamingforest/components/entity/SlimySolesAttachment.java
 //   src/main/java/gloamingforest/client/model/armor/TravellersWingsModel.java
-//   src/main/java/gloamingforest/util/TFMathUtil.java
+//   src/main/java/gloamingforest/util/GloamingMathUtil.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -259,7 +259,7 @@ void startSidestep(Wings& w, bool left);
 
 // ---- wings animation (client model) -----------------------------------------------------------
 
-/// TFMathUtil#interpolateToTarget.
+/// GloamingMathUtil#interpolateToTarget.
 [[nodiscard]] double interpolateToTarget(double old, double target, double dtTicks, double tau);
 
 /// TravellersWingsAnimAttachment (`phase` starts at a random value in [0, 2 pi): seedPhase).

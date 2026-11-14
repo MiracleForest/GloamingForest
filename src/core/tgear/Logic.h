@@ -6,13 +6,13 @@
 //   src/main/java/gloamingforest/item/travellers_gear/modifiers/TooltipStringInterpolator.java
 //   src/main/java/gloamingforest/client/overlay/display/ClockDisplay.java
 //   src/main/java/gloamingforest/client/overlay/display/MoonDialDisplay.java
-//   src/main/java/gloamingforest/util/TFMathUtil.java
+//   src/main/java/gloamingforest/util/GloamingMathUtil.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // The game-independent rules of U11 (Travellers' Gear): the goggles' item display storage, the belt's
-// hotbar swap, the auto repair chance, the clock / moon dial HUD texts and the ${tfkeybinds/...}
+// hotbar swap, the auto repair chance, the clock / moon dial HUD texts and the ${gloamingkeybinds/...}
 // interpolation of the modifier names. The game adapters (src/feature/tgear, src/client/tgear) map
 // item stacks onto these plain values.
 #pragma once
@@ -96,7 +96,7 @@ inline constexpr double kAutoRepairSunlightBoost = 3;
 inline constexpr double kAutoRepairGloamingBoost = kAutoRepairSunlightBoost / 2;
 /// Ticks after the last armour damage during which nothing repairs (10 s; `<=` returns).
 inline constexpr std::int64_t kAutoRepairQuietTicks = 10 * 20;
-/// TFMathUtil#probabilityOfAtLeastOneSuccess.
+/// GloamingMathUtil#probabilityOfAtLeastOneSuccess.
 [[nodiscard]] double probabilityOfAtLeastOneSuccess(double successProbability, double tries);
 [[nodiscard]] double autoRepairChance(double baseProbability, bool canSeeSky, bool gloamingDimension, bool isDay);
 
@@ -123,7 +123,7 @@ inline constexpr std::int64_t kAutoRepairQuietTicks = 10 * 20;
 
 // ---- TooltipStringInterpolator -------------------------------------------------------------------
 
-/// Replaces every ${tfkeybinds/<key name>} in `text` with `keyName(<key name>)`. Other forms are
+/// Replaces every ${gloamingkeybinds/<key name>} in `text` with `keyName(<key name>)`. Other forms are
 /// left as they are (upstream throws for them: none of its strings has one).
 [[nodiscard]] std::string interpolate(std::string const& text, std::function<std::string(std::string const&)> const& keyName);
 

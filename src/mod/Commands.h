@@ -14,7 +14,7 @@ class Player;
 namespace gf::commands {
 
 /// The root command: `/gloamingforest`, without aliases
-/// (TFCommand). Units add subcommands (rule R14: every subcommand has one owner in
+/// (GloamingCommand). Units add subcommands (rule R14: every subcommand has one owner in
 /// docs/spec/owners.tsv). The function runs every time the command is (re)registered (BDS start,
 /// every client local world):
 ///

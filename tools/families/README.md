@@ -61,14 +61,14 @@ Every family:
 | param | meaning |
 |---|---|
 | `class`, `vanillaClass`, `states`, `copyOf`, `base` | F1's import: the Java class, the vanilla class it extends, its block-state properties, the block whose properties it copies, a stairs' base block |
-| `woodType` | F1's import: the TFWoodTypes field (`canopy_wood_type`, `canopy_wood_set`): the sign / chest wood (`canopy`) |
+| `woodType` | F1's import: the GloamingWoodTypes field (`canopy_wood_type`, `canopy_wood_set`): the sign / chest wood (`canopy`) |
 | `wood` | the wood of a sign or chest texture (default: from `woodType` or the id) |
 | `textures` | a texture key, or `{key: texture key}` (`*`, `side`, `top`, `bottom`, `end`, `up`, `down`, `north`..., `front`, `back`, `lower`, `upper`, `pot`, `soil`, `plant`, `overlay`, `connected`, `single`/`left`/`right` for chests): the kit draws the block with these instead of keeping the skeleton's model |
 | `render_method` | Bedrock material render method |
 | `hardness`, `resistance`, `map_color`, `light`, `loot`, `tool` | base components (otherwise the skeleton's) |
 | `tags` | F1's import: the block's Bedrock block tags, free of any format (see Block tags) |
 | `menu_category` | when there is no skeleton |
-| `sound` | the Bedrock block sound in `blocks.json` (default per family), for a block that has none yet: upstream's sound types (`gloamingforest.jar`, TFSoundTypes) and the blocks using them come from F1's import (`rp/blocks.d`, `rp/sounds.json.d`), which the kit leaves alone |
+| `sound` | the Bedrock block sound in `blocks.json` (default per family), for a block that has none yet: upstream's sound types (`gloamingforest.jar`, GloamingSoundTypes) and the blocks using them come from F1's import (`rp/blocks.d`, `rp/sounds.json.d`), which the kit leaves alone |
 | `components` | raw Bedrock components merged last (their tags join the block's tags, see Block tags) |
 | `waterlogged` / `waterloggable` | adds the waterloggable modifier |
 | `traits` | F1's modifiers of the entry (`["waterloggable", "climbable"]`) |
@@ -82,10 +82,10 @@ Per family:
 | `button` | `ticks` (default 30, upstream's wooden buttons), `arrows` (wooden: true), `block_set` (`stone`, `iron`, `gold`) |
 | `pressure_plate` | `sensitivity` (`everything` / `mobs`), `block_set` |
 | `log`, `wood`, `pillar` | `stripped` (default: upstream's STRIPPABLES, RegistrationEvents) |
-| `horizontal` | `placement`: `opposite` (default; TFHorizontalBlock), `look` (BanisterBlock), `none` (ClimbableHollowLogBlock) |
+| `horizontal` | `placement`: `opposite` (default; GloamingHorizontalBlock), `look` (BanisterBlock), `none` (ClimbableHollowLogBlock) |
 | `directional` | `placement`: `nearest_opposite` (default; DirectionalBlock), `nearest` (EtchedNagastoneBlock), `nearest_y_flipped` (StrongholdShieldBlock), `none` |
 | `leaves` | `tint` (Bedrock tint method by biome; default: upstream's ColorHandler where Bedrock has one), `tint_color` (`#rrggbb`: a colour Java always uses, the texture pre-tinted in `terrain_texture.json`; default: upstream's beanstalk and thorn leaves). Upstream's time, transformation, mining, sorting and rainbow oak leaves get a tint method: the client mod draws ColorHandler's colour per position through `gf::client::tint`, `log` (counts as a log for leaf distance, on any family). A tinted leaf takes Bedrock's grey image of a `_carried` vanilla texture |
-| `sapling` | `grower`: Java's TreeGrower `{feature, secondary_feature, secondary_chance, mega_feature, secondary_mega_feature, flowers_feature, secondary_flowers_feature}` or upstream's StructureTreeGrower `{structure}` (default: TFTreeGrowers by sapling id); `feature`: a grower with one tree. A unit's own grower: `src/feature/ext/families/Growers.h` |
+| `sapling` | `grower`: Java's TreeGrower `{feature, secondary_feature, secondary_chance, mega_feature, secondary_mega_feature, flowers_feature, secondary_flowers_feature}` or upstream's StructureTreeGrower `{structure}` (default: GloamingTreeGrowers by sapling id); `feature`: a grower with one tree. A unit's own grower: `src/feature/ext/families/Growers.h` |
 | `potted` | `plant` (default: `potted_<x>` -> `<x>`, upstream's thorn pots from RegistrationEvents), `special` (upstream's SpecialFlowerPotBlock keeps the plant) |
 | `sign`, `hanging_sign` | `wall` (default: `<x>_sign` -> `<x>_wall_sign`, `<x>_hanging_sign` -> `<x>_wall_hanging_sign`); `gui_texture`: what the native editor draws the sign with (default: `textures/gloamingforest/entity/signs/<wood>`, hanging signs `textures/gloamingforest/gui/hanging_signs/<wood>`) |
 | `wall_sign`, `wall_hanging_sign` | `standing` (the reverse) |

@@ -10,7 +10,7 @@
         "default": "textures/gloamingforest/entity/knightphantom"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.knight_phantom"
+        "default": "geometry.gf.skeleton.knight_phantom"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

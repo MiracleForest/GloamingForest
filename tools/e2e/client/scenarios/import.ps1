@@ -59,6 +59,6 @@ Start-Sleep -Seconds 2
 Save-Screenshot 'creative-construction-end' | Out-Null
 Click 0.6016 0.514 -Relative       # the last group of the category: upstream's blocks tab
 Start-Sleep -Seconds 2
-Save-Screenshot 'creative-construction-tf' | Out-Null
+Save-Screenshot 'creative-construction-upsrc' | Out-Null
 Close-Screen
 if ($remote -and -not (Get-GameProcess)) { throw 'the game closed while connected to the host' }

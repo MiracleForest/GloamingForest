@@ -39,11 +39,11 @@ using structure::bases::TowerWing;
 
 namespace {
 
-constexpr char kWing[]       = "gloamingforest:TFMTWin";
-constexpr char kMain[]       = "gloamingforest:TFMTMai";
-constexpr char kBridge[]     = "gloamingforest:TFMTBri";
-constexpr char kMainBridge[] = "gloamingforest:TFMTMB";
-constexpr char kRoof[]       = "gloamingforest:TFMTRoofMush";
+constexpr char kWing[]       = "gloamingforest:GloamingMTWin";
+constexpr char kMain[]       = "gloamingforest:GloamingMTMai";
+constexpr char kBridge[]     = "gloamingforest:GloamingMTBri";
+constexpr char kMainBridge[] = "gloamingforest:GloamingMTMB";
+constexpr char kRoof[]       = "gloamingforest:GloamingMTRoofMush";
 
 struct MushroomTowerDecoratorImpl final : Decorator {
     [[nodiscard]] std::string decoString() const override { return "DecoMushroomTower"; }
@@ -63,7 +63,7 @@ Block const& mushroom(char const* id, int bits, Json const& javaProps) {
 std::unique_ptr<Decorator> mushroomTowerDecorator() {
     auto d   = std::make_unique<MushroomTowerDecoratorImpl>();
     auto def = structure::bases::defaultDecorator();
-    // the TFStructureDecorator defaults MushroomTowerDecorator keeps
+    // the GloamingStructureDecorator defaults MushroomTowerDecorator keeps
     d->platformState = def->platformState;
     d->roofState     = def->roofState;
     d->randomBlocks  = def->randomBlocks;

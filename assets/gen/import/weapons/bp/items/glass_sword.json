@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_item_glass_sword_solid"
+          "default": "gf_item_glass_sword_solid"
         }
       },
       "minecraft:display_name": {

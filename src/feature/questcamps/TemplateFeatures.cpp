@@ -9,7 +9,7 @@
 //   src/main/java/gloamingforest/world/components/feature/templates/GraveyardFeature.java
 //   src/main/java/gloamingforest/world/components/feature/config/SwizzleConfig.java
 //   src/main/java/gloamingforest/util/features/FeatureLogic.java (isBlockOk / isBlockNotOk / isAreaClear)
-//   src/main/java/gloamingforest/loot/TFLootTables.java (generateLootContainer / generateChestContents)
+//   src/main/java/gloamingforest/loot/GloamingLootTables.java (generateLootContainer / generateChestContents)
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -138,7 +138,7 @@ bool offsetToAverageGroundLevel(st::Region& region, BlockPos& start, cq::Vec3i s
     return true;
 }
 
-/// TFLootTables.generateLootContainer(world, pos, state, flags, table): the block, then the table
+/// GloamingLootTables.generateLootContainer(world, pos, state, flags, table): the block, then the table
 /// with the seed generateChestContents uses (world seed * x + y ^ z).
 void lootContainer(st::Region& region, BlockPos const& pos, Block const& state, std::string const& table) {
     region.setBlock(pos, state, 16 | 2);

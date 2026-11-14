@@ -25,7 +25,7 @@ namespace {
 Placement parse(char const* json) { return Placement::fromJson(nlohmann::json::parse(json)); }
 } // namespace
 
-TEST(LandmarkPlacement, ParsesTfStructureSets) {
+TEST(LandmarkPlacement, ParsesGloamingStructureSets) {
     auto lich = parse(R"({"type":"gloamingforest:landmark_grid","structure_grid_lock":"gloamingforest:lich_tower"})");
     EXPECT_EQ(lich.kind, Kind::LandmarkGrid);
     EXPECT_EQ(lich.gridLock, "gloamingforest:lich_tower");

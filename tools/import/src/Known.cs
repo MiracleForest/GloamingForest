@@ -3,10 +3,10 @@
 // generated data file (by registry, tags with Java's registry paths), a BP definition, an owners.tsv id, or
 // an entry of the reviewed allowlist tools/import/known-ids.json (code-registered types, texture locations,
 // template pools, each with its kind, reason and upstream source). A reference found nowhere fails the import;
-// references that are dangling in upstream itself ("tfDangling") are kept verbatim and reported as warnings.
+// references that are dangling in upstream itself ("gloamingDangling") are kept verbatim and reported as warnings.
 //
 // assemble (F0, tools/xmake/assemble.lua) runs the same check on the assembled packs: it reads
-// tools/import/known-ids.json itself (ids known by kind, tfDangling references as warnings), types the
+// tools/import/known-ids.json itself (ids known by kind, gloamingDangling references as warnings), types the
 // values of tag-valued keys as tags and reads tags/gloaming/<registry>/ as a two-segment registry (issue
 // #21). The import keeps its own check so that a dangling reference fails at generation, with the upstream
 // file that names it, and writes no index file for assemble.
@@ -21,7 +21,7 @@ namespace GfImport
 {
     public sealed partial class Ctx
     {
-        static readonly Regex TfRef = new Regex(@"^#?gloamingforest:[a-z0-9_/.\-]+$", RegexOptions.Compiled);
+        static readonly Regex GloamingRef = new Regex(@"^#?gloamingforest:[a-z0-9_/.\-]+$", RegexOptions.Compiled);
 
         /// <summary>assemble.lua's data_registry: data path below data/ -> (registry, "ns:path"), or null.</summary>
         public static Tuple<string, string> DataRegistry(string rel)
@@ -58,7 +58,7 @@ namespace GfImport
             var allowFile = Path.Combine(Root, "tools", "import", "known-ids.json");
             var allow = File.Exists(allowFile) ? ReadJson(allowFile) : J.Obj();
             var allowIds = allow["ids"] ?? J.Obj();
-            var dangling = allow["tfDangling"] ?? J.Obj();
+            var dangling = allow["gloamingDangling"] ?? J.Obj();
             // JSON keys whose value is a tag written without '#' (TagKey codecs, Bedrock item tags)
             var tagKeys = new HashSet<string>((allow["tagValuedKeys"] ?? J.Obj()).Keys, StringComparer.Ordinal);
 
@@ -133,7 +133,7 @@ namespace GfImport
 
             // resolve each one the way Java does, then the allowlist; the rest is a dangling reference
             var usedAllow = new HashSet<string>(StringComparer.Ordinal);
-            int resolved = 0, tfDangling = 0, unknown = 0;
+            int resolved = 0, gloamingDangling = 0, unknown = 0;
             foreach (var r in refs.Values)
             {
                 bool tag = r.Value.StartsWith("#", StringComparison.Ordinal);
@@ -146,7 +146,7 @@ namespace GfImport
                 {
                     // dangling in upstream itself: kept verbatim, a warning
                     usedAllow.Add(r.Value);
-                    tfDangling++;
+                    gloamingDangling++;
                     Warn("dangling reference " + r.Value + " (" + dangling[r.Value]["kind"].AsString() + ") in " + string.Join(", ", r.Files) + ": " + dangling[r.Value]["reason"].AsString());
                 }
                 else
@@ -159,14 +159,14 @@ namespace GfImport
             foreach (var k in allowIds.Keys.Concat(dangling.Keys))
                 if (!usedAllow.Contains(k)) Warn("tools/import/known-ids.json: " + k + " is not referenced (stale entry)");
             Log.Add(refs.Count + " references that are no generated data file, BP definition or owners.tsv id: " + resolved
-                + " resolved (Java tag paths, tools/import/known-ids.json), " + tfDangling + " dangling in upstream itself (tfDangling, warned), "
+                + " resolved (Java tag paths, tools/import/known-ids.json), " + gloamingDangling + " dangling in upstream itself (gloamingDangling, warned), "
                 + unknown + " unknown (errors)");
         }
 
         static void VisitKeys(J v, string key, string[] keys, Action<string> onRef)
         {
             if (v == null) return;
-            if (v.IsStr) { if (key != null && keys.Contains(key) && TfRef.IsMatch(v.S) && !v.S.StartsWith("#", StringComparison.Ordinal)) onRef(v.S); return; }
+            if (v.IsStr) { if (key != null && keys.Contains(key) && GloamingRef.IsMatch(v.S) && !v.S.StartsWith("#", StringComparison.Ordinal)) onRef(v.S); return; }
             if (v.IsArr) { foreach (var x in v.A) VisitKeys(x, key, keys, onRef); return; }
             if (v.IsObj) foreach (var kv in v.O) VisitKeys(kv.Value, kv.Key, keys, onRef);
         }
@@ -174,7 +174,7 @@ namespace GfImport
         static void Visit(J v, string key, Action<string, string> onRef)
         {
             if (v == null) return;
-            if (v.IsStr) { if (key != "identifier" && TfRef.IsMatch(v.S)) onRef(v.S, key); return; }
+            if (v.IsStr) { if (key != "identifier" && GloamingRef.IsMatch(v.S)) onRef(v.S, key); return; }
             if (v.IsArr) { foreach (var x in v.A) Visit(x, key, onRef); return; }
             if (v.IsObj) foreach (var kv in v.O) Visit(kv.Value, kv.Key, onRef);
         }

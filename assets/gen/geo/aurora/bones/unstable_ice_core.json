@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.unstable_ice_core",
   "layer": {
     "name": "unstable_ice_core",
-    "field": "TFModelLayers.UNSTABLE_ICE_CORE",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.UNSTABLE_ICE_CORE, UnstableIceCoreModel::create);"
+    "field": "GloamingModelLayers.UNSTABLE_ICE_CORE",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.UNSTABLE_ICE_CORE, UnstableIceCoreModel::create);"
   },
   "texture_size": [32, 32],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/iceexploder",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/iceexploder.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/iceexploder.png"
     }
   ],
   "bones": [

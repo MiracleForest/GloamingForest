@@ -138,8 +138,8 @@ struct Found {
 
 /// ChunkGenerator#findNearestMapStructure (with upstream's hook) for a key or "#tag".
 std::optional<Found> search(int dim, std::string const& printable, std::vector<std::string> const& holders, int x, int z, bool skip) {
-    bool tf = std::any_of(holders.begin(), holders.end(), [](std::string const& k) { return k.starts_with("gloamingforest:"); });
-    if (tf) {
+    bool upsrc = std::any_of(holders.begin(), holders.end(), [](std::string const& k) { return k.starts_with("gloamingforest:"); });
+    if (upsrc) {
         if (auto hit = gf::landmark::ext::locate(dim, printable, x, z, 100, skip)) return Found{hit->key, hit->pos.x, hit->pos.z};
     }
     // Minecraft's structures: Bedrock's own search
@@ -210,8 +210,8 @@ void mapLocator(CommandOrigin const& origin, CommandOutput& output, std::string 
 
 /// The biome id at quart (qx, 0, qz) of `dim` (getNoiseBiome).
 std::string noiseBiome(int dim, int qx, int qz) {
-    auto tf = gf::world::gloaming();
-    if (tf && static_cast<int>(*tf) == dim) return worldgen::biomeAt(BlockPos{qx * 4, 0, qz * 4});
+    auto upsrc = gf::world::gloaming();
+    if (upsrc && static_cast<int>(*upsrc) == dim) return worldgen::biomeAt(BlockPos{qx * 4, 0, qz * 4});
     auto region = game::regionOf(dim);
     if (!region) return {};
     BlockPos at{qx * 4, 0, qz * 4};
@@ -266,11 +266,11 @@ void biomePng(CommandOrigin const& origin, CommandOutput& output, int width, int
         if (progressUpdate == 0) return fail(); // x % 0: ArithmeticException
         if (x % progressUpdate == 0) {
             double percent = static_cast<double>(x) / height * 100;
-            output.success(say(origin, "commands.tffeature.biomepng.progress", "%s%% Done mapping", cu::decimalFormat00(percent)));
+            output.success(say(origin, "commands.gloamingfeature.biomepng.progress", "%s%% Done mapping", cu::decimalFormat00(percent)));
         }
     }
     if (showBiomePercents) {
-        output.success(say(origin, "commands.tffeature.biomepng.counts_header", "Approximate biome-block counts within a %sx%s region", std::to_string(width), std::to_string(height)));
+        output.success(say(origin, "commands.gloamingfeature.biomepng.counts_header", "Approximate biome-block counts within a %sx%s region", std::to_string(width), std::to_string(height)));
         long long total = 0;
         for (auto const& [b, n] : counts) total += n;
         for (auto const& b : order) {
@@ -296,9 +296,9 @@ void biomePng(CommandOrigin const& origin, CommandOutput& output, int width, int
         }
     } catch (std::exception const& e) {
         log().warn("uncraftmaps: biomepng could not save {}: {}", path.string(), e.what());
-        return output.error(say(origin, "commands.tffeature.biomepng.save_failed", "Could not save image! Please report this!"));
+        return output.error(say(origin, "commands.gloamingfeature.biomepng.save_failed", "Could not save image! Please report this!"));
     }
-    output.success(say(origin, "commands.tffeature.biomepng.save_success", "Image saved!"));
+    output.success(say(origin, "commands.gloamingfeature.biomepng.save_success", "Image saved!"));
     log().info("uncraftmaps: biomepng wrote {}", path.string());
 #endif
 }

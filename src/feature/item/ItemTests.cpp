@@ -1307,9 +1307,9 @@ GF_REGISTER_SELFTEST("item.catalog", [](Context& ctx) {
     ctx.check(gf::catalog::groupOf("minecraft:stone").empty(), "vanilla items are in no upstream tab");
     auto names = gf::catalog::internal::groupNames();
     ctx.check(!names.empty(), "the server's creative registry is readable (" + std::to_string(names.size()) + " groups)");
-    std::size_t tf = 0;
-    for (auto const& g : groups) tf += g.items.size();
-    ctx.info("upstream catalog items: " + std::to_string(tf));
+    std::size_t upsrc = 0;
+    for (auto const& g : groups) upsrc += g.items.size();
+    ctx.info("upstream catalog items: " + std::to_string(upsrc));
 });
 
 GF_REGISTER_SELFTEST("item.rarity", [](Context& ctx) {
@@ -1348,7 +1348,7 @@ GF_REGISTER_SELFTEST("item.rarity", [](Context& ctx) {
     ex::setRarity(kFixture, ex::Rarity::Common);
 });
 
-// TFItemDisplayContextEnumExtension#JARRED: its own display transform, else FIXED's.
+// GloamingItemDisplayContextEnumExtension#JARRED: its own display transform, else FIXED's.
 GF_REGISTER_SELFTEST("item.display_jarred", [](Context& ctx) {
     namespace ex = gf::item::ext;
     gf::item::internal::clearDisplayTransforms(kFixture);

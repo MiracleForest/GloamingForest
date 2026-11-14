@@ -1,7 +1,7 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/world/components/structures/TFStructureComponentOld.java
-//   src/main/java/gloamingforest/loot/TFLootTables.java (generateChest, generateChestContents)
+//   src/main/java/gloamingforest/world/components/structures/GloamingStructureComponentOld.java
+//   src/main/java/gloamingforest/loot/GloamingLootTables.java (generateChest, generateChestContents)
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -26,7 +26,7 @@ struct SavedMode {
     Mirror      mirror;
 };
 
-/// TFLootTables.generateChestContents seed: level.getSeed() * x + y ^ z.
+/// GloamingLootTables.generateChestContents seed: level.getSeed() * x + y ^ z.
 std::int64_t chestSeed(Region& region, BlockPos const& pos) {
     auto s = static_cast<std::uint64_t>(region.seed()) * static_cast<std::uint64_t>(static_cast<std::int64_t>(pos.x)) +
              static_cast<std::uint64_t>(static_cast<std::int64_t>(pos.y));
@@ -227,7 +227,7 @@ void ComponentOld::placeTreasureAtCurrentPosition(Region& region, int x, int y, 
 void ComponentOld::placeTreasureAtWorldPosition(Region& region, std::string const& tableId, bool trapped, BlockBox const& sbb, BlockPos const& pos) {
     if (!sbb.contains(pos.x, pos.y, pos.z)) return;
     if (blocks::is(region.getBlock(pos), trapped ? "minecraft:trapped_chest" : "minecraft:chest")) return;
-    // TFLootTables.generateChest(world, pos, getOrientation(), trapped, table)
+    // GloamingLootTables.generateChest(world, pos, getOrientation(), trapped, table)
     blockentities::container(region, pos, trapped ? "minecraft:trapped_chest" : "minecraft:chest", getOrientation().value_or(Orientation::North), tableId,
                              chestSeed(region, pos));
 }

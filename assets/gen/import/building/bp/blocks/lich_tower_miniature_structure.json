@@ -19,22 +19,22 @@
       },
       "minecraft:tags": ["minecraft:is_pickaxe_item_destructible"],
       "minecraft:collision_box": false,
-      "minecraft:geometry": "geometry.tf.gloamingforest.block.miniature.lich_tower",
+      "minecraft:geometry": "geometry.gf.gloamingforest.block.miniature.lich_tower",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_vanilla_block_stone_bricks",
+          "texture": "gf_vanilla_block_stone_bricks",
           "render_method": "alpha_test"
         },
         "birchwood": {
-          "texture": "tf_vanilla_block_birch_planks",
+          "texture": "gf_vanilla_block_birch_planks",
           "render_method": "alpha_test"
         },
         "oakwood": {
-          "texture": "tf_vanilla_block_oak_planks",
+          "texture": "gf_vanilla_block_oak_planks",
           "render_method": "alpha_test"
         },
         "stonebricks": {
-          "texture": "tf_vanilla_block_stone_bricks",
+          "texture": "gf_vanilla_block_stone_bricks",
           "render_method": "alpha_test"
         }
       },
@@ -48,22 +48,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.miniature.lich_tower",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.miniature.lich_tower",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_stone_bricks",
+              "texture": "gf_vanilla_block_stone_bricks",
               "render_method": "alpha_test"
             },
             "birchwood": {
-              "texture": "tf_vanilla_block_birch_planks",
+              "texture": "gf_vanilla_block_birch_planks",
               "render_method": "alpha_test"
             },
             "oakwood": {
-              "texture": "tf_vanilla_block_oak_planks",
+              "texture": "gf_vanilla_block_oak_planks",
               "render_method": "alpha_test"
             },
             "stonebricks": {
-              "texture": "tf_vanilla_block_stone_bricks",
+              "texture": "gf_vanilla_block_stone_bricks",
               "render_method": "alpha_test"
             }
           },
@@ -79,22 +79,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.miniature.lich_tower",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.miniature.lich_tower",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_stone_bricks",
+              "texture": "gf_vanilla_block_stone_bricks",
               "render_method": "alpha_test"
             },
             "birchwood": {
-              "texture": "tf_vanilla_block_birch_planks",
+              "texture": "gf_vanilla_block_birch_planks",
               "render_method": "alpha_test"
             },
             "oakwood": {
-              "texture": "tf_vanilla_block_oak_planks",
+              "texture": "gf_vanilla_block_oak_planks",
               "render_method": "alpha_test"
             },
             "stonebricks": {
-              "texture": "tf_vanilla_block_stone_bricks",
+              "texture": "gf_vanilla_block_stone_bricks",
               "render_method": "alpha_test"
             }
           },
@@ -110,22 +110,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.miniature.lich_tower",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.miniature.lich_tower",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_stone_bricks",
+              "texture": "gf_vanilla_block_stone_bricks",
               "render_method": "alpha_test"
             },
             "birchwood": {
-              "texture": "tf_vanilla_block_birch_planks",
+              "texture": "gf_vanilla_block_birch_planks",
               "render_method": "alpha_test"
             },
             "oakwood": {
-              "texture": "tf_vanilla_block_oak_planks",
+              "texture": "gf_vanilla_block_oak_planks",
               "render_method": "alpha_test"
             },
             "stonebricks": {
-              "texture": "tf_vanilla_block_stone_bricks",
+              "texture": "gf_vanilla_block_stone_bricks",
               "render_method": "alpha_test"
             }
           },
@@ -141,22 +141,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.miniature.lich_tower",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.miniature.lich_tower",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_stone_bricks",
+              "texture": "gf_vanilla_block_stone_bricks",
               "render_method": "alpha_test"
             },
             "birchwood": {
-              "texture": "tf_vanilla_block_birch_planks",
+              "texture": "gf_vanilla_block_birch_planks",
               "render_method": "alpha_test"
             },
             "oakwood": {
-              "texture": "tf_vanilla_block_oak_planks",
+              "texture": "gf_vanilla_block_oak_planks",
               "render_method": "alpha_test"
             },
             "stonebricks": {
-              "texture": "tf_vanilla_block_stone_bricks",
+              "texture": "gf_vanilla_block_stone_bricks",
               "render_method": "alpha_test"
             }
           },

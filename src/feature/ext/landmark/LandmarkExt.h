@@ -151,7 +151,7 @@ struct Occupancy {
 
 /// A piece of a stored start (StructureStart#getPieces), in placement order.
 struct StartPiece {
-    std::string type; ///< the piece type id (StructurePieceType: "gloamingforest:TFHill", ...)
+    std::string type; ///< the piece type id (StructurePieceType: "gloamingforest:GloamingHill", ...)
     BlockBox    box;
     /// StructurePiece#createTag (the persisted shape above): from the piece in memory, else the tag it
     /// was last saved with (its type has no factory yet), else {"id", "BB"}.
@@ -219,7 +219,7 @@ struct Located {
 #ifdef GF_CLIENT
 namespace client {
 /// The structure boxes the server last sent (StructureProtectionPacket): (box, protected) pairs;
-/// empty for "all clear". TFWeatherRenderer draws the protection rain inside them.
+/// empty for "all clear". GloamingWeatherRenderer draws the protection rain inside them.
 [[nodiscard]] std::vector<std::pair<BlockBox, bool>> structureProtection();
 /// The area protection boxes shown now (AreaProtectionPacket), with ticks left.
 [[nodiscard]] std::vector<std::pair<BlockBox, int>> areaProtection();

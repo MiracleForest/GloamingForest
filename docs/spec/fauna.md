@@ -30,7 +30,7 @@ no row for them; F1 imports their members with the vanilla tags upstream referen
 
 ## 1. Common rules
 
-- Every entity type below is registered by `init/TFEntities.java` `make(...)`: tracking range 80 blocks, update
+- Every entity type below is registered by `init/GloamingEntities.java` `make(...)`: tracking range 80 blocks, update
   interval 3 ticks, velocity updates on, riding offset 0, not fire immune. Eye height is vanilla's default
   (0.85 x height) unless stated. A spawn egg exists because both egg colours are non-zero.
 - Attributes are registered in `events/RegistrationEvents.java#addEntityAttributes`; spawn placements in
@@ -135,7 +135,7 @@ a colour-indexed texture set (vanilla clients).
 
 ### 2.3 `gloamingforest:deer` (Deer)
 
-Source: `entity/passive/Deer.java`, `client/model/entity/DeerModel.java`, renderer `TFGenericMobRenderer` texture `wilddeer.png`, shadow 0.7.
+Source: `entity/passive/Deer.java`, `client/model/entity/DeerModel.java`, renderer `GloamingGenericMobRenderer` texture `wilddeer.png`, shadow 0.7.
 
 | Field | Value |
 |---|---|
@@ -269,7 +269,7 @@ Loot `gloamingforest:entities/raven`: `gloamingforest:raven_feather` 0..2, looti
 
 ### 2.8 `gloamingforest:squirrel` (Squirrel)
 
-Source: `entity/passive/Squirrel.java`, `client/model/entity/SquirrelModel.java`, renderer `TFGenericMobRenderer` texture `squirrel2.png`, shadow 0.3.
+Source: `entity/passive/Squirrel.java`, `client/model/entity/SquirrelModel.java`, renderer `GloamingGenericMobRenderer` texture `squirrel2.png`, shadow 0.3.
 
 | Field | Value |
 |---|---|
@@ -336,7 +336,7 @@ Prey: cats (1), ocelots (1), foxes (6), wolves (7).
 ### 2.10 `gloamingforest:kobold` (Kobold)
 
 Source: `entity/monster/Kobold.java`, `entity/ai/goal/PanicOnFlockDeathGoal.java`,
-`entity/ai/goal/FlockToSameKindGoal.java`, `client/model/entity/KoboldModel.java`, renderer `TFBipedRenderer`
+`entity/ai/goal/FlockToSameKindGoal.java`, `client/model/entity/KoboldModel.java`, renderer `GloamingBipedRenderer`
 texture `kobold.png`, shadow 0.4.
 
 | Field | Value |
@@ -457,12 +457,12 @@ Spawn: placement ON_GROUND, `Monster::checkMonsterSpawnRules`.
   mob's sound at **pitch 1.8, volume 0.6**. Bedrock: vanilla parrots imitate only vanilla mobs; reproduce Java's
   `Parrot.imitateNearbyMobs` / random-ambient imitation selection (mobs within 20 blocks, played at volume 0.7 with the
   parrot pitch) in a server tick over loaded parrots, reading this map; the entity ids are strings (R2).
-- **Variant registries** `tiny_bird_variant` and `dwarf_rabbit_variant` (upstream datapack registries, `TFRegistries.java`
+- **Variant registries** `tiny_bird_variant` and `dwarf_rabbit_variant` (upstream datapack registries, `GloamingRegistries.java`
   keys `gloamingforest:tiny_bird_variant` / `gloamingforest:dwarf_rabbit_variant`): codec `{texture: ResourceLocation,
   biomes?: HolderSet<Biome>}`. Load them as U16 data (`assets/data/<kind>/fauna.json`) so datapack-style additions
   keep working; the biome filter must be honoured even though upstream's entries have none.
 - **Data serializers** `gloamingforest:tiny_bird_variant` and `gloamingforest:dwarf_rabbit_variant`
-  (`init/TFDataSerializers.java`) only sync the variant holder; on Bedrock this is the variant actor property.
+  (`init/GloamingDataSerializers.java`) only sync the variant holder; on Bedrock this is the variant actor property.
 - **JEED compat recipe** `gloamingforest:jeed/hunger` (`main/resources/data/gloamingforest/recipe/jeed/hunger.json`):
   `jeed:effect_provider` listing `gloamingforest:mosquito_swarm_spawn_egg` as a provider of `minecraft:hunger`, loaded
   only when the JEED mod is present. JEED does not exist on Bedrock: **not ported** (record in not-ported.md); U16

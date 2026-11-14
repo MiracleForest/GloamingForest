@@ -172,9 +172,9 @@ if (-not $remote) {
     if ($site) {
         $sx = [int]$site.Matches[0].Groups[1].Value * 16 + 7
         $sz = [int]$site.Matches[0].Groups[2].Value * 16 + 7
-        $tfMark = Get-LogMark
+        $gloamingMark = Get-LogMark
         Invoke-Chat '/gloamingforest tp'
-        Wait-LogLine 'dimension: .* travelled from minecraft:overworld to gloamingforest:gloaming_forest' 60 -Since $tfMark | Out-Null
+        Wait-LogLine 'dimension: .* travelled from minecraft:overworld to gloamingforest:gloaming_forest' 60 -Since $gloamingMark | Out-Null
         Start-Sleep -Seconds 4
         Invoke-Chat '/gamemode spectator'
         # the plateau is about 100 blocks around the site; the thornlands ring lies beyond it

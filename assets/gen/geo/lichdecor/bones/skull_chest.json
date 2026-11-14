@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.skull_chest",
   "layer": {
     "name": "skull_chest",
-    "field": "TFModelLayers.SKULL_CHEST",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.SKULL_CHEST, () -> SkullChestRenderer.create(false));"
+    "field": "GloamingModelLayers.SKULL_CHEST",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.SKULL_CHEST, () -> SkullChestRenderer.create(false));"
   },
   "texture_size": [64, 64],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/casket/skull_chest",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/casket/skull_chest.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/casket/skull_chest.png"
     }
   ],
   "bones": [

@@ -3,13 +3,13 @@
   "geometry": "geometry.slime.armor",
   "layer": {
     "name": "maze_slime_outer",
-    "field": "TFModelLayers.MAZE_SLIME_OUTER",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.MAZE_SLIME_OUTER, SlimeModel::createOuterBodyLayer);"
+    "field": "GloamingModelLayers.MAZE_SLIME_OUTER",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.MAZE_SLIME_OUTER, SlimeModel::createOuterBodyLayer);"
   },
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/mazeslime",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/mazeslime.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/mazeslime.png"
     }
   ],
   "notes": ["SlimeModel.createOuterBodyLayer (the translucent outer layer)."]

@@ -3,14 +3,14 @@
   "geometry": "geometry.spider.v1.8",
   "layer": {
     "name": "carminite_broodling",
-    "field": "TFModelLayers.CARMINITE_BROODLING",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.CARMINITE_BROODLING, SpiderModel::createSpiderBodyLayer);"
+    "field": "GloamingModelLayers.CARMINITE_BROODLING",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.CARMINITE_BROODLING, SpiderModel::createSpiderBodyLayer);"
   },
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/towerbroodling",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/towerbroodling.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/towerbroodling.png"
     }
   ],
-  "notes": ["SpiderModel.createSpiderBodyLayer; TFSpiderRenderer scales it by 0.7."]
+  "notes": ["SpiderModel.createSpiderBodyLayer; GloamingSpiderRenderer scales it by 0.7."]
 }

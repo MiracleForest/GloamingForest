@@ -30,7 +30,7 @@ inline constexpr char kUnit[] = "biomes";
 /// may reuse the address).
 [[nodiscard]] std::string const& biomeIdOf(Biome const& biome);
 /// Whether `biomeId` is one of upstream's 22 biomes.
-[[nodiscard]] bool isTfBiome(std::string_view biomeId);
+[[nodiscard]] bool isGloamingBiome(std::string_view biomeId);
 
 /// config/biomes.json (rule R13). upstream has no biome config key (docs/spec/config.md): these are
 /// GloamingForest's own switches.
@@ -43,7 +43,7 @@ struct BiomesConfig {
     int tintBlendRadius = 2;
 };
 
-/// The 22 biome ids of the Gloaming Forest (TFBiomes), sorted.
+/// The 22 biome ids of the Gloaming Forest (GloamingBiomes), sorted.
 [[nodiscard]] std::vector<std::string> const& biomeIds();
 
 /// The layer stacks and the terrain grid read from the mod's data folder (nullptr: missing or

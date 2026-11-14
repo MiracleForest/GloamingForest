@@ -179,7 +179,7 @@
           },
           "textures": {
             "default": "textures/gloamingforest/entity/gloaminglich64",
-            "clone": "textures/gloamingforest/lich/tf-derived/gloaminglich64_clone",
+            "clone": "textures/gloamingforest/lich/upstream-derived/gloaminglich64_clone",
             "eyes": "textures/gloamingforest/entity/gloaminglich64_eyes"
           },
           "geometry": {

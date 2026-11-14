@@ -658,7 +658,7 @@ LL_TYPE_INSTANCE_HOOK(EntitySetTargetHook, ll::memory::HookPriority::Normal, Mob
     origin(target);
 }
 
-// Entity#canUsePortal: upstream's bosses (BaseTFBoss) and parts (HydraPart, NagaSegment, TFPart) never go
+// Entity#canUsePortal: upstream's bosses (BaseTFBoss) and parts (HydraPart, NagaSegment, GloamingPart) never go
 // through a portal, nor do the types marked with ext::setCanUsePortal (RisingZombie, ChainBlock,
 // CubeOfAnnihilation). Bedrock's portals and the Gloaming portal ask the actor's
 // canChangeDimensionsUsingPortal: Mob, FallingBlockActor and Player override Actor's, every other
@@ -844,7 +844,7 @@ public:
             }
             if (currentTick() % 100 == 0) sweep();
         }));
-        // Behaviour::interact (Java's mobInteract); a part forwards to its parent (TFPart#interact)
+        // Behaviour::interact (Java's mobInteract); a part forwards to its parent (GloamingPart#interact)
         handlers().push_back(ia::onInteract({}, [](ia::EntityContext const& c) {
             Actor* target = &c.entity;
             if (auto parent = parentOfPart(c.entity)) target = actorById(parent);

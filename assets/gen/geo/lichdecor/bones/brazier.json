@@ -3,22 +3,22 @@
   "geometry": "geometry.gloamingforest.brazier",
   "layer": {
     "name": "brazier",
-    "field": "TFModelLayers.BRAZIER",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.BRAZIER, BrazierModel::create);"
+    "field": "GloamingModelLayers.BRAZIER",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.BRAZIER, BrazierModel::create);"
   },
   "texture_size": [64, 64],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/brazier/brazier",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/brazier/brazier.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/brazier/brazier.png"
     },
     {
       "bedrock": "textures/gloamingforest/entity/brazier/brazier_lit",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/brazier/brazier_lit.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/brazier/brazier_lit.png"
     },
     {
       "bedrock": "textures/gloamingforest/entity/brazier/brazier_overlay",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/brazier/brazier_overlay.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/brazier/brazier_overlay.png"
     }
   ],
   "bones": [

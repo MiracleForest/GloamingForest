@@ -1,6 +1,6 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/world/TFTeleporter.java
+//   src/main/java/gloamingforest/world/GloamingTeleporter.java
 //   src/main/java/gloamingforest/world/NoReturnTeleporter.java
 //   src/main/java/gloamingforest/world/TeleporterCache.java
 //   src/main/java/gloamingforest/util/Restriction.java
@@ -160,7 +160,7 @@ long long gameTime() {
 
 } // namespace
 
-// ---- TFPortalBlock.recursivelyValidatePortal ---------------------------------------------------------------------------
+// ---- GloamingPortalBlock.recursivelyValidatePortal ---------------------------------------------------------------------------
 
 bool recursivelyValidatePortal(BlockSource& region, BlockPos const& pos, PortalScan& checked, int& size, Block const& poolBlock) {
     int const maxSize = std::max(gf::config::get<DimensionConfig>().maxPortalSize, 4);
@@ -302,7 +302,7 @@ Traveller capture(Actor& actor) {
         t.height = box.max.y - box.min.y;
     }
     if (auto* region = game::regionOf(t.srcDim)) {
-        // TFTeleporter#placeInExistingPortal (source side): the portal blocks around the entity
+        // GloamingTeleporter#placeInExistingPortal (source side): the portal blocks around the entity
         PortalScan blocks;
         blocks[t.srcPos] = true;
         int size         = 0;
@@ -315,7 +315,7 @@ Traveller capture(Actor& actor) {
     return t;
 }
 
-// ---- TFTeleporter -----------------------------------------------------------------------------------------------------------
+// ---- GloamingTeleporter -----------------------------------------------------------------------------------------------------------
 
 namespace {
 

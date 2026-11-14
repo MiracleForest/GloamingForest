@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_block_trollvidr"
+          "default": "gf_block_trollvidr"
         }
       },
       "minecraft:display_name": {

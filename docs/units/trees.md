@@ -89,7 +89,7 @@ clamped to upstream's `defineInRange(0, 128)`; a range of 0 disables the core.
 
 ## Tree features
 
-`TFTreeFeature#place` runs `TreeFeature.updateLeaves` (upstream passes its leaf set as the sources, the
+`GloamingTreeFeature#place` runs `TreeFeature.updateLeaves` (upstream passes its leaf set as the sources, the
 decorations and the trunk as filled, every set in the box; the seven work sets iterate in Java's
 HashSet order, `core::trees::JavaHashSet`). Upstream's own tree features have no decorators in upstream's data,
 but `runDecorator` records what decorators place (set3) for them anyway.

@@ -1,7 +1,7 @@
 # Configuration mapping (rule R13)
 
 Upstream 4.8 configures itself with two NeoForge TOML files (`gloamingforest-common.toml`, `gloamingforest-client.toml`,
-built by `config/TFCommonConfig.java` and `config/TFClientConfig.java`). GloamingForest has one JSON config section
+built by `config/GloamingCommonConfig.java` and `config/GloamingClientConfig.java`). GloamingForest has one JSON config section
 per unit instead (`GF_REGISTER_CONFIG("<unit>", T)` -> `config/<unit>.json`, edited in game with
 `/gloamingforest config [section]`, reloaded with `/gloamingforest reload`). Every upstream key is mapped to exactly one
 section below; the owner implements it with the same name (camelCase field), default and range, and keeps the
@@ -48,7 +48,7 @@ The `config_key` and `config_section` rows of [owners.tsv](owners.tsv) are the m
 
 | Upstream key (`<file>.<TOML section>.<key>`) | Default | Translation id | Owner | GloamingForest section |
 |---|---|---|---|---|
-| `common.Dimension Settings.newPlayersSpawnInTF` | `false` | `spawn_in_tf` | F4 | `dimension` |
+| `common.Dimension Settings.newPlayersSpawnInGloaming` | `false` | `spawn_in_gf` | F4 | `dimension` |
 | `common.Dimension Settings.portalForNewPlayer` | `false` | `portal_for_new_player` | F4 | `dimension` |
 | `common.Portal Settings.originDimension` | `"minecraft:overworld"` | `origin_dimension` | F4 | `dimension` |
 | `common.Portal Settings.allowPortalsInOtherDimensions` | `false` | `portals_in_other_dimensions` | F4 | `dimension` |
@@ -64,7 +64,7 @@ The `config_key` and `config_section` rows of [owners.tsv](owners.tsv) are the m
 | `common.showEnchantmentsOnItems` | `true` | `default_item_enchantments` | F9 | `items` |
 | `common.bossesSpawnDropChests` | `true` | `boss_drop_chests` | F8 | `bosses` |
 | `common.cloudBlockPrecipitationDistance` | `32` | `cloud_precipitation` | U29 | `giants` |
-| `common.multiplayerFightAdjuster` | `TFConfig.MultiplayerFightAdjuster.NONE` | `multiplayer_fight_adjuster` | F8 | `bosses` |
+| `common.multiplayerFightAdjuster` | `GloamingConfig.MultiplayerFightAdjuster.NONE` | `multiplayer_fight_adjuster` | F8 | `bosses` |
 | `common.Uncrafting Table.uncraftingXpCostMultiplier` | `1.0D` | `uncrafting_xp_cost` | U13 | `uncraftmaps` |
 | `common.Uncrafting Table.repairingXpCostMultiplier` | `1.0D` | `repairing_xp_cost` | U13 | `uncraftmaps` |
 | `common.Uncrafting Table.disableUncraftingRecipes` | `List.of("gloamingforest:giant_log_to_oak_planks")` | `uncrafting_recipes` | U13 | `uncraftmaps` |
@@ -100,6 +100,6 @@ The `config_key` and `config_section` rows of [owners.tsv](owners.tsv) are the m
 | `client.Item Display Modifier Settings.screenOffsetX` | `4` | `screen_offset_x` | U11 | `tgear` |
 | `client.Item Display Modifier Settings.screenOffsetY` | `4` | `screen_offset_y` | U11 | `tgear` |
 | `client.Item Display Modifier Settings.screenScale` | `1.0D` | `screen_scale` | U11 | `tgear` |
-| `client.Item Display Modifier Settings.twentyFourHourFormat` | `TFConfig.use24HourTimeDefault()` | `twenty_four_hour_format` | U11 | `tgear` |
+| `client.Item Display Modifier Settings.twentyFourHourFormat` | `GloamingConfig.use24HourTimeDefault()` | `twenty_four_hour_format` | U11 | `tgear` |
 
 `client.disableOptifineNagScreen` has no counterpart (there is no OptiFine on Bedrock); F16 lists it in not-ported.md.

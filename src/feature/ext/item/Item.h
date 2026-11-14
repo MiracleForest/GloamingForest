@@ -2,7 +2,7 @@
 
 // Extension of contract "item" by F9 (rule R18; to be folded into feature/item/Item.h by A8).
 //
-// - Rarity: upstream's TFRarityEnumExtension adds the GLOAMING rarity (dark green names: the boss
+// - Rarity: upstream's GloamingRarityEnumExtension adds the GLOAMING rarity (dark green names: the boss
 //   trophies and banner patterns). Bedrock's Rarity enum has no such entry, so names are coloured
 //   by id. upstream's own GLOAMING items are built in; units may add more. Enchanted stacks get Java's
 //   bump (common / uncommon -> rare, rare -> epic; GLOAMING and epic stay).
@@ -12,7 +12,7 @@
 //   data outside the inventory tick (a chest, an item frame). A line starting with a § code keeps
 //   its style; an unstyled line is white, as Java draws an unstyled tooltip Component (Bedrock's
 //   lore default, purple italic, is reset): give upstream's style explicitly ("§7" for upstream's gray lines).
-// - Display contexts: TFItemDisplayContextEnumExtension's JARRED context ("gloamingforest:jarred",
+// - Display contexts: GloamingItemDisplayContextEnumExtension's JARRED context ("gloamingforest:jarred",
 //   items drawn inside a mason jar; Java falls back to FIXED): the display transforms of an item's
 //   model by context with that fallback, and (client) a renderer registry the jar renderer
 //   dispatches through.
@@ -64,7 +64,7 @@ struct DisplayTransform {
 };
 /// The JARRED context's name in item models ("display": {"gloamingforest:jarred": {...}}).
 inline constexpr char kJarred[] = "gloamingforest:jarred";
-/// TFItemDisplayContextEnumExtension#JARRED as a client/render ItemContext flag (after Head = 32).
+/// GloamingItemDisplayContextEnumExtension#JARRED as a client/render ItemContext flag (after Head = 32).
 inline constexpr unsigned kJarredContext = 64;
 /// Sets an item's display transform for a context ("fixed", "gui", "ground", kJarred, ...): the
 /// owner of the item gives its model's numbers.

@@ -42,7 +42,7 @@
       "minecraft:geometry": "geometry.gloamingforest.building.minoshroom_trophy_r0",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_building_minoshroomtaur",
+          "texture": "gf_building_minoshroomtaur",
           "render_method": "alpha_test"
         }
       }

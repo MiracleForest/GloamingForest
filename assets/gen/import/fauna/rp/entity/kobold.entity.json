@@ -10,7 +10,7 @@
         "default": "textures/gloamingforest/entity/kobold"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.kobold"
+        "default": "geometry.gf.skeleton.kobold"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

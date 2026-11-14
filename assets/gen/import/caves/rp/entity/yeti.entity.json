@@ -10,7 +10,7 @@
         "default": "textures/gloamingforest/entity/yeti2"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.yeti"
+        "default": "geometry.gf.skeleton.yeti"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

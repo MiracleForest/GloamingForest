@@ -30,7 +30,7 @@
       "minecraft:geometry": "geometry.gloamingforest.building.lich_wall_trophy",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_building_gloaminglich64",
+          "texture": "gf_building_gloaminglich64",
           "render_method": "alpha_test"
         }
       }

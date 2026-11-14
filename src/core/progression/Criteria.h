@@ -100,7 +100,7 @@ struct Context {
 /// The trigger payloads of upstream's triggers (other units fire them through progression::trigger;
 /// the keys are documented in docs/units/progression.md). True when the criterion's
 /// conditions accept the payload.
-[[nodiscard]] bool matchTfTrigger(std::string const& trigger, Json const& conditions, Json const& data, Env const& env);
+[[nodiscard]] bool matchGloamingTrigger(std::string const& trigger, Json const& conditions, Json const& data, Env const& env);
 
 /// The id a payload names under one of `keys` (a string, or an object with "id" / "name" / "item").
 [[nodiscard]] std::string idIn(Json const& data, std::initializer_list<char const*> keys);

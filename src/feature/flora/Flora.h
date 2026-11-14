@@ -3,7 +3,7 @@
 // U6 flora (unit-internal header): upstream's small plants, berry bushes, critters and jars.
 //
 //   Util.cpp      block / item / sound helpers shared by the unit's files
-//   Bushes.cpp    berry, dark tower and oreberry bushes (TFBushBlock family)
+//   Bushes.cpp    berry, dark tower and oreberry bushes (GloamingBushBlock family)
 //   Plants.cpp    patches, mayapple, fiddlehead, mushgloom, fallen leaves, roots, torchberries,
 //                 liveroots, huge lily pads / water lilies, berries as food, essence berry, the
 //                 survival rules of every flora block and the world generation survival sweep
@@ -47,7 +47,7 @@ using Json = nlohmann::json;
 using core::GlobalPos;
 using core::jrand::RandomSource;
 
-/// Config section "flora" (docs/spec/config.md): TFConfig's client cicada switches.
+/// Config section "flora" (docs/spec/config.md): GloamingConfig's client cicada switches.
 struct FloraConfig {
     int  version              = 1;
     bool silentCicadas        = false; ///< client.silentCicadas
@@ -184,7 +184,7 @@ void schedule(int ticks, std::function<void()> fn);
 
 // ---- parts -----------------------------------------------------------------------------------------
 
-/// The fallen leaves item used on a block that did not take the click (TFItems FALLEN_LEAVES useOn / use).
+/// The fallen leaves item used on a block that did not take the click (GloamingItems FALLEN_LEAVES useOn / use).
 [[nodiscard]] interactions::Result useFallenLeavesOn(interactions::UseOnContext const& c);
 
 void installBushes();
@@ -201,12 +201,12 @@ namespace bushes {
 enum class Kind { Overworld, DarkTower, Oreberry, Essence };
 [[nodiscard]] bool isBush(std::string const& blockId);
 [[nodiscard]] Kind kindOf(std::string const& blockId);
-/// TFBushBlock#randomTick (+ BerryBushBlock / dark tower / oreberry overrides) with `random`.
+/// GloamingBushBlock#randomTick (+ BerryBushBlock / dark tower / oreberry overrides) with `random`.
 void randomTick(BlockSource& region, BlockPos const& pos, RandomSource& random);
 /// The berry loot table of a bush ("gloamingforest:blocks/raspberry_bush_berries").
 [[nodiscard]] std::string berryTable(std::string const& blockId);
 [[nodiscard]] bool canGrowAt(BlockSource& region, BlockPos const& pos, Block const& block);
-/// TFBushBlock#canSurvive (+ OreBerryBlock's light limit).
+/// GloamingBushBlock#canSurvive (+ OreBerryBlock's light limit).
 [[nodiscard]] bool canSurvive(BlockSource& region, BlockPos const& pos, Block const& block);
 /// BerryBushBlock#performBonemeal.
 void performBonemeal(BlockSource& region, BlockPos const& pos, RandomSource& random);

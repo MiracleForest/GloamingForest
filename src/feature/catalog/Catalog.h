@@ -2,7 +2,7 @@
 
 // Contract "data", creative catalog (header owned by F0, implemented by F9; spike S6).
 //
-// upstream's 4 creative tabs (TFCreativeTabs: blocks, items, equipment, ... ) become Bedrock creative
+// upstream's 4 creative tabs (GloamingCreativeTabs: blocks, items, equipment, ... ) become Bedrock creative
 // catalog groups (Bedrock has no top-level tabs). The catalog content is imported data
 // (assets/gen/import, F1); this is the runtime query and the extension point.
 

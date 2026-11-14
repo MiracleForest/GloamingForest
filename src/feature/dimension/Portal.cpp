@@ -1,8 +1,8 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/block/TFPortalBlock.java
+//   src/main/java/gloamingforest/block/GloamingPortalBlock.java
 //   src/main/java/gloamingforest/events/ProgressionEvents.java (portal creation check)
-//   src/main/java/gloamingforest/config/TFConfig.java (getPortalLockingAdvancement)
+//   src/main/java/gloamingforest/config/GloamingConfig.java (getPortalLockingAdvancement)
 //   src/main/java/gloamingforest/asmhooks/BlockHooks.java (modifySoilDecisionForMushroomBlockSurvivability)
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
@@ -12,7 +12,7 @@
 // pool whose rim is dirt topped with plants; the pool turns into portal blocks under a lightning
 // bolt. Portal blocks fall back to water when their floor or rim breaks. Mushrooms next to a portal
 // survive in any light, and sugar cane takes a portal next to its soil for its water
-// (TFPortalBlock#getFluidState; the rest of what the portal's water does is in PortalFluid.cpp).
+// (GloamingPortalBlock#getFluidState; the rest of what the portal's water does is in PortalFluid.cpp).
 // Explosions: ExplosionDamageCalculator#getBlockExplosionResistance takes the larger of the block's
 // resistance (strength(-1.0F): 0) and its fluid's (water: 100): during an explosion the portal holds
 // the water's resistance, the block keeps upstream's 0 otherwise.
@@ -104,7 +104,7 @@ void pruneThrowers(Level& level, int budget) {
     }
 }
 
-/// TFPortalBlock.playersNotified (unique ids, for the session).
+/// GloamingPortalBlock.playersNotified (unique ids, for the session).
 std::unordered_set<std::int64_t>& playersNotified() {
     static std::unordered_set<std::int64_t> s;
     return s;
@@ -229,7 +229,7 @@ bool portalWatersSugarCane(BlockSource& region, BlockPos const& pos) {
     return false;
 }
 
-/// TFPortalBlock#getFluidState (the portal is a little water, "and this checks the checkbox in
+/// GloamingPortalBlock#getFluidState (the portal is a little water, "and this checks the checkbox in
 /// Sugar Cane logic to not destroy itself when portal is made"): a Gloaming portal next to the
 /// cane's soil counts as its water. Bedrock's sugar cane asks mayPlace when it is placed and
 /// whenever it checks that it can stay.
@@ -314,7 +314,7 @@ int portalExplosionDepth() {
 
 float portalWaterResistance() { return gWaterResistance.load(); }
 
-/// TFPortalBlock#getFluidState for explosions. The explosion's rays read each block's resistance
+/// GloamingPortalBlock#getFluidState for explosions. The explosion's rays read each block's resistance
 /// straight from its permutation's direct data (inline: a hook on BlockType::getExplosionResistance
 /// is not consulted, selftest round 4), so the portal's two permutations hold the water's
 /// resistance while any explosion runs and upstream's 0 otherwise (the explosion window above: nested
@@ -377,7 +377,7 @@ bool advancementExists(std::string const& id) {
 bool isVanillaAdvancement(std::string const& id) { return id.starts_with("minecraft:") && validResourceLocation(id); }
 
 std::optional<std::string> portalLockingAdvancement(bool quiet) {
-    // TFConfig#getPortalLockingAdvancement: checked once per configured value
+    // GloamingConfig#getPortalLockingAdvancement: checked once per configured value
     static std::string checked;
     auto&              cfg = gf::config::mut<DimensionConfig>();
     if (cfg.portalUnlockedByAdvancement.empty()) return std::nullopt;
@@ -437,7 +437,7 @@ bool unworthy(Player& player) {
 
 void resetNotified() { playersNotified().clear(); }
 
-// ---- TFPortalBlock ------------------------------------------------------------------------------------------------------
+// ---- GloamingPortalBlock ------------------------------------------------------------------------------------------------------
 
 void causeLightning(BlockSource& region, BlockPos const& pos, bool destructive) {
     Vec3          at{pos.x + 0.5f, static_cast<float>(pos.y), pos.z + 0.5f};
@@ -603,7 +603,7 @@ void checkWhenLoaded(BlockSource& region, BlockPos const& pos) {
 }
 } // namespace
 
-/// TFPortalBlock#neighborChanged: the portal turns back into water when its floor or rim breaks.
+/// GloamingPortalBlock#neighborChanged: the portal turns back into water when its floor or rim breaks.
 /// Java sets the water with UPDATE_ALL, so the portal blocks next to it hear of it and go too: here
 /// the water's block change reaches them through gf::blockevents (F11 tells the six neighbours of
 /// every block change at the end of the tick), and the whole pool turns back into water.

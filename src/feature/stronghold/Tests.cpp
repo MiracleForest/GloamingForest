@@ -185,7 +185,7 @@ void golden(Context& ctx, std::string const& name, std::string const& expected, 
 // Recorded from the translation (GloamingForest's own goldens: chunk (3, -2), y 0, seed 20260521).
 constexpr int  kChunkX   = 3;
 constexpr int  kChunkZ   = -2;
-constexpr char kLayout[] = "TFSAC=1 TFSAt=2 TFSBR=1 TFSBalR=6 TFSCr=8 TFSDE=8 TFSEnter=1 TFSFo=3 TFSLT=35 TFSRT=28 TFSSH=30 TFSSS=13 TFSTC=14 TFSTR=5 TFSUA=14 TFSUCo=11 TFSULT=12 TFSURT=18 TFSUTI=14 TFTreaR=3 -36,-32,-115,134,11,64";
+constexpr char kLayout[] = "GloamingSAC=1 GloamingSAt=2 GloamingSBR=1 GloamingSBalR=6 GloamingSCr=8 GloamingSDE=8 GloamingSEnter=1 GloamingSFo=3 GloamingSLT=35 GloamingSRT=28 GloamingSSH=30 GloamingSSS=13 GloamingSTC=14 GloamingSTR=5 GloamingSUA=14 GloamingSUCo=11 GloamingSULT=12 GloamingSURT=18 GloamingSUTI=14 GloamingTreaR=3 -36,-32,-115,134,11,64";
 constexpr char kHash[]   = "c3a8791499fd7216";
 
 struct DifficultyScope {
@@ -204,10 +204,10 @@ struct DifficultyScope {
 struct EnforcedScope {
     bool previous = false;
     explicit EnforcedScope(bool on) {
-        previous = gf::gamerules::getBool("tfEnforcedProgression");
-        gf::gamerules::set("tfEnforcedProgression", on);
+        previous = gf::gamerules::getBool("gloamingEnforcedProgression");
+        gf::gamerules::set("gloamingEnforcedProgression", on);
     }
-    ~EnforcedScope() { gf::gamerules::set("tfEnforcedProgression", previous); }
+    ~EnforcedScope() { gf::gamerules::set("gloamingEnforcedProgression", previous); }
 };
 
 Mob* spawnAt(core::GlobalPos const& at, std::string const& id, float dx = 0.5f, float dz = 0.5f) {
@@ -586,14 +586,14 @@ GF_REGISTER_SELFTEST("stronghold.phantom_fight", [](Context& ctx) -> ll::coro::C
 
 namespace {
 
-/// tfEnforcedProgression for the length of a test.
+/// gloamingEnforcedProgression for the length of a test.
 struct WalkEnforcedScope {
     bool previous = false;
     WalkEnforcedScope() {
-        previous = gf::gamerules::getBool("tfEnforcedProgression");
-        gf::gamerules::set("tfEnforcedProgression", true);
+        previous = gf::gamerules::getBool("gloamingEnforcedProgression");
+        gf::gamerules::set("gloamingEnforcedProgression", true);
     }
-    ~WalkEnforcedScope() { gf::gamerules::set("tfEnforcedProgression", previous); }
+    ~WalkEnforcedScope() { gf::gamerules::set("gloamingEnforcedProgression", previous); }
 };
 
 /// The landmark of a boss against upstream's structure record (LandmarkStructure: AdvancementLockConfig,
@@ -648,9 +648,9 @@ void walkLandmark(Context& ctx, std::string const& key, std::string const& lock,
 } // namespace
 
 // The knight stronghold against upstream's KnightStrongholdStructure record: locked by
-// progress_trophy_pedestal, the tfstronghold hint book, conquerable; its protected pieces refuse a
+// progress_trophy_pedestal, the gloamingstronghold hint book, conquerable; its protected pieces refuse a
 // player without progress_trophy_pedestal.
-GF_REGISTER_SELFTEST("stronghold.landmark_walk", [](Context& ctx) { walkLandmark(ctx, id::Stronghold, "gloamingforest:progress_trophy_pedestal", "tfstronghold", 150507); });
+GF_REGISTER_SELFTEST("stronghold.landmark_walk", [](Context& ctx) { walkLandmark(ctx, id::Stronghold, "gloamingforest:progress_trophy_pedestal", "gloamingstronghold", 150507); });
 
 // The real conquest (KnightPhantom#postmortem -> LandmarkUtil#markStructureConquered): a knight
 // stronghold start forced far from the test rows (its chunks never load: nothing is placed), a lone

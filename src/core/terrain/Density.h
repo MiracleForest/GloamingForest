@@ -3,7 +3,7 @@
 //   src/main/java/gloamingforest/world/components/chunkgenerators/TerrainDensityRouter.java
 //   src/main/java/gloamingforest/world/components/chunkgenerators/NoiseDensityRouter.java
 //   src/main/java/gloamingforest/world/components/chunkgenerators/SqrtDensityFunction.java
-//   src/main/java/gloamingforest/init/TFDensityFunctions.java
+//   src/main/java/gloamingforest/init/GloamingDensityFunctions.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).

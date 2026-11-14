@@ -90,8 +90,8 @@ public:
         // the blocks' definitions name baked textures (upstream's texture times its item colour: what vanilla
         // clients draw); the client mod draws the untinted textures with the per-position colour below
         namespace mat = gf::feature::ext::aurora::materials;
-        for (int n = 0; n < 16; n++) mat::swapTexture("tf_aurora_baked_aurora_block_" + std::to_string(n), "tf_block_aurora_block_" + std::to_string(n));
-        for (char const* t : {"aurora_pillar", "aurora_pillar_top", "aurora_slab_side"}) mat::swapTexture(std::string("tf_aurora_baked_") + t, std::string("tf_block_") + t);
+        for (int n = 0; n < 16; n++) mat::swapTexture("gf_aurora_baked_aurora_block_" + std::to_string(n), "gf_block_aurora_block_" + std::to_string(n));
+        for (char const* t : {"aurora_pillar", "aurora_pillar_top", "aurora_slab_side"}) mat::swapTexture(std::string("gf_aurora_baked_") + t, std::string("gf_block_") + t);
         tint::registerBlock("gloamingforest:aurora_block", [](BlockPos const& p) { return ca::auroraBlockColor(p.x, p.y, p.z); });
         for (char const* id : {"gloamingforest:aurora_pillar", "gloamingforest:aurora_slab", "gloamingforest:auroralized_glass"})
             tint::registerBlock(id, [](BlockPos const& p) { return ca::auroraPaleColor(ca::auroraBlockColor(p.x, p.y, p.z)); });

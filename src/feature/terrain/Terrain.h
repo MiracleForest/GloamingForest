@@ -77,7 +77,7 @@ struct State {
     /// The terrain column of a quart (U1's main biome through worldgen::mainBiomeAt; the forest's
     /// column when no biome source answers, so the terrain stays sane without U1).
     [[nodiscard]] TerrainColumn const* columnAt(int quartX, int quartZ) const;
-    /// TFBiomeProvider#getNoiseBiome from the main biome and the column's layers.
+    /// GloamingBiomeProvider#getNoiseBiome from the main biome and the column's layers.
     [[nodiscard]] std::string const& noiseBiome(int quartX, int quartY, int quartZ) const;
     /// BiomeManager#getBiome: the zoom over the noise biomes.
     [[nodiscard]] std::string const& blockBiome(int x, int y, int z) const;
@@ -119,7 +119,7 @@ void terrainProvider(worldgen::Chunk& chunk);
 void surfaceProvider(worldgen::Chunk& chunk, worldgen::Region& region);
 void blanketProvider(worldgen::Chunk& chunk, worldgen::Region& region);
 void carve(bool highlands, worldgen::Chunk& chunk, worldgen::Region& region, core::jrand::RandomSource& random);
-/// TFCavesCarver#isStartChunk + #carve with an explicit context (source chunk, config, mask).
+/// GloamingCavesCarver#isStartChunk + #carve with an explicit context (source chunk, config, mask).
 void carveWith(State const& s, bool highlands, worldgen::Chunk& chunk, worldgen::ext::CarverContext& ctx, core::jrand::RandomSource& random);
 
 /// Milliseconds of CPU time this thread has run so far (QueryThreadCycleTime at the processor's
@@ -186,7 +186,7 @@ using ChunkLookup = std::function<bool(int x, int z)>;
 /// table): the selftest probes its own keys, outside the chunk records.
 [[nodiscard]] std::optional<SavedChunkProbe> findSavedChunks(int dim, bool fullScan, ChunkLookup const& lookup);
 
-/// TFCavesCarver#carveBlock (and its postCarveBlock) at one world position of `chunk`, as a tunnel
+/// GloamingCavesCarver#carveBlock (and its postCarveBlock) at one world position of `chunk`, as a tunnel
 /// reaching it would run it (selftests: the fluid tests on Bedrock's liquid layer). True: carved.
 bool carveBlockAt(
     State const&                  s,

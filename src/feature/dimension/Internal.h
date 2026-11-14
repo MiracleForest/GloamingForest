@@ -25,10 +25,10 @@ namespace gf::feature::dimension {
 inline constexpr char kPortalBlock[]     = "gloamingforest:gloaming_portal";
 inline constexpr char kOneWayState[]     = "gloamingforest:is_one_way";
 inline constexpr char kWhooshSound[]     = "block.gloamingforest.portal.whoosh";
-inline constexpr char kMakePortalTrigger[] = "gloamingforest:make_tf_portal";
-inline constexpr char kDefaultDelayRule[]  = "playersTfPortalDefaultDelay";
-inline constexpr char kCreativeDelayRule[] = "playersTfPortalCreativeDelay";
-/// upstream's defaults of the two gamerules (TFGameRules), used while the gamerule store has no value.
+inline constexpr char kMakePortalTrigger[] = "gloamingforest:make_gf_portal";
+inline constexpr char kDefaultDelayRule[]  = "playersGloamingPortalDefaultDelay";
+inline constexpr char kCreativeDelayRule[] = "playersGloamingPortalCreativeDelay";
+/// upstream's defaults of the two gamerules (GloamingGameRules), used while the gamerule store has no value.
 inline constexpr int kDefaultDelay  = 60;
 inline constexpr int kCreativeDelay = 1;
 
@@ -76,9 +76,9 @@ struct Height {
 
 // ---- portal travel --------------------------------------------------------------------------------------
 
-/// The portal transition time of a player (TFPortalBlock#getPortalTransitionTime).
+/// The portal transition time of a player (GloamingPortalBlock#getPortalTransitionTime).
 [[nodiscard]] int portalDelay(Player const& player);
-/// The portal timer of the player (TFPortalAttachment: 0..60), for overlays and tests.
+/// The portal timer of the player (GloamingPortalAttachment: 0..60), for overlays and tests.
 [[nodiscard]] int portalTimer(Player const& player);
 /// An entity's portal process as vanilla keeps it (Entity#portalProcess, portalCooldown), whether
 /// it is on a trip and whether its destination is preloaded (tests).
@@ -90,12 +90,12 @@ struct PortalProcessView {
     bool preloaded  = false;
 };
 [[nodiscard]] PortalProcessView portalProcessOf(Actor const& actor);
-/// Entity#canUsePortal(false) as TFPortalBlock#entityInside and Entity#handlePortal ask it: alive,
+/// Entity#canUsePortal(false) as GloamingPortalBlock#entityInside and Entity#handlePortal ask it: alive,
 /// riding nothing, of a kind that goes through portals, and the actor's own answer whether or not
 /// something rides it (Actor::canChangeDimensionsUsingPortal: F8's refusals of upstream's bosses, parts
 /// and marked types, then the engine's).
 [[nodiscard]] bool canUsePortal(Actor& actor);
-/// The portal's own decisions about one watched actor (tests): how often TFPortalBlock#entityInside
+/// The portal's own decisions about one watched actor (tests): how often GloamingPortalBlock#entityInside
 /// and Entity#handlePortal asked canUsePortal while it was in a portal, and how often the answer
 /// was no, in all and while something rode the actor.
 struct PortalDecisions {
@@ -129,7 +129,7 @@ void moveAcross(
 /// already on a trip.
 bool teleportPlayer(Player& player, int dest, Vec3 const& at, float yaw, float pitch);
 
-/// CapabilityEvents#newSpawnInGloamingForest (no-op unless newPlayersSpawnInTF).
+/// CapabilityEvents#newSpawnInGloamingForest (no-op unless newPlayersSpawnInGloaming).
 void newSpawnInGloamingForest(Player& player);
 /// ServerPlayer#getRespawnPosition() != null: the player has a bed / anchor / forced spawn point.
 [[nodiscard]] bool hasRespawnPosition(Player const& player);
@@ -160,7 +160,7 @@ struct FunctionTeleport {
 
 /// Sends an action bar message (Java displayClientMessage(..., true)).
 void actionBar(Player& player, std::string const& text);
-/// TFConfig#getPortalLockingAdvancement: the advancement that unlocks portals (nullopt: none). The
+/// GloamingConfig#getPortalLockingAdvancement: the advancement that unlocks portals (nullopt: none). The
 /// configured id is checked once per value against the advancements the mod ships
 /// (data/<namespace>/advancement[s]/<path>.json); an unknown one is logged, cleared and saved. A
 /// vanilla id (minecraft:...) is kept unchecked with a warning: Bedrock has no vanilla advancements.
@@ -169,18 +169,18 @@ void actionBar(Player& player, std::string const& text);
 [[nodiscard]] bool advancementExists(std::string const& id);
 /// A well-formed id in the minecraft namespace (Java's server knows every vanilla advancement).
 [[nodiscard]] bool isVanillaAdvancement(std::string const& id);
-/// TFPortalBlock#entityInside / ProgressionEvents: the "unworthy" message + missing-advancement
+/// GloamingPortalBlock#entityInside / ProgressionEvents: the "unworthy" message + missing-advancement
 /// toast; true when the player may not use / light portals.
 bool unworthy(Player& player);
-/// Forgets which players saw the toast (TFPortalBlock.playersNotified).
+/// Forgets which players saw the toast (GloamingPortalBlock.playersNotified).
 void resetNotified();
-/// TFPortalBlock#causeLightning.
+/// GloamingPortalBlock#causeLightning.
 void causeLightning(BlockSource& region, BlockPos const& pos, bool destructive);
-/// TFPortalBlock#tryToCreatePortal (`catalyst` loses one item, may be null).
+/// GloamingPortalBlock#tryToCreatePortal (`catalyst` loses one item, may be null).
 bool tryToCreatePortal(BlockSource& region, BlockPos const& pos, ItemActor* catalyst, Player* player);
 /// ProgressionEvents#checkForPortalCreation.
 void checkForPortalCreation(Player& player, BlockSource& world, float rangeToCheck);
-/// TFPortalBlock#neighborChanged: the portal block at `pos` turns back into water when its floor
+/// GloamingPortalBlock#neighborChanged: the portal block at `pos` turns back into water when its floor
 /// or one of its four sides is no longer valid (true when it did). Java's getBlockState loads a
 /// chunk that is not loaded: when the rule reaches a block whose chunk is not loaded, the check
 /// waits for it instead (the chunks around `pos` are loaded for it, then it runs again).
@@ -191,12 +191,12 @@ bool portalNeighborChanged(BlockSource& region, BlockPos const& pos);
 /// Drops the waiting neighbour checks (the world closed).
 void clearPortalChecks();
 /// Turns the portal block's handlers of gf::blockevents on (TravelModule::install; registered once
-/// per process, since the contract has no removal): neighbour changes (TFPortalBlock#neighborChanged),
+/// per process, since the contract has no removal): neighbour changes (GloamingPortalBlock#neighborChanged),
 /// and placements / removals by any cause, which the portal index reads again. Off again with
 /// unregisterPortalBlockEvents (uninstall): the handlers then do nothing.
 void registerPortalBlockEvents();
 void unregisterPortalBlockEvents();
-/// The portal's explosion window (Portal.cpp, TFPortalBlock#getFluidState for explosions): from
+/// The portal's explosion window (Portal.cpp, GloamingPortalBlock#getFluidState for explosions): from
 /// the start of the first explosion in flight to the end of the last one (nested ones, or ones on
 /// another thread), the portal's two states hold the water's explosion resistance; the last one
 /// to end puts back what they held before. The Explosion::explode hook opens one per explosion
@@ -232,13 +232,13 @@ void moveItemOwner(std::int64_t from, std::int64_t to);
 /// BlockHooks#modifySoilDecisionForMushroomBlockSurvivability: a Gloaming portal among the eight
 /// blocks around the one under `pos` keeps a mushroom at `pos` alive.
 [[nodiscard]] bool portalKeepsMushroom(BlockSource& region, BlockPos const& pos);
-/// TFPortalBlock#getFluidState for SugarCaneBlock#canSurvive: sugar cane at `pos` on #dirt / #sand
+/// GloamingPortalBlock#getFluidState for SugarCaneBlock#canSurvive: sugar cane at `pos` on #dirt / #sand
 /// with a Gloaming portal on a side of that soil block has its water.
 [[nodiscard]] bool portalWatersSugarCane(BlockSource& region, BlockPos const& pos);
 
 // ---- the portal's water (PortalFluid.cpp) -----------------------------------------------------------------
 
-/// TFPortalBlock#getFluidState as Entity#updateFluidHeightAndDoFluidPushing sees it: the entity's
+/// GloamingPortalBlock#getFluidState as Entity#updateFluidHeightAndDoFluidPushing sees it: the entity's
 /// box reaches below the surface of a portal's level-1 water (1/9 of a block).
 [[nodiscard]] bool inPortalWater(Actor& actor, BlockSource& region);
 /// What the water does to an entity in it this tick (fall distance, fire, splash, water-sensitive

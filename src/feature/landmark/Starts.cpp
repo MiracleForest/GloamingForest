@@ -4,7 +4,7 @@
 //   src/main/java/gloamingforest/world/components/structures/util/ConquerableStructure.java
 //   src/main/java/gloamingforest/world/components/structures/util/CustomStructureData.java
 //   src/main/java/gloamingforest/world/components/structures/util/DecorationClearance.java
-//   src/main/java/gloamingforest/world/components/structures/start/TFStructureStart.java
+//   src/main/java/gloamingforest/world/components/structures/start/GloamingStructureStart.java
 //   src/main/java/gloamingforest/world/components/placements/AvoidLandmarkModifier.java
 //   src/main/java/gloamingforest/asmhooks/WorldgenHooks.java
 //   src/main/java/gloamingforest/util/landmarks/LandmarkUtil.java
@@ -569,13 +569,13 @@ std::optional<int> gloamingDim() {
 }
 
 int seaLevelOf(int dim) {
-    auto tf = gloamingDim();
-    return tf && *tf == dim ? kGloamingSeaLevel : kDefaultSeaLevel;
+    auto upsrc = gloamingDim();
+    return upsrc && *upsrc == dim ? kGloamingSeaLevel : kDefaultSeaLevel;
 }
 
 std::string biomeAt(int dim, int x, int y, int z) {
-    auto tf = gloamingDim();
-    if (tf && *tf == dim) {
+    auto upsrc = gloamingDim();
+    if (upsrc && *upsrc == dim) {
         auto b = worldgen::biomeAt(BlockPos{x, y, z});
         if (!b.empty()) return b;
     }
@@ -1111,8 +1111,8 @@ void forgetEvaluation(int dim, int chunkX, int chunkZ) {
 }
 
 bool ensureStartsIn(int dim, int chunkX, int chunkZ) {
-    auto tf = gloamingDim();
-    if (!tf || *tf != dim) return true; // upstream's structure sets only place in the Gloaming Forest
+    auto upsrc = gloamingDim();
+    if (!upsrc || *upsrc != dim) return true; // upstream's structure sets only place in the Gloaming Forest
     auto&          r = records();
     ChunkKey const key{dim, chunkX, chunkZ};
     {
@@ -1174,8 +1174,8 @@ bool startsEvaluated(int dim, int chunkX, int chunkZ) {
 }
 
 void ensureStartsAround(int dim, int chunkX, int chunkZ) {
-    auto tf = gloamingDim();
-    if (!tf || *tf != dim) return;
+    auto upsrc = gloamingDim();
+    if (!upsrc || *upsrc != dim) return;
     auto& r = records();
     {
         // fast path for the hot queries (feature clearance, terraforming): one shared lock
@@ -1424,13 +1424,13 @@ void setConquered(int dimension, BlockPos const& pos, std::string const& key, bo
     auto        k   = fl::normalizeKey(key);
     auto        rec = fl::nearestLandmarkOf(dimension, k, pos.x, pos.z);
     auto const* inf = fl::info(k);
-    if (!rec || !inf || !inf->traits.conquerable) return; // only TFStructureStarts carry the flag
+    if (!rec || !inf || !inf->traits.conquerable) return; // only GloamingStructureStarts carry the flag
     if (rec->start.conquered != conquered) {
         rec->start.conquered = conquered;
         fl::markDirty(*rec);
     }
     gf::log().info("landmark: {} at {} {} {} conquered={}", k, rec->start.center.x, rec->start.center.y, rec->start.center.z, conquered);
-    // TFAdvancements.STRUCTURE_CLEARED for the players within 32 blocks: Level#getEntitiesOfClass(
+    // GloamingAdvancements.STRUCTURE_CLEARED for the players within 32 blocks: Level#getEntitiesOfClass(
     // ServerPlayer, AABB(pos).inflate(32)) takes every player whose bounding box intersects the area
     auto level = ll::service::getLevel();
     if (!level) return;
@@ -1488,9 +1488,9 @@ void addTerraformer(std::string const& key, std::function<double(Start const& st
 }
 
 bool decorationAllowed(ChunkPos chunk, DecoKind kind) {
-    auto tf = fl::gloamingDim();
-    if (!tf) return true;
-    fl::ensureStartsAround(*tf, chunk.x, chunk.z);
+    auto upsrc = fl::gloamingDim();
+    if (!upsrc) return true;
+    fl::ensureStartsAround(*upsrc, chunk.x, chunk.z);
     core::landmark::FeatureOccupancy occ;
     switch (kind) {
     case DecoKind::Surface:
@@ -1499,7 +1499,7 @@ bool decorationAllowed(ChunkPos chunk, DecoKind kind) {
     case DecoKind::Lakes: occ.surface = occ.underground = true; break; // checkBoth()
     }
     int x = chunk.x * 16 + 8, z = chunk.z * 16 + 8;
-    for (auto const& rec : fl::recordsIntersecting(*tf, chunk.x, chunk.z)) {
+    for (auto const& rec : fl::recordsIntersecting(*upsrc, chunk.x, chunk.z)) {
         if (rec->placed) continue; // no structure references the chunk
         // StructureStart#isValid: a reserved site (no generator yet, no pieces) is no start, whatever
         // its clearance square

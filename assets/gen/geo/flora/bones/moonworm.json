@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.moonworm",
   "layer": {
     "name": "moonworm",
-    "field": "TFModelLayers.MOONWORM",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.MOONWORM, MoonwormModel::create);"
+    "field": "GloamingModelLayers.MOONWORM",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.MOONWORM, MoonwormModel::create);"
   },
   "texture_size": [32, 32],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/moonworm",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/moonworm.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/moonworm.png"
     }
   ],
   "bones": [

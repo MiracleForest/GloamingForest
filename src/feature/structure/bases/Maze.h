@@ -1,12 +1,12 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/world/components/structures/TFMaze.java
+//   src/main/java/gloamingforest/world/components/structures/GloamingMaze.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
 
-// Contract "structure", shared bases (header owned by F0, implemented by F7; rule R18). TFMaze: the
+// Contract "structure", shared bases (header owned by F0, implemented by F7; rule R18). GloamingMaze: the
 // maze generator of the labyrinth (U23), the hedge maze (U18) and the hollow hill mazes. Cells sit
 // at odd raw coordinates, walls at even ones (raw size 2 * cells + 1); 0 is a wall. The generation
 // (recursive backtracker, rooms, exits) must consume `random` exactly like Java (F7 gtests it).
@@ -25,7 +25,7 @@ public:
     static constexpr int ROOM          = 5;
     static constexpr int DOOR          = 6;
 
-    /// TFMaze(cellsWidth, cellsDepth, random): defaults oddBias 3, evenBias 1, tall 3, head 0,
+    /// GloamingMaze(cellsWidth, cellsDepth, random): defaults oddBias 3, evenBias 1, tall 3, head 0,
     /// roots 0, walls cut_mazestone, roots mazestone, torches minecraft:torch (rarity 0.75), no
     /// pillars / head / doors (air, door rarity 0).
     Maze(int cellsWidth, int cellsDepth, RandomSource& random);

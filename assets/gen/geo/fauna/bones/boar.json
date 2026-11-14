@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.boar",
   "layer": {
     "name": "boar",
-    "field": "TFModelLayers.BOAR",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.BOAR, BoarModel::checkForPack);"
+    "field": "GloamingModelLayers.BOAR",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.BOAR, BoarModel::checkForPack);"
   },
   "texture_size": [64, 32],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/wildboar",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/wildboar.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/wildboar.png"
     }
   ],
   "bones": [

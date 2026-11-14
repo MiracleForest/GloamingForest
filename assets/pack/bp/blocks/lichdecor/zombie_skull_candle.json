@@ -58,11 +58,11 @@
       },
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_lichdecor_skull_zombie",
+          "texture": "gf_lichdecor_skull_zombie",
           "render_method": "alpha_test"
         },
         "candle": {
-          "texture": "tf_lichdecor_candle",
+          "texture": "gf_lichdecor_candle",
           "render_method": "alpha_test"
         }
       },
@@ -434,11 +434,11 @@
         "components": {
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_lichdecor_skull_zombie",
+              "texture": "gf_lichdecor_skull_zombie",
               "render_method": "alpha_test"
             },
             "candle": {
-              "texture": "tf_lichdecor_candle",
+              "texture": "gf_lichdecor_candle",
               "render_method": "alpha_test"
             }
           }
@@ -449,11 +449,11 @@
         "components": {
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_lichdecor_skull_zombie",
+              "texture": "gf_lichdecor_skull_zombie",
               "render_method": "alpha_test"
             },
             "candle": {
-              "texture": "tf_lichdecor_candle_lit",
+              "texture": "gf_lichdecor_candle_lit",
               "render_method": "alpha_test"
             }
           }

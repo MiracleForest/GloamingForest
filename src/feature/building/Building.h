@@ -21,7 +21,7 @@ class ItemStack;
 
 namespace gf::feature::building {
 
-/// Config section "building" (R13, docs/spec/config.md): TFClientConfig.rotateTrophyHeadsGui.
+/// Config section "building" (R13, docs/spec/config.md): GloamingClientConfig.rotateTrophyHeadsGui.
 struct BuildingConfig {
     int version = 1;
     /// client.rotateTrophyHeadsGui (animate_trophies): trophy heads spin in GUI slots (client mod).
@@ -76,7 +76,7 @@ void uninstallRope();
 // ---- banner patterns (Banners.cpp) ----
 struct BannerSpec {
     std::string boss;   ///< the item is gloamingforest:<boss>_banner_pattern, the texture upstream's <boss>.png
-    std::string tfId;   ///< upstream's banner_pattern registry id
+    std::string gfId;   ///< upstream's banner_pattern registry id
     std::string nameId; ///< Bedrock's pattern id (name and nameID; banners store it)
 };
 [[nodiscard]] std::vector<BannerSpec> const&   bannerPatterns();

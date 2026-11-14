@@ -3,7 +3,7 @@
 # Eight armour stands in a row in front of the player wear the eight sets (naga scale tunic and
 # leggings; ironwood; fiery; steeleaf; knightmetal; phantom helmet and chestplate; yeti;
 # arctic): out/armory/sets-<mode>.png
-# (compare with upstream's models/armor textures and TFArmorModel / YetiArmorModel / PhantomArmorModel /
+# (compare with upstream's models/armor textures and GloamingArmorModel / YetiArmorModel / PhantomArmorModel /
 # ArcticArmorModel / FieryArmorModel). Then the hotbar and inventory with the tools and materials
 # (icons, the arctic icons' dye layer): out/armory/hotbar-<mode>.png, out/armory/inventory-<mode>.png.
 # The player itself wears the yeti set in third person: out/armory/player-<mode>.png.

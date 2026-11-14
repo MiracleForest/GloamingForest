@@ -59,7 +59,7 @@ void onTick(std::function<void(Player& player)> fn);
 /// The local player's progression as the server synced it (client mod; client thread).
 namespace client {
 [[nodiscard]] bool has(std::string const& advancementId);
-/// The tfEnforcedProgression gamerule of the current world.
+/// The gloamingEnforcedProgression gamerule of the current world.
 [[nodiscard]] bool enforced();
 /// Whether biome `biomeId` is locked for the local player (restrictions + progression).
 [[nodiscard]] bool biomeLocked(std::string const& biomeId);

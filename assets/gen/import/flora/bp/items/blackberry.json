@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_item_blackberry"
+          "default": "gf_item_blackberry"
         }
       },
       "minecraft:display_name": {

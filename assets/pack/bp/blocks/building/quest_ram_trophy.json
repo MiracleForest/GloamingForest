@@ -42,11 +42,11 @@
       "minecraft:geometry": "geometry.gloamingforest.building.quest_ram_trophy_r0",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_building_questram",
+          "texture": "gf_building_questram",
           "render_method": "alpha_test"
         },
         "lines": {
-          "texture": "tf_building_questram_lines",
+          "texture": "gf_building_questram_lines",
           "render_method": "alpha_test"
         }
       }

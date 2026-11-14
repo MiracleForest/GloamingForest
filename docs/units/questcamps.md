@@ -9,7 +9,7 @@ What the code and the original templates of U19 do beyond docs/spec/questcamps.m
 | `src/core/questcamps/Questcamps.{h,cpp}` | Dye colours, the ram's colour flags and model pose, the template features' ground averaging, the graveyard grid (gtests `tests/questcamps`). |
 | `src/feature/questcamps/Quest.cpp` | `gloaming/quests/questing_ram` (fallback: the 16 wools), Ingredient matching (`item`, `tag`, lists). |
 | `src/feature/questcamps/QuestRam.cpp` | The Questing Ram: quest flags (entity data `questcamps` + property `gloamingforest:color_flags`), feeding, `QuestRamEatWoolGoal`, `TemptGoal`, the restriction point, the reward, `questcamps.sync_quests`. |
-| `src/feature/questcamps/Grove.cpp` | `TFQuest1` and the `gloamingforest:quest_grove` landmark generator (BEARD_THIN). |
+| `src/feature/questcamps/Grove.cpp` | `GloamingQuest1` and the `gloamingforest:quest_grove` landmark generator (BEARD_THIN). |
 | `src/feature/questcamps/Camp.cpp` | The `gloamingforest:camp` generator: `CampStructure#findGenerationPoint` + F7's jigsaw assembly, BEARD_BOX per pool entry. |
 | `src/feature/questcamps/TemplateFeatures.cpp` | `TemplateFeature` (druid hut, simple / fancy well, grove ruins, stone circle) and `GraveyardFeature`. |
 | `src/client/questcamps/Indicator.cpp` | `QuestingRamIndicatorOverlay` as an F12 HUD layer. |
@@ -36,7 +36,7 @@ main paths lead to paths, tents and decos; paths end in decos (racks through `ra
 ## Client assets
 
 `tools/structures/questcamps/make-ram-assets.ps1` derives the ram's tinted texture (16 copies of
-the wool segment's UV box tinted with `Sheep#getColor`; `tf-derived`, CC BY-NC-SA 4.0), the tinted and
+the wool segment's UV box tinted with `Sheep#getColor`; `upstream-derived`, CC BY-NC-SA 4.0), the tinted and
 the 1.025-scaled lines geometries, the pose animation (`QuestRamModel#prepareMobModel` from the packed
 colour property) and the client entity / render controllers from F1's and F2's files.
 

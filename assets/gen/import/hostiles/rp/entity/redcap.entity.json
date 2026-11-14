@@ -10,7 +10,7 @@
         "default": "textures/gloamingforest/entity/redcap"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.redcap"
+        "default": "geometry.gf.skeleton.redcap"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

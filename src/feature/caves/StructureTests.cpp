@@ -169,7 +169,7 @@ struct TestMode {
 };
 
 // Recorded from the translation (GloamingForest's own goldens, docs/units/caves.md).
-constexpr char kTrollLayout[]  = "gloamingforest:TFTCCon=11 gloamingforest:TFTCGard=4 gloamingforest:TFTCMai=1 gloamingforest:TFTCVa=1 28,-15,-100,163,11,25";
+constexpr char kTrollLayout[]  = "gloamingforest:GloamingTCCon=11 gloamingforest:GloamingTCGard=4 gloamingforest:GloamingTCMai=1 gloamingforest:GloamingTCVa=1 28,-15,-100,163,11,25";
 constexpr char kTrollHash[]    = "bedf1a4ba1742ba7"; // giant blocks carry U29's gf:giant_* tiling states
 constexpr char kCastleHash[]   = "af832880f6c53481"; // giant blocks carry U29's gf:giant_* tiling states
 constexpr char kYetiHash[]     = "219d7a9970bbf71a"; // with the ice stalactites (the heightmap sees the hill)
@@ -183,14 +183,14 @@ constexpr char kFeaturesHash[] = "bcf3047b03b92576";
 GF_REGISTER_SELFTEST("caves.troll_cave_layout", [](Context& ctx) {
     auto pieces = trollCave(5, -3, 0);
     auto types  = typesOf(pieces);
-    ctx.require(!pieces.empty() && pieces.front()->typeId == "gloamingforest:TFTCMai", "the main cave comes first");
+    ctx.require(!pieces.empty() && pieces.front()->typeId == "gloamingforest:GloamingTCMai", "the main cave comes first");
     auto const& main = *pieces.front();
     // TrollCaveMainComponent(0, x, y + 11, z): a 30 x 20 x 30 box from (-15, -20, -15)
     ctx.check(main.bbox.maxX - main.bbox.minX == 30 && main.bbox.maxY - main.bbox.minY == 20 && main.bbox.maxY == 11, "main cave box 30 x 20 x 30 ending at y + 11");
-    ctx.check(types["gloamingforest:TFTCVa"] == 1, "one troll vault (" + describe(types) + ")");
-    ctx.check(types["gloamingforest:TFTCCon"] >= 1, "connecting caves");
+    ctx.check(types["gloamingforest:GloamingTCVa"] == 1, "one troll vault (" + describe(types) + ")");
+    ctx.check(types["gloamingforest:GloamingTCCon"] >= 1, "connecting caves");
     for (auto const& p : pieces) {
-        if (p->typeId == "gloamingforest:TFTCVa") {
+        if (p->typeId == "gloamingforest:GloamingTCVa") {
             ctx.check(p->bbox.maxX - p->bbox.minX == 12 && ((p->bbox.minX + 8) & 3) == 0, "the vault is 13 wide, aligned to 4");
             ctx.check(static_cast<st::bases::Component&>(*p).getSpawnIndex() == -1, "no controlled spawns in the vault");
         }
@@ -211,7 +211,7 @@ GF_REGISTER_SELFTEST("caves.troll_cave_hash", [](Context& ctx) {
     ctx.check(mem.count("minecraft:air") > 10000, "hollowed caves");
     ctx.check(mem.count("gloamingforest:trollsteinn") > 0, "trollsteinn on the cave walls: " + std::to_string(mem.count("gloamingforest:trollsteinn")));
     for (auto const& p : pieces)
-        if (p->typeId == "gloamingforest:TFTCVa") {
+        if (p->typeId == "gloamingforest:GloamingTCVa") {
             ctx.check(mem.idAt(p->getWorldPos(5, 5, 5)) == "minecraft:cobblestone", "the cobblestone platform");
             ctx.check(mem.idAt(p->getWorldPos(5, 6, 5)) == "minecraft:chest", "the vault chest");
         }
@@ -224,7 +224,7 @@ GF_REGISTER_SELFTEST("caves.cloud_castle_hash", [](Context& ctx) {
     pieces.push_back(std::make_unique<CloudCastle>(0, 1000, 160, -2000));
     pieces.front()->addChildren(*pieces.front(), pieces, rand);
     auto types = typesOf(pieces);
-    ctx.check(types["gloamingforest:TFCloud"] == 1 && types["gloamingforest:TFClTr"] == 2, "a cloud and two cloud trees (" + describe(types) + ")");
+    ctx.check(types["gloamingforest:GloamingCloud"] == 1 && types["gloamingforest:GloamingClTr"] == 2, "a cloud and two cloud trees (" + describe(types) + ")");
     MemoryRegion mem(-64);
     generate(pieces, mem);
     auto const& castle = *pieces.front();
@@ -241,7 +241,7 @@ GF_REGISTER_SELFTEST("caves.cloud_castle_hash", [](Context& ctx) {
 GF_REGISTER_SELFTEST("caves.yeti_cave_hash", [](Context& ctx) {
     PieceList pieces;
     layoutYetiCave(64, 0, 64, pieces);
-    ctx.require(pieces.size() == 1 && pieces.front()->typeId == "gloamingforest:TFYeti", "one yeti cave piece");
+    ctx.require(pieces.size() == 1 && pieces.front()->typeId == "gloamingforest:GloamingYeti", "one yeti cave piece");
     auto& yeti = static_cast<YetiCave&>(*pieces.front());
     // HollowHillComponent(size 2) at y + 4, its box lowered by one
     ctx.check(yeti.bbox.maxX - yeti.bbox.minX == 68, "hill radius 34");

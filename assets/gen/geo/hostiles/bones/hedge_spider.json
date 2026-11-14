@@ -3,13 +3,13 @@
   "geometry": "geometry.spider.v1.8",
   "layer": {
     "name": "hedge_spider",
-    "field": "TFModelLayers.HEDGE_SPIDER",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.HEDGE_SPIDER, SpiderModel::createSpiderBodyLayer);"
+    "field": "GloamingModelLayers.HEDGE_SPIDER",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.HEDGE_SPIDER, SpiderModel::createSpiderBodyLayer);"
   },
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/hedgespider",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/hedgespider.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/hedgespider.png"
     }
   ]
 }

@@ -35,11 +35,11 @@
       },
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_lichdecor_black_candle_lit",
+          "texture": "gf_lichdecor_black_candle_lit",
           "render_method": "alpha_test"
         },
         "candle": {
-          "texture": "tf_lichdecor_black_candle_lit",
+          "texture": "gf_lichdecor_black_candle_lit",
           "render_method": "alpha_test"
         }
       },

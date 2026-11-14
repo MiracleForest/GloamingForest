@@ -1,6 +1,6 @@
 {
   "config.gloamingforest.boss_drop_chests": "보스 전리품 상자",
-  "config.gloamingforest.boss_drop_chests.tooltip": "값이 참이라면, 황혼의 숲의 보스는 전리품을 직접 떨어뜨리는 대신 원래 생성된 상자 안에 전리품을 넣습니다.\n유령 기사는 드랍 방식이 다르므로 영향을 받지 않습니다.",
+  "config.gloamingforest.boss_drop_chests.tooltip": "값이 참이라면, Gloaming Forest 보스는 전리품을 직접 떨어뜨리는 대신 원래 생성된 상자 안에 전리품을 넣습니다.\n유령 기사는 드랍 방식이 다르므로 영향을 받지 않습니다.",
   "config.gloamingforest.multiplayer_fight_adjuster": "멀티플레이어 싸움 조정자",
   "config.gloamingforest.multiplayer_fight_adjuster.more_health": "더 많은 체력",
   "config.gloamingforest.multiplayer_fight_adjuster.more_loot": "더 많은 전리품",

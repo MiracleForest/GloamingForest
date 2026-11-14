@@ -295,7 +295,7 @@ void drawPlacedUrGhast(r::RenderContext& ctx, BlockPos const& pos, Block const& 
 void drawGui(r::RenderContext& ctx, std::string const& boss) {
     auto head = headOf(boss);
     if (head.geo.empty()) return;
-    // TFConfig.rotateTrophyHeadsGui && !minecraft.isPaused() ? ClientGameEvents.time % 360 : -45
+    // GloamingConfig.rotateTrophyHeadsGui && !minecraft.isPaused() ? ClientGameEvents.time % 360 : -45
     auto* client = gf::client::currentClient();
     bool  paused = client && client->isShowingPauseScreen();
     float spin   = gf::config::get<fb::BuildingConfig>().rotateTrophyHeadsGui && !paused ? std::fmod(clientTicks(), 360.0f) : -45.0f;

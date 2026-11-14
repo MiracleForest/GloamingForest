@@ -1,12 +1,12 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/world/components/TFCavesCarver.java
-//   src/main/java/gloamingforest/init/TFCaveCarvers.java
+//   src/main/java/gloamingforest/world/components/GloamingCavesCarver.java
+//   src/main/java/gloamingforest/init/GloamingCaveCarvers.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// TFCavesCarver (gloamingforest:tf_caves and gloamingforest:highland_caves) with the parts of
+// GloamingCavesCarver (gloamingforest:gf_caves and gloamingforest:highland_caves) with the parts of
 // Minecraft 1.21.1's WorldCarver it inherits (carveEllipsoid, canReach) and CarvingContext#
 // topMaterial (the surface rules at the block below a carved surface). F5 calls a carver once per
 // source chunk within 8 chunks with setLargeFeatureSeed(seed + index, source); the context carries
@@ -83,7 +83,7 @@ std::uint16_t flagsOf(State const& s, Block const& b) {
 
 constexpr std::array<std::array<int, 3>, 6> kDirections{{{0, -1, 0}, {0, 1, 0}, {0, 0, -1}, {0, 0, 1}, {-1, 0, 0}, {1, 0, 0}}}; // DOWN UP NORTH SOUTH WEST EAST
 
-/// TFCavesCarver's wall providers (TFCaveCarvers): forest caves a NoiseProvider of dirts, highland
+/// GloamingCavesCarver's wall providers (GloamingCaveCarvers): forest caves a NoiseProvider of dirts, highland
 /// caves trollsteinn 1 / stone 3.
 Json const& wallProvider(bool highlands) {
     static Json const forest = [] {
@@ -200,7 +200,7 @@ struct Carver {
         return flag;
     }
 
-    // TFCavesCarver#carveBlock
+    // GloamingCavesCarver#carveBlock
     bool carveBlock(int x, int y, int z, bool& isSurface) const {
         std::uint16_t f = flags(x, y, z);
         if (f & kSurface) isSurface = true;
@@ -228,7 +228,7 @@ struct Carver {
         return true;
     }
 
-    // TFCavesCarver#postCarveBlock
+    // GloamingCavesCarver#postCarveBlock
     void postCarveBlock(int x, int y, int z, RandomSource& rand) const {
         for (std::size_t di = 0; di < kDirections.size(); ++di) {
             auto const& d  = kDirections[di];
@@ -311,7 +311,7 @@ struct Carver {
         }
     }
 
-    // TFCavesCarver#carve
+    // GloamingCavesCarver#carve
     void carve(RandomSource& random) const {
         int sx = ctx.sourceChunkX, sz = ctx.sourceChunkZ;
         if (highlands && (std::clamp(core::landmark::manhattanDistanceFromCenter(sx, sz), 0, 3) & 1) == 1) return;

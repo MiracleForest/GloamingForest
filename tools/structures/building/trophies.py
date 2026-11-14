@@ -199,7 +199,7 @@ def geometry_doc(geometries):
 
 
 def tex_key(path):
-    return "tf_building_" + path.split("/")[-1]
+    return "gf_building_" + path.split("/")[-1]
 
 
 def textures_of(base):
@@ -349,7 +349,7 @@ def item(boss):
             "components": {
                 # ISTER draws the head over the trophy type's backdrop sprite (item/trophy...): the
                 # backdrop is the icon, the client mod draws the head on it
-                "minecraft:icon": {"textures": {"default": "tf_building_item_" + BOSSES[boss]}},
+                "minecraft:icon": {"textures": {"default": "gf_building_item_" + BOSSES[boss]}},
                 "minecraft:display_name": {"value": "tile.gloamingforest:%s_trophy.name" % boss},
                 "minecraft:block_placer": {"block": NS + boss + "_trophy", "replace_block_item": True},
                 # AbstractTrophyBlock#getEquipmentSlot: HEAD
@@ -387,12 +387,12 @@ def outputs():
     # castle_rune_brick_0..7 (castleblock_magic_0..7, one picked per position) are the atlas entry's
     # variations, which Bedrock also picks per position
     for color, rgb in RUNE_COLORS.items():
-        terrain["tf_building_rune_" + color] = {"textures": {"variations": [
+        terrain["gf_building_rune_" + color] = {"textures": {"variations": [
             {"path": "textures/gloamingforest/block/castleblock_magic_%d" % i, "tint_color": rgb, "weight": 1} for i in range(8)]}}
     # upstream's random model variants as per-face texture variations (variants.py writes the rest)
     terrain.update(variants.terrain())
     files[OUT_TERRAIN] = dump(dict(sorted(terrain.items())))
-    items = {"tf_building_item_" + t: {"textures": "textures/gloamingforest/item/" + t} for t in sorted(set(BOSSES.values()))}
+    items = {"gf_building_item_" + t: {"textures": "textures/gloamingforest/item/" + t} for t in sorted(set(BOSSES.values()))}
     files[OUT_ITEM_TEX] = dump(items)
     return files
 

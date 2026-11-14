@@ -19,17 +19,17 @@
       "minecraft:geometry": "geometry.gloamingforest.building.fiery_block",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_fiery_block",
+          "texture": "gf_block_fiery_block",
           "render_method": "alpha_test"
         },
         "all": {
-          "texture": "tf_block_fiery_block_inner",
+          "texture": "gf_block_fiery_block_inner",
           "render_method": "alpha_test",
           "ambient_occlusion": 0,
           "face_dimming": false
         },
         "over": {
-          "texture": "tf_block_fiery_pattern",
+          "texture": "gf_block_fiery_pattern",
           "render_method": "alpha_test",
           "ambient_occlusion": 0,
           "face_dimming": false

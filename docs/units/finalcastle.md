@@ -6,7 +6,7 @@ cinder furnace, the gazebo's WIP texts).
 
 ## Audit round 1
 
-Checked against upstream 4.8 (CinderFurnaceBlock / CinderFurnaceBlockEntity, ForceFieldBlock, CastleDoorBlock, TFBlocks
+Checked against upstream 4.8 (CinderFurnaceBlock / CinderFurnaceBlockEntity, ForceFieldBlock, CastleDoorBlock, GloamingBlocks
 properties, FinalCastleBossGazeboComponent).
 
 Fixed:

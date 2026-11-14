@@ -17,31 +17,31 @@
       "minecraft:geometry": "minecraft:geometry.full_block",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_canopy_window",
+          "texture": "gf_block_canopy_window",
           "render_method": "alpha_test"
         },
         "up": {
-          "texture": "tf_block_canopy_window",
+          "texture": "gf_block_canopy_window",
           "render_method": "alpha_test"
         },
         "down": {
-          "texture": "tf_block_canopy_window",
+          "texture": "gf_block_canopy_window",
           "render_method": "alpha_test"
         },
         "north": {
-          "texture": "tf_block_canopy_window",
+          "texture": "gf_block_canopy_window",
           "render_method": "alpha_test"
         },
         "south": {
-          "texture": "tf_block_canopy_window",
+          "texture": "gf_block_canopy_window",
           "render_method": "alpha_test"
         },
         "east": {
-          "texture": "tf_block_canopy_window",
+          "texture": "gf_block_canopy_window",
           "render_method": "alpha_test"
         },
         "west": {
-          "texture": "tf_block_canopy_window",
+          "texture": "gf_block_canopy_window",
           "render_method": "alpha_test"
         }
       },

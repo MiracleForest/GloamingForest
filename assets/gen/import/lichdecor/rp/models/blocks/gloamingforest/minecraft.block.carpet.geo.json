@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.tf.minecraft.block.carpet",
+        "identifier": "geometry.gf.minecraft.block.carpet",
         "texture_width": 16,
         "texture_height": 16,
         "visible_bounds_width": 3,

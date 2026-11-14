@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.slime_beetle_tail",
   "layer": {
     "name": "slime_beetle_tail",
-    "field": "TFModelLayers.SLIME_BEETLE_TAIL",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.SLIME_BEETLE_TAIL, SlimeBeetleModel::checkForPack);"
+    "field": "GloamingModelLayers.SLIME_BEETLE_TAIL",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.SLIME_BEETLE_TAIL, SlimeBeetleModel::checkForPack);"
   },
   "texture_size": [64, 64],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/slimebeetle",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/slimebeetle.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/slimebeetle.png"
     }
   ],
   "bones": [

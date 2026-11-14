@@ -1,6 +1,6 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/world/components/structures/TFStructureComponentOld.java
+//   src/main/java/gloamingforest/world/components/structures/GloamingStructureComponentOld.java
 //   src/main/java/gloamingforest/world/components/structures/GloamingJigsawPiece.java
 //   src/main/java/gloamingforest/world/components/structures/HedgeMazeComponent.java
 //   src/main/java/gloamingforest/world/components/structures/lichtower/TowerMainComponent.java
@@ -11,7 +11,7 @@
 //   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleDungeonRoom31Component.java
 //   src/main/java/gloamingforest/world/components/structures/courtyard/CourtyardTerrace.java
 //   src/main/java/gloamingforest/world/components/structures/lichtowerrevamp/*.java
-//   src/main/java/gloamingforest/init/TFStructurePieceTypes.java
+//   src/main/java/gloamingforest/init/GloamingStructurePieceTypes.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -33,7 +33,7 @@ std::string lower(std::string s) {
 /// How an upstream piece type answers the beardifier.
 enum class Rule {
     Plain,        ///< a plain StructurePiece / TemplateStructurePiece: the structure's adaptation
-    OldNone,      ///< TFStructureComponentOld's default: NONE
+    OldNone,      ///< GloamingStructureComponentOld's default: NONE
     BeardBox0,    ///< BEARD_BOX, ground delta 0 (HedgeMazeComponent)
     BeardBox1,    ///< BEARD_BOX, ground delta 1 (TowerWingComponent's delta: TowerMain, DarkTowerEntrance; lich tower base, trim, foyer, grave)
     BeardBox2,    ///< BEARD_BOX, ground delta 2 (LichPerimeterFence)
@@ -52,34 +52,34 @@ std::unordered_map<std::string, Rule> const& rules() {
             for (auto const* id : ids) m.emplace(id, rule);
         };
         // plain pieces (no PieceBeardifierModifier, no PoolElementStructurePiece)
-        add(Rule::Plain, {"tfquest1", "tffallentrunk", "tfutilitypiece", "tfhtlb", "tfhtmb", "tfhtsb", "tfhttr", "tfhtro", "tfhtld", "tfncmn", "tfnccp", "tfnccpp",
-                          "tfnccr", "tfncln", "tfnct", "tfncis", "tfncpd", "tfncpa", "tfncwl", "tfncwp", "tfncwc", "tfncwa", "tfcloud"});
-        // TFStructureComponentOld subclasses without an override: NONE
+        add(Rule::Plain, {"gloamingquest1", "gloamingfallentrunk", "gloamingutilitypiece", "gloaminghtlb", "gloaminghtmb", "gloaminghtsb", "gloaminghttr", "gloaminghtro", "gloaminghtld", "gloamingncmn", "gloamingnccp", "gloamingnccpp",
+                          "gloamingnccr", "gloamingncln", "gloamingnct", "gloamingncis", "gloamingncpd", "gloamingncpa", "gloamingncwl", "gloamingncwp", "gloamingncwc", "gloamingncwa", "gloamingcloud"});
+        // GloamingStructureComponentOld subclasses without an override: NONE
         add(Rule::OldNone,
-            {"tfhill",     "tfhydra",    "tfyeti",     "tfmtmai",   "tfmtwin",    "tfmtbri",   "tfmtmb",    "tfmtroofmush", "tfltbea",   "tfltba",    "tfltbri",
-             "tfltout",    "tfltroo",    "tfltras",    "tfltrf",    "tfltrgf",    "tfltrp",    "tfltrpo",   "tfltrs",       "tfltrsf",   "tfltrst",   "tfltrsto",
-             "tfltwin",    "tfmmc",      "tfmmcif",    "tfmmcr",    "tfmmcs",     "tfmmde",    "tfmmdec",   "tfmmdef",      "tfmmdefl",  "tfmmdep",   "tfmmder",
-             "tfmmdes",    "tfmmdet",    "tfmmdetrc",  "tfmmdetc",  "tfmmes",     "tfmmmound", "tfmmmr",    "tfmmr",        "tfmmrb",    "tfmmrc",    "tfmmre",
-             "tfmmrf",     "tfmmrsc",    "tfmmrv",     "tfmmruins", "tfmmue",     "tfmmaze",   "tfdtbal",   "tfdtbea",      "tfdtbb",    "tfdtbt",    "tfdtbri",
-             "tfdteb",     "tfdtmai",    "tfdtmb",     "tfdtroos",  "tfdtra",     "tfdtrc",    "tfdtrfp",   "tfdtrr",       "tfdtwin",   "tfitmai",   "tfitwin",
-             "tfitroof",   "tfitbea",    "tfitboss",   "tfitent",   "tfitbri",    "tfitst",    "tftcloud",  "tfclca",       "tfcltr",    "tftcva",    "tffcmain",
-             "tffcstto",   "tffclato",   "tffcmur",    "tffctof48", "tffcro48cr", "tffcbogaz", "tffcsito",  "tffcdunst",    "tffcdunbor", "tffcro9cr", "tffcro13cr",
-             "tffcro13con", "tffcro13pk", "tffcento",  "tffcensito", "tffcenboto", "tffcenst", "tffcbelto", "tffcbri",      "tffctof13", "tffcbef21", "tffcfth21",
-             "tffcdamt",   "tffcwrt",
+            {"gloaminghill",     "gloaminghydra",    "gloamingyeti",     "gloamingmtmai",   "gloamingmtwin",    "gloamingmtbri",   "gloamingmtmb",    "gloamingmtroofmush", "gloamingltbea",   "gloamingltba",    "gloamingltbri",
+             "gloamingltout",    "gloamingltroo",    "gloamingltras",    "gloamingltrf",    "gloamingltrgf",    "gloamingltrp",    "gloamingltrpo",   "gloamingltrs",       "gloamingltrsf",   "gloamingltrst",   "gloamingltrsto",
+             "gloamingltwin",    "gloamingmmc",      "gloamingmmcif",    "gloamingmmcr",    "gloamingmmcs",     "gloamingmmde",    "gloamingmmdec",   "gloamingmmdef",      "gloamingmmdefl",  "gloamingmmdep",   "gloamingmmder",
+             "gloamingmmdes",    "gloamingmmdet",    "gloamingmmdetrc",  "gloamingmmdetc",  "gloamingmmes",     "gloamingmmmound", "gloamingmmmr",    "gloamingmmr",        "gloamingmmrb",    "gloamingmmrc",    "gloamingmmre",
+             "gloamingmmrf",     "gloamingmmrsc",    "gloamingmmrv",     "gloamingmmruins", "gloamingmmue",     "gloamingmmaze",   "gloamingdtbal",   "gloamingdtbea",      "gloamingdtbb",    "gloamingdtbt",    "gloamingdtbri",
+             "gloamingdteb",     "gloamingdtmai",    "gloamingdtmb",     "gloamingdtroos",  "gloamingdtra",     "gloamingdtrc",    "gloamingdtrfp",   "gloamingdtrr",       "gloamingdtwin",   "gloamingitmai",   "gloamingitwin",
+             "gloamingitroof",   "gloamingitbea",    "gloamingitboss",   "gloamingitent",   "gloamingitbri",    "gloamingitst",    "gloamingtcloud",  "gloamingclca",       "gloamingcltr",    "gloamingtcva",    "gloamingfcmain",
+             "gloamingfcstto",   "gloamingfclato",   "gloamingfcmur",    "gloamingfctof48", "gloamingfcro48cr", "gloamingfcbogaz", "gloamingfcsito",  "gloamingfcdunst",    "gloamingfcdunbor", "gloamingfcro9cr", "gloamingfcro13cr",
+             "gloamingfcro13con", "gloamingfcro13pk", "gloamingfcento",  "gloamingfcensito", "gloamingfcenboto", "gloamingfcenst", "gloamingfcbelto", "gloamingfcbri",      "gloamingfctof13", "gloamingfcbef21", "gloamingfcfth21",
+             "gloamingfcdamt",   "gloamingfcwrt",
              // KnightStrongholdComponent#getTerrainAdjustment: isComponentProtected() ? BURY : NONE;
              // these six answer isComponentProtected() = false
-             "tfsac", "tfsua", "tfsult", "tfsurt", "tfsuco", "tfsuti"});
-        add(Rule::BeardBox0, {"tfhedge"});
-        add(Rule::BeardBox1, {"tfltmai", "tfdtent", "tflttfoy", "tfltctbase", "tfltcttrim", "tfltgrave"});
-        add(Rule::BeardBox2, {"tfltfence"});
-        add(Rule::BeardBox3, {"tfncte", "tfnche"});
-        add(Rule::Bury, {"tfssh", "tfslt", "tfscr", "tfsrt", "tfsde", "tfsbalr", "tfstr", "tfsss", "tfstc", "tfsat", "tfsfo", "tftrear", "tfsbr", "tfsenter", "tfsshield",
-                         "tftcmai", "tftccon", "tftcgard", "tffcdunr31", "tffcdunen", "tffcdunex"});
-        add(Rule::ModifierNone, {"tfltctseg", "tfltmobbridge", "tfltbridge", "tflttroof", "tflttroom", "tflttdecor", "tflttgallery", "tflttfoyd", "tflttboss",
-                                 "tflttbossroof", "tfltlight"});
-        add(Rule::Jigsaw, {"tfjigsawtemplate"});
-        add(Rule::WingBeard, {"tflttbeard"});
-        add(Rule::YardBox, {"tfltpath"});
+             "gloamingsac", "gloamingsua", "gloamingsult", "gloamingsurt", "gloamingsuco", "gloamingsuti"});
+        add(Rule::BeardBox0, {"gloaminghedge"});
+        add(Rule::BeardBox1, {"gloamingltmai", "gloamingdtent", "gloaminglttfoy", "gloamingltctbase", "gloamingltcttrim", "gloamingltgrave"});
+        add(Rule::BeardBox2, {"gloamingltfence"});
+        add(Rule::BeardBox3, {"gloamingncte", "gloamingnche"});
+        add(Rule::Bury, {"gloamingssh", "gloamingslt", "gloamingscr", "gloamingsrt", "gloamingsde", "gloamingsbalr", "gloamingstr", "gloamingsss", "gloamingstc", "gloamingsat", "gloamingsfo", "gloamingtrear", "gloamingsbr", "gloamingsenter", "gloamingsshield",
+                         "gloamingtcmai", "gloamingtccon", "gloamingtcgard", "gloamingfcdunr31", "gloamingfcdunen", "gloamingfcdunex"});
+        add(Rule::ModifierNone, {"gloamingltctseg", "gloamingltmobbridge", "gloamingltbridge", "gloaminglttroof", "gloaminglttroom", "gloaminglttdecor", "gloaminglttgallery", "gloaminglttfoyd", "gloaminglttboss",
+                                 "gloaminglttbossroof", "gloamingltlight"});
+        add(Rule::Jigsaw, {"gloamingjigsawtemplate"});
+        add(Rule::WingBeard, {"gloaminglttbeard"});
+        add(Rule::YardBox, {"gloamingltpath"});
         return m;
     }();
     return r;
@@ -146,7 +146,7 @@ bool isCloseToChunk(BlockBox const& b, int chunkX, int chunkZ, int distance) {
 
 TerrainAdjustment adjustmentOf(std::string const& name) { return core::landmark::terrainAdjustmentOf(lower(name)); }
 
-std::optional<PieceBeard> tfPieceBeard(std::string const& typeId, BlockBox const& box, nlohmann::json const& tag) {
+std::optional<PieceBeard> gloamingPieceBeard(std::string const& typeId, BlockBox const& box, nlohmann::json const& tag) {
     auto        colon = typeId.find(':');
     std::string ns    = colon == std::string::npos ? std::string("minecraft") : lower(typeId.substr(0, colon));
     if (ns != "gloamingforest") return std::nullopt;

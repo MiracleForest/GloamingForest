@@ -129,7 +129,7 @@ void restoreSkull(BlockSource& region, BlockPos const& pos, Block const& b, Skul
 /// EntityEvents#createSkullCandle: a vanilla candle on a vanilla head.
 ia::Result createSkullCandle(ia::UseOnContext const& c) {
     if (gf::config::get<LichdecorConfig>().disableSkullCandleCreation) return ia::Result::Pass;
-    int color = tfColorOfCandle(c.itemId);
+    int color = gloamingColorOfCandle(c.itemId);
     if (color < 0 || c.sneaking) return ia::Result::Pass;
     auto const* type = typeOfHead(c.blockId);
     if (!type) return ia::Result::Pass;
@@ -165,7 +165,7 @@ ia::Result useSkullCandle(ia::UseOnContext const& c) {
     int          candles = intStateOr(b, "candles", 1);
     Lighting     l       = lightingOf(b).value_or(Lighting::None);
     // useItemOn: the same colour's candle adds one (not sneaking)
-    if (!c.itemId.empty() && c.itemId == candleOfTfColor(color) && !c.sneaking && candles < 4) {
+    if (!c.itemId.empty() && c.itemId == candleOfGloamingColor(color) && !c.sneaking && candles < 4) {
         if (!c.firstEvent) return ia::Result::Consume;
         setStates(*region, pos, b, Json{{"candles", candles + 1}});
         playSound(*region, centre(pos), "minecraft:block.candle.place", 1.0F, 1.0F);
@@ -195,7 +195,7 @@ ia::Result useSkullCandle(ia::UseOnContext const& c) {
         if (candles - 1 > 0) setStates(*region, pos, b, Json{{"candles", candles - 1}});
         else restoreSkull(*region, pos, b, *kind);
         playSound(*region, centre(pos), "minecraft:block.candle.break", 1.0F, 1.0F);
-        giveCandleBack(c.player, candleOfTfColor(color));
+        giveCandleBack(c.player, candleOfGloamingColor(color));
         return ia::Result::Consume;
     }
     return ia::Result::Pass;
@@ -302,7 +302,7 @@ void registerSkullCandles() {
             gf::item::setData(*stack, kDataComponent, Json{{"color", color}, {"count", candles}});
             *skull = *stack;
         } else if (candles > 0) {
-            if (auto st = game::items::make(candleOfTfColor(color), candles)) loot.push_back(*st);
+            if (auto st = game::items::make(candleOfGloamingColor(color), candles)) loot.push_back(*st);
         }
     });
 }

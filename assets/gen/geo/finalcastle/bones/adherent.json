@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.adherent",
   "layer": {
     "name": "adherent",
-    "field": "TFModelLayers.ADHERENT",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.ADHERENT, AdherentModel::create);"
+    "field": "GloamingModelLayers.ADHERENT",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.ADHERENT, AdherentModel::create);"
   },
   "texture_size": [64, 32],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/adherent",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/adherent.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/adherent.png"
     }
   ],
   "bones": [

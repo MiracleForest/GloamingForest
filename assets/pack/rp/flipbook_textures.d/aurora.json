@@ -1,7 +1,7 @@
 [
   {
     "flipbook_texture": "textures/gloamingforest/block/aurora_block_1",
-    "atlas_tile": "tf_block_aurora_block_1",
+    "atlas_tile": "gf_block_aurora_block_1",
     "ticks_per_frame": 4,
     "frames": [
       2,
@@ -39,7 +39,7 @@
   },
   {
     "flipbook_texture": "textures/gloamingforest/block/aurora_block_2",
-    "atlas_tile": "tf_block_aurora_block_2",
+    "atlas_tile": "gf_block_aurora_block_2",
     "ticks_per_frame": 4,
     "frames": [
       4,
@@ -77,7 +77,7 @@
   },
   {
     "flipbook_texture": "textures/gloamingforest/block/aurora_block_3",
-    "atlas_tile": "tf_block_aurora_block_3",
+    "atlas_tile": "gf_block_aurora_block_3",
     "ticks_per_frame": 4,
     "frames": [
       6,
@@ -115,7 +115,7 @@
   },
   {
     "flipbook_texture": "textures/gloamingforest/block/aurora_block_4",
-    "atlas_tile": "tf_block_aurora_block_4",
+    "atlas_tile": "gf_block_aurora_block_4",
     "ticks_per_frame": 4,
     "frames": [
       8,
@@ -153,7 +153,7 @@
   },
   {
     "flipbook_texture": "textures/gloamingforest/block/aurora_block_5",
-    "atlas_tile": "tf_block_aurora_block_5",
+    "atlas_tile": "gf_block_aurora_block_5",
     "ticks_per_frame": 4,
     "frames": [
       10,
@@ -191,7 +191,7 @@
   },
   {
     "flipbook_texture": "textures/gloamingforest/block/aurora_block_6",
-    "atlas_tile": "tf_block_aurora_block_6",
+    "atlas_tile": "gf_block_aurora_block_6",
     "ticks_per_frame": 4,
     "frames": [
       12,
@@ -229,7 +229,7 @@
   },
   {
     "flipbook_texture": "textures/gloamingforest/block/aurora_block_7",
-    "atlas_tile": "tf_block_aurora_block_7",
+    "atlas_tile": "gf_block_aurora_block_7",
     "ticks_per_frame": 4,
     "frames": [
       14,
@@ -267,7 +267,7 @@
   },
   {
     "flipbook_texture": "textures/gloamingforest/block/aurora_block_8",
-    "atlas_tile": "tf_block_aurora_block_8",
+    "atlas_tile": "gf_block_aurora_block_8",
     "ticks_per_frame": 4,
     "frames": [
       14,
@@ -305,7 +305,7 @@
   },
   {
     "flipbook_texture": "textures/gloamingforest/block/aurora_block_9",
-    "atlas_tile": "tf_block_aurora_block_9",
+    "atlas_tile": "gf_block_aurora_block_9",
     "ticks_per_frame": 4,
     "frames": [
       12,
@@ -343,7 +343,7 @@
   },
   {
     "flipbook_texture": "textures/gloamingforest/block/aurora_block_10",
-    "atlas_tile": "tf_block_aurora_block_10",
+    "atlas_tile": "gf_block_aurora_block_10",
     "ticks_per_frame": 4,
     "frames": [
       10,
@@ -381,7 +381,7 @@
   },
   {
     "flipbook_texture": "textures/gloamingforest/block/aurora_block_11",
-    "atlas_tile": "tf_block_aurora_block_11",
+    "atlas_tile": "gf_block_aurora_block_11",
     "ticks_per_frame": 4,
     "frames": [
       8,
@@ -419,7 +419,7 @@
   },
   {
     "flipbook_texture": "textures/gloamingforest/block/aurora_block_12",
-    "atlas_tile": "tf_block_aurora_block_12",
+    "atlas_tile": "gf_block_aurora_block_12",
     "ticks_per_frame": 4,
     "frames": [
       6,
@@ -457,7 +457,7 @@
   },
   {
     "flipbook_texture": "textures/gloamingforest/block/aurora_block_13",
-    "atlas_tile": "tf_block_aurora_block_13",
+    "atlas_tile": "gf_block_aurora_block_13",
     "ticks_per_frame": 4,
     "frames": [
       4,
@@ -495,7 +495,7 @@
   },
   {
     "flipbook_texture": "textures/gloamingforest/block/aurora_block_14",
-    "atlas_tile": "tf_block_aurora_block_14",
+    "atlas_tile": "gf_block_aurora_block_14",
     "ticks_per_frame": 4,
     "frames": [
       2,
@@ -533,7 +533,7 @@
   },
   {
     "flipbook_texture": "textures/gloamingforest/block/aurora_block_15",
-    "atlas_tile": "tf_block_aurora_block_15",
+    "atlas_tile": "gf_block_aurora_block_15",
     "ticks_per_frame": 4,
     "frames": [
       0,
@@ -570,8 +570,8 @@
     "blend_frames": true
   },
   {
-    "flipbook_texture": "textures/blocks/aurora/tf-derived/aurora_block_item",
-    "atlas_tile": "tf_aurora_item_block",
+    "flipbook_texture": "textures/blocks/aurora/upstream-derived/aurora_block_item",
+    "atlas_tile": "gf_aurora_item_block",
     "ticks_per_frame": 4,
     "frames": [
       0,
@@ -608,8 +608,8 @@
     "blend_frames": true
   },
   {
-    "flipbook_texture": "textures/blocks/aurora/tf-derived/aurora_block_baked_0",
-    "atlas_tile": "tf_aurora_baked_aurora_block_0",
+    "flipbook_texture": "textures/blocks/aurora/upstream-derived/aurora_block_baked_0",
+    "atlas_tile": "gf_aurora_baked_aurora_block_0",
     "ticks_per_frame": 4,
     "frames": [
       0,
@@ -646,8 +646,8 @@
     "blend_frames": true
   },
   {
-    "flipbook_texture": "textures/blocks/aurora/tf-derived/aurora_block_baked_1",
-    "atlas_tile": "tf_aurora_baked_aurora_block_1",
+    "flipbook_texture": "textures/blocks/aurora/upstream-derived/aurora_block_baked_1",
+    "atlas_tile": "gf_aurora_baked_aurora_block_1",
     "ticks_per_frame": 4,
     "frames": [
       2,
@@ -684,8 +684,8 @@
     "blend_frames": true
   },
   {
-    "flipbook_texture": "textures/blocks/aurora/tf-derived/aurora_block_baked_2",
-    "atlas_tile": "tf_aurora_baked_aurora_block_2",
+    "flipbook_texture": "textures/blocks/aurora/upstream-derived/aurora_block_baked_2",
+    "atlas_tile": "gf_aurora_baked_aurora_block_2",
     "ticks_per_frame": 4,
     "frames": [
       4,
@@ -722,8 +722,8 @@
     "blend_frames": true
   },
   {
-    "flipbook_texture": "textures/blocks/aurora/tf-derived/aurora_block_baked_3",
-    "atlas_tile": "tf_aurora_baked_aurora_block_3",
+    "flipbook_texture": "textures/blocks/aurora/upstream-derived/aurora_block_baked_3",
+    "atlas_tile": "gf_aurora_baked_aurora_block_3",
     "ticks_per_frame": 4,
     "frames": [
       6,
@@ -760,8 +760,8 @@
     "blend_frames": true
   },
   {
-    "flipbook_texture": "textures/blocks/aurora/tf-derived/aurora_block_baked_4",
-    "atlas_tile": "tf_aurora_baked_aurora_block_4",
+    "flipbook_texture": "textures/blocks/aurora/upstream-derived/aurora_block_baked_4",
+    "atlas_tile": "gf_aurora_baked_aurora_block_4",
     "ticks_per_frame": 4,
     "frames": [
       8,
@@ -798,8 +798,8 @@
     "blend_frames": true
   },
   {
-    "flipbook_texture": "textures/blocks/aurora/tf-derived/aurora_block_baked_5",
-    "atlas_tile": "tf_aurora_baked_aurora_block_5",
+    "flipbook_texture": "textures/blocks/aurora/upstream-derived/aurora_block_baked_5",
+    "atlas_tile": "gf_aurora_baked_aurora_block_5",
     "ticks_per_frame": 4,
     "frames": [
       10,
@@ -836,8 +836,8 @@
     "blend_frames": true
   },
   {
-    "flipbook_texture": "textures/blocks/aurora/tf-derived/aurora_block_baked_6",
-    "atlas_tile": "tf_aurora_baked_aurora_block_6",
+    "flipbook_texture": "textures/blocks/aurora/upstream-derived/aurora_block_baked_6",
+    "atlas_tile": "gf_aurora_baked_aurora_block_6",
     "ticks_per_frame": 4,
     "frames": [
       12,
@@ -874,8 +874,8 @@
     "blend_frames": true
   },
   {
-    "flipbook_texture": "textures/blocks/aurora/tf-derived/aurora_block_baked_7",
-    "atlas_tile": "tf_aurora_baked_aurora_block_7",
+    "flipbook_texture": "textures/blocks/aurora/upstream-derived/aurora_block_baked_7",
+    "atlas_tile": "gf_aurora_baked_aurora_block_7",
     "ticks_per_frame": 4,
     "frames": [
       14,
@@ -912,8 +912,8 @@
     "blend_frames": true
   },
   {
-    "flipbook_texture": "textures/blocks/aurora/tf-derived/aurora_block_baked_8",
-    "atlas_tile": "tf_aurora_baked_aurora_block_8",
+    "flipbook_texture": "textures/blocks/aurora/upstream-derived/aurora_block_baked_8",
+    "atlas_tile": "gf_aurora_baked_aurora_block_8",
     "ticks_per_frame": 4,
     "frames": [
       14,
@@ -950,8 +950,8 @@
     "blend_frames": true
   },
   {
-    "flipbook_texture": "textures/blocks/aurora/tf-derived/aurora_block_baked_9",
-    "atlas_tile": "tf_aurora_baked_aurora_block_9",
+    "flipbook_texture": "textures/blocks/aurora/upstream-derived/aurora_block_baked_9",
+    "atlas_tile": "gf_aurora_baked_aurora_block_9",
     "ticks_per_frame": 4,
     "frames": [
       12,
@@ -988,8 +988,8 @@
     "blend_frames": true
   },
   {
-    "flipbook_texture": "textures/blocks/aurora/tf-derived/aurora_block_baked_10",
-    "atlas_tile": "tf_aurora_baked_aurora_block_10",
+    "flipbook_texture": "textures/blocks/aurora/upstream-derived/aurora_block_baked_10",
+    "atlas_tile": "gf_aurora_baked_aurora_block_10",
     "ticks_per_frame": 4,
     "frames": [
       10,
@@ -1026,8 +1026,8 @@
     "blend_frames": true
   },
   {
-    "flipbook_texture": "textures/blocks/aurora/tf-derived/aurora_block_baked_11",
-    "atlas_tile": "tf_aurora_baked_aurora_block_11",
+    "flipbook_texture": "textures/blocks/aurora/upstream-derived/aurora_block_baked_11",
+    "atlas_tile": "gf_aurora_baked_aurora_block_11",
     "ticks_per_frame": 4,
     "frames": [
       8,
@@ -1064,8 +1064,8 @@
     "blend_frames": true
   },
   {
-    "flipbook_texture": "textures/blocks/aurora/tf-derived/aurora_block_baked_12",
-    "atlas_tile": "tf_aurora_baked_aurora_block_12",
+    "flipbook_texture": "textures/blocks/aurora/upstream-derived/aurora_block_baked_12",
+    "atlas_tile": "gf_aurora_baked_aurora_block_12",
     "ticks_per_frame": 4,
     "frames": [
       6,
@@ -1102,8 +1102,8 @@
     "blend_frames": true
   },
   {
-    "flipbook_texture": "textures/blocks/aurora/tf-derived/aurora_block_baked_13",
-    "atlas_tile": "tf_aurora_baked_aurora_block_13",
+    "flipbook_texture": "textures/blocks/aurora/upstream-derived/aurora_block_baked_13",
+    "atlas_tile": "gf_aurora_baked_aurora_block_13",
     "ticks_per_frame": 4,
     "frames": [
       4,
@@ -1140,8 +1140,8 @@
     "blend_frames": true
   },
   {
-    "flipbook_texture": "textures/blocks/aurora/tf-derived/aurora_block_baked_14",
-    "atlas_tile": "tf_aurora_baked_aurora_block_14",
+    "flipbook_texture": "textures/blocks/aurora/upstream-derived/aurora_block_baked_14",
+    "atlas_tile": "gf_aurora_baked_aurora_block_14",
     "ticks_per_frame": 4,
     "frames": [
       2,
@@ -1178,8 +1178,8 @@
     "blend_frames": true
   },
   {
-    "flipbook_texture": "textures/blocks/aurora/tf-derived/aurora_block_baked_15",
-    "atlas_tile": "tf_aurora_baked_aurora_block_15",
+    "flipbook_texture": "textures/blocks/aurora/upstream-derived/aurora_block_baked_15",
+    "atlas_tile": "gf_aurora_baked_aurora_block_15",
     "ticks_per_frame": 4,
     "frames": [
       0,

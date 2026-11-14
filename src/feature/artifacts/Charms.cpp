@@ -1,7 +1,7 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
 //   src/main/java/gloamingforest/events/CharmEvents.java
-//   src/main/java/gloamingforest/util/TFItemStackUtils.java
+//   src/main/java/gloamingforest/util/GloamingItemStackUtils.java
 //   src/main/java/gloamingforest/entity/CharmEffect.java
 //   src/main/java/gloamingforest/network/SpawnCharmPacket.java
 // Copyright (c) the upstream authors (see NOTICE).
@@ -13,7 +13,7 @@
 //   - the charms of keeping are the first keeper: the first stack a dying player's keepers see
 //     runs CharmEvents#handleCharmOfKeeping for the whole inventory (core/artifacts applyKeeping:
 //     the tiers, scopes and casket rules), takes the kept stacks out of their slots and stores them
-//     in "gf:artifacts:kept:<uuid>" (upstream's TFCharmInventory) with the consumed charm (CharmStack);
+//     in "gf:artifacts:kept:<uuid>" (upstream's GloamingCharmInventory) with the consumed charm (CharmStack);
 //     F10's lowest keeper then keeps #gloamingforest:kept_on_death as upstream does after the charm;
 //   - the remaining drops place the keepsake casket (stockKeepsakeCasket);
 //   - on respawn the stored stacks come back (loadNoClear: their slot when empty, else anywhere,
@@ -136,7 +136,7 @@ ca::Slot const& coreSlot(ca::Inventory const& inv, ca::SlotRef const& r) {
     return inv.offhand;
 }
 
-/// The kept record (upstream's TFCharmInventory + CharmStack).
+/// The kept record (upstream's GloamingCharmInventory + CharmStack).
 Json loadRecord(Player& p) {
     auto doc = game::db::get(keptKey(p));
     if (doc && doc->is_object()) return *doc;

@@ -12,7 +12,7 @@ U22 worker and the W2 audit (A3). Numbers are upstream's; "Bedrock:" paragraphs 
 | Config | section `lichdecor` (config_section `lichdecor`): `common.disableSkullCandleCreation` (default `false`, translation `disable_skull_candles`) |
 | Owned paths beyond R3 | `assets/structures/lich/rooms/**` (the lich tower room interiors; generator and template ids are U21's, see lich.md 4.3-4.4) |
 | Contracts | template (F7), families + blockevents (F11), blockdata + redstone (F0), inventory (F10), entity (F8), data, client.render (F12), interactions |
-| Java sources | `block/{LightableBlock,BrazierBlock,CandelabraBlock,ChiseledCanopyShelfBlock,AbstractSkullCandleBlock,SkullCandleBlock,WallSkullCandleBlock,OminousCandleBlock,OminousFireBlock,SinisterSpawnerBlock,SkullChestBlock,WroughtIronFenceBlock}.java`, `block/entity/{BrazierBlockEntity,CandelabraBlockEntity,OminousCandleBlockEntity,SkullCandleBlockEntity,SkullChestBlockEntity}.java`, `block/entity/bookshelf/*.java`, `block/entity/spawner/{SinisterSpawnerBlockEntity,SinisterSpawnerLogic}.java`, `components/item/{CandelabraData,SkullCandles}.java`, `entity/{MagicPainting,MagicPaintingVariant}.java`, `item/{MagicPaintingItem,SkullCandleItem,WroughtIronFenceItem}.java`, `enums/BrazierLight.java`, `events/EntityEvents.java` (`createSkullCandle`, `ominousFireConversion`, `zombifiedPlayerAttacks`, `attachLeadToWroughtFence`), `command/SinisterSpawnerCommand.java`, `init/{TFBlocks,TFItems,TFBlockEntities,TFDataComponents,TFDataSerializers,TFDataMaps,TFStats,TFParticleType,TFSounds}.java` |
+| Java sources | `block/{LightableBlock,BrazierBlock,CandelabraBlock,ChiseledCanopyShelfBlock,AbstractSkullCandleBlock,SkullCandleBlock,WallSkullCandleBlock,OminousCandleBlock,OminousFireBlock,SinisterSpawnerBlock,SkullChestBlock,WroughtIronFenceBlock}.java`, `block/entity/{BrazierBlockEntity,CandelabraBlockEntity,OminousCandleBlockEntity,SkullCandleBlockEntity,SkullChestBlockEntity}.java`, `block/entity/bookshelf/*.java`, `block/entity/spawner/{SinisterSpawnerBlockEntity,SinisterSpawnerLogic}.java`, `components/item/{CandelabraData,SkullCandles}.java`, `entity/{MagicPainting,MagicPaintingVariant}.java`, `item/{MagicPaintingItem,SkullCandleItem,WroughtIronFenceItem}.java`, `enums/BrazierLight.java`, `events/EntityEvents.java` (`createSkullCandle`, `ominousFireConversion`, `zombifiedPlayerAttacks`, `attachLeadToWroughtFence`), `command/SinisterSpawnerCommand.java`, `init/{GloamingBlocks,GloamingItems,GloamingBlockEntities,GloamingDataComponents,GloamingDataSerializers,GloamingDataMaps,GloamingStats,GloamingParticleType,GloamingSounds}.java` |
 
 Not owned here: exanimate essence (U9), scepters (U9), the Lich's candle-turning logic (U21 calls these blocks by
 id), keepsake casket (U9, which places a skull chest at casket damage >= 2), canopy wood set (U4).
@@ -180,8 +180,8 @@ Vanilla chiseled-bookshelf behaviour (6 book slots, `#minecraft:bookshelf_books`
 - Recipe `gloamingforest:wrought_iron_fence` (shaped `###/###` of `#c:ingots/wrought_iron`) -> 3 fences; unlock
   `gloamingforest:recipes/decorations/wrought_iron_fence`. Loot `gloamingforest:blocks/wrought_iron_fence`: itself.
 - `gloamingforest:wrought_iron_bar` ("Wrought Iron Bar"): plain item, the only upstream member of `#c:ingots/wrought_iron`;
-  creative/commands only: upstream 4.8 has no recipe and no loot table that yields it (it appears only in `TFItems`, the
-  item model, the `c:ingots/wrought_iron` tag, the lang files and `TFCreativeTabs`). The candelabra and wrought iron
+  creative/commands only: upstream 4.8 has no recipe and no loot table that yields it (it appears only in `GloamingItems`, the
+  item model, the `c:ingots/wrought_iron` tag, the lang files and `GloamingCreativeTabs`). The candelabra and wrought iron
   fence recipes are therefore effectively creative-only in upstream 4.8; keep it that way (no invented recipe or loot).
 - Bedrock: post (3) x four sides of 5 values (625) x waterlogged (2) = 3750 permutations is far over budget: store the side states as BlockData or
   compute the geometry client-side (F11 connected family); keep the state names for parity.
@@ -205,7 +205,7 @@ Vanilla chiseled-bookshelf behaviour (6 book slots, `#minecraft:bookshelf_books`
 - Lich tower rooms place it through `sinister_spawner[:mobs[:range[:scan]]]` with ominous flame particles and loot
   `gloamingforest:blocks/ominous_spawner_drops` (= one `gloamingforest:exanimate_essence`).
 - Subcommand **`/gloamingforest sinister_spawner`**, upstream's literal from
-  `command/SinisterSpawnerCommand.java:30-37`, chained directly below `/gloamingforest` by `TFCommand`. Owners rows
+  `command/SinisterSpawnerCommand.java:30-37`, chained directly below `/gloamingforest` by `GloamingCommand`. Owners rows
   (all U22): `subcommand sinister_spawner`, `sinister_spawner add_particle`, `sinister_spawner remove_particle`,
   `sinister_spawner set_loot`, `sinister_spawner clear_loot`. Permission level 2. The bare literal has no executor
   (incomplete command); the four children, with upstream's argument names and order:

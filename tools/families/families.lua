@@ -6,12 +6,12 @@
 --   src/main/java/gloamingforest/block/WallPillarBlock.java
 --   src/main/java/gloamingforest/block/ConnectableRotatedPillarBlock.java
 --   src/main/java/gloamingforest/block/SnowLoggable.java
---   src/main/java/gloamingforest/client/renderer/block/TFChestRenderer.java
+--   src/main/java/gloamingforest/client/renderer/block/GloamingChestRenderer.java
 --   src/main/java/gloamingforest/client/event/ColorHandler.java
---   src/main/java/gloamingforest/util/woods/TFWoodTypes.java
---   src/main/java/gloamingforest/init/TFSoundTypes.java
---   src/main/java/gloamingforest/init/TFSounds.java
---   src/main/java/gloamingforest/init/TFBlocks.java
+--   src/main/java/gloamingforest/util/woods/GloamingWoodTypes.java
+--   src/main/java/gloamingforest/init/GloamingSoundTypes.java
+--   src/main/java/gloamingforest/init/GloamingSounds.java
+--   src/main/java/gloamingforest/init/GloamingBlocks.java
 -- Copyright (c) the upstream authors (see NOTICE).
 -- Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 -- of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -410,7 +410,7 @@ end
 
 -- ---- upstream's data (generator side) ------------------------------------------------------------------
 
--- TFChestRenderer: the chest texture folder of each chest block
+-- GloamingChestRenderer: the chest texture folder of each chest block
 local CHEST_TEXTURE_DIRS = {
     gloaming_oak = "gloaming", canopy = "canopy", mangrove = "mangrove", dark = "darkwood",
     time = "time", transformation = "transformation", mining = "mining", sorting = "sorting",
@@ -438,7 +438,7 @@ local LEAF_COLORS = {
     ["gloamingforest:beanstalk_leaves"] = "#619961", ["gloamingforest:thorn_leaves"] = "#619961",
 }
 
--- The wood of a sign / chest (TFWoodTypes names: gloaming_oak, canopy, mangrove, dark, time,
+-- The wood of a sign / chest (GloamingWoodTypes names: gloaming_oak, canopy, mangrove, dark, time,
 -- transformation, mining, sorting): params.wood, F1's woodType ("canopy_wood_type"), or the id.
 local function wood_of(e)
     local p = e.params
@@ -1416,7 +1416,7 @@ behaviour.trapped_chest = function (doc, e)
     for n = 1, 15 do perm(doc, is(KIT .. "open_count", n), {["minecraft:redstone_producer"] = {power = n, strongly_powered_face = "down"}}) end
 end
 
--- horizontal (upstream TFHorizontalBlock, HorizontalDirectionalBlock): facing; the front (params
+-- horizontal (upstream GloamingHorizontalBlock, HorizontalDirectionalBlock): facing; the front (params
 -- textures.front) faces the facing. binary rotated (upstream BinaryRotatedBlock): rotated turns the
 -- model a quarter. directional (Java DirectionalBlock): facing of six; the front is up.
 visual.horizontal = function (doc, e, t)
@@ -1721,7 +1721,7 @@ modifiers.snowloggable = function (doc, e, t, ctx)
         comps(doc)["minecraft:material_instances"] = mi
     end
     -- the snow is part of the block's shape (SnowLoggable shapes). F1's skeleton of an upstream block has
-    -- Java's shape per state already (TFBushBlock.getShape / getCollisionShape with the snow of each
+    -- Java's shape per state already (GloamingBushBlock.getShape / getCollisionShape with the snow of each
     -- layer count, per age): those stay, the kit's layer boxes would override them
     for _, p in ipairs(block_of(doc).permutations or {}) do
         local c = p.components or {}
@@ -1787,8 +1787,8 @@ local DEFAULT_SOUND = {
 
 -- Families whose Java class sets the sound type in its constructor, over the properties' one (and
 -- over the import's sound for the id): CeilingHangingSignBlock and WallHangingSignBlock call
--- properties.sound(woodType.hangingSignSoundType()), and upstream's wood types (TFWoodTypes: new
--- WoodType(name, set)) take WoodType's default SoundType.HANGING_SIGN, although TFBlocks copies the
+-- properties.sound(woodType.hangingSignSoundType()), and upstream's wood types (GloamingWoodTypes: new
+-- WoodType(name, set)) take WoodType's default SoundType.HANGING_SIGN, although GloamingBlocks copies the
 -- planks' properties (SoundType.WOOD) into them. A params.sound still wins.
 local FORCED_SOUND = {hanging_sign = "hanging_sign", wall_hanging_sign = "hanging_sign"}
 
@@ -2013,7 +2013,7 @@ end
 -- ---- generation ----------------------------------------------------------------------------------
 
 -- The entity textures of signs and chests (the assembled RP's upstream textures, registered in
--- terrain_texture.json under tf_entity_*), or the params' textures.
+-- terrain_texture.json under gf_entity_*), or the params' textures.
 local function entity_textures(g, rpdir, ctx)
     local function register(key, rel)
         ctx.terrain[key] = rel
@@ -2026,17 +2026,17 @@ local function entity_textures(g, rpdir, ctx)
     local shape = g.shape
     if shape == "sign" or shape == "wall_sign" then
         local w = wood_of({id = g.id, params = g.params})
-        t.entity = register("tf_entity_sign_" .. w, "textures/gloamingforest/entity/signs/" .. w)
+        t.entity = register("gf_entity_sign_" .. w, "textures/gloamingforest/entity/signs/" .. w)
     elseif shape == "hanging_sign" or shape == "wall_hanging_sign" then
         local w = wood_of({id = g.id, params = g.params})
-        t.entity = register("tf_entity_hanging_sign_" .. w, "textures/gloamingforest/entity/signs/hanging/" .. w)
+        t.entity = register("gf_entity_hanging_sign_" .. w, "textures/gloamingforest/entity/signs/hanging/" .. w)
     elseif shape == "chest" or shape == "trapped_chest" then
         local w = wood_of({id = g.id, params = g.params})
         local dir = CHEST_TEXTURE_DIRS[w] or w
         local trapped = shape == "trapped_chest"
         for _, k in ipairs({"single", "left", "right"}) do
             local name = trapped and (k == "single" and "trapped" or ("trapped_" .. k)) or k
-            t[k] = register("tf_entity_chest_" .. dir .. "_" .. name, "textures/gloamingforest/entity/chest/" .. dir .. "/" .. name)
+            t[k] = register("gf_entity_chest_" .. dir .. "_" .. name, "textures/gloamingforest/entity/chest/" .. dir .. "/" .. name)
         end
     end
     return t
@@ -2293,7 +2293,7 @@ local function generate_set(entries, bpdir, rpdir, opts, errors)
         if opts.strict_textures then table.insert(errors, "families: texture " .. m .. " is not in the resource pack") end
     end
     -- block sounds (RP blocks.json): the kit's default per family where the block has no sound yet.
-    -- An id that has one keeps it: upstream's sound types (the jars' gloamingforest.jar, TFSoundTypes) are
+    -- An id that has one keeps it: upstream's sound types (the jars' gloamingforest.jar, GloamingSoundTypes) are
     -- F1's import, its rp/blocks.d and rp/sounds.json.d fragments (block_sounds and the step, fall,
     -- jump and land interactive_sounds), except where the family's Java class sets the sound type
     -- itself (FORCED_SOUND: the hanging signs), which replaces the one their properties give (the

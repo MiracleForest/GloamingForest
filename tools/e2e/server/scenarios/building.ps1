@@ -23,5 +23,5 @@ if (-not (Get-ServerLog -Since $mark | Select-String -Pattern 'building: trophy 
 }
 if (-not (Get-ServerLog -Since $mark | Select-String -Pattern 'building: dispenser put gloamingforest:minoshroom_trophy on' -Quiet)) { throw 'the dispenser did not equip the trophy' }
 if (-not (Get-ServerLog -Since $mark | Select-String -Pattern 'building: rope at .* broke' -Quiet)) { throw 'no rope broke without support' }
-if (-not (Get-ServerLog -Since $mark | Select-String -Pattern 'building: the server''s loom crafted a banner with tf_naga' -Quiet)) { throw 'the server did not craft an upstream banner from a loom request' }
+if (-not (Get-ServerLog -Since $mark | Select-String -Pattern 'building: the server''s loom crafted a banner with gf_naga' -Quiet)) { throw 'the server did not craft an upstream banner from a loom request' }
 Write-Step "building selftests: pass=$($r.Pass)"

@@ -1,5 +1,5 @@
-commands.tffeature.structure.conquer.status=Structure conquer flag: %s
-commands.tffeature.structure.conquer.update=Structure conquer flag was %s, changing to %s
-commands.tffeature.structure.inside=You are in the structure for that feature
-commands.tffeature.structure.outside=You are not in the structure for that feature
-commands.tffeature.structure.required=You are not in a structure
+commands.gloamingfeature.structure.conquer.status=Structure conquer flag: %s
+commands.gloamingfeature.structure.conquer.update=Structure conquer flag was %s, changing to %s
+commands.gloamingfeature.structure.inside=You are in the structure for that feature
+commands.gloamingfeature.structure.outside=You are not in the structure for that feature
+commands.gloamingfeature.structure.required=You are not in a structure

@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.tf.gloamingforest.block.template_drying_rack",
+        "identifier": "geometry.gf.gloamingforest.block.template_drying_rack",
         "texture_width": 16,
         "texture_height": 16,
         "visible_bounds_width": 3,

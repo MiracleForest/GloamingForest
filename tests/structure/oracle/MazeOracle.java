@@ -1,13 +1,13 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/world/components/structures/TFMaze.java
+//   src/main/java/gloamingforest/world/components/structures/GloamingMaze.java
 //   src/main/java/gloamingforest/world/components/structures/HedgeMazeComponent.java
 //   src/main/java/gloamingforest/world/components/structures/minotaurmaze/MinotaurMazeComponent.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// Java oracle of tests/structure/MazeTest.cpp: TFMaze's grid code (verbatim apart from the
+// Java oracle of tests/structure/MazeTest.cpp: GloamingMaze's grid code (verbatim apart from the
 // Minecraft types: RandomSource -> java.util.Random, which LegacyRandomSource reproduces bit for
 // bit) driven like the labyrinth, the hedge maze and the dark tower drive it. Regenerate the
 // goldens with

@@ -3,13 +3,13 @@
   "geometry": "geometry.wolf",
   "layer": {
     "name": "mist_wolf",
-    "field": "TFModelLayers.MIST_WOLF",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.MIST_WOLF, () -> LayerDefinition.create(WolfModel.createMeshDefinition(CubeDeformation.NONE), 64, 32));"
+    "field": "GloamingModelLayers.MIST_WOLF",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.MIST_WOLF, () -> LayerDefinition.create(WolfModel.createMeshDefinition(CubeDeformation.NONE), 64, 32));"
   },
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/mistwolf",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/mistwolf.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/mistwolf.png"
     }
   ],
   "notes": ["Registered but unused: MistWolfRenderer bakes hostile_wolf."]

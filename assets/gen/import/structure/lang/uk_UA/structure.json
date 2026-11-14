@@ -1,11 +1,11 @@
 {
-  "commands.tffeature.display_pieces.missing_key": "відсутній ключ",
-  "commands.tffeature.structure.boundaries": "Межі структури: %s",
-  "commands.tffeature.structure.conquer.status": "Структура відмічена: %s",
-  "commands.tffeature.structure.conquer.update": "Відмітка структури %s, змінена на %s",
-  "commands.tffeature.structure.inside": "Ви перебуваєте в структурі орієнтира",
-  "commands.tffeature.structure.outside": "Ви не перебуваєте в структурі орієнтира",
-  "commands.tffeature.structure.required": "Ви не знаходитесь в структурі",
-  "commands.tffeature.structure.spawn_info": "%s, вага %s",
-  "commands.tffeature.structure.spawn_list": "Список появи для цієї области це:"
+  "commands.gloamingfeature.display_pieces.missing_key": "відсутній ключ",
+  "commands.gloamingfeature.structure.boundaries": "Межі структури: %s",
+  "commands.gloamingfeature.structure.conquer.status": "Структура відмічена: %s",
+  "commands.gloamingfeature.structure.conquer.update": "Відмітка структури %s, змінена на %s",
+  "commands.gloamingfeature.structure.inside": "Ви перебуваєте в структурі орієнтира",
+  "commands.gloamingfeature.structure.outside": "Ви не перебуваєте в структурі орієнтира",
+  "commands.gloamingfeature.structure.required": "Ви не знаходитесь в структурі",
+  "commands.gloamingfeature.structure.spawn_info": "%s, вага %s",
+  "commands.gloamingfeature.structure.spawn_list": "Список появи для цієї области це:"
 }

@@ -1,5 +1,5 @@
 config.gloamingforest.boss_drop_chests=Скрині здобичі босів
-config.gloamingforest.boss_drop_chests.tooltip=Якщо «УВІМК.», боси Сутінкового Лісу кладуть здобич у скриню, де вони спочатку з’явилися, замість того, щоби скидати здобич безпосередньо.~LINEBREAK~Зауважте, що це не впливає на фантомів лицаря, оскільки вони дії діють інакше.
+config.gloamingforest.boss_drop_chests.tooltip=Якщо «УВІМК.», боси Gloaming Forest кладуть здобич у скриню, де вони спочатку з’явилися, замість того, щоби скидати здобич безпосередньо.~LINEBREAK~Зауважте, що це не впливає на фантомів лицаря, оскільки вони дії діють інакше.
 config.gloamingforest.multiplayer_fight_adjuster=Налагоджувач бою гри в мережі
 config.gloamingforest.multiplayer_fight_adjuster.more_health=Більше здоров'я
 config.gloamingforest.multiplayer_fight_adjuster.more_loot=Більше здобичі

@@ -1,6 +1,6 @@
 [
-  { "flipbook_texture": "textures/blocks/trees/tf-derived/time_leaves_item", "atlas_tile": "tf_trees_time_leaves_item", "ticks_per_frame": 2 },
-  { "flipbook_texture": "textures/blocks/trees/tf-derived/transformation_leaves_item", "atlas_tile": "tf_trees_transformation_leaves_item", "ticks_per_frame": 2 },
-  { "flipbook_texture": "textures/blocks/trees/tf-derived/mining_leaves_item", "atlas_tile": "tf_trees_mining_leaves_item", "ticks_per_frame": 2 },
-  { "flipbook_texture": "textures/blocks/trees/tf-derived/sorting_leaves_item", "atlas_tile": "tf_trees_sorting_leaves_item", "ticks_per_frame": 2 }
+  { "flipbook_texture": "textures/blocks/trees/upstream-derived/time_leaves_item", "atlas_tile": "gf_trees_time_leaves_item", "ticks_per_frame": 2 },
+  { "flipbook_texture": "textures/blocks/trees/upstream-derived/transformation_leaves_item", "atlas_tile": "gf_trees_transformation_leaves_item", "ticks_per_frame": 2 },
+  { "flipbook_texture": "textures/blocks/trees/upstream-derived/mining_leaves_item", "atlas_tile": "gf_trees_mining_leaves_item", "ticks_per_frame": 2 },
+  { "flipbook_texture": "textures/blocks/trees/upstream-derived/sorting_leaves_item", "atlas_tile": "gf_trees_sorting_leaves_item", "ticks_per_frame": 2 }
 ]

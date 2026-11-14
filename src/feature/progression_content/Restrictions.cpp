@@ -9,7 +9,7 @@
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // Biome progression: on every server tick each player whose own tick counter is a multiple of 20
-// (ProgressionEvents), while tfEnforcedProgression is true and the player is neither creative nor
+// (ProgressionEvents), while gloamingEnforcedProgression is true and the player is neither creative nor
 // spectator, gets the enforcement of the restriction of the biome at its feet (unless it has the
 // restriction's advancements) and a hint for the restriction's structure
 // (StructureHints.tryHintForStructure: landmark::trySpawnHint, rate limited by F6). Each
@@ -104,7 +104,7 @@ void enforce(Player& player, cp::Restriction const& r, int tickCount) {
 /// player on the server, and the game's toast (text only: ToastRequestPacket has no icon).
 void tickVanillaToast(Player& player, int tickCount) {
     if (tickCount % 5 != 0 || net::isCompanion(player)) return;
-    if (!gamerules::getBool("tfEnforcedProgression") || player.isCreative() || player.isSpectator()) return;
+    if (!gamerules::getBool("gloamingEnforcedProgression") || player.isCreative() || player.isSpectator()) return;
     auto uuid  = uuidOf(player);
     auto biome = std::string{};
     {
@@ -147,7 +147,7 @@ void tickPlayer(Player& player) {
     int tickCount = player.mTickCount;
     tickVanillaToast(player, tickCount);
     if (!cp::outerGate(tickCount)) return;
-    if (!gamerules::getBool("tfEnforcedProgression") || player.isCreative() || player.isSpectator()) return;
+    if (!gamerules::getBool("gloamingEnforcedProgression") || player.isCreative() || player.isSpectator()) return;
     auto uuid  = uuidOf(player);
     auto biome = std::string{};
     {

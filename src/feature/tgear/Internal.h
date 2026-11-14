@@ -78,7 +78,7 @@ bool displaySlotClick(Player& player, std::string const& collection, int index);
 void openDisplayForm(Player& player);
 
 // ---- Module.cpp ----------------------------------------------------------------------------------------
-/// The game time of the wearer's last armour damage (TFDataAttachments.LAST_DAMAGE_ARMOR_TIME).
+/// The game time of the wearer's last armour damage (GloamingDataAttachments.LAST_DAMAGE_ARMOR_TIME).
 [[nodiscard]] std::int64_t lastArmorDamageTime(Actor const& wearer);
 void                       setLastArmorDamageTime(Actor const& wearer, std::int64_t time);
 /// Seeds the modifier rolls (selftests: perfect dodge, auto repair).
@@ -97,7 +97,7 @@ bool rollPerfectDodge(Actor& victim, Actor* projectile);
 void               setZoom(Player& player, bool zoom, float fov = 0.f);
 /// MultifaceBlock#canAttachTo: the neighbour on `face` (FacingID) of `pos` has a full face towards it.
 [[nodiscard]] bool canAttachRedThread(BlockSource& region, BlockPos const& pos, int face);
-/// TFDataAttachments.TRAVELLERS_GOGGLES_RED_THREAD_VISION of a player (default true, kept on death,
+/// GloamingDataAttachments.TRAVELLERS_GOGGLES_RED_THREAD_VISION of a player (default true, kept on death,
 /// stored in gf:tgear:red_thread_vision); the toggle needs the active modifier.
 [[nodiscard]] bool redThreadVision(Player const& player);
 bool               toggleRedThreadVision(Player& player);

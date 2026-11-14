@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_block_huge_lily_pad"
+          "default": "gf_block_huge_lily_pad"
         }
       },
       "minecraft:display_name": {

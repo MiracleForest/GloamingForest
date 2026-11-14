@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_block_hollow_oak_sapling"
+          "default": "gf_block_hollow_oak_sapling"
         }
       },
       "minecraft:display_name": {

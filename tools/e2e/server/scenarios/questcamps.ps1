@@ -3,7 +3,7 @@
 # the 57 original templates exists and keeps its golden volume hash (rule R19), the template
 # features' 15 x 15 limit and the graves' shared footprint, the ram taking each colour once (by hand)
 # and eating dropped wool, the reward (crumble horn and bundle, complete_quest_ram, the conquered
-# grove), the grove piece (TFQuest1: box, droppers, the ram with its home), a seeded camp's jigsaw
+# grove), the grove piece (GloamingQuest1: box, droppers, the ram with its home), a seeded camp's jigsaw
 # layout (start, tents, paths, decos without overlaps, golden layout hash) and the druid hut (markers,
 # basement), wells, graveyard (8 graves, wraiths) and ruins placed through their feature code.
 Wait-LogLine 'GloamingForest world ready' 120 | Out-Null

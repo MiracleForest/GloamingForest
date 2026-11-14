@@ -17,18 +17,18 @@
       "minecraft:light_emission": 15,
       "minecraft:map_color": "#007c00",
       "minecraft:collision_box": false,
-      "minecraft:geometry": "geometry.tf.gloamingforest.block.trollber",
+      "minecraft:geometry": "geometry.gf.gloamingforest.block.trollber",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_trollber",
+          "texture": "gf_block_trollber",
           "render_method": "alpha_test"
         },
         "cross": {
-          "texture": "tf_block_trollber",
+          "texture": "gf_block_trollber",
           "render_method": "alpha_test"
         },
         "cross2": {
-          "texture": "tf_block_trollber_glow",
+          "texture": "gf_block_trollber_glow",
           "render_method": "alpha_test"
         }
       },

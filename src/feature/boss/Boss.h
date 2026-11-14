@@ -4,7 +4,7 @@
 //
 // BaseTFBoss lifecycle for upstream's eight bosses: home structure, conquest of the landmark on death,
 // the 27-slot loot buffer deposited into a death chest (gf::inventory), peaceful difficulty
-// turning the boss back into its spawner, the RGB boss bar (TFBossBarPacket: exact colour with
+// turning the boss back into its spawner, the RGB boss bar (GloamingBossBarPacket: exact colour with
 // the client mod, nearest of the 8 BossBarColor values on vanilla clients), the generic boss
 // spawner block entity (range 9, particles, self-destruct), minions, the multiplayer health
 // adjuster and the trophy variant table (10 BossVariant rows). Config section "bosses"
@@ -29,7 +29,7 @@ class Player;
 namespace gf::boss {
 
 struct BarSpec {
-    unsigned rgb    = 0xFFFFFF; ///< 0xRRGGBB (TFBossBarPacket colour)
+    unsigned rgb    = 0xFFFFFF; ///< 0xRRGGBB (GloamingBossBarPacket colour)
     bool     darken = false;    ///< BossEvent#setDarkenScreen
     bool     fog    = false;    ///< BossEvent#setCreateWorldFog
 };

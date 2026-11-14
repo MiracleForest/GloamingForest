@@ -41,7 +41,7 @@
       "minecraft:geometry": "geometry.gloamingforest.keepsake_casket_block",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_artifacts_casket_0",
+          "texture": "gf_artifacts_casket_0",
           "render_method": "alpha_test"
         }
       },
@@ -77,7 +77,7 @@
         "components": {
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_artifacts_casket_1",
+              "texture": "gf_artifacts_casket_1",
               "render_method": "alpha_test"
             }
           }
@@ -88,7 +88,7 @@
         "components": {
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_artifacts_casket_2",
+              "texture": "gf_artifacts_casket_2",
               "render_method": "alpha_test"
             }
           }
@@ -145,18 +145,18 @@
       {
         "condition": "q.block_state('gloamingforest:multilogged') == 'obsidian'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.casket_solid_template",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.casket_solid_template",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_obsidian",
+              "texture": "gf_vanilla_block_obsidian",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_vanilla_block_obsidian",
+              "texture": "gf_vanilla_block_obsidian",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_vanilla_block_obsidian",
+              "texture": "gf_vanilla_block_obsidian",
               "render_method": "opaque"
             }
           },
@@ -189,18 +189,18 @@
       {
         "condition": "q.block_state('gloamingforest:multilogged') == 'stone'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.casket_solid_template",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.casket_solid_template",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_stone",
+              "texture": "gf_vanilla_block_stone",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_vanilla_block_stone",
+              "texture": "gf_vanilla_block_stone",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_vanilla_block_stone",
+              "texture": "gf_vanilla_block_stone",
               "render_method": "opaque"
             }
           },
@@ -233,18 +233,18 @@
       {
         "condition": "q.block_state('gloamingforest:multilogged') == 'basalt'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.casket_solid_template",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.casket_solid_template",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_basalt_side",
+              "texture": "gf_vanilla_block_basalt_side",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_vanilla_block_basalt_side",
+              "texture": "gf_vanilla_block_basalt_side",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_vanilla_block_basalt_top",
+              "texture": "gf_vanilla_block_basalt_top",
               "render_method": "opaque"
             }
           },

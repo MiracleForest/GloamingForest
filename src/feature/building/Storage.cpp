@@ -100,7 +100,7 @@ BlockType const* applyBlockProperties() {
 void installStorage() {
     if (gInstalled) return;
     gInstalled = true;
-    // TFBlocks: the fiery block's item is rarity UNCOMMON (and fireResistant: its BP item's
+    // GloamingBlocks: the fiery block's item is rarity UNCOMMON (and fireResistant: its BP item's
     // minecraft:fire_resistant); the client mod colours its name
     item::ext::setRarity(kFiery, item::ext::Rarity::Uncommon);
     blockevents::onEntityInside(kKnightmetal, [](BlockSource&, BlockPos const&, Actor& entity) {

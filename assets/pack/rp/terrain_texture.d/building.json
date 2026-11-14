@@ -1,35 +1,35 @@
 {
-  "tf_building_hydra4": {
+  "gf_building_hydra4": {
     "textures": "textures/gloamingforest/entity/hydra4"
   },
-  "tf_building_icon_cracked_towerwood": {
+  "gf_building_icon_cracked_towerwood": {
     "textures": "textures/gloamingforest/block/cracked_towerwood"
   },
-  "tf_building_icon_mossy_towerwood": {
+  "gf_building_icon_mossy_towerwood": {
     "textures": "textures/gloamingforest/block/mossy_towerwood"
   },
-  "tf_building_icon_towerwood": {
+  "gf_building_icon_towerwood": {
     "textures": "textures/gloamingforest/block/towerwood"
   },
-  "tf_building_minoshroomtaur": {
+  "gf_building_minoshroomtaur": {
     "textures": "textures/gloamingforest/entity/minoshroomtaur"
   },
-  "tf_building_nagahead": {
+  "gf_building_nagahead": {
     "textures": "textures/gloamingforest/entity/nagahead"
   },
-  "tf_building_phantom_layer_1": {
+  "gf_building_phantom_layer_1": {
     "textures": "textures/gloamingforest/models/armor/phantom_layer_1"
   },
-  "tf_building_phantomskeleton": {
+  "gf_building_phantomskeleton": {
     "textures": "textures/gloamingforest/entity/phantomskeleton"
   },
-  "tf_building_questram": {
+  "gf_building_questram": {
     "textures": "textures/gloamingforest/entity/questram"
   },
-  "tf_building_questram_lines": {
+  "gf_building_questram_lines": {
     "textures": "textures/gloamingforest/entity/questram_lines"
   },
-  "tf_building_rune_blue": {
+  "gf_building_rune_blue": {
     "textures": {
       "variations": [
         {
@@ -75,7 +75,7 @@
       ]
     }
   },
-  "tf_building_rune_pink": {
+  "gf_building_rune_pink": {
     "textures": {
       "variations": [
         {
@@ -121,7 +121,7 @@
       ]
     }
   },
-  "tf_building_rune_violet": {
+  "gf_building_rune_violet": {
     "textures": {
       "variations": [
         {
@@ -167,7 +167,7 @@
       ]
     }
   },
-  "tf_building_rune_yellow": {
+  "gf_building_rune_yellow": {
     "textures": {
       "variations": [
         {
@@ -213,16 +213,16 @@
       ]
     }
   },
-  "tf_building_snowqueen": {
+  "gf_building_snowqueen": {
     "textures": "textures/gloamingforest/entity/snowqueen"
   },
-  "tf_building_towerboss": {
+  "gf_building_towerboss": {
     "textures": "textures/gloamingforest/entity/towerboss"
   },
-  "tf_building_gloaminglich64": {
+  "gf_building_gloaminglich64": {
     "textures": "textures/gloamingforest/entity/gloaminglich64"
   },
-  "tf_building_var_carminite_block_bottom": {
+  "gf_building_var_carminite_block_bottom": {
     "textures": {
       "variations": [
         {
@@ -230,23 +230,19 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r90",
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r90",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r270",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/carminite_block",
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r270",
           "weight": 1
         },
         {
@@ -254,21 +250,25 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r90",
+          "path": "textures/gloamingforest/block/carminite_block",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r90",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r270",
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r270",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_carminite_block_bottom2": {
+  "gf_building_var_carminite_block_bottom2": {
     "textures": {
       "variations": [
         {
@@ -276,23 +276,19 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r90",
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r90",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r270",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/carminite_block_overlay",
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r270",
           "weight": 1
         },
         {
@@ -300,113 +296,25 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r90",
+          "path": "textures/gloamingforest/block/carminite_block_overlay",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r90",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r270",
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r270",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_carminite_block_east": {
-    "textures": {
-      "variations": [
-        {
-          "path": "textures/gloamingforest/block/carminite_block",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/carminite_block",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/carminite_block",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r270",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r90",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/carminite_block",
-          "weight": 1
-        }
-      ]
-    }
-  },
-  "tf_building_var_carminite_block_east2": {
-    "textures": {
-      "variations": [
-        {
-          "path": "textures/gloamingforest/block/carminite_block_overlay",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/carminite_block_overlay",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/carminite_block_overlay",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r270",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r90",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/carminite_block_overlay",
-          "weight": 1
-        }
-      ]
-    }
-  },
-  "tf_building_var_carminite_block_north": {
+  "gf_building_var_carminite_block_east": {
     "textures": {
       "variations": [
         {
@@ -422,37 +330,37 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r270",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r90",
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r180",
           "weight": 1
         },
         {
           "path": "textures/gloamingforest/block/carminite_block",
           "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r90",
-          "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_carminite_block_north2": {
+  "gf_building_var_carminite_block_east2": {
     "textures": {
       "variations": [
         {
@@ -468,221 +376,37 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r270",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r90",
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r180",
           "weight": 1
         },
         {
           "path": "textures/gloamingforest/block/carminite_block_overlay",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r90",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_carminite_block_south": {
-    "textures": {
-      "variations": [
-        {
-          "path": "textures/gloamingforest/block/carminite_block",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/carminite_block",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/carminite_block",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/carminite_block",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r270",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r270",
-          "weight": 1
-        }
-      ]
-    }
-  },
-  "tf_building_var_carminite_block_south2": {
-    "textures": {
-      "variations": [
-        {
-          "path": "textures/gloamingforest/block/carminite_block_overlay",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/carminite_block_overlay",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/carminite_block_overlay",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/carminite_block_overlay",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r270",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r270",
-          "weight": 1
-        }
-      ]
-    }
-  },
-  "tf_building_var_carminite_block_top": {
-    "textures": {
-      "variations": [
-        {
-          "path": "textures/gloamingforest/block/carminite_block",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r270",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/carminite_block",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r270",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/carminite_block",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r270",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r270",
-          "weight": 1
-        }
-      ]
-    }
-  },
-  "tf_building_var_carminite_block_top2": {
-    "textures": {
-      "variations": [
-        {
-          "path": "textures/gloamingforest/block/carminite_block_overlay",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r270",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/carminite_block_overlay",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r270",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/carminite_block_overlay",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r270",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r270",
-          "weight": 1
-        }
-      ]
-    }
-  },
-  "tf_building_var_carminite_block_west": {
+  "gf_building_var_carminite_block_north": {
     "textures": {
       "variations": [
         {
@@ -698,7 +422,11 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r90",
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r90",
           "weight": 1
         },
         {
@@ -706,29 +434,25 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r270",
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_r180",
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r90",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_carminite_block_west2": {
+  "gf_building_var_carminite_block_north2": {
     "textures": {
       "variations": [
         {
@@ -744,7 +468,11 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r90",
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r90",
           "weight": 1
         },
         {
@@ -752,29 +480,301 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r270",
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/carminite_block_overlay_r180",
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r90",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_castle_roof_tile_down": {
+  "gf_building_var_carminite_block_south": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/gloamingforest/block/carminite_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/gloamingforest/block/carminite_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/gloamingforest/block/carminite_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/gloamingforest/block/carminite_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r270",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "gf_building_var_carminite_block_south2": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/gloamingforest/block/carminite_block_overlay",
+          "weight": 1
+        },
+        {
+          "path": "textures/gloamingforest/block/carminite_block_overlay",
+          "weight": 1
+        },
+        {
+          "path": "textures/gloamingforest/block/carminite_block_overlay",
+          "weight": 1
+        },
+        {
+          "path": "textures/gloamingforest/block/carminite_block_overlay",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r270",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "gf_building_var_carminite_block_top": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/gloamingforest/block/carminite_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/gloamingforest/block/carminite_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/gloamingforest/block/carminite_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r270",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "gf_building_var_carminite_block_top2": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/gloamingforest/block/carminite_block_overlay",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/gloamingforest/block/carminite_block_overlay",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/gloamingforest/block/carminite_block_overlay",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r270",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "gf_building_var_carminite_block_west": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/gloamingforest/block/carminite_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/gloamingforest/block/carminite_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/gloamingforest/block/carminite_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/gloamingforest/block/carminite_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_r180",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "gf_building_var_carminite_block_west2": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/gloamingforest/block/carminite_block_overlay",
+          "weight": 1
+        },
+        {
+          "path": "textures/gloamingforest/block/carminite_block_overlay",
+          "weight": 1
+        },
+        {
+          "path": "textures/gloamingforest/block/carminite_block_overlay",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/gloamingforest/block/carminite_block_overlay",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/carminite_block_overlay_r180",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "gf_building_var_castle_roof_tile_down": {
     "textures": {
       "variations": [
         {
@@ -782,23 +782,19 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r90",
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r90",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r270",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/castle_roof_tile",
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r270",
           "weight": 1
         },
         {
@@ -806,21 +802,25 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r90",
+          "path": "textures/gloamingforest/block/castle_roof_tile",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r90",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r270",
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r270",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_castle_roof_tile_east": {
+  "gf_building_var_castle_roof_tile_east": {
     "textures": {
       "variations": [
         {
@@ -836,27 +836,27 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r270",
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r270",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r90",
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r90",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r180",
           "weight": 1
         },
         {
@@ -866,7 +866,7 @@
       ]
     }
   },
-  "tf_building_var_castle_roof_tile_north": {
+  "gf_building_var_castle_roof_tile_north": {
     "textures": {
       "variations": [
         {
@@ -882,11 +882,11 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r90",
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r90",
           "weight": 1
         },
         {
@@ -894,25 +894,25 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r90",
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r90",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_castle_roof_tile_south": {
+  "gf_building_var_castle_roof_tile_south": {
     "textures": {
       "variations": [
         {
@@ -932,33 +932,33 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r270",
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r270",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r270",
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r270",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_castle_roof_tile_up": {
+  "gf_building_var_castle_roof_tile_up": {
     "textures": {
       "variations": [
         {
@@ -966,23 +966,11 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r270",
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r270",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/castle_roof_tile",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r270",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r180",
           "weight": 1
         },
         {
@@ -990,21 +978,33 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r270",
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r270",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r270",
+          "path": "textures/gloamingforest/block/castle_roof_tile",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r270",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_castle_roof_tile_west": {
+  "gf_building_var_castle_roof_tile_west": {
     "textures": {
       "variations": [
         {
@@ -1020,7 +1020,7 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r90",
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r90",
           "weight": 1
         },
         {
@@ -1028,29 +1028,29 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r270",
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r270",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/castle_roof_tile_r180",
+          "path": "textures/blocks/building/upstream-derived/castle_roof_tile_r180",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_cracked_deadrock_down": {
+  "gf_building_var_cracked_deadrock_down": {
     "textures": {
       "variations": [
         {
@@ -1058,23 +1058,19 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r90",
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r90",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r270",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/cracked_deadrock",
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r270",
           "weight": 1
         },
         {
@@ -1082,67 +1078,25 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r90",
+          "path": "textures/gloamingforest/block/cracked_deadrock",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r90",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r270",
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r270",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_cracked_deadrock_east": {
-    "textures": {
-      "variations": [
-        {
-          "path": "textures/gloamingforest/block/cracked_deadrock",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/cracked_deadrock",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/cracked_deadrock",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r270",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r90",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/cracked_deadrock",
-          "weight": 1
-        }
-      ]
-    }
-  },
-  "tf_building_var_cracked_deadrock_north": {
+  "gf_building_var_cracked_deadrock_east": {
     "textures": {
       "variations": [
         {
@@ -1158,11 +1112,41 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r270",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r90",
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/gloamingforest/block/cracked_deadrock",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "gf_building_var_cracked_deadrock_north": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/gloamingforest/block/cracked_deadrock",
           "weight": 1
         },
         {
@@ -1170,25 +1154,41 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "path": "textures/gloamingforest/block/cracked_deadrock",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r90",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r90",
+          "path": "textures/gloamingforest/block/cracked_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r90",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_cracked_deadrock_south": {
+  "gf_building_var_cracked_deadrock_south": {
     "textures": {
       "variations": [
         {
@@ -1208,33 +1208,33 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r270",
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r270",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r270",
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r270",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_cracked_deadrock_up": {
+  "gf_building_var_cracked_deadrock_up": {
     "textures": {
       "variations": [
         {
@@ -1242,23 +1242,11 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r270",
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r270",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/cracked_deadrock",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r270",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r180",
           "weight": 1
         },
         {
@@ -1266,21 +1254,33 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r270",
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r270",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r270",
+          "path": "textures/gloamingforest/block/cracked_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r270",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_cracked_deadrock_west": {
+  "gf_building_var_cracked_deadrock_west": {
     "textures": {
       "variations": [
         {
@@ -1296,7 +1296,7 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r90",
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r90",
           "weight": 1
         },
         {
@@ -1304,29 +1304,29 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r270",
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r270",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_deadrock_r180",
+          "path": "textures/blocks/building/upstream-derived/cracked_deadrock_r180",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_cracked_towerwood_down": {
+  "gf_building_var_cracked_towerwood_down": {
     "textures": {
       "variations": [
         {
@@ -1334,7 +1334,7 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_towerwood_fv",
+          "path": "textures/blocks/building/upstream-derived/cracked_towerwood_fv",
           "weight": 1
         },
         {
@@ -1342,13 +1342,13 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_towerwood_alt_fv",
+          "path": "textures/blocks/building/upstream-derived/cracked_towerwood_alt_fv",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_cracked_towerwood_east": {
+  "gf_building_var_cracked_towerwood_east": {
     "textures": {
       "variations": [
         {
@@ -1356,7 +1356,7 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_towerwood_fv",
+          "path": "textures/blocks/building/upstream-derived/cracked_towerwood_fv",
           "weight": 1
         },
         {
@@ -1364,13 +1364,13 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_towerwood_alt_fv",
+          "path": "textures/blocks/building/upstream-derived/cracked_towerwood_alt_fv",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_cracked_towerwood_north": {
+  "gf_building_var_cracked_towerwood_north": {
     "textures": {
       "variations": [
         {
@@ -1378,7 +1378,7 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_towerwood_fv",
+          "path": "textures/blocks/building/upstream-derived/cracked_towerwood_fv",
           "weight": 1
         },
         {
@@ -1386,13 +1386,13 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_towerwood_alt_fv",
+          "path": "textures/blocks/building/upstream-derived/cracked_towerwood_alt_fv",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_cracked_towerwood_south": {
+  "gf_building_var_cracked_towerwood_south": {
     "textures": {
       "variations": [
         {
@@ -1400,7 +1400,7 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_towerwood_fv",
+          "path": "textures/blocks/building/upstream-derived/cracked_towerwood_fv",
           "weight": 1
         },
         {
@@ -1408,13 +1408,13 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_towerwood_alt_fv",
+          "path": "textures/blocks/building/upstream-derived/cracked_towerwood_alt_fv",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_cracked_towerwood_up": {
+  "gf_building_var_cracked_towerwood_up": {
     "textures": {
       "variations": [
         {
@@ -1422,7 +1422,7 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_towerwood_fv",
+          "path": "textures/blocks/building/upstream-derived/cracked_towerwood_fv",
           "weight": 1
         },
         {
@@ -1430,13 +1430,13 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_towerwood_alt_fv",
+          "path": "textures/blocks/building/upstream-derived/cracked_towerwood_alt_fv",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_cracked_towerwood_west": {
+  "gf_building_var_cracked_towerwood_west": {
     "textures": {
       "variations": [
         {
@@ -1444,7 +1444,7 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_towerwood_fv",
+          "path": "textures/blocks/building/upstream-derived/cracked_towerwood_fv",
           "weight": 1
         },
         {
@@ -1452,13 +1452,13 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/cracked_towerwood_alt_fv",
+          "path": "textures/blocks/building/upstream-derived/cracked_towerwood_alt_fv",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_deadrock_down": {
+  "gf_building_var_deadrock_down": {
     "textures": {
       "variations": [
         {
@@ -1466,43 +1466,21 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/deadrock_r180",
+          "path": "textures/blocks/building/upstream-derived/deadrock_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/deadrock_r90",
+          "path": "textures/blocks/building/upstream-derived/deadrock_r90",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/deadrock_r270",
+          "path": "textures/blocks/building/upstream-derived/deadrock_r270",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_deadrock_east": {
-    "textures": {
-      "variations": [
-        {
-          "path": "textures/gloamingforest/block/deadrock",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/deadrock",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/deadrock",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/deadrock",
-          "weight": 1
-        }
-      ]
-    }
-  },
-  "tf_building_var_deadrock_north": {
+  "gf_building_var_deadrock_east": {
     "textures": {
       "variations": [
         {
@@ -1524,7 +1502,7 @@
       ]
     }
   },
-  "tf_building_var_deadrock_south": {
+  "gf_building_var_deadrock_north": {
     "textures": {
       "variations": [
         {
@@ -1546,29 +1524,7 @@
       ]
     }
   },
-  "tf_building_var_deadrock_up": {
-    "textures": {
-      "variations": [
-        {
-          "path": "textures/gloamingforest/block/deadrock",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/deadrock_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/deadrock_r270",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/deadrock_r90",
-          "weight": 1
-        }
-      ]
-    }
-  },
-  "tf_building_var_deadrock_west": {
+  "gf_building_var_deadrock_south": {
     "textures": {
       "variations": [
         {
@@ -1590,25 +1546,69 @@
       ]
     }
   },
-  "tf_building_var_mazestone_down": {
+  "gf_building_var_deadrock_up": {
     "textures": {
       "variations": [
         {
-          "path": "textures/blocks/building/tf-derived/mazestone_r270",
+          "path": "textures/gloamingforest/block/deadrock",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/mazestone_r270",
+          "path": "textures/blocks/building/upstream-derived/deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/deadrock_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/deadrock_r90",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_mazestone_east": {
+  "gf_building_var_deadrock_west": {
     "textures": {
       "variations": [
         {
-          "path": "textures/blocks/building/tf-derived/mazestone_r180",
+          "path": "textures/gloamingforest/block/deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/gloamingforest/block/deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/gloamingforest/block/deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/gloamingforest/block/deadrock",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "gf_building_var_mazestone_down": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/blocks/building/upstream-derived/mazestone_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/mazestone_r270",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "gf_building_var_mazestone_east": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/blocks/building/upstream-derived/mazestone_r180",
           "weight": 1
         },
         {
@@ -1618,49 +1618,49 @@
       ]
     }
   },
-  "tf_building_var_mazestone_north": {
+  "gf_building_var_mazestone_north": {
     "textures": {
       "variations": [
         {
-          "path": "textures/blocks/building/tf-derived/mazestone_r90",
+          "path": "textures/blocks/building/upstream-derived/mazestone_r90",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/mazestone_r90",
+          "path": "textures/blocks/building/upstream-derived/mazestone_r90",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_mazestone_south": {
+  "gf_building_var_mazestone_south": {
     "textures": {
       "variations": [
         {
-          "path": "textures/blocks/building/tf-derived/mazestone_r270",
+          "path": "textures/blocks/building/upstream-derived/mazestone_r270",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/mazestone_r270",
+          "path": "textures/blocks/building/upstream-derived/mazestone_r270",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_mazestone_up": {
+  "gf_building_var_mazestone_up": {
     "textures": {
       "variations": [
         {
-          "path": "textures/blocks/building/tf-derived/mazestone_r270",
+          "path": "textures/blocks/building/upstream-derived/mazestone_r270",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/mazestone_r270",
+          "path": "textures/blocks/building/upstream-derived/mazestone_r270",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_mazestone_west": {
+  "gf_building_var_mazestone_west": {
     "textures": {
       "variations": [
         {
@@ -1668,13 +1668,13 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/mazestone_r180",
+          "path": "textures/blocks/building/upstream-derived/mazestone_r180",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_mossy_towerwood_down": {
+  "gf_building_var_mossy_towerwood_down": {
     "textures": {
       "variations": [
         {
@@ -1682,13 +1682,13 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/mossy_towerwood_fv",
+          "path": "textures/blocks/building/upstream-derived/mossy_towerwood_fv",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_mossy_towerwood_east": {
+  "gf_building_var_mossy_towerwood_east": {
     "textures": {
       "variations": [
         {
@@ -1696,13 +1696,13 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/mossy_towerwood_fv",
+          "path": "textures/blocks/building/upstream-derived/mossy_towerwood_fv",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_mossy_towerwood_north": {
+  "gf_building_var_mossy_towerwood_north": {
     "textures": {
       "variations": [
         {
@@ -1710,13 +1710,13 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/mossy_towerwood_fv",
+          "path": "textures/blocks/building/upstream-derived/mossy_towerwood_fv",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_mossy_towerwood_south": {
+  "gf_building_var_mossy_towerwood_south": {
     "textures": {
       "variations": [
         {
@@ -1724,13 +1724,13 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/mossy_towerwood_fv",
+          "path": "textures/blocks/building/upstream-derived/mossy_towerwood_fv",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_mossy_towerwood_up": {
+  "gf_building_var_mossy_towerwood_up": {
     "textures": {
       "variations": [
         {
@@ -1738,13 +1738,13 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/mossy_towerwood_fv",
+          "path": "textures/blocks/building/upstream-derived/mossy_towerwood_fv",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_mossy_towerwood_west": {
+  "gf_building_var_mossy_towerwood_west": {
     "textures": {
       "variations": [
         {
@@ -1752,13 +1752,13 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/mossy_towerwood_fv",
+          "path": "textures/blocks/building/upstream-derived/mossy_towerwood_fv",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_steeleaf_block_down": {
+  "gf_building_var_steeleaf_block_down": {
     "textures": {
       "variations": [
         {
@@ -1766,23 +1766,19 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r90",
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r90",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r270",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/steeleaf_block",
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r270",
           "weight": 1
         },
         {
@@ -1790,67 +1786,25 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r90",
+          "path": "textures/gloamingforest/block/steeleaf_block",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r90",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r270",
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r270",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_steeleaf_block_east": {
-    "textures": {
-      "variations": [
-        {
-          "path": "textures/gloamingforest/block/steeleaf_block",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/steeleaf_block",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/steeleaf_block",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r270",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r90",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/steeleaf_block",
-          "weight": 1
-        }
-      ]
-    }
-  },
-  "tf_building_var_steeleaf_block_north": {
+  "gf_building_var_steeleaf_block_east": {
     "textures": {
       "variations": [
         {
@@ -1866,11 +1820,41 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r270",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r90",
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/gloamingforest/block/steeleaf_block",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "gf_building_var_steeleaf_block_north": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/gloamingforest/block/steeleaf_block",
           "weight": 1
         },
         {
@@ -1878,25 +1862,41 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "path": "textures/gloamingforest/block/steeleaf_block",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r90",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r90",
+          "path": "textures/gloamingforest/block/steeleaf_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r90",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_steeleaf_block_south": {
+  "gf_building_var_steeleaf_block_south": {
     "textures": {
       "variations": [
         {
@@ -1916,33 +1916,33 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r270",
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r270",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r270",
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r270",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_steeleaf_block_up": {
+  "gf_building_var_steeleaf_block_up": {
     "textures": {
       "variations": [
         {
@@ -1950,23 +1950,11 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r270",
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r270",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/steeleaf_block",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r270",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r180",
           "weight": 1
         },
         {
@@ -1974,21 +1962,33 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r270",
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r270",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r270",
+          "path": "textures/gloamingforest/block/steeleaf_block",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r270",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_steeleaf_block_west": {
+  "gf_building_var_steeleaf_block_west": {
     "textures": {
       "variations": [
         {
@@ -2004,7 +2004,7 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r90",
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r90",
           "weight": 1
         },
         {
@@ -2012,43 +2012,29 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r270",
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r270",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/steeleaf_block_r180",
+          "path": "textures/blocks/building/upstream-derived/steeleaf_block_r180",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_towerwood_down": {
-    "textures": {
-      "variations": [
-        {
-          "path": "textures/gloamingforest/block/towerwood",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/towerwood_fv",
-          "weight": 1
-        }
-      ]
-    }
-  },
-  "tf_building_var_towerwood_east": {
+  "gf_building_var_towerwood_down": {
     "textures": {
       "variations": [
         {
@@ -2056,13 +2042,13 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/towerwood_fv",
+          "path": "textures/blocks/building/upstream-derived/towerwood_fv",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_towerwood_north": {
+  "gf_building_var_towerwood_east": {
     "textures": {
       "variations": [
         {
@@ -2070,13 +2056,13 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/towerwood_fv",
+          "path": "textures/blocks/building/upstream-derived/towerwood_fv",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_towerwood_south": {
+  "gf_building_var_towerwood_north": {
     "textures": {
       "variations": [
         {
@@ -2084,13 +2070,13 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/towerwood_fv",
+          "path": "textures/blocks/building/upstream-derived/towerwood_fv",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_towerwood_up": {
+  "gf_building_var_towerwood_south": {
     "textures": {
       "variations": [
         {
@@ -2098,13 +2084,13 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/towerwood_fv",
+          "path": "textures/blocks/building/upstream-derived/towerwood_fv",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_towerwood_west": {
+  "gf_building_var_towerwood_up": {
     "textures": {
       "variations": [
         {
@@ -2112,13 +2098,27 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/towerwood_fv",
+          "path": "textures/blocks/building/upstream-derived/towerwood_fv",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_weathered_deadrock_down": {
+  "gf_building_var_towerwood_west": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/gloamingforest/block/towerwood",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/towerwood_fv",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "gf_building_var_weathered_deadrock_down": {
     "textures": {
       "variations": [
         {
@@ -2126,23 +2126,19 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r90",
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r90",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r270",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/weathered_deadrock",
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r270",
           "weight": 1
         },
         {
@@ -2150,67 +2146,25 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r90",
+          "path": "textures/gloamingforest/block/weathered_deadrock",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r90",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r270",
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r270",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_weathered_deadrock_east": {
-    "textures": {
-      "variations": [
-        {
-          "path": "textures/gloamingforest/block/weathered_deadrock",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/weathered_deadrock",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/weathered_deadrock",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r270",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r90",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/weathered_deadrock",
-          "weight": 1
-        }
-      ]
-    }
-  },
-  "tf_building_var_weathered_deadrock_north": {
+  "gf_building_var_weathered_deadrock_east": {
     "textures": {
       "variations": [
         {
@@ -2226,11 +2180,41 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r270",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r90",
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r90",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/gloamingforest/block/weathered_deadrock",
+          "weight": 1
+        }
+      ]
+    }
+  },
+  "gf_building_var_weathered_deadrock_north": {
+    "textures": {
+      "variations": [
+        {
+          "path": "textures/gloamingforest/block/weathered_deadrock",
           "weight": 1
         },
         {
@@ -2238,25 +2222,41 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "path": "textures/gloamingforest/block/weathered_deadrock",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r90",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r90",
+          "path": "textures/gloamingforest/block/weathered_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r90",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_weathered_deadrock_south": {
+  "gf_building_var_weathered_deadrock_south": {
     "textures": {
       "variations": [
         {
@@ -2276,33 +2276,33 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r270",
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r270",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r270",
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r270",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_weathered_deadrock_up": {
+  "gf_building_var_weathered_deadrock_up": {
     "textures": {
       "variations": [
         {
@@ -2310,23 +2310,11 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r270",
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r270",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
-          "weight": 1
-        },
-        {
-          "path": "textures/gloamingforest/block/weathered_deadrock",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r270",
-          "weight": 1
-        },
-        {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r180",
           "weight": 1
         },
         {
@@ -2334,21 +2322,33 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r270",
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r270",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r270",
+          "path": "textures/gloamingforest/block/weathered_deadrock",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r270",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r180",
+          "weight": 1
+        },
+        {
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r270",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_var_weathered_deadrock_west": {
+  "gf_building_var_weathered_deadrock_west": {
     "textures": {
       "variations": [
         {
@@ -2364,7 +2364,7 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r90",
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r90",
           "weight": 1
         },
         {
@@ -2372,29 +2372,29 @@
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r270",
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r270",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r180",
           "weight": 1
         },
         {
-          "path": "textures/blocks/building/tf-derived/weathered_deadrock_r180",
+          "path": "textures/blocks/building/upstream-derived/weathered_deadrock_r180",
           "weight": 1
         }
       ]
     }
   },
-  "tf_building_yetialpha": {
+  "gf_building_yetialpha": {
     "textures": "textures/gloamingforest/entity/yetialpha"
   }
 }

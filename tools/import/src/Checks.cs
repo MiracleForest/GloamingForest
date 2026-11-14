@@ -269,7 +269,7 @@ namespace GfImport
                     // upstream's own sound types by the golden's soundTypes (javaType -> the pack's type, written by hand), the
                     // vanilla ones by the engine type of Blocks.SoundMap
                     string javaSound = e["sound"].AsString(), want;
-                    if (javaSound.StartsWith("TFSoundTypes.", StringComparison.Ordinal))
+                    if (javaSound.StartsWith("GloamingSoundTypes.", StringComparison.Ordinal))
                     {
                         var named = soundTypes != null ? soundTypes.Keys.Where(k => soundTypes[k]["javaType"] != null && soundTypes[k]["javaType"].AsString() == javaSound).ToList() : new List<string>();
                         // two entries naming it are reported by CheckSoundTypes; the block is not checked against either
@@ -318,7 +318,7 @@ namespace GfImport
                         list.Add(Tuple.Create(where, bs != null ? bs[id] : null, ib != null ? ib[id] : null));
                     }
                 }
-            // a javaType names one pack type: CheckBehaviour maps a block's TFSoundTypes.* sound to the entry that names it
+            // a javaType names one pack type: CheckBehaviour maps a block's GloamingSoundTypes.* sound to the entry that names it
             foreach (var grp in golden.Keys.Where(k => golden[k].IsObj && golden[k]["javaType"] != null && golden[k]["javaType"].IsStr)
                          .GroupBy(k => golden[k]["javaType"].S, StringComparer.Ordinal).Where(g => g.Count() > 1))
                 Errors.Add("tools/import/expected-behaviour.json: soundTypes " + string.Join(", ", grp) + " share the javaType " + grp.Key + " (one entry per Java sound type)");

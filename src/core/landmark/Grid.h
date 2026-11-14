@@ -68,7 +68,7 @@ private:
 /// first), `gridSearchRadius` cells out.
 [[nodiscard]] std::vector<ColumnXZ> centerScanner(int blockX, int blockZ, int gridSearchRadius);
 
-/// The landmark keys upstream declares (TFStructures) that have no structure in 4.8: no descriptor.
+/// The landmark keys upstream declares (GloamingStructures) that have no structure in 4.8: no descriptor.
 [[nodiscard]] bool isUnimplementedKey(std::string const& key);
 
 } // namespace gf::core::landmark

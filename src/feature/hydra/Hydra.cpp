@@ -316,7 +316,7 @@ void syncParts(Mob& hydra, Runtime& rt) {
             p.sentRed = red;
         }
         if (isHeadPart(idx)) {
-            // TFPartRenderer#setupRotations: a dying head flips onto its side (the necks' flip is 0)
+            // GloamingPartRenderer#setupRotations: a dying head flips onto its side (the necks' flip is 0)
             int death = std::min(p.deathTime, 20);
             if (death != p.sentDeath) {
                 ge::setProperty(*a, "gloamingforest:death", death);

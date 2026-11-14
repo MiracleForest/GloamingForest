@@ -395,7 +395,7 @@ void installRam() {
     b.die      = [](Actor& self, std::string const&, Actor*) { dividers().erase(fe::uidOf(self)); };
     b.load     = [](Actor& self, Json const&) { publish(self); };
     gf::entity::registerType(kRam, b);
-    // TFEntities: ON_GROUND, MOTION_BLOCKING_NO_LEAVES, Animal.checkAnimalSpawnRules
+    // GloamingEntities: ON_GROUND, MOTION_BLOCKING_NO_LEAVES, Animal.checkAnimalSpawnRules
     gf::spawn::registerPlacement(kRam, gf::spawn::PlacementRule::OnGround);
 
     // the homes of rams the grove placed whose chunk has not loaded yet, kept with the world

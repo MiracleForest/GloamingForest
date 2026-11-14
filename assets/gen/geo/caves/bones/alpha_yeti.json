@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.alpha_yeti",
   "layer": {
     "name": "alpha_yeti",
-    "field": "TFModelLayers.ALPHA_YETI",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.ALPHA_YETI, AlphaYetiModel::create);"
+    "field": "GloamingModelLayers.ALPHA_YETI",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.ALPHA_YETI, AlphaYetiModel::create);"
   },
   "texture_size": [256, 128],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/yetialpha",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/yetialpha.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/yetialpha.png"
     }
   ],
   "bones": [

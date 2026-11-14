@@ -140,7 +140,7 @@ void golden(Context& ctx, std::string const& name, std::string const& expected, 
 }
 
 // Recorded from the translation (GloamingForest's own goldens: chunk (2, -3), y 8, seed 20260521).
-constexpr char kLayout[] = "TFDTBB=4 TFDTBT=4 TFDTBal=9 TFDTBea=38 TFDTBri=38 TFDTEB=2 TFDTEnt=2 TFDTMB=2 TFDTMai=3 TFDTRA=14 TFDTRC=8 TFDTRFP=5 TFDTRR=7 TFDTWin=32 1,8,-103,103,196,-1";
+constexpr char kLayout[] = "GloamingDTBB=4 GloamingDTBT=4 GloamingDTBal=9 GloamingDTBea=38 GloamingDTBri=38 GloamingDTEB=2 GloamingDTEnt=2 GloamingDTMB=2 GloamingDTMai=3 GloamingDTRA=14 GloamingDTRC=8 GloamingDTRFP=5 GloamingDTRR=7 GloamingDTWin=32 1,8,-103,103,196,-1";
 constexpr char kHash[]   = "4fc7bd59b5d3a5c2"; // planter trees: vanilla oak / birch inline, upstream trees from U3 (with tree_roots)
 
 } // namespace
@@ -178,7 +178,7 @@ GF_REGISTER_SELFTEST("darktower.structure_layout", [](Context& ctx) {
     for (auto const& p : pieces) {
         int si = static_cast<::gf::structure::bases::Component&>(*p).getSpawnIndex();
         if (p->typeId == tower::kBossTrap) ctx.check(si == -1, "no spawns in boss traps");
-        if (p->typeId.rfind("gloamingforest:TFDTR", 0) == 0) ctx.check(si == 1, "roof spawn list 1: " + p->typeId);
+        if (p->typeId.rfind("gloamingforest:GloamingDTR", 0) == 0) ctx.check(si == 1, "roof spawn list 1: " + p->typeId);
     }
     golden(ctx, "darktower_layout", kLayout, describe(types, pieces));
 });

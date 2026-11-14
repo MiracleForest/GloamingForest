@@ -192,7 +192,7 @@ Mapping rules (see [import.md](import.md)):
 | `gloamingforest:gloaming_oak_trapped_chest` | U4 | TrappedChestBlock | `gloamingforest:facing`: north, south, west, east (class)<br>`gloamingforest:type`: single, left, right (class) | - | 12 |
 | `gloamingforest:gloaming_oak_wall_hanging_sign` | U4 | WallHangingSignBlock | `gloamingforest:facing`: north, south, west, east (class) | - | 4 |
 | `gloamingforest:gloaming_oak_wood` | U4 | RotatedPillarBlock | `gloamingforest:axis`: y, x, z | - | 3 |
-| `gloamingforest:gloaming_portal` | F4 | TFPortalBlock < HalfTransparentBlock | `gloamingforest:is_one_way`: false, true | - | 2 |
+| `gloamingforest:gloaming_portal` | F4 | GloamingPortalBlock < HalfTransparentBlock | `gloamingforest:is_one_way`: false, true | - | 2 |
 | `gloamingforest:gloaming_portal_miniature_structure` | U5 | MiniatureStructureBlock < HorizontalDirectionalBlock | `gloamingforest:facing`: north, south, west, east | - | 4 |
 | `gloamingforest:gloaming_wall_sign` | U4 | WallSignBlock | `gloamingforest:facing`: north, south, west, east (class) | - | 4 |
 | `gloamingforest:gold_oreberry` | U6 | OreBerryBlock < Block | `gloamingforest:age`: 0, 1, 2, 3<br>`gloamingforest:layers`: 0, 1, 2, 3, 4, 5, 6, 7, 8 | - | 36 |
@@ -353,7 +353,7 @@ Mapping rules (see [import.md](import.md)):
 | `gloamingforest:naga_trophy` | U5 | TrophyBlock < BaseEntityBlock | `gloamingforest:powered`: true, false (class)<br>`gloamingforest:rotation`: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 (class) | - | 32 |
 | `gloamingforest:naga_wall_trophy` | U5 | TrophyWallBlock < BaseEntityBlock | `gloamingforest:facing`: north, south, west, east (class)<br>`gloamingforest:powered`: true, false (class) | - | 8 |
 | `gloamingforest:nagastone` | U5 | NagastoneBlock < Block | `gloamingforest:variant`: solid, north_down, south_down, west_down, east_down, north_up, south_up, east_up, west_up, axis_x, axis_y, axis_z | - | 12 |
-| `gloamingforest:nagastone_head` | U5 | TFHorizontalBlock < HorizontalDirectionalBlock | `gloamingforest:facing`: north, south, west, east | - | 4 |
+| `gloamingforest:nagastone_head` | U5 | GloamingHorizontalBlock < HorizontalDirectionalBlock | `gloamingforest:facing`: north, south, west, east | - | 4 |
 | `gloamingforest:nagastone_pillar` | U5 | DirectionalRotatedPillarBlock < RotatedPillarBlock | `gloamingforest:axis`: y, x, z<br>`gloamingforest:reversed`: false, true | - | 6 |
 | `gloamingforest:nagastone_stairs_left` | U5 | StairBlock | `gloamingforest:facing`: north, south, west, east<br>`gloamingforest:half`: bottom, top<br>`gloamingforest:shape`: straight, inner_left, inner_right, outer_left, outer_right | - | 40 |
 | `gloamingforest:nagastone_stairs_right` | U5 | StairBlock | `gloamingforest:facing`: north, south, west, east<br>`gloamingforest:half`: bottom, top<br>`gloamingforest:shape`: straight, inner_left, inner_right, outer_left, outer_right | - | 40 |
@@ -419,7 +419,7 @@ Mapping rules (see [import.md](import.md)):
 | `gloamingforest:skull_chest` | U22 | SkullChestBlock < BaseEntityBlock | `gloamingforest:facing`: north, south, west, east (class)<br>`gloamingforest:multilogged`: air, water, lava, obsidian, stone, basalt | - | 24 |
 | `gloamingforest:skyberry_bush` | U6 | DarkTowerBerryBushBlock < Block | `gloamingforest:age`: 0, 1, 2, 3<br>`gloamingforest:layers`: 0, 1, 2, 3, 4, 5, 6, 7, 8 | - | 36 |
 | `gloamingforest:slider` | U26 | SliderBlock < RotatedPillarBlock | `gloamingforest:axis`: y, x, z<br>`gloamingforest:delay`: 0, 1, 2, 3 | - | 12 |
-| `gloamingforest:smoker` | U24 | TFSmokerBlock < BaseEntityBlock | - | - | 1 |
+| `gloamingforest:smoker` | U24 | GloamingSmokerBlock < BaseEntityBlock | - | - | 1 |
 | `gloamingforest:snow_queen_boss_spawner` | U5 | BossSpawnerBlock < BaseEntityBlock | - | - | 1 |
 | `gloamingforest:snow_queen_trophy` | U5 | TrophyBlock < BaseEntityBlock | `gloamingforest:powered`: true, false (class)<br>`gloamingforest:rotation`: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 (class) | - | 32 |
 | `gloamingforest:snow_queen_wall_trophy` | U5 | TrophyWallBlock < BaseEntityBlock | `gloamingforest:facing`: north, south, west, east (class)<br>`gloamingforest:powered`: true, false (class) | - | 8 |

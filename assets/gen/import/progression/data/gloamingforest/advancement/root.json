@@ -1,6 +1,6 @@
 {
   "criteria": {
-    "in_tf": {
+    "in_gf": {
       "conditions": {
         "player": [
           {
@@ -17,7 +17,7 @@
       "trigger": "minecraft:location"
     },
     "make_portal": {
-      "trigger": "gloamingforest:make_tf_portal"
+      "trigger": "gloamingforest:make_gf_portal"
     }
   },
   "display": {
@@ -36,7 +36,7 @@
   },
   "requirements": [
     [
-      "in_tf",
+      "in_gf",
       "make_portal"
     ]
   ],

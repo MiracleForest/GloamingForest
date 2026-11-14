@@ -15,32 +15,32 @@ namespace GfImport
         public readonly Dictionary<string, SortedSet<string>> TexUsers = new Dictionary<string, SortedSet<string>>(StringComparer.Ordinal);
         public readonly Dictionary<string, SortedSet<string>> TexAtlases = new Dictionary<string, SortedSet<string>>(StringComparer.Ordinal);
         public readonly SortedSet<string> MissingTextures = new SortedSet<string>(StringComparer.Ordinal);
-        Dictionary<string, string> tfTextureFiles;
+        Dictionary<string, string> gloamingTextureFiles;
         readonly Dictionary<string, bool> alphaCache = new Dictionary<string, bool>(StringComparer.Ordinal);
 
         public string TexturesDir { get { return Path.Combine(MainRes, "assets", "gloamingforest", "textures"); } }
 
         /// <summary>upstream texture id -> file (textures/<path>.png).</summary>
-        public Dictionary<string, string> TfTextures
+        public Dictionary<string, string> GloamingTextures
         {
             get
             {
-                if (tfTextureFiles == null)
+                if (gloamingTextureFiles == null)
                 {
-                    tfTextureFiles = new Dictionary<string, string>(StringComparer.Ordinal);
+                    gloamingTextureFiles = new Dictionary<string, string>(StringComparer.Ordinal);
                     foreach (var rel in Files(TexturesDir, "*.png"))
-                        tfTextureFiles["gloamingforest:" + StripExt(rel)] = Path.Combine(TexturesDir, rel);
+                        gloamingTextureFiles["gloamingforest:" + StripExt(rel)] = Path.Combine(TexturesDir, rel);
                 }
-                return tfTextureFiles;
+                return gloamingTextureFiles;
             }
         }
 
-        /// <summary>The atlas key of a texture id ("tf_block_naga_stone", "tf_vanilla_oak_planks").</summary>
+        /// <summary>The atlas key of a texture id ("gf_block_naga_stone", "gf_vanilla_oak_planks").</summary>
         public static string TexKey(string texId)
         {
             int c = texId.IndexOf(':');
             string ns = texId.Substring(0, c), path = texId.Substring(c + 1);
-            return (ns == "gloamingforest" ? "tf_" : "tf_vanilla_") + path.Replace('/', '_');
+            return (ns == "gloamingforest" ? "gf_" : "gf_vanilla_") + path.Replace('/', '_');
         }
 
         /// <summary>The resource pack path (no extension) of a texture id.</summary>
@@ -58,7 +58,7 @@ namespace GfImport
         {
             if (texId == null) return null;
             if (!texId.Contains(":")) texId = "minecraft:" + texId;
-            if (texId.StartsWith("gloamingforest:", StringComparison.Ordinal) && !TfTextures.ContainsKey(texId))
+            if (texId.StartsWith("gloamingforest:", StringComparison.Ordinal) && !GloamingTextures.ContainsKey(texId))
             {
                 MissingTextures.Add(texId);
                 return null;
@@ -83,7 +83,7 @@ namespace GfImport
             if (alphaCache.TryGetValue(texId, out r)) return r;
             string file;
             r = false;
-            if (TfTextures.TryGetValue(texId, out file))
+            if (GloamingTextures.TryGetValue(texId, out file))
             {
                 try { r = Png.Decode(File.ReadAllBytes(file)).Px.Any(p => (p >> 24) < 255); }
                 catch (Exception e) { Warn("cannot decode " + file + ": " + e.Message); }
@@ -105,7 +105,7 @@ namespace GfImport
         {
             var flip = new Dictionary<string, List<J>>(StringComparer.Ordinal);
             var generated = ChestBoatTextures();
-            foreach (var kv in TfTextures.OrderBy(k => k.Key, StringComparer.Ordinal))
+            foreach (var kv in GloamingTextures.OrderBy(k => k.Key, StringComparer.Ordinal))
             {
                 string texId = kv.Key, file = kv.Value;
                 string rel = texId.Substring("gloamingforest:".Length);
@@ -231,9 +231,9 @@ namespace GfImport
             var res = new Dictionary<string, byte[]>(StringComparer.Ordinal);
             string chestId = "gloamingforest:entity/chest/gloaming/single";
             string chestFile;
-            if (!TfTextures.TryGetValue(chestId, out chestFile)) { Warn("chest boats: " + chestId + " missing"); return res; }
+            if (!GloamingTextures.TryGetValue(chestId, out chestFile)) { Warn("chest boats: " + chestId + " missing"); return res; }
             var chest = Png.Decode(File.ReadAllBytes(chestFile));
-            foreach (var kv in TfTextures.Where(k => k.Key.StartsWith("gloamingforest:entity/chest_boat/", StringComparison.Ordinal)).OrderBy(k => k.Key, StringComparer.Ordinal))
+            foreach (var kv in GloamingTextures.Where(k => k.Key.StartsWith("gloamingforest:entity/chest_boat/", StringComparison.Ordinal)).OrderBy(k => k.Key, StringComparer.Ordinal))
             {
                 var img = Png.Decode(File.ReadAllBytes(kv.Value));
                 int scale = img.W / 128;

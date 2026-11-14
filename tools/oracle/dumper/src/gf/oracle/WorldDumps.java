@@ -27,7 +27,7 @@ import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
 import gloamingforest.util.landmarks.LegacyLandmarkPlacements;
-import gloamingforest.world.components.biomesources.TFBiomeProvider;
+import gloamingforest.world.components.biomesources.GloamingBiomeProvider;
 import gloamingforest.world.components.chunkgenerators.TerrainColumn;
 import gloamingforest.world.components.layer.BiomeDensitySource;
 
@@ -88,8 +88,8 @@ final class WorldDumps {
 		return out;
 	}
 
-	private static TFBiomeProvider biomeSource(ServerLevel level) {
-		if (level.getChunkSource().getGenerator().getBiomeSource() instanceof TFBiomeProvider p) return p;
+	private static GloamingBiomeProvider biomeSource(ServerLevel level) {
+		if (level.getChunkSource().getGenerator().getBiomeSource() instanceof GloamingBiomeProvider p) return p;
 		throw new IllegalStateException("the Gloaming Forest biome source is not gloamingforest:gloaming_biomes");
 	}
 
@@ -98,7 +98,7 @@ final class WorldDumps {
 
 	static Object biomes(Ctx ctx) {
 		ServerLevel level = ctx.gloaming();
-		TFBiomeProvider src = biomeSource(level);
+		GloamingBiomeProvider src = biomeSource(level);
 		Climate.Sampler sampler = level.getChunkSource().randomState().sampler();
 		JsonObject s = ctx.section();
 		Grid main = Grid.of(Ctx.getObj(s, "main"), -128, -128, 256, 256, 1);
@@ -165,7 +165,7 @@ final class WorldDumps {
 		return out;
 	}
 
-	private static String[][] mainBiomes(TFBiomeProvider src, Grid g, TreeSet<String> ids) {
+	private static String[][] mainBiomes(GloamingBiomeProvider src, Grid g, TreeSet<String> ids) {
 		String[][] rows = new String[g.height][g.width];
 		for (int j = 0; j < g.height; j++) {
 			for (int i = 0; i < g.width; i++) {
@@ -310,7 +310,7 @@ final class WorldDumps {
 		int perBiome = Ctx.getInt(ss, "perBiome", 2);
 		int minApart = Ctx.getInt(ss, "minApart", 512);
 		int depth = Ctx.getInt(ss, "depth", 8);
-		TFBiomeProvider src = biomeSource(level);
+		GloamingBiomeProvider src = biomeSource(level);
 		String[][] biomeGrid = mainBiomes(src, search, new TreeSet<>());
 		TreeMap<String, List<int[]>> candidates = new TreeMap<>(); // biome -> [i, j, score]
 		for (int j = 0; j < search.height; j++) {
@@ -424,7 +424,7 @@ final class WorldDumps {
 		out.put("note", "Block coordinates of chunks generated to minecraft:surface (noise terrain with landmark terraforming and surface rules; no carvers or features). "
 			+ "worldSurfaceWg / oceanFloorWg are the y above the highest block matching the heightmap predicate; top is the block below worldSurfaceWg (palette characters). "
 			+ "Grid: x0/z0/width/height/step around the origin. samples.chunks: whole 16x16 chunks (rows = z, columns = x from x0/z0) picked per main biome of the search grid "
-			+ "(quart units, TFBiomeProvider#getMainBiome): the cells with the most same-biome neighbours (score, of 8) first, then the nearest to the origin; at most perBiome per biome, "
+			+ "(quart units, GloamingBiomeProvider#getMainBiome): the cells with the most same-biome neighbours (score, of 8) first, then the nearest to the origin; at most perBiome per biome, "
 			+ "minApart blocks apart. profile: per column the depth blocks from the block below oceanFloorWg downwards (one palette character each, columns separated by spaces); "
 			+ "biomes: the column's quart biome (ChunkAccess#getNoiseBiome) at that block (biomePalette characters). unsampled: key biomes the search grid never reaches.");
 		out.put("status", "minecraft:surface");
@@ -531,7 +531,7 @@ final class WorldDumps {
 
 	static Object landmarks(Ctx ctx) {
 		ServerLevel level = ctx.gloaming();
-		TFBiomeProvider src = biomeSource(level);
+		GloamingBiomeProvider src = biomeSource(level);
 		JsonObject s = ctx.section();
 		int rMin = Ctx.getInt(s, "regionMin", -8), rMax = Ctx.getInt(s, "regionMax", 7);
 		int chunkSamples = Ctx.getInt(s, "chunkSamples", 2048);
@@ -599,7 +599,7 @@ final class WorldDumps {
 		}
 		Map<String, Object> out = Json.obj();
 		out.put("note", "centers: one per region (regionX/Z = (chunk + 8) >> 4) from getNearestCenterXZ; variety = pickVarietyLandmark, pick = pickLandmarkForChunk "
-			+ "(biome read at pickBiomeX/Z, y 0, through Level#getBiome), mainBiome = TFBiomeProvider#getMainBiome at the center, starts = the valid structure starts of the center chunk "
+			+ "(biome read at pickBiomeX/Z, y 0, through Level#getBiome), mainBiome = GloamingBiomeProvider#getMainBiome at the center, starts = the valid structure starts of the center chunk "
 			+ "(minecraft:structure_starts). chunks: sampled chunks with their nearest center (x, z), chunkHasLandmarkCenter, manhattanDistanceFromLandmarkCenter and pickVarietyLandmark.");
 		out.put("varietyWeights", weights);
 		out.put("centers", centers);

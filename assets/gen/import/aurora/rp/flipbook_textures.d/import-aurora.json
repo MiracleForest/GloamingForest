@@ -1,7 +1,7 @@
 [
   {
     "flipbook_texture": "textures/gloamingforest/block/aurora_block_0",
-    "atlas_tile": "tf_block_aurora_block_0",
+    "atlas_tile": "gf_block_aurora_block_0",
     "ticks_per_frame": 4,
     "frames": [
       0,

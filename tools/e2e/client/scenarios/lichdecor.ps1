@@ -43,17 +43,17 @@ Invoke-Build 'time set 18000' # night: the lights show
 
 $y = -60 # the flat world's first air layer
 $z = 46
-$tf = 'gloamingforest'
+$upsrc = 'gloamingforest'
 
 Invoke-Chat '/clear @s'
 foreach ($it in 'wrought_iron_bar', 'magic_painting', 'zombie_skull_candle', 'skeleton_skull_candle', 'wither_skeleton_skull_candle', 'creeper_skull_candle', 'player_skull_candle', 'piglin_skull_candle', 'candelabra') {
-    Invoke-Chat "/give @s ${tf}:$it"
+    Invoke-Chat "/give @s ${upsrc}:$it"
 }
 Start-Sleep -Seconds 2
 Save-Screenshot 'lichdecor-items-hotbar' | Out-Null
 Invoke-Chat '/clear @s'
 foreach ($it in 'brazier', 'skull_chest', 'wrought_iron_fence', 'sinister_spawner', 'chiseled_canopy_bookshelf', 'coronation_carpet', 'terrorcotta_arcs', 'terrorcotta_curves', 'terrorcotta_lines') {
-    Invoke-Chat "/give @s ${tf}:$it"
+    Invoke-Chat "/give @s ${upsrc}:$it"
 }
 Start-Sleep -Seconds 2
 Save-Screenshot 'lichdecor-items-hotbar-2' | Out-Null
@@ -62,9 +62,9 @@ function S([hashtable]$states) {
     if (-not $states -or $states.Count -eq 0) { return '' }
     $parts = foreach ($k in ($states.Keys | Sort-Object)) {
         $v = $states[$k]
-        if ($v -is [bool]) { "`"${tf}:$k`"=$($v.ToString().ToLower())" }
-        elseif ($v -is [int]) { "`"${tf}:$k`"=$v" }
-        else { "`"${tf}:$k`"=`"$v`"" }
+        if ($v -is [bool]) { "`"${upsrc}:$k`"=$($v.ToString().ToLower())" }
+        elseif ($v -is [int]) { "`"${upsrc}:$k`"=$v" }
+        else { "`"${upsrc}:$k`"=`"$v`"" }
     }
     ' [' + ($parts -join ',') + ']'
 }
@@ -77,10 +77,10 @@ $b = @()
 for ($l = 0; $l -lt 4; $l++) {
     for ($c = 0; $c -le 3; $c++) {
         $st = @{ facing = 'south'; on_wall = $false; lighting = $lightings[$l]; has_candle_1 = ($c -ge 1); has_candle_2 = ($c -ge 2); has_candle_3 = ($c -ge 3) }
-        $b += , @((2 * $c + 9 * $l), 0, 0, "${tf}:candelabra", (S $st))
+        $b += , @((2 * $c + 9 * $l), 0, 0, "${upsrc}:candelabra", (S $st))
         $b += , @((2 * $c + 9 * $l), 1, 1, 'minecraft:stone', '')
         $st.on_wall = $true; $st.facing = 'south'
-        $b += , @((2 * $c + 9 * $l), 1, 0, "${tf}:candelabra", (S $st))
+        $b += , @((2 * $c + 9 * $l), 1, 0, "${upsrc}:candelabra", (S $st))
     }
 }
 $rows += @{ name = 'lichdecor-candelabra'; x = 300; blocks = $b; width = 36 }
@@ -90,11 +90,11 @@ $b = @()
 $types = 'zombie', 'skeleton', 'wither_skeleton', 'creeper', 'player', 'piglin'
 for ($t = 0; $t -lt $types.Count; $t++) {
     for ($c = 1; $c -le 4; $c++) {
-        $b += , @((6 * $t + $c - 1), 0, 0, "${tf}:$($types[$t])_skull_candle", (S @{ candles = $c; lighting = $lightings[$c - 1]; rotation = (4 * ($c - 1)) }))
+        $b += , @((6 * $t + $c - 1), 0, 0, "${upsrc}:$($types[$t])_skull_candle", (S @{ candles = $c; lighting = $lightings[$c - 1]; rotation = (4 * ($c - 1)) }))
     }
     $b += , @((6 * $t), 1, 3, 'minecraft:stone', '')
-    $b += , @((6 * $t), 1, 2, "${tf}:$($types[$t])_wall_skull_candle", (S @{ candles = 2; lighting = 'normal'; facing = 'north' }))
-    $b += , @((6 * $t + 2), 0, 3, "${tf}:$($types[$t])_skull_candle", (S @{ candles = 1; lighting = 'none'; rotation = 2 }))
+    $b += , @((6 * $t), 1, 2, "${upsrc}:$($types[$t])_wall_skull_candle", (S @{ candles = 2; lighting = 'normal'; facing = 'north' }))
+    $b += , @((6 * $t + 2), 0, 3, "${upsrc}:$($types[$t])_skull_candle", (S @{ candles = 1; lighting = 'none'; rotation = 2 }))
 }
 $rows += @{ name = 'lichdecor-skull-candles'; x = 360; blocks = $b; width = 36 }
 
@@ -102,7 +102,7 @@ $rows += @{ name = 'lichdecor-skull-candles'; x = 360; blocks = $b; width = 36 }
 $b = @()
 $colors = '', 'white_', 'orange_', 'magenta_', 'light_blue_', 'yellow_', 'lime_', 'pink_', 'gray_', 'light_gray_', 'cyan_', 'purple_', 'blue_', 'brown_', 'green_', 'red_', 'black_'
 for ($i = 0; $i -lt $colors.Count; $i++) {
-    $b += , @((2 * $i), 0, 0, "${tf}:ominous_$($colors[$i])candle", (S @{ candles = (($i % 4) + 1) }))
+    $b += , @((2 * $i), 0, 0, "${upsrc}:ominous_$($colors[$i])candle", (S @{ candles = (($i % 4) + 1) }))
 }
 $rows += @{ name = 'lichdecor-ominous-candles'; x = 420; blocks = $b; width = 34 }
 
@@ -110,31 +110,31 @@ $rows += @{ name = 'lichdecor-ominous-candles'; x = 420; blocks = $b; width = 34
 $b = @()
 $lights = 'off', 'dim', 'half', 'bright', 'full'
 for ($i = 0; $i -lt 5; $i++) {
-    $b += , @((2 * $i), 0, 0, "${tf}:brazier", (S @{ half = 'lower'; light = $lights[$i] }))
-    $b += , @((2 * $i), 1, 0, "${tf}:brazier", (S @{ half = 'upper'; light = $lights[$i] }))
+    $b += , @((2 * $i), 0, 0, "${upsrc}:brazier", (S @{ half = 'lower'; light = $lights[$i] }))
+    $b += , @((2 * $i), 1, 0, "${upsrc}:brazier", (S @{ half = 'upper'; light = $lights[$i] }))
 }
 $i = 0
-foreach ($f in 'north', 'east', 'south', 'west') { $b += , @((11 + 2 * $i), 0, 0, "${tf}:skull_chest", (S @{ facing = $f; multilogged = 'air' })); $i++ }
+foreach ($f in 'north', 'east', 'south', 'west') { $b += , @((11 + 2 * $i), 0, 0, "${upsrc}:skull_chest", (S @{ facing = $f; multilogged = 'air' })); $i++ }
 $i = 0
-foreach ($m in 'obsidian', 'stone', 'basalt', 'water') { $b += , @((11 + 2 * $i), 0, 3, "${tf}:skull_chest", (S @{ facing = 'north'; multilogged = $m })); $i++ }
-$b += , @(20, 0, 0, "${tf}:sinister_spawner", '')
+foreach ($m in 'obsidian', 'stone', 'basalt', 'water') { $b += , @((11 + 2 * $i), 0, 3, "${upsrc}:skull_chest", (S @{ facing = 'north'; multilogged = $m })); $i++ }
+$b += , @(20, 0, 0, "${upsrc}:sinister_spawner", '')
 $b += , @(22, -1, 0, 'minecraft:stone', '')
-$b += , @(22, 0, 0, "${tf}:ominous_fire", '')
-$b += , @(24, 0, 0, "${tf}:wrought_iron_fence", (S @{ post = 'post' }))
-$b += , @(25, 0, 0, "${tf}:wrought_iron_fence", (S @{ post = 'capped'; east_fence = 'full' }))
-$b += , @(26, 0, 0, "${tf}:wrought_iron_fence", (S @{ post = 'none'; east_fence = 'bottom'; west_fence = 'bottom' }))
-$b += , @(26, 1, 0, "${tf}:wrought_iron_fence", (S @{ post = 'none'; east_fence = 'top'; west_fence = 'top' }))
-$b += , @(27, 0, 0, "${tf}:wrought_iron_fence", (S @{ post = 'post'; west_fence = 'full' }))
-$b += , @(29, 0, 0, "${tf}:terrorcotta_arcs", (S @{ axis = 'y' }))
-$b += , @(30, 0, 0, "${tf}:terrorcotta_arcs", (S @{ axis = 'x' }))
-$b += , @(31, 0, 0, "${tf}:terrorcotta_curves", (S @{ facing = 'north' }))
-$b += , @(32, 0, 0, "${tf}:terrorcotta_curves", (S @{ facing = 'east' }))
-$b += , @(33, 0, 0, "${tf}:terrorcotta_lines", '')
-$b += , @(34, 0, 0, "${tf}:terrorcotta_lines", (S @{ rotated = $true }))
-for ($k = 0; $k -lt 3; $k++) { $b += , @((29 + $k), 0, 2, "${tf}:coronation_carpet", '') }
-$b += , @(36, 0, 0, "${tf}:chiseled_canopy_bookshelf", (S @{ facing = 'north' }))
-$b += , @(37, 0, 0, "${tf}:chiseled_canopy_bookshelf", (S @{ facing = 'north'; slot_0_occupied = $true; slot_1_occupied = $true; slot_2_occupied = $true; slot_3_occupied = $true; slot_4_occupied = $true; slot_5_occupied = $true }))
-$b += , @(38, 0, 0, "${tf}:chiseled_canopy_bookshelf", (S @{ facing = 'north'; spawner = $true; slot_0_occupied = $true; slot_4_occupied = $true }))
+$b += , @(22, 0, 0, "${upsrc}:ominous_fire", '')
+$b += , @(24, 0, 0, "${upsrc}:wrought_iron_fence", (S @{ post = 'post' }))
+$b += , @(25, 0, 0, "${upsrc}:wrought_iron_fence", (S @{ post = 'capped'; east_fence = 'full' }))
+$b += , @(26, 0, 0, "${upsrc}:wrought_iron_fence", (S @{ post = 'none'; east_fence = 'bottom'; west_fence = 'bottom' }))
+$b += , @(26, 1, 0, "${upsrc}:wrought_iron_fence", (S @{ post = 'none'; east_fence = 'top'; west_fence = 'top' }))
+$b += , @(27, 0, 0, "${upsrc}:wrought_iron_fence", (S @{ post = 'post'; west_fence = 'full' }))
+$b += , @(29, 0, 0, "${upsrc}:terrorcotta_arcs", (S @{ axis = 'y' }))
+$b += , @(30, 0, 0, "${upsrc}:terrorcotta_arcs", (S @{ axis = 'x' }))
+$b += , @(31, 0, 0, "${upsrc}:terrorcotta_curves", (S @{ facing = 'north' }))
+$b += , @(32, 0, 0, "${upsrc}:terrorcotta_curves", (S @{ facing = 'east' }))
+$b += , @(33, 0, 0, "${upsrc}:terrorcotta_lines", '')
+$b += , @(34, 0, 0, "${upsrc}:terrorcotta_lines", (S @{ rotated = $true }))
+for ($k = 0; $k -lt 3; $k++) { $b += , @((29 + $k), 0, 2, "${upsrc}:coronation_carpet", '') }
+$b += , @(36, 0, 0, "${upsrc}:chiseled_canopy_bookshelf", (S @{ facing = 'north' }))
+$b += , @(37, 0, 0, "${upsrc}:chiseled_canopy_bookshelf", (S @{ facing = 'north'; slot_0_occupied = $true; slot_1_occupied = $true; slot_2_occupied = $true; slot_3_occupied = $true; slot_4_occupied = $true; slot_5_occupied = $true }))
+$b += , @(38, 0, 0, "${upsrc}:chiseled_canopy_bookshelf", (S @{ facing = 'north'; spawner = $true; slot_0_occupied = $true; slot_4_occupied = $true }))
 $rows += @{ name = 'lichdecor-misc'; x = 480; blocks = $b; width = 40 }
 
 foreach ($row in $rows) {
@@ -175,7 +175,7 @@ $px = 560
 Invoke-Build "fill $px $y $($z + 1) $($px + 40) $($y + 6) $($z + 1) minecraft:stone"
 $variants = 'castaway_paradise', 'darkness', 'lucid_lands', 'music_in_the_mire', 'the_hostile_paradise'
 for ($i = 0; $i -lt $variants.Count; $i++) {
-    Invoke-Build "summon ${tf}:magic_painting $($px + 4 + 8 * $i) $($y + 2) $($z + 0.97) 180 0 ${tf}:variant_$($variants[$i])"
+    Invoke-Build "summon ${upsrc}:magic_painting $($px + 4 + 8 * $i) $($y + 2) $($z + 0.97) 180 0 ${upsrc}:variant_$($variants[$i])"
 }
 Start-Sleep -Seconds 8
 for ($i = 0; $i -lt $variants.Count; $i++) {

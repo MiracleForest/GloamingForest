@@ -139,7 +139,7 @@ private:
             st::Orientation facing;
             if (std::abs(xDiff) > std::abs(zDiff)) facing = xDiff < 0 ? st::Orientation::West : st::Orientation::East;
             else facing = zDiff < 0 ? st::Orientation::North : st::Orientation::South;
-            // TFLootTables.generateChest(world, pos, facing, false, table): seed getSeed() * x + y ^ z
+            // GloamingLootTables.generateChest(world, pos, facing, false, table): seed getSeed() * x + y ^ z
             std::int64_t seed = core::mth::ladd(core::mth::lmul(world.seed(), pos.x), pos.y) ^ pos.z;
             placeContainerAt(world, sbb, pos, "minecraft:chest", facing, table, seed);
         }

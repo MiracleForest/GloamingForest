@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.naga_body",
   "layer": {
     "name": "naga_body",
-    "field": "TFModelLayers.NAGA_BODY",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.NAGA_BODY, NagaModel::checkForPack);"
+    "field": "GloamingModelLayers.NAGA_BODY",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.NAGA_BODY, NagaModel::checkForPack);"
   },
   "texture_size": [64, 32],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/nagasegment",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/nagasegment.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/nagasegment.png"
     }
   ],
   "bones": [

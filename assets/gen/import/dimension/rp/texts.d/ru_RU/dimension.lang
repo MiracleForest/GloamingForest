@@ -1,6 +1,6 @@
-block.gloamingforest.gloaming_portal=Портал в сумеречный лес
-dimension.gloamingforest.gloaming_forest=Сумеречный лес
+block.gloamingforest.gloaming_portal=Портал в Gloaming Forest
+dimension.gloamingforest.gloaming_forest=Gloaming Forest
 misc.gloamingforest.portal_unsafe=Кажется, здесь небезопасно...
 misc.gloamingforest.portal_unworthy=Пул портала не отвечает. Возможно, что-то было упущено из виду?
-subtitles.gloamingforest.block.portal.whoosh=Портал в Сумеречный Лес манит
-tile.gloamingforest:gloaming_portal.name=Портал в сумеречный лес
+subtitles.gloamingforest.block.portal.whoosh=Портал в Gloaming Forest манит
+tile.gloamingforest:gloaming_portal.name=Портал в Gloaming Forest

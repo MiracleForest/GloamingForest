@@ -17,10 +17,10 @@ function Import-GfModelsAssembly {
 }
 
 # The upstream source tree (src/main/java) of the shared checkout (rule R24).
-function Get-GfTfJavaRoot {
-    $tf = if ($env:GF_UPSTREAM_HOME) { $env:GF_UPSTREAM_HOME } else { Join-Path $env:LOCALAPPDATA 'gf-upstream/view' }
-    $java = Join-Path $tf 'src/main/java'
-    if (-not (Test-Path (Join-Path $java 'gloamingforest/client/model/TFModelLayers.java'))) {
+function Get-GfGloamingJavaRoot {
+    $upsrc = if ($env:GF_UPSTREAM_HOME) { $env:GF_UPSTREAM_HOME } else { Join-Path $env:LOCALAPPDATA 'gf-upstream/view' }
+    $java = Join-Path $upsrc 'src/main/java'
+    if (-not (Test-Path (Join-Path $java 'gloamingforest/client/model/GloamingModelLayers.java'))) {
         & pwsh -NoProfile -File (Join-Path $script:Root 'tools/upstream/fetch.ps1') -Quiet | Out-Null
         if ($LASTEXITCODE -ne 0 -or -not (Test-Path $java)) { throw "The Gloaming Forest checkout is missing: run pwsh tools/upstream/fetch.ps1" }
     }
@@ -41,7 +41,7 @@ function Get-GfUnitNames {
 function Invoke-GfModelsGenerator([string]$Java, [string]$Item) {
     Import-GfModelsAssembly
     $catalog = Get-Content (Join-Path $PSScriptRoot '../catalog.json') -Raw
-    $full = [Gf.Models.Generator]::new((Get-GfTfJavaRoot), $catalog)
+    $full = [Gf.Models.Generator]::new((Get-GfGloamingJavaRoot), $catalog)
     $full.Run($null, $null, $null)
     $result = @{ Files = [ordered]@{}; Selected = $null; Log = @($full.Log); Errors = [System.Collections.Generic.List[string]]::new() }
     foreach ($e in $full.Errors) { $result.Errors.Add($e) }
@@ -163,4 +163,4 @@ function Write-GfModelsFiles($result, [string]$Unit, [switch]$Check, [string]$Ou
     return @{ Problems = $problems; Files = $written; Partitions = $parts }
 }
 
-Export-ModuleMember -Function Import-GfModelsAssembly, Get-GfTfJavaRoot, Invoke-GfModelsGenerator, Write-GfModelsFiles, Test-GfModelsOwners, Get-GfUnitNames
+Export-ModuleMember -Function Import-GfModelsAssembly, Get-GfGloamingJavaRoot, Invoke-GfModelsGenerator, Write-GfModelsFiles, Test-GfModelsOwners, Get-GfUnitNames

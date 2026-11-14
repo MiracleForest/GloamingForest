@@ -1,59 +1,59 @@
 {
-  "tf_block_aurora_block_1": {
+  "gf_block_aurora_block_1": {
     "textures": "textures/gloamingforest/block/aurora_block_1"
   },
-  "tf_block_aurora_block_2": {
+  "gf_block_aurora_block_2": {
     "textures": "textures/gloamingforest/block/aurora_block_2"
   },
-  "tf_block_aurora_block_3": {
+  "gf_block_aurora_block_3": {
     "textures": "textures/gloamingforest/block/aurora_block_3"
   },
-  "tf_block_aurora_block_4": {
+  "gf_block_aurora_block_4": {
     "textures": "textures/gloamingforest/block/aurora_block_4"
   },
-  "tf_block_aurora_block_5": {
+  "gf_block_aurora_block_5": {
     "textures": "textures/gloamingforest/block/aurora_block_5"
   },
-  "tf_block_aurora_block_6": {
+  "gf_block_aurora_block_6": {
     "textures": "textures/gloamingforest/block/aurora_block_6"
   },
-  "tf_block_aurora_block_7": {
+  "gf_block_aurora_block_7": {
     "textures": "textures/gloamingforest/block/aurora_block_7"
   },
-  "tf_block_aurora_block_8": {
+  "gf_block_aurora_block_8": {
     "textures": "textures/gloamingforest/block/aurora_block_8"
   },
-  "tf_block_aurora_block_9": {
+  "gf_block_aurora_block_9": {
     "textures": "textures/gloamingforest/block/aurora_block_9"
   },
-  "tf_block_aurora_block_10": {
+  "gf_block_aurora_block_10": {
     "textures": "textures/gloamingforest/block/aurora_block_10"
   },
-  "tf_block_aurora_block_11": {
+  "gf_block_aurora_block_11": {
     "textures": "textures/gloamingforest/block/aurora_block_11"
   },
-  "tf_block_aurora_block_12": {
+  "gf_block_aurora_block_12": {
     "textures": "textures/gloamingforest/block/aurora_block_12"
   },
-  "tf_block_aurora_block_13": {
+  "gf_block_aurora_block_13": {
     "textures": "textures/gloamingforest/block/aurora_block_13"
   },
-  "tf_block_aurora_block_14": {
+  "gf_block_aurora_block_14": {
     "textures": "textures/gloamingforest/block/aurora_block_14"
   },
-  "tf_block_aurora_block_15": {
+  "gf_block_aurora_block_15": {
     "textures": "textures/gloamingforest/block/aurora_block_15"
   },
-  "tf_block_auroralized_glass": {
+  "gf_block_auroralized_glass": {
     "textures": "textures/gloamingforest/block/auroralized_glass"
   },
-  "tf_aurora_ct_base": {
+  "gf_aurora_ct_base": {
     "textures": "textures/blocks/aurora/ct_base"
   },
-  "tf_aurora_item_block": {
-    "textures": "textures/blocks/aurora/tf-derived/aurora_block_item"
+  "gf_aurora_item_block": {
+    "textures": "textures/blocks/aurora/upstream-derived/aurora_block_item"
   },
-  "tf_aurora_item_aurora_pillar": {
+  "gf_aurora_item_aurora_pillar": {
     "textures": [
       {
         "path": "textures/gloamingforest/block/aurora_pillar",
@@ -61,7 +61,7 @@
       }
     ]
   },
-  "tf_aurora_item_aurora_pillar_top": {
+  "gf_aurora_item_aurora_pillar_top": {
     "textures": [
       {
         "path": "textures/gloamingforest/block/aurora_pillar_top",
@@ -69,7 +69,7 @@
       }
     ]
   },
-  "tf_aurora_item_aurora_slab_side": {
+  "gf_aurora_item_aurora_slab_side": {
     "textures": [
       {
         "path": "textures/gloamingforest/block/aurora_slab_side",
@@ -77,7 +77,7 @@
       }
     ]
   },
-  "tf_aurora_item_auroralized_glass": {
+  "gf_aurora_item_auroralized_glass": {
     "textures": [
       {
         "path": "textures/gloamingforest/block/auroralized_glass",
@@ -85,55 +85,55 @@
       }
     ]
   },
-  "tf_aurora_baked_aurora_block_0": {
-    "textures": "textures/blocks/aurora/tf-derived/aurora_block_baked_0"
+  "gf_aurora_baked_aurora_block_0": {
+    "textures": "textures/blocks/aurora/upstream-derived/aurora_block_baked_0"
   },
-  "tf_aurora_baked_aurora_block_1": {
-    "textures": "textures/blocks/aurora/tf-derived/aurora_block_baked_1"
+  "gf_aurora_baked_aurora_block_1": {
+    "textures": "textures/blocks/aurora/upstream-derived/aurora_block_baked_1"
   },
-  "tf_aurora_baked_aurora_block_2": {
-    "textures": "textures/blocks/aurora/tf-derived/aurora_block_baked_2"
+  "gf_aurora_baked_aurora_block_2": {
+    "textures": "textures/blocks/aurora/upstream-derived/aurora_block_baked_2"
   },
-  "tf_aurora_baked_aurora_block_3": {
-    "textures": "textures/blocks/aurora/tf-derived/aurora_block_baked_3"
+  "gf_aurora_baked_aurora_block_3": {
+    "textures": "textures/blocks/aurora/upstream-derived/aurora_block_baked_3"
   },
-  "tf_aurora_baked_aurora_block_4": {
-    "textures": "textures/blocks/aurora/tf-derived/aurora_block_baked_4"
+  "gf_aurora_baked_aurora_block_4": {
+    "textures": "textures/blocks/aurora/upstream-derived/aurora_block_baked_4"
   },
-  "tf_aurora_baked_aurora_block_5": {
-    "textures": "textures/blocks/aurora/tf-derived/aurora_block_baked_5"
+  "gf_aurora_baked_aurora_block_5": {
+    "textures": "textures/blocks/aurora/upstream-derived/aurora_block_baked_5"
   },
-  "tf_aurora_baked_aurora_block_6": {
-    "textures": "textures/blocks/aurora/tf-derived/aurora_block_baked_6"
+  "gf_aurora_baked_aurora_block_6": {
+    "textures": "textures/blocks/aurora/upstream-derived/aurora_block_baked_6"
   },
-  "tf_aurora_baked_aurora_block_7": {
-    "textures": "textures/blocks/aurora/tf-derived/aurora_block_baked_7"
+  "gf_aurora_baked_aurora_block_7": {
+    "textures": "textures/blocks/aurora/upstream-derived/aurora_block_baked_7"
   },
-  "tf_aurora_baked_aurora_block_8": {
-    "textures": "textures/blocks/aurora/tf-derived/aurora_block_baked_8"
+  "gf_aurora_baked_aurora_block_8": {
+    "textures": "textures/blocks/aurora/upstream-derived/aurora_block_baked_8"
   },
-  "tf_aurora_baked_aurora_block_9": {
-    "textures": "textures/blocks/aurora/tf-derived/aurora_block_baked_9"
+  "gf_aurora_baked_aurora_block_9": {
+    "textures": "textures/blocks/aurora/upstream-derived/aurora_block_baked_9"
   },
-  "tf_aurora_baked_aurora_block_10": {
-    "textures": "textures/blocks/aurora/tf-derived/aurora_block_baked_10"
+  "gf_aurora_baked_aurora_block_10": {
+    "textures": "textures/blocks/aurora/upstream-derived/aurora_block_baked_10"
   },
-  "tf_aurora_baked_aurora_block_11": {
-    "textures": "textures/blocks/aurora/tf-derived/aurora_block_baked_11"
+  "gf_aurora_baked_aurora_block_11": {
+    "textures": "textures/blocks/aurora/upstream-derived/aurora_block_baked_11"
   },
-  "tf_aurora_baked_aurora_block_12": {
-    "textures": "textures/blocks/aurora/tf-derived/aurora_block_baked_12"
+  "gf_aurora_baked_aurora_block_12": {
+    "textures": "textures/blocks/aurora/upstream-derived/aurora_block_baked_12"
   },
-  "tf_aurora_baked_aurora_block_13": {
-    "textures": "textures/blocks/aurora/tf-derived/aurora_block_baked_13"
+  "gf_aurora_baked_aurora_block_13": {
+    "textures": "textures/blocks/aurora/upstream-derived/aurora_block_baked_13"
   },
-  "tf_aurora_baked_aurora_block_14": {
-    "textures": "textures/blocks/aurora/tf-derived/aurora_block_baked_14"
+  "gf_aurora_baked_aurora_block_14": {
+    "textures": "textures/blocks/aurora/upstream-derived/aurora_block_baked_14"
   },
-  "tf_aurora_baked_aurora_block_15": {
-    "textures": "textures/blocks/aurora/tf-derived/aurora_block_baked_15"
+  "gf_aurora_baked_aurora_block_15": {
+    "textures": "textures/blocks/aurora/upstream-derived/aurora_block_baked_15"
   },
-  "tf_aurora_baked_aurora_pillar": {
+  "gf_aurora_baked_aurora_pillar": {
     "textures": [
       {
         "path": "textures/gloamingforest/block/aurora_pillar",
@@ -141,7 +141,7 @@
       }
     ]
   },
-  "tf_aurora_baked_aurora_pillar_top": {
+  "gf_aurora_baked_aurora_pillar_top": {
     "textures": [
       {
         "path": "textures/gloamingforest/block/aurora_pillar_top",
@@ -149,7 +149,7 @@
       }
     ]
   },
-  "tf_aurora_baked_aurora_slab_side": {
+  "gf_aurora_baked_aurora_slab_side": {
     "textures": [
       {
         "path": "textures/gloamingforest/block/aurora_slab_side",

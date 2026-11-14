@@ -45,21 +45,21 @@ using ::gf::structure::Rotation;
 using ::gf::structure::bases::Decorator;
 using ::gf::structure::bases::PieceList;
 
-inline constexpr char kWing[]           = "gloamingforest:TFDTWin";
-inline constexpr char kMain[]           = "gloamingforest:TFDTMai";
-inline constexpr char kBridge[]         = "gloamingforest:TFDTBri";
-inline constexpr char kEntranceBridge[] = "gloamingforest:TFDTEB";
-inline constexpr char kMainBridge[]     = "gloamingforest:TFDTMB";
-inline constexpr char kBossBridge[]     = "gloamingforest:TFDTBB";
-inline constexpr char kEntrance[]       = "gloamingforest:TFDTEnt";
-inline constexpr char kBossTrap[]       = "gloamingforest:TFDTBT";
-inline constexpr char kBalcony[]        = "gloamingforest:TFDTBal";
-inline constexpr char kBeard[]          = "gloamingforest:TFDTBea";
-inline constexpr char kRoof[]           = "gloamingforest:TFDTRooS";
-inline constexpr char kRoofAntenna[]    = "gloamingforest:TFDTRA";
-inline constexpr char kRoofCactus[]     = "gloamingforest:TFDTRC";
-inline constexpr char kRoofFourPost[]   = "gloamingforest:TFDTRFP";
-inline constexpr char kRoofRings[]      = "gloamingforest:TFDTRR";
+inline constexpr char kWing[]           = "gloamingforest:GloamingDTWin";
+inline constexpr char kMain[]           = "gloamingforest:GloamingDTMai";
+inline constexpr char kBridge[]         = "gloamingforest:GloamingDTBri";
+inline constexpr char kEntranceBridge[] = "gloamingforest:GloamingDTEB";
+inline constexpr char kMainBridge[]     = "gloamingforest:GloamingDTMB";
+inline constexpr char kBossBridge[]     = "gloamingforest:GloamingDTBB";
+inline constexpr char kEntrance[]       = "gloamingforest:GloamingDTEnt";
+inline constexpr char kBossTrap[]       = "gloamingforest:GloamingDTBT";
+inline constexpr char kBalcony[]        = "gloamingforest:GloamingDTBal";
+inline constexpr char kBeard[]          = "gloamingforest:GloamingDTBea";
+inline constexpr char kRoof[]           = "gloamingforest:GloamingDTRooS";
+inline constexpr char kRoofAntenna[]    = "gloamingforest:GloamingDTRA";
+inline constexpr char kRoofCactus[]     = "gloamingforest:GloamingDTRC";
+inline constexpr char kRoofFourPost[]   = "gloamingforest:GloamingDTRFP";
+inline constexpr char kRoofRings[]      = "gloamingforest:GloamingDTRR";
 
 inline constexpr char kDarkTower[] = "gloamingforest:dark_tower";
 
@@ -69,7 +69,7 @@ enum class Door { Vanishing, Reappearing, Locked };
 /// StructureDecoratorDarkTower ("DecoDarkTower").
 [[nodiscard]] std::unique_ptr<Decorator> darkTowerDecorator();
 
-/// DarkTowerWingComponent ("TFDTWin").
+/// DarkTowerWingComponent ("GloamingDTWin").
 class Wing : public ::gf::structure::bases::TowerWing {
 public:
     Wing(std::string typeId, int i, int x, int y, int z, int pSize, int pHeight, Orientation direction);
@@ -145,7 +145,7 @@ protected:
     std::vector<Door> openingTypes;
 };
 
-/// DarkTowerMainComponent ("TFDTMai").
+/// DarkTowerMainComponent ("GloamingDTMai").
 class Main : public Wing {
 public:
     /// DarkTowerMainComponent(rand, index, x, y, z): the first main tower at (x + 10, y, z + 10).
@@ -200,7 +200,7 @@ private:
     bool placedKeys = false; ///< not saved (Java)
 };
 
-/// DarkTowerBridgeComponent ("TFDTBri"; extends TowerWingComponent, as in Java).
+/// DarkTowerBridgeComponent ("GloamingDTBri"; extends TowerWingComponent, as in Java).
 class Bridge : public ::gf::structure::bases::TowerWing {
 public:
     Bridge(std::string typeId, int i, int x, int y, int z, int pSize, int pHeight, Orientation direction);
@@ -217,7 +217,7 @@ protected:
     int dHeight = 0;
 };
 
-/// DarkTowerEntranceBridgeComponent ("TFDTEB").
+/// DarkTowerEntranceBridgeComponent ("GloamingDTEB").
 class EntranceBridge : public Bridge {
 public:
     EntranceBridge(int i, int x, int y, int z, int pSize, int pHeight, Orientation direction);
@@ -225,7 +225,7 @@ public:
                        Rotation rotation) override;
 };
 
-/// DarkTowerMainBridgeComponent ("TFDTMB").
+/// DarkTowerMainBridgeComponent ("GloamingDTMB").
 class MainBridge : public Bridge {
 public:
     MainBridge(int i, int x, int y, int z, int pSize, int pHeight, Orientation direction);
@@ -233,7 +233,7 @@ public:
                        Rotation rotation) override;
 };
 
-/// DarkTowerBossBridgeComponent ("TFDTBB").
+/// DarkTowerBossBridgeComponent ("GloamingDTBB").
 class BossBridge : public Bridge {
 public:
     BossBridge(int i, int x, int y, int z, int pSize, int pHeight, Orientation direction);
@@ -241,7 +241,7 @@ public:
                        Rotation rotation) override;
 };
 
-/// DarkTowerEntranceComponent ("TFDTEnt").
+/// DarkTowerEntranceComponent ("GloamingDTEnt").
 class Entrance : public Wing {
 public:
     Entrance(int i, int x, int y, int z, int pSize, int pHeight, Orientation direction);
@@ -255,7 +255,7 @@ protected:
     [[nodiscard]] bool isEntrance() const override { return true; }
 };
 
-/// DarkTowerBossTrapComponent ("TFDTBT").
+/// DarkTowerBossTrapComponent ("GloamingDTBT").
 class BossTrap : public Wing {
 public:
     BossTrap(int i, int x, int y, int z, int pSize, int pHeight, Orientation direction);
@@ -267,7 +267,7 @@ private:
     void addBossTrapFloors(Region& region, BlockBox const& sbb);
 };
 
-/// DarkTowerBalconyComponent ("TFDTBal").
+/// DarkTowerBalconyComponent ("GloamingDTBal").
 class Balcony : public ::gf::structure::bases::TowerWing {
 public:
     Balcony(int i, int x, int y, int z, Orientation direction);
@@ -275,7 +275,7 @@ public:
     void postProcess(Region& region, RandomSource& rand, BlockBox const& sbb, BlockPos const& pivot) override;
 };
 
-/// DarkTowerBeardComponent ("TFDTBea").
+/// DarkTowerBeardComponent ("GloamingDTBea").
 class Beard : public ::gf::structure::bases::ComponentOld {
 public:
     Beard(int i, ::gf::structure::bases::TowerWing const& wing, int x, int y, int z);
@@ -291,7 +291,7 @@ private:
     int  height = 0;
 };
 
-/// DarkTowerRoofComponent ("TFDTRooS") and its four kinds.
+/// DarkTowerRoofComponent ("GloamingDTRooS") and its four kinds.
 class Roof : public ::gf::structure::bases::TowerRoof {
 public:
     Roof(std::string typeId, int i, ::gf::structure::bases::TowerWing const& wing, int x, int y, int z);

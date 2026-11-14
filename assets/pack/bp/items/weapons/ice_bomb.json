@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_item_ice_bomb"
+          "default": "gf_item_ice_bomb"
         }
       },
       "minecraft:display_name": {

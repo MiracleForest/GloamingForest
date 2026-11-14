@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_item_pocket_watch"
+          "default": "gf_item_pocket_watch"
         }
       },
       "minecraft:display_name": {

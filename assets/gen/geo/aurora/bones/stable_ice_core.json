@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.stable_ice_core",
   "layer": {
     "name": "stable_ice_core",
-    "field": "TFModelLayers.STABLE_ICE_CORE",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.STABLE_ICE_CORE, StableIceCoreModel::create);"
+    "field": "GloamingModelLayers.STABLE_ICE_CORE",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.STABLE_ICE_CORE, StableIceCoreModel::create);"
   },
   "texture_size": [32, 32],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/iceshooter",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/iceshooter.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/iceshooter.png"
     }
   ],
   "bones": [

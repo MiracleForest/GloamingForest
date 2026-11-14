@@ -1,7 +1,7 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/config/TFCommonConfig.java
-//   src/main/java/gloamingforest/config/TFConfig.java
+//   src/main/java/gloamingforest/config/GloamingCommonConfig.java
+//   src/main/java/gloamingforest/config/GloamingConfig.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -18,8 +18,8 @@ struct DimensionConfig {
     int version = 1;
 
     // -- Dimension Settings (config.gloamingforest.dim_settings) --
-    /// spawn_in_tf: new players spawn in the Gloaming Forest (and respawn there without a bed).
-    bool newPlayersSpawnInTF = false;
+    /// spawn_in_gf: new players spawn in the Gloaming Forest (and respawn there without a bed).
+    bool newPlayersSpawnInGloaming = false;
     /// portal_for_new_player: such players arrive next to a fresh (one-way) portal.
     bool portalForNewPlayer = false;
 

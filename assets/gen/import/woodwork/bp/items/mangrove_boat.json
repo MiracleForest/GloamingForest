@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_item_mangrove_boat"
+          "default": "gf_item_mangrove_boat"
         }
       },
       "minecraft:display_name": {

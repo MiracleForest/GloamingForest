@@ -26,44 +26,44 @@
         "minecraft:is_pickaxe_item_destructible"
       ],
       "minecraft:collision_box": false,
-      "minecraft:geometry": "geometry.tf.gloamingforest.block.miniature.naga_courtyard",
+      "minecraft:geometry": "geometry.gf.gloamingforest.block.miniature.naga_courtyard",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_vanilla_block_stone_bricks",
+          "texture": "gf_vanilla_block_stone_bricks",
           "render_method": "alpha_test"
         },
         "brick": {
-          "texture": "tf_vanilla_block_stone_bricks",
+          "texture": "gf_vanilla_block_stone_bricks",
           "render_method": "alpha_test"
         },
         "dirt": {
-          "texture": "tf_vanilla_block_dirt",
+          "texture": "gf_vanilla_block_dirt",
           "render_method": "alpha_test"
         },
         "grass": {
-          "texture": "tf_vanilla_block_grass_block_top",
+          "texture": "gf_vanilla_block_grass_block_top",
           "render_method": "alpha_test",
           "tint_method": "default_foliage"
         },
         "grass_side": {
-          "texture": "tf_vanilla_block_grass_block_side_overlay",
+          "texture": "gf_vanilla_block_grass_block_side_overlay",
           "render_method": "alpha_test",
           "tint_method": "default_foliage"
         },
         "moss_brick": {
-          "texture": "tf_vanilla_block_mossy_stone_bricks",
+          "texture": "gf_vanilla_block_mossy_stone_bricks",
           "render_method": "alpha_test"
         },
         "slab_side": {
-          "texture": "tf_vanilla_block_smooth_stone_slab_side",
+          "texture": "gf_vanilla_block_smooth_stone_slab_side",
           "render_method": "alpha_test"
         },
         "slab_top": {
-          "texture": "tf_vanilla_block_smooth_stone",
+          "texture": "gf_vanilla_block_smooth_stone",
           "render_method": "alpha_test"
         },
         "stone": {
-          "texture": "tf_vanilla_block_stone",
+          "texture": "gf_vanilla_block_stone",
           "render_method": "alpha_test"
         }
       },
@@ -85,44 +85,44 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.miniature.naga_courtyard",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.miniature.naga_courtyard",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_stone_bricks",
+              "texture": "gf_vanilla_block_stone_bricks",
               "render_method": "alpha_test"
             },
             "brick": {
-              "texture": "tf_vanilla_block_stone_bricks",
+              "texture": "gf_vanilla_block_stone_bricks",
               "render_method": "alpha_test"
             },
             "dirt": {
-              "texture": "tf_vanilla_block_dirt",
+              "texture": "gf_vanilla_block_dirt",
               "render_method": "alpha_test"
             },
             "grass": {
-              "texture": "tf_vanilla_block_grass_block_top",
+              "texture": "gf_vanilla_block_grass_block_top",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             },
             "grass_side": {
-              "texture": "tf_vanilla_block_grass_block_side_overlay",
+              "texture": "gf_vanilla_block_grass_block_side_overlay",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             },
             "moss_brick": {
-              "texture": "tf_vanilla_block_mossy_stone_bricks",
+              "texture": "gf_vanilla_block_mossy_stone_bricks",
               "render_method": "alpha_test"
             },
             "slab_side": {
-              "texture": "tf_vanilla_block_smooth_stone_slab_side",
+              "texture": "gf_vanilla_block_smooth_stone_slab_side",
               "render_method": "alpha_test"
             },
             "slab_top": {
-              "texture": "tf_vanilla_block_smooth_stone",
+              "texture": "gf_vanilla_block_smooth_stone",
               "render_method": "alpha_test"
             },
             "stone": {
-              "texture": "tf_vanilla_block_stone",
+              "texture": "gf_vanilla_block_stone",
               "render_method": "alpha_test"
             }
           },
@@ -150,44 +150,44 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.miniature.naga_courtyard",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.miniature.naga_courtyard",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_stone_bricks",
+              "texture": "gf_vanilla_block_stone_bricks",
               "render_method": "alpha_test"
             },
             "brick": {
-              "texture": "tf_vanilla_block_stone_bricks",
+              "texture": "gf_vanilla_block_stone_bricks",
               "render_method": "alpha_test"
             },
             "dirt": {
-              "texture": "tf_vanilla_block_dirt",
+              "texture": "gf_vanilla_block_dirt",
               "render_method": "alpha_test"
             },
             "grass": {
-              "texture": "tf_vanilla_block_grass_block_top",
+              "texture": "gf_vanilla_block_grass_block_top",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             },
             "grass_side": {
-              "texture": "tf_vanilla_block_grass_block_side_overlay",
+              "texture": "gf_vanilla_block_grass_block_side_overlay",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             },
             "moss_brick": {
-              "texture": "tf_vanilla_block_mossy_stone_bricks",
+              "texture": "gf_vanilla_block_mossy_stone_bricks",
               "render_method": "alpha_test"
             },
             "slab_side": {
-              "texture": "tf_vanilla_block_smooth_stone_slab_side",
+              "texture": "gf_vanilla_block_smooth_stone_slab_side",
               "render_method": "alpha_test"
             },
             "slab_top": {
-              "texture": "tf_vanilla_block_smooth_stone",
+              "texture": "gf_vanilla_block_smooth_stone",
               "render_method": "alpha_test"
             },
             "stone": {
-              "texture": "tf_vanilla_block_stone",
+              "texture": "gf_vanilla_block_stone",
               "render_method": "alpha_test"
             }
           },
@@ -215,44 +215,44 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.miniature.naga_courtyard",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.miniature.naga_courtyard",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_stone_bricks",
+              "texture": "gf_vanilla_block_stone_bricks",
               "render_method": "alpha_test"
             },
             "brick": {
-              "texture": "tf_vanilla_block_stone_bricks",
+              "texture": "gf_vanilla_block_stone_bricks",
               "render_method": "alpha_test"
             },
             "dirt": {
-              "texture": "tf_vanilla_block_dirt",
+              "texture": "gf_vanilla_block_dirt",
               "render_method": "alpha_test"
             },
             "grass": {
-              "texture": "tf_vanilla_block_grass_block_top",
+              "texture": "gf_vanilla_block_grass_block_top",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             },
             "grass_side": {
-              "texture": "tf_vanilla_block_grass_block_side_overlay",
+              "texture": "gf_vanilla_block_grass_block_side_overlay",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             },
             "moss_brick": {
-              "texture": "tf_vanilla_block_mossy_stone_bricks",
+              "texture": "gf_vanilla_block_mossy_stone_bricks",
               "render_method": "alpha_test"
             },
             "slab_side": {
-              "texture": "tf_vanilla_block_smooth_stone_slab_side",
+              "texture": "gf_vanilla_block_smooth_stone_slab_side",
               "render_method": "alpha_test"
             },
             "slab_top": {
-              "texture": "tf_vanilla_block_smooth_stone",
+              "texture": "gf_vanilla_block_smooth_stone",
               "render_method": "alpha_test"
             },
             "stone": {
-              "texture": "tf_vanilla_block_stone",
+              "texture": "gf_vanilla_block_stone",
               "render_method": "alpha_test"
             }
           },
@@ -280,44 +280,44 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.miniature.naga_courtyard",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.miniature.naga_courtyard",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_stone_bricks",
+              "texture": "gf_vanilla_block_stone_bricks",
               "render_method": "alpha_test"
             },
             "brick": {
-              "texture": "tf_vanilla_block_stone_bricks",
+              "texture": "gf_vanilla_block_stone_bricks",
               "render_method": "alpha_test"
             },
             "dirt": {
-              "texture": "tf_vanilla_block_dirt",
+              "texture": "gf_vanilla_block_dirt",
               "render_method": "alpha_test"
             },
             "grass": {
-              "texture": "tf_vanilla_block_grass_block_top",
+              "texture": "gf_vanilla_block_grass_block_top",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             },
             "grass_side": {
-              "texture": "tf_vanilla_block_grass_block_side_overlay",
+              "texture": "gf_vanilla_block_grass_block_side_overlay",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             },
             "moss_brick": {
-              "texture": "tf_vanilla_block_mossy_stone_bricks",
+              "texture": "gf_vanilla_block_mossy_stone_bricks",
               "render_method": "alpha_test"
             },
             "slab_side": {
-              "texture": "tf_vanilla_block_smooth_stone_slab_side",
+              "texture": "gf_vanilla_block_smooth_stone_slab_side",
               "render_method": "alpha_test"
             },
             "slab_top": {
-              "texture": "tf_vanilla_block_smooth_stone",
+              "texture": "gf_vanilla_block_smooth_stone",
               "render_method": "alpha_test"
             },
             "stone": {
-              "texture": "tf_vanilla_block_stone",
+              "texture": "gf_vanilla_block_stone",
               "render_method": "alpha_test"
             }
           },

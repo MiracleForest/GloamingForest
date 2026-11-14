@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.troll",
   "layer": {
     "name": "troll",
-    "field": "TFModelLayers.TROLL",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.TROLL, TrollModel::checkForPack);"
+    "field": "GloamingModelLayers.TROLL",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.TROLL, TrollModel::checkForPack);"
   },
   "texture_size": [128, 64],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/troll",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/troll.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/troll.png"
     }
   ],
   "bones": [

@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_block_patch_clover"
+          "default": "gf_block_patch_clover"
         }
       },
       "minecraft:display_name": {

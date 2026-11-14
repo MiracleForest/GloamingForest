@@ -10,7 +10,7 @@ Checked (A3, landmarks and bosses I):
   chest while a knight lives, `IT_IS_OVER` on the last one and the dark chest with the trophy. The conquest of
   `gloamingforest:knight_stronghold` at the home point is the unit's own `setConquered` call (`Phantom.cpp`, `KnightPhantom#postmortem`); it does not go through the boss kit's default postmortem, so the test cannot see it without a start at the test site (checked by reading the code against upstream).
 - The stronghold against upstream's `KnightStrongholdStructure` record (`stronghold.landmark_walk`): locked by
-  `progress_trophy_pedestal`, the `tfstronghold` hint book, conquerable; its protected pieces refuse a survival player
+  `progress_trophy_pedestal`, the `gloamingstronghold` hint book, conquerable; its protected pieces refuse a survival player
   without the advancement and let him in with it.
 
 Fixed:

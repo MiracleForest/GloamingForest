@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.pinch_beetle",
   "layer": {
     "name": "pinch_beetle",
-    "field": "TFModelLayers.PINCH_BEETLE",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.PINCH_BEETLE, PinchBeetleModel::checkForPack);"
+    "field": "GloamingModelLayers.PINCH_BEETLE",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.PINCH_BEETLE, PinchBeetleModel::checkForPack);"
   },
   "texture_size": [64, 32],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/pinchbeetle",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/pinchbeetle.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/pinchbeetle.png"
     }
   ],
   "bones": [

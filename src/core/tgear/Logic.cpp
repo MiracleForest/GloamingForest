@@ -6,7 +6,7 @@
 //   src/main/java/gloamingforest/item/travellers_gear/modifiers/TooltipStringInterpolator.java
 //   src/main/java/gloamingforest/client/overlay/display/ClockDisplay.java
 //   src/main/java/gloamingforest/client/overlay/display/MoonDialDisplay.java
-//   src/main/java/gloamingforest/util/TFMathUtil.java
+//   src/main/java/gloamingforest/util/GloamingMathUtil.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -141,7 +141,7 @@ std::string interpolate(std::string const& text, std::function<std::string(std::
         out.append(text, pos, open - pos);
         std::string var   = text.substr(open + 2, close - open - 2);
         auto        slash = var.find('/');
-        if (slash != std::string::npos && var.find('/', slash + 1) == std::string::npos && var.substr(0, slash) == "tfkeybinds")
+        if (slash != std::string::npos && var.find('/', slash + 1) == std::string::npos && var.substr(0, slash) == "gloamingkeybinds")
             out += keyName(var.substr(slash + 1));
         else out.append(text, open, close - open + 1);
         pos = close + 1;

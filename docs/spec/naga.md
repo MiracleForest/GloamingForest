@@ -12,7 +12,7 @@ derived, the formula is given. "Bedrock:" paragraphs mark adaptation notes.
 | Net channels | `naga.*` |
 | Config | none (upstream has no Naga config key; boss drop chests and the multiplayer adjuster are F8's `bosses` section) |
 | Contracts | landmark (F6), structure + template (F7), boss + entity (F8), loot (F10), fx (F10) |
-| Java sources | `entity/boss/Naga.java`, `entity/boss/NagaSegment.java`, `entity/ai/goal/NagaMovementPattern.java`, `entity/ai/goal/NagaSmashGoal.java`, `entity/ai/control/NagaMoveControl.java`, `block/entity/spawner/NagaSpawnerBlockEntity.java`, `world/components/structures/type/NagaCourtyardStructure.java`, `world/components/structures/courtyard/*.java` (18 files), `client/renderer/entity/Naga{,Segment}Renderer.java`, `client/model/entity/NagaModel.java`, `init/TFEntities.java`, `events/RegistrationEvents.java` |
+| Java sources | `entity/boss/Naga.java`, `entity/boss/NagaSegment.java`, `entity/ai/goal/NagaMovementPattern.java`, `entity/ai/goal/NagaSmashGoal.java`, `entity/ai/control/NagaMoveControl.java`, `block/entity/spawner/NagaSpawnerBlockEntity.java`, `world/components/structures/type/NagaCourtyardStructure.java`, `world/components/structures/courtyard/*.java` (18 files), `client/renderer/entity/Naga{,Segment}Renderer.java`, `client/model/entity/NagaModel.java`, `init/GloamingEntities.java`, `events/RegistrationEvents.java` |
 | Data | `data/gloamingforest/loot_table/entities/naga.json`, `worldgen/structure/naga_courtyard.json`, `worldgen/structure_set/naga_courtyard.json`, `gloaming/template_definition/courtyard/spawner.json`, `tags/banner_pattern/pattern_item/naga.json` |
 
 Not owned here (referenced by string only, R2): `gloamingforest:naga_boss_spawner`, `gloamingforest:naga_trophy`,
@@ -23,7 +23,7 @@ the landmark grid, conquest, protection and hints (F6).
 
 ## 1. Entity `gloamingforest:naga`
 
-Registered in `TFEntities.NAGA`: category MONSTER, size 2.0 x 3.0, eye height 2.0, **fire immune**, tracking range
+Registered in `GloamingEntities.NAGA`: category MONSTER, size 2.0 x 3.0, eye height 2.0, **fire immune**, tracking range
 80, update interval 3, receives velocity updates. Spawn egg `gloamingforest:naga_spawn_egg` (primary `0xa4d316`,
 secondary `0x1b380b`, name "Naga Spawn Egg"). Spawn placement ON_GROUND / MOTION_BLOCKING_NO_LEAVES /
 `Monster::checkMonsterSpawnRules` (only matters for the egg and commands; the boss comes from its spawner).
@@ -141,7 +141,7 @@ Before the vanilla move control tick: DAZE -> `xxa = 0`; not CHARGE and not INTI
 
 ### 1.8 Body segments (`NagaSegment`, multipart)
 
-- 12 `TFPart` segments, renderer id `gloamingforest:naga_segment`, inactive = size 0 x 0 and invisible, active =
+- 12 `GloamingPart` segments, renderer id `gloamingforest:naga_segment`, inactive = size 0 x 0 and invisible, active =
   2.0 x 2.0 visible.
 - Segment count: `clamp((int)(health / healthPerSegment) + (health > 0 ? 2 : 0), 0, 12)`. When it decreases,
   segment `i` (new..old-1) self-destructs after `(old - i) * 12` ticks: on expiry the naga makes 20 EXPLOSION
@@ -238,28 +238,28 @@ In peaceful the boss turns back into its spawner at the restriction point (`chec
 
 | Connection bits | Piece (piece type) | Templates (+ "big" overlay at integrity 0.5, air ignored) |
 |---|---|---|
-| one direction | 50/50 `NagaCourtyardHedgeCapComponent` (`gloamingforest:TFNCCp`) or `...CapPillarComponent` (`gloamingforest:TFNCCpP`), rotated per direction | `courtyard/hedge_end` + `hedge_end_big`; `courtyard/hedge_end_pillar` + `hedge_end_pillar_big` |
-| two adjacent (corner) | `NagaCourtyardHedgeCornerComponent` (`gloamingforest:TFNCCr`) | `courtyard/hedge_corner` + `_big` |
-| three (T) | `NagaCourtyardHedgeTJunctionComponent` (`gloamingforest:TFNCT`) | `courtyard/hedge_t` + `_big` |
-| two opposite (line) | `NagaCourtyardHedgeLineComponent` (`gloamingforest:TFNCLn`) | `courtyard/hedge_line` + `_big` |
-| four | `NagaCourtyardHedgeIntersectionComponent` (`gloamingforest:TFNCIs`) | `courtyard/hedge_intersection` + `_big` |
-| none | terrace at `(-6, -3, -6)`: 1/150 `terrace_statue`; else `nextInt(5)`: 1 `terrace_duct`, 2 `terrace_channel`, 3 `terrace_reservoir`, 4 `CourtyardTerraceHedge` (`gloamingforest:TFNCHe`: `terrace_hedge` + `terrace_hedge_big` at 0.5), 0 `terrace_fire`; all `CourtyardTerrace` (`gloamingforest:TFNCTe`) | as named |
+| one direction | 50/50 `NagaCourtyardHedgeCapComponent` (`gloamingforest:GloamingNCCp`) or `...CapPillarComponent` (`gloamingforest:GloamingNCCpP`), rotated per direction | `courtyard/hedge_end` + `hedge_end_big`; `courtyard/hedge_end_pillar` + `hedge_end_pillar_big` |
+| two adjacent (corner) | `NagaCourtyardHedgeCornerComponent` (`gloamingforest:GloamingNCCr`) | `courtyard/hedge_corner` + `_big` |
+| three (T) | `NagaCourtyardHedgeTJunctionComponent` (`gloamingforest:GloamingNCT`) | `courtyard/hedge_t` + `_big` |
+| two opposite (line) | `NagaCourtyardHedgeLineComponent` (`gloamingforest:GloamingNCLn`) | `courtyard/hedge_line` + `_big` |
+| four | `NagaCourtyardHedgeIntersectionComponent` (`gloamingforest:GloamingNCIs`) | `courtyard/hedge_intersection` + `_big` |
+| none | terrace at `(-6, -3, -6)`: 1/150 `terrace_statue`; else `nextInt(5)`: 1 `terrace_duct`, 2 `terrace_channel`, 3 `terrace_reservoir`, 4 `CourtyardTerraceHedge` (`gloamingforest:GloamingNCHe`: `terrace_hedge` + `terrace_hedge_big` at 0.5), 0 `terrace_fire`; all `CourtyardTerrace` (`gloamingforest:GloamingNCTe`) | as named |
 
   Rotation order for caps: case WEST 0, NORTH 1, EAST 2, SOUTH 3 (fall-through `rotation++`); corners: SOUTH_EAST 0,
   SOUTH_WEST 1, NORTH_WEST 2, NORTH_EAST 3; T: NOT_WEST 0, NOT_NORTH 1, NOT_EAST 2, NOT_SOUTH 3; lines: EAST_WEST 0,
   NORTH_SOUTH 1 (indices into `Rotation.values()`).
 - Hedge connectors: for each connection west/north (and east/south only at the grid edge or next to an excluded
-  cell) a `NagaCourtyardHedgePadderComponent` (`gloamingforest:TFNCPd`, `courtyard/hedge_between` + `_big`) at
+  cell) a `NagaCourtyardHedgePadderComponent` (`gloamingforest:GloamingNCPd`, `courtyard/hedge_between` + `_big`) at
   -1 / +4 / +5 offsets (a second padder 6 further when the neighbour is not excluded) and a line piece 6 blocks away
   (coordinates exactly as `processInnerWallsAndFloor`).
-- Paths: `CourtyardPathPiece` (`gloamingforest:TFNCPa`, template `courtyard/pathway`, NagastoneVariants, placed one
+- Paths: `CourtyardPathPiece` (`gloamingforest:GloamingNCPa`, template `courtyard/pathway`, NagastoneVariants, placed one
   block lower via `placePieceAdjusted(..., -1)`) at the centre and on the four cardinal and four diagonal sides of
   every hedge cell when the neighbouring cells have no terrace (the eight `...HasNoTerraceOrIsSafe` predicates).
 - Outer walls (`processOuterWalls`): for each of the four diagonals, padders and walls along the clipped notches,
-  two `CourtyardWallCornerOuter` (`gloamingforest:TFNCWC`, `courtyard/courtyard_wall_corner` +
-  `_decayed`) and one `CourtyardWallCornerInner` (`gloamingforest:TFNCWA`, `courtyard/courtyard_wall_corner_inner` +
-  `_decayed`); then the straight north/south/west/east runs of `CourtyardWall` (`gloamingforest:TFNCWl`,
-  `courtyard/courtyard_wall` + `_decayed`) every 12 blocks with a `CourtyardWallPadder` (`gloamingforest:TFNCWP`,
+  two `CourtyardWallCornerOuter` (`gloamingforest:GloamingNCWC`, `courtyard/courtyard_wall_corner` +
+  `_decayed`) and one `CourtyardWallCornerInner` (`gloamingforest:GloamingNCWA`, `courtyard/courtyard_wall_corner_inner` +
+  `_decayed`); then the straight north/south/west/east runs of `CourtyardWall` (`gloamingforest:GloamingNCWl`,
+  `courtyard/courtyard_wall` + `_decayed`) every 12 blocks with a `CourtyardWallPadder` (`gloamingforest:GloamingNCWP`,
   `courtyard/courtyard_wall_padding` + `_decayed`) between them, coordinates as in the Java.
 - Wall pieces are `GloamingDoubleTemplateStructurePiece`s: the intact template with BlockRot 0.95 + SmoothStone +
   Nagastone + StoneBricks + Cobble variant processors, then the decayed template with BlockRot 0.1 + Cobble variants.
@@ -268,21 +268,21 @@ In peaceful the boss turns back into its spawner at the restriction point (`chec
   sandstone slab into: (double slab) stone brick slab when the world block is stone bricks / mossy / cracked /
   stone brick slab / mossy stone brick slab, nothing when the world block is plain air (cave air is kept), otherwise
   stone bricks; (single slab) nothing over air, otherwise a stone brick slab.
-- Hedge pieces (`TFStructureComponentTemplate`): template with NagastoneVariants, then the big template with
+- Hedge pieces (`GloamingStructureComponentTemplate`): template with NagastoneVariants, then the big template with
   BlockIgnore AIR + BlockRot 0.5, both with flags 18.
 - Boss spawner: `CourtyardMain.addChildren` picks from template pool `gloamingforest:courtyard/center` at
   `getWorldPos(22, 1, 22)` facing a random rotation of SOUTH (`FrontAndTop(UP, dir)`), junction name
-  `"gloamingforest:center"`, as a `GloamingJigsawPiece` (piece type `gloamingforest:TFJigsawTemplate`; owner F7 is
+  `"gloamingforest:center"`, as a `GloamingJigsawPiece` (piece type `gloamingforest:GloamingJigsawTemplate`; owner F7 is
   proposed, pending an owners.tsv fix by F0/A8,
   [issue #4](https://github.com/MiracleForest/GloamingForest/issues/4)). Legacy saves without
   `placeSpawner = false` place `gloamingforest:naga_boss_spawner` at `(22, 3, 22)` in `postProcess` (keep for
   old-save parity only).
 
-Piece type ids owned here (all `structure_piece_type`): `gloamingforest:TFNCMn` (CourtyardMain),
-`gloamingforest:TFNCCp`, `gloamingforest:TFNCCpP`, `gloamingforest:TFNCCr`, `gloamingforest:TFNCLn`,
-`gloamingforest:TFNCT`, `gloamingforest:TFNCIs`, `gloamingforest:TFNCPd`, `gloamingforest:TFNCTe`,
-`gloamingforest:TFNCHe`, `gloamingforest:TFNCPa`, `gloamingforest:TFNCWl`, `gloamingforest:TFNCWP`,
-`gloamingforest:TFNCWC`, `gloamingforest:TFNCWA`. The structure type id `gloamingforest:naga_courtyard` is owned
+Piece type ids owned here (all `structure_piece_type`): `gloamingforest:GloamingNCMn` (CourtyardMain),
+`gloamingforest:GloamingNCCp`, `gloamingforest:GloamingNCCpP`, `gloamingforest:GloamingNCCr`, `gloamingforest:GloamingNCLn`,
+`gloamingforest:GloamingNCT`, `gloamingforest:GloamingNCIs`, `gloamingforest:GloamingNCPd`, `gloamingforest:GloamingNCTe`,
+`gloamingforest:GloamingNCHe`, `gloamingforest:GloamingNCPa`, `gloamingforest:GloamingNCWl`, `gloamingforest:GloamingNCWP`,
+`gloamingforest:GloamingNCWC`, `gloamingforest:GloamingNCWA`. The structure type id `gloamingforest:naga_courtyard` is owned
 here too.
 
 ### 3.2 Template slot list (re-design brief, R11/R19)

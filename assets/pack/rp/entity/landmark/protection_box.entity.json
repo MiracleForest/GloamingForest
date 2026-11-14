@@ -7,7 +7,7 @@
         "default": "entity_beam"
       },
       "textures": {
-        "default": "textures/entity/landmark/tf-derived/protectionbox"
+        "default": "textures/entity/landmark/upstream-derived/protectionbox"
       },
       "geometry": {
         "default": "geometry.gloamingforest.protection_box.tiled"

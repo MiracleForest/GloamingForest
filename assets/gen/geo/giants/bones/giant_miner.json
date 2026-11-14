@@ -3,8 +3,8 @@
   "geometry": "geometry.humanoid.custom",
   "layer": {
     "name": "giant_miner",
-    "field": "TFModelLayers.GIANT_MINER",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.GIANT_MINER, () -> LayerDefinition.create(HumanoidModel.createMesh(CubeDeformation.NONE, 0.0F), 64, 32));"
+    "field": "GloamingModelLayers.GIANT_MINER",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.GIANT_MINER, () -> LayerDefinition.create(HumanoidModel.createMesh(CubeDeformation.NONE, 0.0F), 64, 32));"
   },
-  "notes": ["TFGiantRenderer draws the vanilla PlayerModel with the viewer's skin at 4x scale; the registered layer is unused."]
+  "notes": ["GloamingGiantRenderer draws the vanilla PlayerModel with the viewer's skin at 4x scale; the registered layer is unused."]
 }

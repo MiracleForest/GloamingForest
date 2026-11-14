@@ -26,7 +26,7 @@ if ($script:Mode -eq 'local') {
 # but the loom screen and the renderer index the registry)
 if ($script:Mode -ne 'remote-vanilla') {
     $ids = Wait-LogLine '^(?!.*\[host\]).*building: banner pattern ids' 60
-    if ($ids -notmatch 'tf_naga=\d+') { throw "the client mod did not register upstream's banner patterns: $ids" }
+    if ($ids -notmatch 'gf_naga=\d+') { throw "the client mod did not register upstream's banner patterns: $ids" }
     Write-Step "building: client $($ids -replace '^.*banner pattern ids', 'banner pattern ids')"
     if ($script:Mode -eq 'remote-mod') {
         $hostIds = Wait-LogLine '\[host\].*building: banner pattern ids' 60
@@ -149,7 +149,7 @@ $done = Wait-LogLine 'SELFTEST DONE pass=\d+ fail=\d+' 120 -Since $mark
 if ($done -notmatch 'fail=0') { throw "building.banner_loom failed: $done" }
 Invoke-Chat '/tag @s remove gf_building_banners'
 
-# the loom screen of a real loom (the real CraftLoom request with tf_naga is building.loom_request:
+# the loom screen of a real loom (the real CraftLoom request with gf_naga is building.loom_request:
 # the client's request bytes read and validated by the integrated or BDS server)
 Invoke-Chat '/gamemode creative'
 Invoke-Chat '/clear @s'

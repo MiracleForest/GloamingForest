@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_vanilla_item_bread"
+          "default": "gf_vanilla_item_bread"
         }
       },
       "minecraft:display_name": {

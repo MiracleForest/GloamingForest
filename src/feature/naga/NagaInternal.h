@@ -48,7 +48,7 @@ inline constexpr double kDefaultSpeed         = 0.5;
 enum class MovementState { Intimidate, Crumble, Charge, StunlessCharge, Circle, Daze };
 [[nodiscard]] char const* stateName(MovementState state);
 
-/// NagaSegment (a TFPart: an F8 part actor).
+/// NagaSegment (a GloamingPart: an F8 part actor).
 struct Segment {
     gf::entity::PartHandle part;
     Vec3                   pos{};

@@ -1,6 +1,6 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/block/TFHorizontalBlock.java
+//   src/main/java/gloamingforest/block/GloamingHorizontalBlock.java
 //   src/main/java/gloamingforest/block/MiniatureStructureBlock.java
 //   src/main/java/gloamingforest/block/BanisterBlock.java
 //   src/main/java/gloamingforest/block/EtchedNagastoneBlock.java
@@ -8,7 +8,7 @@
 //   src/main/java/gloamingforest/block/DirectionalRotatedPillarBlock.java
 //   src/main/java/gloamingforest/block/BinaryRotatedBlock.java
 //   src/main/java/gloamingforest/block/ConnectableRotatedPillarBlock.java
-//   src/main/java/gloamingforest/block/TFBushBlock.java
+//   src/main/java/gloamingforest/block/GloamingBushBlock.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -157,7 +157,7 @@ void placeConnectablePillar(Placing const& p, Entry const& e) {
 }
 
 void placeHorizontal(Placing const& p, Entry const& e) {
-    // TFHorizontalBlock / MiniatureStructureBlock: facing the player (the opposite of the look);
+    // GloamingHorizontalBlock / MiniatureStructureBlock: facing the player (the opposite of the look);
     // BanisterBlock: the look direction (its shape is the owner's); params.placement overrides
     auto cls  = e.str("class");
     auto mode = e.str("placement", cls == "BanisterBlock" ? "look" : (cls == "ClimbableHollowLogBlock" ? "none" : "opposite"));
@@ -181,7 +181,7 @@ void placeDirectional(Placing const& p, Entry const& e) {
 }
 
 void placeSnowy(Placing const& p) {
-    // TFBushBlock.getStateForPlacement: placed into one layer of snow, it keeps the layer
+    // GloamingBushBlock.getStateForPlacement: placed into one layer of snow, it keeps the layer
     auto const* was = detail::replacedBlock(p.c.pos);
     if (!was || was->getTypeName() != "minecraft:snow_layer") return;
     if (intState(*was, "height").value_or(-1) == 0) setStates(p.region, p.pos, {{state::Layers, 1}});

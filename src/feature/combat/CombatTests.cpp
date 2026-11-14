@@ -127,8 +127,8 @@ int itemEntitiesNear(GlobalPos const& pos, float radius) {
 
 GF_REGISTER_SELFTEST("combat.gamerules", [](Context& ctx) {
     namespace gr = gf::gamerules;
-    ctx.check(gr::getBool("tfEnforcedProgression") == gr::getBool("tfEnforcedProgression"), "tfEnforcedProgression is known");
-    ctx.check(std::holds_alternative<int>(gr::get("playersTfPortalDefaultDelay")), "playersTfPortalDefaultDelay is an int rule");
+    ctx.check(gr::getBool("gloamingEnforcedProgression") == gr::getBool("gloamingEnforcedProgression"), "gloamingEnforcedProgression is known");
+    ctx.check(std::holds_alternative<int>(gr::get("playersGloamingPortalDefaultDelay")), "playersGloamingPortalDefaultDelay is an int rule");
     gr::registerBool("gfTestBoolRule", true);
     gr::registerInt("gfTestIntRule", 7);
     ctx.check(gr::getBool("gfTestBoolRule") && gr::getInt("gfTestIntRule") == 7, "defaults apply until set");
@@ -139,7 +139,7 @@ GF_REGISTER_SELFTEST("combat.gamerules", [](Context& ctx) {
     auto stored = db::get("gf:gamerules:values");
     ctx.check(stored && stored->value("gfTestIntRule", 0) == 12, "values are stored in the world DB");
     ctx.check(gr::parse("gfTestIntRule", "34").has_value() && !gr::parse("gfTestIntRule", "3x").has_value(), "command values parse");
-    ctx.check(gr::snapshot().contains("tfEnforcedProgression"), "the snapshot lists upstream's rules");
+    ctx.check(gr::snapshot().contains("gloamingEnforcedProgression"), "the snapshot lists upstream's rules");
     // the test rules leave no trace (registry and stored values)
     gr::unregisterRule("gfTestIntRule");
     gr::unregisterRule("gfTestBoolRule");
@@ -480,15 +480,15 @@ GF_REGISTER_SELFTEST("combat.fx_effect_variables", [](Context& ctx) -> ll::coro:
 GF_REGISTER_SELFTEST("combat.damage_types", [](Context& ctx) {
     namespace c = gf::combat;
     using Cause = SharedTypes::Legacy::ActorDamageCause;
-    int tf      = 0;
+    int upsrc      = 0;
     for (auto const& id : c::damageTypeIds())
-        if (id.rfind("gloamingforest:", 0) == 0) ++tf;
-    ctx.check(tf >= 40, "upstream's 40 damage types are known (" + std::to_string(tf) + ")");
+        if (id.rfind("gloamingforest:", 0) == 0) ++upsrc;
+    ctx.check(upsrc >= 40, "upstream's 40 damage types are known (" + std::to_string(upsrc) + ")");
     auto const* bite = c::damageType("gloamingforest:hydra_bite");
     ctx.require(bite != nullptr, "hydra_bite is known");
-    ctx.check(bite->messageId == "gloamingforest.hydraBite", "message ids follow TFDamageTypes");
+    ctx.check(bite->messageId == "gloamingforest.hydraBite", "message ids follow GloamingDamageTypes");
     ctx.check(c::damageType("gloamingforest:slam")->messageId == "gloamingforest.axing", "slam reuses the axing message");
-    ctx.check(c::damageType("gloamingforest:thorns")->exhaustion > 0.09f, "exhaustion follows TFDamageTypes");
+    ctx.check(c::damageType("gloamingforest:thorns")->exhaustion > 0.09f, "exhaustion follows GloamingDamageTypes");
     ctx.check(c::causeFor("gloamingforest:lich_bolt", true) == Cause::Magic, "bypasses_armor -> Magic");
     ctx.check(c::causeFor("gloamingforest:hydra_fire", true) == Cause::Fire, "is_fire -> Fire");
     ctx.check(c::causeFor("gloamingforest:yeeted", true) == Cause::Fall, "is_fall -> Fall");
@@ -649,7 +649,7 @@ GF_REGISTER_SELFTEST("combat.keepers", [](Context& ctx) -> ll::coro::CoroTask<> 
 namespace {
 
 /// A table using every upstream loot extension with constant numbers (exact expected counts).
-JsonT tfFunctionsTable() {
+JsonT gloamingFunctionsTable() {
     return JsonT::parse(R"({
       "type": "minecraft:entity",
       "pools": [
@@ -692,9 +692,9 @@ JsonT structureTable() {
 
 } // namespace
 
-GF_REGISTER_SELFTEST("combat.loot_tf_functions", [](Context& ctx) -> ll::coro::CoroTask<> {
+GF_REGISTER_SELFTEST("combat.loot_gf_functions", [](Context& ctx) -> ll::coro::CoroTask<> {
     namespace loot = gf::loot;
-    loot::registerTable("gf_test:combat/tf_functions", tfFunctionsTable());
+    loot::registerTable("gf_test:combat/gf_functions", gloamingFunctionsTable());
     auto pos = ctx.testPos(6004);
     ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
     auto& p = ctx.player();
@@ -717,9 +717,9 @@ GF_REGISTER_SELFTEST("combat.loot_tf_functions", [](Context& ctx) -> ll::coro::C
     // three qualified players with an adjuster that adds loot
     loot::setTestParticipants(3);
     loot::setTestAdjustsLoot(true);
-    auto many = loot::roll("gf_test:combat/tf_functions", lc);
+    auto many = loot::roll("gf_test:combat/gf_functions", lc);
     loot::setTestAdjustsLoot(false);
-    auto plain = loot::roll("gf_test:combat/tf_functions", lc);
+    auto plain = loot::roll("gf_test:combat/gf_functions", lc);
     loot::setTestParticipants(-1);
     loot::setTestAdjustsLoot(std::nullopt);
     p.setCarriedItem(ItemStack{});
@@ -728,7 +728,7 @@ GF_REGISTER_SELFTEST("combat.loot_tf_functions", [](Context& ctx) -> ll::coro::C
     ctx.check(countIn(many, "minecraft:emerald") == 4, "looting_rolls: looting 3 + base 1 (got " + std::to_string(countIn(many, "minecraft:emerald")) + ")");
     ctx.check(countIn(many, "minecraft:gold_ingot") == 1 && countIn(many, "minecraft:iron_ingot") == 0, "mod_exists: gloamingforest yes, examplemod no");
     ctx.check(countIn(plain, "minecraft:stick") == 1 && countIn(plain, "minecraft:diamond") == 2, "without the loot adjuster the default rolls and counts apply");
-    loot::registerTable("gf_test:combat/tf_functions", nullptr);
+    loot::registerTable("gf_test:combat/gf_functions", nullptr);
 });
 
 GF_REGISTER_SELFTEST("combat.loot_interpreter", [](Context& ctx) {

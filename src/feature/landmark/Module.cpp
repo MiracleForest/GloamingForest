@@ -70,7 +70,7 @@ namespace {
 
 constexpr char kStructureHuntTag[] = "gf_landmark_structure_hunt";
 
-/// setup_structure_hunt: the tagged player goes to the Gloaming Forest (TFTeleportCommand#run).
+/// setup_structure_hunt: the tagged player goes to the Gloaming Forest (GloamingTeleportCommand#run).
 void structureHunt(Level& level) {
     std::vector<ActorUniqueID> tagged;
     level.forEachPlayer([&](Player& p) {
@@ -81,9 +81,9 @@ void structureHunt(Level& level) {
         auto* p = level.getPlayer(id);
         if (!p) continue;
         p->removeTag(kStructureHuntTag);
-        auto tf = gf::world::gloaming();
-        if (!tf) {
-            p->sendMessage(trFor(*p, "commands.tffeature.teleport.dimension_missing", "The Gloaming Forest dimension is unavailable."));
+        auto upsrc = gf::world::gloaming();
+        if (!upsrc) {
+            p->sendMessage(trFor(*p, "commands.gloamingfeature.teleport.dimension_missing", "The Gloaming Forest dimension is unavailable."));
             continue;
         }
         // `execute in gloamingforest:gloaming_forest run tp @p ~ ~ ~`: the same x / y / z (and facing)
@@ -91,7 +91,7 @@ void structureHunt(Level& level) {
         // the player does not start in the void
         auto pos = p->getFeetPos();
         pos.y    = std::max(pos.y, static_cast<float>(gf::world::kMinY));
-        gf::world::teleport(*p, *tf, pos, p->getRotation().y);
+        gf::world::teleport(*p, *upsrc, pos, p->getRotation().y);
         log().info("landmark: setup_structure_hunt sent {} to the Gloaming Forest at {} {} {}", p->getRealName(), pos.x, pos.y, pos.z);
     }
 }

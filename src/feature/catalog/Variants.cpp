@@ -1,12 +1,12 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/init/TFCreativeTabs.java
+//   src/main/java/gloamingforest/init/GloamingCreativeTabs.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // Creative entry variants of the catalog (F9, gf::catalog::addVariant): upstream's tabs accept a few
-// stacks with data next to the plain item (TFCreativeTabs#createGlassSwordAndLoreVer). The behavior
+// stacks with data next to the plain item (GloamingCreativeTabs#createGlassSwordAndLoreVer). The behavior
 // pack's item_catalog lists item ids only, so the variant is a new entry of the server's
 // CreativeItemRegistry: a copy of the item's entry with the variant's data, placed right after it
 // in its group, added when a world is ready (before the creative content goes to the clients).

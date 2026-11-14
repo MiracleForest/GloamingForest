@@ -28,7 +28,7 @@ no row for them; F1 imports their members with the vanilla tags upstream referen
 
 ## 1. Common rules
 
-- Registration (`init/TFEntities.java`): tracking range 80, update interval 3, velocity updates; projectiles
+- Registration (`init/GloamingEntities.java`): tracking range 80, update interval 3, velocity updates; projectiles
   `nature_bolt` and `slime_blob` use `makeCastedBuilder` (category MISC, tracking 150, intervals 5 and 3, no egg).
 - Attributes in `events/RegistrationEvents.java#addEntityAttributes`, placements in `#registerSpawnPlacements`
   (ON_GROUND, `MOTION_BLOCKING_NO_LEAVES`).
@@ -149,7 +149,7 @@ Loot `gloamingforest:entities/winter_wolf`: `gloamingforest:arctic_fur` 0..2, lo
 
 ### 2.4 `gloamingforest:king_spider` (KingSpider extends Spider)
 
-Source: `entity/monster/KingSpider.java`, renderer `TFSpiderRenderer` (`kingspider.png`, shadow 1.25, scale 1.9).
+Source: `entity/monster/KingSpider.java`, renderer `GloamingSpiderRenderer` (`kingspider.png`, shadow 1.25, scale 1.9).
 
 | Field | Value |
 |---|---|
@@ -172,7 +172,7 @@ killed by a player).
 
 ### 2.5 `gloamingforest:hedge_spider` (HedgeSpider extends Spider)
 
-Source: `entity/monster/HedgeSpider.java`, renderer `TFSpiderRenderer` (`hedgespider.png`, shadow 0.8, scale 1.0).
+Source: `entity/monster/HedgeSpider.java`, renderer `GloamingSpiderRenderer` (`hedgespider.png`, shadow 0.8, scale 1.0).
 
 | Field | Value |
 |---|---|
@@ -191,7 +191,7 @@ Loot `gloamingforest:entities/hedge_spider`: references `minecraft:entities/spid
 
 ### 2.6 `gloamingforest:swarm_spider` (SwarmSpider extends Spider)
 
-Source: `entity/monster/SwarmSpider.java`, renderer `TFSpiderRenderer` (`swarmspider.png`, shadow 0.25, scale 0.5).
+Source: `entity/monster/SwarmSpider.java`, renderer `GloamingSpiderRenderer` (`swarmspider.png`, shadow 0.25, scale 0.5).
 
 | Field | Value |
 |---|---|
@@ -215,7 +215,7 @@ Loot `gloamingforest:entities/swarm_spider`: references `minecraft:entities/spid
 
 ### 2.7 `gloamingforest:skeleton_druid` (SkeletonDruid extends AbstractSkeleton)
 
-Source: `entity/monster/SkeletonDruid.java`, `client/model/entity/SkeletonDruidModel.java` (SkeletonModel), renderer `TFBipedRenderer` (`skeletondruid.png`, shadow 0.5).
+Source: `entity/monster/SkeletonDruid.java`, `client/model/entity/SkeletonDruidModel.java` (SkeletonModel), renderer `GloamingBipedRenderer` (`skeletondruid.png`, shadow 0.5).
 
 | Field | Value |
 |---|---|
@@ -250,7 +250,7 @@ Loot `gloamingforest:entities/skeleton_druid`: `minecraft:bone` 0..2 + looting 0
 
 ### 2.8 `gloamingforest:nature_bolt` (NatureBolt projectile)
 
-Source: `entity/projectile/NatureBolt.java`, `entity/projectile/TFThrowable.java`; rendered as the item
+Source: `entity/projectile/NatureBolt.java`, `entity/projectile/GloamingThrowable.java`; rendered as the item
 `minecraft:wheat_seeds` (ThrownItemRenderer).
 
 - ThrowableProjectile, 0.25 x 0.25, gravity 0.003 per tick.
@@ -269,7 +269,7 @@ Source: `entity/projectile/NatureBolt.java`, `entity/projectile/TFThrowable.java
 
 Source: `entity/monster/Redcap.java`, `entity/ai/goal/{RedcapBaseGoal,RedcapShyGoal,RedcapLightTNTGoal}.java`,
 `entity/ai/goal/AvoidAnyEntityGoal.java`, `client/model/entity/RedcapModel.java` (FixedHumanoidModel), renderer
-`TFBipedRenderer` with inner/outer armour layers (`redcap.png`, shadow 0.4).
+`GloamingBipedRenderer` with inner/outer armour layers (`redcap.png`, shadow 0.4).
 
 | Field | Value |
 |---|---|
@@ -363,7 +363,7 @@ the F8 move control; translucency is a client render state (vanilla clients: alp
 
 ### 2.12 `gloamingforest:fire_beetle` (FireBeetle, IBreathAttacker)
 
-Source: `entity/monster/FireBeetle.java`, `client/model/entity/FireBeetleModel.java`, renderer `TFGenericMobRenderer` (`firebeetle.png`, shadow 0.8).
+Source: `entity/monster/FireBeetle.java`, `client/model/entity/FireBeetleModel.java`, renderer `GloamingGenericMobRenderer` (`firebeetle.png`, shadow 0.8).
 
 | Field | Value |
 |---|---|
@@ -436,7 +436,7 @@ Source: `entity/projectile/SlimeProjectile.java`; rendered as `minecraft:slime_b
 
 Source: `entity/monster/PinchBeetle.java`, `entity/ai/goal/ChargeAttackGoal.java`, `events/HostileMountEvents.java`,
 `util/entities/EntityUtil.java#properlyApplyCustomDamageSource`, `client/model/entity/PinchBeetleModel.java`, renderer
-`TFGenericMobRenderer` (`pinchbeetle.png`, shadow 0.6).
+`GloamingGenericMobRenderer` (`pinchbeetle.png`, shadow 0.6).
 
 | Field | Value |
 |---|---|
@@ -470,7 +470,7 @@ degrees; the Jappa values are not ported); spider-style legs.
 Sounds: `entity.gloamingforest.pinch_beetle.ambient` ("Pinch Beetle chitters"), `entity.gloamingforest.pinch_beetle.hurt`,
 `entity.gloamingforest.pinch_beetle.death`, `entity.gloamingforest.pinch_beetle.step` (vol 0.15), and
 `entity.gloamingforest.pinch_beetle.attack` ("Pinch Beetle clamps") which is the hurt sound of the `clamped` damage
-effect (`gloamingforest:pinch` DamageEffects extension, `TFEnumExtensions.java`).
+effect (`gloamingforest:pinch` DamageEffects extension, `GloamingEnumExtensions.java`).
 
 Spawn: `Monster::checkMonsterSpawnRules`; hollow hills, labyrinth, dark tower (by string).
 

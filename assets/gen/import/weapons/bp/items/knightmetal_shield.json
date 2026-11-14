@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_block_towerwood"
+          "default": "gf_block_towerwood"
         }
       },
       "minecraft:display_name": {

@@ -10,7 +10,7 @@
         "default": "textures/gloamingforest/entity/hedgespider"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.hedge_spider"
+        "default": "geometry.gf.skeleton.hedge_spider"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

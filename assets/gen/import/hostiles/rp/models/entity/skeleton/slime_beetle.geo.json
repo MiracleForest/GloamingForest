@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.tf.skeleton.slime_beetle",
+        "identifier": "geometry.gf.skeleton.slime_beetle",
         "texture_width": 64,
         "texture_height": 64,
         "visible_bounds_width": 2,

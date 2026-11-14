@@ -107,7 +107,7 @@ struct ModifierInfo {
 [[nodiscard]] bool isActiveOn(Actor const& wearer, ItemStack const& stack, std::string const& id);
 /// isModifierActive(LivingEntity, key): the stack of the group's single armour slot.
 [[nodiscard]] bool isActive(Actor const& wearer, std::string const& id);
-/// The armour points of a gear item (its BP wearable protection; upstream's TFArmorMaterials.TRAVELLERS).
+/// The armour points of a gear item (its BP wearable protection; upstream's GloamingArmorMaterials.TRAVELLERS).
 [[nodiscard]] int armorPointsOf(std::string const& itemId);
 /// The modifier's component default as a number (probabilities, amplifiers), `fallback` without one.
 [[nodiscard]] double numberOf(std::string const& id, double fallback);
@@ -152,10 +152,10 @@ void setGloves(ItemStack& stack, bool gloves);
 
 // ---- names -------------------------------------------------------------------------------------------
 
-/// upstream's default binding names of its keys (TFKeyBinds): the server (BDS) has no player bindings.
+/// upstream's default binding names of its keys (GloamingKeyBinds): the server (BDS) has no player bindings.
 [[nodiscard]] std::string defaultKeyName(std::string const& keyName);
 /// TravellersModifiersManager#getModifierTooltipComponent: the modifier's name in `locale` ("" =
-/// the server's) with ${tfkeybinds/...} replaced by `keyName`.
+/// the server's) with ${gloamingkeybinds/...} replaced by `keyName`.
 [[nodiscard]] std::string modifierName(std::string const& id, std::string const& locale = {}, std::string (*keyName)(std::string const&) = nullptr);
 /// Translates a key (with its English fallback) for a description line.
 using TranslateFn = std::function<std::string(std::string const& key, std::string const& fallback)>;

@@ -2,12 +2,12 @@
 
 // Contract "rules+fx", gamerules (header owned by F0, implemented by F10).
 //
-// upstream's gamerules (tfEnforcedProgression, playersTfPortalDefaultDelay,
-// playersTfPortalCreativeDelay) are per-world values with `/gloamingforest gamerule <id> [value]`
+// upstream's gamerules (gloamingEnforcedProgression, playersGloamingPortalDefaultDelay,
+// playersGloamingPortalCreativeDelay) are per-world values with `/gloamingforest gamerule <id> [value]`
 // (Bedrock's /gamerule only knows vanilla rules). Owners register them at install:
 //
-//     gf::gamerules::registerBool("tfEnforcedProgression", true);
-//     bool on = gf::gamerules::getBool("tfEnforcedProgression");
+//     gf::gamerules::registerBool("gloamingEnforcedProgression", true);
+//     bool on = gf::gamerules::getBool("gloamingEnforcedProgression");
 
 #include <string>
 #include <variant>

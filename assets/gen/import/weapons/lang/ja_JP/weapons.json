@@ -1,6 +1,6 @@
 {
-  "config.gloamingforest.parry_non_gloaming": "黄昏の森以外の飛び道具の受け流し",
-  "config.gloamingforest.parry_non_gloaming.tooltip": "trueにすると、黄昏の森以外の飛び道具を受け流せるようになります。",
+  "config.gloamingforest.parry_non_gloaming": "薄暮の森以外の飛び道具の受け流し",
+  "config.gloamingforest.parry_non_gloaming.tooltip": "trueにすると、薄暮の森以外の飛び道具を受け流せるようになります。",
   "config.gloamingforest.parry_window": "受け流し",
   "config.gloamingforest.parry_window.tooltip": "盾を構えてから飛び道具を受け流せるようになるまでのティック数。（1ティック  = 1／20秒）",
   "config.gloamingforest.shield": "盾の相互作用",

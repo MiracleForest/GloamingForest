@@ -42,7 +42,7 @@
       "minecraft:geometry": "geometry.gloamingforest.building.naga_trophy_r0",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_building_nagahead",
+          "texture": "gf_building_nagahead",
           "render_method": "alpha_test"
         }
       }

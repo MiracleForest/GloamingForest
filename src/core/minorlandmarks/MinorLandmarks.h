@@ -11,7 +11,7 @@
 //   src/main/java/gloamingforest/world/components/chunkgenerators/HollowHillFunction.java
 //   src/main/java/gloamingforest/world/components/chunkgenerators/FocusedDensityFunction.java
 //   src/main/java/gloamingforest/world/components/chunkgenerators/TanhHillFunction.java
-//   src/main/java/gloamingforest/world/components/feature/TFSmallLakeFeature.java
+//   src/main/java/gloamingforest/world/components/feature/GloamingSmallLakeFeature.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -25,7 +25,7 @@
 //   - HollowHillStructure#canSpawnMob's dome is F6's; its terraformer (getStructureTerraformer) is here;
 //   - BoundingBox#orientBox and vanilla StructurePiece#getWorldX/Y/Z (fallen trunks);
 //   - the fallen trunk's Hole, its mound bases and TrunkUnderDensityFunction;
-//   - the vanilla-style lake shape of TFSmallLakeFeature;
+//   - the vanilla-style lake shape of GloamingSmallLakeFeature;
 //   - Util.shuffle / FeatureLogic#getRotation (ruined foundation walls).
 
 #include <array>
@@ -157,7 +157,7 @@ private:
 };
 
 // ---- lakes ------------------------------------------------------------------------------------------------
-/// TFSmallLakeFeature's shape: 4..7 ellipsoids in a 16 x 8 x 16 box, booleans[(x * 16 + z) * 8 + y].
+/// GloamingSmallLakeFeature's shape: 4..7 ellipsoids in a 16 x 8 x 16 box, booleans[(x * 16 + z) * 8 + y].
 [[nodiscard]] std::array<bool, 2048> lakeShape(RandomSource& random);
 /// Whether (x, y, z) borders the shape (not in it, a face neighbour in it).
 [[nodiscard]] bool lakeBorder(std::array<bool, 2048> const& shape, int x, int y, int z);

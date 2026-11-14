@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.snow_queen",
   "layer": {
     "name": "snow_queen",
-    "field": "TFModelLayers.SNOW_QUEEN",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.SNOW_QUEEN, SnowQueenModel::checkForPack);"
+    "field": "GloamingModelLayers.SNOW_QUEEN",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.SNOW_QUEEN, SnowQueenModel::checkForPack);"
   },
   "texture_size": [64, 32],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/snowqueen",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/snowqueen.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/snowqueen.png"
     }
   ],
   "bones": [

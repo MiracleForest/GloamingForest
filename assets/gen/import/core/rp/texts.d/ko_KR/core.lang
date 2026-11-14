@@ -1,9 +1,9 @@
-commands.tffeature.usage=/%s <정보 | 재활성 | 정복 | 중앙>
+commands.gloamingfeature.usage=/%s <정보 | 재활성 | 정복 | 중앙>
 gloamingforest.configuration.section.gloamingforest.client.toml=클라이언트 설정
 gloamingforest.configuration.section.gloamingforest.client.toml.title=클라이언트 설정
 gloamingforest.configuration.section.gloamingforest.common.toml=일반 설정
 gloamingforest.configuration.section.gloamingforest.common.toml.title=일반 설정
-gloamingforest.configuration.title=황혼의 숲 설정
+gloamingforest.configuration.title=Gloaming Forest 설정
 misc.gloamingforest.advancement_hidden=<숨겨진 발전 과제>
 misc.gloamingforest.advancement_required=필요한 발전 과제:
 misc.gloamingforest.core_disabled=%s 설정에 의해 비활성화 되었습니다.

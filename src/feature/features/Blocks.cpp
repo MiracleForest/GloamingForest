@@ -1,8 +1,8 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/init/TFBlocks.java
-//   src/main/java/gloamingforest/block/TFPlantBlock.java
-//   src/main/java/gloamingforest/block/TFBushBlock.java
+//   src/main/java/gloamingforest/init/GloamingBlocks.java
+//   src/main/java/gloamingforest/block/GloamingPlantBlock.java
+//   src/main/java/gloamingforest/block/GloamingBushBlock.java
 //   src/main/java/gloamingforest/block/BerryBushBlock.java
 //   src/main/java/gloamingforest/block/DarkTowerBerryBushBlock.java
 //   src/main/java/gloamingforest/block/OreBerryBlock.java
@@ -19,7 +19,7 @@
 //
 // Java block states in Bedrock terms for the feature interpreter (F5): Java ids and properties of
 // the imported worldgen JSON -> Bedrock permutations, and the Java block queries world
-// generation uses (air, fluids, motion blocking, replaceable with TFBlocks' replaceable blocks,
+// generation uses (air, fluids, motion blocking, replaceable with GloamingBlocks' replaceable blocks,
 // tags, survival).
 #include <algorithm>
 #include <array>
@@ -504,7 +504,7 @@ std::unordered_map<std::string, Block const*>& cache() {
 
 /// BlockStateBase#canBeReplaced: the blocks built with BlockBehaviour.Properties#replaceable, by
 /// Java id. Vanilla 1.21.1's are the members of its minecraft:replaceable tag; upstream's come from
-/// TFBlocks (fiddlehead, fallen leaves, ominous fire, wispy cloud), which no tag lists.
+/// GloamingBlocks (fiddlehead, fallen leaves, ominous fire, wispy cloud), which no tag lists.
 bool replaceableId(std::string const& javaId) {
     static std::unordered_set<std::string> const ids{
         "minecraft:air",
@@ -755,7 +755,7 @@ std::string facingOf(Block const& block) {
     return "up";
 }
 
-/// TFBushBlock#canSurvive's isSameMatureBush: the same bush below, at AGE >= MAX_AGE - 1 (2).
+/// GloamingBushBlock#canSurvive's isSameMatureBush: the same bush below, at AGE >= MAX_AGE - 1 (2).
 bool matureBushBelow(Block const& below, Block const& bush) {
     if (&below.getBlockType() != &bush.getBlockType()) return false;
     for (auto const& [k, v] : game::statesOf(below))
@@ -787,7 +787,7 @@ bool survives(Survival rule, Region& region, BlockPos const& pos, Block const& b
         return sturdyFace(below, 1) || below.getTypeName() == "gloamingforest:uberous_soil";
     case Survival::Mushroom: // MushroomBlock#canSurvive (the brightness of a generation region is not known: below 13 assumed)
         return kit::hasTag(below, "minecraft:mushroom_grow_block") || kit::blocksMotion(below);
-    case Survival::HangingPlant: // TFPlantBlock.canPlaceRootAt
+    case Survival::HangingPlant: // GloamingPlantBlock.canPlaceRootAt
         return kit::hasTag(above, "gloamingforest:plants_hang_on");
     case Survival::RootStrand: // RootStrandBlock#canSurvive
         return kit::hasTag(above, "gloamingforest:plants_hang_on") || &above.getBlockType() == &block.getBlockType();
@@ -811,8 +811,8 @@ bool survives(Survival rule, Region& region, BlockPos const& pos, Block const& b
         bool        ice = b == "minecraft:ice" || b == "minecraft:frosted_ice";
         return (waterSource(below) || ice) && !kit::isFluid(region.getBlock(pos));
     }
-    case Survival::BerryBush: // TFBushBlock#canSurvive with BerryBushBlock#canBePlacedAt
-        return kit::hasTag(below, "gloamingforest:tf_berry_bushes_survive") || matureBushBelow(below, block);
+    case Survival::BerryBush: // GloamingBushBlock#canSurvive with BerryBushBlock#canBePlacedAt
+        return kit::hasTag(below, "gloamingforest:gf_berry_bushes_survive") || matureBushBelow(below, block);
     case Survival::DarkTowerBerryBush:
         return kit::hasTag(below, "gloamingforest:dark_tower_berry_bushes_survive") || matureBushBelow(below, block);
     case Survival::OreBerry: // OreBerryBlock (its brightness limit is not known in a generation region)

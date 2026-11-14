@@ -3,8 +3,8 @@
   "geometry": "geometry.gloamingforest.fiery_armor.leggings",
   "layer": {
     "name": "fiery_armor_inner",
-    "field": "TFModelLayers.FIERY_ARMOR_INNER",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.FIERY_ARMOR_INNER, () -> LayerDefinition.create(FieryArmorModel.createMesh(LayerDefinitions.INNER_ARMOR_DEFORMATION, 0.0F), 64, 32));"
+    "field": "GloamingModelLayers.FIERY_ARMOR_INNER",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.FIERY_ARMOR_INNER, () -> LayerDefinition.create(FieryArmorModel.createMesh(LayerDefinitions.INNER_ARMOR_DEFORMATION, 0.0F), 64, 32));"
   },
   "slot": "leggings",
   "parts": ["body", "right_leg", "left_leg"],

@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_block_blank"
+          "default": "gf_block_blank"
         }
       },
       "minecraft:display_name": {

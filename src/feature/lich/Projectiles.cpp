@@ -3,7 +3,7 @@
 //   src/main/java/gloamingforest/entity/projectile/LichBolt.java
 //   src/main/java/gloamingforest/entity/projectile/LichBomb.java
 //   src/main/java/gloamingforest/entity/projectile/TomeBolt.java
-//   src/main/java/gloamingforest/entity/projectile/TFThrowable.java
+//   src/main/java/gloamingforest/entity/projectile/GloamingThrowable.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -354,7 +354,7 @@ void registerProjectiles() {
                      || (damageTypeIn("minecraft:is_explosion", d.type) && blastAround(d.victim));
         return fromBomb ? gf::combat::Verdict::Cancel : gf::combat::Verdict::Pass;
     });
-    // the bomb's explosion is TFDamageTypes.LICH_BOMB, attributed to the bomb's owner
+    // the bomb's explosion is GloamingDamageTypes.LICH_BOMB, attributed to the bomb's owner
     gf::combat::onIncoming(gf::combat::priority::Highest, [](gf::combat::DamageInfo& d) {
         Actor* bomb = bombSource(d);
         if (!bomb) {

@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.tf.skeleton.pinch_beetle",
+        "identifier": "geometry.gf.skeleton.pinch_beetle",
         "texture_width": 64,
         "texture_height": 32,
         "visible_bounds_width": 3,

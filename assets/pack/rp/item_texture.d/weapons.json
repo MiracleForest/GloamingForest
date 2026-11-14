@@ -1,5 +1,5 @@
 {
-  "tf_item_knightmetal_shield": {
-    "textures": "textures/items/weapons/tf-derived/knightmetal_shield"
+  "gf_item_knightmetal_shield": {
+    "textures": "textures/items/weapons/upstream-derived/knightmetal_shield"
   }
 }

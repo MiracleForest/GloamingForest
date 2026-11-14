@@ -101,7 +101,7 @@ thread_local std::shared_ptr<StrongholdPieces::Weight> tLastPieceMade;
 std::unique_ptr<Decorator> strongholdDecorator() {
     auto d           = std::make_unique<StrongholdDeco>();
     auto def         = ::gf::structure::bases::defaultDecorator();
-    d->floorState    = def->floorState; // TFStructureDecorator's defaults
+    d->floorState    = def->floorState; // GloamingStructureDecorator's defaults
     d->roofState     = def->roofState;
     d->blockState    = &J("gloamingforest:underbrick");
     d->accentState   = &J("gloamingforest:cracked_underbrick");
@@ -1416,7 +1416,7 @@ void UpperAscender::load(Json const& data) {
     exitTop = data.value("exitTop", false);
 }
 BlockBox UpperAscender::generateBoundingBox(Orientation facing, int x, int y, int z) {
-    // TFDimensionData.SEALEVEL (0) + 5
+    // GloamingDimensionData.SEALEVEL (0) + 5
     if (y < 5) {
         exitTop = true;
         return orientBox(x, y, z, -2, -1, 0, 5, 10, 10, facing);

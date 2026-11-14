@@ -30,7 +30,7 @@ using Json = nlohmann::json;
 inline constexpr char kRam[]        = "gloamingforest:quest_ram";
 inline constexpr char kGrove[]      = "gloamingforest:quest_grove";
 inline constexpr char kCamp[]       = "gloamingforest:camp";
-inline constexpr char kGrovePiece[] = "gloamingforest:TFQuest1";
+inline constexpr char kGrovePiece[] = "gloamingforest:GloamingQuest1";
 /// gf::entity::data key of a ram ({"ColorFlags", "Rewarded"}), synced to companions.
 inline constexpr char kRamData[] = "questcamps";
 /// The ram's entity property (the 16 wool segments of the model, every client).

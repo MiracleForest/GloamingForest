@@ -21,7 +21,7 @@
       "minecraft:geometry": "minecraft:geometry.full_block",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_wood_planks_canopy_0",
+          "texture": "gf_block_wood_planks_canopy_0",
           "render_method": "opaque"
         }
       }

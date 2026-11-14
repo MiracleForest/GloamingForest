@@ -10,7 +10,7 @@
         "default": "textures/misc/missing_texture"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.loyal_zombie"
+        "default": "geometry.gf.skeleton.loyal_zombie"
       },
       "render_controllers": ["controller.render.default"]
     }

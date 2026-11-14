@@ -40,7 +40,7 @@
 // false, not, and, or, mod_loaded (minecraft, neoforge and gloamingforest are loaded; jeed and
 // every other mod are not), item_exists (vanilla, upstream and fixture ids), tag_empty, and upstream's
 // gloamingforest:uncrafting_table_enabled (upstream's default, enabled, until its owner registers the
-// test of TFConfig.disableEntireTable). A registration re-evaluates the data at the next query.
+// test of GloamingConfig.disableEntireTable). A registration re-evaluates the data at the next query.
 //
 //     gf::recipes::ext::registerCondition("gloamingforest:uncrafting_table_enabled",
 //                                         [](nlohmann::json const&) { return !config().disableEntireTable; });

@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_item_maze_slime_ball"
+          "default": "gf_item_maze_slime_ball"
         }
       },
       "minecraft:display_name": {

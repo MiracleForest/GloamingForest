@@ -3,8 +3,8 @@
   "geometry": "geometry.gloamingforest.yeti_armor.boots",
   "layer": {
     "name": "yeti_armor_outer",
-    "field": "TFModelLayers.YETI_ARMOR_OUTER",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.YETI_ARMOR_OUTER, () -> LayerDefinition.create(YetiArmorModel.addPieces(LayerDefinitions.OUTER_ARMOR_DEFORMATION), 64, 32));"
+    "field": "GloamingModelLayers.YETI_ARMOR_OUTER",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.YETI_ARMOR_OUTER, () -> LayerDefinition.create(YetiArmorModel.addPieces(LayerDefinitions.OUTER_ARMOR_DEFORMATION), 64, 32));"
   },
   "slot": "boots",
   "parts": ["right_leg", "left_leg"],

@@ -1,7 +1,7 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/init/TFBlocks.java
-//   src/main/java/gloamingforest/init/TFItems.java
+//   src/main/java/gloamingforest/init/GloamingBlocks.java
+//   src/main/java/gloamingforest/init/GloamingItems.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -46,7 +46,7 @@ std::mt19937& rng() {
 
 std::vector<std::string> furnitureIds(char const* suffix) {
     std::vector<std::string> out;
-    for (auto w : kTfWoods) out.push_back(std::string(kNs) + std::string(w) + suffix);
+    for (auto w : kGloamingWoods) out.push_back(std::string(kNs) + std::string(w) + suffix);
     for (auto w : kVanillaFurnitureWoods) out.push_back(std::string(kNs) + std::string(w) + suffix);
     return out;
 }
@@ -67,12 +67,12 @@ std::vector<HollowLog> const& hollowLogs() {
     static auto const logs = [] {
         std::vector<HollowLog> out;
         auto add = [&](std::string_view wood) {
-            // TFBlocks: hollow_<wood>_log_*, the nether woods hollow_<wood>_stem_*
+            // GloamingBlocks: hollow_<wood>_log_*, the nether woods hollow_<wood>_stem_*
             bool        stem = wood == "crimson" || wood == "warped";
             std::string base = std::string(kNs) + "hollow_" + std::string(wood) + (stem ? "_stem" : "_log");
             out.push_back({std::string(wood), base, base + "_horizontal", base + "_vertical", base + "_climbable"});
         };
-        for (auto w : kTfWoods) add(w);
+        for (auto w : kGloamingWoods) add(w);
         for (auto w : kVanillaHollowWoods) add(w);
         return out;
     }();

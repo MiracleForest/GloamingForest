@@ -2,14 +2,14 @@
 // request handling (dx 575, rule R12).
 //
 // The test writes the bytes a Bedrock client sends for a loom craft (ItemStackRequestPacket: the
-// banner, the dye and the pattern item put into the loom, then CraftLoom "tf_naga", the two
+// banner, the dye and the pattern item put into the loom, then CraftLoom "gf_naga", the two
 // consumes and the result taken to the cursor), lets the game read them (ItemStackRequestPacket
 // _read, ItemStackRequestPacketPayload::toRequestBatch) and hands the batch to the simulated
 // player's ItemStackNetManagerServer, as ServerNetworkHandler does for a client's packet. So the
 // server's validation runs as for a player: the loom screen opened by a use on a real loom block,
 // LoomMaterialContainerValidation for upstream's pattern item (Banners.cpp's slot hook), CraftHandlerLoom
-// with the tf_naga pattern (BannerPattern::matchesPatternItem, Banners.cpp's hook) and the
-// created-output take. A second craft asks for tf_lich with the naga pattern item: the server must
+// with the gf_naga pattern (BannerPattern::matchesPatternItem, Banners.cpp's hook) and the
+// created-output take. A second craft asks for gf_lich with the naga pattern item: the server must
 // refuse it (Java's LoomMenu offers only the patterns of #pattern_item/<boss>).
 
 #include <cstdint>
@@ -371,22 +371,22 @@ GF_REGISTER_SELFTEST("building.loom_request", [](Context& ctx) -> ll::coro::Coro
                     "the server let upstream's pattern item into the loom's pattern slot (" + gf::game::items::idOf(uiItem(sp, PlayerUISlot::LoomMaterial)) + ")");
     }
 
-    // the craft: CraftLoom tf_naga, the banner and the dye consumed, the result to the cursor
+    // the craft: CraftLoom gf_naga, the banner and the dye consumed, the result to the cursor
     {
-        auto err = craftInLoom(ctx.player(), -107, "tf_naga");
-        ctx.require(err.empty(), "the loom request (tf_naga): " + err);
+        auto err = craftInLoom(ctx.player(), -107, "gf_naga");
+        ctx.require(err.empty(), "the loom request (gf_naga): " + err);
     }
     co_await ctx.ticks(2);
     bool nagaCrafted = false;
     {
         auto&       sp     = ctx.player();
         auto const& cursor = uiItem(sp, PlayerUISlot::CursorSelected);
-        nagaCrafted        = hasPattern(cursor, "tf_naga");
+        nagaCrafted        = hasPattern(cursor, "gf_naga");
         ctx.check(nagaCrafted, "the server's loom made a banner with upstream's naga pattern (" + gf::game::items::idOf(cursor) + ")");
         if (nagaCrafted) {
             for (auto const& [pp, color] : BannerItem::getPatternAndColorPairsFromItemStack(cursor))
-                if (pp && *pp->mNameID == "tf_naga") ctx.check(static_cast<int>(color) == 1, "in the dye's colour, red (" + std::to_string(static_cast<int>(color)) + ")");
-            gf::log().info("building: the server's loom crafted a banner with tf_naga for a client request");
+                if (pp && *pp->mNameID == "gf_naga") ctx.check(static_cast<int>(color) == 1, "in the dye's colour, red (" + std::to_string(static_cast<int>(color)) + ")");
+            gf::log().info("building: the server's loom crafted a banner with gf_naga for a client request");
         }
         ctx.check(uiItem(sp, PlayerUISlot::LoomInput).isNull(), "the banner was used up");
         ctx.check(uiItem(sp, PlayerUISlot::LoomDye).isNull(), "the dye was used up");
@@ -394,7 +394,7 @@ GF_REGISTER_SELFTEST("building.loom_request", [](Context& ctx) -> ll::coro::Coro
         sp.setPlayerUIItem(PlayerUISlot::CursorSelected, ItemStack::EMPTY_ITEM(), false);
     }
 
-    // The same request with only the pattern id swapped to tf_lich: the naga pattern item does not
+    // The same request with only the pattern id swapped to gf_lich: the naga pattern item does not
     // unlock it (Java's LoomMenu offers only the patterns of #pattern_item/<boss>), so the server
     // refuses it and consumes nothing. The naga craft above proves the request itself is valid.
     if (nagaCrafted) {
@@ -409,12 +409,12 @@ GF_REGISTER_SELFTEST("building.loom_request", [](Context& ctx) -> ll::coro::Coro
         co_await ctx.ticks(2);
         ctx.require(gf::game::items::idOf(uiItem(ctx.player(), PlayerUISlot::LoomInput)) == "minecraft:banner", "a second banner is in the loom");
         {
-            auto err = craftInLoom(ctx.player(), -113, "tf_lich");
-            ctx.require(err.empty(), "the loom request (tf_lich): " + err);
+            auto err = craftInLoom(ctx.player(), -113, "gf_lich");
+            ctx.require(err.empty(), "the loom request (gf_lich): " + err);
         }
         co_await ctx.ticks(2);
         auto& sp = ctx.player();
-        ctx.check(!hasPattern(uiItem(sp, PlayerUISlot::CursorSelected), "tf_lich"), "the naga pattern item does not make a lich banner");
+        ctx.check(!hasPattern(uiItem(sp, PlayerUISlot::CursorSelected), "gf_lich"), "the naga pattern item does not make a lich banner");
         ctx.check(gf::game::items::idOf(uiItem(sp, PlayerUISlot::LoomInput)) == "minecraft:banner", "the refused craft kept the banner in the loom");
         ctx.check(gf::game::items::idOf(uiItem(sp, PlayerUISlot::LoomDye)) == "minecraft:red_dye", "the refused craft kept the dye in the loom");
     }

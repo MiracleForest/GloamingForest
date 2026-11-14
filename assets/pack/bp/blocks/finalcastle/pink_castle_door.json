@@ -91,15 +91,15 @@
       },
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_castle_door",
+          "texture": "gf_block_castle_door",
           "render_method": "alpha_test"
         },
         "overlay": {
-          "texture": "tf_finalcastle_door_overlay_pink",
+          "texture": "gf_finalcastle_door_overlay_pink",
           "render_method": "alpha_test"
         },
         "connected": {
-          "texture": "tf_finalcastle_door_connected_pink",
+          "texture": "gf_finalcastle_door_connected_pink",
           "render_method": "alpha_test"
         }
       },
@@ -783,15 +783,15 @@
         "components": {
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_door",
+              "texture": "gf_block_castle_door",
               "render_method": "alpha_test"
             },
             "overlay": {
-              "texture": "tf_finalcastle_door_overlay_pink",
+              "texture": "gf_finalcastle_door_overlay_pink",
               "render_method": "alpha_test"
             },
             "connected": {
-              "texture": "tf_finalcastle_door_connected_pink",
+              "texture": "gf_finalcastle_door_connected_pink",
               "render_method": "alpha_test"
             }
           },
@@ -804,15 +804,15 @@
         "components": {
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_door_vanished",
+              "texture": "gf_block_castle_door_vanished",
               "render_method": "alpha_test"
             },
             "overlay": {
-              "texture": "tf_finalcastle_door_overlay_pink",
+              "texture": "gf_finalcastle_door_overlay_pink",
               "render_method": "alpha_test"
             },
             "connected": {
-              "texture": "tf_finalcastle_door_connected_pink",
+              "texture": "gf_finalcastle_door_connected_pink",
               "render_method": "alpha_test"
             }
           },

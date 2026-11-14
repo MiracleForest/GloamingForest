@@ -14,22 +14,22 @@
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 0
       },
-      "minecraft:geometry": "geometry.tf.gloamingforest.block.potted_thorn_template",
+      "minecraft:geometry": "geometry.gf.gloamingforest.block.potted_thorn_template",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_vanilla_block_flower_pot",
+          "texture": "gf_vanilla_block_flower_pot",
           "render_method": "alpha_test"
         },
         "flowerpot": {
-          "texture": "tf_vanilla_block_flower_pot",
+          "texture": "gf_vanilla_block_flower_pot",
           "render_method": "alpha_test"
         },
         "thorn_side": {
-          "texture": "tf_block_green_thorns_side",
+          "texture": "gf_block_green_thorns_side",
           "render_method": "alpha_test"
         },
         "thorn_top": {
-          "texture": "tf_block_green_thorns_top",
+          "texture": "gf_block_green_thorns_top",
           "render_method": "alpha_test"
         }
       },

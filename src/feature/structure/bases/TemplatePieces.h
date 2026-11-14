@@ -1,6 +1,6 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/world/components/structures/TFStructureComponentTemplate.java
+//   src/main/java/gloamingforest/world/components/structures/GloamingStructureComponentTemplate.java
 //   src/main/java/gloamingforest/world/components/structures/GloamingTemplateStructurePiece.java
 //   src/main/java/gloamingforest/world/components/structures/GloamingDoubleTemplateStructurePiece.java
 //   src/main/java/gloamingforest/world/components/structures/GloamingJigsawPiece.java
@@ -40,7 +40,7 @@ struct PlaceSettings {
 [[nodiscard]] PlaceSettings readSettings(Json const& saved);
 [[nodiscard]] Json          writeSettings(PlaceSettings const& settings);
 
-/// TFStructureComponentTemplate: a TFStructureComponent placing one template at templatePosition.
+/// GloamingStructureComponentTemplate: a GloamingStructureComponent placing one template at templatePosition.
 class ComponentTemplate : public Component {
 public:
     ComponentTemplate(std::string typeId, int genDepth, int x, int y, int z, BlockBox const& box);

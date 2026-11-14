@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.penguin",
   "layer": {
     "name": "penguin",
-    "field": "TFModelLayers.PENGUIN",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.PENGUIN, PenguinModel::create);"
+    "field": "GloamingModelLayers.PENGUIN",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.PENGUIN, PenguinModel::create);"
   },
   "texture_size": [64, 32],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/penguin",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/penguin.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/penguin.png"
     }
   ],
   "bones": [

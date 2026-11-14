@@ -1,6 +1,6 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
-// Tests of src/core/armory/Armory.h (translated from upstream 4.8's TFArmorMaterials, TFToolMaterials,
-// TFItems, ToolEvents, EntityEvents, ApplyFrostedEffect, FieryToolSmeltingModifier and
+// Tests of src/core/armory/Armory.h (translated from upstream 4.8's GloamingArmorMaterials, GloamingToolMaterials,
+// GloamingItems, ToolEvents, EntityEvents, ApplyFrostedEffect, FieryToolSmeltingModifier and
 // CraftingGenerator; LGPL-2.1-or-later code, see the header of Armory.h).
 #include <cmath>
 #include <set>

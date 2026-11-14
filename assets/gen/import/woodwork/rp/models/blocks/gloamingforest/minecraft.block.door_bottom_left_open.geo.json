@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.tf.minecraft.block.door_bottom_left_open",
+        "identifier": "geometry.gf.minecraft.block.door_bottom_left_open",
         "texture_width": 16,
         "texture_height": 16,
         "visible_bounds_width": 3,

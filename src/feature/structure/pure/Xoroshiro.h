@@ -10,7 +10,7 @@
 //                      .at(centerChunk.getWorldPosition())
 //
 // where the upstream dimension's noise settings use the Xoroshiro source (useLegacyRandomSource false,
-// TFDimensionData#makeNoiseSettings). tests/structure/XoroshiroTest.cpp checks every value against
+// GloamingDimensionData#makeNoiseSettings). tests/structure/XoroshiroTest.cpp checks every value against
 // the output of tests/structure/oracle/XoroshiroOracle.java run on Minecraft 1.21.1 itself.
 //
 // F5's gf::core::jrand::Xoroshiro128pp (contract "worldgen") was a stub when this was written; it

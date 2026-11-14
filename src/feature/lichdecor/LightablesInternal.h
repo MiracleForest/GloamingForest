@@ -31,9 +31,9 @@ inline constexpr char kOminousFireDamage[] = "gloamingforest:ominous_fire";
 /// The vanilla candle id of upstream's CandleColors value 0..16 (0 plain, 1 white, 2 light gray, 3 gray,
 /// 4 black, 5 red, 6 orange, 7 yellow, 8 green, 9 lime, 10 blue, 11 cyan, 12 light blue, 13 purple,
 /// 14 magenta, 15 pink, 16 brown).
-[[nodiscard]] std::string candleOfTfColor(int value);
+[[nodiscard]] std::string candleOfGloamingColor(int value);
 /// upstream's CandleColors value of a vanilla candle id (-1: not a vanilla candle).
-[[nodiscard]] int tfColorOfCandle(std::string_view vanillaCandleId);
+[[nodiscard]] int gloamingColorOfCandle(std::string_view vanillaCandleId);
 
 // ---- shared item / player helpers -------------------------------------------------------------------
 

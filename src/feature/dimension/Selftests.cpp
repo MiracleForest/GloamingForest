@@ -324,18 +324,18 @@ private:
 
 // The dimension exists with upstream's dimension_type values.
 GF_REGISTER_SELFTEST("dimension.registered", [](Context& ctx) {
-    auto tf = world::gloaming();
-    ctx.require(tf.has_value(), "gloamingforest:gloaming_forest is registered");
-    int id = static_cast<int>(*tf);
+    auto upsrc = world::gloaming();
+    ctx.require(upsrc.has_value(), "gloamingforest:gloaming_forest is registered");
+    int id = static_cast<int>(*upsrc);
     ctx.info("the Gloaming Forest is dimension " + std::to_string(id));
     ctx.check(id > 2, "it is a custom dimension (id > 2)");
-    ctx.check(world::isGloaming(*tf), "isGloaming(id)");
+    ctx.check(world::isGloaming(*upsrc), "isGloaming(id)");
     ctx.check(!world::isGloaming(DimensionType(0)), "the overworld is not the Gloaming Forest");
     ctx.check(dimensionByName(world::kDimensionId) == id, "found by identifier");
     ctx.check(dimensionName(id) == world::kDimensionId, "identifier of the id");
     auto level = ll::service::getLevel();
     ctx.require(level.has_value(), "level");
-    auto d = level->getOrCreateDimension(*tf).lock();
+    auto d = level->getOrCreateDimension(*upsrc).lock();
     ctx.require(d != nullptr, "the dimension is created");
     ctx.check(world::isGloaming(*d), "isGloaming(Dimension)");
     auto h = heightOf(id);
@@ -361,11 +361,11 @@ GF_REGISTER_SELFTEST("dimension.registered", [](Context& ctx) {
 // terrain: the blocks it had are put back afterwards).
 GF_REGISTER_SELFTEST("dimension.enter", [](Context& ctx) -> ll::coro::CoroTask<> {
     ctx.require(co_await ctx.inGloaming(), "moved into the Gloaming Forest");
-    auto tf = *world::gloaming();
-    ctx.check(static_cast<int>(ctx.player().getDimensionId()) == static_cast<int>(tf), "the player is in the Gloaming Forest");
+    auto upsrc = *world::gloaming();
+    ctx.check(static_cast<int>(ctx.player().getDimensionId()) == static_cast<int>(upsrc), "the player is in the Gloaming Forest");
     auto           at = ctx.testPos(5400);
     TerrainRestore terrain;
-    auto           hold   = co_await loadArea(static_cast<int>(tf), BlockPos{at.x, 0, at.z}, 0);
+    auto           hold   = co_await loadArea(static_cast<int>(upsrc), BlockPos{at.x, 0, at.z}, 0);
     auto*          region = ctx.region();
     ctx.require(hold != nullptr && region != nullptr, "the test column loaded");
     auto const* stone = game::blockWith("minecraft:stone");
@@ -381,7 +381,7 @@ GF_REGISTER_SELFTEST("dimension.enter", [](Context& ctx) -> ll::coro::CoroTask<>
     ctx.check(region->getMaxHeight() == world::kMinY + world::kHeight, "region max height 256");
     int back = co_await terrain.restore();
     ctx.info("put back " + std::to_string(back) + " blocks of the generated terrain");
-    region = game::regionOf(static_cast<int>(tf));
+    region = game::regionOf(static_cast<int>(upsrc));
     ctx.require(region != nullptr, "region");
     ctx.check(game::blockId(region->getBlock(BlockPos{at.x, world::kMinY + world::kHeight - 1, at.z})) != "minecraft:stone", "the terrain is back");
 });
@@ -390,14 +390,14 @@ GF_REGISTER_SELFTEST("dimension.enter", [](Context& ctx) -> ll::coro::CoroTask<>
 
 GF_REGISTER_SELFTEST("dimension.config_defaults", [](Context& ctx) {
     DimensionConfig d;
-    ctx.check(!d.newPlayersSpawnInTF && !d.portalForNewPlayer, "dimension settings default off");
+    ctx.check(!d.newPlayersSpawnInGloaming && !d.portalForNewPlayer, "dimension settings default off");
     ctx.check(d.originDimension == "minecraft:overworld", "origin dimension");
     ctx.check(!d.allowPortalsInOtherDimensions && d.portalCreationPermission == 0 && !d.disablePortalCreation, "creation defaults");
     ctx.check(d.checkPortalPlacement && d.destructivePortalLightning && d.shouldReturnPortalBeUsable, "portal defaults");
     ctx.check(d.portalUnlockedByAdvancement.empty() && d.maxPortalSize == 64, "lock and size defaults");
 });
 
-// TFPortalBlock#getPortalTransitionTime: the two gamerules of the gamerule store (F10), the
+// GloamingPortalBlock#getPortalTransitionTime: the two gamerules of the gamerule store (F10), the
 // creative one for invulnerable players (creative, spectator). Set through the contract and through
 // `/gloamingforest gamerule`; the rules go back to what they were.
 GF_REGISTER_SELFTEST("dimension.portal_delay", [](Context& ctx) {
@@ -412,16 +412,16 @@ GF_REGISTER_SELFTEST("dimension.portal_delay", [](Context& ctx) {
     ctx.check(std::holds_alternative<int>(restore.def) && std::holds_alternative<int>(restore.creative), "both delays are integer gamerules of the store");
     auto& p = static_cast<SimulatedPlayer&>(ctx.player());
     p.setPlayerGameType(GameType::Survival);
-    ctx.check(portalDelay(p) == gamerules::getInt(kDefaultDelayRule), "survival: playersTfPortalDefaultDelay, got " + std::to_string(portalDelay(p)));
+    ctx.check(portalDelay(p) == gamerules::getInt(kDefaultDelayRule), "survival: playersGloamingPortalDefaultDelay, got " + std::to_string(portalDelay(p)));
     ctx.info(std::format("the world's delays: {} / {} (upstream's defaults 60 / 1)", gamerules::getInt(kDefaultDelayRule), gamerules::getInt(kCreativeDelayRule)));
-    ctx.require(gamerules::set(kDefaultDelayRule, 30), "playersTfPortalDefaultDelay set to 30");
+    ctx.require(gamerules::set(kDefaultDelayRule, 30), "playersGloamingPortalDefaultDelay set to 30");
     ctx.check(portalDelay(p) == 30, "a survival player's delay follows it (" + std::to_string(portalDelay(p)) + ")");
     auto cmd = selftest::runServerCommand(std::string("gloamingforest gamerule ") + kDefaultDelayRule + " 45");
     ctx.check(cmd.ok, "/gloamingforest gamerule " + std::string(kDefaultDelayRule) + " 45 (" + cmd.messages + ")");
     ctx.check(portalDelay(p) == 45, "and through the command (" + std::to_string(portalDelay(p)) + ")");
-    ctx.require(gamerules::set(kCreativeDelayRule, 7), "playersTfPortalCreativeDelay set to 7");
+    ctx.require(gamerules::set(kCreativeDelayRule, 7), "playersGloamingPortalCreativeDelay set to 7");
     p.setPlayerGameType(GameType::Creative);
-    ctx.check(portalDelay(p) == 7, "a creative player's delay is playersTfPortalCreativeDelay (" + std::to_string(portalDelay(p)) + ")");
+    ctx.check(portalDelay(p) == 7, "a creative player's delay is playersGloamingPortalCreativeDelay (" + std::to_string(portalDelay(p)) + ")");
     p.setPlayerGameType(GameType::Spectator);
     ctx.check(portalDelay(p) == 7, "so is a spectator's (" + std::to_string(portalDelay(p)) + ")");
     p.setPlayerGameType(GameType::Adventure);
@@ -461,7 +461,7 @@ GF_REGISTER_SELFTEST("dimension.tags", [](Context& ctx) {
     if (auto bush = registered({"minecraft:dead_bush", "minecraft:deadbush"}); !bush.empty()) ctx.check(blockTagged("gloamingforest:portal/decoration", bush), bush + " (minecraft:dead_bush) decorates");
 });
 
-// ---- TFPortalBlock: lighting --------------------------------------------------------------------------------------------
+// ---- GloamingPortalBlock: lighting --------------------------------------------------------------------------------------------
 
 // tryToCreatePortal: the shapes that light and the ones that don't.
 GF_REGISTER_SELFTEST("dimension.portal_light", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -524,7 +524,7 @@ GF_REGISTER_SELFTEST("dimension.portal_light", [](Context& ctx) -> ll::coro::Cor
     ctx.check(!game::intState(region->getBlock(game::blockPos(oneWay)), kOneWayState).value_or(1), "and becomes two-way");
 });
 
-/// The players the progression bus (F10) heard gloamingforest:make_tf_portal for.
+/// The players the progression bus (F10) heard gloamingforest:make_gf_portal for.
 std::vector<std::int64_t>& madePortal() {
     static std::vector<std::int64_t> v;
     return v;
@@ -540,7 +540,7 @@ void listenToMadePortal() {
 }
 
 // A diamond thrown by a player into a pool lights it (ProgressionEvents#checkForPortalCreation) and
-// fires upstream's make_tf_portal trigger.
+// fires upstream's make_gf_portal trigger.
 GF_REGISTER_SELFTEST("dimension.portal_item", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto  box    = co_await ctx.flatArea(5440, 12, 8);
     auto* region = ctx.region();
@@ -583,10 +583,10 @@ GF_REGISTER_SELFTEST("dimension.portal_item", [](Context& ctx) -> ll::coro::Coro
     }
     ctx.check(lit, "the player's diamond in the pool lights the portal within 3 s");
     ctx.check(level->fetchEntity(ActorUniqueID{ownId}, false) == nullptr, "the diamond was used up");
-    ctx.check(std::count(madePortal().begin(), madePortal().end(), owner) == 1, "the progression bus heard gloamingforest:make_tf_portal for the player once");
+    ctx.check(std::count(madePortal().begin(), madePortal().end(), owner) == 1, "the progression bus heard gloamingforest:make_gf_portal for the player once");
 });
 
-// TFPortalBlock#neighborChanged through the game's own block changes (gf::blockevents, F11): a
+// GloamingPortalBlock#neighborChanged through the game's own block changes (gf::blockevents, F11): a
 // portal whose rim or floor is no longer valid turns back into water, and the water it leaves
 // reaches the portal blocks next to it (Java: setBlock(WATER, UPDATE_ALL)), so the whole pool goes.
 // Changes that keep the frame valid (another edge block, a block above, a decoration) leave it.
@@ -694,7 +694,7 @@ GF_REGISTER_SELFTEST("dimension.portal_neighbor", [](Context& ctx) -> ll::coro::
     ctx.check(stale == 0, "the portal index forgot the blocks that turned into water (" + std::to_string(stale) + " left)");
 });
 
-// TFPortalBlock#neighborChanged reads the floor and the four sides with Level#getBlockState, which
+// GloamingPortalBlock#neighborChanged reads the floor and the four sides with Level#getBlockState, which
 // loads a chunk that is not loaded. Two portal blocks on the east border of a loaded area (their east
 // sides in a chunk that is not loaded) hear of a change: each check waits for that chunk, has it
 // loaded and runs again. The one whose west side became stone turns into water; the other one,
@@ -789,9 +789,9 @@ GF_REGISTER_SELFTEST("dimension.teleporter_cache", [](Context& ctx) {
 // A player stands in a lit portal: after the delay it is in the Gloaming Forest next to a return
 // portal; standing in that one brings it back next to the first portal.
 GF_REGISTER_SELFTEST("dimension.portal_travel", [](Context& ctx) -> ll::coro::CoroTask<> {
-    auto tf = world::gloaming();
-    ctx.require(tf.has_value(), "the Gloaming Forest exists");
-    int   tfId   = static_cast<int>(*tf);
+    auto upsrc = world::gloaming();
+    ctx.require(upsrc.has_value(), "the Gloaming Forest exists");
+    int   gfId   = static_cast<int>(*upsrc);
     auto  box    = co_await ctx.flatArea(5480, 8, 8);
     auto* region = ctx.region();
     ctx.require(region != nullptr, "region");
@@ -808,7 +808,7 @@ GF_REGISTER_SELFTEST("dimension.portal_travel", [](Context& ctx) -> ll::coro::Co
     auto* pp = playerById(id);
     ctx.require(pp && static_cast<int>(pp->getDimensionId()) == ctx.dimension(), "back at the pool");
     auto dest = portal::destinationFor(*pp);
-    ctx.check(dest && dest->dim == tfId, "destinationFor: the Gloaming Forest");
+    ctx.check(dest && dest->dim == gfId, "destinationFor: the Gloaming Forest");
     pp->teleport(Vec3{pool.x + 0.5f, static_cast<float>(pool.y), pool.z + 0.5f}, DimensionType(ctx.dimension()));
 
     // the trip
@@ -820,30 +820,30 @@ GF_REGISTER_SELFTEST("dimension.portal_travel", [](Context& ctx) -> ll::coro::Co
         ctx.require(pl != nullptr, "the player is still there");
         if (ticks == 30) ctx.check(portalTimer(*pl) > 20, "the portal timer runs while inside (" + std::to_string(portalTimer(*pl)) + ")");
         // in the Gloaming Forest and moved next to the return portal
-        there = static_cast<int>(pl->getDimensionId()) == tfId && game::regionOf(tfId)
-             && tp::portalBlocksNear(*game::regionOf(tfId), game::blockPosOf(pl->getFeetPos()), 3).size() >= 4;
+        there = static_cast<int>(pl->getDimensionId()) == gfId && game::regionOf(gfId)
+             && tp::portalBlocksNear(*game::regionOf(gfId), game::blockPosOf(pl->getFeetPos()), 3).size() >= 4;
     }
     ctx.require(there, "in the Gloaming Forest next to a portal after " + std::to_string(ticks) + " ticks");
     ctx.check(ticks >= kDefaultDelay, "not before the 60 tick delay");
     auto* pl       = playerById(id);
-    auto* tfRegion = game::regionOf(tfId);
-    ctx.require(pl && tfRegion, "player and dimension");
+    auto* gloamingRegion = game::regionOf(gfId);
+    ctx.require(pl && gloamingRegion, "player and dimension");
     // PortalProcessor: the process stays after the trip (portalTime 61) and decays from here on
     auto arrived = portalProcessOf(*pl);
     ctx.check(arrived.hasProcess && arrived.portalTime > 0 && !arrived.travelling,
               "the portal process is kept after the trip (portalTime " + std::to_string(arrived.portalTime) + ")");
     auto here    = game::blockPosOf(pl->getFeetPos());
-    auto portals = tp::portalBlocksNear(*tfRegion, here, 4);
+    auto portals = tp::portalBlocksNear(*gloamingRegion, here, 4);
     ctx.check(portals.size() == 4, "a 2x2 return portal (" + std::to_string(portals.size()) + " blocks)");
     BlockPos corner = portals.front();
     for (auto const& b : portals) corner = BlockPos{std::min(corner.x, b.x), b.y, std::min(corner.z, b.z)};
     ctx.check(terrain.sites() == 1, "the site of the return portal was saved before it was built");
-    ctx.check(!game::intState(tfRegion->getBlock(corner), kOneWayState).value_or(1), "the return portal is usable (shouldReturnPortalBeUsable)");
+    ctx.check(!game::intState(gloamingRegion->getBlock(corner), kOneWayState).value_or(1), "the return portal is usable (shouldReturnPortalBeUsable)");
     ctx.info("arrived at " + str(here) + ", return portal at " + str(corner));
     // the way back is cached for the return portal's columns
     auto back = tp::cacheGet("minecraft:overworld", corner.x, corner.z);
     ctx.check(back.has_value(), "the way back is cached");
-    ctx.check(!ctx.blockAt(core::GlobalPos{tfId, corner.x, corner.y - 1, corner.z}).ends_with(":air"), "the return portal stands on the ground (y " + std::to_string(corner.y) + ", " + ctx.blockAt(core::GlobalPos{tfId, corner.x, corner.y - 1, corner.z}) + " below)");
+    ctx.check(!ctx.blockAt(core::GlobalPos{gfId, corner.x, corner.y - 1, corner.z}).ends_with(":air"), "the return portal stands on the ground (y " + std::to_string(corner.y) + ", " + ctx.blockAt(core::GlobalPos{gfId, corner.x, corner.y - 1, corner.z}) + " below)");
 
     // back home as soon as the 10 tick cooldown is over (standing in a portal while it runs
     // restarts it): the kept process goes on from where it decayed to, so the trip comes sooner
@@ -860,7 +860,7 @@ GF_REGISTER_SELFTEST("dimension.portal_travel", [](Context& ctx) -> ll::coro::Co
     ctx.require(pl != nullptr, "the player is still there");
     ctx.check(left.cooldown <= 0, "the portal cooldown ran out");
     ctx.info("stepping into the return portal with portalTime " + std::to_string(left.hasProcess ? left.portalTime : 0));
-    pl->teleport(Vec3{corner.x + 0.5f, static_cast<float>(corner.y), corner.z + 0.5f}, DimensionType(tfId));
+    pl->teleport(Vec3{corner.x + 0.5f, static_cast<float>(corner.y), corner.z + 0.5f}, DimensionType(gfId));
     int  leaveTick = -1;
     bool home      = false;
     for (ticks = 0; ticks < 400 && !home; ++ticks) {
@@ -891,18 +891,18 @@ GF_REGISTER_SELFTEST("dimension.portal_travel", [](Context& ctx) -> ll::coro::Co
         for (int dz = 0; dz < 2; ++dz) tp::cacheRemove(world::kDimensionId, pool.x + dx, pool.z + dz);
     int put = co_await terrain.restore();
     ctx.info("put back " + std::to_string(put) + " blocks of the generated terrain at the return portal");
-    tfRegion = game::regionOf(tfId);
-    ctx.check(tfRegion && tp::portalBlocksNear(*tfRegion, corner, 2).empty(), "the return portal is gone, the terrain is back");
+    gloamingRegion = game::regionOf(gfId);
+    ctx.check(gloamingRegion && tp::portalBlocksNear(*gloamingRegion, corner, 2).empty(), "the return portal is gone, the terrain is back");
 });
 
-// newPlayersSpawnInTF (CapabilityEvents#newSpawnInGloamingForest): the player lands in the Gloaming
+// newPlayersSpawnInGloaming (CapabilityEvents#newSpawnInGloamingForest): the player lands in the Gloaming
 // Forest, spawns there and counts as banished.
 GF_REGISTER_SELFTEST("dimension.new_player_spawn", [](Context& ctx) -> ll::coro::CoroTask<> {
-    auto tf = world::gloaming();
-    ctx.require(tf.has_value(), "the Gloaming Forest exists");
+    auto upsrc = world::gloaming();
+    ctx.require(upsrc.has_value(), "the Gloaming Forest exists");
     // the settings go back however the test ends (a later joining player must not be banished)
     ConfigGuard config;
-    gf::config::mut<DimensionConfig>().newPlayersSpawnInTF = true;
+    gf::config::mut<DimensionConfig>().newPlayersSpawnInGloaming = true;
     gf::config::mut<DimensionConfig>().portalForNewPlayer  = true;
     // the portal is built into the generated Gloaming Forest: put back afterwards
     TerrainRestore terrain;
@@ -936,11 +936,11 @@ GF_REGISTER_SELFTEST("dimension.new_player_spawn", [](Context& ctx) -> ll::coro:
     ctx.require(p != nullptr, "player");
     ctx.info("after the new spawn: " + respawnInfo(*p));
     ctx.check(hasRespawnPosition(*p), "the new spawn is a respawn point");
-    ctx.check(p->mPlayerRespawnPoint->mDimension->mValue == static_cast<int>(*tf), "respawns in the Gloaming Forest");
-    auto portals = tp::portalBlocksNear(*game::regionOf(static_cast<int>(*tf)), game::blockPosOf(p->getFeetPos()), 4);
+    ctx.check(p->mPlayerRespawnPoint->mDimension->mValue == static_cast<int>(*upsrc), "respawns in the Gloaming Forest");
+    auto portals = tp::portalBlocksNear(*game::regionOf(static_cast<int>(*upsrc)), game::blockPosOf(p->getFeetPos()), 4);
     ctx.check(portals.size() == 4, "next to a fresh portal (portalForNewPlayer)");
     if (!portals.empty()) {
-        ctx.check(game::intState(game::regionOf(static_cast<int>(*tf))->getBlock(portals.front()), kOneWayState).value_or(0) == 1, "a one-way portal (forced entry)");
+        ctx.check(game::intState(game::regionOf(static_cast<int>(*upsrc))->getBlock(portals.front()), kOneWayState).value_or(0) == 1, "a one-way portal (forced entry)");
     }
     ctx.check(terrain.sites() == 1, "the portal's site was saved before it was built");
     int put = co_await terrain.restore();
@@ -952,9 +952,9 @@ GF_REGISTER_SELFTEST("dimension.new_player_spawn", [](Context& ctx) -> ll::coro:
 // An item dropped into a lit portal goes to the Gloaming Forest at once (transition time 0), where
 // the teleporter builds a return portal for it; nobody has to be there.
 GF_REGISTER_SELFTEST("dimension.item_travel", [](Context& ctx) -> ll::coro::CoroTask<> {
-    auto tf = world::gloaming();
-    ctx.require(tf.has_value(), "the Gloaming Forest exists");
-    int   tfId   = static_cast<int>(*tf);
+    auto upsrc = world::gloaming();
+    ctx.require(upsrc.has_value(), "the Gloaming Forest exists");
+    int   gfId   = static_cast<int>(*upsrc);
     auto  box    = co_await ctx.flatArea(5490, 8, 8);
     auto* region = ctx.region();
     ctx.require(region != nullptr, "region");
@@ -967,7 +967,7 @@ GF_REGISTER_SELFTEST("dimension.item_travel", [](Context& ctx) -> ll::coro::Coro
     // the destination (x and z times 8, generated by the Gloaming Forest's generator), with nobody there
     int const destX = pool.x * 8, destZ = pool.z * 8;
     // where to look for the sticks: around the scaled destination, and around the portal the
-    // teleporter chose for the pool (its cache) or built (the watched sites). TFTeleporter#
+    // teleporter chose for the pool (its cache) or built (the watched sites). GloamingTeleporter#
     // moveToSafeCoords moves an arrival out of landmark chunks (scanIntoSafeBiomes), which can be
     // hundreds of blocks from the scaled destination.
     auto searchAreas = [&]() {
@@ -978,7 +978,7 @@ GF_REGISTER_SELFTEST("dimension.item_travel", [](Context& ctx) -> ll::coro::Coro
         for (int dx = 0; dx < 2; ++dx)
             for (int dz = 0; dz < 2; ++dz)
                 if (auto cached = tp::cacheGet(world::kDimensionId, pool.x + dx, pool.z + dz)) around(cached->pos);
-        for (auto const& corner : terrain.sitesIn(tfId)) around(corner);
+        for (auto const& corner : terrain.sitesIn(gfId)) around(corner);
         return out;
     };
     // the test player waits next to the pool, in the overworld
@@ -997,9 +997,9 @@ GF_REGISTER_SELFTEST("dimension.item_travel", [](Context& ctx) -> ll::coro::Coro
         co_await ctx.ticks(1);
         auto* a = level->fetchEntity(ActorUniqueID{itemId}, false);
         if (started < 0 && a && portalProcessOf(*a).travelling) started = ticks;
-        if (a && static_cast<int>(a->getDimensionId()) == tfId) there = a;
+        if (a && static_cast<int>(a->getDimensionId()) == gfId) there = a;
         // (or the sticks as another item entity, when the engine gave the moved item a new id)
-        if (auto* r = game::regionOf(tfId); !there && r) {
+        if (auto* r = game::regionOf(gfId); !there && r) {
             for (auto const& near : searchAreas()) {
                 for (auto* e : r->getEntities(near, 0.0f, ActorType::ItemEntity)) {
                     if (e && e->getEntityTypeId() == ActorType::ItemEntity
@@ -1015,18 +1015,18 @@ GF_REGISTER_SELFTEST("dimension.item_travel", [](Context& ctx) -> ll::coro::Coro
     }
     ctx.require(there != nullptr, "the item is in the Gloaming Forest (after " + std::to_string(ticks) + " ticks)");
     ctx.info("the item arrived after " + std::to_string(ticks) + " ticks at " + str(game::blockPosOf(there->getFeetPos())));
-    // the trip starts at once; loading the destination (twice when TFTeleporter#moveToSafeCoords
+    // the trip starts at once; loading the destination (twice when GloamingTeleporter#moveToSafeCoords
     // moves it out of landmark chunks) takes the engine's time, which is no portal delay
     ctx.info("its trip started after " + std::to_string(started) + " ticks");
     ctx.check(started >= 0 && started < 60, "it went through without the players' 60 tick delay");
-    auto* tfRegion = game::regionOf(tfId);
-    ctx.require(tfRegion != nullptr, "the Gloaming Forest region");
-    auto portals = tp::portalBlocksNear(*tfRegion, game::blockPosOf(there->getFeetPos()), 4);
+    auto* gloamingRegion = game::regionOf(gfId);
+    ctx.require(gloamingRegion != nullptr, "the Gloaming Forest region");
+    auto portals = tp::portalBlocksNear(*gloamingRegion, game::blockPosOf(there->getFeetPos()), 4);
     ctx.check(portals.size() == 4, "next to a 2x2 return portal (" + std::to_string(portals.size()) + " blocks)");
     if (!portals.empty()) {
         BlockPos corner = portals.front();
         for (auto const& b : portals) corner = BlockPos{std::min(corner.x, b.x), b.y, std::min(corner.z, b.z)};
-        ctx.check(!ctx.blockAt(core::GlobalPos{tfId, corner.x, corner.y - 1, corner.z}).ends_with(":air"), "the return portal stands on the ground (y " + std::to_string(corner.y) + ", " + ctx.blockAt(core::GlobalPos{tfId, corner.x, corner.y - 1, corner.z}) + " below)");
+        ctx.check(!ctx.blockAt(core::GlobalPos{gfId, corner.x, corner.y - 1, corner.z}).ends_with(":air"), "the return portal stands on the ground (y " + std::to_string(corner.y) + ", " + ctx.blockAt(core::GlobalPos{gfId, corner.x, corner.y - 1, corner.z}) + " below)");
         for (auto const& b : portals) tp::cacheRemove("minecraft:overworld", b.x, b.z);
     }
     for (int dx = 0; dx < 2; ++dx)
@@ -1040,17 +1040,17 @@ GF_REGISTER_SELFTEST("dimension.item_travel", [](Context& ctx) -> ll::coro::Coro
 // ---- the area loader -------------------------------------------------------------------------------------------------
 
 GF_REGISTER_SELFTEST("dimension.area_loader", [](Context& ctx) -> ll::coro::CoroTask<> {
-    auto tf = world::gloaming();
-    ctx.require(tf.has_value(), "the Gloaming Forest exists");
-    int      tfId = static_cast<int>(*tf);
+    auto upsrc = world::gloaming();
+    ctx.require(upsrc.has_value(), "the Gloaming Forest exists");
+    int      gfId = static_cast<int>(*upsrc);
     BlockPos far{-77712, 64, 54321}; // far from every test and player
-    auto*    region = game::regionOf(tfId);
+    auto*    region = game::regionOf(gfId);
     ctx.info(std::string("loaded before: ") + (region && region->hasChunksAt(far, 2, false) ? "yes" : "no"));
-    ctx.info("the engine's ticking areas now: " + loadReport(tfId, far, 0));
+    ctx.info("the engine's ticking areas now: " + loadReport(gfId, far, 0));
     int  held = heldAreas();
-    auto hold = co_await loadArea(tfId, far, 18);
+    auto hold = co_await loadArea(gfId, far, 18);
     ctx.require(hold != nullptr, "the area loads without a player");
-    region = game::regionOf(tfId);
+    region = game::regionOf(gfId);
     ctx.check(region && region->hasChunksAt(far, 18, false), "every chunk within 18 blocks is loaded");
     ctx.check(heldAreas() == held + 1, "one area held");
     hold.reset();
@@ -1064,18 +1064,18 @@ GF_REGISTER_SELFTEST("dimension.area_loader", [](Context& ctx) -> ll::coro::Coro
 // loading is over (removed at once, it would strand the chunks it was bringing in: W0d, docs/spikes
 // S1.md), so every destination loads and no wait meets stranded chunks.
 GF_REGISTER_SELFTEST("dimension.area_handover", [](Context& ctx) -> ll::coro::CoroTask<> {
-    auto tf = world::gloaming();
-    ctx.require(tf.has_value(), "the Gloaming Forest exists");
-    int tfId     = static_cast<int>(*tf);
+    auto upsrc = world::gloaming();
+    ctx.require(upsrc.has_value(), "the Gloaming Forest exists");
+    int gfId     = static_cast<int>(*upsrc);
     int stranded = strandedWaits();
     int raced = 0, loadedCount = 0;
     for (int i = 0; i < 3; ++i) {
         BlockPos column{-61000 + i * 512 + 7, 0, 47000 + 9};
-        auto     first = requestArea(tfId, column, 0);
+        auto     first = requestArea(gfId, column, 0);
         ctx.require(first != nullptr, "column " + std::to_string(i) + " asked for");
         co_await ctx.ticks(1);
         int  inPipeline = 0, missing = 0;
-        auto states     = chunkStates(tfId, column, 0);
+        auto states     = chunkStates(gfId, column, 0);
         for (int s : states) {
             if (s >= 1 && s <= 10) ++inPipeline;
             if (s < 1) ++missing;
@@ -1092,7 +1092,7 @@ GF_REGISTER_SELFTEST("dimension.area_handover", [](Context& ctx) -> ll::coro::Co
             missing,
             settling ? "it finishes its loading before it goes" : "its loading was over"
         ));
-        auto second = co_await loadArea(tfId, column, 18);
+        auto second = co_await loadArea(gfId, column, 18);
         if (second) ++loadedCount;
         ctx.check(second != nullptr, std::format("column {}: its destination loaded", i));
     }
@@ -1154,7 +1154,7 @@ GF_REGISTER_SELFTEST("dimension.portal_site_fluids", [](Context& ctx) -> ll::cor
     co_await terrain.restore();
 });
 
-// ---- TFConfig#getPortalLockingAdvancement ------------------------------------------------------------------------------------
+// ---- GloamingConfig#getPortalLockingAdvancement ------------------------------------------------------------------------------------
 
 GF_REGISTER_SELFTEST("dimension.portal_lock", [](Context& ctx) {
     ConfigGuard guard;
@@ -1181,7 +1181,7 @@ GF_REGISTER_SELFTEST("dimension.portal_lock", [](Context& ctx) {
     ctx.check(portalLockingAdvancement(true) == std::optional<std::string>("minecraft:story/enter_the_nether"), "a vanilla advancement locks portals");
     ctx.check(cfg.portalUnlockedByAdvancement == "minecraft:story/enter_the_nether", "and stays in the config");
 
-    // the lock against the progression store (F10): TFPortalBlock#entityInside turns a survival
+    // the lock against the progression store (F10): GloamingPortalBlock#entityInside turns a survival
     // player without the advancement away ("unworthy"), lets one with it through; creative and
     // spectator players are never held back
     if (!shipped) return;
@@ -1311,15 +1311,15 @@ GF_REGISTER_SELFTEST("dimension.clock_watch", [](Context& ctx) -> ll::coro::Coro
 
 // Bedrock's /execute in accepts the custom dimension's identifier.
 GF_REGISTER_SELFTEST("dimension.execute_in", [](Context& ctx) -> ll::coro::CoroTask<> {
-    auto tf = world::gloaming();
-    ctx.require(tf.has_value(), "the Gloaming Forest exists");
+    auto upsrc = world::gloaming();
+    ctx.require(upsrc.has_value(), "the Gloaming Forest exists");
     auto& p    = ctx.player();
     auto  id   = idOf(p);
     auto  name = p.getRealName();
-    auto toTf = selftest::runServerCommand("execute as \"" + name + "\" at @s in gloamingforest:gloaming_forest run tp @s ~ ~ ~");
-    ctx.check(toTf.ok, "execute in gloamingforest:gloaming_forest runs (" + toTf.messages + ")");
+    auto toGloaming = selftest::runServerCommand("execute as \"" + name + "\" at @s in gloamingforest:gloaming_forest run tp @s ~ ~ ~");
+    ctx.check(toGloaming.ok, "execute in gloamingforest:gloaming_forest runs (" + toGloaming.messages + ")");
     bool there = false;
-    for (int i = 0; toTf.ok && i < 200 && !there; ++i) {
+    for (int i = 0; toGloaming.ok && i < 200 && !there; ++i) {
         co_await ctx.ticks(1);
         auto* pl = playerById(id);
         there    = pl && world::isGloaming(pl->getDimensionId());
@@ -1340,18 +1340,18 @@ GF_REGISTER_SELFTEST("dimension.execute_in", [](Context& ctx) -> ll::coro::CoroT
 // execute in scales X and Z by from.coordinateScale / to.coordinateScale (x8 into the Gloaming
 // Forest, /8 out of it).
 GF_REGISTER_SELFTEST("dimension.functions", [](Context& ctx) -> ll::coro::CoroTask<> {
-    auto tf = world::gloaming();
-    ctx.require(tf.has_value(), "the Gloaming Forest exists");
-    int tfId = static_cast<int>(*tf);
+    auto upsrc = world::gloaming();
+    ctx.require(upsrc.has_value(), "the Gloaming Forest exists");
+    int gfId = static_cast<int>(*upsrc);
     // the semantics (CommandSourceStack#withLevel)
     auto in = runTpFunction(0, Vec3{100.5f, 70.0f, -20.25f}, true);
     ctx.require(in.has_value(), "tp_gloaming has a destination");
-    ctx.check(in->dim == tfId, "tp_gloaming goes to the Gloaming Forest");
+    ctx.check(in->dim == gfId, "tp_gloaming goes to the Gloaming Forest");
     ctx.check(in->pos.x == 804.0f && in->pos.y == 70.0f && in->pos.z == -162.0f, "overworld 100.5 70 -20.25 is 804 70 -162 there");
-    auto out = runTpFunction(tfId, Vec3{804.0f, 70.0f, -162.0f}, false);
+    auto out = runTpFunction(gfId, Vec3{804.0f, 70.0f, -162.0f}, false);
     ctx.require(out.has_value(), "tp_overworld has a destination");
     ctx.check(out->dim == 0 && out->pos.x == 100.5f && out->pos.z == -20.25f, "and back: 100.5 70 -20.25 in the overworld");
-    auto same = runTpFunction(tfId, Vec3{5.0f, 6.0f, 7.0f}, true);
+    auto same = runTpFunction(gfId, Vec3{5.0f, 6.0f, 7.0f}, true);
     ctx.check(same && same->pos.x == 5.0f && same->pos.z == 7.0f, "within the same dimension the position stays");
     auto nether = runTpFunction(1, Vec3{10.0f, 64.0f, 10.0f}, true);
     ctx.check(nether && nether->pos.x == 640.0f && nether->pos.z == 640.0f, "the nether (scale 8) is 64 times farther in the Gloaming Forest");
@@ -1364,9 +1364,9 @@ GF_REGISTER_SELFTEST("dimension.functions", [](Context& ctx) -> ll::coro::CoroTa
     auto  name = p.getRealName();
     auto  at   = ctx.testPos(5498);
     BlockPos column{static_cast<int>(std::floor((at.x + 0.5f) * 8.0f)), 0, static_cast<int>(std::floor((at.z + 0.5f) * 8.0f))};
-    auto     columnHold = co_await loadArea(tfId, column, 2);
-    ctx.require(columnHold != nullptr && game::regionOf(tfId) != nullptr, "the arrival column loaded");
-    int ground = tp::heightmap(*game::regionOf(tfId), column.x, column.z);
+    auto     columnHold = co_await loadArea(gfId, column, 2);
+    ctx.require(columnHold != nullptr && game::regionOf(gfId) != nullptr, "the arrival column loaded");
+    int ground = tp::heightmap(*game::regionOf(gfId), column.x, column.z);
     ctx.info("the arrival column's ground is at y " + std::to_string(ground));
     // then the test player stands at the source spot in the overworld
     ctx.player().teleport(Vec3{at.x + 0.5f, static_cast<float>(at.y), at.z + 0.5f}, DimensionType(ctx.dimension()));
@@ -1385,10 +1385,10 @@ GF_REGISTER_SELFTEST("dimension.functions", [](Context& ctx) -> ll::coro::CoroTa
         ctx.info("another player is nearer to the scaled position: the in-game part is skipped");
         co_return;
     }
-    auto fnTf = selftest::runServerCommand(std::format("execute as \"{}\" at @s positioned ~ {} ~ run function gloamingforest/dimension/tp_gloaming", name, ground));
-    ctx.check(fnTf.ok, "function tp_gloaming runs (" + fnTf.messages + ")");
+    auto fnGloaming = selftest::runServerCommand(std::format("execute as \"{}\" at @s positioned ~ {} ~ run function gloamingforest/dimension/tp_gloaming", name, ground));
+    ctx.check(fnGloaming.ok, "function tp_gloaming runs (" + fnGloaming.messages + ")");
     bool there = false;
-    for (int i = 0; fnTf.ok && i < 200 && !there; ++i) {
+    for (int i = 0; fnGloaming.ok && i < 200 && !there; ++i) {
         co_await ctx.ticks(1);
         pl    = playerById(id);
         there = pl && world::isGloaming(pl->getDimensionId());
@@ -1409,7 +1409,7 @@ GF_REGISTER_SELFTEST("dimension.functions", [](Context& ctx) -> ll::coro::CoroTa
     // and back from where it stands, Y back on the overworld's ground
     Vec3 back = got;
     back.y    = static_cast<float>(at.y);
-    auto home = runTpFunction(tfId, back, false);
+    auto home = runTpFunction(gfId, back, false);
     ctx.require(home.has_value(), "the expected way back");
     if (home->player != id) {
         ctx.info("another player is nearer to the scaled way back: it is not taken");
@@ -1434,7 +1434,7 @@ GF_REGISTER_SELFTEST("dimension.functions", [](Context& ctx) -> ll::coro::CoroTa
 
 // ---- the portal block's physical rules ---------------------------------------------------------------------------------
 
-// TFPortalBlock#getFluidState (sugar cane keeps its water), pushReaction BLOCK (pistons can't move
+// GloamingPortalBlock#getFluidState (sugar cane keeps its water), pushReaction BLOCK (pistons can't move
 // it) and no map colour (maps look through it).
 GF_REGISTER_SELFTEST("dimension.portal_block", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto  box    = co_await ctx.flatArea(5401, 8, 8);
@@ -1495,7 +1495,7 @@ GF_REGISTER_SELFTEST("dimension.portal_block", [](Context& ctx) -> ll::coro::Cor
     ctx.check(ctx.blockAt(portalBase.offset(0, 2, 0)) != kPortalBlock, "and was not pushed up");
 });
 
-// Explosions (TFPortalBlock#getFluidState): Java's ExplosionDamageCalculator takes the larger of the
+// Explosions (GloamingPortalBlock#getFluidState): Java's ExplosionDamageCalculator takes the larger of the
 // block's resistance (upstream's 0) and its fluid's (water, 100), so an explosion never destroys a portal
 // block, though the block itself keeps 0. Two deterministic cases (the explosion's rays: each starts
 // with radius x 0.7..1.3, loses 0.225 per 0.3-block step and (resistance + 0.3) x 0.3 per block):
@@ -1515,8 +1515,8 @@ GF_REGISTER_SELFTEST("dimension.portal_explosion", [](Context& ctx) -> ll::coro:
     auto const* open   = portalBlock(false);
     auto const* oneWay = portalBlock(true);
     ctx.require(open && oneWay, "both portal states");
-    auto tfZero = [&] { return open->mDirectData->mExplosionResistance == 0.0f && oneWay->mDirectData->mExplosionResistance == 0.0f; };
-    ctx.check(tfZero(), "the block keeps upstream's explosion resistance 0 (strength(-1.0F))");
+    auto gloamingZero = [&] { return open->mDirectData->mExplosionResistance == 0.0f && oneWay->mDirectData->mExplosionResistance == 0.0f; };
+    ctx.check(gloamingZero(), "the block keeps upstream's explosion resistance 0 (strength(-1.0F))");
 
     // a lit 2x2 portal in the middle of the area (the craters stay inside it)
     int  y    = box.minY - 1; // the grass layer
@@ -1556,7 +1556,7 @@ GF_REGISTER_SELFTEST("dimension.portal_explosion", [](Context& ctx) -> ll::coro:
     Vec3 middle{pool.x + 1.0f, pool.y + 1.25f, pool.z + 1.0f};
     for (int i = 0; i < 2; ++i) {
         explode(middle, 0.75f);
-        ctx.check(tfZero() && portalExplosionDepth() == 0, "upstream's 0 again after explosion " + std::to_string(i + 1));
+        ctx.check(gloamingZero() && portalExplosionDepth() == 0, "upstream's 0 again after explosion " + std::to_string(i + 1));
     }
     co_await ctx.ticks(4); // block changes reach the portal at the end of the tick
     auto broken = rimBroken();
@@ -1570,14 +1570,14 @@ GF_REGISTER_SELFTEST("dimension.portal_explosion", [](Context& ctx) -> ll::coro:
     auto west = pool.offset(-1, 0, 0);
     ctx.setBlock(west.offset(0, 1, 0), "minecraft:air");
     explode(Vec3{west.x + 0.5f, west.y + 1.25f, west.z + 0.5f}, 1.5f);
-    ctx.check(tfZero() && portalExplosionDepth() == 0, "upstream's 0 again after the explosion over the rim");
+    ctx.check(gloamingZero() && portalExplosionDepth() == 0, "upstream's 0 again after the explosion over the rim");
     co_await ctx.ticks(4); // (the water flows into the crater only after 5 ticks)
     int portals = count(kPortalBlock), water = count("minecraft:water");
     ctx.info("after the explosion over the rim: " + std::to_string(portals) + " portal blocks, " + std::to_string(water) + " water, rim " + rimBroken());
     ctx.check(!blockTagged("gloamingforest:portal/edge", ctx.blockAt(west)), "the explosion broke the rim block under it (" + ctx.blockAt(west) + ")");
     ctx.check(portals + water == 4, "the explosion destroyed none of the portal blocks (" + std::to_string(portals) + " portal, " + std::to_string(water) + " water)");
     ctx.check(water == 4, "the rim broke: upstream's neighbour rule turned the whole portal back into water (" + std::to_string(water) + " of 4)");
-    ctx.check(tfZero(), "and the portal holds upstream's 0 again after the explosions");
+    ctx.check(gloamingZero(), "and the portal holds upstream's 0 again after the explosions");
     if (auto* r = ctx.region()) {
         // the drops of the broken blocks
         AABB area{Vec3(static_cast<float>(box.minX), y - 1.0f, static_cast<float>(box.minZ)), Vec3(box.maxX + 1.0f, y + 6.0f, box.maxZ + 1.0f)};
@@ -1680,9 +1680,9 @@ GF_REGISTER_SELFTEST("dimension.dimension_type", [](Context& ctx) {
     ctx.check(t.fixedTime == 13000 && t.coordinateScale == 0.125 && t.minY == -32 && t.height == 288 && t.logicalHeight == 288, "gloaming_forest_type: time, scale, height");
     ctx.check(t.ambientLight == 0.01f && t.monsterSpawnBlockLightLimit == 7 && t.monsterSpawnLightMin == 0 && t.monsterSpawnLightMax == 7, "ambient light and monster spawn light");
     ctx.check(t.bedWorks && !t.respawnAnchorWorks && !t.hasRaids && !t.piglinSafe && t.natural && t.hasSkylight && !t.hasCeiling && !t.ultrawarm, "flags");
-    auto tf = world::gloaming();
-    ctx.require(tf.has_value(), "the Gloaming Forest exists");
-    ctx.check(&ext::dimensionType(static_cast<int>(*tf)) == &t, "the Gloaming Forest's id reads gloaming_forest_type");
+    auto upsrc = world::gloaming();
+    ctx.require(upsrc.has_value(), "the Gloaming Forest exists");
+    ctx.check(&ext::dimensionType(static_cast<int>(*upsrc)) == &t, "the Gloaming Forest's id reads gloaming_forest_type");
     ctx.check(ext::dimensionType(0).id == "minecraft:overworld" && ext::dimensionType(1).id == "minecraft:the_nether", "vanilla types");
     // DimensionType#brightness
     ctx.check(std::abs(ext::brightness(0.01f, 0) - 0.01f) < 1e-6f, "light 0: the ambient light");
@@ -1691,7 +1691,7 @@ GF_REGISTER_SELFTEST("dimension.dimension_type", [](Context& ctx) {
     // the Gloaming Forest's brightness ramp has it
     auto level = ll::service::getLevel();
     ctx.require(level.has_value(), "level");
-    auto d = level->getOrCreateDimension(*tf).lock();
+    auto d = level->getOrCreateDimension(*upsrc).lock();
     ctx.require(d != nullptr, "the dimension");
     auto const& ramp = d->getBrightnessRamp().mBrightnessRamp;
     bool        same = true;
@@ -1718,7 +1718,7 @@ GF_REGISTER_SELFTEST("dimension.dimension_type", [](Context& ctx) {
     ctx.check(dark(ext::dimensionType(1), 0, 15, 0, {0, 0}) == false && dark(ext::dimensionType(1), 0, 7, 0, {0, 0}), "the nether: no block light limit, a constant 7");
 });
 
-// ---- TFPortalBlock#getFluidState: what the portal's water does ----------------------------------------------
+// ---- GloamingPortalBlock#getFluidState: what the portal's water does ----------------------------------------------
 
 // The portal is level-1 water: an entity in it lands without fall damage, its fire goes out,
 // water-sensitive mobs take drowning damage there, and farmland within 4 blocks stays moist.
@@ -1876,11 +1876,11 @@ bool heard(std::int64_t id, int from, int to) {
 // dimension at once, into another one once the destination has loaded (the player waits where it
 // is meanwhile), and tells portal::onTeleported.
 GF_REGISTER_SELFTEST("dimension.teleport_riders", [](Context& ctx) -> ll::coro::CoroTask<> {
-    auto tf = world::gloaming();
-    ctx.require(tf.has_value(), "the Gloaming Forest exists");
+    auto upsrc = world::gloaming();
+    ctx.require(upsrc.has_value(), "the Gloaming Forest exists");
     listenToTeleports();
     heardTeleports().clear();
-    int  tfId = static_cast<int>(*tf);
+    int  gfId = static_cast<int>(*upsrc);
     int  home = ctx.dimension();
     auto at   = ctx.testPos(5470, 2);
     auto id   = idOf(ctx.player());
@@ -1929,24 +1929,24 @@ GF_REGISTER_SELFTEST("dimension.teleport_riders", [](Context& ctx) -> ll::coro::
     BlockPos column{(at.x + 3) * 8 + 4, 0, at.z * 8 + 4};
     int      ground = 0;
     {
-        auto hold = co_await loadArea(tfId, column, 0);
-        ctx.require(hold != nullptr && game::regionOf(tfId), "the column loaded");
-        ground = tp::heightmap(*game::regionOf(tfId), column.x, column.z);
+        auto hold = co_await loadArea(gfId, column, 0);
+        ctx.require(hold != nullptr && game::regionOf(gfId), "the column loaded");
+        ground = tp::heightmap(*game::regionOf(gfId), column.x, column.z);
     }
     Vec3 dest{column.x + 0.5f, static_cast<float>(ground), column.z + 0.5f};
     pl = playerById(id);
     ctx.require(pl != nullptr, "player");
-    ctx.info("before the trip: " + loadReport(tfId, game::blockPosOf(dest), 18));
-    ctx.require(world::teleport(*pl, *tf, dest, 0.0f), "the teleport into the Gloaming Forest started");
+    ctx.info("before the trip: " + loadReport(gfId, game::blockPosOf(dest), 18));
+    ctx.require(world::teleport(*pl, *upsrc, dest, 0.0f), "the teleport into the Gloaming Forest started");
     ctx.check(static_cast<int>(pl->getDimensionId()) == home, "the player waits at home while the destination loads");
     bool there = false;
     int  ticks = 0;
     for (; ticks < 300 && !there; ++ticks) {
         co_await ctx.ticks(1);
         pl    = playerById(id);
-        there = pl && static_cast<int>(pl->getDimensionId()) == tfId && heard(id, home, tfId);
+        there = pl && static_cast<int>(pl->getDimensionId()) == gfId && heard(id, home, gfId);
     }
-    if (!there) ctx.info("not there after 300 ticks: " + loadReport(tfId, game::blockPosOf(dest), 18));
+    if (!there) ctx.info("not there after 300 ticks: " + loadReport(gfId, game::blockPosOf(dest), 18));
     ctx.require(there, "the player arrived in the Gloaming Forest (portal::onTeleported)");
     co_await ctx.ticks(10);
     pl = playerById(id);
@@ -1959,9 +1959,9 @@ GF_REGISTER_SELFTEST("dimension.teleport_riders", [](Context& ctx) -> ll::coro::
     bool withRiderThere = false;
     if (withRider) {
         Actor* came = nullptr;
-        if (auto* tfr = game::regionOf(tfId)) {
+        if (auto* gloamingr = game::regionOf(gfId)) {
             AABB around{pl->getFeetPos() - Vec3(4, 4, 4), pl->getFeetPos() + Vec3(4, 4, 4)};
-            for (auto* e : tfr->getEntities(around, 0.0f)) {
+            for (auto* e : gloamingr->getEntities(around, 0.0f)) {
                 if (!e || e->getTypeName() != "minecraft:parrot") continue;
                 parrots.push_back(idOf(*e));
                 came = e;
@@ -1985,7 +1985,7 @@ GF_REGISTER_SELFTEST("dimension.teleport_riders", [](Context& ctx) -> ll::coro::
     for (int i = 0; i < 300 && !back; ++i) {
         co_await ctx.ticks(1);
         pl   = playerById(id);
-        back = pl && static_cast<int>(pl->getDimensionId()) == home && heard(id, tfId, home);
+        back = pl && static_cast<int>(pl->getDimensionId()) == home && heard(id, gfId, home);
     }
     ctx.check(back, "the player is home again");
     co_await ctx.ticks(10);
@@ -2008,7 +2008,7 @@ GF_REGISTER_SELFTEST("dimension.teleport_riders", [](Context& ctx) -> ll::coro::
 
 // ---- ridden actors in the portal -------------------------------------------------------------------------------------
 
-// TFPortalBlock#entityInside and Entity#handlePortal ask Entity#canUsePortal(false) of the actor
+// GloamingPortalBlock#entityInside and Entity#handlePortal ask Entity#canUsePortal(false) of the actor
 // itself first: BaseTFBoss (and upstream's parts, and the types F8 marks with ext::setCanUsePortal) answer
 // false whether or not something rides them, so an upstream boss carrying a rider stays out of the portal:
 // the fixture boss (it has no seat, so its rider keeps sliding off and is put back on) and a boat of
@@ -2016,9 +2016,9 @@ GF_REGISTER_SELFTEST("dimension.teleport_riders", [](Context& ctx) -> ll::coro::
 // has the engine's: an unmarked boat with a pig in it travels, and changeDimension takes the pig
 // along.
 GF_REGISTER_SELFTEST("dimension.portal_ridden", [](Context& ctx) -> ll::coro::CoroTask<> {
-    auto tf = world::gloaming();
-    ctx.require(tf.has_value(), "the Gloaming Forest exists");
-    int   tfId   = static_cast<int>(*tf);
+    auto upsrc = world::gloaming();
+    ctx.require(upsrc.has_value(), "the Gloaming Forest exists");
+    int   gfId   = static_cast<int>(*upsrc);
     auto  box    = co_await ctx.flatArea(5410, 12, 8);
     auto* region = ctx.region();
     ctx.require(region != nullptr, "region");
@@ -2177,7 +2177,7 @@ GF_REGISTER_SELFTEST("dimension.portal_ridden", [](Context& ctx) -> ll::coro::Co
     if (auto* pig = actor(pigId)) ctx.check(!canUsePortal(*pig), "its rider is not asked (a passenger never uses a portal itself)");
     int const destX = pool.x * 8, destZ = pool.z * 8;
     // where to look: around the scaled destination, and around the portal the teleporter chose for
-    // the pool (its cache) or built (the watched sites). TFTeleporter#moveToSafeCoords moves an
+    // the pool (its cache) or built (the watched sites). GloamingTeleporter#moveToSafeCoords moves an
     // arrival out of landmark chunks (scanIntoSafeBiomes), which can be hundreds of blocks away.
     auto searchAreas = [&]() {
         std::vector<AABB> out{AABB{Vec3(destX - 24, world::kMinY, destZ - 24), Vec3(destX + 24, world::kMinY + world::kHeight, destZ + 24)}};
@@ -2187,11 +2187,11 @@ GF_REGISTER_SELFTEST("dimension.portal_ridden", [](Context& ctx) -> ll::coro::Co
         for (int dx = 0; dx < 2; ++dx)
             for (int dz = 0; dz < 2; ++dz)
                 if (auto cached = tp::cacheGet(world::kDimensionId, pool.x + dx, pool.z + dz)) around(cached->pos);
-        for (auto const& corner : terrain.sitesIn(tfId)) around(corner);
+        for (auto const& corner : terrain.sitesIn(gfId)) around(corner);
         return out;
     };
     auto boatsAndPigs = [&](auto&& fn) {
-        auto* r = game::regionOf(tfId);
+        auto* r = game::regionOf(gfId);
         if (!r) return;
         std::set<std::int64_t> seen;
         for (auto const& area : searchAreas())
@@ -2217,8 +2217,8 @@ GF_REGISTER_SELFTEST("dimension.portal_ridden", [](Context& ctx) -> ll::coro::Co
         co_await ctx.ticks(1);
         boatThere = pigThere = nullptr;
         // the same entities (when the engine kept their ids), or new ones near the arrival
-        if (auto* b = actor(boatId); b && static_cast<int>(b->getDimensionId()) == tfId) boatThere = b;
-        if (auto* p = actor(pigId); p && static_cast<int>(p->getDimensionId()) == tfId) pigThere = p;
+        if (auto* b = actor(boatId); b && static_cast<int>(b->getDimensionId()) == gfId) boatThere = b;
+        if (auto* p = actor(pigId); p && static_cast<int>(p->getDimensionId()) == gfId) pigThere = p;
         boatsAndPigs([&](Actor& e) {
             if (before.contains(idOf(e))) return;
             if (!boatThere && e.getTypeName() == "minecraft:boat") boatThere = &e;
@@ -2249,8 +2249,8 @@ GF_REGISTER_SELFTEST("dimension.portal_ridden", [](Context& ctx) -> ll::coro::Co
     // the teleporter cache entries of the trip
     for (int dx = 0; dx < 2; ++dx)
         for (int dz = 0; dz < 2; ++dz) tp::cacheRemove(world::kDimensionId, pool.x + dx, pool.z + dz);
-    if (auto* tfr = game::regionOf(tfId); tfr && arrival)
-        for (auto const& b : tp::portalBlocksNear(*tfr, *arrival, 4)) tp::cacheRemove("minecraft:overworld", b.x, b.z);
+    if (auto* gloamingr = game::regionOf(gfId); gloamingr && arrival)
+        for (auto const& b : tp::portalBlocksNear(*gloamingr, *arrival, 4)) tp::cacheRemove("minecraft:overworld", b.x, b.z);
     for (auto id : spawned)
         if (auto* a = actor(id)) a->remove();
     int put = co_await terrain.restore();

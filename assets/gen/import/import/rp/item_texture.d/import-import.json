@@ -1,17 +1,17 @@
 {
-  "tf_block_blank": {
+  "gf_block_blank": {
     "textures": "textures/gloamingforest/block/blank"
   },
-  "tf_block_towerwood": {
+  "gf_block_towerwood": {
     "textures": "textures/gloamingforest/block/towerwood"
   },
-  "tf_vanilla_block_oak_leaves": {
+  "gf_vanilla_block_oak_leaves": {
     "textures": "textures/blocks/leaves_oak_carried"
   },
-  "tf_vanilla_block_oak_log": {
+  "gf_vanilla_block_oak_log": {
     "textures": "textures/blocks/log_oak"
   },
-  "tf_vanilla_block_soul_sand": {
+  "gf_vanilla_block_soul_sand": {
     "textures": "textures/blocks/soul_sand"
   }
 }

@@ -37,25 +37,25 @@ are listed in the appendices; none of them has runtime behaviour in GloamingFore
 | `OptifineWarningScreen` + config `client.disableOptifineNagScreen` (translation id `optifine`, keys `config.gloamingforest.optifine`, `config.gloamingforest.optifine.tooltip`, `gui.gloamingforest.optifine.*`) | not ported: there is no OptiFine on Bedrock | the key is not part of any config section (config.md: "(not ported)") |
 | `JappaPackReloadListener` (switches entity models when the "Jappa" programmer-art pack is loaded) | not ported | the imported default textures/models only; a Bedrock resource pack can override them |
 | `ModUpdateURLInterceptor` (NeoForge update checker URL) | not ported | releases are announced through the GloamingForest repository |
-| NeoForge config files and config screen (`TFCommonConfig`, `TFClientConfig`) | replaced | per-unit JSON sections + `/gloamingforest config` (F0, config.md) |
+| NeoForge config files and config screen (`GloamingCommonConfig`, `GloamingClientConfig`) | replaced | per-unit JSON sections + `/gloamingforest config` (F0, config.md) |
 | Skylight world preset | replaced | a `terrain` config option (U2), Bedrock has no world-preset choice for custom dimensions |
 | Data pack overrides of upstream registries (wood palettes, biome stacks, restrictions, magic paintings, travellers modifiers, ...) | baked | GloamingForest reads the imported JSON from its own data folder; server owners may edit those files |
-| Creative tabs (`TFCreativeTabs`) | replaced | Bedrock creative catalog groups (F9 `catalog`), no top-level tabs |
+| Creative tabs (`GloamingCreativeTabs`) | replaced | Bedrock creative catalog groups (F9 `catalog`), no top-level tabs |
 | `mod_exists` loot condition | reduced | recognises only `gloamingforest` and `minecraft` (F10) |
 | Item durability / flask dose bar colours, title splash, Halloween visuals | client mod only | F9 `item::setBar`, F12 |
-| Key bindings (`TFKeyBinds`: zoom Z, item display map cycle C, swap hotbar V, red thread vision unbound) | keyboard defaults only | touch / controller players use item-use fallbacks (U11) |
+| Key bindings (`GloamingKeyBinds`: zoom Z, item display map cycle C, swap hotbar V, red thread vision unbound) | keyboard defaults only | touch / controller players use item-use fallbacks (U11) |
 | ASM transformers (`asmhooks/**`: water walking, unrestrained movement, efficient eater exhaustion, straight-ahead FOV, emperor's cloth armor/elytra/cape hiding, leash pathfinding override, giant renderers, ...) | re-implemented per unit | exact with the client mod; approximations or none for vanilla (rows below) |
 
 ## 3. Content that upstream 4.8 registers but does not implement
 
 | Upstream id / feature | Status |
 |---|---|
-| Structure `gloamingforest:quest_island` | key only, no structure / set / pieces in upstream 4.8 (the set registration is commented out in `TFStructureSets`): not ported. `LegacyLandmarkPlacements` still maps the `gloamingforest:lake` biome centre to `quest_island`; with no registered structure upstream places nothing there (no landmark's `valid_*_biomes` tag contains the lake: neither the variety landmarks picked by `pickVarietyLandmark` nor the biome-locked ones placed by `forceStructureForCenters`), and the magic map shows no icon (`structureRegistry.getHolder` is empty). F6 and U13 must keep the key in `pickForChunk` and treat it as absent without warnings: no generator, no map decoration, no hint, no log line. `/gloamingforest center` (F6) at a lake centre names it as upstream does, `structure.gloamingforest.quest_island` (no lang key in upstream, so the raw key is shown) |
+| Structure `gloamingforest:quest_island` | key only, no structure / set / pieces in upstream 4.8 (the set registration is commented out in `GloamingStructureSets`): not ported. `LegacyLandmarkPlacements` still maps the `gloamingforest:lake` biome centre to `quest_island`; with no registered structure upstream places nothing there (no landmark's `valid_*_biomes` tag contains the lake: neither the variety landmarks picked by `pickVarietyLandmark` nor the biome-locked ones placed by `forceStructureForCenters`), and the magic map shows no icon (`structureRegistry.getHolder` is empty). F6 and U13 must keep the key in `pickForChunk` and treat it as absent without warnings: no generator, no map decoration, no hint, no log line. `/gloamingforest center` (F6) at a lake centre names it as upstream does, `structure.gloamingforest.quest_island` (no lang key in upstream, so the raw key is shown) |
 | Structure `gloamingforest:druid_grove` | key only: not ported |
 | Structure `gloamingforest:floating_ruins` | key only: not ported |
 | Structure `gloamingforest:world_tree` | key only: not ported |
-| Boggard entity | commented out in `TFEntities` / attributes: not registered, not ported |
-| Ten `*_miniature_structure` blocks (hedge maze, hollow hill, quest grove, mushroom tower, hydra lair, goblin stronghold, yeti cave, aurora palace, troll cave cottage, final castle) | commented out in `TFBlocks`: not registered (owners.tsv counts 523 blocks) |
+| Boggard entity | commented out in `GloamingEntities` / attributes: not registered, not ported |
+| Ten `*_miniature_structure` blocks (hedge maze, hollow hill, quest grove, mushroom tower, hydra lair, goblin stronghold, yeti cave, aurora palace, troll cave cottage, final castle) | commented out in `GloamingBlocks`: not registered (owners.tsv counts 523 blocks) |
 | Sound event `GHAST_TRAP_ACTIVE` | commented out: 328 sound events |
 | PlateauBoss (`gloamingforest:plateau_boss`) and its spawner (`final_boss_boss_spawner` never spawns) | kept as upstream's placeholder (U30 / U5) |
 | Final castle "work in progress" message on `progression_end` | ported as is (U14) |

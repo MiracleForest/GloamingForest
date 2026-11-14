@@ -45,7 +45,7 @@
       "minecraft:geometry": "minecraft:geometry.full_block",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_giants_oak_leaves",
+          "texture": "gf_giants_oak_leaves",
           "render_method": "alpha_test",
           "tint_method": "default_foliage"
         }

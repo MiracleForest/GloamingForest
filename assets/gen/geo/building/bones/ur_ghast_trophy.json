@@ -3,8 +3,8 @@
   "source": "TrophyRenderer.render + UrGhastModel.renderTrophy + waveTentacles (floor; the geometry is the pose at tick 0, the base animation waves the tentacles)",
   "layer": {
     "name": "ur_ghast_trophy",
-    "field": "TFModelLayers.UR_GHAST_TROPHY",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.UR_GHAST_TROPHY, UrGhastModel::create);"
+    "field": "GloamingModelLayers.UR_GHAST_TROPHY",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.UR_GHAST_TROPHY, UrGhastModel::create);"
   },
   "frame": "world",
   "geometries": [
@@ -12,7 +12,7 @@
       "identifier": "geometry.gloamingforest.ur_ghast_trophy",
       "texture": {
         "bedrock": "textures/gloamingforest/entity/towerboss",
-        "tf": "src/main/resources/assets/gloamingforest/textures/entity/towerboss.png"
+        "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/towerboss.png"
       },
       "material": "entity_alphatest"
     }

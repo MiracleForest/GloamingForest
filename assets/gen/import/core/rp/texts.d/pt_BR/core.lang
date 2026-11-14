@@ -1,4 +1,4 @@
-commands.tffeature.usage=/%s <informações | reativar | conquistar | centro>
+commands.gloamingfeature.usage=/%s <informações | reativar | conquistar | centro>
 misc.gloamingforest.advancement_hidden=<Avanço Oculto>
 misc.gloamingforest.advancement_required=Avanço necessário:
 misc.gloamingforest.core_disabled=%s está desativado via configuração

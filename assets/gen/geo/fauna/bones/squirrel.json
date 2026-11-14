@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.squirrel",
   "layer": {
     "name": "squirrel",
-    "field": "TFModelLayers.SQUIRREL",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.SQUIRREL, SquirrelModel::checkForPack);"
+    "field": "GloamingModelLayers.SQUIRREL",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.SQUIRREL, SquirrelModel::checkForPack);"
   },
   "texture_size": [32, 32],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/squirrel2",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/squirrel2.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/squirrel2.png"
     }
   ],
   "bones": [

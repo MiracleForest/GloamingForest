@@ -3,13 +3,13 @@
   "geometry": "geometry.silverfish",
   "layer": {
     "name": "towerwood_borer",
-    "field": "TFModelLayers.TOWERWOOD_BORER",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.TOWERWOOD_BORER, SilverfishModel::createBodyLayer);"
+    "field": "GloamingModelLayers.TOWERWOOD_BORER",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.TOWERWOOD_BORER, SilverfishModel::createBodyLayer);"
   },
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/towertermite",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/towertermite.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/towertermite.png"
     }
   ],
   "notes": ["SilverfishModel.createBodyLayer; the renderer bakes ModelLayers.SILVERFISH."]

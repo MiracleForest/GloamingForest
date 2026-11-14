@@ -13,7 +13,7 @@
         "geometry": "minecraft:geometry.full_block",
         "material_instances": {
           "*": {
-            "texture": "tf_block_darkwood_leaves",
+            "texture": "gf_block_darkwood_leaves",
             "render_method": "alpha_test"
           }
         }
@@ -32,37 +32,37 @@
       "minecraft:geometry": "minecraft:geometry.full_block",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_darkwood_leaves",
+          "texture": "gf_block_darkwood_leaves",
           "render_method": "alpha_test",
           "tint_method": "default_foliage"
         },
         "up": {
-          "texture": "tf_block_darkwood_leaves",
+          "texture": "gf_block_darkwood_leaves",
           "render_method": "alpha_test",
           "tint_method": "default_foliage"
         },
         "down": {
-          "texture": "tf_block_darkwood_leaves",
+          "texture": "gf_block_darkwood_leaves",
           "render_method": "alpha_test",
           "tint_method": "default_foliage"
         },
         "north": {
-          "texture": "tf_block_darkwood_leaves",
+          "texture": "gf_block_darkwood_leaves",
           "render_method": "alpha_test",
           "tint_method": "default_foliage"
         },
         "south": {
-          "texture": "tf_block_darkwood_leaves",
+          "texture": "gf_block_darkwood_leaves",
           "render_method": "alpha_test",
           "tint_method": "default_foliage"
         },
         "east": {
-          "texture": "tf_block_darkwood_leaves",
+          "texture": "gf_block_darkwood_leaves",
           "render_method": "alpha_test",
           "tint_method": "default_foliage"
         },
         "west": {
-          "texture": "tf_block_darkwood_leaves",
+          "texture": "gf_block_darkwood_leaves",
           "render_method": "alpha_test",
           "tint_method": "default_foliage"
         }

@@ -468,7 +468,7 @@ std::optional<DisplayTransform> displayTransform(std::string const& itemId, std:
     std::lock_guard lock(t.mutex);
     auto            it = t.byItem.find(fullId(itemId));
     if (it == t.byItem.end()) return std::nullopt;
-    // ItemDisplayContext's fallback chain: JARRED (TFEnumExtensions#ItemDisplayContext_JARRED) -> FIXED
+    // ItemDisplayContext's fallback chain: JARRED (GloamingEnumExtensions#ItemDisplayContext_JARRED) -> FIXED
     for (std::string c = context; !c.empty(); c = c == kJarred ? "fixed" : "") {
         if (auto d = it->second.find(c); d != it->second.end()) return d->second;
     }

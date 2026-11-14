@@ -96,7 +96,7 @@ namespace {
 
 constexpr char kDbKey[]     = "gf:trees:cores";
 constexpr int  kTickRate    = 20; ///< SpecialMagicLogBlock#tickRate
-constexpr int  kMaxRange    = 128; ///< TFConfig's defineInRange(.., 0, 128) of every core range
+constexpr int  kMaxRange    = 128; ///< GloamingConfig's defineInRange(.., 0, 128) of every core range
 constexpr char kEnchanted[] = "gloamingforest:enchanted_forest";
 
 struct CoreInfo {
@@ -970,7 +970,7 @@ int coreRange(Core core) {
         r = cfg.sortingCoreRange;
         break;
     }
-    return std::clamp(r, 0, kMaxRange); // TFConfig: defineInRange(.., 16, 0, 128)
+    return std::clamp(r, 0, kMaxRange); // GloamingConfig: defineInRange(.., 16, 0, 128)
 }
 
 int performCoreEffect(Core core, BlockSource& region, BlockPos const& pos) {

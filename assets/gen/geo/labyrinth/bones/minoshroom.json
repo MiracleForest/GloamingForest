@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.minoshroom",
   "layer": {
     "name": "minoshroom",
-    "field": "TFModelLayers.MINOSHROOM",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.MINOSHROOM, MinoshroomModel::checkForPack);"
+    "field": "GloamingModelLayers.MINOSHROOM",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.MINOSHROOM, MinoshroomModel::checkForPack);"
   },
   "texture_size": [128, 32],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/minoshroomtaur",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/minoshroomtaur.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/minoshroomtaur.png"
     }
   ],
   "bones": [

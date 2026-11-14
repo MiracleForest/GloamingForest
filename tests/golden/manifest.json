@@ -80,23 +80,23 @@
     "landmarks/seed-0.json": {
       "kind": "landmarks",
       "seed": 0,
-      "bytes": 245238,
-      "fnv1a64": "6a2a053e7924b576",
-      "sha256": "e0d49c298af7af21032f69ec712c45436fc415af5ac2af3a7eb501c121dcaf2e"
+      "bytes": 245244,
+      "fnv1a64": "4b34a080d96c8b66",
+      "sha256": "c5cb1e094b4683c2a712e708ad039efa8bb6cac544cd7151dfa7ae966de26a4e"
     },
     "landmarks/seed-123456789.json": {
       "kind": "landmarks",
       "seed": 123456789,
-      "bytes": 245148,
-      "fnv1a64": "826e5bd6ffa21867",
-      "sha256": "52b6317da6dd68d24e645c87b67bcd780867f64d249bad74c3d59ecca6774222"
+      "bytes": 245154,
+      "fnv1a64": "6accf85d82c041fb",
+      "sha256": "104a8747cc95967fabc59d5fb1da0e903e426ed0f22f1b54ab3c0859afacd970"
     },
     "landmarks/seed-m8346138912345678901.json": {
       "kind": "landmarks",
       "seed": -8346138912345678901,
-      "bytes": 245495,
-      "fnv1a64": "6ac659d09bdb7837",
-      "sha256": "3f1cb4c96b369e32542bbc58780b6dab64cac352ad10800b1f99a5aef7217450"
+      "bytes": 245501,
+      "fnv1a64": "8ed8f1691e30d0a7",
+      "sha256": "c835cf44049b7928f1f804dd602d35e2a76a6d6b15f6fb81747963c9839e536b"
     },
     "loot.json": {
       "kind": "loot",
@@ -137,23 +137,23 @@
     "surface/seed-0.json": {
       "kind": "surface",
       "seed": 0,
-      "bytes": 363314,
-      "fnv1a64": "2abcfd62266080c9",
-      "sha256": "64653f042d10e75bcbeb0714b8732ae784fc9b384f37922d0d4cd0327d1a89b7"
+      "bytes": 363320,
+      "fnv1a64": "6d5030df6ff855a9",
+      "sha256": "ed6fbfbb7a48744484d1529151483894e7b4acd3ee8d75bb570274fbf9b64cb3"
     },
     "surface/seed-123456789.json": {
       "kind": "surface",
       "seed": 123456789,
-      "bytes": 360953,
-      "fnv1a64": "33b0eb900d644466",
-      "sha256": "ca43044cc9bd8abcbeb7895064dc430d71ff4df9220e8e883912badb9ef38c47"
+      "bytes": 360959,
+      "fnv1a64": "7e83acd28b267136",
+      "sha256": "2740aae43ce23ff77765646509bf0a7fc40727bb3de086303ab83a6863206511"
     },
     "surface/seed-m8346138912345678901.json": {
       "kind": "surface",
       "seed": -8346138912345678901,
-      "bytes": 365915,
-      "fnv1a64": "1865387df461e9d2",
-      "sha256": "bb056054acce6cf13511c761ec79fe31211927dc2ba68a3003f507945713e6c3"
+      "bytes": 365921,
+      "fnv1a64": "d6ad70ccda6990ce",
+      "sha256": "38a911c0daa13a425f4329e0aabe0c2b309ba4b42dab89b5009d4b77f7c403be"
     },
     "uncrafting.json": {
       "kind": "uncrafting",

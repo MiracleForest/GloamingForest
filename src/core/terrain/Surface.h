@@ -1,6 +1,6 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/world/registration/surface_rules/TFSurfaceRules.java
+//   src/main/java/gloamingforest/world/registration/surface_rules/GloamingSurfaceRules.java
 //   src/main/java/gloamingforest/world/components/chunkblanketing/CanopyBlanketProcessor.java
 //   src/main/java/gloamingforest/world/components/chunkblanketing/GlacierBlanketProcessor.java
 //   src/main/java/gloamingforest/world/components/chunkblanketing/ChunkBlanketProcessor.java

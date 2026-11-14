@@ -1,7 +1,7 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/init/TFParticleType.java
-//   src/main/java/gloamingforest/config/TFClientConfig.java
+//   src/main/java/gloamingforest/init/GloamingParticleType.java
+//   src/main/java/gloamingforest/config/GloamingClientConfig.java
 //   src/main/java/gloamingforest/client/event/ClientGameEvents.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
@@ -19,7 +19,7 @@
 //   pass (ViewRenderData::mDrawWeather) and LevelRendererPlayer::tickRain (splashes, rain sounds);
 //   the rain and lightning levels are left alone, as upstream's DimensionSpecialEffects;
 // - music: MusicManager::getSituationalMusic (upstream's setMusicInDimension);
-// - particles: native factories for upstream's 29 particle ids (TFParticleType), run instead of the
+// - particles: native factories for upstream's 29 particle ids (GloamingParticleType), run instead of the
 //   data-driven particle when the client spawns that effect: gf::fx::particle's companion message
 //   (F10's fx.particle handler asks spawnFromFx through gf::fx::client::setNativeSink), the server's
 //   SpawnParticleEffectPacket (LegacyClientNetworkHandler::handle) and effects the client level
@@ -27,7 +27,7 @@
 // - maps: the client's MapItemSavedData as a MapView, upstream's decoration icons (drawn by Render.cpp);
 // - camera: LocalPlayer::getFieldOfViewModifier modifiers, the screen shake of
 //   ClientGameEvents (beanstalk rumbling: the local player's yaw / pitch jitter per tick, config
-//   "client".screenShakingEffect = TFClientConfig.screenShakingEffect).
+//   "client".screenShakingEffect = GloamingClientConfig.screenShakingEffect).
 
 #ifdef GF_CLIENT
 
@@ -218,7 +218,7 @@ void setProvider(MusicFn fn) {
 
 namespace particles {
 namespace {
-/// upstream's particle types (TFParticleType), in registration order; `alwaysShow` is the
+/// upstream's particle types (GloamingParticleType), in registration order; `alwaysShow` is the
 /// SimpleParticleType(overrideLimiter) flag.
 struct Declared {
     char const* id;

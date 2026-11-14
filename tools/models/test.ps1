@@ -42,7 +42,7 @@ function Near([double]$actual, [double]$expected, [double]$eps = 1e-4, [string]$
 }
 function AssertType($v, [string]$t, [string]$what = '') { if ($v.GetType().Name -ne $t) { throw "$what expected $t, got $($v.GetType().Name) ($v)" } }
 
-$cp = [Gf.Models.ClassPath]::new((Get-GfTfJavaRoot))
+$cp = [Gf.Models.ClassPath]::new((Get-GfGloamingJavaRoot))
 $interp = [Gf.Models.Interp]::new($cp)
 function J([string]$expr) { $interp.Eval([Gf.Models.Parser]::ParseExpression($expr), [Gf.Models.Frame]::new($null)) }
 
@@ -220,7 +220,7 @@ Test 'Bedrock euler angles of a rotation matrix round-trip' {
 }
 
 Write-Host '[geo-test] the generator against upstream 4.8'
-$gen = [Gf.Models.Generator]::new((Get-GfTfJavaRoot), (Get-Content (Join-Path $PSScriptRoot 'catalog.json') -Raw))
+$gen = [Gf.Models.Generator]::new((Get-GfGloamingJavaRoot), (Get-Content (Join-Path $PSScriptRoot 'catalog.json') -Raw))
 $gen.Run($null, $null, $null)
 $files = $gen.Files
 function Geo([string]$unit, [string]$name) { ($files["assets/gen/geo/$unit/rp/models/entity/$name.geo.json"] | ConvertFrom-Json).'minecraft:geometry'[0] }
@@ -661,7 +661,7 @@ Test 'catalog baseCase: every entry is well-formed and used by a model' {
         foreach ($e in @($sa.todo)) { if ($e.why) { $texts.Add($e.why) } }
     }
     $all = $texts -join "`n"
-    $modelSrc = (Get-ChildItem (Join-Path (Get-GfTfJavaRoot) 'gloamingforest/client/model/entity') -Filter *.java | ForEach-Object { Get-Content $_.FullName -Raw }) -join "`n"
+    $modelSrc = (Get-ChildItem (Join-Path (Get-GfGloamingJavaRoot) 'gloamingforest/client/model/entity') -Filter *.java | ForEach-Object { Get-Content $_.FullName -Raw }) -join "`n"
     foreach ($b in $gen.BaseCases) {
         $needle = if ($b.Fixed) { "catalog baseCase: $($b.Expr) is $($b.ValueText) on every frame" } else { " as $($b.ValueText) ($($b.Why))" }
         if ($all.Contains($needle)) { continue }
@@ -683,9 +683,9 @@ Test 'catalog.json carries the LGPL attribution of the upstream code its extract
     foreach ($c in $classes) { if (-not ($attr -match "/$c\.java$")) { throw "the attribution does not name $c.java" } }
 }
 Test 'Matches: -Java YetiModel does not select AlphaYetiModel''s layers (whole class names in the supplier)' {
-    if (-not [Gf.Models.Generator]::SupplierNames('event.registerLayerDefinition(TFModelLayers.YETI, YetiModel::create);', 'YetiModel')) { throw 'YetiModel::create' }
-    if ([Gf.Models.Generator]::SupplierNames('event.registerLayerDefinition(TFModelLayers.ALPHA_YETI, AlphaYetiModel::create);', 'YetiModel')) { throw 'AlphaYetiModel::create matches YetiModel' }
-    if ([Gf.Models.Generator]::SupplierNames('event.registerLayerDefinition(TFModelLayers.CARMINITE_GHASTLING, TFGhastModel::create);', 'GhastModel')) { throw 'TFGhastModel matches GhastModel' }
+    if (-not [Gf.Models.Generator]::SupplierNames('event.registerLayerDefinition(GloamingModelLayers.YETI, YetiModel::create);', 'YetiModel')) { throw 'YetiModel::create' }
+    if ([Gf.Models.Generator]::SupplierNames('event.registerLayerDefinition(GloamingModelLayers.ALPHA_YETI, AlphaYetiModel::create);', 'YetiModel')) { throw 'AlphaYetiModel::create matches YetiModel' }
+    if ([Gf.Models.Generator]::SupplierNames('event.registerLayerDefinition(GloamingModelLayers.CARMINITE_GHASTLING, GloamingGhastModel::create);', 'GhastModel')) { throw 'GloamingGhastModel matches GhastModel' }
     if (-not [Gf.Models.Generator]::SupplierNames('() -> LayerDefinition.create(ArcticArmorModel.addPieces(x), 64, 32)', 'ArcticArmorModel')) { throw 'ArcticArmorModel.addPieces' }
     $yeti = @($gen.Select('YetiModel', $null))
     $alpha = @($yeti | Where-Object { $_ -like '*alpha_yeti*' })
@@ -883,7 +883,7 @@ if (-not $SkipTree) {
         }
     }
     Test 'the generator is deterministic' {
-        $again = [Gf.Models.Generator]::new((Get-GfTfJavaRoot), (Get-Content (Join-Path $PSScriptRoot 'catalog.json') -Raw))
+        $again = [Gf.Models.Generator]::new((Get-GfGloamingJavaRoot), (Get-Content (Join-Path $PSScriptRoot 'catalog.json') -Raw))
         $again.Run($null, $null, $null)
         Eq $again.Files.Count $files.Count
         foreach ($k in $files.Keys) { if ($again.Files[$k] -cne $files[$k]) { throw "$k differs between two runs" } }

@@ -1,17 +1,17 @@
 {
-  "tf_block_experiment115_experiment115_bottom": {
+  "gf_block_experiment115_experiment115_bottom": {
     "textures": "textures/gloamingforest/block/experiment115/experiment115_bottom"
   },
-  "tf_block_experiment115_experiment115_inner": {
+  "gf_block_experiment115_experiment115_inner": {
     "textures": "textures/gloamingforest/block/experiment115/experiment115_inner"
   },
-  "tf_block_experiment115_experiment115_side": {
+  "gf_block_experiment115_experiment115_side": {
     "textures": "textures/gloamingforest/block/experiment115/experiment115_side"
   },
-  "tf_block_experiment115_experiment115_sprinkle": {
+  "gf_block_experiment115_experiment115_sprinkle": {
     "textures": "textures/gloamingforest/block/experiment115/experiment115_sprinkle"
   },
-  "tf_block_experiment115_experiment115_top": {
+  "gf_block_experiment115_experiment115_top": {
     "textures": "textures/gloamingforest/block/experiment115/experiment115_top"
   }
 }

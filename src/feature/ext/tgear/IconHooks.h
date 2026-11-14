@@ -13,7 +13,7 @@
 // the icon path itself; A8 folds this into client.render (an icon-layer registry).
 //
 //     gf::ext::tgear::client::setIconLayers("gloamingforest:red_thread", [](ItemStack const& s) {
-//         return IconLayers{.base = "tf_tgear_red_thread_bundle_2"};
+//         return IconLayers{.base = "gf_tgear_red_thread_bundle_2"};
 //     });
 
 #ifdef GF_CLIENT

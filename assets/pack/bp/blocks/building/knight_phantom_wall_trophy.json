@@ -30,11 +30,11 @@
       "minecraft:geometry": "geometry.gloamingforest.building.knight_phantom_wall_trophy",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_building_phantomskeleton",
+          "texture": "gf_building_phantomskeleton",
           "render_method": "alpha_test"
         },
         "helmet": {
-          "texture": "tf_building_phantom_layer_1",
+          "texture": "gf_building_phantom_layer_1",
           "render_method": "alpha_test"
         }
       }

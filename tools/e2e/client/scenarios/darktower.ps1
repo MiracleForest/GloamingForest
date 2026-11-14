@@ -15,7 +15,7 @@
 #   closeup_debris      active reactor debris (an active reactor places it) and closeup_trap: an
 #                       active ghast trap, each from two blocks away
 #   urghast_tantrum     in the Gloaming Forest, an Ur-Ghast in a tantrum: boss tears falling under it and
-#                       the tantrum rain the client mod fades in (TFWeatherRenderer.urGhastAlive)
+#                       the tantrum rain the client mod fades in (GloamingWeatherRenderer.urGhastAlive)
 # Modes: local runs the selftests on the integrated server first; remote-mod and remote-vanilla join
 # the BDS host and take the same shots. A companion (local, remote-mod) draws the tears and the rain
 # itself from "darktower.urghast"; a vanilla client gets the tears as server-side particles and must

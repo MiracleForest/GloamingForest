@@ -1,4 +1,4 @@
-commands.tffeature.usage=%s <info | reactivate | conquer | center>
+commands.gloamingfeature.usage=%s <info | reactivate | conquer | center>
 misc.gloamingforest.advancement_required=Progresso richiesto:
 misc.gloamingforest.core_disabled=%s è disabilitato nella configurazione
 misc.gloamingforest.firefly_spawner_radius=Raggio delle particelle delle lucciole: %s blocchi

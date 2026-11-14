@@ -3,8 +3,8 @@
   "source": "ItemInHandLayer (right arm) + the item model's 'thirdperson_righthand' display + ItemRenderer (builtin/entity) + ISTER + TrophyRenderer.render(null, 180, THIRD_PERSON_RIGHT_HAND) + QuestRamModel.renderTrophy (item form: z 0.5)",
   "layer": {
     "name": "quest_ram_trophy",
-    "field": "TFModelLayers.QUEST_RAM_TROPHY",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.QUEST_RAM_TROPHY, QuestRamModel::checkForPackTrophyEdition);"
+    "field": "GloamingModelLayers.QUEST_RAM_TROPHY",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.QUEST_RAM_TROPHY, QuestRamModel::checkForPackTrophyEdition);"
   },
   "frame": "rightArm",
   "slot": "main_hand",
@@ -24,7 +24,7 @@
       "identifier": "geometry.gloamingforest.quest_ram_trophy_held",
       "texture": {
         "bedrock": "textures/gloamingforest/entity/questram",
-        "tf": "src/main/resources/assets/gloamingforest/textures/entity/questram.png"
+        "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/questram.png"
       },
       "material": "entity_alphatest"
     },
@@ -32,7 +32,7 @@
       "identifier": "geometry.gloamingforest.quest_ram_trophy_held_lines",
       "texture": {
         "bedrock": "textures/gloamingforest/entity/questram_lines",
-        "tf": "src/main/resources/assets/gloamingforest/textures/entity/questram_lines.png"
+        "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/questram_lines.png"
       },
       "material": "entity_emissive_alpha"
     }

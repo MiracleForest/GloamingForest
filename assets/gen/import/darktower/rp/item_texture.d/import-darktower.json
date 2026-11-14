@@ -1,11 +1,11 @@
 {
-  "tf_item_borer_essence": {
+  "gf_item_borer_essence": {
     "textures": "textures/gloamingforest/item/borer_essence"
   },
-  "tf_item_carminite": {
+  "gf_item_carminite": {
     "textures": "textures/gloamingforest/item/carminite"
   },
-  "tf_item_tower_key": {
+  "gf_item_tower_key": {
     "textures": "textures/gloamingforest/item/tower_key"
   }
 }

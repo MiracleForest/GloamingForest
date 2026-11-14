@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.carminite_golem",
   "layer": {
     "name": "carminite_golem",
-    "field": "TFModelLayers.CARMINITE_GOLEM",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.CARMINITE_GOLEM, CarminiteGolemModel::create);"
+    "field": "GloamingModelLayers.CARMINITE_GOLEM",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.CARMINITE_GOLEM, CarminiteGolemModel::create);"
   },
   "texture_size": [128, 64],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/carminitegolem",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/carminitegolem.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/carminitegolem.png"
     }
   ],
   "bones": [

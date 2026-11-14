@@ -5,7 +5,7 @@
 //   src/main/java/gloamingforest/world/components/structures/util/TemplatePoolInstance.java
 //   src/main/java/gloamingforest/world/components/structures/GloamingJigsawPiece.java (defaultForTemplate)
 //   src/main/java/gloamingforest/world/components/structures/type/CampStructure.java (jigsaw start)
-//   src/main/java/gloamingforest/init/TFStructurePieceTypes.java (TFJigsawTemplate, TFUtilityPiece)
+//   src/main/java/gloamingforest/init/GloamingStructurePieceTypes.java (GloamingJigsawTemplate, GloamingUtilityPiece)
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -112,7 +112,7 @@ namespace {
 class PoolJigsawPiece final : public JigsawPiece {
 public:
     PoolJigsawPiece(int depth, std::string const& templateId, JigsawPlaceContext const& context, Json const& instance, std::vector<std::string> chosen)
-    : JigsawPiece("gloamingforest:TFJigsawTemplate", depth, templateId, context) {
+    : JigsawPiece("gloamingforest:GloamingJigsawTemplate", depth, templateId, context) {
         if (instance.is_object()) {
             terrainAdjustment = parseTerrainAdjustment(instance.value("terrain_adaptation", std::string("none")));
             if (instance.contains("processors")) {
@@ -239,13 +239,13 @@ bool projectsTerrain(JigsawPiece const& piece) {
 }
 
 void registerPieceTypes() {
-    registerPieceType("gloamingforest:TFUtilityPiece", [](Json const& saved) -> std::unique_ptr<Piece> {
+    registerPieceType("gloamingforest:GloamingUtilityPiece", [](Json const& saved) -> std::unique_ptr<Piece> {
         auto p = std::make_unique<UtilityPiece>(0, BlockBox{});
         p->load(saved);
         return p;
     });
-    registerPieceType("gloamingforest:TFJigsawTemplate", [](Json const& saved) -> std::unique_ptr<Piece> {
-        auto p = std::make_unique<JigsawPiece>("gloamingforest:TFJigsawTemplate", 0, saved.value("Template", std::string{}), JigsawPlaceContext{});
+    registerPieceType("gloamingforest:GloamingJigsawTemplate", [](Json const& saved) -> std::unique_ptr<Piece> {
+        auto p = std::make_unique<JigsawPiece>("gloamingforest:GloamingJigsawTemplate", 0, saved.value("Template", std::string{}), JigsawPlaceContext{});
         p->load(saved);
         return p;
     });

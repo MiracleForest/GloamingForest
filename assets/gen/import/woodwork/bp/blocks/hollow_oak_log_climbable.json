@@ -24,26 +24,26 @@
         "catch_chance_modifier": 5,
         "destroy_chance_modifier": 5
       },
-      "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_vine",
+      "minecraft:geometry": "geometry.gf.gloamingforest.block.vertical_hollow_log_vine",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_vanilla_block_oak_log",
+          "texture": "gf_vanilla_block_oak_log",
           "render_method": "alpha_test"
         },
         "climbable": {
-          "texture": "tf_vanilla_block_vine",
+          "texture": "gf_vanilla_block_vine",
           "render_method": "alpha_test"
         },
         "inner": {
-          "texture": "tf_vanilla_block_stripped_oak_log",
+          "texture": "gf_vanilla_block_stripped_oak_log",
           "render_method": "alpha_test"
         },
         "side": {
-          "texture": "tf_vanilla_block_oak_log",
+          "texture": "gf_vanilla_block_oak_log",
           "render_method": "alpha_test"
         },
         "top": {
-          "texture": "tf_vanilla_block_oak_log_top",
+          "texture": "gf_vanilla_block_oak_log_top",
           "render_method": "alpha_test"
         }
       },
@@ -74,26 +74,26 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:variant') == 'ladder'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_ladder",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.vertical_hollow_log_ladder",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_oak_log",
+              "texture": "gf_vanilla_block_oak_log",
               "render_method": "alpha_test"
             },
             "climbable": {
-              "texture": "tf_vanilla_block_ladder",
+              "texture": "gf_vanilla_block_ladder",
               "render_method": "alpha_test"
             },
             "inner": {
-              "texture": "tf_vanilla_block_stripped_oak_log",
+              "texture": "gf_vanilla_block_stripped_oak_log",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_vanilla_block_oak_log",
+              "texture": "gf_vanilla_block_oak_log",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_vanilla_block_oak_log_top",
+              "texture": "gf_vanilla_block_oak_log_top",
               "render_method": "alpha_test"
             }
           },
@@ -128,26 +128,26 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:variant') == 'ladder_waterlogged'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_ladder",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.vertical_hollow_log_ladder",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_oak_log",
+              "texture": "gf_vanilla_block_oak_log",
               "render_method": "alpha_test"
             },
             "climbable": {
-              "texture": "tf_vanilla_block_ladder",
+              "texture": "gf_vanilla_block_ladder",
               "render_method": "alpha_test"
             },
             "inner": {
-              "texture": "tf_vanilla_block_stripped_oak_log",
+              "texture": "gf_vanilla_block_stripped_oak_log",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_vanilla_block_oak_log",
+              "texture": "gf_vanilla_block_oak_log",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_vanilla_block_oak_log_top",
+              "texture": "gf_vanilla_block_oak_log_top",
               "render_method": "alpha_test"
             }
           },
@@ -182,26 +182,26 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:variant') == 'vine'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_vine",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.vertical_hollow_log_vine",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_oak_log",
+              "texture": "gf_vanilla_block_oak_log",
               "render_method": "alpha_test"
             },
             "climbable": {
-              "texture": "tf_vanilla_block_vine",
+              "texture": "gf_vanilla_block_vine",
               "render_method": "alpha_test"
             },
             "inner": {
-              "texture": "tf_vanilla_block_stripped_oak_log",
+              "texture": "gf_vanilla_block_stripped_oak_log",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_vanilla_block_oak_log",
+              "texture": "gf_vanilla_block_oak_log",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_vanilla_block_oak_log_top",
+              "texture": "gf_vanilla_block_oak_log_top",
               "render_method": "alpha_test"
             }
           },
@@ -232,26 +232,26 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:variant') == 'ladder'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_ladder",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.vertical_hollow_log_ladder",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_oak_log",
+              "texture": "gf_vanilla_block_oak_log",
               "render_method": "alpha_test"
             },
             "climbable": {
-              "texture": "tf_vanilla_block_ladder",
+              "texture": "gf_vanilla_block_ladder",
               "render_method": "alpha_test"
             },
             "inner": {
-              "texture": "tf_vanilla_block_stripped_oak_log",
+              "texture": "gf_vanilla_block_stripped_oak_log",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_vanilla_block_oak_log",
+              "texture": "gf_vanilla_block_oak_log",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_vanilla_block_oak_log_top",
+              "texture": "gf_vanilla_block_oak_log_top",
               "render_method": "alpha_test"
             }
           },
@@ -286,26 +286,26 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:variant') == 'ladder_waterlogged'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_ladder",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.vertical_hollow_log_ladder",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_oak_log",
+              "texture": "gf_vanilla_block_oak_log",
               "render_method": "alpha_test"
             },
             "climbable": {
-              "texture": "tf_vanilla_block_ladder",
+              "texture": "gf_vanilla_block_ladder",
               "render_method": "alpha_test"
             },
             "inner": {
-              "texture": "tf_vanilla_block_stripped_oak_log",
+              "texture": "gf_vanilla_block_stripped_oak_log",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_vanilla_block_oak_log",
+              "texture": "gf_vanilla_block_oak_log",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_vanilla_block_oak_log_top",
+              "texture": "gf_vanilla_block_oak_log_top",
               "render_method": "alpha_test"
             }
           },
@@ -340,26 +340,26 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:variant') == 'vine'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_vine",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.vertical_hollow_log_vine",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_oak_log",
+              "texture": "gf_vanilla_block_oak_log",
               "render_method": "alpha_test"
             },
             "climbable": {
-              "texture": "tf_vanilla_block_vine",
+              "texture": "gf_vanilla_block_vine",
               "render_method": "alpha_test"
             },
             "inner": {
-              "texture": "tf_vanilla_block_stripped_oak_log",
+              "texture": "gf_vanilla_block_stripped_oak_log",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_vanilla_block_oak_log",
+              "texture": "gf_vanilla_block_oak_log",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_vanilla_block_oak_log_top",
+              "texture": "gf_vanilla_block_oak_log_top",
               "render_method": "alpha_test"
             }
           },
@@ -390,26 +390,26 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:variant') == 'ladder'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_ladder",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.vertical_hollow_log_ladder",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_oak_log",
+              "texture": "gf_vanilla_block_oak_log",
               "render_method": "alpha_test"
             },
             "climbable": {
-              "texture": "tf_vanilla_block_ladder",
+              "texture": "gf_vanilla_block_ladder",
               "render_method": "alpha_test"
             },
             "inner": {
-              "texture": "tf_vanilla_block_stripped_oak_log",
+              "texture": "gf_vanilla_block_stripped_oak_log",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_vanilla_block_oak_log",
+              "texture": "gf_vanilla_block_oak_log",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_vanilla_block_oak_log_top",
+              "texture": "gf_vanilla_block_oak_log_top",
               "render_method": "alpha_test"
             }
           },
@@ -444,26 +444,26 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:variant') == 'ladder_waterlogged'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_ladder",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.vertical_hollow_log_ladder",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_oak_log",
+              "texture": "gf_vanilla_block_oak_log",
               "render_method": "alpha_test"
             },
             "climbable": {
-              "texture": "tf_vanilla_block_ladder",
+              "texture": "gf_vanilla_block_ladder",
               "render_method": "alpha_test"
             },
             "inner": {
-              "texture": "tf_vanilla_block_stripped_oak_log",
+              "texture": "gf_vanilla_block_stripped_oak_log",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_vanilla_block_oak_log",
+              "texture": "gf_vanilla_block_oak_log",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_vanilla_block_oak_log_top",
+              "texture": "gf_vanilla_block_oak_log_top",
               "render_method": "alpha_test"
             }
           },
@@ -498,26 +498,26 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:variant') == 'vine'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_vine",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.vertical_hollow_log_vine",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_oak_log",
+              "texture": "gf_vanilla_block_oak_log",
               "render_method": "alpha_test"
             },
             "climbable": {
-              "texture": "tf_vanilla_block_vine",
+              "texture": "gf_vanilla_block_vine",
               "render_method": "alpha_test"
             },
             "inner": {
-              "texture": "tf_vanilla_block_stripped_oak_log",
+              "texture": "gf_vanilla_block_stripped_oak_log",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_vanilla_block_oak_log",
+              "texture": "gf_vanilla_block_oak_log",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_vanilla_block_oak_log_top",
+              "texture": "gf_vanilla_block_oak_log_top",
               "render_method": "alpha_test"
             }
           },
@@ -548,26 +548,26 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:variant') == 'ladder'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_ladder",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.vertical_hollow_log_ladder",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_oak_log",
+              "texture": "gf_vanilla_block_oak_log",
               "render_method": "alpha_test"
             },
             "climbable": {
-              "texture": "tf_vanilla_block_ladder",
+              "texture": "gf_vanilla_block_ladder",
               "render_method": "alpha_test"
             },
             "inner": {
-              "texture": "tf_vanilla_block_stripped_oak_log",
+              "texture": "gf_vanilla_block_stripped_oak_log",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_vanilla_block_oak_log",
+              "texture": "gf_vanilla_block_oak_log",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_vanilla_block_oak_log_top",
+              "texture": "gf_vanilla_block_oak_log_top",
               "render_method": "alpha_test"
             }
           },
@@ -602,26 +602,26 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:variant') == 'ladder_waterlogged'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_ladder",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.vertical_hollow_log_ladder",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_oak_log",
+              "texture": "gf_vanilla_block_oak_log",
               "render_method": "alpha_test"
             },
             "climbable": {
-              "texture": "tf_vanilla_block_ladder",
+              "texture": "gf_vanilla_block_ladder",
               "render_method": "alpha_test"
             },
             "inner": {
-              "texture": "tf_vanilla_block_stripped_oak_log",
+              "texture": "gf_vanilla_block_stripped_oak_log",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_vanilla_block_oak_log",
+              "texture": "gf_vanilla_block_oak_log",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_vanilla_block_oak_log_top",
+              "texture": "gf_vanilla_block_oak_log_top",
               "render_method": "alpha_test"
             }
           },
@@ -656,26 +656,26 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:variant') == 'vine'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log_vine",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.vertical_hollow_log_vine",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_oak_log",
+              "texture": "gf_vanilla_block_oak_log",
               "render_method": "alpha_test"
             },
             "climbable": {
-              "texture": "tf_vanilla_block_vine",
+              "texture": "gf_vanilla_block_vine",
               "render_method": "alpha_test"
             },
             "inner": {
-              "texture": "tf_vanilla_block_stripped_oak_log",
+              "texture": "gf_vanilla_block_stripped_oak_log",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_vanilla_block_oak_log",
+              "texture": "gf_vanilla_block_oak_log",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_vanilla_block_oak_log_top",
+              "texture": "gf_vanilla_block_oak_log_top",
               "render_method": "alpha_test"
             }
           },

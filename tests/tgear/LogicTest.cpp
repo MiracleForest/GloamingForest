@@ -117,8 +117,8 @@ TEST(TgearHud, MoonPhaseFollowsTheDayCount) {
 
 TEST(TgearTooltip, Interpolate) {
     auto name = [](std::string const& k) { return k == "key.gloamingforest.swap_hotbar" ? std::string("V") : std::string("Nonexistent key"); };
-    EXPECT_EQ(interpolate("Swap Hotbar (keybind: ${tfkeybinds/key.gloamingforest.swap_hotbar})", name), "Swap Hotbar (keybind: V)");
-    EXPECT_EQ(interpolate("a ${tfkeybinds/x} b ${other/y} c", name), "a Nonexistent key b ${other/y} c");
+    EXPECT_EQ(interpolate("Swap Hotbar (keybind: ${gloamingkeybinds/key.gloamingforest.swap_hotbar})", name), "Swap Hotbar (keybind: V)");
+    EXPECT_EQ(interpolate("a ${gloamingkeybinds/x} b ${other/y} c", name), "a Nonexistent key b ${other/y} c");
     EXPECT_EQ(interpolate("plain", name), "plain");
 }
 

@@ -238,13 +238,13 @@ GF_REGISTER_SELFTEST("woodwork.boat_chest_contents", [](Context& ctx) -> ll::cor
     co_await ctx.ticks(2);
     auto drops = dropsNear(ctx, c);
     auto& pl   = ctx.player();
-    int   tf   = drops["gloamingforest:dark_chest_boat"] + carried(pl, "gloamingforest:dark_chest_boat");
+    int   upsrc   = drops["gloamingforest:dark_chest_boat"] + carried(pl, "gloamingforest:dark_chest_boat");
     int   oak  = drops["minecraft:oak_boat"] + carried(pl, "minecraft:oak_boat");
     int   same = drops[own] + carried(pl, own);
     std::string seen;
     for (auto const& [id, n] : drops) seen += id + " x" + std::to_string(n) + " ";
     ctx.info("drops: " + seen);
-    ctx.check(tf == 1, "exactly one upstream dark chest boat item (" + std::to_string(tf) + ")");
+    ctx.check(upsrc == 1, "exactly one upstream dark chest boat item (" + std::to_string(upsrc) + ")");
     ctx.check(oak == 1, "the oak boat from the chest stays (" + std::to_string(oak) + ")");
     ctx.check(same == 1, "the " + own + " from the chest stays and the boat's own one is gone (" + std::to_string(same) + ")");
     clearItems(ctx, c);
@@ -253,7 +253,7 @@ GF_REGISTER_SELFTEST("woodwork.boat_chest_contents", [](Context& ctx) -> ll::cor
 // ---- the dried slime drops are food --------------------------------------------------------------------
 
 GF_REGISTER_SELFTEST("woodwork.slime_food", [](Context& ctx) {
-    // TFItems: gelatinous_slime_drop (nutrition 1, saturation 0.2, Speed 600 ticks),
+    // GloamingItems: gelatinous_slime_drop (nutrition 1, saturation 0.2, Speed 600 ticks),
     // gelatinous_maze_slime_drop (nutrition 2, saturation 0.3, Resistance 600 ticks)
     struct Food {
         char const* item;
@@ -288,7 +288,7 @@ GF_REGISTER_SELFTEST("woodwork.slime_food", [](Context& ctx) {
 // ---- tannin's craft remainder ---------------------------------------------------------------------------
 
 GF_REGISTER_SELFTEST("woodwork.tannin_remainder", [](Context& ctx) {
-    // TFItems.TANNIN: craftRemainder(Items.GLASS_BOTTLE): crafting treated leather gives the bottle back
+    // GloamingItems.TANNIN: craftRemainder(Items.GLASS_BOTTLE): crafting treated leather gives the bottle back
     namespace rc = gf::recipes;
     auto& player = ctx.player();
     auto& ui     = player.mPlayerUIContainer.get();

@@ -1,13 +1,13 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/world/components/structures/TFMaze.java
+//   src/main/java/gloamingforest/world/components/structures/GloamingMaze.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
 
 // Pure C++ (no mc/ll includes; tests/structure gtests it against Java goldens): the cell grid of
-// TFMaze. bases::Maze keeps the storage (header-mandated layout) and forwards here. Cells sit at
+// GloamingMaze. bases::Maze keeps the storage (header-mandated layout) and forwards here. Cells sit at
 // odd raw coordinates, walls at even ones; 0 is a wall.
 
 #include <climits>

@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_item_cube_talisman"
+          "default": "gf_item_cube_talisman"
         }
       },
       "minecraft:display_name": {

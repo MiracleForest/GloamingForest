@@ -20,7 +20,7 @@
 #   plate, the aurora's change (green over red, lighter: a glow), no pink sunset band, the share of
 #   pixels the weather changes against the clear view and the blizzard / sparkles lighter than it):
 #   the reviewed screenshots of the PR are the goldens, these are their measurable parts. Then
-#   <mode>-aurora-biomes-editor: TFClientConfig's "Edit Biomes" list editor.
+#   <mode>-aurora-biomes-editor: GloamingClientConfig's "Edit Biomes" list editor.
 #   Local mode does it twice: Classic (graphics_mode 1, atmosphere.prelaunch.ps1) and Vibrant
 #   Visuals (graphics_mode 2, after a restart); remote-mod in Classic. GF_ATMOSPHERE_CALIBRATE=1 adds
 #   the shots of every pass / material the client can draw the aurora and the stars with.
@@ -237,7 +237,7 @@ function Invoke-AtmosphereViews([string]$mode) {
     $spooky = Show-Atmosphere 'show_spooky' "$mode-fog-spooky" 'atmosphere: fog of gloamingforest:spooky_forest' 12
     $d = Get-ColourDistance (Get-AtmosphereColour $forest) (Get-AtmosphereColour $spooky)
     Test-AtmosphereSignature "$mode fog forest vs spooky forest colour distance" $d 4 1000
-    # upstream draws its stars without fog (TFSkyRenderer: FogRenderer.setupNoFog): they stay over the
+    # upstream draws its stars without fog (GloamingSkyRenderer: FogRenderer.setupNoFog): they stay over the
     # spooky forest's near fog
     Set-View 0 -50
     Start-Sleep -Seconds 1
@@ -325,7 +325,7 @@ function Invoke-AtmosphereViews([string]$mode) {
     Invoke-AtmosphereTest 'atmosphere.show_clear' | Out-Null
 }
 
-# The aurora biome list editor (TFClientConfig's "Edit Biomes"), opened by the server for the
+# The aurora biome list editor (GloamingClientConfig's "Edit Biomes"), opened by the server for the
 # tagged companion; closed with Esc.
 function Show-AuroraBiomesEditor([string]$mode) {
     Invoke-Chat '/effect @s clear' # the host scene of native screens is the effects screen

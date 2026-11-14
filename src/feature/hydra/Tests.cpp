@@ -1541,14 +1541,14 @@ GF_REGISTER_SELFTEST("hydra.rests_on_java_box", [](Context& ctx) -> ll::coro::Co
 
 namespace {
 
-/// tfEnforcedProgression for the length of a test.
+/// gloamingEnforcedProgression for the length of a test.
 struct WalkEnforcedScope {
     bool previous = false;
     WalkEnforcedScope() {
-        previous = gf::gamerules::getBool("tfEnforcedProgression");
-        gf::gamerules::set("tfEnforcedProgression", true);
+        previous = gf::gamerules::getBool("gloamingEnforcedProgression");
+        gf::gamerules::set("gloamingEnforcedProgression", true);
     }
-    ~WalkEnforcedScope() { gf::gamerules::set("tfEnforcedProgression", previous); }
+    ~WalkEnforcedScope() { gf::gamerules::set("gloamingEnforcedProgression", previous); }
 };
 
 /// The landmark of a boss against upstream's structure record (LandmarkStructure: AdvancementLockConfig,

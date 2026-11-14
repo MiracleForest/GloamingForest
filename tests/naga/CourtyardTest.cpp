@@ -36,8 +36,8 @@ TEST(NagaCourtyard, Constants) {
     EXPECT_EQ(box, (BlockBox{78, 63, 178, 122, 73, 222}));
     auto sc = sizeConstraints(100, 64, 200);
     EXPECT_EQ(sc, (BlockBox{56, 63, 156, 144, 73, 244}));
-    EXPECT_STREQ(pieceTypeId(PieceKind::HedgeCap), "gloamingforest:TFNCCp");
-    EXPECT_STREQ(pieceTypeId(PieceKind::WallCornerInner), "gloamingforest:TFNCWA");
+    EXPECT_STREQ(pieceTypeId(PieceKind::HedgeCap), "gloamingforest:GloamingNCCp");
+    EXPECT_STREQ(pieceTypeId(PieceKind::WallCornerInner), "gloamingforest:GloamingNCWA");
 }
 
 TEST(NagaCourtyard, MazeInvariants) {

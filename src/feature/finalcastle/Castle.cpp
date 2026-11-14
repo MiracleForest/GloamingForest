@@ -12,7 +12,7 @@
 // Structure.GenerationContext#random() (ext::contextRandom).
 //
 // Terrain: the structure's BEARD_BOX applies to no piece. NeoForge's Beardifier takes every
-// TFStructureComponentOld (a PieceBeardifierModifier) with its own adjustment, which is NONE except
+// GloamingStructureComponentOld (a PieceBeardifierModifier) with its own adjustment, which is NONE except
 // for the dungeon rooms (FinalCastleDungeonRoom31Component and its entrance / exit: BURY, ground
 // level delta 0); the template pieces keep their pool's NONE. The terraformer buries the rooms.
 #include <map>

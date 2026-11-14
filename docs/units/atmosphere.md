@@ -1,7 +1,7 @@
 # U15 `atmosphere`: sky, fog, weather and aurora
 
-The Gloaming Forest's client presentation (upstream 4.8: `GloamingForestRenderInfo`, `TFSkyRenderer`, `FogHandler`,
-`TFWeatherRenderer`, the aurora shader, `ClientGameEvents` killVignette / customizeSplashes) and its vanilla
+The Gloaming Forest's client presentation (upstream 4.8: `GloamingForestRenderInfo`, `GloamingSkyRenderer`, `FogHandler`,
+`GloamingWeatherRenderer`, the aurora shader, `ClientGameEvents` killVignette / customizeSplashes) and its vanilla
 fallback. Spec: [docs/spec/atmosphere.md](../spec/atmosphere.md).
 
 ## Files
@@ -11,7 +11,7 @@ fallback. Spec: [docs/spec/atmosphere.md](../spec/atmosphere.md).
 | `src/core/atmosphere/` | Pure maths (gtested in `tests/atmosphere/`): biome sky / fog colours, fixed time, fog colour and planes, `FogSmoother` (FogHandler), upstream's star field, the weather columns (`lockedColumn`, `sparkleColumn`, IntervalUtils), the Ur-Ghast rain, the aurora counter and the aurora shader (OpenSimplex2 ImproveXY, ray march, fog) on the CPU, the birthday splash. |
 | `src/client/atmosphere/` | Client mod: F12 sky provider for the upstream dimension (sky, stars, fog, clouds, weather), the aurora worker thread, the Ur-Ghast rain splashes and sounds, the `atmosphere.*` client selftests. |
 | `src/feature/atmosphere/` | Config section `atmosphere`, the vanilla fog fallback (PlayerFogPacket), the `atmosphere.aurora_biomes` screen type (the "Edit Biomes" editor; a form for vanilla players), server selftests and the `atmosphere.show_*` previews and `atmosphere.show_cal_*` calibration previews of the client scenario. |
-| `src/client/atmosphere/AuroraBiomesScreen.cpp` | TFClientConfig's auroraBiomes list editor (config.gloamingforest.aurora_biomes, .button, .tooltip): edits the client's own `config/atmosphere.json`, also when joined to a remote server. |
+| `src/client/atmosphere/AuroraBiomesScreen.cpp` | GloamingClientConfig's auroraBiomes list editor (config.gloamingforest.aurora_biomes, .button, .tooltip): edits the client's own `config/atmosphere.json`, also when joined to a remote server. |
 | `src/feature/ext/atmosphere/ClientHooks.cpp` | Contract extension (R18): HudVignetteRenderer (killVignette) and SplashTextRenderer (birthday splash) hooks. |
 | `src/feature/ext/atmosphere/SkyView.{h,cpp}` | Contract extension (R18, to fold into F12's SkyProvider): a per-dimension view override that sets the frame's cloud colour and hides the sunrise colour band (`ViewRenderObject` in `LevelRendererCamera::$render`). |
 | `assets/pack/rp/fogs/atmosphere/` | 24 resource pack fog definitions. |
@@ -24,7 +24,7 @@ fallback. Spec: [docs/spec/atmosphere.md](../spec/atmosphere.md).
   is the near fog (0.1875..0.25), plus `gloamingforest:dark_forest_near` and `gloamingforest:dark_forest_center_near`
   (0.05..0.5) that the server pushes to vanilla clients below y 20.
 - **`atmosphere.ur_ghast`** (server -> client mod, U26): `{"active": true}` while the Ur-Ghast near the player is in its
-  tantrum (upstream's `UrGhast#aiStep` sets `TFWeatherRenderer.urGhastAlive` every client tick then), `{"active": false}`
+  tantrum (upstream's `UrGhast#aiStep` sets `GloamingWeatherRenderer.urGhastAlive` every client tick then), `{"active": false}`
   when it ends or dies. The client raises its Ur-Ghast rain by 0.1 a tick to 1 while active, lowers it by 0.02 a tick
   after, and spawns splashes and rain sounds where it is stronger than the level's rain.
 - **Protected structure sparkles** read F6's `landmark::ext::client::structureProtection()`.
@@ -38,7 +38,7 @@ fallback. Spec: [docs/spec/atmosphere.md](../spec/atmosphere.md).
 
 | Key | Default | upstream |
 |---|---|---|
-| `auroraBiomes` | `["gloamingforest:glacier"]` | `TFClientConfig.auroraBiomes` (empty disables the aurora; ids that do not parse as resource locations, or name no biome of the world once its biomes are known, are warned about once and skipped, as `TFConfig#getValidAuroraBiomes`) |
+| `auroraBiomes` | `["gloamingforest:glacier"]` | `GloamingClientConfig.auroraBiomes` (empty disables the aurora; ids that do not parse as resource locations, or name no biome of the world once its biomes are known, are warned about once and skipped, as `GloamingConfig#getValidAuroraBiomes`) |
 | `sky`, `fog`, `weather`, `aurora` | `true` | GloamingForest switches for the client mod's rendering |
 
 ## Bedrock adaptation
@@ -57,21 +57,21 @@ fallback. Spec: [docs/spec/atmosphere.md](../spec/atmosphere.md).
     (`render::onWorld`, depth tested), with that fog.
   - Weather columns: the particle engine's blend material, split at the texture's edges (upstream relies on a repeating
     sampler); 10 columns with fancy graphics, 5 without. Bedrock has no "decreased particles" option.
-  - Void plate (TFSkyRenderer's dark disc below y -32): the stars material in black, sky pass.
+  - Void plate (GloamingSkyRenderer's dark disc below y -32): the stars material in black, sky pass.
 - No sun / moon: the level renderer's sun, moon and star meshes are swapped for an empty mesh while the player is in
   the Gloaming Forest and put back outside it.
 - Clouds and sunrise: `ext/atmosphere/SkyView` sets the frame's cloud colour to `ClientLevel#getCloudColor` at the fixed
   time (rain and thunder included) and clears the sunrise colour band (`getSunriseColor` is null in upstream).
 - Fog: Bedrock has one distance fog; it takes FogHandler's terrain planes (the sky fog is smoothed alongside), stepped
   by the time since the last step in frames of 1/60 s (upstream steps per rendered frame). A boss bar asking for world fog
-  (the companion's TFBossBarPacket state) gives the near fog, as `BossOverlay#shouldCreateWorldFog`.
+  (the companion's GloamingBossBarPacket state) gives the near fog, as `BossOverlay#shouldCreateWorldFog`.
   - Only for FogType.NONE: with the camera under the surface of water or lava (FluidState#getHeight) or in powder snow
     the provider returns nothing and the game's own fog stays (`atmosphere.client_fog_fluid`).
   - isFoggyAt and FogHandler read the feet (`player.position()`, `player.blockPosition()`); Bedrock's getPosition is
     the eyes, so the client and the vanilla fallback use getFeetPos / getFeetBlockPos (`atmosphere.fog_feet`).
   - The colour is FogRenderer#setupColor's: the biome fog and sky colours blended over the 6 x 6 x 6 quart cells around
     the camera (CubicSampler), darkened by the rain and thunder levels and towards black below the dimension's floor.
-- Stars: TFSkyRenderer draws them after FogRenderer.setupNoFog. Bedrock fogs the sky pass by distance, so the stars (and
+- Stars: GloamingSkyRenderer draws them after FogRenderer.setupNoFog. Bedrock fogs the sky pass by distance, so the stars (and
   the sky-pass aurora and void plate) are scaled to a few blocks from the camera (the same picture), inside every fog
   start: the stars stay over the spooky forest's near fog.
 - Void plate: the dark buffer is opaque black (shader colour 0 0 0 1, no blend) drawn after the stars, fogged by upstream's
@@ -130,7 +130,7 @@ fallback. Spec: [docs/spec/atmosphere.md](../spec/atmosphere.md).
 ## Audit round 2
 
 - **Vibrant Visuals: stars below the horizon over the void plate** (measured 6, range 0..2, round 1). Under VV the stars
-  and the plate draw in the world pass, ordered by depth and blend, and stars showed through the plate. TFSkyRenderer
+  and the plate draw in the world pass, ordered by depth and blend, and stars showed through the plate. GloamingSkyRenderer
   draws the plate after the stars without depth, so every star in a direction that meets the plate is hidden: when the
   plate is drawn in the world pass the stars it covers are now left out (`core::atmosphere::underVoidPlate`, the ray
   against the octagon at y -4, gtested in `Atmosphere.UnderVoidPlate`; `starsAbovePlate()` in

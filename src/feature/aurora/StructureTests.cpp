@@ -145,9 +145,9 @@ void golden(Context& ctx, std::string const& name, std::string const& expected, 
 }
 
 // Recorded from the translation (docs/spec/aurora.md section 1.3: GloamingForest's own goldens).
-constexpr char kPalaceLayout[] = "gloamingforest:TFITBea=9 gloamingforest:TFITBoss=1 gloamingforest:TFITBri=1 gloamingforest:TFITEnt=1 gloamingforest:TFITMai=1 gloamingforest:TFITRoof=20 gloamingforest:TFITSt=3 gloamingforest:TFITWin=17 gloamingforest:TFUtilityPiece=10 26,36,-49,122,181,11";
+constexpr char kPalaceLayout[] = "gloamingforest:GloamingITBea=9 gloamingforest:GloamingITBoss=1 gloamingforest:GloamingITBri=1 gloamingforest:GloamingITEnt=1 gloamingforest:GloamingITMai=1 gloamingforest:GloamingITRoof=20 gloamingforest:GloamingITSt=3 gloamingforest:GloamingITWin=17 gloamingforest:GloamingUtilityPiece=10 26,36,-49,122,181,11";
 constexpr char kPalaceHash[]   = "998d5322f7fa3e2b"; // with the aurora block variants (the stairs' lowest steps too) and the varied tower bases
-constexpr char kMushroomLayout[] = "gloamingforest:TFMTBri=82 gloamingforest:TFMTMB=2 gloamingforest:TFMTMai=3 gloamingforest:TFMTRoofMush=72 gloamingforest:TFMTWin=82 -119,9,25,-11,90,133";
+constexpr char kMushroomLayout[] = "gloamingforest:GloamingMTBri=82 gloamingforest:GloamingMTMB=2 gloamingforest:GloamingMTMai=3 gloamingforest:GloamingMTRoofMush=72 gloamingforest:GloamingMTWin=82 -119,9,25,-11,90,133";
 constexpr char kMushroomHash[]   = "541b39f142c085fd";
 
 } // namespace
@@ -155,23 +155,23 @@ constexpr char kMushroomHash[]   = "541b39f142c085fd";
 GF_REGISTER_SELFTEST("aurora.palace_layout", [](Context& ctx) {
     auto pieces = layout(layoutAuroraPalace, 3, -2, 0);
     auto types  = typesOf(pieces);
-    ctx.require(!pieces.empty() && pieces.front()->typeId == "gloamingforest:TFITMai", "the main tower comes first");
+    ctx.require(!pieces.empty() && pieces.front()->typeId == "gloamingforest:GloamingITMai", "the main tower comes first");
     auto const& main = static_cast<IceTowerMain&>(*pieces.front());
     ctx.check(main.hasBossWing, "the main tower loops until the boss wing exists");
-    ctx.check(types["gloamingforest:TFITBoss"] == 1, "one Snow Queen tower (" + describe(types) + ")");
-    ctx.check(types["gloamingforest:TFITEnt"] == 1 && types["gloamingforest:TFITBri"] == 1, "one entrance tower and one bridge");
-    ctx.check(types["gloamingforest:TFITSt"] == 3, "three outside stairs at the entrance");
-    ctx.check(types["gloamingforest:TFITWin"] >= 4, "wings");
-    ctx.check(types["gloamingforest:TFITRoof"] > 0 && (types["gloamingforest:TFITBea"] > 0 || types["gloamingforest:TFUtilityPiece"] > 0), "roofs, beards and bases");
+    ctx.check(types["gloamingforest:GloamingITBoss"] == 1, "one Snow Queen tower (" + describe(types) + ")");
+    ctx.check(types["gloamingforest:GloamingITEnt"] == 1 && types["gloamingforest:GloamingITBri"] == 1, "one entrance tower and one bridge");
+    ctx.check(types["gloamingforest:GloamingITSt"] == 3, "three outside stairs at the entrance");
+    ctx.check(types["gloamingforest:GloamingITWin"] >= 4, "wings");
+    ctx.check(types["gloamingforest:GloamingITRoof"] > 0 && (types["gloamingforest:GloamingITBea"] > 0 || types["gloamingforest:GloamingUtilityPiece"] > 0), "roofs, beards and bases");
     // the main tower floats 40 blocks above the start, 11 east and south of it
     ctx.check(main.bbox.minY == 40 && main.bbox.maxY - main.bbox.minY + 1 >= 31, "main tower at y + 40, 31..51 high");
     // every wing stays within RANGE of the main tower's centre
     int cx = main.bbox.minX + (main.bbox.maxX - main.bbox.minX + 1) / 2;
     for (auto const& p : pieces)
-        if (p->typeId == "gloamingforest:TFITWin") ctx.check(std::abs(p->bbox.minX - cx) < 80, "wing near the main tower");
+        if (p->typeId == "gloamingforest:GloamingITWin") ctx.check(std::abs(p->bbox.minX - cx) < 80, "wing near the main tower");
     // persistence: a wing survives save / load
     for (auto const& p : pieces)
-        if (p->typeId == "gloamingforest:TFITBoss") {
+        if (p->typeId == "gloamingforest:GloamingITBoss") {
             auto loaded = structure::loadPiece(p->save());
             ctx.require(loaded != nullptr, "the boss wing loads back");
             ctx.check(loaded->bbox == p->bbox && loaded->save() == p->save(), "same box and saved data");
@@ -192,7 +192,7 @@ GF_REGISTER_SELFTEST("aurora.palace_hash", [](Context& ctx) {
     generate(pieces, mem);
     // the Snow Queen's spawner sits at (7, top - 6, 7) of the boss tower
     for (auto const& p : pieces)
-        if (p->typeId == "gloamingforest:TFITBoss") {
+        if (p->typeId == "gloamingforest:GloamingITBoss") {
             auto pos = p->getWorldPos(7, 34, 7);
             ctx.check(mem.idAt(pos) == "gloamingforest:snow_queen_boss_spawner", "the snow queen spawner at (7, 34, 7) of the boss tower: " + mem.idAt(pos));
             ctx.check(mem.idAt(p->getWorldPos(7, 37, 7)).find("air") != std::string::npos, "the air box above it");
@@ -204,7 +204,7 @@ GF_REGISTER_SELFTEST("aurora.palace_hash", [](Context& ctx) {
     // the bases under the wings (fillColumnDown to the ground) vary by position as the walls above
     int baseBlocks = 0, baseVariants = 0;
     for (auto const& p : pieces) {
-        if (p->typeId != "gloamingforest:TFITWin" && p->typeId != "gloamingforest:TFITMai" && p->typeId != "gloamingforest:TFITEnt") continue;
+        if (p->typeId != "gloamingforest:GloamingITWin" && p->typeId != "gloamingforest:GloamingITMai" && p->typeId != "gloamingforest:GloamingITEnt") continue;
         auto const& wing = static_cast<IceTowerWing const&>(*p);
         if (!wing.hasBase) continue;
         for (int x = wing.bbox.minX; x <= wing.bbox.maxX; x++)
@@ -224,10 +224,10 @@ GF_REGISTER_SELFTEST("aurora.palace_hash", [](Context& ctx) {
 GF_REGISTER_SELFTEST("aurora.mushroom_tower_hash", [](Context& ctx) {
     auto pieces = layout(layoutMushroomTower, -5, 4, 5);
     auto types  = typesOf(pieces);
-    ctx.require(!pieces.empty() && pieces.front()->typeId == "gloamingforest:TFMTMai", "the main tower comes first");
+    ctx.require(!pieces.empty() && pieces.front()->typeId == "gloamingforest:GloamingMTMai", "the main tower comes first");
     ctx.check(pieces.front()->bbox.minY == 9, "main tower at y + 4");
-    ctx.check(types["gloamingforest:TFMTBri"] > 0, "bridges (" + describe(types) + ")");
-    ctx.check(types["gloamingforest:TFMTRoofMush"] > 0, "mushroom caps");
+    ctx.check(types["gloamingforest:GloamingMTBri"] > 0, "bridges (" + describe(types) + ")");
+    ctx.check(types["gloamingforest:GloamingMTRoofMush"] > 0, "mushroom caps");
     MemoryRegion mem;
     generate(pieces, mem);
     ctx.check(mem.count("minecraft:red_mushroom_block") > 100, "red mushroom caps");

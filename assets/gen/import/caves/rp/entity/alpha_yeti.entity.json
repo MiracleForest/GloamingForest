@@ -10,7 +10,7 @@
         "default": "textures/misc/missing_texture"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.alpha_yeti"
+        "default": "geometry.gf.skeleton.alpha_yeti"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

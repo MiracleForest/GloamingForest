@@ -26,14 +26,14 @@
         "destroy_chance_modifier": 100
       },
       "minecraft:collision_box": false,
-      "minecraft:geometry": "geometry.tf.gloamingforest.block.clover_patch",
+      "minecraft:geometry": "geometry.gf.gloamingforest.block.clover_patch",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_cloverpatch",
+          "texture": "gf_block_cloverpatch",
           "render_method": "alpha_test"
         },
         "texture": {
-          "texture": "tf_block_cloverpatch",
+          "texture": "gf_block_cloverpatch",
           "render_method": "alpha_test"
         }
       },

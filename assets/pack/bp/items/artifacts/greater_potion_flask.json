@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_artifacts_greater_potion_flask"
+          "default": "gf_artifacts_greater_potion_flask"
         }
       },
       "minecraft:display_name": {

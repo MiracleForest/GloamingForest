@@ -13,7 +13,7 @@
 
 namespace gf::gamerules {
 
-/// Every known rule with its current value ({"tfEnforcedProgression": true, ...}).
+/// Every known rule with its current value ({"gloamingEnforcedProgression": true, ...}).
 [[nodiscard]] nlohmann::json snapshot();
 /// Called after `set` changed a rule (server thread).
 void onChanged(std::function<void(std::string const& id, Value const& value)> fn);

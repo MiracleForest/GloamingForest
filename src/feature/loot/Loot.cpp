@@ -1,8 +1,8 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/init/TFLoot.java
+//   src/main/java/gloamingforest/init/GloamingLoot.java
 //   src/main/java/gloamingforest/loot/conditions/ModExistsCondition.java
-//   src/main/java/gloamingforest/loot/TFLootTables.java (the container / entity drops use)
+//   src/main/java/gloamingforest/loot/GloamingLootTables.java (the container / entity drops use)
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -310,7 +310,7 @@ bool adjustsLootRolls() {
 
 namespace {
 bool readAdjuster() {
-    // TFConfig.multiplayerFightAdjuster lives in the `bosses` section (F8): MORE_LOOT and
+    // GloamingConfig.multiplayerFightAdjuster lives in the `bosses` section (F8): MORE_LOOT and
     // MORE_LOOT_AND_HEALTH add loot
     for (auto const& entry : config::ConfigRegistry::entries()) {
         if (entry.section != "bosses" || !entry.values) continue;
@@ -746,7 +746,7 @@ struct SilkBreak {
 thread_local SilkBreak* tSilkBreak = nullptr;
 
 /// Rolls an upstream block's Java table and pops the stacks; a block without a table drops nothing.
-void dropTfBlock(BlockSource& region, BlockPos const& pos, Block const& block, std::string const& tableId, ItemStack const* tool,
+void dropGloamingBlock(BlockSource& region, BlockPos const& pos, Block const& block, std::string const& tableId, ItemStack const* tool,
                  Actor const* actor, std::optional<float> radius) {
     if (!table(tableId)) return; // upstream's noLootTable(): nothing (never Bedrock's own drops)
     LootContext ctx;
@@ -799,13 +799,13 @@ LL_TYPE_INSTANCE_HOOK(
 ) {
     using namespace gf::loot;
     auto const& id = getTypeName();
-    bool        tf = id.rfind("gloamingforest:", 0) == 0;
+    bool        upsrc = id.rfind("gloamingforest:", 0) == 0;
     // vanilla blocks go through the global modifiers only when they are mined with a tool (upstream's
     // modifiers are tool effects) and keep no block actor data (shulker boxes, banners, beds keep
     // the game's own drops)
-    bool modifiable = !tf && hasGlobalModifiers() && !static_cast<ItemStack const&>(dropsContext.mUsedItem).isNull()
+    bool modifiable = !upsrc && hasGlobalModifiers() && !static_cast<ItemStack const&>(dropsContext.mUsedItem).isNull()
                    && region.getBlockEntity(pos) == nullptr;
-    if (region.getLevel().isClientSide() || (!tf && !modifiable)) return origin(region, pos, block, random, dropsContext, actorContext);
+    if (region.getLevel().isClientSide() || (!upsrc && !modifiable)) return origin(region, pos, block, random, dropsContext, actorContext);
     if (tSilkBreak) {
         tSilkBreak->reached = true;
         ++tSilkBreak->inside;
@@ -818,7 +818,7 @@ LL_TYPE_INSTANCE_HOOK(
     std::optional<float> radius;
     if (dropsContext.mCause == ResourceDropsCause::Explosion && dropsContext.mExplosionRadius > 0) radius = dropsContext.mExplosionRadius;
     auto const* tool = &static_cast<ItemStack const&>(dropsContext.mUsedItem);
-    if (tf) return dropTfBlock(region, pos, block, std::string("gloamingforest:blocks/") + id.substr(15), tool, actorContext, radius);
+    if (upsrc) return dropGloamingBlock(region, pos, block, std::string("gloamingforest:blocks/") + id.substr(15), tool, actorContext, radius);
     // vanilla blocks: Bedrock's drops through the global modifiers
     LootContext ctx;
     ctx.region     = &region;
@@ -859,7 +859,7 @@ LL_TYPE_INSTANCE_HOOK(
     origin(player, pos);
     tSilkBreak = previous;
     if (silk.reached || silk.suppressed == 0) return; // the table rolled, or the game popped nothing (creative)
-    dropTfBlock(player.getDimensionBlockSource(), pos, *this, std::string("gloamingforest:blocks/") + id.substr(15), &tool, &player, std::nullopt);
+    dropGloamingBlock(player.getDimensionBlockSource(), pos, *this, std::string("gloamingforest:blocks/") + id.substr(15), &tool, &player, std::nullopt);
 }
 
 // Item entities spawned while a mob dies (gf::loot::DropCapture, the death pipeline): the game's

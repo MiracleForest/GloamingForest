@@ -32,31 +32,31 @@
       "minecraft:geometry": "minecraft:geometry.full_block",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_vanilla_block_oak_leaves",
+          "texture": "gf_vanilla_block_oak_leaves",
           "render_method": "alpha_test"
         },
         "up": {
-          "texture": "tf_vanilla_block_oak_leaves",
+          "texture": "gf_vanilla_block_oak_leaves",
           "render_method": "alpha_test"
         },
         "down": {
-          "texture": "tf_vanilla_block_oak_leaves",
+          "texture": "gf_vanilla_block_oak_leaves",
           "render_method": "alpha_test"
         },
         "north": {
-          "texture": "tf_vanilla_block_oak_leaves",
+          "texture": "gf_vanilla_block_oak_leaves",
           "render_method": "alpha_test"
         },
         "south": {
-          "texture": "tf_vanilla_block_oak_leaves",
+          "texture": "gf_vanilla_block_oak_leaves",
           "render_method": "alpha_test"
         },
         "east": {
-          "texture": "tf_vanilla_block_oak_leaves",
+          "texture": "gf_vanilla_block_oak_leaves",
           "render_method": "alpha_test"
         },
         "west": {
-          "texture": "tf_vanilla_block_oak_leaves",
+          "texture": "gf_vanilla_block_oak_leaves",
           "render_method": "alpha_test"
         }
       },

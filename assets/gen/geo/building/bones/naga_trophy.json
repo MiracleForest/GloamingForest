@@ -3,8 +3,8 @@
   "source": "TrophyRenderer.render + NagaModel.renderTrophy (floor)",
   "layer": {
     "name": "naga_trophy",
-    "field": "TFModelLayers.NAGA_TROPHY",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.NAGA_TROPHY, NagaModel::checkForPack);"
+    "field": "GloamingModelLayers.NAGA_TROPHY",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.NAGA_TROPHY, NagaModel::checkForPack);"
   },
   "frame": "world",
   "geometries": [
@@ -12,7 +12,7 @@
       "identifier": "geometry.gloamingforest.naga_trophy",
       "texture": {
         "bedrock": "textures/gloamingforest/entity/nagahead",
-        "tf": "src/main/resources/assets/gloamingforest/textures/entity/nagahead.png"
+        "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/nagahead.png"
       },
       "material": "entity_alphatest"
     }

@@ -3,18 +3,18 @@
   "geometry": "geometry.gloamingforest.lich",
   "layer": {
     "name": "lich",
-    "field": "TFModelLayers.LICH",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.LICH, LichModel::create);"
+    "field": "GloamingModelLayers.LICH",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.LICH, LichModel::create);"
   },
   "texture_size": [64, 64],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/gloaminglich64",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/gloaminglich64.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/gloaminglich64.png"
     },
     {
       "bedrock": "textures/gloamingforest/entity/gloaminglich64_eyes",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/gloaminglich64_eyes.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/gloaminglich64_eyes.png"
     }
   ],
   "bones": [

@@ -36,9 +36,9 @@ Paths are relative to `assets/gen/import/<unit>/`. Fragment files in `*.d` direc
 
 | Kind | upstream input | Output |
 |---|---|---|
-| `textures` | 1197 PNG (+ `.mcmeta`) | `rp/textures/gloamingforest/<tf path>.png`; atlas keys `tf_<path with _>` in `rp/terrain_texture.d`, `rp/item_texture.d`; animated block textures in `rp/flipbook_textures.d`; vanilla textures upstream reuses as `tf_vanilla_<path>` keys pointing at the game's own files (never copied) |
-| `models` | 523 blockstates, 2984 generated + 123 hand models, a built-in library of the vanilla parent shapes they extend (`Models.cs`, `Vanilla`) | `rp/models/blocks/gloamingforest/*.geo.json`: one geometry per element-defining model (`geometry.tf.<model id>`), shared by every block using it, material instances named after the Java texture variables; one geometry per multipart block (a bone per part, shown by Molang `bone_visibility`) |
-| `blockstates` | blockstates, the upstream block classes (`createBlockStateDefinition`, `registerDefaultState`, `getLightEmission`), `TFBlocks.java` (class, strength, light, sound, map colour, collision, `requiresCorrectToolForDrops`), `RegistrationEvents.java` (`setFlammable`), the tool tags (`#minecraft:mineable/*`, `#minecraft:needs_*_tool`, `#minecraft:sword_efficient`, `#minecraft:leaves`) | `bp/blocks/<id>.json` (format 1.26.50, the family blocks too: see *Block format* below): states, permutations, `minecraft:geometry` / `material_instances` / `transformation`, collision and selection boxes from the model bounds, destructibility, tool and tier tags, light (per state where upstream computes it), map colour, flammability, friction; `rp/blocks.d` sounds and `rp/sounds.json.d` upstream's own sound types; [blockstates.md](blockstates.md) |
+| `textures` | 1197 PNG (+ `.mcmeta`) | `rp/textures/gloamingforest/<upsrc path>.png`; atlas keys `gf_<path with _>` in `rp/terrain_texture.d`, `rp/item_texture.d`; animated block textures in `rp/flipbook_textures.d`; vanilla textures upstream reuses as `gf_vanilla_<path>` keys pointing at the game's own files (never copied) |
+| `models` | 523 blockstates, 2984 generated + 123 hand models, a built-in library of the vanilla parent shapes they extend (`Models.cs`, `Vanilla`) | `rp/models/blocks/gloamingforest/*.geo.json`: one geometry per element-defining model (`geometry.gf.<model id>`), shared by every block using it, material instances named after the Java texture variables; one geometry per multipart block (a bone per part, shown by Molang `bone_visibility`) |
+| `blockstates` | blockstates, the upstream block classes (`createBlockStateDefinition`, `registerDefaultState`, `getLightEmission`), `GloamingBlocks.java` (class, strength, light, sound, map colour, collision, `requiresCorrectToolForDrops`), `RegistrationEvents.java` (`setFlammable`), the tool tags (`#minecraft:mineable/*`, `#minecraft:needs_*_tool`, `#minecraft:sword_efficient`, `#minecraft:leaves`) | `bp/blocks/<id>.json` (format 1.26.50, the family blocks too: see *Block format* below): states, permutations, `minecraft:geometry` / `material_instances` / `transformation`, collision and selection boxes from the model bounds, destructibility, tool and tier tags, light (per state where upstream computes it), map colour, flammability, friction; `rp/blocks.d` sounds and `rp/sounds.json.d` upstream's own sound types; [blockstates.md](blockstates.md) |
 | `lang` | en_us (2061 keys) + 99 translations | `lang/<locale>/<unit>.json` (every upstream key a locale translates; `gf::tr` falls back to en_US) and `rp/texts.d/<locale>/<unit>.lang` (the same keys for rawtext, plus the Bedrock names `tile.gloamingforest:<id>.name`, `item.gloamingforest:<id>.name`, `entity.gloamingforest:<id>.name`, `item.spawn_egg.entity.gloamingforest:<id>.name`, the creative group titles) for the 29 Bedrock locales (below); other upstream locales (`en_ud`, ...) are dropped |
 | `tags` | 393 tag files (upstream, minecraft, c, neoforge and compat namespaces) | `data/<ns>/tags/<registry>/<path>.json` of the tag owner (other namespaces: F1) |
 | `loot` | 634 loot tables, 2 loot modifiers, NeoForge's global modifier list | `data/<ns>/loot_table/**`, `data/<ns>/loot_modifiers/**` (upstream functions and conditions kept by id for F10) |
@@ -49,8 +49,8 @@ Paths are relative to `assets/gen/import/<unit>/`. Fragment files in `*.d` direc
 | `registries` | 290 + 9 `gloaming/*` entries, banner patterns, damage types, jukebox songs, trim materials, enchantments, 6 functions | `data/<ns>/<registry>/**` |
 | `particles` | 28 particle JSON | `rp/particles/<id>.json` skeleton effects and `data/gf/particles/<unit>.json` (every frame). Upstream sprites: the first frame of the upstream texture; vanilla sprites: their cell of Bedrock's legacy particle atlas `textures/particle/particles` (128 x 128, Java's pre-1.14 `particles.png` layout: `generic_N` row 0, `flame` (0, 24), `angry` (8, 40), `glint` (16, 40), the happy villager cell that Java 1.14 split out as `glint.png` (`protection`), `effect_N` row 8, `sga_*` from index 225), animated by age as a flipbook in Java's sprite order, a random glyph for `sga_*`. Particles of a `SuspendedTownParticle` subclass (`protection`) translate its lifetime (`(int) (20 / (random * 0.8 + 0.2))` ticks, plus the tick it is removed on), quad size and damped drift (Particle's random direction, rescaled, times 0.02, velocity * 0.99 per tick) as per-emitter Molang randoms and parametric motion, white and full bright (no lighting component), like the client's `ProtectionParticle`; they leave out the caller's small velocity (no collision, as in Java: the class's `move` ignores blocks). Other effects are a 1 s, 0.1 sprite at rest until their owner or F12 refines them. A sprite newer than the atlas (e.g. 1.17's `glow`) has no cell: a warning, and the effect emits nothing until F12's native particle |
 | `sounds` | `sounds.json` (328 events, 288 subtitles) | **No `sound_definitions`** (see below). Validates that every event has an owner in owners.tsv (a missing one fails the run) and writes a plain, non-merged listing `data/gf/sound_events/<unit>.json`: event -> Bedrock category, subtitle key, sound *names* (upstream file paths without namespace, vanilla events). The subtitle texts come with the `lang` kind |
-| `skeleton` | TFItems, TFToolMaterials, TFEntities, models/item | `bp/items/<id>.json` (254 items, the tiered tools with `minecraft:digger` and Bedrock's tool tags, and the block items whose Java item model is a flat icon: `minecraft:block_placer` with `replace_block_item`), `bp/entities/<id>.json` (80, collision box, health, type family, `is_spawnable` for the 51 with eggs), `rp/entity/<id>.entity.json` + `rp/models/entity/skeleton/<id>.geo.json` (a placeholder box of the entity's size with its upstream texture, spawn egg colours), `data/gf/import/skeleton.json` (the id list the `import.*` selftests check), `data/gf/import/harvest.json` (every block's tools, tier and drop rule: read by the runtime, below, and the selftests) |
-| `catalog` | TFCreativeTabs (4 tabs) | `bp/item_catalog.d/import.json` (Bedrock creative groups: blocks -> construction, items and food -> items, equipment -> equipment) and `data/gf/catalog/import.json` (`gf::catalog` groups in upstream's order) |
+| `skeleton` | GloamingItems, GloamingToolMaterials, GloamingEntities, models/item | `bp/items/<id>.json` (254 items, the tiered tools with `minecraft:digger` and Bedrock's tool tags, and the block items whose Java item model is a flat icon: `minecraft:block_placer` with `replace_block_item`), `bp/entities/<id>.json` (80, collision box, health, type family, `is_spawnable` for the 51 with eggs), `rp/entity/<id>.entity.json` + `rp/models/entity/skeleton/<id>.geo.json` (a placeholder box of the entity's size with its upstream texture, spawn egg colours), `data/gf/import/skeleton.json` (the id list the `import.*` selftests check), `data/gf/import/harvest.json` (every block's tools, tier and drop rule: read by the runtime, below, and the selftests) |
+| `catalog` | GloamingCreativeTabs (4 tabs) | `bp/item_catalog.d/import.json` (Bedrock creative groups: blocks -> construction, items and food -> items, equipment -> equipment) and `data/gf/catalog/import.json` (`gf::catalog` groups in upstream's order) |
 | `families` | upstream block classes and interfaces, block tags, model loaders | `data/gf/families/<unit>.json`: `[{id, family, params: {class, vanillaClass, traits, base, copyOf, woodType, plant, states, tags}}]` for F11 (below) |
 
 ## References
@@ -63,18 +63,18 @@ types, template marker handler types, enforcements, the `pinch` damage effect, t
 `gloaming_biomes` biome source, attribute modifier ids), texture locations and the `camp/rack` template pool, each
 with its kind, the reason and the upstream source that registers it, plus the JSON keys whose values are tags written
 without `#` (`tag`, `tags`, `generates_on`). A reference found nowhere **fails the import**. References that are
-dangling in upstream itself are listed under `tfDangling` and reported as a warning on every run: only
+dangling in upstream itself are listed under `gloamingDangling` and reported as a warning on every run: only
 `gloamingforest:equipment/travellers_chest` (the `craft_vest` criterion of advancement `craft_travellers_gear` names
 the recipe's pre-rename id; upstream renamed it `travellers_vest` and the criterion never triggers in upstream either; kept
 verbatim for parity). An allowlist entry no data references any more is reported as stale.
 
 assemble's dangling-reference check (`tools/xmake/assemble.lua`, F0) does the same on the assembled packs
 ([issue #21](https://github.com/MiracleForest/GloamingForest/issues/21), fixed in F0's W0c): it reads
-`tools/import/known-ids.json` itself (its `ids` known by kind, its `tfDangling` references reported as warnings),
+`tools/import/known-ids.json` itself (its `ids` known by kind, its `gloamingDangling` references reported as warnings),
 types the values of tag-valued keys as tags and reads `tags/gloaming/<registry>/` as a two-segment registry. The
 import therefore writes no index file for it (the W0b bridge `data/gloamingforest/gf_known/**` is gone); it keeps its
 own check so that a dangling reference fails at generation, next to the upstream file that names it. `assemble -Check`
-reports the one `tfDangling` reference as its only warning.
+reports the one `gloamingDangling` reference as its only warning.
 
 ## Sound events
 
@@ -180,8 +180,8 @@ Shared files get one owner by rule:
   `sounds.json` `block_sounds`), not sound events, so the closest one stands in where the Java type has none:
   `LILY_PAD` -> `grass` (Bedrock's own `waterlily` uses `grass`, vanilla `blocks.json` 1.26.51; Java's lily pad
   differs only in its place sound), `FLOWERING_AZALEA` -> `azalea` (the vanilla `blocks.json` names no flowering
-  azalea type; the three troll roots use it). Upstream's own sound types (`TFSoundTypes.java`: `JAR`, NeoForge's
-  `DeferredSoundType(volume, pitch, break, step, place, hit, fall)` of `TFSounds` events) become sound types of the
+  azalea type; the three troll roots use it). Upstream's own sound types (`GloamingSoundTypes.java`: `JAR`, NeoForge's
+  `DeferredSoundType(volume, pitch, break, step, place, hit, fall)` of `GloamingSounds` events) become sound types of the
   pack: `gloamingforest.<type>` (`gloamingforest.jar`: the mason jar, firefly jar, firefly particle spawner and cicada
   jar), written to `rp/sounds.json.d/import-<owner>.json` (assemble merges it into the resource pack's `sounds.json`
   per id; one file per owner of the blocks using the type, F1 when several units do): `block_sounds` break, place
@@ -235,9 +235,9 @@ Shared files get one owner by rule:
   `PickaxeItem`, `AxeItem`, `ShovelItem`, `HoeItem`, `SwordItem`, whatever the upstream class is called) gets Bedrock's
   item tags `minecraft:is_<kind>` (+ `minecraft:is_tool` for diggers) and the tier whose blocks it drops
   (`minecraft:{wooden,stone,iron,diamond,golden,netherite}_tier`, from the vanilla `incorrect_for_<tier>_tool` its
-  `TFToolMaterials` tag includes: ironwood iron, steeleaf and knightmetal diamond, fiery netherite, giant stone, ice
+  `GloamingToolMaterials` tag includes: ironwood iron, steeleaf and knightmetal diamond, fiery netherite, giant stone, ice
   and glass wooden; `Tiers.X` for the minotaur axes, the mazebreaker and stale bread), and a `minecraft:digger`:
-  a digger mines blocks with its kind's block tag at the tier's speed (`TFToolMaterials`: ironwood 6.5, steeleaf 8,
+  a digger mines blocks with its kind's block tag at the tier's speed (`GloamingToolMaterials`: ironwood 6.5, steeleaf 8,
   knightmetal 8, fiery 9, giant 4), a sword cobwebs at 15 and `minecraft:is_sword_item_destructible` /
   `minecraft:leaves` blocks at 1.5, `use_efficiency` on (Java's efficiency). The game lets a custom item harvest
   every block its digger lists, whatever its tier tags (measured: an ironwood pickaxe with `minecraft:iron_tier`
@@ -254,7 +254,7 @@ Shared files get one owner by rule:
   (U7 / U29, `item::Behaviour::destroySpeed`). Armour's `minecraft:wearable` and the attack damage are the owners'
   (U7 armory, F9's item contract).
 - Light: a constant `lightLevel` is the block's `minecraft:light_emission`. A state-dependent one (`Light.cs`: a
-  `lightLevel` lambda of `TFBlocks.java` or of a block class constructor, or a `getLightEmission` override, the
+  `lightLevel` lambda of `GloamingBlocks.java` or of a block class constructor, or a `getLightEmission` override, the
   leaf-most of the class chain) is evaluated for every combination of the states it reads (ternaries, `==` /
   `!=`, `*`, `switch` on an enum, `BrazierLight.getLight()`, the candelabra's candle count): the default state's
   light on the root, one permutation per other light level (fire jets, ghast trap, carminite reactor and builder,
@@ -282,7 +282,7 @@ Shared files get one owner by rule:
 
 - Item icons: the Java item model's `layer0` (`item/generated`, `item/handheld`), else `textures/item/<id>.png`,
   else the model's particle texture. Stack size from `stacksTo`; durability from `durability`, from the tier of a
-  tiered item (`TieredItem` and every subclass, whatever its name: `TFToolMaterials` or vanilla `Tiers` uses), from
+  tiered item (`TieredItem` and every subclass, whatever its name: `GloamingToolMaterials` or vanilla `Tiers` uses), from
   `ArmorItem.Type.getDurability(n)` (also through `TravellersArmorItem`'s `(type, properties, slots, durability)`
   constructor and a subclass's `super(...)`); a damageable item and every subclass of a vanilla single-stack class
   (tools, armour, bows, shields, ...) stacks to 1 (the class chain is walked, not the class name matched).

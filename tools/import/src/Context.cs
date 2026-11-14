@@ -20,7 +20,7 @@ namespace GfImport
     public sealed partial class Ctx
     {
         public string Root;       // repository root
-        public string Tf;         // upstream checkout root
+        public string Upsrc;         // upstream checkout root
         public string GenRes, MainRes, JavaDir;
         public readonly List<string> Log = new List<string>();
         public readonly List<string> Warnings = new List<string>();
@@ -36,14 +36,14 @@ namespace GfImport
         // docs written by the tool (repo-relative path -> text)
         public readonly SortedDictionary<string, string> Docs = new SortedDictionary<string, string>(StringComparer.Ordinal);
 
-        public Ctx(string root, string tf)
+        public Ctx(string root, string upsrc)
         {
             Root = root;
-            Tf = tf;
-            GenRes = Path.Combine(tf, "src", "generated", "resources");
-            MainRes = Path.Combine(tf, "src", "main", "resources");
-            JavaDir = Path.Combine(tf, "src", "main", "java", "gloamingforest");
-            if (!Directory.Exists(JavaDir)) throw new Exception("upstream checkout not found at " + tf + " (run: pwsh tools/upstream/fetch.ps1)");
+            Upsrc = upsrc;
+            GenRes = Path.Combine(upsrc, "src", "generated", "resources");
+            MainRes = Path.Combine(upsrc, "src", "main", "resources");
+            JavaDir = Path.Combine(upsrc, "src", "main", "java", "gloamingforest");
+            if (!Directory.Exists(JavaDir)) throw new Exception("upstream checkout not found at " + upsrc + " (run: pwsh tools/upstream/fetch.ps1)");
             LoadOwners();
         }
 

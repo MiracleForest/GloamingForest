@@ -1,11 +1,11 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/block/TFPortalBlock.java (getFluidState)
+//   src/main/java/gloamingforest/block/GloamingPortalBlock.java (getFluidState)
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// The Gloaming portal is a little water: TFPortalBlock#getFluidState answers level-1 flowing water
+// The Gloaming portal is a little water: GloamingPortalBlock#getFluidState answers level-1 flowing water
 // (Fluids.WATER.getFlowing(1, false), 1/9 of a block high). In Java every rule that asks for the
 // fluid there sees water. Sugar cane and explosions are handled in Portal.cpp (and the block's
 // explosion resistance); this file does what the water does to the entities in it and to the

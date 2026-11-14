@@ -7,7 +7,7 @@
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // gloamingforest:ice_bomb throws gloamingforest:thrown_ice (also thrown by U27's alpha yeti, by
-// string): a TFThrowable with gravity 0.025 until it lands. On a block it freezes the terrain
+// string): a GloamingThrowable with gravity 0.025 until it lands. On a block it freezes the terrain
 // around (radius 2, then 3 at tick 99) and stays 100 ticks, freezing the living things in
 // +-3 / +-2 / +-3 every 20 ticks; yetis become two blocks of ice.
 

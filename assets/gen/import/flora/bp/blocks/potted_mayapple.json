@@ -14,26 +14,26 @@
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 0
       },
-      "minecraft:geometry": "geometry.tf.gloamingforest.block.potted_mayapple",
+      "minecraft:geometry": "geometry.gf.gloamingforest.block.potted_mayapple",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_vanilla_block_flower_pot",
+          "texture": "gf_vanilla_block_flower_pot",
           "render_method": "alpha_test"
         },
         "dirt": {
-          "texture": "tf_vanilla_block_dirt",
+          "texture": "gf_vanilla_block_dirt",
           "render_method": "alpha_test"
         },
         "flowerpot": {
-          "texture": "tf_vanilla_block_flower_pot",
+          "texture": "gf_vanilla_block_flower_pot",
           "render_method": "alpha_test"
         },
         "stem": {
-          "texture": "tf_block_mayapple_side",
+          "texture": "gf_block_mayapple_side",
           "render_method": "alpha_test"
         },
         "top": {
-          "texture": "tf_block_mayapple",
+          "texture": "gf_block_mayapple",
           "render_method": "alpha_test"
         }
       },

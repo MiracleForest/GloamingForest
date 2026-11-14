@@ -22,14 +22,14 @@
       },
       "minecraft:tags": ["minecraft:is_axe_item_destructible"],
       "minecraft:map_color": "#976d4d",
-      "minecraft:geometry": "geometry.tf.minecraft.block.template_orientable_trapdoor_bottom",
+      "minecraft:geometry": "geometry.gf.minecraft.block.template_orientable_trapdoor_bottom",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_wood_trapdoor_mangrove_trapdoor",
+          "texture": "gf_block_wood_trapdoor_mangrove_trapdoor",
           "render_method": "opaque"
         },
         "texture": {
-          "texture": "tf_block_wood_trapdoor_mangrove_trapdoor",
+          "texture": "gf_block_wood_trapdoor_mangrove_trapdoor",
           "render_method": "opaque"
         }
       },
@@ -47,14 +47,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'bottom' && !q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.template_orientable_trapdoor_bottom",
+          "minecraft:geometry": "geometry.gf.minecraft.block.template_orientable_trapdoor_bottom",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_trapdoor_mangrove_trapdoor",
+              "texture": "gf_block_wood_trapdoor_mangrove_trapdoor",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_trapdoor_mangrove_trapdoor",
+              "texture": "gf_block_wood_trapdoor_mangrove_trapdoor",
               "render_method": "opaque"
             }
           },
@@ -74,14 +74,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.template_orientable_trapdoor_open",
+          "minecraft:geometry": "geometry.gf.minecraft.block.template_orientable_trapdoor_open",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_trapdoor_mangrove_trapdoor",
+              "texture": "gf_block_wood_trapdoor_mangrove_trapdoor",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_trapdoor_mangrove_trapdoor",
+              "texture": "gf_block_wood_trapdoor_mangrove_trapdoor",
               "render_method": "opaque"
             }
           },
@@ -101,14 +101,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'top' && !q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.template_orientable_trapdoor_top",
+          "minecraft:geometry": "geometry.gf.minecraft.block.template_orientable_trapdoor_top",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_trapdoor_mangrove_trapdoor",
+              "texture": "gf_block_wood_trapdoor_mangrove_trapdoor",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_trapdoor_mangrove_trapdoor",
+              "texture": "gf_block_wood_trapdoor_mangrove_trapdoor",
               "render_method": "opaque"
             }
           },
@@ -128,14 +128,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.template_orientable_trapdoor_open",
+          "minecraft:geometry": "geometry.gf.minecraft.block.template_orientable_trapdoor_open",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_trapdoor_mangrove_trapdoor",
+              "texture": "gf_block_wood_trapdoor_mangrove_trapdoor",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_trapdoor_mangrove_trapdoor",
+              "texture": "gf_block_wood_trapdoor_mangrove_trapdoor",
               "render_method": "opaque"
             }
           },
@@ -155,14 +155,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'bottom' && !q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.template_orientable_trapdoor_bottom",
+          "minecraft:geometry": "geometry.gf.minecraft.block.template_orientable_trapdoor_bottom",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_trapdoor_mangrove_trapdoor",
+              "texture": "gf_block_wood_trapdoor_mangrove_trapdoor",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_trapdoor_mangrove_trapdoor",
+              "texture": "gf_block_wood_trapdoor_mangrove_trapdoor",
               "render_method": "opaque"
             }
           },
@@ -182,14 +182,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.template_orientable_trapdoor_open",
+          "minecraft:geometry": "geometry.gf.minecraft.block.template_orientable_trapdoor_open",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_trapdoor_mangrove_trapdoor",
+              "texture": "gf_block_wood_trapdoor_mangrove_trapdoor",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_trapdoor_mangrove_trapdoor",
+              "texture": "gf_block_wood_trapdoor_mangrove_trapdoor",
               "render_method": "opaque"
             }
           },
@@ -209,14 +209,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'top' && !q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.template_orientable_trapdoor_top",
+          "minecraft:geometry": "geometry.gf.minecraft.block.template_orientable_trapdoor_top",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_trapdoor_mangrove_trapdoor",
+              "texture": "gf_block_wood_trapdoor_mangrove_trapdoor",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_trapdoor_mangrove_trapdoor",
+              "texture": "gf_block_wood_trapdoor_mangrove_trapdoor",
               "render_method": "opaque"
             }
           },
@@ -236,14 +236,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.template_orientable_trapdoor_open",
+          "minecraft:geometry": "geometry.gf.minecraft.block.template_orientable_trapdoor_open",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_trapdoor_mangrove_trapdoor",
+              "texture": "gf_block_wood_trapdoor_mangrove_trapdoor",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_trapdoor_mangrove_trapdoor",
+              "texture": "gf_block_wood_trapdoor_mangrove_trapdoor",
               "render_method": "opaque"
             }
           },
@@ -263,14 +263,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'bottom' && !q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.template_orientable_trapdoor_bottom",
+          "minecraft:geometry": "geometry.gf.minecraft.block.template_orientable_trapdoor_bottom",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_trapdoor_mangrove_trapdoor",
+              "texture": "gf_block_wood_trapdoor_mangrove_trapdoor",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_trapdoor_mangrove_trapdoor",
+              "texture": "gf_block_wood_trapdoor_mangrove_trapdoor",
               "render_method": "opaque"
             }
           },
@@ -290,14 +290,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.template_orientable_trapdoor_open",
+          "minecraft:geometry": "geometry.gf.minecraft.block.template_orientable_trapdoor_open",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_trapdoor_mangrove_trapdoor",
+              "texture": "gf_block_wood_trapdoor_mangrove_trapdoor",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_trapdoor_mangrove_trapdoor",
+              "texture": "gf_block_wood_trapdoor_mangrove_trapdoor",
               "render_method": "opaque"
             }
           },
@@ -317,14 +317,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'top' && !q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.template_orientable_trapdoor_top",
+          "minecraft:geometry": "geometry.gf.minecraft.block.template_orientable_trapdoor_top",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_trapdoor_mangrove_trapdoor",
+              "texture": "gf_block_wood_trapdoor_mangrove_trapdoor",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_trapdoor_mangrove_trapdoor",
+              "texture": "gf_block_wood_trapdoor_mangrove_trapdoor",
               "render_method": "opaque"
             }
           },
@@ -344,14 +344,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.template_orientable_trapdoor_open",
+          "minecraft:geometry": "geometry.gf.minecraft.block.template_orientable_trapdoor_open",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_trapdoor_mangrove_trapdoor",
+              "texture": "gf_block_wood_trapdoor_mangrove_trapdoor",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_trapdoor_mangrove_trapdoor",
+              "texture": "gf_block_wood_trapdoor_mangrove_trapdoor",
               "render_method": "opaque"
             }
           },
@@ -371,14 +371,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'bottom' && !q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.template_orientable_trapdoor_bottom",
+          "minecraft:geometry": "geometry.gf.minecraft.block.template_orientable_trapdoor_bottom",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_trapdoor_mangrove_trapdoor",
+              "texture": "gf_block_wood_trapdoor_mangrove_trapdoor",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_trapdoor_mangrove_trapdoor",
+              "texture": "gf_block_wood_trapdoor_mangrove_trapdoor",
               "render_method": "opaque"
             }
           },
@@ -398,14 +398,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.template_orientable_trapdoor_open",
+          "minecraft:geometry": "geometry.gf.minecraft.block.template_orientable_trapdoor_open",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_trapdoor_mangrove_trapdoor",
+              "texture": "gf_block_wood_trapdoor_mangrove_trapdoor",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_trapdoor_mangrove_trapdoor",
+              "texture": "gf_block_wood_trapdoor_mangrove_trapdoor",
               "render_method": "opaque"
             }
           },
@@ -425,14 +425,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'top' && !q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.template_orientable_trapdoor_top",
+          "minecraft:geometry": "geometry.gf.minecraft.block.template_orientable_trapdoor_top",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_trapdoor_mangrove_trapdoor",
+              "texture": "gf_block_wood_trapdoor_mangrove_trapdoor",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_trapdoor_mangrove_trapdoor",
+              "texture": "gf_block_wood_trapdoor_mangrove_trapdoor",
               "render_method": "opaque"
             }
           },
@@ -452,14 +452,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.template_orientable_trapdoor_open",
+          "minecraft:geometry": "geometry.gf.minecraft.block.template_orientable_trapdoor_open",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_trapdoor_mangrove_trapdoor",
+              "texture": "gf_block_wood_trapdoor_mangrove_trapdoor",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_trapdoor_mangrove_trapdoor",
+              "texture": "gf_block_wood_trapdoor_mangrove_trapdoor",
               "render_method": "opaque"
             }
           },

@@ -1,7 +1,7 @@
 {
   "gui.gloamingforest.crumble_horn_jei": "Zerbröckeltes Horn",
   "gui.gloamingforest.moonworm_queen_jei": "Mondwurmkönigin reparieren",
-  "gui.gloamingforest.optifine.message": "Bevor du fortfährst, beachte bitte, dass Optifine bekannte Abstürze, visuelle Fehler bei Mehrteil-Entitäten und viele andere Probleme verursacht.\n\nBevor du einen Fehler meldest, entferne zuerst Optifine und prüfe, ob der Fehler weiterhin besteht.\n\nOptifine-bezogene Probleme können auf Seiten des Dämmerwald-Mods nicht behoben werden!\n\nDieser Bildschirm kann in den Client-Einstellungen deaktiviert werden.",
+  "gui.gloamingforest.optifine.message": "Bevor du fortfährst, beachte bitte, dass Optifine bekannte Abstürze, visuelle Fehler bei Mehrteil-Entitäten und viele andere Probleme verursacht.\n\nBevor du einen Fehler meldest, entferne zuerst Optifine und prüfe, ob der Fehler weiterhin besteht.\n\nOptifine-bezogene Probleme können auf Seiten des Gloaming Forest-Mods nicht behoben werden!\n\nDieser Bildschirm kann in den Client-Einstellungen deaktiviert werden.",
   "gui.gloamingforest.optifine.suggestions": "Hier ist eine Auswahl von Mods, die wir stattdessen empfehlen.",
   "gui.gloamingforest.optifine.title": "WARNUNG: OPTIFINE ERKANNT",
   "gui.gloamingforest.progression_end.discord": "Discord-Server",

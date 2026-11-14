@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_item_canopy_door"
+          "default": "gf_item_canopy_door"
         }
       },
       "minecraft:display_name": {

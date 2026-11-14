@@ -571,7 +571,7 @@ GF_REGISTER_SELFTEST("giants.cloud_castle_hash", [](Context& ctx) {
     auto bb  = structure::boxFromJson(tag["BB"]);
     ctx.check(bb.minX == 40 && bb.minY == 164 && bb.minZ == -40 && bb.maxX == 104 && bb.maxY == 180 && bb.maxZ == 24, "the castle's box: rounded to 4, (-8, -4, -8) + 64 x 16 x 64");
     if (!cloudCastleAvailable()) {
-        ctx.info("the cloud castle piece types (U27: gloamingforest:TFClCa) are not registered: the golden hash waits for them");
+        ctx.info("the cloud castle piece types (U27: gloamingforest:GloamingClCa) are not registered: the golden hash waits for them");
         return;
     }
     int const cx = 3, cz = -2;
@@ -581,7 +581,7 @@ GF_REGISTER_SELFTEST("giants.cloud_castle_hash", [](Context& ctx) {
     ctx.require(layoutGiantHouse(context, cx * 16, 0, cz * 16, pieces), "the giant house lays out");
     std::map<std::string, int> types;
     for (auto const& p : pieces) types[p->typeId]++;
-    ctx.check(types["gloamingforest:TFClCa"] == 1 && types["gloamingforest:TFCloud"] == 1 && types["gloamingforest:TFClTr"] == 2,
+    ctx.check(types["gloamingforest:GloamingClCa"] == 1 && types["gloamingforest:GloamingCloud"] == 1 && types["gloamingforest:GloamingClTr"] == 2,
               "a castle, its cloud and two cloud trees");
     ctx.check(pieces.front()->bbox.minY == 164, "the castle's box starts at y 164 (castle floor at 168)");
     MemoryRegion mem;

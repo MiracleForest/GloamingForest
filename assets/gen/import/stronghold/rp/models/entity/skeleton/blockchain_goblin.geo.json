@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.tf.skeleton.blockchain_goblin",
+        "identifier": "geometry.gf.skeleton.blockchain_goblin",
         "texture_width": 64,
         "texture_height": 32,
         "visible_bounds_width": 2,

@@ -1,11 +1,11 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
 //   src/main/java/gloamingforest/client/GloamingForestRenderInfo.java
-//   src/main/java/gloamingforest/client/renderer/TFSkyRenderer.java
+//   src/main/java/gloamingforest/client/renderer/GloamingSkyRenderer.java
 //   src/main/java/gloamingforest/client/event/FogHandler.java
-//   src/main/java/gloamingforest/client/renderer/TFWeatherRenderer.java
+//   src/main/java/gloamingforest/client/renderer/GloamingWeatherRenderer.java
 //   src/main/java/gloamingforest/client/event/ClientGameEvents.java
-//   src/main/java/gloamingforest/config/TFConfig.java
+//   src/main/java/gloamingforest/config/GloamingConfig.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -21,7 +21,7 @@
 //   and a boss bar asking for world fog use the near fog) in the colour of
 //   getBrightnessDependentFogColor;
 // - clouds at y 128 in ClientLevel#getCloudColor's colour (no sunset tint);
-// - weather: TFWeatherRenderer's locked-biome columns (blizzard, mosquitoes, ashes, dark streams,
+// - weather: GloamingWeatherRenderer's locked-biome columns (blizzard, mosquitoes, ashes, dark streams,
 //   big rain) and the sparkles in protected structure pieces, 10 columns around the camera with
 //   fancy graphics and 5 without; vanilla weather still renders;
 // - the aurora (ClientGameEvents#renderAurora) in the biomes of the config's auroraBiomes, in any
@@ -262,7 +262,7 @@ ConfigCache& configCache() {
     return c;
 }
 
-/// TFConfig#getValidAuroraBiomes: the configured ids that parse as resource locations (an invalid
+/// GloamingConfig#getValidAuroraBiomes: the configured ids that parse as resource locations (an invalid
 /// one is warned about once and skipped; so is one that names no biome of the world, once the
 /// world's biomes are known). Runs after every config load.
 void buildConfigView(at::AtmosphereConfig const& c) {
@@ -433,7 +433,7 @@ void urGhastSplashes(LocalPlayer& p, float level, int ticks, int& rainSoundTime)
 }
 
 /// BossOverlay#shouldCreateWorldFog: a boss bar the player sees asks for world fog (the companion's
-/// TFBossBarPacket state; Bedrock's own BossEventPacket has no such flag).
+/// GloamingBossBarPacket state; Bedrock's own BossEventPacket has no such flag).
 bool bossWorldFog(LocalPlayer& p) {
     auto const& pos = p.getPosition();
     for (Actor* a : p.getLevel().getRuntimeActorList()) {
@@ -531,7 +531,7 @@ void clientTick() {
     int dim = gDimension.load();
     if (p && ::gf::world::isGloaming(p->getDimension())) dim = static_cast<int>(p->getDimensionId());
     else if (dim < 0)
-        if (auto tf = ::gf::world::gloaming()) dim = static_cast<int>(*tf);
+        if (auto upsrc = ::gf::world::gloaming()) dim = static_cast<int>(*upsrc);
     if (dim >= 0 && dim != gDimension.load()) {
         int old = gDimension.exchange(dim);
         if (old >= 0) clearProviderFor(old);
@@ -724,12 +724,12 @@ AuroraWorker& auroraWorker() {
 // ---- level renderer sky meshes ---------------------------------------------------------------------------------
 
 /// The sun, moon and star meshes of the level renderer while the player is in the Gloaming Forest
-/// (TFSkyRenderer: no sun, no moon; upstream's own stars are drawn by the stars callback).
+/// (GloamingSkyRenderer: no sun, no moon; upstream's own stars are drawn by the stars callback).
 struct SkyMeshes {
     LevelRenderer*                            owner   = nullptr;
     bool                                      swapped = false;
     std::shared_ptr<mce::Mesh>                hidden;
-    std::shared_ptr<mce::Mesh>                tfStars; ///< upstream's star field (Vibrant Visuals draws it itself)
+    std::shared_ptr<mce::Mesh>                gloamingStars; ///< upstream's star field (Vibrant Visuals draws it itself)
     std::shared_ptr<mce::Mesh>                sun, stars;
     std::array<std::shared_ptr<mce::Mesh>, 8> moon;
 };
@@ -762,8 +762,8 @@ void hideVanillaSky(ScreenContext& screen) {
     // view override); in Classic the stars are drawn by starsFrame
     std::shared_ptr<mce::Mesh> starsWanted = m.hidden;
     if (vibrantVisuals() && previewNow().vvStarMesh == 1) {
-        if (!m.tfStars) m.tfStars = buildMesh(screen, starVerticesRaw(), "gf_atmosphere_stars");
-        starsWanted = m.tfStars;
+        if (!m.gloamingStars) m.gloamingStars = buildMesh(screen, starVerticesRaw(), "gf_atmosphere_stars");
+        starsWanted = m.gloamingStars;
         logOnce("stars_mesh", "atmosphere: upstream stars in the level renderer's star mesh (Vibrant Visuals)");
     }
     // the game may rebuild them (device lost): put ours back every frame
@@ -892,7 +892,7 @@ std::optional<sky::FogSpec> fogAt(std::optional<std::string> const& forcedBiome)
 }
 
 std::optional<sky::FogSpec> fogFor(std::string const&) { return fogAt(std::nullopt); }
-/// The stars of TFSkyRenderer#createStars (radius 100) before the sky rotation: the level renderer's
+/// The stars of GloamingSkyRenderer#createStars (radius 100) before the sky rotation: the level renderer's
 /// own star mesh under Vibrant Visuals (the game rotates it by its time of day).
 std::vector<ColourVertex> const& starVerticesRaw() {
     static std::vector<ColourVertex> const v = [] {
@@ -906,7 +906,7 @@ std::vector<ColourVertex> const& starVerticesRaw() {
     return v;
 }
 
-/// The stars rotated as TFSkyRenderer#renderSky does at the fixed time, radius 100, both windings.
+/// The stars rotated as GloamingSkyRenderer#renderSky does at the fixed time, radius 100, both windings.
 std::vector<ColourVertex> const& starVertices() {
     static std::vector<ColourVertex> const v = [] {
         std::vector<ColourVertex> out;
@@ -948,7 +948,7 @@ ca::FogPlanes skyFogPlanes() {
     return ca::vanillaFog(true, s.renderDistance, false);
 }
 
-/// The void plate (TFSkyRenderer's dark buffer, black, shader colour 0 0 0 1, no blend) with the sky
+/// The void plate (GloamingSkyRenderer's dark buffer, black, shader colour 0 0 0 1, no blend) with the sky
 /// fog upstream's position shader mixes in (black below, the fog colour towards the horizon), both
 /// windings, radius 512 at y -4.
 std::vector<ColourVertex> voidPlateVertices(ca::Rgb fog, ca::FogPlanes planes) {
@@ -1177,7 +1177,7 @@ void drawWorldSky(render::RenderContext& ctx, bool stars, bool voidPlate, StarsM
     float r   = far > 0 ? std::min(0.9f * far, 2000.0f) : 400.0f;
     if (stars) {
         std::string spec = !preview.starsMat.empty() ? preview.starsMat : mode == StarsMode::WorldStars ? std::string("@stars") : std::string(kVibrantStars);
-        // TFSkyRenderer covers the stars below the horizon with the void plate it draws after them
+        // GloamingSkyRenderer covers the stars below the horizon with the void plate it draws after them
         // without depth; here the world pass orders them by depth and blend, and stars showed
         // through the plate: the stars the plate covers are left out instead
         std::vector<ColourVertex> const& all = voidPlate ? starsAbovePlate() : starVertices();
@@ -1192,7 +1192,7 @@ void drawWorldSky(render::RenderContext& ctx, bool stars, bool voidPlate, StarsM
 
 /// Vibrant Visuals paints its own physical sky (its sun at the fixed 13000 is just below the
 /// horizon: an orange dusk band upstream has not) after the world pass, wherever nothing was drawn. In the
-/// Gloaming Forest upstream's sky is drawn there instead, as TFSkyRenderer draws it: the sky disc in the
+/// Gloaming Forest upstream's sky is drawn there instead, as GloamingSkyRenderer draws it: the sky disc in the
 /// sky colour fogged by the sky fog, the fog colour at and below the horizon, as a sphere behind the
 /// stars (at 0.95 of the far plane) with a material Vibrant Visuals does not light. The stars, the
 /// aurora and the void plate then draw over it, and the sky's own pass leaves it alone.
@@ -1241,7 +1241,7 @@ bool skyFrame(render::RenderContext& ctx, float) {
     return false; // the vanilla sky dome (biome sky colour) stays
 }
 
-/// TFSkyRenderer after the sky dome: the stars without fog at full brightness, then the void plate
+/// GloamingSkyRenderer after the sky dome: the stars without fog at full brightness, then the void plate
 /// opaque over them (the stars below the horizon are hidden), in the sky pass (Classic).
 void starsFrame(render::RenderContext& ctx, float partial) {
     auto       cfg     = config();
@@ -1294,7 +1294,7 @@ void worldFrame(render::RenderContext& ctx, float partial) {
     }
 }
 
-/// TFWeatherRenderer#renderSnowAndRain: the locked-biome columns and the protected structure sparkles.
+/// GloamingWeatherRenderer#renderSnowAndRain: the locked-biome columns and the protected structure sparkles.
 bool weatherFrame(render::RenderContext& ctx, float partial) {
     if (!config()->weather) return false;
     auto* p = currentPlayer();
@@ -1421,7 +1421,7 @@ std::optional<vx::ViewOverride> viewOverride() {
     auto c = ca::cloudColor(ca::timeOfDay(ca::kFixedTime), rain, thunder);
     logOnce("clouds_colour", fmt::format("atmosphere: clouds {:.2f} {:.2f} {:.2f}, no sunrise colour", c.r, c.g, c.b));
     vx::ViewOverride o{.cloud = std::array<float, 3>{c.r, c.g, c.b}, .noSunrise = true};
-    o.starBrightness = 1.0f; // TFSkyRenderer: "stars are always bright"
+    o.starBrightness = 1.0f; // GloamingSkyRenderer: "stars are always bright"
     if (vibrantVisuals()) {
         float t = previewNow().vvSkyTime;
         if (t < 0) t = kVibrantSkyTime;
@@ -1554,8 +1554,8 @@ public:
         // the world pass: the aurora anywhere, the sun and moon back outside the Gloaming Forest
         render::onWorld([](render::RenderContext& ctx, float partial) { worldFrame(ctx, partial); });
         auroraWorker().start();
-        if (auto tf = ::gf::world::gloaming()) {
-            gDimension = static_cast<int>(*tf);
+        if (auto upsrc = ::gf::world::gloaming()) {
+            gDimension = static_cast<int>(*upsrc);
             installProvider();
         }
     }

@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.kobold",
   "layer": {
     "name": "kobold",
-    "field": "TFModelLayers.KOBOLD",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.KOBOLD, KoboldModel::checkForPack);"
+    "field": "GloamingModelLayers.KOBOLD",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.KOBOLD, KoboldModel::checkForPack);"
   },
   "texture_size": [64, 32],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/kobold",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/kobold.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/kobold.png"
     }
   ],
   "bones": [

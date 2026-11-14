@@ -36,14 +36,14 @@ using structure::bases::TowerWing;
 
 namespace {
 
-constexpr char kWing[]     = "gloamingforest:TFITWin";
-constexpr char kMain[]     = "gloamingforest:TFITMai";
-constexpr char kBoss[]     = "gloamingforest:TFITBoss";
-constexpr char kEntrance[] = "gloamingforest:TFITEnt";
-constexpr char kBridge[]   = "gloamingforest:TFITBri";
-constexpr char kStairs[]   = "gloamingforest:TFITSt";
-constexpr char kRoof[]     = "gloamingforest:TFITRoof";
-constexpr char kBeard[]    = "gloamingforest:TFITBea";
+constexpr char kWing[]     = "gloamingforest:GloamingITWin";
+constexpr char kMain[]     = "gloamingforest:GloamingITMai";
+constexpr char kBoss[]     = "gloamingforest:GloamingITBoss";
+constexpr char kEntrance[] = "gloamingforest:GloamingITEnt";
+constexpr char kBridge[]   = "gloamingforest:GloamingITBri";
+constexpr char kStairs[]   = "gloamingforest:GloamingITSt";
+constexpr char kRoof[]     = "gloamingforest:GloamingITRoof";
+constexpr char kBeard[]    = "gloamingforest:GloamingITBea";
 
 constexpr char kAuroraRoom[]  = "gloamingforest:aurora_room";
 constexpr char kAuroraCache[] = "gloamingforest:aurora_cache";
@@ -65,7 +65,7 @@ char const* axisOf(Orientation o) { return (o == Orientation::East || o == Orien
 std::unique_ptr<Decorator> iceTowerDecorator() {
     auto d           = std::make_unique<IceTowerDecoratorImpl>();
     auto def         = structure::bases::defaultDecorator();
-    d->roofState     = def->roofState; // TFStructureDecorator's default (IceTowerDecorator keeps it)
+    d->roofState     = def->roofState; // GloamingStructureDecorator's default (IceTowerDecorator keeps it)
     d->blockState    = &blocks::java("gloamingforest:aurora_block");
     d->accentState   = &blocks::java("minecraft:birch_planks");
     d->fenceState    = &blocks::java("minecraft:oak_fence");

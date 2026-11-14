@@ -586,18 +586,18 @@ std::uint64_t layoutHash(std::vector<tower::PieceBox> const& pieces, BlockPos co
 }
 
 void checkLayoutCounts(Context& ctx, std::map<std::string, int>& counts) {
-    ctx.check(counts["gloamingforest:TFLTTFoy"] == 1, "one foyer");
-    ctx.check(counts["gloamingforest:TFLTCTBase"] == 1, "one tower base");
-    ctx.check(counts["gloamingforest:TFLTCTTrim"] == 1, "the base trim");
-    int slices = counts["gloamingforest:TFLTCTSeg"] - 1; // the boss boundary is a segment too
+    ctx.check(counts["gloamingforest:GloamingLTTFoy"] == 1, "one foyer");
+    ctx.check(counts["gloamingforest:GloamingLTCTBase"] == 1, "one tower base");
+    ctx.check(counts["gloamingforest:GloamingLTCTTrim"] == 1, "the base trim");
+    int slices = counts["gloamingforest:GloamingLTCTSeg"] - 1; // the boss boundary is a segment too
     ctx.check(slices >= 12 && slices <= 15, "12-15 tower slices (" + std::to_string(slices) + ")");
-    ctx.check(counts["gloamingforest:TFLTTBoss"] == 1 && counts["gloamingforest:TFLTTBossRoof"] == 1, "the boss room and its roof");
-    ctx.check(counts["gloamingforest:TFLTBridge"] >= 1, "wing bridges or covers");
-    ctx.check(counts["gloamingforest:TFLTTRoom"] >= 1, "wing rooms (placeholders while U22's rooms are missing)");
+    ctx.check(counts["gloamingforest:GloamingLTTBoss"] == 1 && counts["gloamingforest:GloamingLTTBossRoof"] == 1, "the boss room and its roof");
+    ctx.check(counts["gloamingforest:GloamingLTBridge"] >= 1, "wing bridges or covers");
+    ctx.check(counts["gloamingforest:GloamingLTTRoom"] >= 1, "wing rooms (placeholders while U22's rooms are missing)");
     // the yard: the dirt, the path from the vestibule, the cross path and two side paths, the lights
-    ctx.check(counts["gloamingforest:TFLTPath"] == 5, "the yard's dirt and four paths (" + std::to_string(counts["gloamingforest:TFLTPath"]) + ")");
-    ctx.check(counts["gloamingforest:TFLTLight"] == 1, "the lights along the first path");
-    ctx.check(counts["gloamingforest:TFLTFence"] >= 1, "the perimeter fence (" + std::to_string(counts["gloamingforest:TFLTFence"]) + " pieces)");
+    ctx.check(counts["gloamingforest:GloamingLTPath"] == 5, "the yard's dirt and four paths (" + std::to_string(counts["gloamingforest:GloamingLTPath"]) + ")");
+    ctx.check(counts["gloamingforest:GloamingLTLight"] == 1, "the lights along the first path");
+    ctx.check(counts["gloamingforest:GloamingLTFence"] >= 1, "the perimeter fence (" + std::to_string(counts["gloamingforest:GloamingLTFence"]) + " pieces)");
 }
 
 // The lich tower assembles: foyer, base, 12-15 slices, the boss room, its boundary and roof, wings
@@ -665,14 +665,14 @@ GF_REGISTER_SELFTEST("lich.yard_spawns", [](Context& ctx) -> ll::coro::CoroTask<
     // a spot of the yard that no tower piece covers (the highest index wins where they overlap)
     auto covered = [&](int x, int y, int z) {
         for (auto const& q : pieces)
-            if (q.type != "gloamingforest:TFLTPath" && q.type != "gloamingforest:TFLTGrave" && q.type != "gloamingforest:TFLTLight" && q.box.minX <= x && x <= q.box.maxX
+            if (q.type != "gloamingforest:GloamingLTPath" && q.type != "gloamingforest:GloamingLTGrave" && q.type != "gloamingforest:GloamingLTLight" && q.box.minX <= x && x <= q.box.maxX
                 && q.box.minY <= y && y <= q.box.maxY && q.box.minZ <= z && z <= q.box.maxZ)
                 return true;
         return false;
     };
     bool path = false, interior = false;
     for (auto const& p : pieces) {
-        if (p.type != "gloamingforest:TFLTPath" || path) continue;
+        if (p.type != "gloamingforest:GloamingLTPath" || path) continue;
         for (int x = p.box.minX; x <= p.box.maxX && !path; x += 3)
             for (int z = p.box.minZ; z <= p.box.maxZ && !path; z += 3) {
                 int y = p.box.minY + 1;
@@ -684,7 +684,7 @@ GF_REGISTER_SELFTEST("lich.yard_spawns", [](Context& ctx) -> ll::coro::CoroTask<
     }
     ctx.check(path, "a rising zombie can spawn on the yard");
     for (auto const& p : pieces) {
-        if (p.type == "gloamingforest:TFLTCTBase" && !interior) {
+        if (p.type == "gloamingforest:GloamingLTCTBase" && !interior) {
             auto ids = listAt(p.box);
             interior = std::find(ids.begin(), ids.end(), "gloamingforest:death_tome") != ids.end();
             ctx.check(interior, "the tower base spawns the interior list (death tomes)");
@@ -762,7 +762,7 @@ GF_REGISTER_SELFTEST("lich.tower_yard_loaded", [](Context& ctx) -> ll::coro::Cor
              + ", the blocks " + std::to_string(blocks.height(gf::worldgen::Heightmap::MotionBlockingNoLeaves, gx, gz)));
     // 1. the tower and its yard through the loaded-chunk adapter
     for (auto const& p : tower::layoutForTest(at, kGoldenSeed))
-        if (p.typeId == "gloamingforest:TFLTPath" || p.typeId == "gloamingforest:TFLTLight" || p.typeId == "gloamingforest:TFLTTFoy")
+        if (p.typeId == "gloamingforest:GloamingLTPath" || p.typeId == "gloamingforest:GloamingLTLight" || p.typeId == "gloamingforest:GloamingLTTFoy")
             ctx.info(p.typeId.substr(15) + " box " + std::to_string(p.box.minX - at.x) + " " + std::to_string(p.box.minY - at.y) + " " + std::to_string(p.box.minZ - at.z) + " .. "
                      + std::to_string(p.box.maxX - at.x) + " " + std::to_string(p.box.maxY - at.y) + " " + std::to_string(p.box.maxZ - at.z));
     tower::placeForTest(loaded, clip, kGoldenSeed);
@@ -789,10 +789,10 @@ GF_REGISTER_SELFTEST("lich.tower_yard_loaded", [](Context& ctx) -> ll::coro::Cor
     std::map<std::string, int> fences;
     int clearances = 0, sideFences = 0;
     for (auto const& p : perimeter) {
-        if (p.typeId.starts_with("gloamingforest:TFLTFence|")) {
+        if (p.typeId.starts_with("gloamingforest:GloamingLTFence|")) {
             ++sideFences;
             fences[p.typeId.substr(p.typeId.find('|') + 1)]++;
-        } else if (p.typeId == "gloamingforest:TFUtilityPiece") ++clearances;
+        } else if (p.typeId == "gloamingforest:GloamingUtilityPiece") ++clearances;
     }
     std::string summary;
     for (auto const& [id, n] : fences) summary += " " + id + "=" + std::to_string(n);
@@ -1151,7 +1151,7 @@ GF_REGISTER_SELFTEST("lich.client_showcase", [](Context& ctx) -> ll::coro::CoroT
         for (int dz = -48; dz <= 48 && !start; dz += 8) start = gf::landmark::startAt(dim, BlockPos{at.x + dx, at.y + 2, at.z + dz});
     if (start)
         for (auto const& p : gf::landmark::ext::startPieces(*start))
-            if (p.type == "gloamingforest:TFLTTFoy") foyerC = Vec3{(p.box.minX + p.box.maxX) / 2.0f, float(p.box.minY), (p.box.minZ + p.box.maxZ) / 2.0f};
+            if (p.type == "gloamingforest:GloamingLTTFoy") foyerC = Vec3{(p.box.minX + p.box.maxX) / 2.0f, float(p.box.minY), (p.box.minZ + p.box.maxZ) / 2.0f};
     if (pathC) foyerC = *pathC; // look at the first path
     Vec3  outward{foyerC.x - towerAt.x, 0.0f, foyerC.z - towerAt.z};
     float olen = std::sqrt(outward.x * outward.x + outward.z * outward.z);
@@ -1176,14 +1176,14 @@ GF_REGISTER_SELFTEST("lich.client_showcase", [](Context& ctx) -> ll::coro::CoroT
 
 namespace {
 
-/// tfEnforcedProgression for the length of a test.
+/// gloamingEnforcedProgression for the length of a test.
 struct WalkEnforcedScope {
     bool previous = false;
     WalkEnforcedScope() {
-        previous = gf::gamerules::getBool("tfEnforcedProgression");
-        gf::gamerules::set("tfEnforcedProgression", true);
+        previous = gf::gamerules::getBool("gloamingEnforcedProgression");
+        gf::gamerules::set("gloamingEnforcedProgression", true);
     }
-    ~WalkEnforcedScope() { gf::gamerules::set("tfEnforcedProgression", previous); }
+    ~WalkEnforcedScope() { gf::gamerules::set("gloamingEnforcedProgression", previous); }
 };
 
 /// The landmark of a boss against upstream's structure record (LandmarkStructure: AdvancementLockConfig,

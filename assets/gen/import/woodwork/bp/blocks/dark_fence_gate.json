@@ -26,14 +26,14 @@
         "catch_chance_modifier": 5,
         "destroy_chance_modifier": 20
       },
-      "minecraft:geometry": "geometry.tf.minecraft.block.template_fence_gate",
+      "minecraft:geometry": "geometry.gf.minecraft.block.template_fence_gate",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_wood_planks_darkwood_0",
+          "texture": "gf_block_wood_planks_darkwood_0",
           "render_method": "opaque"
         },
         "texture": {
-          "texture": "tf_block_wood_planks_darkwood_0",
+          "texture": "gf_block_wood_planks_darkwood_0",
           "render_method": "opaque"
         }
       },
@@ -54,14 +54,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east' && !q.block_state('gloamingforest:in_wall') && !q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.template_fence_gate",
+          "minecraft:geometry": "geometry.gf.minecraft.block.template_fence_gate",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_darkwood_0",
+              "texture": "gf_block_wood_planks_darkwood_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_darkwood_0",
+              "texture": "gf_block_wood_planks_darkwood_0",
               "render_method": "opaque"
             }
           },
@@ -81,14 +81,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east' && !q.block_state('gloamingforest:in_wall') && q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.template_fence_gate_open",
+          "minecraft:geometry": "geometry.gf.minecraft.block.template_fence_gate_open",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_darkwood_0",
+              "texture": "gf_block_wood_planks_darkwood_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_darkwood_0",
+              "texture": "gf_block_wood_planks_darkwood_0",
               "render_method": "opaque"
             }
           },
@@ -108,14 +108,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:in_wall') && !q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.template_fence_gate_wall",
+          "minecraft:geometry": "geometry.gf.minecraft.block.template_fence_gate_wall",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_darkwood_0",
+              "texture": "gf_block_wood_planks_darkwood_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_darkwood_0",
+              "texture": "gf_block_wood_planks_darkwood_0",
               "render_method": "opaque"
             }
           },
@@ -135,14 +135,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:in_wall') && q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.template_fence_gate_wall_open",
+          "minecraft:geometry": "geometry.gf.minecraft.block.template_fence_gate_wall_open",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_darkwood_0",
+              "texture": "gf_block_wood_planks_darkwood_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_darkwood_0",
+              "texture": "gf_block_wood_planks_darkwood_0",
               "render_method": "opaque"
             }
           },
@@ -162,14 +162,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north' && !q.block_state('gloamingforest:in_wall') && !q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.template_fence_gate",
+          "minecraft:geometry": "geometry.gf.minecraft.block.template_fence_gate",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_darkwood_0",
+              "texture": "gf_block_wood_planks_darkwood_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_darkwood_0",
+              "texture": "gf_block_wood_planks_darkwood_0",
               "render_method": "opaque"
             }
           },
@@ -189,14 +189,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north' && !q.block_state('gloamingforest:in_wall') && q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.template_fence_gate_open",
+          "minecraft:geometry": "geometry.gf.minecraft.block.template_fence_gate_open",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_darkwood_0",
+              "texture": "gf_block_wood_planks_darkwood_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_darkwood_0",
+              "texture": "gf_block_wood_planks_darkwood_0",
               "render_method": "opaque"
             }
           },
@@ -216,14 +216,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:in_wall') && !q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.template_fence_gate_wall",
+          "minecraft:geometry": "geometry.gf.minecraft.block.template_fence_gate_wall",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_darkwood_0",
+              "texture": "gf_block_wood_planks_darkwood_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_darkwood_0",
+              "texture": "gf_block_wood_planks_darkwood_0",
               "render_method": "opaque"
             }
           },
@@ -243,14 +243,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:in_wall') && q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.template_fence_gate_wall_open",
+          "minecraft:geometry": "geometry.gf.minecraft.block.template_fence_gate_wall_open",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_darkwood_0",
+              "texture": "gf_block_wood_planks_darkwood_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_darkwood_0",
+              "texture": "gf_block_wood_planks_darkwood_0",
               "render_method": "opaque"
             }
           },
@@ -270,14 +270,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south' && !q.block_state('gloamingforest:in_wall') && !q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.template_fence_gate",
+          "minecraft:geometry": "geometry.gf.minecraft.block.template_fence_gate",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_darkwood_0",
+              "texture": "gf_block_wood_planks_darkwood_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_darkwood_0",
+              "texture": "gf_block_wood_planks_darkwood_0",
               "render_method": "opaque"
             }
           },
@@ -297,14 +297,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south' && !q.block_state('gloamingforest:in_wall') && q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.template_fence_gate_open",
+          "minecraft:geometry": "geometry.gf.minecraft.block.template_fence_gate_open",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_darkwood_0",
+              "texture": "gf_block_wood_planks_darkwood_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_darkwood_0",
+              "texture": "gf_block_wood_planks_darkwood_0",
               "render_method": "opaque"
             }
           },
@@ -324,14 +324,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:in_wall') && !q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.template_fence_gate_wall",
+          "minecraft:geometry": "geometry.gf.minecraft.block.template_fence_gate_wall",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_darkwood_0",
+              "texture": "gf_block_wood_planks_darkwood_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_darkwood_0",
+              "texture": "gf_block_wood_planks_darkwood_0",
               "render_method": "opaque"
             }
           },
@@ -351,14 +351,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:in_wall') && q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.template_fence_gate_wall_open",
+          "minecraft:geometry": "geometry.gf.minecraft.block.template_fence_gate_wall_open",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_darkwood_0",
+              "texture": "gf_block_wood_planks_darkwood_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_darkwood_0",
+              "texture": "gf_block_wood_planks_darkwood_0",
               "render_method": "opaque"
             }
           },
@@ -378,14 +378,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west' && !q.block_state('gloamingforest:in_wall') && !q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.template_fence_gate",
+          "minecraft:geometry": "geometry.gf.minecraft.block.template_fence_gate",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_darkwood_0",
+              "texture": "gf_block_wood_planks_darkwood_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_darkwood_0",
+              "texture": "gf_block_wood_planks_darkwood_0",
               "render_method": "opaque"
             }
           },
@@ -405,14 +405,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west' && !q.block_state('gloamingforest:in_wall') && q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.template_fence_gate_open",
+          "minecraft:geometry": "geometry.gf.minecraft.block.template_fence_gate_open",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_darkwood_0",
+              "texture": "gf_block_wood_planks_darkwood_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_darkwood_0",
+              "texture": "gf_block_wood_planks_darkwood_0",
               "render_method": "opaque"
             }
           },
@@ -432,14 +432,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:in_wall') && !q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.template_fence_gate_wall",
+          "minecraft:geometry": "geometry.gf.minecraft.block.template_fence_gate_wall",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_darkwood_0",
+              "texture": "gf_block_wood_planks_darkwood_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_darkwood_0",
+              "texture": "gf_block_wood_planks_darkwood_0",
               "render_method": "opaque"
             }
           },
@@ -459,14 +459,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:in_wall') && q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.template_fence_gate_wall_open",
+          "minecraft:geometry": "geometry.gf.minecraft.block.template_fence_gate_wall_open",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_darkwood_0",
+              "texture": "gf_block_wood_planks_darkwood_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_darkwood_0",
+              "texture": "gf_block_wood_planks_darkwood_0",
               "render_method": "opaque"
             }
           },

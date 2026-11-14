@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_vanilla_item_stone_pickaxe"
+          "default": "gf_vanilla_item_stone_pickaxe"
         }
       },
       "minecraft:display_name": {

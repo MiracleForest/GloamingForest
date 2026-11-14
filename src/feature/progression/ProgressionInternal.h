@@ -9,7 +9,7 @@
 
 namespace gf::progression {
 
-/// upstream's MissingAdvancementToast (MissingAdvancementToastPacket from TFPortalBlock#entityInside and
+/// upstream's MissingAdvancementToast (MissingAdvancementToastPacket from GloamingPortalBlock#entityInside and
 /// ProgressionEvents#checkForPortalCreation): UPPER_TEXT, the title and icon sent when the
 /// advancement has no display, and the time it is shown (10 s).
 inline constexpr char kMissingUpperText[] = "misc.gloamingforest.advancement_required";

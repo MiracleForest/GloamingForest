@@ -184,16 +184,16 @@ GF_REGISTER_SELFTEST("import.harvest_tags", [](Context& ctx) {
 // Mining speed and harvest, measured with a survival player in game: an upstream block mines as the vanilla block of the
 // same Java tool tag, tier and drop rule (the progress per tick normalised by the game's stored hardness of each,
 // as Bedrock's own vanilla hardness can differ from Java's: obsidian 35), and upstream's tools as the vanilla tools of the
-// same speed and tier (Java's TFToolMaterials: knightmetal / steeleaf 8 diamond, fiery 9 netherite).
+// same speed and tier (Java's GloamingToolMaterials: knightmetal / steeleaf 8 diamond, fiery 9 netherite).
 GF_REGISTER_SELFTEST("import.harvest_mining", [](Context& ctx) {
     gf::feature::ext::harvest::applyNow();
     Miner m(ctx.player());
     struct Pair {
-        char const*              tf;
+        char const*              upsrc;
         char const*              vanilla;
         std::vector<char const*> tools; // "" = empty hand
     };
-    // upstream's tags (TFBlocks.java, the tag JSONs) against the vanilla block with the same ones (Minecraft 1.21.1)
+    // upstream's tags (GloamingBlocks.java, the tag JSONs) against the vanilla block with the same ones (Minecraft 1.21.1)
     std::vector<Pair> const pairs{
         {"gloamingforest:gloaming_oak_planks", "minecraft:oak_planks", {"", "minecraft:iron_axe", "minecraft:iron_pickaxe"}},                            // axe, no tool needed
         {"gloamingforest:underbrick", "minecraft:iron_ore", {"", "minecraft:wooden_pickaxe", "minecraft:stone_pickaxe", "minecraft:iron_pickaxe"}},     // pickaxe, needs stone
@@ -203,21 +203,21 @@ GF_REGISTER_SELFTEST("import.harvest_mining", [](Context& ctx) {
         {"gloamingforest:uberous_soil", "minecraft:dirt", {"", "minecraft:iron_shovel"}},                                                              // shovel
     };
     for (auto const& p : pairs) {
-        auto const* tf = blockOf(p.tf);
+        auto const* upsrc = blockOf(p.upsrc);
         auto const* va = blockOf(p.vanilla);
-        if (!tf || !va) {
-            ctx.check(false, std::string(p.tf) + " / " + p.vanilla + " not registered");
+        if (!upsrc || !va) {
+            ctx.check(false, std::string(p.upsrc) + " / " + p.vanilla + " not registered");
             continue;
         }
         for (auto const* tool : p.tools) {
-            double a = m.progress(tool, *tf) * hardnessOf(*tf), b = m.progress(tool, *va) * hardnessOf(*va);
+            double a = m.progress(tool, *upsrc) * hardnessOf(*upsrc), b = m.progress(tool, *va) * hardnessOf(*va);
             std::string with = std::string(*tool ? tool : "an empty hand");
-            ctx.info(std::string(p.tf) + " with " + with + ": progress x hardness " + num(a) + ", " + p.vanilla + " " + num(b));
-            ctx.check(near(a, b), std::string(p.tf) + " mines with " + with + " as " + p.vanilla + " (progress x hardness " + num(a) + ", vanilla " + num(b) + ")");
+            ctx.info(std::string(p.upsrc) + " with " + with + ": progress x hardness " + num(a) + ", " + p.vanilla + " " + num(b));
+            ctx.check(near(a, b), std::string(p.upsrc) + " mines with " + with + " as " + p.vanilla + " (progress x hardness " + num(a) + ", vanilla " + num(b) + ")");
         }
     }    // upstream's tools against vanilla tools of the same speed and tier
     struct Same {
-        char const*              tf;
+        char const*              upsrc;
         char const*              vanilla;
         std::vector<char const*> blocks;
     };
@@ -237,10 +237,10 @@ GF_REGISTER_SELFTEST("import.harvest_mining", [](Context& ctx) {
                 ctx.check(false, std::string(id) + " not registered");
                 continue;
             }
-            double a = m.progress(s.tf, *b), v = m.progress(s.vanilla, *b);
-            ctx.info(std::string(s.tf) + " on " + id + ": progress " + num(a) + " (speed " + num(Miner::speed(s.tf, *b)) + ", harvests " + (Miner::harvests(s.tf, *b) ? "yes" : "no") + "), "
+            double a = m.progress(s.upsrc, *b), v = m.progress(s.vanilla, *b);
+            ctx.info(std::string(s.upsrc) + " on " + id + ": progress " + num(a) + " (speed " + num(Miner::speed(s.upsrc, *b)) + ", harvests " + (Miner::harvests(s.upsrc, *b) ? "yes" : "no") + "), "
                      + s.vanilla + " " + num(v) + " (speed " + num(Miner::speed(s.vanilla, *b)) + ", harvests " + (Miner::harvests(s.vanilla, *b) ? "yes" : "no") + ")");
-            ctx.check(near(a, v), std::string(s.tf) + " mines " + id + " as " + s.vanilla + " (progress " + num(a) + ", vanilla " + num(v) + ")");
+            ctx.check(near(a, v), std::string(s.upsrc) + " mines " + id + " as " + s.vanilla + " (progress " + num(a) + ", vanilla " + num(v) + ")");
         }
     // the vanilla shears on upstream's leaves: Java's ShearsItem overrides the speed to 15 on #minecraft:leaves (upstream's leaves are
     // members). Bedrock's shears read minecraft:is_shears_item_destructible on a JSON block at 5, so the leaves' own

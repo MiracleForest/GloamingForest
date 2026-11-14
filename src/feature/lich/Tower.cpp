@@ -109,21 +109,21 @@ constexpr int kInteriorSpawns = 1;
 constexpr int kEmptySpawns    = 2;
 constexpr int kDenySpawns     = -2; // SpawnIndexProvider.Deny
 
-// piece type ids (TFStructurePieceTypes "TFLT" + suffix)
-constexpr char const* kFoyer      = "gloamingforest:TFLTTFoy";
-constexpr char const* kFoyerDecor = "gloamingforest:TFLTTFoyD";
-constexpr char const* kBase       = "gloamingforest:TFLTCTBase";
-constexpr char const* kBaseTrim   = "gloamingforest:TFLTCTTrim";
-constexpr char const* kSegment    = "gloamingforest:TFLTCTSeg";
-constexpr char const* kMobBridge  = "gloamingforest:TFLTMobBridge";
-constexpr char const* kWingBridge = "gloamingforest:TFLTBridge";
-constexpr char const* kWingRoof   = "gloamingforest:TFLTTRoof";
-constexpr char const* kWingBeard  = "gloamingforest:TFLTTBeard";
-constexpr char const* kWingRoom   = "gloamingforest:TFLTTRoom";
-constexpr char const* kRoomDecor  = "gloamingforest:TFLTTDecor";
-constexpr char const* kGallery    = "gloamingforest:TFLTTGallery";
-constexpr char const* kBossRoom   = "gloamingforest:TFLTTBoss";
-constexpr char const* kBossRoof   = "gloamingforest:TFLTTBossRoof";
+// piece type ids (GloamingStructurePieceTypes "GloamingLT" + suffix)
+constexpr char const* kFoyer      = "gloamingforest:GloamingLTTFoy";
+constexpr char const* kFoyerDecor = "gloamingforest:GloamingLTTFoyD";
+constexpr char const* kBase       = "gloamingforest:GloamingLTCTBase";
+constexpr char const* kBaseTrim   = "gloamingforest:GloamingLTCTTrim";
+constexpr char const* kSegment    = "gloamingforest:GloamingLTCTSeg";
+constexpr char const* kMobBridge  = "gloamingforest:GloamingLTMobBridge";
+constexpr char const* kWingBridge = "gloamingforest:GloamingLTBridge";
+constexpr char const* kWingRoof   = "gloamingforest:GloamingLTTRoof";
+constexpr char const* kWingBeard  = "gloamingforest:GloamingLTTBeard";
+constexpr char const* kWingRoom   = "gloamingforest:GloamingLTTRoom";
+constexpr char const* kRoomDecor  = "gloamingforest:GloamingLTTDecor";
+constexpr char const* kGallery    = "gloamingforest:GloamingLTTGallery";
+constexpr char const* kBossRoom   = "gloamingforest:GloamingLTTBoss";
+constexpr char const* kBossRoof   = "gloamingforest:GloamingLTTBossRoof";
 
 // ---- the generation context of the running layout ------------------------------------------------------
 
@@ -582,13 +582,13 @@ public:
 protected:
     void handleDataMarker(std::string const& label, BlockPos const& pos, Region& region, RandomSource& random, BlockBox const& chunk, Rotation) override {
         placeBlock(region, "minecraft:air", Json::object(), pos.x, pos.y, pos.z, chunk);
-        // TFStructureHelper#randomPlant: a potted oak / spruce / birch / jungle sapling, red or brown mushroom
+        // GloamingStructureHelper#randomPlant: a potted oak / spruce / birch / jungle sapling, red or brown mushroom
         static char const* const kPlants[] = {"minecraft:potted_oak_sapling",    "minecraft:potted_spruce_sapling", "minecraft:potted_birch_sapling",
                                               "minecraft:potted_jungle_sapling", "minecraft:potted_red_mushroom",   "minecraft:potted_brown_mushroom"};
         if (label == "sapling") {
             placeBlock(region, kPlants[random.nextInt(6)], Json::object(), pos.x, pos.y, pos.z, chunk);
         } else if (label == "tree") {
-            // TFStructureHelper#randomTree(nextInt(4)): oak, spruce, birch or a jungle tree without
+            // GloamingStructureHelper#randomTree(nextInt(4)): oak, spruce, birch or a jungle tree without
             // vines; a plant when the tree does not fit
             static char const* const kTrees[] = {"minecraft:oak", "minecraft:spruce", "minecraft:birch", "minecraft:jungle_tree_no_vine"};
             char const*              tree     = kTrees[random.nextInt(4)];
@@ -1537,10 +1537,10 @@ void Segment::process(JigsawPiece&, PieceList& pieces, RandomSource& random, Jig
 
 // ---- the yard (LichYardBox, LichPerimeterFence, LichYardGrave, LichYardLights) --------------------------
 
-constexpr char const* kYardPath   = "gloamingforest:TFLTPath";
-constexpr char const* kYardFence  = "gloamingforest:TFLTFence";
-constexpr char const* kYardGrave  = "gloamingforest:TFLTGrave";
-constexpr char const* kYardLights = "gloamingforest:TFLTLight";
+constexpr char const* kYardPath   = "gloamingforest:GloamingLTPath";
+constexpr char const* kYardFence  = "gloamingforest:GloamingLTFence";
+constexpr char const* kYardGrave  = "gloamingforest:GloamingLTGrave";
+constexpr char const* kYardLights = "gloamingforest:GloamingLTLight";
 
 /// Java's Direction for the yard pieces: the four horizontals and UP (LichYardBox's "no axis").
 struct YardDir {

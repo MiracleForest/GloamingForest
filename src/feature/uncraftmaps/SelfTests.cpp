@@ -465,8 +465,8 @@ GF_REGISTER_SELFTEST("uncraftmaps.maze_map", [](Context& ctx) -> ll::coro::CoroT
     ctx.check(items::isEmpty(cloneResult({&ore, &empty}, MapKind::Maze)), "the ore map is not a maze map");
     ctx.check(items::isEmpty(cloneResult({&maze, &maze, &empty}, MapKind::Maze)), "two filled maps don't clone");
     // the labyrinth snap: a labyrinth chunk around the Gloaming Forest test area
-    if (auto tf = gf::world::gloaming()) {
-        int dim = static_cast<int>(*tf);
+    if (auto upsrc = gf::world::gloaming()) {
+        int dim = static_cast<int>(*upsrc);
         bool found = false;
         for (int r = 0; r < 12 && !found; ++r)
             for (int dx = -r; dx <= r && !found; ++dx)

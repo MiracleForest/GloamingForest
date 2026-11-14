@@ -1,9 +1,9 @@
 block.gloamingforest.uncrafting_table=拆解台
 block.gloamingforest.uncrafting_table.disabled=此方块已被禁用
-commands.tffeature.biomepng.counts_header=%sx%s区域内生物群系方块数量统计（近似值）
-commands.tffeature.biomepng.progress=地图绘制进度：%s%%
-commands.tffeature.biomepng.save_failed=无法保存图像！请报告此问题！
-commands.tffeature.biomepng.save_success=图像已保存！
+commands.gloamingfeature.biomepng.counts_header=%sx%s区域内生物群系方块数量统计（近似值）
+commands.gloamingfeature.biomepng.progress=地图绘制进度：%s%%
+commands.gloamingfeature.biomepng.save_failed=无法保存图像！请报告此问题！
+commands.gloamingfeature.biomepng.save_success=图像已保存！
 config.gloamingforest.disable_uncrafting=禁用拆解
 config.gloamingforest.disable_uncrafting.tooltip=禁用拆解台的拆解功能。如果你需要对拆解台的功能作太多修改（或者你只是懒，我不评判），建议以此作为最后的手段。~LINEBREAK~请注意，一些特殊的拆解配方将不会被禁用，因为本模组依赖其完成其他操作。
 config.gloamingforest.disable_uncrafting_table=禁用拆解台

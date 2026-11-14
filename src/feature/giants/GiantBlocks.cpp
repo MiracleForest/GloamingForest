@@ -280,7 +280,7 @@ void installGiantBlocks() {
         .destroySpeed = [](ItemStack const&, Block const& block) -> std::optional<float> {
             auto bid = game::blockId(block);
             if (!isGiantBlock(bid)) return std::nullopt;
-            return giantPickDestroySpeed(bid, 4.0f); // TFToolMaterials.GIANT speed 4 on mineable/pickaxe
+            return giantPickDestroySpeed(bid, 4.0f); // GloamingToolMaterials.GIANT speed 4 on mineable/pickaxe
         },
         .repairWith = [](ItemStack const&, ItemStack const& material) { return game::items::idOf(material) == id::GiantCobblestone; },
     });

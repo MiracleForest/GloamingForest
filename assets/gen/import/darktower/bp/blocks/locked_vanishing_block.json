@@ -15,82 +15,82 @@
       "minecraft:destructible_by_mining": false,
       "minecraft:destructible_by_explosion": false,
       "minecraft:map_color": "#f7e9a3",
-      "minecraft:geometry": "geometry.tf.gloamingforest.block.locked_vanishing_block",
+      "minecraft:geometry": "geometry.gf.gloamingforest.block.locked_vanishing_block",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_towerdev_lock_on",
+          "texture": "gf_block_towerdev_lock_on",
           "render_method": "alpha_test"
         },
         "bottom": {
-          "texture": "tf_block_towerdev_lock_on",
+          "texture": "gf_block_towerdev_lock_on",
           "render_method": "alpha_test"
         },
         "bottom2": {
-          "texture": "tf_block_tower_device_level_1_towerdev_lock_on_1",
+          "texture": "gf_block_tower_device_level_1_towerdev_lock_on_1",
           "render_method": "alpha_test"
         },
         "bottom3": {
-          "texture": "tf_block_tower_device_level_2_towerdev_lock_on_2",
+          "texture": "gf_block_tower_device_level_2_towerdev_lock_on_2",
           "render_method": "alpha_test"
         },
         "east": {
-          "texture": "tf_block_towerdev_lock_on",
+          "texture": "gf_block_towerdev_lock_on",
           "render_method": "alpha_test"
         },
         "east2": {
-          "texture": "tf_block_tower_device_level_1_towerdev_lock_on_1",
+          "texture": "gf_block_tower_device_level_1_towerdev_lock_on_1",
           "render_method": "alpha_test"
         },
         "east3": {
-          "texture": "tf_block_tower_device_level_2_towerdev_lock_on_2",
+          "texture": "gf_block_tower_device_level_2_towerdev_lock_on_2",
           "render_method": "alpha_test"
         },
         "north": {
-          "texture": "tf_block_towerdev_lock_on",
+          "texture": "gf_block_towerdev_lock_on",
           "render_method": "alpha_test"
         },
         "north2": {
-          "texture": "tf_block_tower_device_level_1_towerdev_lock_on_1",
+          "texture": "gf_block_tower_device_level_1_towerdev_lock_on_1",
           "render_method": "alpha_test"
         },
         "north3": {
-          "texture": "tf_block_tower_device_level_2_towerdev_lock_on_2",
+          "texture": "gf_block_tower_device_level_2_towerdev_lock_on_2",
           "render_method": "alpha_test"
         },
         "south": {
-          "texture": "tf_block_towerdev_lock_on",
+          "texture": "gf_block_towerdev_lock_on",
           "render_method": "alpha_test"
         },
         "south2": {
-          "texture": "tf_block_tower_device_level_1_towerdev_lock_on_1",
+          "texture": "gf_block_tower_device_level_1_towerdev_lock_on_1",
           "render_method": "alpha_test"
         },
         "south3": {
-          "texture": "tf_block_tower_device_level_2_towerdev_lock_on_2",
+          "texture": "gf_block_tower_device_level_2_towerdev_lock_on_2",
           "render_method": "alpha_test"
         },
         "top": {
-          "texture": "tf_block_towerdev_lock_on",
+          "texture": "gf_block_towerdev_lock_on",
           "render_method": "alpha_test"
         },
         "top2": {
-          "texture": "tf_block_tower_device_level_1_towerdev_lock_on_1",
+          "texture": "gf_block_tower_device_level_1_towerdev_lock_on_1",
           "render_method": "alpha_test"
         },
         "top3": {
-          "texture": "tf_block_tower_device_level_2_towerdev_lock_on_2",
+          "texture": "gf_block_tower_device_level_2_towerdev_lock_on_2",
           "render_method": "alpha_test"
         },
         "west": {
-          "texture": "tf_block_towerdev_lock_on",
+          "texture": "gf_block_towerdev_lock_on",
           "render_method": "alpha_test"
         },
         "west2": {
-          "texture": "tf_block_tower_device_level_1_towerdev_lock_on_1",
+          "texture": "gf_block_tower_device_level_1_towerdev_lock_on_1",
           "render_method": "alpha_test"
         },
         "west3": {
-          "texture": "tf_block_tower_device_level_2_towerdev_lock_on_2",
+          "texture": "gf_block_tower_device_level_2_towerdev_lock_on_2",
           "render_method": "alpha_test"
         }
       },
@@ -100,82 +100,82 @@
       {
         "condition": "!q.block_state('gloamingforest:locked')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.locked_vanishing_block_unlocked",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.locked_vanishing_block_unlocked",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_towerdev_lock_off",
+              "texture": "gf_block_towerdev_lock_off",
               "render_method": "alpha_test"
             },
             "bottom": {
-              "texture": "tf_block_towerdev_lock_off",
+              "texture": "gf_block_towerdev_lock_off",
               "render_method": "alpha_test"
             },
             "bottom2": {
-              "texture": "tf_block_tower_device_level_1_towerdev_lock_off_1",
+              "texture": "gf_block_tower_device_level_1_towerdev_lock_off_1",
               "render_method": "alpha_test"
             },
             "bottom3": {
-              "texture": "tf_block_tower_device_level_2_towerdev_lock_off_2",
+              "texture": "gf_block_tower_device_level_2_towerdev_lock_off_2",
               "render_method": "alpha_test"
             },
             "east": {
-              "texture": "tf_block_towerdev_lock_off",
+              "texture": "gf_block_towerdev_lock_off",
               "render_method": "alpha_test"
             },
             "east2": {
-              "texture": "tf_block_tower_device_level_1_towerdev_lock_off_1",
+              "texture": "gf_block_tower_device_level_1_towerdev_lock_off_1",
               "render_method": "alpha_test"
             },
             "east3": {
-              "texture": "tf_block_tower_device_level_2_towerdev_lock_off_2",
+              "texture": "gf_block_tower_device_level_2_towerdev_lock_off_2",
               "render_method": "alpha_test"
             },
             "north": {
-              "texture": "tf_block_towerdev_lock_off",
+              "texture": "gf_block_towerdev_lock_off",
               "render_method": "alpha_test"
             },
             "north2": {
-              "texture": "tf_block_tower_device_level_1_towerdev_lock_off_1",
+              "texture": "gf_block_tower_device_level_1_towerdev_lock_off_1",
               "render_method": "alpha_test"
             },
             "north3": {
-              "texture": "tf_block_tower_device_level_2_towerdev_lock_off_2",
+              "texture": "gf_block_tower_device_level_2_towerdev_lock_off_2",
               "render_method": "alpha_test"
             },
             "south": {
-              "texture": "tf_block_towerdev_lock_off",
+              "texture": "gf_block_towerdev_lock_off",
               "render_method": "alpha_test"
             },
             "south2": {
-              "texture": "tf_block_tower_device_level_1_towerdev_lock_off_1",
+              "texture": "gf_block_tower_device_level_1_towerdev_lock_off_1",
               "render_method": "alpha_test"
             },
             "south3": {
-              "texture": "tf_block_tower_device_level_2_towerdev_lock_off_2",
+              "texture": "gf_block_tower_device_level_2_towerdev_lock_off_2",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_block_towerdev_lock_off",
+              "texture": "gf_block_towerdev_lock_off",
               "render_method": "alpha_test"
             },
             "top2": {
-              "texture": "tf_block_tower_device_level_1_towerdev_lock_off_1",
+              "texture": "gf_block_tower_device_level_1_towerdev_lock_off_1",
               "render_method": "alpha_test"
             },
             "top3": {
-              "texture": "tf_block_tower_device_level_2_towerdev_lock_off_2",
+              "texture": "gf_block_tower_device_level_2_towerdev_lock_off_2",
               "render_method": "alpha_test"
             },
             "west": {
-              "texture": "tf_block_towerdev_lock_off",
+              "texture": "gf_block_towerdev_lock_off",
               "render_method": "alpha_test"
             },
             "west2": {
-              "texture": "tf_block_tower_device_level_1_towerdev_lock_off_1",
+              "texture": "gf_block_tower_device_level_1_towerdev_lock_off_1",
               "render_method": "alpha_test"
             },
             "west3": {
-              "texture": "tf_block_tower_device_level_2_towerdev_lock_off_2",
+              "texture": "gf_block_tower_device_level_2_towerdev_lock_off_2",
               "render_method": "alpha_test"
             }
           },
@@ -186,82 +186,82 @@
       {
         "condition": "q.block_state('gloamingforest:locked')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.locked_vanishing_block",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.locked_vanishing_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_towerdev_lock_on",
+              "texture": "gf_block_towerdev_lock_on",
               "render_method": "alpha_test"
             },
             "bottom": {
-              "texture": "tf_block_towerdev_lock_on",
+              "texture": "gf_block_towerdev_lock_on",
               "render_method": "alpha_test"
             },
             "bottom2": {
-              "texture": "tf_block_tower_device_level_1_towerdev_lock_on_1",
+              "texture": "gf_block_tower_device_level_1_towerdev_lock_on_1",
               "render_method": "alpha_test"
             },
             "bottom3": {
-              "texture": "tf_block_tower_device_level_2_towerdev_lock_on_2",
+              "texture": "gf_block_tower_device_level_2_towerdev_lock_on_2",
               "render_method": "alpha_test"
             },
             "east": {
-              "texture": "tf_block_towerdev_lock_on",
+              "texture": "gf_block_towerdev_lock_on",
               "render_method": "alpha_test"
             },
             "east2": {
-              "texture": "tf_block_tower_device_level_1_towerdev_lock_on_1",
+              "texture": "gf_block_tower_device_level_1_towerdev_lock_on_1",
               "render_method": "alpha_test"
             },
             "east3": {
-              "texture": "tf_block_tower_device_level_2_towerdev_lock_on_2",
+              "texture": "gf_block_tower_device_level_2_towerdev_lock_on_2",
               "render_method": "alpha_test"
             },
             "north": {
-              "texture": "tf_block_towerdev_lock_on",
+              "texture": "gf_block_towerdev_lock_on",
               "render_method": "alpha_test"
             },
             "north2": {
-              "texture": "tf_block_tower_device_level_1_towerdev_lock_on_1",
+              "texture": "gf_block_tower_device_level_1_towerdev_lock_on_1",
               "render_method": "alpha_test"
             },
             "north3": {
-              "texture": "tf_block_tower_device_level_2_towerdev_lock_on_2",
+              "texture": "gf_block_tower_device_level_2_towerdev_lock_on_2",
               "render_method": "alpha_test"
             },
             "south": {
-              "texture": "tf_block_towerdev_lock_on",
+              "texture": "gf_block_towerdev_lock_on",
               "render_method": "alpha_test"
             },
             "south2": {
-              "texture": "tf_block_tower_device_level_1_towerdev_lock_on_1",
+              "texture": "gf_block_tower_device_level_1_towerdev_lock_on_1",
               "render_method": "alpha_test"
             },
             "south3": {
-              "texture": "tf_block_tower_device_level_2_towerdev_lock_on_2",
+              "texture": "gf_block_tower_device_level_2_towerdev_lock_on_2",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_block_towerdev_lock_on",
+              "texture": "gf_block_towerdev_lock_on",
               "render_method": "alpha_test"
             },
             "top2": {
-              "texture": "tf_block_tower_device_level_1_towerdev_lock_on_1",
+              "texture": "gf_block_tower_device_level_1_towerdev_lock_on_1",
               "render_method": "alpha_test"
             },
             "top3": {
-              "texture": "tf_block_tower_device_level_2_towerdev_lock_on_2",
+              "texture": "gf_block_tower_device_level_2_towerdev_lock_on_2",
               "render_method": "alpha_test"
             },
             "west": {
-              "texture": "tf_block_towerdev_lock_on",
+              "texture": "gf_block_towerdev_lock_on",
               "render_method": "alpha_test"
             },
             "west2": {
-              "texture": "tf_block_tower_device_level_1_towerdev_lock_on_1",
+              "texture": "gf_block_tower_device_level_1_towerdev_lock_on_1",
               "render_method": "alpha_test"
             },
             "west3": {
-              "texture": "tf_block_tower_device_level_2_towerdev_lock_on_2",
+              "texture": "gf_block_tower_device_level_2_towerdev_lock_on_2",
               "render_method": "alpha_test"
             }
           },

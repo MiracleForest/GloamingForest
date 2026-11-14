@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.blockchain_goblin",
   "layer": {
     "name": "blockchain_goblin",
-    "field": "TFModelLayers.BLOCKCHAIN_GOBLIN",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.BLOCKCHAIN_GOBLIN, BlockChainGoblinModel::checkForPack);"
+    "field": "GloamingModelLayers.BLOCKCHAIN_GOBLIN",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.BLOCKCHAIN_GOBLIN, BlockChainGoblinModel::checkForPack);"
   },
   "texture_size": [32, 32],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/blockgoblin",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/blockgoblin.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/blockgoblin.png"
     }
   ],
   "bones": [

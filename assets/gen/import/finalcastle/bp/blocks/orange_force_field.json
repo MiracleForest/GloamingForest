@@ -20,14 +20,14 @@
       "minecraft:destructible_by_explosion": false,
       "minecraft:light_emission": 2,
       "minecraft:map_color": "#d87f33",
-      "minecraft:geometry": "geometry.tf.gloamingforest.block.orange_force_field",
+      "minecraft:geometry": "geometry.gf.gloamingforest.block.orange_force_field",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_orange_force_field",
+          "texture": "gf_block_orange_force_field",
           "render_method": "blend"
         },
         "pane": {
-          "texture": "tf_block_orange_force_field",
+          "texture": "gf_block_orange_force_field",
           "render_method": "blend"
         }
       },

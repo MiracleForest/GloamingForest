@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.harbinger_cube",
   "layer": {
     "name": "harbinger_cube",
-    "field": "TFModelLayers.HARBINGER_CUBE",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.HARBINGER_CUBE, HarbingerCubeModel::create);"
+    "field": "GloamingModelLayers.HARBINGER_CUBE",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.HARBINGER_CUBE, HarbingerCubeModel::create);"
   },
   "texture_size": [128, 64],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/apocalypse2",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/apocalypse2.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/apocalypse2.png"
     }
   ],
   "bones": [

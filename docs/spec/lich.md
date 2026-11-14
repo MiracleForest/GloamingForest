@@ -12,13 +12,13 @@ mark adaptation notes.
 | Net channels | `lich.*` |
 | Config | none (upstream has no Lich key; `bosses` (F8) holds boss drop chests and the multiplayer adjuster) |
 | Contracts | landmark (F6), structure + template (F7), boss + entity + projectile (F8), loot + combat + fx (F10) |
-| Java sources | `entity/boss/Lich.java`, `entity/ai/goal/Lich{PopMobs,AbsorbMinions,Shadows,Minions}Goal.java`, `entity/monster/{LichMinion,DeathTome,RisingZombie}.java`, `entity/projectile/{LichBolt,LichBomb,TomeBolt,TFThrowable}.java`, `block/entity/spawner/LichSpawnerBlockEntity.java`, `init/{TFEntities,TFAttributes,TFDamageTypes}.java`, `loot/conditions/IsMinionCondition.java`, `client/renderer/entity/LichRenderer.java`, `client/particle/AngryLichParticle.java`, `world/components/structures/type/LichTowerStructure.java`, `world/components/structures/lichtowerrevamp/*.java` (20 files), `world/components/structures/lichtower/*.java` (16 legacy piece classes, implemented by F7) |
+| Java sources | `entity/boss/Lich.java`, `entity/ai/goal/Lich{PopMobs,AbsorbMinions,Shadows,Minions}Goal.java`, `entity/monster/{LichMinion,DeathTome,RisingZombie}.java`, `entity/projectile/{LichBolt,LichBomb,TomeBolt,GloamingThrowable}.java`, `block/entity/spawner/LichSpawnerBlockEntity.java`, `init/{GloamingEntities,GloamingAttributes,GloamingDamageTypes}.java`, `loot/conditions/IsMinionCondition.java`, `client/renderer/entity/LichRenderer.java`, `client/particle/AngryLichParticle.java`, `world/components/structures/type/LichTowerStructure.java`, `world/components/structures/lichtowerrevamp/*.java` (20 files), `world/components/structures/lichtower/*.java` (16 legacy piece classes, implemented by F7) |
 | Data | `loot_table/chests/tower_*.json`, `loot_table/entities/{lich,lich_minion,death_tome*,rising_zombie}.json`, `damage_type/{leaf_brain,lich_bolt,lich_bomb,lost_words,schooled}.json`, `worldgen/structure/lich_tower.json`, `worldgen/structure_set/lich_tower.json`, `gloaming/template_definition/lich_tower/**` (165 files), tags `damage_type/breaks_lich_shields`, `entity_type/lich_deflects_phase_2`, `entity_type/lich_poppables`, `banner_pattern/pattern_item/lich` |
 
 Not owned here (string references only, R2): `gloamingforest:lich_boss_spawner`, `gloamingforest:lich_trophy`, the
 scepters `gloamingforest:gloaming_scepter` / `lifedrain_scepter` / `zombie_scepter` / `fortification_scepter` (U9; the
 Lich only holds them as display items), the attribute `gloamingforest:max_shield_strength` and the fortification shield
-attachment (U9), the sounds `entity.gloamingforest.fortification_shield.add` / `.block` / `.break` (U9; TFSounds
+attachment (U9), the sounds `entity.gloamingforest.fortification_shield.add` / `.block` / `.break` (U9; GloamingSounds
 `SHIELD_ADD` / `SHIELD_BLOCK` / `SHIELD_BREAK`) and the particles `gloamingforest:shield_break` and
 `gloamingforest:magic_effect` (U9), the `gloamingforest:ominous_flame` particle, ominous candles and lightable blocks
 (U22), the candelabra, skull candles, sinister spawner, chiseled canopy shelf, wrought iron fence, magic painting (U22),
@@ -28,7 +28,7 @@ mason jar / firefly jar (U6/U4), `gloamingforest:bold_stone_pillar` and `twisted
 
 ## 1. Entity `gloamingforest:lich` (Gloaming Lich)
 
-`TFEntities.LICH`: MONSTER, 0.8 x 2.5, eye height 1.95, not fire immune, tracking 80, interval 3. Spawn egg
+`GloamingEntities.LICH`: MONSTER, 0.8 x 2.5, eye height 1.95, not fire immune, tracking 80, interval 3. Spawn egg
 `gloamingforest:lich_spawn_egg` (`0xaca489` / `0x360472`, "Gloaming Lich Spawn Egg"). Placement ON_GROUND /
 MOTION_BLOCKING_NO_LEAVES / `checkMonsterSpawnRules`. Name `entity.gloamingforest.lich` "Gloaming Lich". Entity tags:
 `minecraft:skeletons`, `#gloamingforest:bosses`; `#gloamingforest:lich_poppables` excludes it (the tag removes `#c:bosses`, which contains `#gloamingforest:bosses`).
@@ -514,34 +514,34 @@ those structures and any saved starts load; new lich towers never generate the l
 
 | Id | Class |
 |---|---|
-| `gloamingforest:TFLTMai` | TowerMainComponent (legacy main tower: 15 wide, 55-86 tall, spiral stairs, lich spawner on top) |
-| `gloamingforest:TFLTWin` | TowerWingComponent |
-| `gloamingforest:TFLTBri` | TowerBridgeComponent |
-| `gloamingforest:TFLTOut` | TowerOutbuildingComponent |
-| `gloamingforest:TFLTBea` | TowerBeardComponent |
-| `gloamingforest:TFLTBA` | TowerBeardAttachedComponent |
-| `gloamingforest:TFLTRoo` | TowerRoofComponent |
-| `gloamingforest:TFLTRAS` | TowerRoofAttachedSlabComponent |
-| `gloamingforest:TFLTRF` | TowerRoofFenceComponent |
-| `gloamingforest:TFLTRGF` | TowerRoofGableForwardsComponent |
-| `gloamingforest:TFLTRP` | TowerRoofPointyComponent |
-| `gloamingforest:TFLTRPO` | TowerRoofPointyOverhangComponent |
-| `gloamingforest:TFLTRS` | TowerRoofSlabComponent |
-| `gloamingforest:TFLTRSF` | TowerRoofSlabForwardsComponent |
-| `gloamingforest:TFLTRSt` | TowerRoofStairsComponent |
-| `gloamingforest:TFLTRStO` | TowerRoofStairsOverhangComponent |
+| `gloamingforest:GloamingLTMai` | TowerMainComponent (legacy main tower: 15 wide, 55-86 tall, spiral stairs, lich spawner on top) |
+| `gloamingforest:GloamingLTWin` | TowerWingComponent |
+| `gloamingforest:GloamingLTBri` | TowerBridgeComponent |
+| `gloamingforest:GloamingLTOut` | TowerOutbuildingComponent |
+| `gloamingforest:GloamingLTBea` | TowerBeardComponent |
+| `gloamingforest:GloamingLTBA` | TowerBeardAttachedComponent |
+| `gloamingforest:GloamingLTRoo` | TowerRoofComponent |
+| `gloamingforest:GloamingLTRAS` | TowerRoofAttachedSlabComponent |
+| `gloamingforest:GloamingLTRF` | TowerRoofFenceComponent |
+| `gloamingforest:GloamingLTRGF` | TowerRoofGableForwardsComponent |
+| `gloamingforest:GloamingLTRP` | TowerRoofPointyComponent |
+| `gloamingforest:GloamingLTRPO` | TowerRoofPointyOverhangComponent |
+| `gloamingforest:GloamingLTRS` | TowerRoofSlabComponent |
+| `gloamingforest:GloamingLTRSF` | TowerRoofSlabForwardsComponent |
+| `gloamingforest:GloamingLTRSt` | TowerRoofStairsComponent |
+| `gloamingforest:GloamingLTRStO` | TowerRoofStairsOverhangComponent |
 
-Revamp piece types registered by `TFStructurePieceTypes`, with names built as `"TFLT" + suffix`. **owners.tsv does not
+Revamp piece types registered by `GloamingStructurePieceTypes`, with names built as `"GloamingLT" + suffix`. **owners.tsv does not
 list them**: `tools/spec/owners.ps1` does not match the string concatenation. The ownership below is **proposed, pending
 an owners.tsv fix by F0/A8**. It is tracked in [issue #4](https://github.com/MiracleForest/GloamingForest/issues/4).
 The existing rules would assign the `lichtowerrevamp` package to U21 once the regex is fixed. Until owners.tsv has the
 rows, these ids are outside the manifest (R1), so U21 should wait for the fix or confirm with the coordinator
-before registering them. The ids are `gloamingforest:TFLTTFoy` (LichTowerFoyer), `TFLTCTBase` (LichTowerBase), `TFLTCTTrim`
-(LichTowerBaseTrim), `TFLTCTSeg` (LichTowerSegment), `TFLTMobBridge` (LichTowerSpawnerBridge), `TFLTBridge`
-(LichTowerWingBridge), `TFLTTRoof` (LichTowerWingRoof), `TFLTTBeard` (LichTowerWingBeard), `TFLTTRoom`
-(LichTowerWingRoom), `TFLTTDecor` (LichTowerRoomDecor), `TFLTTGallery` (LichTowerMagicGallery), `TFLTTFoyD`
-(LichTowerFoyerDecor), `TFLTTBoss` (LichBossRoom), `TFLTTBossRoof` (LichBossRoof), `TFLTFence`
-(LichPerimeterFence), `TFLTPath` (LichYardBox), `TFLTGrave` (LichYardGrave), `TFLTLight` (LichYardLights).
+before registering them. The ids are `gloamingforest:GloamingLTTFoy` (LichTowerFoyer), `GloamingLTCTBase` (LichTowerBase), `GloamingLTCTTrim`
+(LichTowerBaseTrim), `GloamingLTCTSeg` (LichTowerSegment), `GloamingLTMobBridge` (LichTowerSpawnerBridge), `GloamingLTBridge`
+(LichTowerWingBridge), `GloamingLTTRoof` (LichTowerWingRoof), `GloamingLTTBeard` (LichTowerWingBeard), `GloamingLTTRoom`
+(LichTowerWingRoom), `GloamingLTTDecor` (LichTowerRoomDecor), `GloamingLTTGallery` (LichTowerMagicGallery), `GloamingLTTFoyD`
+(LichTowerFoyerDecor), `GloamingLTTBoss` (LichBossRoom), `GloamingLTTBossRoof` (LichBossRoof), `GloamingLTFence`
+(LichPerimeterFence), `GloamingLTPath` (LichYardBox), `GloamingLTGrave` (LichYardGrave), `GloamingLTLight` (LichYardLights).
 
 The structure type id `gloamingforest:lich_tower` is owned here.
 

@@ -52,7 +52,7 @@ import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
-import gloamingforest.config.TFConfig;
+import gloamingforest.config.GloamingConfig;
 import gloamingforest.data.tags.ItemTagGenerator;
 import gloamingforest.inventory.UncraftingContainer;
 import gloamingforest.inventory.UncraftingMenu;
@@ -76,16 +76,16 @@ final class DataDumps {
 	static final String upstream = "gloamingforest";
 
 	/** Whether a resource comes from upstream's own data pack (the mod jar). */
-	static boolean fromTf(Resource r) {
+	static boolean fromGloaming(Resource r) {
 		return r.sourcePackId().contains(upstream);
 	}
 
 	/** Ids of the upstream data pack's files under data/<ns>/<dir>/ (all namespaces), sorted. */
-	static TreeMap<String, ResourceLocation> tfData(MinecraftServer server, String dir, TreeSet<String> packs) {
+	static TreeMap<String, ResourceLocation> gloamingData(MinecraftServer server, String dir, TreeSet<String> packs) {
 		TreeMap<String, ResourceLocation> out = new TreeMap<>();
 		Map<ResourceLocation, Resource> res = server.getResourceManager().listResources(dir, loc -> loc.getPath().endsWith(".json"));
 		for (Map.Entry<ResourceLocation, Resource> e : res.entrySet()) {
-			if (!fromTf(e.getValue())) continue;
+			if (!fromGloaming(e.getValue())) continue;
 			packs.add(e.getValue().sourcePackId());
 			String path = e.getKey().getPath();
 			ResourceLocation id = ResourceLocation.fromNamespaceAndPath(e.getKey().getNamespace(), path.substring(dir.length() + 1, path.length() - 5));
@@ -218,7 +218,7 @@ final class DataDumps {
 		Map<String, ItemStack> entityWeapons = new LinkedHashMap<>();
 		entityWeapons.put("looting_3", enchanted(Items.DIAMOND_SWORD, enchantments, Enchantments.LOOTING, 3));
 		TreeSet<String> packs = new TreeSet<>();
-		TreeMap<String, ResourceLocation> ids = tfData(server, "loot_table", packs);
+		TreeMap<String, ResourceLocation> ids = gloamingData(server, "loot_table", packs);
 
 		Map<String, Object> tables = Json.obj();
 		for (Map.Entry<String, ResourceLocation> e : ids.entrySet()) {
@@ -390,11 +390,11 @@ final class DataDumps {
 		MinecraftServer server = ctx.server;
 		RegistryOps<JsonElement> ops = Stacks.ops(server);
 		TreeSet<String> packs = new TreeSet<>();
-		TreeMap<String, ResourceLocation> tfIds = tfData(server, "recipe", packs);
+		TreeMap<String, ResourceLocation> gloamingIds = gloamingData(server, "recipe", packs);
 		TreeMap<String, RecipeHolder<?>> holders = new TreeMap<>();
 		for (RecipeHolder<?> h : server.getRecipeManager().getRecipes()) {
 			String id = h.id().toString();
-			if (tfIds.containsKey(id) || h.id().getNamespace().equals(upstream)) holders.put(id, h);
+			if (gloamingIds.containsKey(id) || h.id().getNamespace().equals(upstream)) holders.put(id, h);
 		}
 		Map<String, Object> recipes = Json.obj();
 		for (Map.Entry<String, RecipeHolder<?>> e : holders.entrySet()) {
@@ -449,7 +449,7 @@ final class DataDumps {
 			probes.add(new Json.Inline(m));
 		}
 		List<Object> notLoaded = Json.arr();
-		for (String id : tfIds.keySet()) if (!holders.containsKey(id)) notLoaded.add(id);
+		for (String id : gloamingIds.keySet()) if (!holders.containsKey(id)) notLoaded.add(id);
 		Map<String, Object> out = Json.obj();
 		out.put("note", "Every recipe of upstream's data pack (any namespace) and every gloamingforest:* recipe: type, serializer, getResultItem (id, count), isSpecial, "
 			+ "width/height of shaped recipes, cookingTime/experience of cooking recipes, getIngredients() (each the item ids of Ingredient#getItems in order, tags expanded; [] = empty slot) "
@@ -644,16 +644,16 @@ final class DataDumps {
 		}
 
 		Map<String, Object> config = Json.obj();
-		config.put("uncraftingXpCostMultiplier", TFConfig.uncraftingXpCostMultiplier);
-		config.put("repairingXpCostMultiplier", TFConfig.repairingXpCostMultiplier);
-		config.put("allowShapelessUncrafting", TFConfig.allowShapelessUncrafting);
-		config.put("disableIngredientSwitching", TFConfig.disableIngredientSwitching);
-		config.put("disableUncraftingRecipes", new ArrayList<>(TFConfig.disableUncraftingRecipes));
-		config.put("reverseRecipeBlacklist", TFConfig.reverseRecipeBlacklist);
-		config.put("blacklistedUncraftingModIds", new ArrayList<>(TFConfig.blacklistedUncraftingModIds));
-		config.put("flipUncraftingModIdList", TFConfig.flipUncraftingModIdList);
-		config.put("disableUncraftingOnly", TFConfig.disableUncraftingOnly);
-		config.put("disableEntireTable", TFConfig.disableEntireTable);
+		config.put("uncraftingXpCostMultiplier", GloamingConfig.uncraftingXpCostMultiplier);
+		config.put("repairingXpCostMultiplier", GloamingConfig.repairingXpCostMultiplier);
+		config.put("allowShapelessUncrafting", GloamingConfig.allowShapelessUncrafting);
+		config.put("disableIngredientSwitching", GloamingConfig.disableIngredientSwitching);
+		config.put("disableUncraftingRecipes", new ArrayList<>(GloamingConfig.disableUncraftingRecipes));
+		config.put("reverseRecipeBlacklist", GloamingConfig.reverseRecipeBlacklist);
+		config.put("blacklistedUncraftingModIds", new ArrayList<>(GloamingConfig.blacklistedUncraftingModIds));
+		config.put("flipUncraftingModIdList", GloamingConfig.flipUncraftingModIdList);
+		config.put("disableUncraftingOnly", GloamingConfig.disableUncraftingOnly);
+		config.put("disableEntireTable", GloamingConfig.disableEntireTable);
 		Map<String, Object> out = Json.obj();
 		out.put("note", "upstream's UncraftingMenu itself (default config, every UNCRAFTING_STUFFS value in config). items: for every item, a stack of 64 in the input slot, "
 			+ "unrecipeInCycle cycled through every recipe it offers (ingredientsInCycle 0): the recipe, inputCount (items consumed), cost (XP levels, getUncraftingCost) and the "

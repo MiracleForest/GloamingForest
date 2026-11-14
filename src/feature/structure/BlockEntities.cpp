@@ -454,14 +454,14 @@ void reportRefusal(BlockSource& source, Painting& painting, BlockPos const& cove
     std::snprintf(buf, sizeof(buf), "; game box %.4f %.4f %.4f .. %.4f %.4f %.4f", b.min.x, b.min.y, b.min.z, b.max.x, b.max.y, b.max.z);
     line += buf;
     if (variant) {
-        double tf[6];
-        paintings::boundingBox(covered, direction, *variant, tf);
-        std::snprintf(buf, sizeof(buf), ", upstream box %.4f %.4f %.4f .. %.4f %.4f %.4f", tf[0], tf[1], tf[2], tf[3], tf[4], tf[5]);
+        double upsrc[6];
+        paintings::boundingBox(covered, direction, *variant, upsrc);
+        std::snprintf(buf, sizeof(buf), ", upstream box %.4f %.4f %.4f .. %.4f %.4f %.4f", upsrc[0], upsrc[1], upsrc[2], upsrc[3], upsrc[4], upsrc[5]);
         line += buf;
         line += "; cells:";
-        for (int x = pure::mthFloor(tf[0]); x < pure::mthCeil(tf[3]); x++)
-            for (int y = pure::mthFloor(tf[1]); y < pure::mthCeil(tf[4]); y++)
-                for (int z = pure::mthFloor(tf[2]); z < pure::mthCeil(tf[5]); z++) {
+        for (int x = pure::mthFloor(upsrc[0]); x < pure::mthCeil(upsrc[3]); x++)
+            for (int y = pure::mthFloor(upsrc[1]); y < pure::mthCeil(upsrc[4]); y++)
+                for (int z = pure::mthFloor(upsrc[2]); z < pure::mthCeil(upsrc[5]); z++) {
                     BlockPos     cell{x, y, z};
                     BlockPos     wall{x - stepX(direction), y, z - stepZ(direction)};
                     Block const& front = source.getBlock(cell);
@@ -701,7 +701,7 @@ enum class ParticleShape { Simple, Dust, DustTransition, BlockState, Item, Color
 
 /// The particle types of Minecraft 1.21.1 (ParticleTypes: the SimpleParticleTypes, which take no
 /// options, and the option types; read from the server jar's ParticleTypes.<clinit>) and upstream 4.8
-/// (TFParticleType), by id; nullopt for an unknown id (Registry#byNameCodec fails).
+/// (GloamingParticleType), by id; nullopt for an unknown id (Registry#byNameCodec fails).
 std::optional<ParticleShape> particleShape(std::string const& id) {
     static std::unordered_map<std::string, ParticleShape> const table = [] {
         std::unordered_map<std::string, ParticleShape> t;

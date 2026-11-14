@@ -12,7 +12,7 @@
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// U3 trees: upstream's trunk placers, foliage placer and tree decorators (TFFeatureModifiers), registered
+// U3 trees: upstream's trunk placers, foliage placer and tree decorators (GloamingFeatureModifiers), registered
 // by id with the features contract (F5) so the minecraft:tree feature of upstream's tree JSON uses them.
 #include "feature/trees/Trees.h"
 
@@ -70,7 +70,7 @@ void addOnce(PosIndex& index, std::vector<BlockPos>& list, BlockPos const& p) {
     if (index.keys.insert(posKey(p)).second) list.push_back(p);
 }
 
-/// TFTreeFeature#place's decoration set (set3) while runDecorator runs for it.
+/// GloamingTreeFeature#place's decoration set (set3) while runDecorator runs for it.
 thread_local std::vector<BlockPos>* tDecorations = nullptr;
 
 /// TreeDecorator.Context#setBlock: the decoration setter (the features kit's, which records it for

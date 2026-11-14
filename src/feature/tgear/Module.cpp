@@ -582,13 +582,13 @@ combat::Verdict onIncoming(combat::DamageInfo& d) {
         // never the explosion, fire or magic damage a projectile causes
         // (an upstream projectile's hit deals its own upstream damage type: the types upstream's projectiles deal in
         // onHitEntity; not the ice bomb's area freeze, the falling ice or the mortar's blast)
-        static std::unordered_set<std::string> const kTfImpacts{
+        static std::unordered_set<std::string> const kGloamingImpacts{
             "gloamingforest:lich_bolt",      "gloamingforest:lich_bomb",     "gloamingforest:moonworm",
             "gloamingforest:leaf_brain",     "gloamingforest:thrown_block",  "gloamingforest:thrown_axe",
             "gloamingforest:thrown_pickaxe", "gloamingforest:lost_words",    "gloamingforest:schooled",
             "gloamingforest:gloaming_scepter", "gloamingforest:snowball_fight", "gloamingforest:spiked",
         };
-        bool impact = core::tgear::isProjectileImpactType(d.type) || (simulated && kTfImpacts.contains(d.type));
+        bool impact = core::tgear::isProjectileImpactType(d.type) || (simulated && kGloamingImpacts.contains(d.type));
         if (impact && rollPerfectDodge(d.victim, projectile)) {
             {
                 std::lock_guard lock(state().mutex);
@@ -736,7 +736,7 @@ void updateRedThread(BlockSource& region, BlockPos const& pos) {
     if (auto const* b = game::blockWithStates(ids::kRedThread, faces)) game::setBlock(region, pos, *b);
 }
 
-// ---- red thread vision (TFDataAttachments.TRAVELLERS_GOGGLES_RED_THREAD_VISION) -------------------------
+// ---- red thread vision (GloamingDataAttachments.TRAVELLERS_GOGGLES_RED_THREAD_VISION) -------------------------
 
 std::string uuidOf(Player const& p) { return p.getUuid().asString(); }
 
@@ -868,7 +868,7 @@ void setZoom(Player& player, bool zoom, float fov) {
 bool redThreadVision(Player const& player) {
     std::lock_guard lock(state().mutex);
     auto            it = state().vision.find(uuidOf(player));
-    return it == state().vision.end() || it->second; // TFDataAttachments default: true
+    return it == state().vision.end() || it->second; // GloamingDataAttachments default: true
 }
 
 bool toggleRedThreadVision(Player& player) {

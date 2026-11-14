@@ -19,22 +19,22 @@
       },
       "minecraft:tags": ["minecraft:is_pickaxe_item_destructible"],
       "minecraft:collision_box": false,
-      "minecraft:geometry": "geometry.tf.gloamingforest.block.miniature.dark_tower",
+      "minecraft:geometry": "geometry.gf.gloamingforest.block.miniature.dark_tower",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_wood_planks_darkwood_3",
+          "texture": "gf_block_wood_planks_darkwood_3",
           "render_method": "opaque"
         },
         "encased": {
-          "texture": "tf_block_encased_towerwood",
+          "texture": "gf_block_encased_towerwood",
           "render_method": "opaque"
         },
         "netherrack": {
-          "texture": "tf_vanilla_block_netherrack",
+          "texture": "gf_vanilla_block_netherrack",
           "render_method": "opaque"
         },
         "planks": {
-          "texture": "tf_block_wood_planks_darkwood_3",
+          "texture": "gf_block_wood_planks_darkwood_3",
           "render_method": "opaque"
         }
       },
@@ -48,22 +48,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.miniature.dark_tower",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.miniature.dark_tower",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_darkwood_3",
+              "texture": "gf_block_wood_planks_darkwood_3",
               "render_method": "opaque"
             },
             "encased": {
-              "texture": "tf_block_encased_towerwood",
+              "texture": "gf_block_encased_towerwood",
               "render_method": "opaque"
             },
             "netherrack": {
-              "texture": "tf_vanilla_block_netherrack",
+              "texture": "gf_vanilla_block_netherrack",
               "render_method": "opaque"
             },
             "planks": {
-              "texture": "tf_block_wood_planks_darkwood_3",
+              "texture": "gf_block_wood_planks_darkwood_3",
               "render_method": "opaque"
             }
           },
@@ -79,22 +79,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.miniature.dark_tower",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.miniature.dark_tower",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_darkwood_3",
+              "texture": "gf_block_wood_planks_darkwood_3",
               "render_method": "opaque"
             },
             "encased": {
-              "texture": "tf_block_encased_towerwood",
+              "texture": "gf_block_encased_towerwood",
               "render_method": "opaque"
             },
             "netherrack": {
-              "texture": "tf_vanilla_block_netherrack",
+              "texture": "gf_vanilla_block_netherrack",
               "render_method": "opaque"
             },
             "planks": {
-              "texture": "tf_block_wood_planks_darkwood_3",
+              "texture": "gf_block_wood_planks_darkwood_3",
               "render_method": "opaque"
             }
           },
@@ -110,22 +110,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.miniature.dark_tower",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.miniature.dark_tower",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_darkwood_3",
+              "texture": "gf_block_wood_planks_darkwood_3",
               "render_method": "opaque"
             },
             "encased": {
-              "texture": "tf_block_encased_towerwood",
+              "texture": "gf_block_encased_towerwood",
               "render_method": "opaque"
             },
             "netherrack": {
-              "texture": "tf_vanilla_block_netherrack",
+              "texture": "gf_vanilla_block_netherrack",
               "render_method": "opaque"
             },
             "planks": {
-              "texture": "tf_block_wood_planks_darkwood_3",
+              "texture": "gf_block_wood_planks_darkwood_3",
               "render_method": "opaque"
             }
           },
@@ -141,22 +141,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.miniature.dark_tower",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.miniature.dark_tower",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_darkwood_3",
+              "texture": "gf_block_wood_planks_darkwood_3",
               "render_method": "opaque"
             },
             "encased": {
-              "texture": "tf_block_encased_towerwood",
+              "texture": "gf_block_encased_towerwood",
               "render_method": "opaque"
             },
             "netherrack": {
-              "texture": "tf_vanilla_block_netherrack",
+              "texture": "gf_vanilla_block_netherrack",
               "render_method": "opaque"
             },
             "planks": {
-              "texture": "tf_block_wood_planks_darkwood_3",
+              "texture": "gf_block_wood_planks_darkwood_3",
               "render_method": "opaque"
             }
           },

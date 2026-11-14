@@ -1,7 +1,7 @@
 {
   "parent": "minecraft:recipes/root",
   "criteria": {
-    "has_tf_oak": {
+    "has_gf_oak": {
       "conditions": {
         "items": [
           {
@@ -21,7 +21,7 @@
   "requirements": [
     [
       "has_the_recipe",
-      "has_tf_oak"
+      "has_gf_oak"
     ]
   ],
   "rewards": {

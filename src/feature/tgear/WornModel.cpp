@@ -95,7 +95,7 @@ int wornModelBits(Player const& player, bool zooming) {
         if (id == ids::kBelt || (id == ids::kWings && hasModifier(legs, ids::kSwapHotbar))) bits |= kWornBelt;
     }
     if (zooming) bits |= kWornZoom;
-    bool overlayOn = true; // TFConfig.firstPersonGloveOverlay's default
+    bool overlayOn = true; // GloamingConfig.firstPersonGloveOverlay's default
     {
         std::lock_guard lock(overlay().mutex);
         if (auto it = overlay().firstPersonGloves.find(uidOf(player)); it != overlay().firstPersonGloves.end()) overlayOn = it->second;

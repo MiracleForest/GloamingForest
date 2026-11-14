@@ -75,7 +75,7 @@
           "geometry": "minecraft:geometry.full_block",
           "material_instances": {
             "*": {
-              "texture": "tf_trees_gloaming_oak_leaves_item",
+              "texture": "gf_trees_gloaming_oak_leaves_item",
               "render_method": "alpha_test"
             }
           }
@@ -124,7 +124,7 @@
           "geometry": "minecraft:geometry.full_block",
           "material_instances": {
             "*": {
-              "texture": "tf_trees_canopy_leaves_item",
+              "texture": "gf_trees_canopy_leaves_item",
               "render_method": "alpha_test"
             }
           }
@@ -173,7 +173,7 @@
           "geometry": "minecraft:geometry.full_block",
           "material_instances": {
             "*": {
-              "texture": "tf_trees_mangrove_leaves_item",
+              "texture": "gf_trees_mangrove_leaves_item",
               "render_method": "alpha_test"
             }
           }
@@ -222,7 +222,7 @@
           "geometry": "minecraft:geometry.full_block",
           "material_instances": {
             "*": {
-              "texture": "tf_trees_rainbow_oak_leaves_item",
+              "texture": "gf_trees_rainbow_oak_leaves_item",
               "render_method": "alpha_test"
             }
           }
@@ -268,14 +268,14 @@
         "op": "add",
         "path": "/minecraft:block/components/minecraft:item_visual",
         "value": {
-          "geometry": "geometry.tf.gloamingforest.block.time_leaves",
+          "geometry": "geometry.gf.gloamingforest.block.time_leaves",
           "material_instances": {
             "*": {
-              "texture": "tf_trees_time_leaves_item",
+              "texture": "gf_trees_time_leaves_item",
               "render_method": "alpha_test"
             },
             "all": {
-              "texture": "tf_trees_time_leaves_item",
+              "texture": "gf_trees_time_leaves_item",
               "render_method": "alpha_test"
             }
           }
@@ -321,14 +321,14 @@
         "op": "add",
         "path": "/minecraft:block/components/minecraft:item_visual",
         "value": {
-          "geometry": "geometry.tf.gloamingforest.block.transformation_leaves",
+          "geometry": "geometry.gf.gloamingforest.block.transformation_leaves",
           "material_instances": {
             "*": {
-              "texture": "tf_trees_transformation_leaves_item",
+              "texture": "gf_trees_transformation_leaves_item",
               "render_method": "alpha_test"
             },
             "all": {
-              "texture": "tf_trees_transformation_leaves_item",
+              "texture": "gf_trees_transformation_leaves_item",
               "render_method": "alpha_test"
             }
           }
@@ -374,14 +374,14 @@
         "op": "add",
         "path": "/minecraft:block/components/minecraft:item_visual",
         "value": {
-          "geometry": "geometry.tf.gloamingforest.block.mining_leaves",
+          "geometry": "geometry.gf.gloamingforest.block.mining_leaves",
           "material_instances": {
             "*": {
-              "texture": "tf_trees_mining_leaves_item",
+              "texture": "gf_trees_mining_leaves_item",
               "render_method": "alpha_test"
             },
             "all": {
-              "texture": "tf_trees_mining_leaves_item",
+              "texture": "gf_trees_mining_leaves_item",
               "render_method": "alpha_test"
             }
           }
@@ -427,14 +427,14 @@
         "op": "add",
         "path": "/minecraft:block/components/minecraft:item_visual",
         "value": {
-          "geometry": "geometry.tf.gloamingforest.block.sorting_leaves",
+          "geometry": "geometry.gf.gloamingforest.block.sorting_leaves",
           "material_instances": {
             "*": {
-              "texture": "tf_trees_sorting_leaves_item",
+              "texture": "gf_trees_sorting_leaves_item",
               "render_method": "alpha_test"
             },
             "all": {
-              "texture": "tf_trees_sorting_leaves_item",
+              "texture": "gf_trees_sorting_leaves_item",
               "render_method": "alpha_test"
             }
           }
@@ -483,7 +483,7 @@
           "geometry": "minecraft:geometry.full_block",
           "material_instances": {
             "*": {
-              "texture": "tf_trees_dark_leaves_item",
+              "texture": "gf_trees_dark_leaves_item",
               "render_method": "alpha_test"
             }
           }

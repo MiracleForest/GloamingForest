@@ -10,20 +10,20 @@
 #   chest-screen.png       a container opened as a player opens it: the client mod's chest screen
 #                          (local, remote-mod: Java's generic_54 layout) or, on a vanilla client,
 #                          the game's chest screen through the proxy (remote-vanilla)
-#   tf-double-chest.png    upstream's gloaming oak double chest (F11's families declare upstream's chests as this
+#   upsrc-double-chest.png    upstream's gloaming oak double chest (F11's families declare upstream's chests as this
 #                          contract's containers), right-clicked: the client mod's 54-slot "Large
 #                          Chest", the right half's slots first (local, remote-mod); on a vanilla
 #                          client the game's large chest screen with the same slots (remote-vanilla:
 #                          the chest minecart proxy behind a chest pair of the client)
-#   tf-double-chest-taken.png  remote-vanilla: the large chest screen after two clicks moved the
+#   upsrc-double-chest-taken.png  remote-vanilla: the large chest screen after two clicks moved the
 #                          naga scales from screen slot 0 to the first hotbar slot (the host's
-#                          combat.ui_tf_double_chest_taken checks the right half and the inventory)
-#   tf-trapped-chest.png   upstream's canopy trapped chest, right-clicked: the client mod's chest screen, the
+#                          combat.ui_gf_double_chest_taken checks the right half and the inventory)
+#   upsrc-trapped-chest.png   upstream's canopy trapped chest, right-clicked: the client mod's chest screen, the
 #                          game's chest screen through the proxy on a vanilla client
 #   fx-particles.png       upstream's large_flame through gf::fx in front of the player: the client mod gets
 #                          fx.particle (F12's native sink first, else the resource pack effect), a
 #                          vanilla client the game's particle packets
-#   fx-portal.png          upstream's portal particles (TFPortalBlock#animateTick, minecraft:portal) over a
+#   fx-portal.png          upstream's portal particles (GloamingPortalBlock#animateTick, minecraft:portal) over a
 #                          3-block row ahead: specks rising above it and falling back onto it
 #                          (Java's PortalParticle: F10's own effect gf:portal with variable.direction,
 #                          Java's blue-violet (0.9f, 0.3f, 1) * f, f = 0.4..1, not Bedrock's pink
@@ -44,7 +44,7 @@ $ready = if ($script:Mode -eq 'local') { 'GloamingForest world ready' } else { '
 Wait-LogLine $ready 120 | Out-Null
 Save-Screenshot 'hud' | Out-Null
 
-foreach ($t in 'combat.loot_tf_functions', 'combat.loot_number_rounding', 'combat.loot_set_contents', 'combat.fx', 'combat.fx_effect_variables', 'combat.progression',
+foreach ($t in 'combat.loot_gf_functions', 'combat.loot_number_rounding', 'combat.loot_set_contents', 'combat.fx', 'combat.fx_effect_variables', 'combat.progression',
     'combat.missing_advancement', 'combat.damage_type_tags', 'combat.loot_tags') {
     $r = Invoke-SelfTest $t
     if ($r.Fail -gt 0) { throw "$t failed" }
@@ -128,18 +128,18 @@ if ($script:Mode -eq 'remote-vanilla') {
             Click $at[0] $at[1] -Relative
             Start-Sleep -Milliseconds 700
         }
-        Save-Screenshot 'tf-double-chest-taken' | Out-Null
+        Save-Screenshot 'upsrc-double-chest-taken' | Out-Null
         $m = Get-LogMark
-        Send-HostConsole 'gloamingforest selftest "combat.ui_tf_double_chest_taken"'
-        $line = Wait-LogLine 'SELFTEST (PASS|FAIL) combat\.ui_tf_double_chest_taken.*' 30 -Since $m
+        Send-HostConsole 'gloamingforest selftest "combat.ui_gf_double_chest_taken"'
+        $line = Wait-LogLine 'SELFTEST (PASS|FAIL) combat\.ui_gf_double_chest_taken.*' 30 -Since $m
         Write-Step "large chest item request: $line"
         if ($line -match 'SELFTEST FAIL') { throw $line }
     }
-    Show-ContainerTest 'combat.ui_tf_double_chest' 'tf-double-chest' 'inventory: \S+ opened the container at .* \(vanilla screen, large chest\)' -Interact $takeStack
-    Show-ContainerTest 'combat.ui_tf_trapped_chest' 'tf-trapped-chest' 'inventory: \S+ opened the container at .* \(vanilla screen\)'
+    Show-ContainerTest 'combat.ui_gf_double_chest' 'upsrc-double-chest' 'inventory: \S+ opened the container at .* \(vanilla screen, large chest\)' -Interact $takeStack
+    Show-ContainerTest 'combat.ui_gf_trapped_chest' 'upsrc-trapped-chest' 'inventory: \S+ opened the container at .* \(vanilla screen\)'
 } else {
-    Show-ContainerTest 'combat.ui_tf_double_chest' 'tf-double-chest' 'combat ui: tf double chest opened for' 'inventory\.chest'
-    Show-ContainerTest 'combat.ui_tf_trapped_chest' 'tf-trapped-chest' 'combat ui: tf trapped chest opened for' 'inventory\.chest'
+    Show-ContainerTest 'combat.ui_gf_double_chest' 'upsrc-double-chest' 'combat ui: upsrc double chest opened for' 'inventory\.chest'
+    Show-ContainerTest 'combat.ui_gf_trapped_chest' 'upsrc-trapped-chest' 'combat ui: upsrc trapped chest opened for' 'inventory\.chest'
 }
 
 # fx particles in front of the player (5 s)

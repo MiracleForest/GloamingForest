@@ -40,15 +40,15 @@ inline constexpr char kHedgeMaze[]        = "gloamingforest:hedge_maze";
 inline constexpr char kHollowTree[]       = "gloamingforest:hollow_tree";
 inline constexpr char kSwampHollowTree[]  = "gloamingforest:swamp_hollow_tree";
 inline constexpr char kFallenTrunk[]      = "gloamingforest:fallen_trunk";
-inline constexpr char kTFHill[]           = "gloamingforest:TFHill";
-inline constexpr char kTFHedge[]          = "gloamingforest:TFHedge";
-inline constexpr char kTFFallenTrunk[]    = "gloamingforest:TFFallenTrunk";
-inline constexpr char kTFHTTr[]           = "gloamingforest:TFHTTr";
-inline constexpr char kTFHTLB[]           = "gloamingforest:TFHTLB";
-inline constexpr char kTFHTMB[]           = "gloamingforest:TFHTMB";
-inline constexpr char kTFHTSB[]           = "gloamingforest:TFHTSB";
-inline constexpr char kTFHTRo[]           = "gloamingforest:TFHTRo";
-inline constexpr char kTFHTLD[]           = "gloamingforest:TFHTLD";
+inline constexpr char kTFHill[]           = "gloamingforest:GloamingHill";
+inline constexpr char kTFHedge[]          = "gloamingforest:GloamingHedge";
+inline constexpr char kTFFallenTrunk[]    = "gloamingforest:GloamingFallenTrunk";
+inline constexpr char kTFHTTr[]           = "gloamingforest:GloamingHTTr";
+inline constexpr char kTFHTLB[]           = "gloamingforest:GloamingHTLB";
+inline constexpr char kTFHTMB[]           = "gloamingforest:GloamingHTMB";
+inline constexpr char kTFHTSB[]           = "gloamingforest:GloamingHTSB";
+inline constexpr char kTFHTRo[]           = "gloamingforest:GloamingHTRo";
+inline constexpr char kTFHTLD[]           = "gloamingforest:GloamingHTLD";
 
 // ---- helpers (Helpers.cpp) -----------------------------------------------------------------------------
 /// StructurePiece#setOrientation of a vanilla piece (mirror / rotation from the facing).
@@ -69,7 +69,7 @@ void setVanillaOrientation(st::Piece& piece, std::optional<st::Orientation> faci
 [[nodiscard]] Json simpleProvider(std::string const& javaId, Json const& props = Json::object());
 /// LeavesBlock.DISTANCE set on a leaves block (unchanged for other blocks).
 [[nodiscard]] Block const& withLeafDistance(Block const& block, int distance);
-/// TFLootTables#generateChest / StructurePiece#createChest at a world position with a facing (any
+/// GloamingLootTables#generateChest / StructurePiece#createChest at a world position with a facing (any
 /// chest-like block id); nothing when `sbb` does not hold `pos`.
 void placeContainerAt(Region& region, BlockBox const& sbb, BlockPos const& pos, std::string const& blockId, std::optional<st::Orientation> facing,
                       std::string const& tableId, std::int64_t seed);
@@ -86,9 +86,9 @@ void placeSpawnerAt(Region& region, BlockBox const& sbb, BlockPos const& pos, st
 [[nodiscard]] bool naturalStart(Json const& startData, int chunkX, int chunkZ, int x, int z, int foundX, int foundZ);
 
 // ---- pieces ------------------------------------------------------------------------------------------
-/// HedgeMazeComponent ("gloamingforest:TFHedge") at (x, y, z) (HedgeMazeStructure: start + (1, 4, 1)).
+/// HedgeMazeComponent ("gloamingforest:GloamingHedge") at (x, y, z) (HedgeMazeStructure: start + (1, 4, 1)).
 [[nodiscard]] std::unique_ptr<st::Piece> makeHedgeMaze(int genDepth, int x, int y, int z);
-/// HollowHillComponent ("gloamingforest:TFHill") for HollowHillStructure#getFirstPiece.
+/// HollowHillComponent ("gloamingforest:GloamingHill") for HollowHillStructure#getFirstPiece.
 [[nodiscard]] std::unique_ptr<st::Piece> makeHollowHill(int hillSize, int x, int y, int z, std::string const& speleothemConfig);
 
 /// HollowTreeStructure's configuration (the structure JSON's providers, loot, monster).

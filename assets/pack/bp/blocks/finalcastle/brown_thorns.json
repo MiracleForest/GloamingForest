@@ -3,20 +3,20 @@
     "components": {
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_brown_thorns_side",
+          "texture": "gf_block_brown_thorns_side",
           "render_method": "alpha_test"
         },
         "t_gloamingforest_block_brown_thorns_side": {
-          "texture": "tf_block_brown_thorns_side",
+          "texture": "gf_block_brown_thorns_side",
           "render_method": "alpha_test"
         },
         "t_gloamingforest_block_brown_thorns_top": {
-          "texture": "tf_block_brown_thorns_top",
+          "texture": "gf_block_brown_thorns_top",
           "render_method": "alpha_test"
         }
       },
       "minecraft:geometry": {
-        "identifier": "geometry.tf.gloamingforest.block.brown_thorns.multipart",
+        "identifier": "geometry.gf.gloamingforest.block.brown_thorns.multipart",
         "bone_visibility": {
           "part13": "(q.block_state('gloamingforest:axis') == 'y' || q.block_state('gloamingforest:axis') == 'x') && !q.block_state('gloamingforest:west')",
           "part19": "(q.block_state('gloamingforest:axis') == 'y' || q.block_state('gloamingforest:axis') == 'z') && !q.block_state('gloamingforest:north')",

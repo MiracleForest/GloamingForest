@@ -34,7 +34,7 @@ enum class BreakRule {
     /// canDestroyBlock && getBlockEntity(pos) == null (ChargeAttackGoal: the minoshroom's charge):
     /// also spares every block with a Java block entity (the vanilla block actors Java has too, not
     /// flower pots, note blocks, cauldrons or pistons; upstream's chests, signs, trophies, spawners,
-    /// candles, jars, drying racks, ... of TFBlockEntities).
+    /// candles, jars, drying racks, ... of GloamingBlockEntities).
     SpareBlockEntities,
 };
 /// Whether a mob may break the block at `pos` under `rule` (no mobGriefing check: the callers ask

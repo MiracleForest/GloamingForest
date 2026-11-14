@@ -23,7 +23,7 @@
       "minecraft:geometry": "minecraft:geometry.full_block",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_arctic_fur_block_ctm",
+          "texture": "gf_block_arctic_fur_block_ctm",
           "render_method": "opaque"
         }
       }

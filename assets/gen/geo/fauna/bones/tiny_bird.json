@@ -3,26 +3,26 @@
   "geometry": "geometry.gloamingforest.tiny_bird",
   "layer": {
     "name": "tiny_bird",
-    "field": "TFModelLayers.TINY_BIRD",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.TINY_BIRD, TinyBirdModel::checkForPack);"
+    "field": "GloamingModelLayers.TINY_BIRD",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.TINY_BIRD, TinyBirdModel::checkForPack);"
   },
   "texture_size": [32, 32],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/tinybirdblue",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/tinybirdblue.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/tinybirdblue.png"
     },
     {
       "bedrock": "textures/gloamingforest/entity/tinybirdbrown",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/tinybirdbrown.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/tinybirdbrown.png"
     },
     {
       "bedrock": "textures/gloamingforest/entity/tinybirdgold",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/tinybirdgold.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/tinybirdgold.png"
     },
     {
       "bedrock": "textures/gloamingforest/entity/tinybirdred",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/tinybirdred.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/tinybirdred.png"
     }
   ],
   "bones": [

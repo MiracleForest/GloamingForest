@@ -215,7 +215,7 @@ void addShields(Actor& actor, int amount, bool temp) {
 void breakShield(Actor& actor, bool expired) {
     auto& e = entryOf(actor);
     e.shields.breakOne();
-    if (actor.isPlayer() && !expired) gf::stats::award(static_cast<Player&>(actor), "gloamingforest:tf_shields_broken");
+    if (actor.isPlayer() && !expired) gf::stats::award(static_cast<Player&>(actor), "gloamingforest:gf_shields_broken");
     auto& r = randomOf(actor);
     playSound(actor, expired ? "entity.gloamingforest.fortification_shield.expire" : "entity.gloamingforest.fortification_shield.break", 1.0F,
               (r.nextFloat() - r.nextFloat()) * 0.3F + 1.0F);

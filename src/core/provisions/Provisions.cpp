@@ -1,9 +1,9 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/init/TFItems.java
+//   src/main/java/gloamingforest/init/GloamingItems.java
 //   src/main/java/gloamingforest/block/Experiment115Block.java
 //   src/main/java/gloamingforest/potions/FrostedEffect.java
-//   src/main/java/gloamingforest/init/TFJukeboxSongs.java
+//   src/main/java/gloamingforest/init/GloamingJukeboxSongs.java
 //   src/main/java/gloamingforest/item/ChainBlockItem.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part

@@ -23,15 +23,15 @@
         "destroy_chance_modifier": 100
       },
       "minecraft:collision_box": false,
-      "minecraft:geometry": "geometry.tf.gloamingforest.block.fallen_leaves1",
+      "minecraft:geometry": "geometry.gf.gloamingforest.block.fallen_leaves1",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_vanilla_block_oak_leaves",
+          "texture": "gf_vanilla_block_oak_leaves",
           "render_method": "alpha_test",
           "tint_method": "default_foliage"
         },
         "all": {
-          "texture": "tf_vanilla_block_oak_leaves",
+          "texture": "gf_vanilla_block_oak_leaves",
           "render_method": "alpha_test",
           "tint_method": "default_foliage"
         }
@@ -46,15 +46,15 @@
       {
         "condition": "q.block_state('gloamingforest:layers') == 1",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.fallen_leaves1",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.fallen_leaves1",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_oak_leaves",
+              "texture": "gf_vanilla_block_oak_leaves",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             },
             "all": {
-              "texture": "tf_vanilla_block_oak_leaves",
+              "texture": "gf_vanilla_block_oak_leaves",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             }
@@ -68,15 +68,15 @@
       {
         "condition": "q.block_state('gloamingforest:layers') == 2",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.fallen_leaves2",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.fallen_leaves2",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_oak_leaves",
+              "texture": "gf_vanilla_block_oak_leaves",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             },
             "all": {
-              "texture": "tf_vanilla_block_oak_leaves",
+              "texture": "gf_vanilla_block_oak_leaves",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             }
@@ -90,15 +90,15 @@
       {
         "condition": "q.block_state('gloamingforest:layers') == 3",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.fallen_leaves3",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.fallen_leaves3",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_oak_leaves",
+              "texture": "gf_vanilla_block_oak_leaves",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             },
             "all": {
-              "texture": "tf_vanilla_block_oak_leaves",
+              "texture": "gf_vanilla_block_oak_leaves",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             }
@@ -112,15 +112,15 @@
       {
         "condition": "q.block_state('gloamingforest:layers') == 4",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.fallen_leaves4",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.fallen_leaves4",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_oak_leaves",
+              "texture": "gf_vanilla_block_oak_leaves",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             },
             "all": {
-              "texture": "tf_vanilla_block_oak_leaves",
+              "texture": "gf_vanilla_block_oak_leaves",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             }
@@ -134,15 +134,15 @@
       {
         "condition": "q.block_state('gloamingforest:layers') == 5",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.fallen_leaves5",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.fallen_leaves5",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_oak_leaves",
+              "texture": "gf_vanilla_block_oak_leaves",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             },
             "all": {
-              "texture": "tf_vanilla_block_oak_leaves",
+              "texture": "gf_vanilla_block_oak_leaves",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             }
@@ -156,15 +156,15 @@
       {
         "condition": "q.block_state('gloamingforest:layers') == 6",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.fallen_leaves6",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.fallen_leaves6",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_oak_leaves",
+              "texture": "gf_vanilla_block_oak_leaves",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             },
             "all": {
-              "texture": "tf_vanilla_block_oak_leaves",
+              "texture": "gf_vanilla_block_oak_leaves",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             }
@@ -178,15 +178,15 @@
       {
         "condition": "q.block_state('gloamingforest:layers') == 7",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.fallen_leaves7",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.fallen_leaves7",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_oak_leaves",
+              "texture": "gf_vanilla_block_oak_leaves",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             },
             "all": {
-              "texture": "tf_vanilla_block_oak_leaves",
+              "texture": "gf_vanilla_block_oak_leaves",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             }
@@ -200,15 +200,15 @@
       {
         "condition": "q.block_state('gloamingforest:layers') == 8",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.fallen_leaves8",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.fallen_leaves8",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_oak_leaves",
+              "texture": "gf_vanilla_block_oak_leaves",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             },
             "all": {
-              "texture": "tf_vanilla_block_oak_leaves",
+              "texture": "gf_vanilla_block_oak_leaves",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             }

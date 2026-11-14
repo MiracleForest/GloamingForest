@@ -1326,9 +1326,9 @@ GF_REGISTER_SELFTEST("families.hanging_chain", [](Context& ctx) -> ll::coro::Cor
     (void)box;
 });
 
-GF_REGISTER_SELFTEST("families.tf_blocks", [](Context& ctx) -> ll::coro::CoroTask<> {
+GF_REGISTER_SELFTEST("families.gf_blocks", [](Context& ctx) -> ll::coro::CoroTask<> {
     // upstream's own blocks through the kit (F1's skeleton + tools/families): a snowy berry bush keeps
-    // upstream's shape per age and layers (TFBushBlock: a grown bush collides as a full block, snow or
+    // upstream's shape per age and layers (GloamingBushBlock: a grown bush collides as a full block, snow or
     // not), the chests are containers with Java's stats, the magic leaves' colours by position
     // (ColorHandler, the client mod's tint), Java's sign line width shared with the editor
     auto const* bush = gf::game::blockWith("gloamingforest:blackberry_bush");
@@ -1351,7 +1351,7 @@ GF_REGISTER_SELFTEST("families.tf_blocks", [](Context& ctx) -> ll::coro::CoroTas
     auto b1 = at(p, 0, 0, 0);
     ctx.require(ctx.setBlock(b1, "gloamingforest:blackberry_bush", {{"gloamingforest:age", 3}, {fam::state::Layers, 1}}), "a grown blackberry bush with one snow layer");
     co_await ctx.ticks(2);
-    ctx.check(std::fabs(top(b1) - 1.0f) < 0.01f, "it collides as a full block (TFBushBlock, " + std::to_string(top(b1)) + ")");
+    ctx.check(std::fabs(top(b1) - 1.0f) < 0.01f, "it collides as a full block (GloamingBushBlock, " + std::to_string(top(b1)) + ")");
     ctx.require(ctx.setBlock(b1, "gloamingforest:blackberry_bush", {{"gloamingforest:age", 0}, {fam::state::Layers, 0}}), "a young bush without snow");
     co_await ctx.ticks(1);
     ctx.check(std::fabs(top(b1) - 0.5f) < 0.01f, "a young bush collides 8 px high (" + std::to_string(top(b1)) + ")");

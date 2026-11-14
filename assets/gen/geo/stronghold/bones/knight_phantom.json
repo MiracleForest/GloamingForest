@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.knight_phantom",
   "layer": {
     "name": "knight_phantom",
-    "field": "TFModelLayers.KNIGHT_PHANTOM",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.KNIGHT_PHANTOM, KnightPhantomModel::create);"
+    "field": "GloamingModelLayers.KNIGHT_PHANTOM",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.KNIGHT_PHANTOM, KnightPhantomModel::create);"
   },
   "texture_size": [64, 32],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/phantomskeleton",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/phantomskeleton.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/phantomskeleton.png"
     }
   ],
   "bones": [

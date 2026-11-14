@@ -3,7 +3,7 @@
 // golden row lists that Bedrock has a component for, read from the unit's behavior pack entities
 // (assets/pack/bp/entities/fauna/<name>.json): health, movement speed, attack damage, follow range,
 // step height, the collision box and the experience reward; and the client entities' spawn egg
-// colours (TFEntities' egg colours). The live actors are checked by the selftest fauna.attributes.
+// colours (GloamingEntities' egg colours). The live actors are checked by the selftest fauna.attributes.
 #include <gtest/gtest.h>
 
 #include <nlohmann/json.hpp>

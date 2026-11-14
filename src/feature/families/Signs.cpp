@@ -773,7 +773,7 @@ GlobalPos posOf(Json const& ctx) {
     return GlobalPos{p[0].get<int>(), p[1].get<int>(), p[2].get<int>(), p[3].get<int>()};
 }
 
-/// The wood of a sign (TFWoodTypes: gloaming_oak, canopy, ...): params.wood, F1's woodType
+/// The wood of a sign (GloamingWoodTypes: gloaming_oak, canopy, ...): params.wood, F1's woodType
 /// ("canopy_wood_type"), or the id (as tools/families' wood_of).
 std::string woodOf(Entry const& e) {
     if (auto w = e.str("wood"); !w.empty()) return w;

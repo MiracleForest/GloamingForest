@@ -94,7 +94,7 @@ PieceBeard pieceBeard(landmark::ext::StartPiece const& piece) {
         if (fn) return fn(piece);
     }
     // 2. upstream 4.8's piece types
-    if (auto tf = beard::tfPieceBeard(piece.type, piece.box, piece.tag)) return {tf->modifier, nameOf(tf->adjustment), tf->box, tf->groundLevelDelta};
+    if (auto upsrc = beard::gloamingPieceBeard(piece.type, piece.box, piece.tag)) return {upsrc->modifier, nameOf(upsrc->adjustment), upsrc->box, upsrc->groundLevelDelta};
     // 3. F7's bases that implement PieceBeardifierModifier
     if (!piece.type.empty() && piece.tag.is_object() && piece.tag.contains("id")) {
         if (auto loaded = structure::loadPiece(piece.tag)) {

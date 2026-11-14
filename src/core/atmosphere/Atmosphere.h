@@ -1,9 +1,9 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
 //   src/main/java/gloamingforest/client/GloamingForestRenderInfo.java
-//   src/main/java/gloamingforest/client/renderer/TFSkyRenderer.java
+//   src/main/java/gloamingforest/client/renderer/GloamingSkyRenderer.java
 //   src/main/java/gloamingforest/client/event/FogHandler.java
-//   src/main/java/gloamingforest/client/renderer/TFWeatherRenderer.java
+//   src/main/java/gloamingforest/client/renderer/GloamingWeatherRenderer.java
 //   src/main/java/gloamingforest/util/IntervalUtils.java
 //   src/main/java/gloamingforest/client/event/ClientGameEvents.java
 //   src/main/resources/assets/gloamingforest/shaders/core/aurora/aurora.fsh
@@ -116,12 +116,12 @@ template <class Fetch>
 /// white darkened by the daylight (GloamingForestRenderInfo has no sunrise colour, so the clouds
 /// get no sunset tint).
 [[nodiscard]] Rgb cloudColor(float timeOfDay, float rainLevel, float thunderLevel);
-/// The void plate of TFSkyRenderer (LevelRenderer's dark buffer: buildSkyDisc(-16) moved up by 12):
+/// The void plate of GloamingSkyRenderer (LevelRenderer's dark buffer: buildSkyDisc(-16) moved up by 12):
 /// a triangle fan around (0, y, 0), y = -4 relative to the camera, radius 512, as quads (the last
 /// corner repeated), corners at -180, -135, ..., 180 degrees.
 [[nodiscard]] std::vector<std::array<Vec3f, 4>> voidPlateQuads();
 /// Whether the void plate of voidPlateQuads covers the direction `dir` from the camera (any length):
-/// the ray goes down and meets the plate (y -4) inside its octagon. TFSkyRenderer draws the plate
+/// the ray goes down and meets the plate (y -4) inside its octagon. GloamingSkyRenderer draws the plate
 /// after the stars without depth, so a star in such a direction is hidden (Vibrant Visuals draws the
 /// stars in the world pass, where the plate cannot cover them: they are left out instead).
 [[nodiscard]] bool underVoidPlate(Vec3f dir);
@@ -136,13 +136,13 @@ struct FoggedVertex {
 /// vertex with its fog value for the sky fog planes `fogStart`..`fogEnd`: drawn opaque, black at
 /// the centre and the fog colour towards the horizon, as Java's dark buffer is.
 [[nodiscard]] std::vector<std::array<FoggedVertex, 4>> voidPlateFogged(float fogStart, float fogEnd, int rings);
-/// upstream's sky seen in the direction dir (unit vector), as TFSkyRenderer draws it over the clear colour:
+/// upstream's sky seen in the direction dir (unit vector), as GloamingSkyRenderer draws it over the clear colour:
 /// the vanilla sky disc (y 16 above the camera, radius 512) in the sky colour, fogged by the sky fog
 /// (ogStart..ogEnd, cylindrical distance of the disc's vertex: max(length(xz), 16)); the fog
 /// colour (FogRenderer's clear colour) where the disc does not reach (at and below the horizon).
 [[nodiscard]] Rgb skyDomeColour(Vec3f dir, Rgb sky, Rgb fog, float fogStart, float fogEnd);
 
-/// ResourceLocation#tryParse as TFConfig#getValidAuroraBiomes reads an id: "namespace:path" (or
+/// ResourceLocation#tryParse as GloamingConfig#getValidAuroraBiomes reads an id: "namespace:path" (or
 /// "path" in "minecraft"), the namespace of [a-z0-9_.-], the path of [a-z0-9_.-/]; nullopt when
 /// invalid.
 [[nodiscard]] std::optional<std::string> parseResourceLocation(std::string_view id);
@@ -188,19 +188,19 @@ private:
     FogPlanes mSky{}, mTerrain{};
 };
 
-// ---- sky (TFSkyRenderer) ----------------------------------------------------------------------------------
+// ---- sky (GloamingSkyRenderer) ----------------------------------------------------------------------------------
 
-/// TFSkyRenderer#drawStars: LevelRenderer#drawStars with 3000 tries (RandomSource.create(10842)),
+/// GloamingSkyRenderer#drawStars: LevelRenderer#drawStars with 3000 tries (RandomSource.create(10842)),
 /// each a quad of 4 vertices at distance 100 (Java's in-place Vector3f#add makes each corner the sum
 /// of the corners before it, as vanilla 1.21 draws them). Positions before the sky rotation.
 [[nodiscard]] std::vector<std::array<Vec3f, 4>> starQuads();
-/// The star rotation of TFSkyRenderer#renderSky: Y by -90 degrees, then X by timeOfDay * 360.
+/// The star rotation of GloamingSkyRenderer#renderSky: Y by -90 degrees, then X by timeOfDay * 360.
 [[nodiscard]] Vec3f rotateStar(Vec3f v, float timeOfDay);
-/// TFSkyRenderer: the void plate (the vanilla dark buffer at +12) is drawn when the camera eye is
+/// GloamingSkyRenderer: the void plate (the vanilla dark buffer at +12) is drawn when the camera eye is
 /// below the dimension's minimum build height.
 [[nodiscard]] inline bool drawsVoidPlate(double eyeY, int minBuildHeight) { return eyeY - minBuildHeight < 0.0; }
 
-// ---- locked-biome weather (TFWeatherRenderer) -------------------------------------------------------------
+// ---- locked-biome weather (GloamingWeatherRenderer) -------------------------------------------------------------
 
 enum class Effect { None, Blizzard, Mosquito, Ashes, DarkStream, BigRain, Sparkles };
 /// The texture of an effect (resource pack path, upstream's textures/environment/<name>.png).
@@ -219,7 +219,7 @@ enum class Effect { None, Blizzard, Mosquito, Ashes, DarkStream, BigRain, Sparkl
 /// The square around the viewer (15 blocks) sampled for a locked biome (isNearLockedBiome).
 inline constexpr int kLockedBiomeScan = 15;
 
-/// One weather column, as TFWeatherRenderer#renderEffect draws it (positions relative to the camera).
+/// One weather column, as GloamingWeatherRenderer#renderEffect draws it (positions relative to the camera).
 struct Column {
     Effect   effect = Effect::None;
     float    x0 = 0, z0 = 0, x1 = 0, z1 = 0; ///< bottom-left and bottom-right corners (camera relative)
@@ -263,7 +263,7 @@ using Interval = std::pair<int, int>;
 /// boxes (box, protected) that intersect `pBox`, at (x, z).
 [[nodiscard]] std::vector<Interval> sparkleIntervals(int x, int z, BlockBox const& pBox, std::vector<std::pair<BlockBox, bool>> const& boxes);
 
-/// TFWeatherRenderer#tickRain's Ur-Ghast rain: rises by 0.1 a tick to 1 while the Ur-Ghast is in
+/// GloamingWeatherRenderer#tickRain's Ur-Ghast rain: rises by 0.1 a tick to 1 while the Ur-Ghast is in
 /// its tantrum (`alive` set that tick), else falls by 0.02 to 0.
 [[nodiscard]] float tickUrGhastRain(float rain, bool alive);
 /// tickRain's rain level: max(level rain, Ur-Ghast rain), halved without fancy graphics.

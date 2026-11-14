@@ -19,31 +19,31 @@
       "minecraft:geometry": "minecraft:geometry.full_block",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_shield_outside",
+          "texture": "gf_block_shield_outside",
           "render_method": "opaque"
         },
         "up": {
-          "texture": "tf_block_shield_inside",
+          "texture": "gf_block_shield_inside",
           "render_method": "opaque"
         },
         "down": {
-          "texture": "tf_block_shield_outside",
+          "texture": "gf_block_shield_outside",
           "render_method": "opaque"
         },
         "north": {
-          "texture": "tf_block_shield_outside",
+          "texture": "gf_block_shield_outside",
           "render_method": "opaque"
         },
         "south": {
-          "texture": "tf_block_shield_outside",
+          "texture": "gf_block_shield_outside",
           "render_method": "opaque"
         },
         "east": {
-          "texture": "tf_block_shield_outside",
+          "texture": "gf_block_shield_outside",
           "render_method": "opaque"
         },
         "west": {
-          "texture": "tf_block_shield_outside",
+          "texture": "gf_block_shield_outside",
           "render_method": "opaque"
         }
       },
@@ -58,31 +58,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_shield_outside",
+              "texture": "gf_block_shield_outside",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_block_shield_inside",
+              "texture": "gf_block_shield_inside",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_block_shield_outside",
+              "texture": "gf_block_shield_outside",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_block_shield_outside",
+              "texture": "gf_block_shield_outside",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_block_shield_outside",
+              "texture": "gf_block_shield_outside",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_block_shield_outside",
+              "texture": "gf_block_shield_outside",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_block_shield_outside",
+              "texture": "gf_block_shield_outside",
               "render_method": "opaque"
             }
           },
@@ -99,31 +99,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_shield_outside",
+              "texture": "gf_block_shield_outside",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_block_shield_inside",
+              "texture": "gf_block_shield_inside",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_block_shield_outside",
+              "texture": "gf_block_shield_outside",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_block_shield_outside",
+              "texture": "gf_block_shield_outside",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_block_shield_outside",
+              "texture": "gf_block_shield_outside",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_block_shield_outside",
+              "texture": "gf_block_shield_outside",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_block_shield_outside",
+              "texture": "gf_block_shield_outside",
               "render_method": "opaque"
             }
           },
@@ -140,31 +140,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_shield_outside",
+              "texture": "gf_block_shield_outside",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_block_shield_inside",
+              "texture": "gf_block_shield_inside",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_block_shield_outside",
+              "texture": "gf_block_shield_outside",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_block_shield_outside",
+              "texture": "gf_block_shield_outside",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_block_shield_outside",
+              "texture": "gf_block_shield_outside",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_block_shield_outside",
+              "texture": "gf_block_shield_outside",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_block_shield_outside",
+              "texture": "gf_block_shield_outside",
               "render_method": "opaque"
             }
           },
@@ -181,31 +181,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_shield_outside",
+              "texture": "gf_block_shield_outside",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_block_shield_inside",
+              "texture": "gf_block_shield_inside",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_block_shield_outside",
+              "texture": "gf_block_shield_outside",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_block_shield_outside",
+              "texture": "gf_block_shield_outside",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_block_shield_outside",
+              "texture": "gf_block_shield_outside",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_block_shield_outside",
+              "texture": "gf_block_shield_outside",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_block_shield_outside",
+              "texture": "gf_block_shield_outside",
               "render_method": "opaque"
             }
           },
@@ -222,31 +222,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_shield_outside",
+              "texture": "gf_block_shield_outside",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_block_shield_inside",
+              "texture": "gf_block_shield_inside",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_block_shield_outside",
+              "texture": "gf_block_shield_outside",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_block_shield_outside",
+              "texture": "gf_block_shield_outside",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_block_shield_outside",
+              "texture": "gf_block_shield_outside",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_block_shield_outside",
+              "texture": "gf_block_shield_outside",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_block_shield_outside",
+              "texture": "gf_block_shield_outside",
               "render_method": "opaque"
             }
           },
@@ -263,31 +263,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_shield_outside",
+              "texture": "gf_block_shield_outside",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_block_shield_inside",
+              "texture": "gf_block_shield_inside",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_block_shield_outside",
+              "texture": "gf_block_shield_outside",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_block_shield_outside",
+              "texture": "gf_block_shield_outside",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_block_shield_outside",
+              "texture": "gf_block_shield_outside",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_block_shield_outside",
+              "texture": "gf_block_shield_outside",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_block_shield_outside",
+              "texture": "gf_block_shield_outside",
               "render_method": "opaque"
             }
           },

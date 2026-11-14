@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_item_phantom_chestplate"
+          "default": "gf_item_phantom_chestplate"
         }
       },
       "minecraft:display_name": {

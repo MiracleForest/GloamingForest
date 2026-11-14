@@ -1,6 +1,6 @@
 {
-  "config.gloamingforest.parry_non_gloaming": "황혼의 숲의 것이 아닌 발사체 막기",
-  "config.gloamingforest.parry_non_gloaming.tooltip": "값이 참이라면, 황혼의 숲의 발사체가 아닌 투사체를 막습니다.",
+  "config.gloamingforest.parry_non_gloaming": "Gloaming Forest 것이 아닌 발사체 막기",
+  "config.gloamingforest.parry_non_gloaming.tooltip": "값이 참이라면, Gloaming Forest 발사체가 아닌 투사체를 막습니다.",
   "config.gloamingforest.parry_window": "창 막기",
   "config.gloamingforest.parry_window.tooltip": "방패를 들어올린 후 투사체를 막을 수 있는 틱 수입니다. (1틱 = 0.05초)",
   "config.gloamingforest.shield": "방패 상호작용",

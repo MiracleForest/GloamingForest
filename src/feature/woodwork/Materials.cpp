@@ -1,11 +1,11 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/init/TFItems.java
+//   src/main/java/gloamingforest/init/GloamingItems.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// The drying rack's materials (TFItems): the dried slime drops are food whose effect always
+// The drying rack's materials (GloamingItems): the dried slime drops are food whose effect always
 // applies (FoodProperties.effect(..., 1.0F)): gelatinous_slime_drop (nutrition 1, saturation 0.2,
 // Speed 600 ticks) and gelatinous_maze_slime_drop (nutrition 2, saturation 0.3, Resistance 600
 // ticks); nutrition, saturation and the eating come from the BP items (minecraft:food, import

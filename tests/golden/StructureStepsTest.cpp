@@ -164,10 +164,10 @@ TEST(OracleStructureSteps, CoversMinecraftAndGloamingForest) {
         for (auto const& id : steps[s]) stepOf[id] = s;
 
     // every vanilla structure and every upstream landmark, at the step F6 has for it, and nothing else
-    auto const tf = gloamingStructures();
-    ASSERT_EQ(tf.size(), 21u) << "upstream 4.8's 21 structures (assets/data/landmarks/gloamingforest)";
+    auto const upsrc = gloamingStructures();
+    ASSERT_EQ(upsrc.size(), 21u) << "upstream 4.8's 21 structures (assets/data/landmarks/gloamingforest)";
     std::set<std::string> expected;
-    for (auto const* list : {&dec::vanillaStructures(), &tf}) {
+    for (auto const* list : {&dec::vanillaStructures(), &upsrc}) {
         for (auto const& s : *list) {
             expected.insert(s.id);
             auto it = stepOf.find(s.id);
@@ -179,7 +179,7 @@ TEST(OracleStructureSteps, CoversMinecraftAndGloamingForest) {
         }
     }
     for (auto const& [id, s] : stepOf) EXPECT_TRUE(expected.contains(id)) << id << " (step " << dec::stepName(s) << ") is in Java's registry but not in F6's table";
-    EXPECT_EQ(stepOf.size(), dec::vanillaStructures().size() + tf.size()) << "Minecraft 1.21.1's 34 structures and upstream 4.8's 21";
+    EXPECT_EQ(stepOf.size(), dec::vanillaStructures().size() + upsrc.size()) << "Minecraft 1.21.1's 34 structures and upstream 4.8's 21";
     EXPECT_EQ(stepOf.size(), golden().at("count").get<std::size_t>());
 }
 

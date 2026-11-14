@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.death_tome",
   "layer": {
     "name": "death_tome",
-    "field": "TFModelLayers.DEATH_TOME",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.DEATH_TOME, DeathTomeModel::create);"
+    "field": "GloamingModelLayers.DEATH_TOME",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.DEATH_TOME, DeathTomeModel::create);"
   },
   "texture_size": [64, 32],
   "textures": [
     {
       "bedrock": "textures/entity/enchanting_table_book",
-      "tf": "(vanilla) minecraft:entity/enchanting_table_book.png"
+      "upsrc": "(vanilla) minecraft:entity/enchanting_table_book.png"
     }
   ],
   "bones": [

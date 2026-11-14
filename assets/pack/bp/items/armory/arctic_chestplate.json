@@ -10,8 +10,8 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_item_arctic_chestplate",
-          "dyed": "tf_item_arctic_chestplate_dyed"
+          "default": "gf_item_arctic_chestplate",
+          "dyed": "gf_item_arctic_chestplate_dyed"
         }
       },
       "minecraft:display_name": {

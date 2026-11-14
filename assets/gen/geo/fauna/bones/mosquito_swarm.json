@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.mosquito_swarm",
   "layer": {
     "name": "mosquito_swarm",
-    "field": "TFModelLayers.MOSQUITO_SWARM",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.MOSQUITO_SWARM, MosquitoSwarmModel::create);"
+    "field": "GloamingModelLayers.MOSQUITO_SWARM",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.MOSQUITO_SWARM, MosquitoSwarmModel::create);"
   },
   "texture_size": [64, 64],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/mosquitoswarm",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/mosquitoswarm.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/mosquitoswarm.png"
     }
   ],
   "bones": [

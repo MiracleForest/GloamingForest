@@ -10,7 +10,7 @@
         "default": "textures/misc/missing_texture"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.charm_effect"
+        "default": "geometry.gf.skeleton.charm_effect"
       },
       "render_controllers": ["controller.render.default"]
     }

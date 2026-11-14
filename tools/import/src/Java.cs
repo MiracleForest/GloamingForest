@@ -1,5 +1,5 @@
 // GloamingForest import tool (contract "import", unit F1): reads upstream's registration code
-// (init/TFBlocks.java, TFItems.java, TFEntities.java, TFCreativeTabs.java) for the facts the data
+// (init/GloamingBlocks.java, GloamingItems.java, GloamingEntities.java, GloamingCreativeTabs.java) for the facts the data
 // files do not carry: block classes and properties, item stack sizes, entity sizes and spawn egg
 // colours, and the creative tab order. Facts only; no Java code is translated here.
 using System;
@@ -38,8 +38,8 @@ namespace GfImport
         public int StackSize = 64, Durability = 0;
         public List<string> Chain = new List<string>();
         public string ToolKind;            // pickaxe | axe | shovel | hoe | sword (the vanilla tool class reached), or null
-        public Java.TierInfo Tier;         // the tool tier (TFToolMaterials / Tiers), or null
-        public string TierName;            // "TFToolMaterials.IRONWOOD"
+        public Java.TierInfo Tier;         // the tool tier (GloamingToolMaterials / Tiers), or null
+        public string TierName;            // "GloamingToolMaterials.IRONWOOD"
         public bool FireResistant;
         public string Rarity;
         public bool Food;
@@ -85,8 +85,8 @@ namespace GfImport
 
         static double F(string s) { return double.Parse(s.TrimEnd('F', 'f', 'D', 'd'), CultureInfo.InvariantCulture); }
 
-        /// <summary>A sound type of upstream's own (init/TFSoundTypes.java): NeoForge's DeferredSoundType(volume, pitch,
-        /// break, step, place, hit, fall), the sounds as upstream's sound event names (init/TFSounds.java createEvent).</summary>
+        /// <summary>A sound type of upstream's own (init/GloamingSoundTypes.java): NeoForge's DeferredSoundType(volume, pitch,
+        /// break, step, place, hit, fall), the sounds as upstream's sound event names (init/GloamingSounds.java createEvent).</summary>
         public sealed class SoundTypeInfo
         {
             public string Name;            // "JAR"
@@ -98,19 +98,19 @@ namespace GfImport
         public static Dictionary<string, SoundTypeInfo> SoundTypes(Ctx ctx)
         {
             var events = new Dictionary<string, string>(StringComparer.Ordinal);
-            string sounds = StripComments(Ctx.ReadText(Path.Combine(ctx.JavaDir, "init", "TFSounds.java")));
+            string sounds = StripComments(Ctx.ReadText(Path.Combine(ctx.JavaDir, "init", "GloamingSounds.java")));
             foreach (Match m in Regex.Matches(sounds, @"\b(\w+)\s*=\s*createEvent\(\s*""([a-z0-9_.]+)""\s*\)")) events[m.Groups[1].Value] = m.Groups[2].Value;
             var types = new Dictionary<string, SoundTypeInfo>(StringComparer.Ordinal);
-            string text = StripComments(Ctx.ReadText(Path.Combine(ctx.JavaDir, "init", "TFSoundTypes.java")));
+            string text = StripComments(Ctx.ReadText(Path.Combine(ctx.JavaDir, "init", "GloamingSoundTypes.java")));
             foreach (var f in Fields(text, @"DeferredSoundType"))
             {
-                var m = Regex.Match(f.Item3, @"^new\s+DeferredSoundType\(\s*([\d.]+[fF]?)\s*,\s*([\d.]+[fF]?)\s*,\s*TFSounds\.(\w+)\s*,\s*TFSounds\.(\w+)\s*,\s*TFSounds\.(\w+)\s*,\s*TFSounds\.(\w+)\s*,\s*TFSounds\.(\w+)\s*\)$");
-                if (!m.Success) { ctx.Warn("TFSoundTypes." + f.Item2 + ": not a DeferredSoundType(volume, pitch, break, step, place, hit, fall) of TFSounds: no Bedrock block sound"); continue; }
+                var m = Regex.Match(f.Item3, @"^new\s+DeferredSoundType\(\s*([\d.]+[fF]?)\s*,\s*([\d.]+[fF]?)\s*,\s*GloamingSounds\.(\w+)\s*,\s*GloamingSounds\.(\w+)\s*,\s*GloamingSounds\.(\w+)\s*,\s*GloamingSounds\.(\w+)\s*,\s*GloamingSounds\.(\w+)\s*\)$");
+                if (!m.Success) { ctx.Warn("GloamingSoundTypes." + f.Item2 + ": not a DeferredSoundType(volume, pitch, break, step, place, hit, fall) of GloamingSounds: no Bedrock block sound"); continue; }
                 Func<int, string> ev = g =>
                 {
                     string e;
                     if (events.TryGetValue(m.Groups[g].Value, out e)) return e;
-                    ctx.Warn("TFSoundTypes." + f.Item2 + ": TFSounds." + m.Groups[g].Value + " is not a createEvent sound event");
+                    ctx.Warn("GloamingSoundTypes." + f.Item2 + ": GloamingSounds." + m.Groups[g].Value + " is not a createEvent sound event");
                     return null;
                 };
                 var t = new SoundTypeInfo { Name = f.Item2, Volume = F(m.Groups[1].Value), Pitch = F(m.Groups[2].Value), Break = ev(3), Step = ev(4), Place = ev(5), Hit = ev(6), Fall = ev(7) };
@@ -121,7 +121,7 @@ namespace GfImport
 
         public static Dictionary<string, JBlock> Blocks(Ctx ctx)
         {
-            string text = StripComments(Ctx.ReadText(Path.Combine(ctx.JavaDir, "init", "TFBlocks.java")));
+            string text = StripComments(Ctx.ReadText(Path.Combine(ctx.JavaDir, "init", "GloamingBlocks.java")));
             var props = new Dictionary<string, string>();
             foreach (var f in Fields(text, @"BlockBehaviour\.Properties")) props[f.Item2] = f.Item3;
             var helpers = new Dictionary<string, string>();
@@ -176,7 +176,7 @@ namespace GfImport
                 byConst[b.Const] = b;
             }
             // property copies: ofFullCopy(OTHER.get()) / ofFullCopy(OTHER) / Blocks.X, and copyAndScaleProperties(X, k)
-            // (TFBlocks: ofFullCopy(X), then destroyTime and explosionResistance x k), then the calls chained after the
+            // (GloamingBlocks: ofFullCopy(X), then destroyTime and explosionResistance x k), then the calls chained after the
             // copy; then the calls an upstream block class chains onto the properties in its constructor (SpecialMagicLogBlock:
             // super(properties.strength(2.0F).sound(SoundType.WOOD)...)), the leaf class first. A block is resolved
             // completely (its own copy and its class's calls) before a block copies it: Java's ofFullCopy reads the
@@ -224,7 +224,7 @@ namespace GfImport
             // flammability) in events/RegistrationEvents.java burn (ignitedByLava alone does not make a block
             // burn in Java)
             string reg = StripComments(Ctx.ReadText(Path.Combine(ctx.JavaDir, "events", "RegistrationEvents.java")));
-            foreach (Match fm in Regex.Matches(reg, @"\.setFlammable\(\s*TFBlocks\.(\w+)(?:\.get\(\))?\s*,\s*(\d+)\s*,\s*(\d+)\s*\)"))
+            foreach (Match fm in Regex.Matches(reg, @"\.setFlammable\(\s*GloamingBlocks\.(\w+)(?:\.get\(\))?\s*,\s*(\d+)\s*,\s*(\d+)\s*\)"))
             {
                 JBlock b;
                 if (!byConst.TryGetValue(fm.Groups[1].Value, out b)) { ctx.Warn("setFlammable: unknown block constant " + fm.Groups[1].Value); continue; }
@@ -243,7 +243,7 @@ namespace GfImport
             return res;
         }
 
-        // the helpers returning BlockBehaviour.Properties that ParseProps reads (TFBlocks.java)
+        // the helpers returning BlockBehaviour.Properties that ParseProps reads (GloamingBlocks.java)
         static readonly string[] KnownPropHelpers = { "logProperties", "copyAndScaleProperties" };
         const string Num = @"-?[\d.]+[FfDd]?(?:\s*[*/]\s*[\d.]+[FfDd]?)*";
         // ofFullCopy(X) / ofLegacyCopy(X) / copyAndScaleProperties(X, k), X an upstream constant (.get()) or Blocks.X
@@ -358,7 +358,7 @@ namespace GfImport
                 if (m.Success)
                 {
                     string src = m.Groups[1].Success ? m.Groups[1].Value : m.Groups[2].Value;
-                    b.CopyOf = src.StartsWith("TFBlocks.", StringComparison.Ordinal) ? src.Substring(9) : src;
+                    b.CopyOf = src.StartsWith("GloamingBlocks.", StringComparison.Ordinal) ? src.Substring(9) : src;
                     double k;
                     b.CopyScale = m.Groups[3].Success && TryFloat(m.Groups[3].Value, out k) ? k : 1;
                 }
@@ -386,9 +386,9 @@ namespace GfImport
             m = Regex.Match(s, @"\.lightLevel\(\s*\(?\s*\w+\s*\)?\s*->\s*(\d+)\s*\)");
             if (m.Success) { b.Light = int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture); b.DynamicLight = false; b.LightExpr = null; }
             else if (s.Contains(".lightLevel(")) { b.DynamicLight = true; b.Light = 0; b.LightExpr = Light.LambdaOf(s); }
-            // a vanilla SoundType by its constant ("WOOD"), one of upstream's own as "TFSoundTypes.JAR"
-            m = Regex.Match(s, @"\.sound\(\s*(SoundType|TFSoundTypes)\.(\w+)\s*\)");
-            if (m.Success) b.Sound = (m.Groups[1].Value == "TFSoundTypes" ? "TFSoundTypes." : "") + m.Groups[2].Value;
+            // a vanilla SoundType by its constant ("WOOD"), one of upstream's own as "GloamingSoundTypes.JAR"
+            m = Regex.Match(s, @"\.sound\(\s*(SoundType|GloamingSoundTypes)\.(\w+)\s*\)");
+            if (m.Success) b.Sound = (m.Groups[1].Value == "GloamingSoundTypes" ? "GloamingSoundTypes." : "") + m.Groups[2].Value;
             // map colour: MapColor.X, DyeColor.X (its map colour), logProperties(top[, side]) (side: a lying log's bark), or
             // a lambda of one boolean state (the castle doors: VANISHED ? MapColor.NONE : the door's colour)
             const string color = @"MapColor\.\w+|DyeColor\.\w+(?:\.getMapColor\(\))?";
@@ -440,13 +440,13 @@ namespace GfImport
             "CrossbowItem", "ShieldItem", "TridentItem", "FishingRodItem", "ElytraItem", "ShearsItem", "FlintAndSteelItem", "MaceItem",
         };
         static readonly Dictionary<string, string> itemChains = new Dictionary<string, string>(StringComparer.Ordinal);
-        static Dictionary<string, TierInfo> tfTiers;
+        static Dictionary<string, TierInfo> gloamingTiers;
 
         /// <summary>Forgets every per-run cache (the assembly stays loaded in a PowerShell session between runs).</summary>
         public static void Reset()
         {
             itemChains.Clear();
-            tfTiers = null;
+            gloamingTiers = null;
             classFiles = null;
             allJavaFiles = null;
             sourceTexts.Clear();
@@ -466,11 +466,11 @@ namespace GfImport
 
         public static Dictionary<string, JItem> Items(Ctx ctx)
         {
-            // TFToolMaterials: new SimpleTier(incorrectBlocks, uses, speed, damage, enchantability, repair); the incorrect-blocks
+            // GloamingToolMaterials: new SimpleTier(incorrectBlocks, uses, speed, damage, enchantability, repair); the incorrect-blocks
             // tag (BlockTagGenerator.INCORRECT_FOR_X_TOOL = gloamingforest:incorrect_for_x_tool) includes the vanilla
             // #minecraft:incorrect_for_<tier>_tool whose blocks the tier does not drop
-            tfTiers = new Dictionary<string, TierInfo>(StringComparer.Ordinal);
-            string tiers = StripComments(Ctx.ReadText(Path.Combine(ctx.JavaDir, "util", "TFToolMaterials.java")));
+            gloamingTiers = new Dictionary<string, TierInfo>(StringComparer.Ordinal);
+            string tiers = StripComments(Ctx.ReadText(Path.Combine(ctx.JavaDir, "util", "GloamingToolMaterials.java")));
             foreach (Match tm in Regex.Matches(tiers, @"Tier\s+(\w+)\s*=\s*new\s+SimpleTier\(\s*(?:\w+\.)?(\w+)\s*,\s*(\d+)\s*,\s*([\d.]+)[Ff]?\s*,"))
             {
                 var ti = new TierInfo { Uses = int.Parse(tm.Groups[3].Value, CultureInfo.InvariantCulture), Speed = F(tm.Groups[4].Value) };
@@ -478,11 +478,11 @@ namespace GfImport
                 var vref = tag != null && tag["values"] != null ? tag["values"].A.Select(v => v.IsStr ? v.AsString() : null)
                     .Select(v => v == null ? null : Regex.Match(v, @"^#minecraft:incorrect_for_(\w+)_tool$")).FirstOrDefault(x => x != null && x.Success) : null;
                 if (vref != null) ti.Drops = vref.Groups[1].Value;
-                else ctx.Warn("TFToolMaterials." + tm.Groups[1].Value + ": " + tm.Groups[2].Value + " does not include a vanilla incorrect_for_<tier>_tool tag");
-                tfTiers[tm.Groups[1].Value] = ti;
+                else ctx.Warn("GloamingToolMaterials." + tm.Groups[1].Value + ": " + tm.Groups[2].Value + " does not include a vanilla incorrect_for_<tier>_tool tag");
+                gloamingTiers[tm.Groups[1].Value] = ti;
             }
-            if (tfTiers.Count == 0) ctx.Warn("TFToolMaterials: no tier parsed");
-            string text = StripComments(Ctx.ReadText(Path.Combine(ctx.JavaDir, "init", "TFItems.java")));
+            if (gloamingTiers.Count == 0) ctx.Warn("GloamingToolMaterials: no tier parsed");
+            string text = StripComments(Ctx.ReadText(Path.Combine(ctx.JavaDir, "init", "GloamingItems.java")));
             var res = new Dictionary<string, JItem>(StringComparer.Ordinal);
             foreach (var f in Fields(text, @"DeferredItem<"))
             {
@@ -509,9 +509,9 @@ namespace GfImport
                 var chain = ClassChain(ctx, it.Cls, itemChains);
                 if (chain.Any(c => TieredBases.Contains(c)))
                 {
-                    var tm = Regex.Match(f.Item3, @"\b(TFToolMaterials|Tiers)\.([A-Z_]+)\b");
+                    var tm = Regex.Match(f.Item3, @"\b(GloamingToolMaterials|Tiers)\.([A-Z_]+)\b");
                     TierInfo ti;
-                    if (tm.Success && (tm.Groups[1].Value == "Tiers" ? VanillaTiers.TryGetValue(tm.Groups[2].Value, out ti) : tfTiers.TryGetValue(tm.Groups[2].Value, out ti)))
+                    if (tm.Success && (tm.Groups[1].Value == "Tiers" ? VanillaTiers.TryGetValue(tm.Groups[2].Value, out ti) : gloamingTiers.TryGetValue(tm.Groups[2].Value, out ti)))
                     {
                         it.Durability = ti.Uses;
                         it.Tier = ti;
@@ -555,7 +555,7 @@ namespace GfImport
                 }
                 it.Chain = chain;
                 if (f.Item3.Contains(".fireResistant()")) it.FireResistant = true;
-                m = Regex.Match(f.Item3, @"\.rarity\(\s*(?:Rarity\.|TFRarityEnumExtension\.\w*\.|tfRarityEnumExtension\.)?(\w+)");
+                m = Regex.Match(f.Item3, @"\.rarity\(\s*(?:Rarity\.|GloamingRarityEnumExtension\.\w*\.|gloamingRarityEnumExtension\.)?(\w+)");
                 if (m.Success) it.Rarity = m.Groups[1].Value;
                 if (f.Item3.Contains(".food(")) it.Food = true;
                 res[it.Id] = it;
@@ -566,13 +566,13 @@ namespace GfImport
         public static Dictionary<string, JEntity> Entities(Ctx ctx)
         {
             var names = new Dictionary<string, string>();
-            foreach (Match m in Regex.Matches(Ctx.ReadText(Path.Combine(ctx.JavaDir, "entity", "TFEntityNames.java")), @"ResourceLocation (\w+) = prefix\(""([a-z0-9_]+)""\)"))
+            foreach (Match m in Regex.Matches(Ctx.ReadText(Path.Combine(ctx.JavaDir, "entity", "GloamingEntityNames.java")), @"ResourceLocation (\w+) = prefix\(""([a-z0-9_]+)""\)"))
                 names[m.Groups[1].Value] = m.Groups[2].Value;
-            string text = StripComments(Ctx.ReadText(Path.Combine(ctx.JavaDir, "init", "TFEntities.java")));
+            string text = StripComments(Ctx.ReadText(Path.Combine(ctx.JavaDir, "init", "GloamingEntities.java")));
             var res = new Dictionary<string, JEntity>(StringComparer.Ordinal);
             foreach (var f in Fields(text, @"DeferredHolder<EntityType"))
             {
-                var m = Regex.Match(f.Item3, @"^\s*(make|buildNoEgg|build)\(\s*TFEntityNames\.(\w+)\s*,\s*(.*)$", RegexOptions.Singleline);
+                var m = Regex.Match(f.Item3, @"^\s*(make|buildNoEgg|build)\(\s*GloamingEntityNames\.(\w+)\s*,\s*(.*)$", RegexOptions.Singleline);
                 if (!m.Success) continue;
                 string id;
                 if (!names.TryGetValue(m.Groups[2].Value, out id)) continue;
@@ -644,13 +644,13 @@ namespace GfImport
             public List<string> Items = new List<string>();
         }
 
-        /// <summary>TFCreativeTabs: the 4 tabs, their icon and their item ids in order.</summary>
+        /// <summary>GloamingCreativeTabs: the 4 tabs, their icon and their item ids in order.</summary>
         public static List<Tab> CreativeTabs(Ctx ctx, Dictionary<string, JBlock> blocks, Dictionary<string, JItem> items, IEnumerable<string> spawnEggs)
         {
             var constId = new Dictionary<string, string>();
-            foreach (var b in blocks.Values) constId["TFBlocks." + b.Const] = b.Id;
-            foreach (var i in items.Values) constId["TFItems." + i.Const] = i.Id;
-            string text = StripComments(Ctx.ReadText(Path.Combine(ctx.JavaDir, "init", "TFCreativeTabs.java")));
+            foreach (var b in blocks.Values) constId["GloamingBlocks." + b.Const] = b.Id;
+            foreach (var i in items.Values) constId["GloamingItems." + i.Const] = i.Id;
+            string text = StripComments(Ctx.ReadText(Path.Combine(ctx.JavaDir, "init", "GloamingCreativeTabs.java")));
             var tabs = new List<Tab>();
             var re = new Regex(@"TABS\.register\(""(\w+)""");
             var starts = re.Matches(text).Cast<Match>().ToList();

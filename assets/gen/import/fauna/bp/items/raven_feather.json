@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_item_raven_feather"
+          "default": "gf_item_raven_feather"
         }
       },
       "minecraft:display_name": {

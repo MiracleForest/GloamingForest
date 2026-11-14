@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.hydra_neck",
   "layer": {
     "name": "hydra_neck",
-    "field": "TFModelLayers.HYDRA_NECK",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.HYDRA_NECK, HydraNeckModel::checkForPack);"
+    "field": "GloamingModelLayers.HYDRA_NECK",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.HYDRA_NECK, HydraNeckModel::checkForPack);"
   },
   "texture_size": [512, 256],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/hydra4",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/hydra4.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/hydra4.png"
     }
   ],
   "bones": [

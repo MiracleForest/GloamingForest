@@ -11,12 +11,12 @@ The Gloaming Forest dimension's client presentation:
 - **Dimension special effects** `GloamingForestRenderInfo` (dimension type effects id `gloamingforest:renderer`
   registered by F4's dimension type): cloud height 128, no sunrise colours, fog colour modulation, near fog in dark
   biomes, custom sky (stars only), custom weather.
-- **Sky** (`TFSkyRenderer`): no sun, no moon, no sunrise; always-bright stars; void horizon threshold.
+- **Sky** (`GloamingSkyRenderer`): no sun, no moon, no sunrise; always-bright stars; void horizon threshold.
 - **Fog** (`FogHandler`): spooky forest / dark forest fog distances with smoothing.
-- **Locked-biome weather** (`TFWeatherRenderer`): blizzard / mosquitoes / ashes / dark streams / big (acid) rain in
+- **Locked-biome weather** (`GloamingWeatherRenderer`): blizzard / mosquitoes / ashes / dark streams / big (acid) rain in
   biomes whose progression restriction the viewer has not met; sparkles inside protected structure pieces; Ur-Ghast
   rain.
-- **Aurora** (`TFShaders.AURORA`, `ClientGameEvents.renderAurora`): the noise aurora plane in the biomes of client
+- **Aurora** (`GloamingShaders.AURORA`, `ClientGameEvents.renderAurora`): the noise aurora plane in the biomes of client
   config `client.auroraBiomes` (default `["gloamingforest:glacier"]`, section `atmosphere`).
 - Damage type `gloamingforest:acid_rain` and sound event `environment.gloamingforest.acid_rain` (played by U14's
   acid-rain enforcement); net channels `atmosphere.*`.
@@ -30,11 +30,11 @@ Contracts: client.world, client.render, progression, world.
 
 ## 2. Upstream sources
 
-`client/GloamingForestRenderInfo.java`, `client/renderer/TFSkyRenderer.java`, `client/event/FogHandler.java`,
-`client/renderer/TFWeatherRenderer.java`, `client/TFShaders.java`, `shaders/core/aurora/aurora.{vsh,fsh,json}`
+`client/GloamingForestRenderInfo.java`, `client/renderer/GloamingSkyRenderer.java`, `client/event/FogHandler.java`,
+`client/renderer/GloamingWeatherRenderer.java`, `client/GloamingShaders.java`, `shaders/core/aurora/aurora.{vsh,fsh,json}`
 (resources), `client/event/ClientGameEvents.java` (`renderAurora`, aurora counter in `clientTick`, `killVignette`),
-`client/event/ClientRegistrationEvents.java` (dimension effects registration, `createStars`), `config/TFClientConfig.java`,
-`config/TFConfig.java` (`getValidAuroraBiomes`), `init/TFDamageTypes.java`, `init/TFSounds.java`,
+`client/event/ClientRegistrationEvents.java` (dimension effects registration, `createStars`), `config/GloamingClientConfig.java`,
+`config/GloamingConfig.java` (`getValidAuroraBiomes`), `init/GloamingDamageTypes.java`, `init/GloamingSounds.java`,
 `textures/environment/{blizzard,mosquitoes,ashes,darkstream,bigrain,sparkles}.png` (imported assets),
 `network/StructureProtectionPacket.java` (box data consumer).
 
@@ -51,7 +51,7 @@ constantAmbientLight false)`:
 - Sky, rain/snow rendering and rain ticking delegate to the renderers below.
 - The vanilla vignette is disabled in the Gloaming Forest (`vignetteBrightness = 0`).
 
-### 3.2 Sky (`TFSkyRenderer.renderSky`)
+### 3.2 Sky (`GloamingSkyRenderer.renderSky`)
 
 1. Sky dome (vanilla sky buffer) in the level's sky colour at the camera.
 2. No sunrise fan, no sun, no moon.
@@ -68,7 +68,7 @@ constantAmbientLight false)`:
 - Values are smoothed every frame: far lerps by 0.003; near lerps by 0.0015 when increasing, 0.006 when decreasing.
   Initialised to the target once the player's chunk is loaded; reset when the level unloads.
 
-### 3.4 Locked-biome weather (`TFWeatherRenderer.renderSnowAndRain`)
+### 3.4 Locked-biome weather (`GloamingWeatherRenderer.renderSnowAndRain`)
 
 Only when progression is enforced (`progression::client::enforced()`, U14's gamerule) and the viewer is not
 creative/spectator; vanilla weather still renders.

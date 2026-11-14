@@ -3,8 +3,8 @@
   "source": "CustomHeadLayer.translateToHead + the item model's 'head' display + ItemRenderer (builtin/entity) + ISTER + TrophyRenderer.render(null, 180, ItemDisplayContext.HEAD) + MinoshroomModel.renderTrophy (item form)",
   "layer": {
     "name": "minoshroom_trophy",
-    "field": "TFModelLayers.MINOSHROOM_TROPHY",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.MINOSHROOM_TROPHY, MinoshroomModel::checkForPack);"
+    "field": "GloamingModelLayers.MINOSHROOM_TROPHY",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.MINOSHROOM_TROPHY, MinoshroomModel::checkForPack);"
   },
   "frame": "head",
   "slot": "head",
@@ -24,7 +24,7 @@
       "identifier": "geometry.gloamingforest.minoshroom_trophy_worn",
       "texture": {
         "bedrock": "textures/gloamingforest/entity/minoshroomtaur",
-        "tf": "src/main/resources/assets/gloamingforest/textures/entity/minoshroomtaur.png"
+        "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/minoshroomtaur.png"
       },
       "material": "entity_alphatest"
     }

@@ -114,15 +114,15 @@ gf::combat::Verdict blockAndParry(gf::combat::DamageInfo& d) {
     // (a shooterless projectile is its own causing entity: parried all the same)
     bool projectile = direct && !isLiving(*direct);
     if (projectile && ticks <= config().shieldParryTicksArrow) {
-        bool tf = gf::projectile::ext::isProjectile(*direct);
-        if (tf || config().parryNonGloamingAttacks) {
-            auto   v     = tf ? gf::projectile::ext::velocity(*direct) : direct->getPosDelta();
+        bool upsrc = gf::projectile::ext::isProjectile(*direct);
+        if (upsrc || config().parryNonGloamingAttacks) {
+            auto   v     = upsrc ? gf::projectile::ext::velocity(*direct) : direct->getPosDelta();
             double speed = std::sqrt(double(v.x) * v.x + double(v.y) * v.y + double(v.z) * v.z);
             auto   look  = lookOf(player);
             Vec3   nv{static_cast<float>(look.x * speed), static_cast<float>(look.y * speed), static_cast<float>(look.z * speed)};
             // upstream's projectiles: the kit's ProjectileImpactEvent#setCanceled and Projectile#setOwner
             // (AIM_DEFLECT; the blocker owns the projectile from now on)
-            if (tf) {
+            if (upsrc) {
                 gf::projectile::ext::setVelocity(*direct, nv);
                 gf::projectile::ext::setOwner(*direct, &player);
                 gf::projectile::ext::cancelImpact(*direct);

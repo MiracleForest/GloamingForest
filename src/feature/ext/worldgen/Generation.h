@@ -15,7 +15,7 @@
 //                 then Features -> LargeWriter -> Spawns
 //   * Blanket runs at surface time, right after the surface provider and the Surface steps: upstream
 //     injects ChunkBlanketProcessors#chunkBlanketing after ChunkGenerator#buildSurface in
-//     ChunkStatusTasks#generateSurface (tf-asm ChunkStatusTaskTransformer), so the canopy and the
+//     ChunkStatusTasks#generateSurface (upsrc-asm ChunkStatusTaskTransformer), so the canopy and the
 //     glacier see the bare ground (WORLD_SURFACE_WG) and every carver and feature sees them.
 //     blanketContext() gives the blanket the WorldGenRegion random of that step (fork() it per
 //     processor that applies, as upstream does) and the biomes in the chunk's sections.

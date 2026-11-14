@@ -37,7 +37,7 @@ namespace net = gf::feature::net;
 
 GF_REGISTER_SELFTEST("atmosphere.config", [](Context& ctx) {
     at::AtmosphereConfig d{};
-    ctx.check(d.auroraBiomes == std::vector<std::string>{"gloamingforest:glacier"}, "auroraBiomes defaults to the glacier (TFClientConfig)");
+    ctx.check(d.auroraBiomes == std::vector<std::string>{"gloamingforest:glacier"}, "auroraBiomes defaults to the glacier (GloamingClientConfig)");
     ctx.check(d.sky && d.fog && d.weather && d.aurora, "the client mod switches are on by default");
     auto sections = gf::config::sections();
     ctx.check(std::find(sections.begin(), sections.end(), "atmosphere") != sections.end(), "config section 'atmosphere' registered");
@@ -127,8 +127,8 @@ GF_REGISTER_SELFTEST("atmosphere.fog_feet", [](Context& ctx) -> ll::coro::CoroTa
 });
 
 GF_REGISTER_SELFTEST("atmosphere.acid_rain", [](Context& ctx) -> ll::coro::CoroTask<> {
-    // the damage type and sound event U14's acid rain enforcement uses (TFDamageTypes.ACID_RAIN,
-    // TFSounds.ACID_RAIN)
+    // the damage type and sound event U14's acid rain enforcement uses (GloamingDamageTypes.ACID_RAIN,
+    // GloamingSounds.ACID_RAIN)
     auto& p      = ctx.player();
     int   before = p.getHealth();
     ctx.check(gf::combat::hurt(p, 2.0f, "gloamingforest:acid_rain"), "gloamingforest:acid_rain damage applies");

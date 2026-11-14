@@ -98,14 +98,14 @@ public final class TreeNodePositionOracle {
             s.filter(p -> p.toString().endsWith(".json")).sorted((a, b) -> a.getFileName().toString().compareTo(b.getFileName().toString())).forEach(files::add);
         }
         Pattern parentRe = Pattern.compile("\"parent\"\\s*:\\s*\"([^\"]+)\"");
-        List<In> tf = new ArrayList<>();
+        List<In> upsrc = new ArrayList<>();
         for (Path f : files) {
             String id   = "gloamingforest:" + f.getFileName().toString().replace(".json", "");
             String text = Files.readString(f);
             Matcher m = parentRe.matcher(text);
-            tf.add(new In(id, m.find() ? m.group(1) : "", text.contains("\"display\"")));
+            upsrc.add(new In(id, m.find() ? m.group(1) : "", text.contains("\"display\"")));
         }
-        layout("gloamingforest", tf, out);
+        layout("gloamingforest", upsrc, out);
         // random trees
         for (int seed = 1; seed <= 40; ++seed) {
             Random   r = new Random(seed);

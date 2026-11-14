@@ -10,7 +10,7 @@
         "default": "textures/gloamingforest/entity/helmetcrab"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.helmet_crab"
+        "default": "geometry.gf.skeleton.helmet_crab"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

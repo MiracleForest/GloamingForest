@@ -46,15 +46,15 @@ using st::bases::TerrainAdjustment;
 
 namespace {
 
-constexpr char kMain[]       = "gloamingforest:TFTCMai";
-constexpr char kConnect[]    = "gloamingforest:TFTCCon";
-constexpr char kGarden[]     = "gloamingforest:TFTCGard";
-constexpr char kVault[]      = "gloamingforest:TFTCVa";
-constexpr char kCastle[]     = "gloamingforest:TFClCa";
-constexpr char kCloud[]      = "gloamingforest:TFCloud";
-constexpr char kCloudTree[]  = "gloamingforest:TFClTr";
-constexpr char kTrollCloud[] = "gloamingforest:TFTCloud";
-constexpr char kYeti[]       = "gloamingforest:TFYeti";
+constexpr char kMain[]       = "gloamingforest:GloamingTCMai";
+constexpr char kConnect[]    = "gloamingforest:GloamingTCCon";
+constexpr char kGarden[]     = "gloamingforest:GloamingTCGard";
+constexpr char kVault[]      = "gloamingforest:GloamingTCVa";
+constexpr char kCastle[]     = "gloamingforest:GloamingClCa";
+constexpr char kCloud[]      = "gloamingforest:GloamingCloud";
+constexpr char kCloudTree[]  = "gloamingforest:GloamingClTr";
+constexpr char kTrollCloud[] = "gloamingforest:GloamingTCloud";
+constexpr char kYeti[]       = "gloamingforest:GloamingYeti";
 
 /// RotationUtil.ROTATIONS (Rotation.values()).
 constexpr std::array<Rotation, 4> kRotations{Rotation::None, Rotation::Clockwise90, Rotation::Clockwise180, Rotation::Counterclockwise90};
@@ -84,7 +84,7 @@ BlockBox componentToAddBoundingBox(int x, int y, int z, int minX, int minY, int 
     }
 }
 
-/// TFStructureComponentOld#setOrientation's rotation of an orientation.
+/// GloamingStructureComponentOld#setOrientation's rotation of an orientation.
 Rotation rotationOf(Orientation o) {
     switch (o) {
     case Orientation::South: return Rotation::Clockwise180;

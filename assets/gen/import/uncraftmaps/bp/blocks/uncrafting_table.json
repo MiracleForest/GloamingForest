@@ -19,38 +19,38 @@
       },
       "minecraft:tags": ["minecraft:is_axe_item_destructible"],
       "minecraft:map_color": "#ff0000",
-      "minecraft:geometry": "geometry.tf.gloamingforest.block.uncrafting_table",
+      "minecraft:geometry": "geometry.gf.gloamingforest.block.uncrafting_table",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_vanilla_block_jungle_planks",
+          "texture": "gf_vanilla_block_jungle_planks",
           "render_method": "blend"
         },
         "bottom": {
-          "texture": "tf_vanilla_block_jungle_planks",
+          "texture": "gf_vanilla_block_jungle_planks",
           "render_method": "blend"
         },
         "east": {
-          "texture": "tf_block_uncrafting_side",
+          "texture": "gf_block_uncrafting_side",
           "render_method": "blend"
         },
         "north": {
-          "texture": "tf_block_uncrafting_side",
+          "texture": "gf_block_uncrafting_side",
           "render_method": "blend"
         },
         "south": {
-          "texture": "tf_block_uncrafting_side",
+          "texture": "gf_block_uncrafting_side",
           "render_method": "blend"
         },
         "top": {
-          "texture": "tf_block_uncrafting_top",
+          "texture": "gf_block_uncrafting_top",
           "render_method": "blend"
         },
         "top2": {
-          "texture": "tf_block_uncrafting_glow",
+          "texture": "gf_block_uncrafting_glow",
           "render_method": "blend"
         },
         "west": {
-          "texture": "tf_block_uncrafting_side",
+          "texture": "gf_block_uncrafting_side",
           "render_method": "blend"
         }
       },
@@ -60,38 +60,38 @@
       {
         "condition": "!q.block_state('gloamingforest:powered')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.uncrafting_table",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.uncrafting_table",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_jungle_planks",
+              "texture": "gf_vanilla_block_jungle_planks",
               "render_method": "blend"
             },
             "bottom": {
-              "texture": "tf_vanilla_block_jungle_planks",
+              "texture": "gf_vanilla_block_jungle_planks",
               "render_method": "blend"
             },
             "east": {
-              "texture": "tf_block_uncrafting_side",
+              "texture": "gf_block_uncrafting_side",
               "render_method": "blend"
             },
             "north": {
-              "texture": "tf_block_uncrafting_side",
+              "texture": "gf_block_uncrafting_side",
               "render_method": "blend"
             },
             "south": {
-              "texture": "tf_block_uncrafting_side",
+              "texture": "gf_block_uncrafting_side",
               "render_method": "blend"
             },
             "top": {
-              "texture": "tf_block_uncrafting_top",
+              "texture": "gf_block_uncrafting_top",
               "render_method": "blend"
             },
             "top2": {
-              "texture": "tf_block_uncrafting_glow",
+              "texture": "gf_block_uncrafting_glow",
               "render_method": "blend"
             },
             "west": {
-              "texture": "tf_block_uncrafting_side",
+              "texture": "gf_block_uncrafting_side",
               "render_method": "blend"
             }
           },
@@ -102,54 +102,54 @@
       {
         "condition": "q.block_state('gloamingforest:powered')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.uncrafting_table_glowing",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.uncrafting_table_glowing",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_jungle_planks",
+              "texture": "gf_vanilla_block_jungle_planks",
               "render_method": "blend"
             },
             "bottom": {
-              "texture": "tf_vanilla_block_jungle_planks",
+              "texture": "gf_vanilla_block_jungle_planks",
               "render_method": "blend"
             },
             "east": {
-              "texture": "tf_block_uncrafting_side",
+              "texture": "gf_block_uncrafting_side",
               "render_method": "blend"
             },
             "east2": {
-              "texture": "tf_block_uncrafting_glow_side",
+              "texture": "gf_block_uncrafting_glow_side",
               "render_method": "blend"
             },
             "north": {
-              "texture": "tf_block_uncrafting_side",
+              "texture": "gf_block_uncrafting_side",
               "render_method": "blend"
             },
             "north2": {
-              "texture": "tf_block_uncrafting_glow_side",
+              "texture": "gf_block_uncrafting_glow_side",
               "render_method": "blend"
             },
             "south": {
-              "texture": "tf_block_uncrafting_side",
+              "texture": "gf_block_uncrafting_side",
               "render_method": "blend"
             },
             "south2": {
-              "texture": "tf_block_uncrafting_glow_side",
+              "texture": "gf_block_uncrafting_glow_side",
               "render_method": "blend"
             },
             "top": {
-              "texture": "tf_block_uncrafting_top",
+              "texture": "gf_block_uncrafting_top",
               "render_method": "blend"
             },
             "top2": {
-              "texture": "tf_block_uncrafting_glow",
+              "texture": "gf_block_uncrafting_glow",
               "render_method": "blend"
             },
             "west": {
-              "texture": "tf_block_uncrafting_side",
+              "texture": "gf_block_uncrafting_side",
               "render_method": "blend"
             },
             "west2": {
-              "texture": "tf_block_uncrafting_glow_side",
+              "texture": "gf_block_uncrafting_glow_side",
               "render_method": "blend"
             }
           },

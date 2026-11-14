@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_block_huge_water_lily"
+          "default": "gf_block_huge_water_lily"
         }
       },
       "minecraft:display_name": {

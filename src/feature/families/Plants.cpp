@@ -2,7 +2,7 @@
 // Translated from the upstream 4.8 source (commit 9e40a757):
 //   src/main/java/gloamingforest/block/SpecialFlowerPotBlock.java
 //   src/main/java/gloamingforest/block/SnowLoggable.java
-//   src/main/java/gloamingforest/block/TFBushBlock.java
+//   src/main/java/gloamingforest/block/GloamingBushBlock.java
 //   src/main/java/gloamingforest/block/LightableBlock.java
 //   src/main/java/gloamingforest/world/components/feature/trees/growers/StructureTreeGrower.java
 // Copyright (c) the upstream authors (see NOTICE).
@@ -510,7 +510,7 @@ void installPlants() {
             }));
         }
     }
-    // ---- snowloggable (upstream TFBushBlock.useItemOn with snow, SnowLoggable.handleBreakingLogic)
+    // ---- snowloggable (upstream GloamingBushBlock.useItemOn with snow, SnowLoggable.handleBreakingLogic)
     for (auto const* e : entries()) {
         if (!e->has(Snowloggable)) continue;
         ia::Match m;
@@ -538,7 +538,7 @@ void installPlants() {
         d.block = e->id;
         handlerIds().push_back(ia::onDestroy(d, [](ia::DestroyContext const& c) {
             int layers = intState(c.block, state::Layers).value_or(0);
-            if (c.sneaking || layers <= 0) return ia::Result::Pass; // TFBushBlock: sneaking breaks it all
+            if (c.sneaking || layers <= 0) return ia::Result::Pass; // GloamingBushBlock: sneaking breaks it all
             auto&    region = c.player.getDimensionBlockSource();
             BlockPos bp     = game::blockPos(c.pos);
             auto const* se  = entryOf(c.block);
@@ -655,7 +655,7 @@ void installPlants() {
                 if (layers <= 0 || layers >= 8 || region.getBrightnessPair(pos).block->mValue <= 11) return;
                 if (auto const* plain = withStates(block, {{state::Layers, 0}}); plain && plain != &block) game::setBlock(region, pos, *plain);
             });
-            // TFBushBlock.updateShape: the snow goes when it can't stay (with the snow's break effect)
+            // GloamingBushBlock.updateShape: the snow goes when it can't stay (with the snow's break effect)
             blockevents::onNeighborChanged(e->id, [](BlockSource& region, BlockPos const& pos, BlockPos const&) {
                 Block const* b = blockAt(region, pos);
                 if (!b || intState(*b, state::Layers).value_or(0) == 0 || snowCanSurvive(region, pos)) return;

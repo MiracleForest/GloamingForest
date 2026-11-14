@@ -74,7 +74,7 @@ namespace {
 
 namespace colors = core::biomes::colors;
 using client::biomes::biomeIdOf;
-using client::biomes::isTfBiome;
+using client::biomes::isGloamingBiome;
 
 thread_local BlockSource* tlRegion = nullptr;
 thread_local int          tlDepth  = 0;
@@ -159,7 +159,7 @@ std::optional<mce::Color>
 dispatch(Block const& block, BlockSource& region, BlockPos const& pos, BiomeTintCache const* cache, TintMethod method, mce::Color const& game) {
     if (tlDepth > 0) return std::nullopt;
     // only upstream's biomes have upstream colours (one lookup for every block of the other dimensions)
-    if (!isTfBiome(biomeIdOf(region.getBiome(pos)))) return std::nullopt;
+    if (!isGloamingBiome(biomeIdOf(region.getBiome(pos)))) return std::nullopt;
     std::string const& id = idOf(block);
     PolicyColors       colors(block, region, pos, cache, method, game);
     BlockSource*       previous = tlRegion;
@@ -256,7 +256,7 @@ LL_TYPE_INSTANCE_HOOK(
     if (!game) return false;
     try {
         std::string const biome = client::biomes::biomeIdOf(region.getBiome(p));
-        if (client::biomes::isTfBiome(biome)) {
+        if (client::biomes::isGloamingBiome(biome)) {
             if (gSeasonsOff.fetch_add(1, std::memory_order_relaxed) == 0)
                 gf::log().info("biomes: leaves at {} {} {} drawn without Bedrock's seasons map (upstream's biome {})", p.x, p.y, p.z, biome);
             return false;
@@ -280,7 +280,7 @@ LL_TYPE_INSTANCE_HOOK(
     BlockRenderLayer game = origin(block, region, pos);
     if (game != BlockRenderLayer::RenderlayerSeasonsOpaque && game != BlockRenderLayer::RenderlayerSeasonsAlphatestToOpaque) return game;
     try {
-        if (client::biomes::isTfBiome(client::biomes::biomeIdOf(region.getBiome(pos))))
+        if (client::biomes::isGloamingBiome(client::biomes::biomeIdOf(region.getBiome(pos))))
             return game == BlockRenderLayer::RenderlayerSeasonsOpaque ? BlockRenderLayer::RenderlayerOpaque : BlockRenderLayer::RenderlayerAlphatestToOpaque;
     } catch (...) {}
     return game;
@@ -342,7 +342,7 @@ LL_TYPE_INSTANCE_HOOK(
         for (auto& [name, instance] : *materialInstance.mMaterials) {
             if (static_cast<TintMethod>(instance.mTintMethod) != TintMethod::None) continue;
             std::string const& texture = instance.mTextureName->mValue;
-            for (char const* t : client::biomes::tfGrassTextures()) {
+            for (char const* t : client::biomes::gloamingGrassTextures()) {
                 if (texture != t) continue;
                 instance.mTintMethod = TintMethod::Grass;
                 if (gPlantTints.fetch_add(1, std::memory_order_relaxed) == 0)
@@ -366,10 +366,10 @@ LL_STATIC_HOOK(
     try {
         std::string const id = client::biomes::biomeIdOf(biome);
         if (auto w = colors::water(id)) {
-            int tf = static_cast<int>((static_cast<unsigned>(game) & 0xFF000000u) | static_cast<unsigned>(*w));
+            int upsrc = static_cast<int>((static_cast<unsigned>(game) & 0xFF000000u) | static_cast<unsigned>(*w));
             if (gWaterApplied.fetch_add(1, std::memory_order_relaxed) == 0)
                 gf::log().info("biomes: water colour hook applied upstream's water of {} at {} {} {} (#{:06X}, the game's #{:08X})", id, pos.x, pos.y, pos.z, *w, static_cast<unsigned>(game));
-            return tf;
+            return upsrc;
         }
     } catch (...) {}
     return game;

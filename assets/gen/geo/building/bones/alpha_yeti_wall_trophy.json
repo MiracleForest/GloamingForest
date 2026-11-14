@@ -3,8 +3,8 @@
   "source": "TrophyRenderer.render + AlphaYetiModel.renderTrophy (wall, facing north)",
   "layer": {
     "name": "alpha_yeti_trophy",
-    "field": "TFModelLayers.ALPHA_YETI_TROPHY",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.ALPHA_YETI_TROPHY, AlphaYetiModel::createTrophy);"
+    "field": "GloamingModelLayers.ALPHA_YETI_TROPHY",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.ALPHA_YETI_TROPHY, AlphaYetiModel::createTrophy);"
   },
   "frame": "world",
   "geometries": [
@@ -12,7 +12,7 @@
       "identifier": "geometry.gloamingforest.alpha_yeti_wall_trophy",
       "texture": {
         "bedrock": "textures/gloamingforest/entity/yetialpha",
-        "tf": "src/main/resources/assets/gloamingforest/textures/entity/yetialpha.png"
+        "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/yetialpha.png"
       },
       "material": "entity_alphatest"
     }

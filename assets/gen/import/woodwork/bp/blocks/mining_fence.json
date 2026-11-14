@@ -27,7 +27,7 @@
         "destroy_chance_modifier": 20
       },
       "minecraft:geometry": {
-        "identifier": "geometry.tf.gloamingforest.block.mining_fence.multipart",
+        "identifier": "geometry.gf.gloamingforest.block.mining_fence.multipart",
         "bone_visibility": {
           "part1": "q.block_state('gloamingforest:north')",
           "part2": "q.block_state('gloamingforest:south')",
@@ -37,11 +37,11 @@
       },
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_wood_planks_mine_0",
+          "texture": "gf_block_wood_planks_mine_0",
           "render_method": "opaque"
         },
         "t_gloamingforest_block_wood_planks_mine_0": {
-          "texture": "tf_block_wood_planks_mine_0",
+          "texture": "gf_block_wood_planks_mine_0",
           "render_method": "opaque"
         }
       },

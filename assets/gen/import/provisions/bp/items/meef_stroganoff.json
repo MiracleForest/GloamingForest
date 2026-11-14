@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_item_meef_stroganoff"
+          "default": "gf_item_meef_stroganoff"
         }
       },
       "minecraft:display_name": {

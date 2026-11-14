@@ -457,14 +457,14 @@ namespace gf::client::maps {
 /// uses when it looks the map up (MapRenderer::_getMapInstance inside the first-person pass, an
 /// item in hand or an item frame; MapRenderer::render itself cannot be hooked, spike S5).
 /// `Decoration::name` is kept (view()) but not drawn on the map: upstream's map decorations
-/// (TFMagicMapData, TFMazeMapData) carry no names.
+/// (GloamingMagicMapData, GloamingMazeMapData) carry no names.
 void setDecorations(std::int64_t mapId, std::vector<Decoration> decorations);
 /// The upstream decorations of `mapId` (empty: none).
 [[nodiscard]] std::vector<Decoration> decorationsOf(std::int64_t mapId);
 /// The texture registered for a decoration type ("" for none).
 [[nodiscard]] std::string iconOf(std::string const& decorationType);
 
-/// upstream's IMapDecorationRenderers for one decoration (Java draws them only on TFMagicMapData; the caller
+/// upstream's IMapDecorationRenderers for one decoration (Java draws them only on GloamingMagicMapData; the caller
 /// sets them for magic maps).
 struct DecorationStyle {
     /// ConqueredMapIconRenderer (structure icons of conquered landmarks): the icon is drawn and the
@@ -481,7 +481,7 @@ struct DecorationStyle {
 };
 /// Java's showOnItemFrame of a decoration type: false for the vanilla player markers
 /// (MapDecorationTypes PLAYER, RED_MARKER, BLUE_MARKER, PLAYER_OFF_MAP, PLAYER_OFF_LIMITS: by Java
-/// name or as "minecraft:<index>" 0, 2, 3, 6, 13), true for every other type (upstream's 15 TFMapDecorations
+/// name or as "minecraft:<index>" 0, 2, 3, 6, 13), true for every other type (upstream's 15 GloamingMapDecorations
 /// register true).
 [[nodiscard]] bool showOnItemFrame(std::string const& decorationType);
 /// Whether map `mapId` has upstream decorations (one lock, no copy: the render thread asks for every map it

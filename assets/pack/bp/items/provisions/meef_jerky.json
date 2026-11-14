@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_item_meef_jerky"
+          "default": "gf_item_meef_jerky"
         }
       },
       "minecraft:display_name": {

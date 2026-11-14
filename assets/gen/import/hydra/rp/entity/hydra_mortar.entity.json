@@ -10,7 +10,7 @@
         "default": "textures/gloamingforest/entity/hydramortar"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.hydra_mortar"
+        "default": "geometry.gf.skeleton.hydra_mortar"
       },
       "render_controllers": ["controller.render.default"]
     }

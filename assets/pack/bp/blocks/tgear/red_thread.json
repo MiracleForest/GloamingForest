@@ -71,7 +71,7 @@
       },
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_tgear_red_thread",
+          "texture": "gf_tgear_red_thread",
           "render_method": "alpha_test",
           "ambient_occlusion": false,
           "face_dimming": false

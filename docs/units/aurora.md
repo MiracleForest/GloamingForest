@@ -34,7 +34,7 @@ Spec: [docs/spec/aurora.md](../spec/aurora.md). Code: `src/feature/aurora/` (ser
   `fillColumnDown` puts under a based wing down to the ground) and every placement F11's `onPlaced` reports
   (players, `/setblock`, `/fill`: `aurora.aurora_block_variant`) set the variant of the position.
 - Item colours (ColorHandler#registerItemColors, the colour without a level): `minecraft:item_visual` with
-  pre-tinted textures: hsvToRGB(0.45, 1, 1) = #00FFB2 baked into a tf-derived copy of upstream's `aurora_block_0`
+  pre-tinted textures: hsvToRGB(0.45, 1, 1) = #00FFB2 baked into a upstream-derived copy of upstream's `aurora_block_0`
   strip (all 16 frames, animated with variant 0's mcmeta frames like upstream's item), and the pale colour
   auroraPaleColor(#00FFB2) = #73E6C3 as `tint_color` of the pillar, slab and glass textures (the gtest
   `AuroraColor.JavaGoldens` pins both against upstream's Java code).
@@ -47,8 +47,8 @@ Spec: [docs/spec/aurora.md](../spec/aurora.md). Code: `src/feature/aurora/` (ser
   queen's room of a placed palace.
 - Block colours: with the client mod, upstream's exact per-position colour (F12 tint); vanilla clients draw baked
   textures (spec section 13). The block definitions (one for every client) name baked textures without a tint
-  method: `tf_aurora_baked_aurora_block_N` (tf-derived copies of upstream's strip times the item colour hsvToRGB(0.45)
-  = #00FFB2, animated with variant N's frames) and `tf_aurora_baked_aurora_pillar{,_top}` /
+  method: `gf_aurora_baked_aurora_block_N` (upstream-derived copies of upstream's strip times the item colour hsvToRGB(0.45)
+  = #00FFB2, animated with variant N's frames) and `gf_aurora_baked_aurora_pillar{,_top}` /
   `_slab_side` (upstream's textures with the pale `tint_color` #73E6C3). The client mod swaps each of them for the
   untinted texture with the `water` tint method when it resolves the block's materials (contract extension
   `src/feature/ext/aurora/MaterialSwap.{h,cpp}`, R18, a hook on

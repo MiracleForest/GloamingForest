@@ -369,16 +369,16 @@ void tick(movement::MoveState& s) {
     // make (feature::tgmove::inputDelta), as on the server copy
     if (auto in = ctx.tryGetComponent<MoveInputComponent>()) {
         Vec2 const move = in->mMove;
-        Vec2       tf   = move;
+        Vec2       upsrc   = move;
         double     mult = tg::straightAheadMultiplier(act(Mod::StraightAhead), tg::kStraightAheadMultiplier, move.y);
         l.straightForward = mult != 1.0;
         if (l.straightForward) { // handleStraightAhead: strafe / 1.4 of the raw impulses
             auto s2 = tg::straightAheadInput(move.x, move.y, mult);
-            tf      = Vec2{s2.strafe, s2.forward};
+            upsrc      = Vec2{s2.strafe, s2.forward};
         }
         if (l.straightForward && move.x != 0 && !l.loggedStraight) {
             l.loggedStraight = true;
-            log().info("tgmove: straight ahead strafe {:.3f} -> {:.3f}", move.x, tf.x);
+            log().info("tgmove: straight ahead strafe {:.3f} -> {:.3f}", move.x, upsrc.x);
         }
         Vec2 engine = move;
         // handleAgileRanger: drawing a projectile weapon, the input x 5 (cancelling Java's 0.2 use
@@ -387,7 +387,7 @@ void tick(movement::MoveState& s) {
             // the slowdown of this use as the input shows it (each item has its own)
             Vec2 const raw  = in->mRawInputState->mAnalogMoveVector;
             double     slow = feature::tgmove::itemUseSlowdownOf(move, raw);
-            tf              = feature::tgmove::agileRangerInput(tf, slow);
+            upsrc              = feature::tgmove::agileRangerInput(upsrc, slow);
             if (!l.loggedAgileInput && (move.x != 0 || move.y != 0)) {
                 l.loggedAgileInput = true;
                 log().info("tgmove: agile ranger, input length while drawing {:.3f} (raw {:.3f}, use slowdown {:.3f})", std::sqrt(move.x * move.x + move.y * move.y),
@@ -409,13 +409,13 @@ void tick(movement::MoveState& s) {
                            l.sneakScaledLater ? "comes after the input" : "is in the input");
             }
             if (l.sneakScaledLater) engine = Vec2{move.x * 0.3f, move.y * 0.3f};
-            tg::unsneakImpulse(tf.y, tf.x, false);
+            tg::unsneakImpulse(upsrc.y, upsrc.x, false);
             if (l.sneakScaledLater) { // the raw input: upstream's is its unit length
-                tf = Vec2{static_cast<float>(move.x / mult), move.y};
-                tg::unsneakImpulse(tf.y, tf.x, true, 1.0f);
+                upsrc = Vec2{static_cast<float>(move.x / mult), move.y};
+                tg::unsneakImpulse(upsrc.y, upsrc.x, true, 1.0f);
             }
         }
-        if (tf.x != engine.x || tf.y != engine.y) s.velocity = s.velocity + feature::tgmove::inputDelta(*p, engine, tf, s.onGround, s.sprinting, act(Mod::Unrestrained));
+        if (upsrc.x != engine.x || upsrc.y != engine.y) s.velocity = s.velocity + feature::tgmove::inputDelta(*p, engine, upsrc, s.onGround, s.sprinting, act(Mod::Unrestrained));
     }
     // ---- agile ranger: the bow's use slowdown x5 (the server's copy does the same) ----
     (void)feature::tgmove::applyAgileRanger(*p, l.eng.agileBase, l.eng.agileSet);

@@ -30,7 +30,7 @@
   pwsh tools/spec/owners.ps1 -Check          # fail if the committed table is stale
 #>
 param(
-    [string]$TfDir,
+    [string]$GloamingDir,
     [string]$Out,
     [switch]$Check,
     [switch]$Strict
@@ -38,15 +38,15 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version 3.0
 $root = (Resolve-Path "$PSScriptRoot/../..").Path
-if (-not $TfDir) { $TfDir = if ($env:GF_UPSTREAM_HOME) { $env:GF_UPSTREAM_HOME } else { Join-Path $env:LOCALAPPDATA 'gf-upstream/view' } }
+if (-not $GloamingDir) { $GloamingDir = if ($env:GF_UPSTREAM_HOME) { $env:GF_UPSTREAM_HOME } else { Join-Path $env:LOCALAPPDATA 'gf-upstream/view' } }
 if (-not $Out) { $Out = Join-Path $root 'docs/spec/owners.tsv' }
 $unclaimedFile = Join-Path (Split-Path $Out) 'owners-unclaimed.txt'
-if (-not (Test-Path (Join-Path $TfDir 'src/main/java/gloamingforest'))) {
-    throw "upstream checkout not found at $TfDir (run: pwsh tools/upstream/fetch.ps1)"
+if (-not (Test-Path (Join-Path $GloamingDir 'src/main/java/gloamingforest'))) {
+    throw "upstream checkout not found at $GloamingDir (run: pwsh tools/upstream/fetch.ps1)"
 }
-$JavaDir = Join-Path $TfDir 'src/main/java/gloamingforest'
-$GenRes = Join-Path $TfDir 'src/generated/resources'
-$MainRes = Join-Path $TfDir 'src/main/resources'
+$JavaDir = Join-Path $GloamingDir 'src/main/java/gloamingforest'
+$GenRes = Join-Path $GloamingDir 'src/generated/resources'
+$MainRes = Join-Path $GloamingDir 'src/main/resources'
 $rules = Get-Content (Join-Path $PSScriptRoot 'owners.rules.json') -Raw | ConvertFrom-Json -AsHashtable
 # the directories below data/<ns>/tags/ that hold tag registries (two-segment registries "<group>/<registry>")
 $tagRegistryGroups = @(if ($rules.ContainsKey('tagRegistryGroups')) { $rules.tagRegistryGroups } else { 'worldgen' })
@@ -139,19 +139,19 @@ function Owner-Of([string]$kind, [string]$id) {
 # ---- extraction -------------------------------------------------------------------------------------
 
 # blocks, items, block items, entities, spawn eggs
-Add-Ids block (Get-JavaIds 'init/TFBlocks.java' 'DeferredBlock<[^=;]*>\s+\w+\s*=\s*[\w.]+\(\s*"([a-z0-9_]+)"')
-Add-Ids item (Get-JavaIds 'init/TFItems.java' 'DeferredItem<[^=;]*>\s+\w+\s*=\s*[\w.]+\(\s*"([a-z0-9_]+)"')
+Add-Ids block (Get-JavaIds 'init/GloamingBlocks.java' 'DeferredBlock<[^=;]*>\s+\w+\s*=\s*[\w.]+\(\s*"([a-z0-9_]+)"')
+Add-Ids item (Get-JavaIds 'init/GloamingItems.java' 'DeferredItem<[^=;]*>\s+\w+\s*=\s*[\w.]+\(\s*"([a-z0-9_]+)"')
 $itemModels = @(Get-DataIds (Join-Path $GenRes 'assets/gloamingforest/models/item')) + @(Get-DataIds (Join-Path $MainRes 'assets/gloamingforest/models/item'))
 $blockItems = @($ids['block'] | Where-Object { $itemModels -contains $_ -and -not $ids['item'].Contains($_) })
 Add-Ids block_item $blockItems
 $entityNames = @{}
-foreach ($m in [regex]::Matches((Read-Text (Join-Path $JavaDir 'entity/TFEntityNames.java')), 'ResourceLocation (\w+) = prefix\("([a-z0-9_]+)"\)')) {
+foreach ($m in [regex]::Matches((Read-Text (Join-Path $JavaDir 'entity/GloamingEntityNames.java')), 'ResourceLocation (\w+) = prefix\("([a-z0-9_]+)"\)')) {
     $entityNames[$m.Groups[1].Value] = $m.Groups[2].Value
 }
-$entityText = Strip-Comments (Read-Text (Join-Path $JavaDir 'init/TFEntities.java'))
+$entityText = Strip-Comments (Read-Text (Join-Path $JavaDir 'init/GloamingEntities.java'))
 $entities = [Collections.Generic.List[string]]::new()
 $eggs = [Collections.Generic.List[string]]::new()
-foreach ($m in [regex]::Matches($entityText, 'DeferredHolder<EntityType<\?>, EntityType<\w+>> \w+ = (\w+)\(TFEntityNames\.(\w+)([^;]*);')) {
+foreach ($m in [regex]::Matches($entityText, 'DeferredHolder<EntityType<\?>, EntityType<\w+>> \w+ = (\w+)\(GloamingEntityNames\.(\w+)([^;]*);')) {
     $name = $entityNames[$m.Groups[2].Value]
     $entities.Add($name)
     if ($m.Groups[3].Value -match '0x[0-9a-fA-F]+') { $eggs.Add("${name}_spawn_egg") }
@@ -160,8 +160,8 @@ Add-Ids entity $entities
 Add-Ids spawn_egg $eggs
 
 # worldgen and data
-Add-Ids biome (Get-JavaIds 'init/TFBiomes.java')
-Add-Ids structure (Get-JavaIds 'init/TFStructures.java')
+Add-Ids biome (Get-JavaIds 'init/GloamingBiomes.java')
+Add-Ids structure (Get-JavaIds 'init/GloamingStructures.java')
 Add-Ids structure_set (Get-DataIds (Join-Path $GenRes 'data/gloamingforest/worldgen/structure_set'))
 Add-Ids configured_feature (Get-DataIds (Join-Path $GenRes 'data/gloamingforest/worldgen/configured_feature'))
 Add-Ids placed_feature (Get-DataIds (Join-Path $GenRes 'data/gloamingforest/worldgen/placed_feature'))
@@ -177,8 +177,8 @@ Add-Ids banner_pattern (Get-DataIds (Join-Path $GenRes 'data/gloamingforest/bann
 Add-Ids jukebox_song (Get-DataIds (Join-Path $GenRes 'data/gloamingforest/jukebox_song'))
 Add-Ids trim_material (Get-DataIds (Join-Path $GenRes 'data/gloamingforest/trim_material'))
 Add-Ids function (Get-DataIds (Join-Path $MainRes 'data/gloamingforest/function') '*.mcfunction') manual
-Add-Ids particle (Get-JavaIds 'init/TFParticleType.java')
-$soundText = Strip-Comments (Read-Text (Join-Path $JavaDir 'init/TFSounds.java')) # GHAST_TRAP_ACTIVE is commented out: 328 events
+Add-Ids particle (Get-JavaIds 'init/GloamingParticleType.java')
+$soundText = Strip-Comments (Read-Text (Join-Path $JavaDir 'init/GloamingSounds.java')) # GHAST_TRAP_ACTIVE is commented out: 328 events
 $sounds = @([regex]::Matches($soundText, 'createEvent\("([^"]+)"\)') | ForEach-Object { $_.Groups[1].Value })
 $soundsJson = Get-Content (Join-Path $GenRes 'assets/gloamingforest/sounds.json') -Raw | ConvertFrom-Json -AsHashtable
 Add-Ids sound_event (@($sounds) + @($soundsJson.Keys) | Sort-Object -Unique)
@@ -198,23 +198,23 @@ Add-Ids advancement $advancements
 
 # code registries (init/*.java)
 $codeKinds = [ordered]@{
-    effect = 'TFMobEffects'; attribute = 'TFAttributes'; stat = 'TFStats'; keybind = 'TFKeyBinds'; gamerule = 'TFGameRules'
-    map_decoration = 'TFMapDecorations'; armor_material = 'TFArmorMaterials'; trigger = 'TFAdvancements'; item_sub_predicate = 'TFItemSubPredicates'
-    recipe_serializer = 'TFRecipes'; loot_modifier = 'TFLootModifiers'; feature_type = 'TFFeatures'; placement_modifier = 'TFFeatureModifiers'
-    structure_type = 'TFStructureTypes'; structure_processor = 'TFStructureProcessors'; structure_placement_type = 'TFStructurePlacementTypes'
-    block_entity = 'TFBlockEntities'; menu = 'TFMenuTypes'; data_component = 'TFDataComponents'; attachment = 'TFDataAttachments'
-    poi = 'TFPOITypes'; creative_tab = 'TFCreativeTabs'; density_function_type = 'TFDensityFunctions'; carver = 'TFCaveCarvers'
-    enchantment_effect = 'TFEnchantmentEffects'; data_serializer = 'TFDataSerializers'
+    effect = 'GloamingMobEffects'; attribute = 'GloamingAttributes'; stat = 'GloamingStats'; keybind = 'GloamingKeyBinds'; gamerule = 'GloamingGameRules'
+    map_decoration = 'GloamingMapDecorations'; armor_material = 'GloamingArmorMaterials'; trigger = 'GloamingAdvancements'; item_sub_predicate = 'GloamingItemSubPredicates'
+    recipe_serializer = 'GloamingRecipes'; loot_modifier = 'GloamingLootModifiers'; feature_type = 'GloamingFeatures'; placement_modifier = 'GloamingFeatureModifiers'
+    structure_type = 'GloamingStructureTypes'; structure_processor = 'GloamingStructureProcessors'; structure_placement_type = 'GloamingStructurePlacementTypes'
+    block_entity = 'GloamingBlockEntities'; menu = 'GloamingMenuTypes'; data_component = 'GloamingDataComponents'; attachment = 'GloamingDataAttachments'
+    poi = 'GloamingPOITypes'; creative_tab = 'GloamingCreativeTabs'; density_function_type = 'GloamingDensityFunctions'; carver = 'GloamingCaveCarvers'
+    enchantment_effect = 'GloamingEnchantmentEffects'; data_serializer = 'GloamingDataSerializers'
 }
 foreach ($k in $codeKinds.Keys) { Add-Ids $k (Get-JavaIds "init/$($codeKinds[$k]).java") manual }
-$lootText = Strip-Comments (Read-Text (Join-Path $JavaDir 'init/TFLoot.java'))
+$lootText = Strip-Comments (Read-Text (Join-Path $JavaDir 'init/GloamingLoot.java'))
 Add-Ids loot_condition @([regex]::Matches($lootText, 'CONDITIONS\.register\("([a-z0-9_]+)"') | ForEach-Object { $_.Groups[1].Value }) manual
 Add-Ids loot_function @([regex]::Matches($lootText, 'FUNCTIONS\.register\("([a-z0-9_]+)"') | ForEach-Object { $_.Groups[1].Value }) manual
 Add-Ids loot_number_provider @([regex]::Matches($lootText, 'NUMBERS\.register\("([a-z0-9_]+)"') | ForEach-Object { $_.Groups[1].Value }) manual
-$pieceText = Strip-Comments (Read-Text (Join-Path $JavaDir 'init/TFStructurePieceTypes.java'))
+$pieceText = Strip-Comments (Read-Text (Join-Path $JavaDir 'init/GloamingStructurePieceTypes.java'))
 $pieceClass = @{}
 # registerPieceType(<one or more string literals joined by +>, <Class>::<method reference>): the
-# revamped Lich Tower registers "TFLT" + "TFoy", ..., TFJigsawTemplate GloamingJigsawPiece::defaultDeserialize
+# revamped Lich Tower registers "GloamingLT" + "TFoy", ..., GloamingJigsawTemplate GloamingJigsawPiece::defaultDeserialize
 foreach ($m in [regex]::Matches($pieceText, 'registerPieceType\(((?:"[A-Za-z0-9_]+"\s*\+\s*)*"[A-Za-z0-9_]+"),\s*(\w+)::\w+')) {
     $name = ([regex]::Matches($m.Groups[1].Value, '"([A-Za-z0-9_]+)"') | ForEach-Object { $_.Groups[1].Value }) -join ''
     $pieceClass[$name] = $m.Groups[2].Value
@@ -222,12 +222,12 @@ foreach ($m in [regex]::Matches($pieceText, 'registerPieceType\(((?:"[A-Za-z0-9_
 Add-Ids structure_piece_type @($pieceClass.Keys | Sort-Object) manual
 
 # /gloamingforest subcommands (R14): the literal paths upstream registers below its root command
-# (command/TFCommand.java and the command classes it chains), arguments left out: "sinister_spawner",
+# (command/GloamingCommand.java and the command classes it chains), arguments left out: "sinister_spawner",
 # "sinister_spawner add_particle", "shield set" (/gloamingforest shield <target> set <amount>). A
 # command class's first Commands.literal is its own literal, the others are its children; a branch
 # (`x = Commands.literal("structure_util").then(a.register())...`) holds the literals of its classes.
 $cmdDir = Join-Path $JavaDir 'command'
-$cmdText = Strip-Comments (Read-Text (Join-Path $cmdDir 'TFCommand.java'))
+$cmdText = Strip-Comments (Read-Text (Join-Path $cmdDir 'GloamingCommand.java'))
 $cmdClass = @{}
 foreach ($m in [regex]::Matches($cmdText, 'private\s+(\w+)\s+(\w+)\s*;')) { $cmdClass[$m.Groups[2].Value] = $m.Groups[1].Value }
 # The end (exclusive) of the builder chain that starts at $start: the ')' or ',' closing the call it
@@ -245,7 +245,7 @@ function Get-ChainEnd([string]$text, [int]$start) {
     return $text.Length
 }
 function Get-CommandPaths([string]$field, [string]$prefix) {
-    if (-not $cmdClass.ContainsKey($field)) { throw "TFCommand.java: no command field '$field'" }
+    if (-not $cmdClass.ContainsKey($field)) { throw "GloamingCommand.java: no command field '$field'" }
     $file = "$($cmdClass[$field]).java"
     $text = Strip-Comments (Read-Text (Join-Path $cmdDir $file))
     $ms = @([regex]::Matches($text, 'Commands\.literal\("([a-z0-9_]+)"\)'))
@@ -286,7 +286,7 @@ foreach ($m in [regex]::Matches($cmdText, '(\w+)\s*=\s*Commands\.literal\("([a-z
     $cmdBranches[$m.Groups[1].Value] = @{ literal = $m.Groups[2].Value; fields = @([regex]::Matches($m.Groups[3].Value, '\.then\((\w+)\.register') | ForEach-Object { $_.Groups[1].Value }) }
 }
 $cmdRoot = [regex]::Match($cmdText, 'Commands\.literal\("gloamingforest"\)(.*?);', 'Singleline')
-if (-not $cmdRoot.Success) { throw 'TFCommand.java: no Commands.literal("gloamingforest") chain' }
+if (-not $cmdRoot.Success) { throw 'GloamingCommand.java: no Commands.literal("gloamingforest") chain' }
 $subcommands = [Collections.Generic.List[string]]::new()
 foreach ($m in [regex]::Matches($cmdRoot.Groups[1].Value, '\.then\((\w+)(\.register\([^)]*\))?\)')) {
     $ref = $m.Groups[1].Value
@@ -295,10 +295,10 @@ foreach ($m in [regex]::Matches($cmdRoot.Groups[1].Value, '\.then\((\w+)(\.regis
         $b = $cmdBranches[$ref]
         $subcommands.Add($b.literal)
         foreach ($f in $b.fields) { foreach ($p in Get-CommandPaths $f "$($b.literal) ") { $subcommands.Add($p) } }
-    } else { throw "TFCommand.java: cannot resolve the subcommand '$ref'" }
+    } else { throw "GloamingCommand.java: cannot resolve the subcommand '$ref'" }
 }
 Add-Ids subcommand $subcommands manual
-$tfSubcommands = [Collections.Generic.HashSet[string]]::new([string[]]@($subcommands))
+$gloamingSubcommands = [Collections.Generic.HashSet[string]]::new([string[]]@($subcommands))
 
 # data maps, tags, gloaming/* registries
 $dataMaps = @()
@@ -339,14 +339,14 @@ foreach ($f in Get-ChildItem (Join-Path $JavaDir 'init/custom') -Filter '*.java'
 Add-Ids registry ($registries | Sort-Object -Unique)
 Add-Ids registry_entry $registryEntries
 
-# config keys (TFCommonConfig / TFClientConfig): "<common|client>.<Section>.<key>" + translation ids
+# config keys (GloamingCommonConfig / GloamingClientConfig): "<common|client>.<Section>.<key>" + translation ids
 $configKeys = [ordered]@{}
 $configTranslations = @{}
-foreach ($pair in @(@('common', 'config/TFCommonConfig.java'), @('client', 'config/TFClientConfig.java'))) {
+foreach ($pair in @(@('common', 'config/GloamingCommonConfig.java'), @('client', 'config/GloamingClientConfig.java'))) {
     $text = Strip-Comments (Read-Text (Join-Path $JavaDir $pair[1]))
     $stack = [Collections.Generic.List[string]]::new()
     $pending = $null
-    foreach ($m in [regex]::Matches($text, 'translation\(TFConfig\.CONFIG_ID \+ "([^"]+)"\)|push\("([^"]+)"\)|pop\(\)|\.define\w*\("([^"]+)"')) {
+    foreach ($m in [regex]::Matches($text, 'translation\(GloamingConfig\.CONFIG_ID \+ "([^"]+)"\)|push\("([^"]+)"\)|pop\(\)|\.define\w*\("([^"]+)"')) {
         if ($m.Groups[1].Success) { $pending = $m.Groups[1].Value }
         elseif ($m.Groups[2].Success) {
             $stack.Add($m.Groups[2].Value)
@@ -576,7 +576,7 @@ foreach ($u in $rules.units.Keys) {
     if ($unit.ContainsKey('subcommands')) { Write-Host "[owners] $u has 'subcommands': upstream's literals are owned by ids.subcommand, GloamingForest additions go to 'gfSubcommands'" -ForegroundColor Red; exit 1 }
     if ($unit.ContainsKey('gfSubcommands')) {
         foreach ($c in $unit.gfSubcommands) {
-            $problem = if ($tfSubcommands.Contains($c)) { "is upstream's literal (owned through ids.subcommand)" }
+            $problem = if ($gloamingSubcommands.Contains($c)) { "is upstream's literal (owned through ids.subcommand)" }
                 elseif (($o = Owner-Of subcommand $c) -and $o -ne $u) { "is $o's already" }
             if ($problem) { Write-Host "[owners] $u gfSubcommands: '$c' $problem" -ForegroundColor Red; exit 1 }
             Set-Owner subcommand $c $u
@@ -598,17 +598,17 @@ foreach ($u in $rules.units.Keys) {
                 $bare = $k -eq 'gamerule' -and $i -match '^[A-Za-z][A-Za-z0-9_]*$'
                 # upstream's triggers are kept by their path (the namespace is added when the rows are written):
                 # a gloamingforest: trigger is declared by its path too, so upstream's own and other units' collide
-                $tfTrigger = $k -eq 'trigger' -and $i -match '^gloamingforest:([a-z0-9_./-]+)$'
-                if ($tfTrigger) { $i = $Matches[1] }
+                $gloamingTrigger = $k -eq 'trigger' -and $i -match '^gloamingforest:([a-z0-9_./-]+)$'
+                if ($gloamingTrigger) { $i = $Matches[1] }
                 $declaredBy = $null
                 foreach ($d in $declared) { if ($d[0] -eq $k -and $d[1] -eq $i) { $declaredBy = $d; break } }
-                $tfOwn = ($bare -or $tfTrigger) -and $ids.Contains($k) -and $ids[$k].Contains($i) -and -not $declaredBy
+                $gloamingOwn = ($bare -or $gloamingTrigger) -and $ids.Contains($k) -and $ids[$k].Contains($i) -and -not $declaredBy
                 $problem = if ($k -eq 'lang' -and $i -notmatch '^[A-Za-z0-9_.-]+$') { "is not a translation key ([A-Za-z0-9_.-]+)" }
                     elseif ($k -eq 'lang' -and $lang.ContainsKey($i)) { "is an upstream en_us key: the lang rules own it" }
-                    elseif ($k -ne 'lang' -and -not $bare -and -not $tfTrigger -and $i -notmatch '^[a-z0-9_.-]+:[a-z0-9_./-]+$') { "is not a full id <namespace>:<path>" }
+                    elseif ($k -ne 'lang' -and -not $bare -and -not $gloamingTrigger -and $i -notmatch '^[a-z0-9_.-]+:[a-z0-9_./-]+$') { "is not a full id <namespace>:<path>" }
                     elseif ($declaredBy) { "is declared by $($declaredBy[2]) already" }
-                    elseif ($tfOwn) { "is upstream's: the rule tables own upstream ids" }
-                    elseif (-not $tfTrigger -and $ids.Contains($k) -and $ids[$k].Contains($i)) { "is upstream's: the rule tables own upstream ids" }
+                    elseif ($gloamingOwn) { "is upstream's: the rule tables own upstream ids" }
+                    elseif (-not $gloamingTrigger -and $ids.Contains($k) -and $ids[$k].Contains($i)) { "is upstream's: the rule tables own upstream ids" }
                     elseif ($m -notin 'gen', 'manual') { "has mode '$m' (gen or manual)" }
                     elseif ($other = @($owner.Keys | Where-Object { $owner[$_].ContainsKey($i) -and $owner[$_][$i] -ne $u } | Select-Object -First 1)) { "is owned by $($owner[$other[0]][$i]) already ($($other[0]))" }
                 if ($problem) { Write-Host "[owners] $u ids.${k}: '$i' $problem" -ForegroundColor Red; exit 1 }

@@ -7,7 +7,7 @@ its vanilla fallbacks and its deviations from upstream 4.8 (for A8's deviation l
 
 | Path | What |
 |---|---|
-| `src/core/tgear/Logic.{h,cpp}` (+ `tests/tgear`) | Item display rules (ItemDisplayContents.Mutable), hotbar swap plan, auto repair chance, clock / moon dial texts, `${tfkeybinds/...}` interpolation |
+| `src/core/tgear/Logic.{h,cpp}` (+ `tests/tgear`) | Item display rules (ItemDisplayContents.Mutable), hotbar swap plan, auto repair chance, clock / moon dial texts, `${gloamingkeybinds/...}` interpolation |
 | `src/feature/tgear/Gear.{h,cpp}` | Modifier registry (data `gloaming/travellers_modifiers`), slots, broken state, `isModifierActive` for any wearer, stack data: `gf:tgear.container`, `gf:tgear.display`, `gf:tgear.gloves` (modifier ids in `gf:gear`, F9's gear contract) |
 | `src/feature/tgear/Recipes.cpp` | The 24 modifier recipes and the vest / gloves merge as special crafting; `add_modifier` trigger for the crafter |
 | `src/feature/tgear/Command.cpp` | `/gloamingforest travellers_gear add_modifier|remove_modifier <modifier>` (soft enum of the registry keys plus an any-word overload for upstream's "not a valid Traveller's Gear Modifier", operators see the result) |
@@ -22,7 +22,7 @@ its vanilla fallbacks and its deviations from upstream 4.8 (for A8's deviation l
 | `src/feature/ext/tgear/IconHooks.{h,cpp}` | Contract extension (client): GUI icon layers (`ItemRenderer::renderGuiItemInChunk`: the base icon replaced by an item atlas entry, overlay entries drawn over it in the same batch) (R18) |
 | `assets/pack/bp/items/tgear`, `assets/pack/bp/recipes/tgear`, `assets/pack/bp/blocks/tgear` | Wearable gear items, 35 BP recipes (one per potion variant), the red thread multiface block (thin per-face selection boxes, waterloggable) |
 | `assets/pack/rp/{models/blocks,particles}/tgear`, `assets/pack/rp/terrain_texture.d/tgear.json` | Red thread block geometry (RedThreadModel's centre piece per face and the 24 same-block connections, shown by the face states), the perfect dodge particle (PortalParticle path) |
-| `assets/pack/rp/textures/gloamingforest/entity/tgear/tf-derived/` | `red_thread.png` (upstream's texture with the transposed copies of the parts the east / west faces need: block geometry cannot rotate a face's UVs) and `red_thread_texels.json` (upstream's texels, which the client draws the connections with) |
+| `assets/pack/rp/textures/gloamingforest/entity/tgear/upstream-derived/` | `red_thread.png` (upstream's texture with the transposed copies of the parts the east / west faces need: block geometry cannot rotate a face's UVs) and `red_thread_texels.json` (upstream's texels, which the client draws the connections with) |
 | `assets/pack/rp/item_texture.d/tgear.json` | Item atlas entries of the `*_broken` icons, every modifier overlay (normal and broken) and the red thread bundle / spool icons |
 
 ## Vanilla fallbacks (players without the client mod)
@@ -162,7 +162,7 @@ its vanilla fallbacks and its deviations from upstream 4.8 (for A8's deviation l
   input and bundles (server-side validation).
 - Red thread: the block geometry draws upstream's 2 x 2 centre piece per face and the 24 connections between the
   faces of the same block (bone visibility by the face states), for everyone; the east / west faces use
-  transposed copies of the part textures (the tf-derived texture), since Bedrock's block geometry cannot
+  transposed copies of the part textures (the upstream-derived texture), since Bedrock's block geometry cannot
   rotate a face's UVs. The client mod draws the connections to the same face of the next thread and round
   the corner (unless a full face is in the way) at the block's light (the dimension's brightness ramp,
   Java's packedLight) and, while red thread is held or the vision is on, everything full bright through
@@ -229,4 +229,4 @@ Open: nothing for audio.
   needs a client run to find the draw path and check the result; this round's client runs could not happen (the e2e
   client instance `%APPDATA%\levilauncher.exe\versions\1.26.51.01` was missing from the machine).
 - **The current key binding in tooltips**: waits for F12's key-name call (being added this round by another agent,
-  not on main when this ran); `${tfkeybinds/...}` still shows the default key.
+  not on main when this ran); `${gloamingkeybinds/...}` still shows the default key.

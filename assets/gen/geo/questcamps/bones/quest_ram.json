@@ -3,18 +3,18 @@
   "geometry": "geometry.gloamingforest.quest_ram",
   "layer": {
     "name": "quest_ram",
-    "field": "TFModelLayers.QUEST_RAM",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.QUEST_RAM, QuestRamModel::checkForPack);"
+    "field": "GloamingModelLayers.QUEST_RAM",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.QUEST_RAM, QuestRamModel::checkForPack);"
   },
   "texture_size": [128, 128],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/questram",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/questram.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/questram.png"
     },
     {
       "bedrock": "textures/gloamingforest/entity/questram_lines",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/questram_lines.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/questram_lines.png"
     }
   ],
   "bones": [

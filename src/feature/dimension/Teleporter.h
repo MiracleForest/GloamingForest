@@ -1,9 +1,9 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/world/TFTeleporter.java
+//   src/main/java/gloamingforest/world/GloamingTeleporter.java
 //   src/main/java/gloamingforest/world/NoReturnTeleporter.java
 //   src/main/java/gloamingforest/world/TeleporterCache.java
-//   src/main/java/gloamingforest/block/TFPortalBlock.java
+//   src/main/java/gloamingforest/block/GloamingPortalBlock.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -39,13 +39,13 @@ struct PosLess {
 };
 using PortalScan = std::map<BlockPos, bool, PosLess>;
 
-/// TFPortalBlock.recursivelyValidatePortal: flood fill of the pool from `pos` (`checked`: pool
+/// GloamingPortalBlock.recursivelyValidatePortal: flood fill of the pool from `pos` (`checked`: pool
 /// blocks true, rim blocks false). False when the pool leaks, is larger than maxPortalSize or the
 /// rim lacks dirt with nature on top.
 bool recursivelyValidatePortal(BlockSource& region, BlockPos const& pos, PortalScan& checked, int& size, Block const& poolBlock);
 /// The upward face of the block at `pos` is sturdy (Java isFaceSturdy(..., UP)).
 [[nodiscard]] bool sturdyTop(BlockSource& region, BlockPos const& pos);
-/// TFPortalBlock#canFormPortal: the pool fluid, or a one-way portal (re-lighting it).
+/// GloamingPortalBlock#canFormPortal: the pool fluid, or a one-way portal (re-lighting it).
 [[nodiscard]] bool canFormPortal(Block const& block);
 
 namespace teleporter {
@@ -61,7 +61,7 @@ struct Traveller {
     Vec3                   srcExact;    ///< entity.position() in the source
     float                  yaw = 0, pitch = 0;
     float                  width = 0.6f, height = 1.8f;
-    std::vector<BlockPos>  srcPortalBlocks; ///< the source portal's blocks (TFPortalBlock.recursivelyValidatePortal)
+    std::vector<BlockPos>  srcPortalBlocks; ///< the source portal's blocks (GloamingPortalBlock.recursivelyValidatePortal)
     std::optional<BlockPos> srcExit;        ///< getPortalPosition(source, srcPos)
     std::vector<std::int64_t> passengers;   ///< riders that travel along (Entity#changeDimension)
 };
@@ -81,7 +81,7 @@ void cacheLoad();
 void cacheSave();
 void cacheClear();
 
-// ---- TFTeleporter ----
+// ---- GloamingTeleporter ----
 /// The nearest portal block (lowest of its column run) within 200 blocks of `pos`, in loaded
 /// chunks only (getPortalPosition).
 [[nodiscard]] std::optional<BlockPos> getPortalPosition(BlockSource& region, BlockPos const& pos);

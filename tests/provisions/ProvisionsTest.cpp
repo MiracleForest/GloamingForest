@@ -1,6 +1,6 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
-// Tests of src/core/provisions/Provisions.h (translated from upstream 4.8's TFItems, Experiment115Block,
-// FrostedEffect, EntityEvents, TFEnchantments, TFJukeboxSongs and ChainBlockItem; LGPL-2.1-or-later
+// Tests of src/core/provisions/Provisions.h (translated from upstream 4.8's GloamingItems, Experiment115Block,
+// FrostedEffect, EntityEvents, GloamingEnchantments, GloamingJukeboxSongs and ChainBlockItem; LGPL-2.1-or-later
 // code, see the header of Provisions.h).
 #include <gtest/gtest.h>
 
@@ -8,7 +8,7 @@
 
 using namespace gf::core::provisions;
 
-TEST(ProvisionsFood, TableHasTfValues) {
+TEST(ProvisionsFood, TableHasGloamingValues) {
     EXPECT_EQ(foods().size(), 23u);
     auto const* chop = food("gloamingforest:hydra_chop");
     ASSERT_NE(chop, nullptr);

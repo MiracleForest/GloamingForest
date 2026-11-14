@@ -1,9 +1,9 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/init/TFArmorMaterials.java
-//   src/main/java/gloamingforest/util/TFToolMaterials.java
-//   src/main/java/gloamingforest/init/TFItems.java
-//   src/main/java/gloamingforest/init/TFTrimMaterials.java
+//   src/main/java/gloamingforest/init/GloamingArmorMaterials.java
+//   src/main/java/gloamingforest/util/GloamingToolMaterials.java
+//   src/main/java/gloamingforest/init/GloamingItems.java
+//   src/main/java/gloamingforest/init/GloamingTrimMaterials.java
 //   src/main/java/gloamingforest/events/ToolEvents.java
 //   src/main/java/gloamingforest/events/EntityEvents.java
 //   src/main/java/gloamingforest/enchantment/ApplyFrostedEffect.java
@@ -21,7 +21,7 @@
 namespace gf::core::armory {
 
 std::vector<ArmorMaterial> const& armorMaterials() {
-    // TFArmorMaterials: defense B/L/C/H, enchantability, toughness, repair ingredient; TFItems: the
+    // GloamingArmorMaterials: defense B/L/C/H, enchantability, toughness, repair ingredient; GloamingItems: the
     // durability multiplier, rarity and fireResistant of the pieces
     static std::vector<ArmorMaterial> const v{
         {"naga_scale", {3, 6, 7, 2}, 15, 0.5f, "gloamingforest:naga_scale", 21, Rarity::Uncommon, false, ""},
@@ -99,7 +99,7 @@ float toughnessOf(ArmorPiece const& piece) {
 }
 
 std::vector<ToolTier> const& toolTiers() {
-    // TFToolMaterials (repair tags #repairs_<tier>_tools = #c:ingots/<tier>) and Tiers.GOLD / DIAMOND
+    // GloamingToolMaterials (repair tags #repairs_<tier>_tools = #c:ingots/<tier>) and Tiers.GOLD / DIAMOND
     static std::vector<ToolTier> const v{
         {"ironwood", 512, 6.5f, 2.0f, 25, "gloamingforest:ironwood_ingot"},
         {"fiery", 1024, 9.0f, 4.0f, 10, "gloamingforest:fiery_ingot"},

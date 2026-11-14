@@ -366,7 +366,7 @@ GF_REGISTER_SELFTEST("questcamps.grove_layout", [](Context& ctx) -> ll::coro::Co
     // the stored piece (placePieceAdjusted(-2))
     int  gx = box.minX + 14, gz = box.minZ + 14, gy = box.minY - 1;
     auto piece = makeGrove(gx, gy, gz);
-    ctx.check(piece->typeId == kGrovePiece, "the piece type TFQuest1");
+    ctx.check(piece->typeId == kGrovePiece, "the piece type GloamingQuest1");
     ctx.check(piece->bbox.minX == gx - 12 && piece->bbox.minZ == gz - 12 && piece->bbox.minY == gy + 2, "the stored box starts at (x - 12, y + 2, z - 12)");
     ctx.check(piece->bbox.maxX - piece->bbox.minX == 26 && piece->bbox.maxZ - piece->bbox.minZ == 26, "the box is 27 x 27");
     auto homesBefore = pendingHomes();

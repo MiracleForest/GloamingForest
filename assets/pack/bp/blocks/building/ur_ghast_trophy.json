@@ -42,7 +42,7 @@
       "minecraft:geometry": "geometry.gloamingforest.building.ur_ghast_trophy_r0",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_building_towerboss",
+          "texture": "gf_building_towerboss",
           "render_method": "alpha_test"
         }
       }

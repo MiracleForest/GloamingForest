@@ -10,7 +10,7 @@
         "default": "textures/gloamingforest/entity/raven"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.raven"
+        "default": "geometry.gf.skeleton.raven"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

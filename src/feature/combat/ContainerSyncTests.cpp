@@ -4,7 +4,7 @@
 //     the end of the tick it changed (a handler's write, a native container's setItem as a hopper
 //     makes it, ext::markChanged), in the context its screen was opened with; nothing while nothing
 //     changes; a player's own click is answered once (feature/ext/combat/InventoryChanges.h);
-//   - combat.tf_chest_screen_refresh: upstream's double chest opened by code (no click): a change of either
+//   - combat.gf_chest_screen_refresh: upstream's double chest opened by code (no click): a change of either
 //     half refreshes the screen in its own context (the half it was opened through), whichever
 //     backend the chests use (BlockData on main before F11's native chests, native after);
 //   - combat.inventory_native_migrate: a native container whose stacks still wait in block data
@@ -257,7 +257,7 @@ GF_REGISTER_SELFTEST("combat.inventory_screen_refresh", [](Context& ctx) -> ll::
 
 // ---- upstream's double chest opened by code: refreshed in its own context ---------------------------------------
 
-GF_REGISTER_SELFTEST("combat.tf_chest_screen_refresh", [](Context& ctx) -> ll::coro::CoroTask<> {
+GF_REGISTER_SELFTEST("combat.gf_chest_screen_refresh", [](Context& ctx) -> ll::coro::CoroTask<> {
     // facing north: a left half's partner is east of it (ChestBlock#getConnectedDirection)
     auto left  = ctx.testPos(6073);
     auto right = ctx.testPos(6074);

@@ -10,7 +10,7 @@
         "default": "textures/gloamingforest/entity/wildboar"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.boar"
+        "default": "geometry.gf.skeleton.boar"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

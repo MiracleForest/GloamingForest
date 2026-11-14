@@ -8,7 +8,7 @@
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // Client view of progression (client build): the local player's completed advancements as the
-// server synced them ("combat.progress"), the tfEnforcedProgression gamerule ("gamerules.sync")
+// server synced them ("combat.progress"), the gloamingEnforcedProgression gamerule ("gamerules.sync")
 // and the biome restrictions (<mod>/data/<ns>/gloaming/restrictions/<biome>.json, as upstream's
 // Restriction registry). The missing advancement toast ("combat.missing_advancement") is upstream's
 // MissingAdvancementToast through F12's toasts (feature/ext/ui/Client.h): UPPER_TEXT
@@ -97,7 +97,7 @@ bool has(std::string const& advancementId) {
 }
 
 bool enforced() {
-    auto v = gamerules::client::value("tfEnforcedProgression");
+    auto v = gamerules::client::value("gloamingEnforcedProgression");
     return v.is_boolean() ? v.get<bool>() : true; // upstream's default
 }
 

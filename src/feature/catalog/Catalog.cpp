@@ -1,13 +1,13 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/init/TFCreativeTabs.java
+//   src/main/java/gloamingforest/init/GloamingCreativeTabs.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // The catalog part of contract "data" (F9; spike S6). upstream's four creative tabs (blocks, items,
 // equipment, food, in that order) are Bedrock creative catalog groups: the behavior pack's
-// item_catalog (F1's import of TFCreativeTabs, item_catalog.d fragments) declares them, the server
+// item_catalog (F1's import of GloamingCreativeTabs, item_catalog.d fragments) declares them, the server
 // builds its CreativeItemRegistry from it and sends it to every client. `groups()` reads that
 // registry back (the groups whose name is an upstream tab, their items in catalog order); before a world
 // exists, or without the catalog data, the four tabs are listed with their icon and name only.
@@ -39,7 +39,7 @@ namespace gf::catalog {
 
 namespace {
 
-/// TFCreativeTabs: id, icon, title, in upstream's order (withTabsBefore).
+/// GloamingCreativeTabs: id, icon, title, in upstream's order (withTabsBefore).
 std::vector<Group> defaults() {
     return {
         {"gloamingforest:blocks", "gloamingforest:naga_courtyard_miniature_structure", "itemGroup.gloamingforest.blocks", {}},

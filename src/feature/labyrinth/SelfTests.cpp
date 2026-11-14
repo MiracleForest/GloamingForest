@@ -178,7 +178,7 @@ void golden(Context& ctx, std::string const& name, std::string const& expected, 
 }
 
 // Recorded from the translation (GloamingForest's own goldens: chunk (3, -2), y 0, seed 20260521).
-constexpr char kLayout[] = "TFMMC=2 TFMMCIF=7 TFMMCR=2 TFMMCS=2 TFMMDE=12 TFMMDEC=9 TFMMDEF=6 TFMMDEFL=12 TFMMDEP=14 TFMMDER=14 TFMMDES=6 TFMMDET=11 TFMMDETC=8 TFMMDETrC=6 TFMMES=1 TFMMMR=2 TFMMMound=1 TFMMR=2 TFMMRB=1 TFMMRC=2 TFMMRE=1 TFMMRF=1 TFMMRSC=4 TFMMRV=1 TFMMRuins=1 TFMMUE=1 TFMMaze=2 5,-24,-75,118,12,38";
+constexpr char kLayout[] = "GloamingMMC=2 GloamingMMCIF=7 GloamingMMCR=2 GloamingMMCS=2 GloamingMMDE=12 GloamingMMDEC=9 GloamingMMDEF=6 GloamingMMDEFL=12 GloamingMMDEP=14 GloamingMMDER=14 GloamingMMDES=6 GloamingMMDET=11 GloamingMMDETC=8 GloamingMMDETrC=6 GloamingMMES=1 GloamingMMMR=2 GloamingMMMound=1 GloamingMMR=2 GloamingMMRB=1 GloamingMMRC=2 GloamingMMRE=1 GloamingMMRF=1 GloamingMMRSC=4 GloamingMMRV=1 GloamingMMRuins=1 GloamingMMUE=1 GloamingMMaze=2 5,-24,-75,118,12,38";
 constexpr char kHash[]   = "a004339e12d37a67";
 
 struct DifficultyScope {
@@ -246,7 +246,7 @@ GF_REGISTER_SELFTEST("labyrinth.maze_layout", [](Context& ctx) {
     ctx.check(types[maze::kEntranceShaft] == 1 && types[maze::kMound] == 1 && types[maze::kUpperEntrance] == 1, "the shaft, the mound and the ruin");
     int deadEnds = 0;
     for (auto const& [t, n] : types)
-        if (t.rfind("gloamingforest:TFMMDE", 0) == 0) deadEnds += n;
+        if (t.rfind("gloamingforest:GloamingMMDE", 0) == 0) deadEnds += n;
     ctx.check(deadEnds > 10, "dead ends decorated: " + std::to_string(deadEnds));
     // the maze levels: 22 x 22 cells, level 2 ten blocks below level 1's floor, under its center,
     // its entrance at level 1's second room
@@ -657,14 +657,14 @@ GF_REGISTER_SELFTEST("labyrinth.client_showcase", [](Context& ctx) -> ll::coro::
 
 namespace {
 
-/// tfEnforcedProgression for the length of a test.
+/// gloamingEnforcedProgression for the length of a test.
 struct WalkEnforcedScope {
     bool previous = false;
     WalkEnforcedScope() {
-        previous = gf::gamerules::getBool("tfEnforcedProgression");
-        gf::gamerules::set("tfEnforcedProgression", true);
+        previous = gf::gamerules::getBool("gloamingEnforcedProgression");
+        gf::gamerules::set("gloamingEnforcedProgression", true);
     }
-    ~WalkEnforcedScope() { gf::gamerules::set("tfEnforcedProgression", previous); }
+    ~WalkEnforcedScope() { gf::gamerules::set("gloamingEnforcedProgression", previous); }
 };
 
 /// The landmark of a boss against upstream's structure record (LandmarkStructure: AdvancementLockConfig,

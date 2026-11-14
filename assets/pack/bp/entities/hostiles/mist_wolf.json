@@ -33,7 +33,7 @@
         "family": [
           "gloamingforest",
           "mist_wolf",
-          "tf_hostile_wolf",
+          "gf_hostile_wolf",
           "monster",
           "mob"
         ]
@@ -119,7 +119,7 @@
               {
                 "test": "is_family",
                 "subject": "other",
-                "value": "tf_hostile_wolf"
+                "value": "gf_hostile_wolf"
               }
             ]
           },

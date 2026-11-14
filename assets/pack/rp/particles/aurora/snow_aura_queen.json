@@ -5,7 +5,7 @@
       "identifier": "gloamingforest:aurora_snow_queen",
       "basic_render_parameters": {
         "material": "particles_alpha",
-        "texture": "textures/particle/aurora/tf-derived/snow_atlas"
+        "texture": "textures/particle/aurora/upstream-derived/snow_atlas"
       }
     },
     "components": {

@@ -2,8 +2,8 @@
 // Translated from the upstream 4.8 source (commit 9e40a757):
 //   src/main/java/gloamingforest/item/MagicMapItem.java
 //   src/main/java/gloamingforest/item/MazeMapItem.java
-//   src/main/java/gloamingforest/item/mapdata/TFMagicMapData.java
-//   src/main/java/gloamingforest/item/mapdata/TFMazeMapData.java
+//   src/main/java/gloamingforest/item/mapdata/GloamingMagicMapData.java
+//   src/main/java/gloamingforest/item/mapdata/GloamingMazeMapData.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -44,7 +44,7 @@ enum class MapKind { Magic, Maze, Ore };
 [[nodiscard]] ItemStack setupMagicMap(Player& player);
 [[nodiscard]] ItemStack setupMazeMap(Player& player, bool ore);
 
-/// The centre of a new maze / ore map made at (x, z) in `dimension` (TFMazeMapData#calculateMapCenter:
+/// The centre of a new maze / ore map made at (x, z) in `dimension` (GloamingMazeMapData#calculateMapCenter:
 /// the 128-block grid, or the labyrinth's centre inside a labyrinth chunk).
 [[nodiscard]] std::pair<int, int> mazeCenterFor(int dimension, int x, int z);
 /// MagicMapCloningRecipe / MazeMapCloningRecipe#assemble over the stacks of a grid (empty: no match).
@@ -53,14 +53,14 @@ enum class MapKind { Magic, Maze, Ore };
 /// One update of a held map as MapItem#inventoryTick does it while selected (selftests call it).
 void updateHeldMap(Player& player, ItemStack const& stack);
 
-/// An upstream decoration of a magic map (TFMagicMapData#addTFDecoration).
-struct TfDecoration {
+/// An upstream decoration of a magic map (GloamingMagicMapData#addTFDecoration).
+struct GloamingDecoration {
     std::string  type; ///< "gloamingforest:lich_tower"
     int          x = 0, z = 0, rotation = 0;
     bool         conquered = false;
 };
 /// The upstream decorations of a magic map so far (selftests, the companion packet).
-[[nodiscard]] std::vector<TfDecoration> decorationsOf(std::int64_t mapId);
+[[nodiscard]] std::vector<GloamingDecoration> decorationsOf(std::int64_t mapId);
 /// The yCenter of a maze / ore map (nullopt: not one).
 [[nodiscard]] std::optional<int> mazeYCenter(std::int64_t mapId);
 
@@ -70,7 +70,7 @@ struct TfDecoration {
 [[nodiscard]] std::uint32_t mapPixel(MapItemSavedData const& data, int x, int z);
 
 /// The vanilla map decoration an upstream decoration is shown as for vanilla clients (MapDecoration::Type).
-[[nodiscard]] int vanillaDecorationFor(std::string const& tfType);
+[[nodiscard]] int vanillaDecorationFor(std::string const& gfType);
 
 /// Java's MapItem#create + MapItemSavedData#addTargetDecoration ("+", red X) for map_locator: a
 /// vanilla filled map of scale 4 centred on Java's map grid around (x, z) in `dimension`.

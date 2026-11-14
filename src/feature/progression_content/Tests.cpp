@@ -135,7 +135,7 @@ GF_REGISTER_SELFTEST("progression.advancements", [](Context& ctx) {
               "the 9 hidden advancements");
     auto byTrigger = pc::criteriaByTrigger();
     for (char const* t : {"minecraft:inventory_changed", "minecraft:player_killed_entity", "minecraft:consume_item", "minecraft:item_used_on_block",
-                          "minecraft:recipe_crafted", "minecraft:location", "minecraft:tick", "gloamingforest:make_tf_portal", "gloamingforest:hurt_boss",
+                          "minecraft:recipe_crafted", "minecraft:location", "minecraft:tick", "gloamingforest:make_gf_portal", "gloamingforest:hurt_boss",
                           "gloamingforest:kill_bug", "gloamingforest:broke_glass_sword", "gloamingforest:drink_from_flask",
                           "gloamingforest:consume_hydra_chop_on_low_hunger", "gloamingforest:add_modifier", "gloamingforest:uncraft_item",
                           "gloamingforest:complete_quest_ram", "gloamingforest:placed_on_trophy_pedestal", "gloamingforest:kill_all_phantoms",
@@ -364,7 +364,7 @@ GF_REGISTER_SELFTEST("progression.announce_gamerule", [](Context& ctx) {
     auto&           p = ctx.player();
     AnnounceCapture capture;
     resetProgress(p);
-    pr::trigger(p, "gloamingforest:make_tf_portal"); // the root (announced: true)
+    pr::trigger(p, "gloamingforest:make_gf_portal"); // the root (announced: true)
     // the world's rule is put back however the test ends
     struct RuleRestore {
         bool was = gf::gamerules::getBool("announceAdvancements");
@@ -384,7 +384,7 @@ GF_REGISTER_SELFTEST("progression.quiet_grants", [](Context& ctx) {
     AnnounceCapture capture; // the chat lines stay out of real players' chat
     auto& p = ctx.player();
     resetProgress(p);
-    pr::trigger(p, "gloamingforest:make_tf_portal"); // the root
+    pr::trigger(p, "gloamingforest:make_gf_portal"); // the root
     gf::net::setTestCompanion(p, true);
     (void)gf::net::takeTestMessages(p);
     pc::setQuietGrants(true);
@@ -394,7 +394,7 @@ GF_REGISTER_SELFTEST("progression.quiet_grants", [](Context& ctx) {
     ctx.check(pr::has(p, "gloamingforest:hedge"), "a quiet grant still completes the advancement");
     ctx.check(std::none_of(quiet.begin(), quiet.end(), [](auto const& m) { return m.channel == "progression.toast"; }), "a quiet grant sends no toast");
     resetProgress(p);
-    pr::trigger(p, "gloamingforest:make_tf_portal");
+    pr::trigger(p, "gloamingforest:make_gf_portal");
     (void)gf::net::takeTestMessages(p);
     pr::grant(p, "gloamingforest:hedge");
     auto loud = gf::net::takeTestMessages(p);
@@ -408,9 +408,9 @@ GF_REGISTER_SELFTEST("progression.trigger_criteria", [](Context& ctx) -> ll::cor
     auto  id = ctx.player().getOrCreateUniqueID().rawID;
     auto& p  = ctx.player();
     resetProgress(p);
-    // the root: gloamingforest:make_tf_portal (F4)
-    pr::trigger(p, "gloamingforest:make_tf_portal");
-    ctx.check(pr::has(p, "gloamingforest:root"), "make_tf_portal earns the root");
+    // the root: gloamingforest:make_gf_portal (F4)
+    pr::trigger(p, "gloamingforest:make_gf_portal");
+    ctx.check(pr::has(p, "gloamingforest:root"), "make_gf_portal earns the root");
     // upstream's triggers fired by their owners by string
     pr::trigger(p, "gloamingforest:kill_bug", {{"bug", "gloamingforest:firefly"}});
     ctx.check(!pr::has(p, "gloamingforest:kill_cicada"), "a firefly is not a cicada");
@@ -563,11 +563,11 @@ GF_REGISTER_SELFTEST("progression.enforce_rules", [](Context& ctx) -> ll::coro::
     auto id = ctx.player().getOrCreateUniqueID().rawID;
     ctx.player().setPlayerGameType(GameType::Survival);
     resetProgress(ctx.player());
-    bool was = gf::gamerules::getBool("tfEnforcedProgression");
-    gf::gamerules::set("tfEnforcedProgression", false);
+    bool was = gf::gamerules::getBool("gloamingEnforcedProgression");
+    gf::gamerules::set("gloamingEnforcedProgression", false);
     int n = co_await stayIn(ctx, id, "gloamingforest:dark_forest", cp::Enforcement::Darkness, 65);
-    gf::gamerules::set("tfEnforcedProgression", was);
-    ctx.check(n == 0, "tfEnforcedProgression false: no enforcement (" + std::to_string(n) + ")");
+    gf::gamerules::set("gloamingEnforcedProgression", was);
+    ctx.check(n == 0, "gloamingEnforcedProgression false: no enforcement (" + std::to_string(n) + ")");
     playerById(id)->setPlayerGameType(GameType::Creative);
     n = co_await stayIn(ctx, id, "gloamingforest:dark_forest", cp::Enforcement::Darkness, 65);
     ctx.check(n == 0, "creative players are not enforced (" + std::to_string(n) + ")");
@@ -582,7 +582,7 @@ GF_REGISTER_SELFTEST("progression.toasts_and_screen", [](Context& ctx) {
     AnnounceCapture capture; // the chat lines stay out of real players' chat
     auto& p = ctx.player();
     resetProgress(p);
-    pr::trigger(p, "gloamingforest:make_tf_portal"); // the root
+    pr::trigger(p, "gloamingforest:make_gf_portal"); // the root
     gf::net::setTestCompanion(p, true);
     (void)gf::net::takeTestMessages(p);
     pr::grant(p, "gloamingforest:hedge");
@@ -675,7 +675,7 @@ GF_REGISTER_SELFTEST("progression.tree_layout", [](Context& ctx) {
     // the screen sends the server's positions
     auto& p = ctx.player();
     resetProgress(p);
-    pr::trigger(p, "gloamingforest:make_tf_portal");
+    pr::trigger(p, "gloamingforest:make_gf_portal");
     auto data = pc::screenData(p);
     int  same = 0;
     for (auto const& n : data["nodes"]) {

@@ -1,11 +1,11 @@
 {
-  "tf_flora_item_firefly": {
+  "gf_flora_item_firefly": {
     "textures": "textures/gloamingforest/block/firefly"
   },
-  "tf_flora_item_cicada": {
+  "gf_flora_item_cicada": {
     "textures": "textures/gloamingforest/block/cicada"
   },
-  "tf_flora_item_moonworm": {
+  "gf_flora_item_moonworm": {
     "textures": "textures/gloamingforest/block/moonworm"
   }
 }

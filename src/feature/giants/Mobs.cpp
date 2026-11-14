@@ -123,7 +123,7 @@ void installMobs() {
         });
         gf::spawn::registerPlacement(gid, gf::spawn::PlacementRule::OnGround, canSpawn);
     }
-    // GiantMiner#doHurtTarget: EntityUtil#properlyApplyCustomDamageSource with TFDamageTypes.ANT
+    // GiantMiner#doHurtTarget: EntityUtil#properlyApplyCustomDamageSource with GloamingDamageTypes.ANT
     gf::combat::onIncoming(gf::combat::priority::High, [](gf::combat::DamageInfo& d) {
         if (!d.attacker || !isGiant(*d.attacker) || (d.direct && d.direct != d.attacker)) return gf::combat::Verdict::Pass;
         if (d.type == "gloamingforest:ant") return gf::combat::Verdict::Pass;

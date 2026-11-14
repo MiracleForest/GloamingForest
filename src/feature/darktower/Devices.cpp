@@ -507,7 +507,7 @@ void reactorDevice(BlockSource& region, BlockPos const& pos, Block const& block)
         auto bursts = te.bursts;
         reactors().erase(gp);
         destroy(region, pos, false);
-        // CarminiteReactorBlockEntity: level.explode(null, TFDamageTypes.getDamageSource(REACTOR), ...): the
+        // CarminiteReactorBlockEntity: level.explode(null, GloamingDamageTypes.getDamageSource(REACTOR), ...): the
         // explosion's entity damage is retyped to gloamingforest:reactor while it runs
         reactorBlast() = true;
         region.getLevel().explode(region, nullptr, Vec3{float(pos.x), float(pos.y), float(pos.z)}, 4.0f, true, true, 3.40282347e38f, false);
@@ -568,7 +568,7 @@ std::map<GlobalPos, Trap>& traps() {
     return m;
 }
 
-/// The ghast trap POIs (TFPOITypes.GHAST_TRAP) per dimension, persisted as gf:darktower:traps:<dim>
+/// The ghast trap POIs (GloamingPOITypes.GHAST_TRAP) per dimension, persisted as gf:darktower:traps:<dim>
 /// (gf:darktower:trap_dims lists the dimensions). Loaded on the server thread when the world is
 /// ready (merged with what the generation added before); saved with the world.
 struct TrapIndex {

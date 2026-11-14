@@ -8,12 +8,12 @@
 //   src/main/java/gloamingforest/world/components/feature/LampostFeature.java
 //   src/main/java/gloamingforest/world/components/feature/MonolithFeature.java
 //   src/main/java/gloamingforest/world/components/feature/CheckAbovePatchFeature.java
-//   src/main/java/gloamingforest/world/components/feature/TFSmallLakeFeature.java
+//   src/main/java/gloamingforest/world/components/feature/GloamingSmallLakeFeature.java
 //   src/main/java/gloamingforest/world/components/feature/WebFeature.java
 //   src/main/java/gloamingforest/world/components/feature/WoodRootFeature.java
 //   src/main/java/gloamingforest/world/components/feature/trees/HollowStumpFeature.java
 //   src/main/java/gloamingforest/world/components/feature/trees/HollowTreeFeature.java
-//   src/main/java/gloamingforest/world/components/feature/trees/TFTreeFeature.java
+//   src/main/java/gloamingforest/world/components/feature/trees/GloamingTreeFeature.java
 //   src/main/java/gloamingforest/util/features/FeatureUtil.java
 //   src/main/java/gloamingforest/util/features/FeaturePlacers.java
 //   src/main/java/gloamingforest/util/features/FeatureLogic.java
@@ -546,7 +546,7 @@ bool hollowStump(FeatureContext const& ctx) {
     };
     ring(3, 2, 6, 0.75, 3, 5);
     ring(1, 2, 8, 0.9, 3, 5);
-    // TFTreeFeature#place: true when leaves or decorations were placed
+    // GloamingTreeFeature#place: true when leaves or decorations were placed
     return decoPlaced;
 }
 

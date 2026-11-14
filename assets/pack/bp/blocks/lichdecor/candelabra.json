@@ -58,15 +58,15 @@
       },
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_candelabra",
+          "texture": "gf_block_candelabra",
           "render_method": "alpha_test"
         },
         "candelabra": {
-          "texture": "tf_block_candelabra",
+          "texture": "gf_block_candelabra",
           "render_method": "alpha_test"
         },
         "candle": {
-          "texture": "tf_lichdecor_candle",
+          "texture": "gf_lichdecor_candle",
           "render_method": "alpha_test"
         }
       },
@@ -117,15 +117,15 @@
           },
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_candelabra",
+              "texture": "gf_block_candelabra",
               "render_method": "alpha_test"
             },
             "candelabra": {
-              "texture": "tf_block_candelabra",
+              "texture": "gf_block_candelabra",
               "render_method": "alpha_test"
             },
             "candle": {
-              "texture": "tf_lichdecor_candle",
+              "texture": "gf_lichdecor_candle",
               "render_method": "alpha_test"
             }
           },
@@ -175,15 +175,15 @@
           },
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_candelabra",
+              "texture": "gf_block_candelabra",
               "render_method": "alpha_test"
             },
             "candelabra": {
-              "texture": "tf_block_candelabra",
+              "texture": "gf_block_candelabra",
               "render_method": "alpha_test"
             },
             "candle": {
-              "texture": "tf_lichdecor_candle",
+              "texture": "gf_lichdecor_candle",
               "render_method": "alpha_test"
             }
           },
@@ -233,15 +233,15 @@
           },
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_candelabra",
+              "texture": "gf_block_candelabra",
               "render_method": "alpha_test"
             },
             "candelabra": {
-              "texture": "tf_block_candelabra",
+              "texture": "gf_block_candelabra",
               "render_method": "alpha_test"
             },
             "candle": {
-              "texture": "tf_lichdecor_candle",
+              "texture": "gf_lichdecor_candle",
               "render_method": "alpha_test"
             }
           },
@@ -291,15 +291,15 @@
           },
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_candelabra",
+              "texture": "gf_block_candelabra",
               "render_method": "alpha_test"
             },
             "candelabra": {
-              "texture": "tf_block_candelabra",
+              "texture": "gf_block_candelabra",
               "render_method": "alpha_test"
             },
             "candle": {
-              "texture": "tf_lichdecor_candle",
+              "texture": "gf_lichdecor_candle",
               "render_method": "alpha_test"
             }
           },
@@ -349,15 +349,15 @@
           },
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_candelabra",
+              "texture": "gf_block_candelabra",
               "render_method": "alpha_test"
             },
             "candelabra": {
-              "texture": "tf_block_candelabra",
+              "texture": "gf_block_candelabra",
               "render_method": "alpha_test"
             },
             "candle": {
-              "texture": "tf_lichdecor_candle",
+              "texture": "gf_lichdecor_candle",
               "render_method": "alpha_test"
             }
           },
@@ -407,15 +407,15 @@
           },
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_candelabra",
+              "texture": "gf_block_candelabra",
               "render_method": "alpha_test"
             },
             "candelabra": {
-              "texture": "tf_block_candelabra",
+              "texture": "gf_block_candelabra",
               "render_method": "alpha_test"
             },
             "candle": {
-              "texture": "tf_lichdecor_candle",
+              "texture": "gf_lichdecor_candle",
               "render_method": "alpha_test"
             }
           },
@@ -465,15 +465,15 @@
           },
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_candelabra",
+              "texture": "gf_block_candelabra",
               "render_method": "alpha_test"
             },
             "candelabra": {
-              "texture": "tf_block_candelabra",
+              "texture": "gf_block_candelabra",
               "render_method": "alpha_test"
             },
             "candle": {
-              "texture": "tf_lichdecor_candle",
+              "texture": "gf_lichdecor_candle",
               "render_method": "alpha_test"
             }
           },
@@ -523,15 +523,15 @@
           },
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_candelabra",
+              "texture": "gf_block_candelabra",
               "render_method": "alpha_test"
             },
             "candelabra": {
-              "texture": "tf_block_candelabra",
+              "texture": "gf_block_candelabra",
               "render_method": "alpha_test"
             },
             "candle": {
-              "texture": "tf_lichdecor_candle",
+              "texture": "gf_lichdecor_candle",
               "render_method": "alpha_test"
             }
           },
@@ -609,15 +609,15 @@
         "components": {
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_candelabra",
+              "texture": "gf_block_candelabra",
               "render_method": "alpha_test"
             },
             "candelabra": {
-              "texture": "tf_block_candelabra",
+              "texture": "gf_block_candelabra",
               "render_method": "alpha_test"
             },
             "candle": {
-              "texture": "tf_lichdecor_candle_lit",
+              "texture": "gf_lichdecor_candle_lit",
               "render_method": "alpha_test"
             }
           }

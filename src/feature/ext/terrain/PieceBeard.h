@@ -8,7 +8,7 @@
 // The beardifier resolves a piece of a start (landmark::ext::StartPiece) in this order:
 //   1. a function registered here for the piece's type id (a structure unit's piece whose beard
 //      depends on something the generic rules cannot see; tests);
-//   2. upstream 4.8's table (core::terrain::beard::tfPieceBeard: TFStructureComponentOld's NONE, the
+//   2. upstream 4.8's table (core::terrain::beard::gloamingPieceBeard: GloamingStructureComponentOld's NONE, the
 //      overrides of the hedge maze, lich tower, dark tower entrance, stronghold, troll cave, final
 //      castle dungeon, courtyard terrace and the new lich tower, and GloamingJigsawPiece's
 //      "terrain_adaptation" / "ground_offset" tag);
@@ -41,7 +41,7 @@ struct PieceBeard {
 using PieceBeardFn = std::function<PieceBeard(landmark::ext::StartPiece const& piece)>;
 
 /// Registers (or with an empty function removes) the answer for pieces of `typeId`
-/// ("gloamingforest:TFHedge"; matched without case).
+/// ("gloamingforest:GloamingHedge"; matched without case).
 void registerPieceBeard(std::string const& typeId, PieceBeardFn fn);
 
 /// The beardifier's answer for one piece, resolved as described above.

@@ -1,7 +1,7 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
 //   src/main/java/gloamingforest/entity/boss/bar/ClientTFBossBar.java
-//   src/main/java/gloamingforest/network/TFBossBarPacket.java
+//   src/main/java/gloamingforest/network/GloamingBossBarPacket.java
 //   src/main/java/gloamingforest/network/UpdateDeathTimePacket.java
 //   src/main/java/gloamingforest/network/MovePlayerPacket.java
 //   src/main/java/gloamingforest/network/UpdateThrownPacket.java

@@ -1,6 +1,6 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/init/TFStructures.java
+//   src/main/java/gloamingforest/init/GloamingStructures.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -12,7 +12,7 @@
 // whose ResourceLocation#compareTo compares the file path first, then the namespace), so the
 // order is the file paths "worldgen/structure/<path>.json" sorted, then the namespaces. Minecraft
 // 1.21.1's 34 structures and upstream 4.8's 21 (src/generated/resources/data/gloamingforest/worldgen/
-// structure, the registrations of TFStructures#bootstrap) are built in, with the steps of their
+// structure, the registrations of GloamingStructures#bootstrap) are built in, with the steps of their
 // JSON; any other structure JSON under <mod>/data/<ns>/worldgen/structure is added (and a JSON
 // of a built-in id wins for its step).
 #include <algorithm>

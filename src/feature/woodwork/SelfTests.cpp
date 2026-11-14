@@ -64,7 +64,7 @@ namespace rack = gf::feature::woodwork::rack;
 namespace ia   = gf::interactions;
 using Facing   = ScriptModuleMinecraft::ScriptFacing;
 
-constexpr char kTf[] = "gloamingforest:";
+constexpr char kGloaming[] = "gloamingforest:";
 
 GlobalPos at(GlobalPos p, int dx, int dy, int dz) { return p.offset(dx, dy, dz); }
 
@@ -218,10 +218,10 @@ GF_REGISTER_SELFTEST("woodwork.strip_logs", [](Context& ctx) -> ll::coro::CoroTa
     (void)co_await ctx.flatArea(400, 5);
     auto p = ctx.testPos(400, 2);
     ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
-    for (auto w : ww::kTfWoods) {
+    for (auto w : ww::kGloamingWoods) {
         for (auto const* kind : {"_log", "_wood"}) {
-            std::string id       = std::string(kTf) + std::string(w) + kind;
-            std::string stripped = std::string(kTf) + "stripped_" + std::string(w) + kind;
+            std::string id       = std::string(kGloaming) + std::string(w) + kind;
+            std::string stripped = std::string(kGloaming) + "stripped_" + std::string(w) + kind;
             ctx.require(ctx.setBlock(p, id, {{"gloamingforest:axis", "x"}}), id + " placed on its side");
             co_await click(ctx, p, Facing::Up, Vec3{0.5f, 1.0f, 0.5f}, "minecraft:iron_axe", 1);
             ctx.check(ctx.blockAt(p) == stripped, "the axe strips " + id + " (" + ctx.blockAt(p) + ")");
@@ -478,9 +478,9 @@ GF_REGISTER_SELFTEST("woodwork.bookshelf", [](Context& ctx) -> ll::coro::CoroTas
     for (auto const& v : list) seen += "(" + std::to_string(v.x) + " " + std::to_string(v.y) + " " + std::to_string(v.z) + ")";
     ctx.info("bookcase positions: " + seen);
     ctx.check(list.size() == 2, "the table counts both bookshelves (" + std::to_string(list.size()) + ")");
-    ctx.check(gf::feature::woodwork::tfBookshelvesAround(*ctx.region(), tb).size() == 1, "one upstream bookshelf around the table");
+    ctx.check(gf::feature::woodwork::gloamingBookshelvesAround(*ctx.region(), tb).size() == 1, "one upstream bookshelf around the table");
     ctx.require(ctx.setBlock(at(t, 1, 0, 0), "minecraft:stone"), "a stone between");
-    ctx.check(gf::feature::woodwork::tfBookshelvesAround(*ctx.region(), tb).empty(), "a solid block between blocks it (enchantment_power_transmitter)");
+    ctx.check(gf::feature::woodwork::gloamingBookshelvesAround(*ctx.region(), tb).empty(), "a solid block between blocks it (enchantment_power_transmitter)");
     ctx.check(gf::tags::has(gf::tags::Registry::Block, "minecraft:enchantment_power_provider", "gloamingforest:canopy_bookshelf"), "the canopy bookshelf provides enchantment power");
 });
 

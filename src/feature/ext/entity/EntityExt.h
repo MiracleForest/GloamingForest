@@ -3,14 +3,14 @@
 // Contract extension of F8 (rule R18: new files only, folded into the W0 headers by A8 in W2b).
 // What the entity / projectile / boss contracts lack for upstream's bosses and mobs:
 //
-//   gf::entity::ext     TFPart hits (Java's attackEntityFromPart), part management, the
+//   gf::entity::ext     GloamingPart hits (Java's attackEntityFromPart), part management, the
 //                       NoClipMoveControl wanted position, the flying speed of FlyingMoveControl,
 //                       ITFCharger / IBreathAttacker state and the breath attack, IHostileMount
 //                       (marker, riders) / YetiThrowAttachment state, the string_list data
 //                       serializer (Hydra#HEAD_NAMES), Entity#canUsePortal of an actor type.
-//   gf::projectile::ext the owner and velocity of a simulated projectile, TFArrow / AbstractArrow
+//   gf::projectile::ext the owner and velocity of a simulated projectile, GloamingArrow / AbstractArrow
 //                       (default hit damage, crit, pickup, water inertia, doPostHurtEffects),
-//                       TFThrowable#makeTrail.
+//                       GloamingThrowable#makeTrail.
 //   gf::boss::ext       ServerTFBossBar#updateStyle (the Lich's colour changes), the boss bar
 //                       flags, the death time, BaseTFBoss's overridable lifecycle steps (loot,
 //                       spawner, postmortem, death animation, death container, postRemoval), the
@@ -51,7 +51,7 @@ namespace gf::entity::ext {
 [[nodiscard]] std::vector<PartHandle> parts(Mob& mob);
 /// Removes one part actor (a Hydra head that died).
 void removePart(PartHandle const& part);
-/// TFPart#setSize: resizes the part's hitbox.
+/// GloamingPart#setSize: resizes the part's hitbox.
 void setPartSize(PartHandle const& part, PartSize size);
 /// The part's yaw / pitch (Java's part.setYRot / setXRot by the parent: Naga segments, Hydra heads),
 /// applied with the next follow move; the part models' animations read it.
@@ -109,7 +109,7 @@ void setCanUsePortal(std::string const& entityId, bool canUse);
 /// The mob that threw the player (nullptr: none or gone).
 [[nodiscard]] Actor* thrower(Player const& player);
 
-/// TFDataSerializers.STRING_LIST: a synced list of strings (Hydra#HEAD_NAMES), kept as a JSON
+/// GloamingDataSerializers.STRING_LIST: a synced list of strings (Hydra#HEAD_NAMES), kept as a JSON
 /// array in data(actor, key) and sent to companion clients (sync); read it there with
 /// gf::client::entity::stringList(uid, key).
 void                                   setStringList(Actor& actor, std::string const& key, std::vector<std::string> const& values);
@@ -128,17 +128,17 @@ void               setVelocity(Actor& projectile, Vec3 const& velocity);
 
 /// AbstractArrow.Pickup.
 enum class Pickup { Disallowed, Allowed, CreativeOnly };
-/// TFArrow (AbstractArrow): what an arrow type does on its own, before / around the Spec hooks.
+/// GloamingArrow (AbstractArrow): what an arrow type does on its own, before / around the Spec hooks.
 struct ArrowSpec {
     double      baseDamage   = 2.0;               ///< AbstractArrow#baseDamage (SeekerArrow: 1.0)
-    std::string pickupItem   = "minecraft:arrow"; ///< TFArrow#getDefaultPickupItem
+    std::string pickupItem   = "minecraft:arrow"; ///< GloamingArrow#getDefaultPickupItem
     std::string hitSound     = "minecraft:entity.arrow.hit"; ///< AbstractArrow#soundEvent / getHitGroundSoundEvent
     float       gravity      = 0.05f;             ///< AbstractArrow#getDefaultGravity (Spec::gravity is not used)
     float       waterInertia = 0.6f;              ///< AbstractArrow#getWaterInertia (Spec::drag is the air's 0.99)
     /// Runs before the default hit (SeekerArrow#onHitEntity: setCritArrow(false) first).
     std::function<void(Actor& arrow, Actor& target)> beforeHitEntity;
     /// AbstractArrow#doPostHurtEffects additions of the type: run only for a hit that landed on a
-    /// living target, after the effects of the fired stack (TFArrow#doPostHurtEffects ->
+    /// living target, after the effects of the fired stack (GloamingArrow#doPostHurtEffects ->
     /// Arrow#doPostHurtEffects: a tipped arrow's potion at 1/8 of its duration, at least 1 tick).
     std::function<void(Actor& arrow, Actor& target)> postHurt;
 };
@@ -169,7 +169,7 @@ void setKnockback(Actor& arrow, double knockback);
 /// ArrowSpec::pickupItem.
 void setPickupItem(Actor& arrow, ItemStack const& stack);
 [[nodiscard]] std::optional<ItemStack> pickupItem(Actor const& arrow);
-/// TFThrowable#makeTrail: `amount` particles around the projectile (0.5 * (r1 - r2) per axis), with
+/// GloamingThrowable#makeTrail: `amount` particles around the projectile (0.5 * (r1 - r2) per axis), with
 /// the "velocity" `rgb` (the colour of dust-like particles).
 void makeTrail(Actor& projectile, std::string const& particle, int amount, Vec3 const& rgb = {});
 
@@ -243,7 +243,7 @@ void setLifecycle(std::string const& entityId, Lifecycle lifecycle);
 void defaultPostmortem(Mob& boss, std::string const& damageType, Actor* killer);
 /// BaseTFBoss#placeSpawner's default: the boss's spawner block at `pos`.
 void placeBossSpawner(Mob& boss, BlockPos const& pos);
-/// The boss's loot table rolled with its death context (TFLootTables#createLootParams; `tableId`
+/// The boss's loot table rolled with its death context (GloamingLootTables#createLootParams; `tableId`
 /// "" is BossSpec::lootTable).
 [[nodiscard]] std::vector<ItemStack> rollLoot(Mob& boss, std::string const& tableId, std::string const& damageType, Actor* killer);
 /// IBossLootBuffer#getAvailableSlots: the 27 slot indices shuffled (Util#shuffle).
@@ -262,7 +262,7 @@ void setHomeRadius(std::string const& entityId, int radius);
 [[nodiscard]] std::vector<ItemStack> lootBuffer(Mob& boss);
 void                                 setLootBufferSlot(Mob& boss, int slot, ItemStack const& stack);
 
-/// TFConfig.bossDropChests and multiplayerFightAdjuster (config section "bosses").
+/// GloamingConfig.bossDropChests and multiplayerFightAdjuster (config section "bosses").
 [[nodiscard]] bool dropChests();
 [[nodiscard]] bool adjustsLootRolls();
 [[nodiscard]] bool adjustsHealth();

@@ -26,7 +26,7 @@
       "minecraft:tags": ["minecraft:is_pickaxe_item_destructible"],
       "minecraft:map_color": "#707070",
       "minecraft:geometry": {
-        "identifier": "geometry.tf.gloamingforest.block.twisted_stone_pillar.multipart",
+        "identifier": "geometry.gf.gloamingforest.block.twisted_stone_pillar.multipart",
         "bone_visibility": {
           "part0": "q.block_state('gloamingforest:axis') == 'x'",
           "part1": "q.block_state('gloamingforest:axis') == 'x' && !q.block_state('gloamingforest:east')",
@@ -47,19 +47,19 @@
       },
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_twisted_stone_pillar",
+          "texture": "gf_block_twisted_stone_pillar",
           "render_method": "alpha_test"
         },
         "t_gloamingforest_block_twisted_stone_cap_end": {
-          "texture": "tf_block_twisted_stone_cap_end",
+          "texture": "gf_block_twisted_stone_cap_end",
           "render_method": "alpha_test"
         },
         "t_gloamingforest_block_twisted_stone_cap_side": {
-          "texture": "tf_block_twisted_stone_cap_side",
+          "texture": "gf_block_twisted_stone_cap_side",
           "render_method": "alpha_test"
         },
         "t_gloamingforest_block_twisted_stone_pillar": {
-          "texture": "tf_block_twisted_stone_pillar",
+          "texture": "gf_block_twisted_stone_pillar",
           "render_method": "alpha_test"
         }
       },

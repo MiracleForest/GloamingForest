@@ -10,7 +10,7 @@
         "default": "textures/misc/missing_texture"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.moonworm_shot"
+        "default": "geometry.gf.skeleton.moonworm_shot"
       },
       "render_controllers": ["controller.render.default"]
     }

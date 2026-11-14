@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.tf.gloamingforest.block.wrought_iron_fence.multipart",
+        "identifier": "geometry.gf.gloamingforest.block.wrought_iron_fence.multipart",
         "texture_width": 16,
         "texture_height": 16,
         "visible_bounds_width": 3,

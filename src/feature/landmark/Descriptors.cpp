@@ -6,7 +6,7 @@
 //   src/main/java/gloamingforest/world/components/structures/util/StructureHints.java
 //   src/main/java/gloamingforest/world/components/structures/util/DecorationClearance.java
 //   src/main/java/gloamingforest/data/tags/StructureTagGenerator.java
-//   src/main/java/gloamingforest/init/TFStructureTypes.java
+//   src/main/java/gloamingforest/init/GloamingStructureTypes.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -62,7 +62,7 @@ void ensureLoaded() {
     if (!store().loaded.load(std::memory_order_acquire)) loadDescriptorsLocked();
 }
 
-/// The Java class family of each structure type (TFStructureTypes and the class hierarchy).
+/// The Java class family of each structure type (GloamingStructureTypes and the class hierarchy).
 Traits traitsOf(std::string const& type) {
     Traits t;
     auto   controlled = [&] {
@@ -265,9 +265,9 @@ void loadDescriptorsLocked() {
     std::error_code                     ec;
 
     // 1. the imported upstream worldgen data (F1), when present
-    auto tfSets = data / "gloamingforest" / "worldgen" / "structure_set";
-    if (std::filesystem::is_directory(tfSets, ec)) {
-        for (auto const& e : std::filesystem::directory_iterator(tfSets, ec)) {
+    auto gloamingSets = data / "gloamingforest" / "worldgen" / "structure_set";
+    if (std::filesystem::is_directory(gloamingSets, ec)) {
+        for (auto const& e : std::filesystem::directory_iterator(gloamingSets, ec)) {
             if (e.path().extension() != ".json") continue;
             if (auto j = readJson(e.path())) {
                 auto id = "gloamingforest:" + e.path().stem().string();
@@ -275,9 +275,9 @@ void loadDescriptorsLocked() {
             }
         }
     }
-    auto tfStructures = data / "gloamingforest" / "worldgen" / "structure";
-    if (std::filesystem::is_directory(tfStructures, ec)) {
-        for (auto const& e : std::filesystem::directory_iterator(tfStructures, ec)) {
+    auto gfStructures = data / "gloamingforest" / "worldgen" / "structure";
+    if (std::filesystem::is_directory(gfStructures, ec)) {
+        for (auto const& e : std::filesystem::directory_iterator(gfStructures, ec)) {
             if (e.path().extension() != ".json") continue;
             if (auto j = readJson(e.path())) {
                 auto key = "gloamingforest:" + e.path().stem().string();

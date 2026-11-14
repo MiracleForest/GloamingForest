@@ -21,7 +21,7 @@
       "minecraft:geometry": "minecraft:geometry.full_block",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_vanilla_block_soul_sand",
+          "texture": "gf_vanilla_block_soul_sand",
           "render_method": "opaque"
         }
       }

@@ -1,23 +1,23 @@
 {
-  "tf_item_red_thread": {
+  "gf_item_red_thread": {
     "textures": "textures/gloamingforest/item/red_thread"
   },
-  "tf_item_travellers_belt": {
+  "gf_item_travellers_belt": {
     "textures": "textures/gloamingforest/item/travellers_belt"
   },
-  "tf_item_travellers_boots": {
+  "gf_item_travellers_boots": {
     "textures": "textures/gloamingforest/item/travellers_boots"
   },
-  "tf_item_travellers_gloves": {
+  "gf_item_travellers_gloves": {
     "textures": "textures/gloamingforest/item/travellers_gloves"
   },
-  "tf_item_travellers_goggles": {
+  "gf_item_travellers_goggles": {
     "textures": "textures/gloamingforest/item/travellers_goggles"
   },
-  "tf_item_travellers_vest": {
+  "gf_item_travellers_vest": {
     "textures": "textures/gloamingforest/item/travellers_vest"
   },
-  "tf_item_travellers_wings": {
+  "gf_item_travellers_wings": {
     "textures": "textures/gloamingforest/item/travellers_wings"
   }
 }

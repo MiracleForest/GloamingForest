@@ -1,13 +1,13 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/init/TFBannerPatterns.java
+//   src/main/java/gloamingforest/init/GloamingBannerPatterns.java
 //   src/main/java/gloamingforest/data/tags/CustomTagGenerator.java (BannerPatternTagGenerator)
-//   src/main/java/gloamingforest/init/TFItems.java (the BannerPatternItems)
+//   src/main/java/gloamingforest/init/GloamingItems.java (the BannerPatternItems)
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// U5 (building): upstream's nine banner patterns (TFBannerPatterns: gloamingforest:<boss>, the quest ram's
+// U5 (building): upstream's nine banner patterns (GloamingBannerPatterns: gloamingforest:<boss>, the quest ram's
 // is questing_ram) and their pattern items (<boss>_banner_pattern, each the only member of
 // #gloamingforest:pattern_item/<boss>), used in the loom like vanilla pattern items (LoomMenu: the
 // pattern item in the pattern slot unlocks its pattern; the item is kept).
@@ -40,17 +40,17 @@
 namespace gf::feature::building {
 
 std::vector<BannerSpec> const& bannerPatterns() {
-    // TFBannerPatterns (registry id, asset id) and the pattern item of each tag
+    // GloamingBannerPatterns (registry id, asset id) and the pattern item of each tag
     static std::vector<BannerSpec> const specs{
-        {"naga", "gloamingforest:naga", "tf_naga"},
-        {"lich", "gloamingforest:lich", "tf_lich"},
-        {"minoshroom", "gloamingforest:minoshroom", "tf_minoshroom"},
-        {"hydra", "gloamingforest:hydra", "tf_hydra"},
-        {"knight_phantom", "gloamingforest:knight_phantom", "tf_knight_phantom"},
-        {"ur_ghast", "gloamingforest:ur_ghast", "tf_ur_ghast"},
-        {"alpha_yeti", "gloamingforest:alpha_yeti", "tf_alpha_yeti"},
-        {"snow_queen", "gloamingforest:snow_queen", "tf_snow_queen"},
-        {"quest_ram", "gloamingforest:questing_ram", "tf_quest_ram"},
+        {"naga", "gloamingforest:naga", "gf_naga"},
+        {"lich", "gloamingforest:lich", "gf_lich"},
+        {"minoshroom", "gloamingforest:minoshroom", "gf_minoshroom"},
+        {"hydra", "gloamingforest:hydra", "gf_hydra"},
+        {"knight_phantom", "gloamingforest:knight_phantom", "gf_knight_phantom"},
+        {"ur_ghast", "gloamingforest:ur_ghast", "gf_ur_ghast"},
+        {"alpha_yeti", "gloamingforest:alpha_yeti", "gf_alpha_yeti"},
+        {"snow_queen", "gloamingforest:snow_queen", "gf_snow_queen"},
+        {"quest_ram", "gloamingforest:questing_ram", "gf_quest_ram"},
     };
     return specs;
 }

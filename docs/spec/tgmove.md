@@ -30,8 +30,8 @@ Contracts: gear (data), client.input+movement, rules+fx, combat.
 `init/custom/TravellersModifiersManager.java`, `item/travellers_gear/TravellersGearLogic.java`,
 `events/TravellersGearEvents.java`, `client/event/TravellersClientEvents.java`, `asmhooks/EntityHooks.java`
 (water walk, unrestrained), `asmhooks/PlayerHooks.java` (straight ahead FOV), `components/entity/{TravellersWingsAttachment,TravellersWingsAnimAttachment,SlimySolesAttachment}.java`,
-`init/TFDataAttachments.java`, `init/TFAttributeModifiers.java`, `network/{PerformDoubleJump,PerformSidestep,GradualGlide,TravellersWingsState}Packet.java`,
-`client/model/armor/TravellersWingsModel.java`, `client/particle/DoubleJumpParticle.java`, `config/TFClientConfig.java`,
+`init/GloamingDataAttachments.java`, `init/GloamingAttributeModifiers.java`, `network/{PerformDoubleJump,PerformSidestep,GradualGlide,TravellersWingsState}Packet.java`,
+`client/model/armor/TravellersWingsModel.java`, `client/particle/DoubleJumpParticle.java`, `config/GloamingClientConfig.java`,
 `events/EntityEvents.java` (leash override cleanup), `world/components/structures/lichtowerrevamp/*` (sets the leash
 override on fenced mobs).
 
@@ -129,13 +129,13 @@ Every id this unit owns in `docs/spec/owners.tsv`, with the upstream 4.8 data th
 
 ### Particle types (1)
 
-| Id | upstream registration (`TFParticleType.java`) |
+| Id | upstream registration (`GloamingParticleType.java`) |
 |---|---|
 | `gloamingforest:double_jump` | `PARTICLE_TYPES.register("double_jump", new SimpleParticleType(true));` |
 
 ### Data components (12)
 
-| Id | upstream registration (`TFDataComponents.java`) |
+| Id | upstream registration (`GloamingDataComponents.java`) |
 |---|---|
 | `gloamingforest:agile_ranger_modifier` | `COMPONENTS.register("agile_ranger_modifier", () -> DataComponentType.<Float>builder().persistent(ExtraCodecs.POSITIVE_FLOAT).networkSynchronized(ByteBufCodecs.FLOAT).cacheEncoding().build());` |
 | `gloamingforest:aquatic_agility` | `COMPONENTS.register("aquatic_agility", () -> DataComponentType.<Unit>builder().persistent(Codec.unit(Unit.INSTANCE)).networkSynchronized(StreamCodec.unit(Unit.INSTANCE)).cacheEncoding().build());` |
@@ -152,7 +152,7 @@ Every id this unit owns in `docs/spec/owners.tsv`, with the upstream 4.8 data th
 
 ### Data attachments (17)
 
-| Id | upstream registration (`TFDataAttachments.java`) |
+| Id | upstream registration (`GloamingDataAttachments.java`) |
 |---|---|
 | `gloamingforest:double_jump_validator` | `ATTACHMENT_TYPES.register("double_jump_validator", () -> AttachmentType.builder(() -> 0).serialize(Codec.INT).build());` |
 | `gloamingforest:double_jump_validator_last_check` | `ATTACHMENT_TYPES.register("double_jump_validator_last_check", () -> AttachmentType.builder(() -> 0).serialize(Codec.INT).build());` |

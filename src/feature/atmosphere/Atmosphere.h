@@ -1,7 +1,7 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/config/TFClientConfig.java
-//   src/main/java/gloamingforest/config/TFConfig.java
+//   src/main/java/gloamingforest/config/GloamingClientConfig.java
+//   src/main/java/gloamingforest/config/GloamingConfig.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -13,7 +13,7 @@
 //   client mod's sky, fog, weather and aurora (GloamingForest additions, all on by default).
 // - Net channels (rule R15, server -> client mod):
 //   - "atmosphere.ur_ghast" {"active": bool}: the Ur-Ghast near the player is in its tantrum (U26
-//     sends it on change; upstream's UrGhast sets TFWeatherRenderer.urGhastAlive every client tick while
+//     sends it on change; upstream's UrGhast sets GloamingWeatherRenderer.urGhastAlive every client tick while
 //     it is alive and in its tantrum). The client raises its Ur-Ghast rain while it is active.
 //   - "atmosphere.preview" {...}: development previews of the e2e scenarios (a biome, locked
 //     biomes, protected boxes, the aurora) sent by the atmosphere.show_* selftests to players
@@ -34,8 +34,8 @@ namespace gf::feature::atmosphere {
 
 struct AtmosphereConfig {
     int version = 1;
-    /// TFClientConfig "auroraBiomes" (config.gloamingforest.aurora_biomes): the biomes the aurora
-    /// shows in; an empty list disables it (TFConfig#getValidAuroraBiomes: invalid ids are warned
+    /// GloamingClientConfig "auroraBiomes" (config.gloamingforest.aurora_biomes): the biomes the aurora
+    /// shows in; an empty list disables it (GloamingConfig#getValidAuroraBiomes: invalid ids are warned
     /// about and skipped).
     std::vector<std::string> auroraBiomes{"gloamingforest:glacier"};
     /// Client mod switches (GloamingForest): upstream's sky (no sun or moon, bright stars), its fog

@@ -125,7 +125,7 @@ struct State {
     std::atomic<int>  fogDim{-1};
     std::atomic<bool> loggedHud{false}, loggedWorld{false}, loggedFixed{false}, loggedHead{false};
     std::shared_ptr<ItemStack> hudItem;                // client thread
-    std::shared_ptr<ItemStack> hudBlock, hudTfBlock;   // client thread: a vanilla and an upstream block item
+    std::shared_ptr<ItemStack> hudBlock, hudGloamingBlock;   // client thread: a vanilla and an upstream block item
     std::int64_t               mapId = 0; // client thread
 };
 State& st() {
@@ -179,12 +179,12 @@ void drawHud(screen::Canvas& c, float) {
     // scenario checks they are GUI cubes, as in the inventory)
     if (!st().hudBlock) {
         if (auto s = game::items::make("minecraft:cobblestone")) st().hudBlock = std::make_shared<ItemStack>(std::move(*s));
-        if (auto s = game::items::make("gloamingforest:gloaming_oak_planks")) st().hudTfBlock = std::make_shared<ItemStack>(std::move(*s));
+        if (auto s = game::items::make("gloamingforest:gloaming_oak_planks")) st().hudGloamingBlock = std::make_shared<ItemStack>(std::move(*s));
     }
     float const cellX = panel.x + panel.w + 6, cellY = panel.y + 1;
     for (int i = 0; i < 3; ++i) c.fill({cellX + static_cast<float>(i) * 18 - 1, cellY - 1, 18, 18}, 0xFF8B8B8B);
     if (st().hudBlock) c.item(*st().hudBlock, cellX, cellY);
-    if (st().hudTfBlock) c.item(*st().hudTfBlock, cellX + 36, cellY);
+    if (st().hudGloamingBlock) c.item(*st().hudGloamingBlock, cellX + 36, cellY);
     if (!st().loggedHud.exchange(true)) {
         auto [gw, gh] = screen::guiSize();
         log().info("ui fixture: hud layer drawn ({}) cells={},{} gui={}x{}", graphicsModeName(), cellX, cellY, gw, gh);

@@ -1,50 +1,50 @@
 {
-  "tf_item_charm_of_keeping_1": {
+  "gf_item_charm_of_keeping_1": {
     "textures": "textures/gloamingforest/item/charm_of_keeping_1"
   },
-  "tf_item_charm_of_keeping_2": {
+  "gf_item_charm_of_keeping_2": {
     "textures": "textures/gloamingforest/item/charm_of_keeping_2"
   },
-  "tf_item_charm_of_keeping_3": {
+  "gf_item_charm_of_keeping_3": {
     "textures": "textures/gloamingforest/item/charm_of_keeping_3"
   },
-  "tf_item_charm_of_life_1": {
+  "gf_item_charm_of_life_1": {
     "textures": "textures/gloamingforest/item/charm_of_life_1"
   },
-  "tf_item_charm_of_life_2": {
+  "gf_item_charm_of_life_2": {
     "textures": "textures/gloamingforest/item/charm_of_life_2"
   },
-  "tf_item_crown_splinter": {
+  "gf_item_crown_splinter": {
     "textures": "textures/gloamingforest/item/crown_splinter"
   },
-  "tf_item_emperors_cloth": {
+  "gf_item_emperors_cloth": {
     "textures": "textures/gloamingforest/item/emperors_cloth"
   },
-  "tf_item_exanimate_powder": {
+  "gf_item_exanimate_powder": {
     "textures": "textures/gloamingforest/item/exanimate_powder"
   },
-  "tf_item_fortification_scepter": {
+  "gf_item_fortification_scepter": {
     "textures": "textures/gloamingforest/item/fortification_scepter"
   },
-  "tf_item_four_leaf_clover": {
+  "gf_item_four_leaf_clover": {
     "textures": "textures/gloamingforest/item/four_leaf_clover"
   },
-  "tf_item_gloaming_scepter": {
+  "gf_item_gloaming_scepter": {
     "textures": "textures/gloamingforest/item/gloaming_scepter"
   },
-  "tf_item_lifedrain_scepter": {
+  "gf_item_lifedrain_scepter": {
     "textures": "textures/gloamingforest/item/lifedrain_scepter"
   },
-  "tf_item_moon_dial_full": {
+  "gf_item_moon_dial_full": {
     "textures": "textures/gloamingforest/item/moon_dial/full"
   },
-  "tf_item_ore_meter": {
+  "gf_item_ore_meter": {
     "textures": "textures/gloamingforest/item/ore_meter"
   },
-  "tf_item_pocket_watch": {
+  "gf_item_pocket_watch": {
     "textures": "textures/gloamingforest/item/pocket_watch"
   },
-  "tf_item_zombie_scepter": {
+  "gf_item_zombie_scepter": {
     "textures": "textures/gloamingforest/item/zombie_scepter"
   }
 }

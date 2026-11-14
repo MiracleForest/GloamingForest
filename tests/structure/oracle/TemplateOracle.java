@@ -198,29 +198,29 @@ public class TemplateOracle {
 	}
 
 	/** One of upstream's processor bodies (ProcessorOracle.PROCESSORS) as a StructureProcessor. */
-	static final class Tf extends StructureProcessor {
+	static final class Upsrc extends StructureProcessor {
 		final ProcessorOracle.Processor body;
 		final int[] offset;
-		final Map<BlockPos, String> tfNames;
+		final Map<BlockPos, String> gloamingNames;
 
-		Tf(ProcessorOracle.Processor body, int[] offset, Map<BlockPos, String> tfNames) {
+		Upsrc(ProcessorOracle.Processor body, int[] offset, Map<BlockPos, String> gloamingNames) {
 			this.body = body;
 			this.offset = offset;
-			this.tfNames = tfNames;
+			this.gloamingNames = gloamingNames;
 		}
 
 		@Override
 		public StructureBlockInfo processBlock(LevelReader level, BlockPos offset, BlockPos pos, StructureBlockInfo original, StructureBlockInfo modified,
 			StructurePlaceSettings settings) {
 			BlockPos at = modified.pos();
-			ProcessorOracle.Info in = new ProcessorOracle.Info(at.getX(), at.getY(), at.getZ(), tfNames.getOrDefault(at, nameOf(modified.state())));
+			ProcessorOracle.Info in = new ProcessorOracle.Info(at.getX(), at.getY(), at.getZ(), gloamingNames.getOrDefault(at, nameOf(modified.state())));
 			ProcessorOracle.Info out = body.process(new Draws(settings.getRandom(at)), in, this.offset);
 			if (out == null) return null;
 			if (out == in) return modified;
 			BlockPos to = new BlockPos(out.x(), out.y(), out.z());
 			if (!vanilla(out.block())) {
 				// an upstream block (the nagastone variants): the stand-in stays, its upstream name is kept aside
-				tfNames.put(to, out.block());
+				gloamingNames.put(to, out.block());
 				return new StructureBlockInfo(to, modified.state(), modified.nbt());
 			}
 			return new StructureBlockInfo(to, state(out.block()), modified.nbt());
@@ -244,9 +244,9 @@ public class TemplateOracle {
 	 */
 	@SuppressWarnings("unchecked")
 	static List<ProcessorOracle.Info> place(StructureTemplate t, int[] offset, ProcessorOracle.Processor body, RandomSource random) throws Exception {
-		Map<BlockPos, String> tfNames = new HashMap<>();
+		Map<BlockPos, String> gloamingNames = new HashMap<>();
 		StructurePlaceSettings settings = new StructurePlaceSettings().setRandom(random);
-		if (body != null) settings.addProcessor(new Tf(body, offset, tfNames));
+		if (body != null) settings.addProcessor(new Upsrc(body, offset, gloamingNames));
 		BlockPos at = new BlockPos(offset[0], offset[1], offset[2]);
 		List<StructureTemplate.Palette> all = (List<StructureTemplate.Palette>) palettes.get(t);
 		List<StructureBlockInfo> blocks = settings.getRandomPalette(all, at).blocks();
@@ -254,7 +254,7 @@ public class TemplateOracle {
 		List<ProcessorOracle.Info> out = new ArrayList<>();
 		for (StructureBlockInfo info : processed) {
 			BlockPos p = info.pos();
-			out.add(new ProcessorOracle.Info(p.getX(), p.getY(), p.getZ(), tfNames.getOrDefault(p, nameOf(info.state()))));
+			out.add(new ProcessorOracle.Info(p.getX(), p.getY(), p.getZ(), gloamingNames.getOrDefault(p, nameOf(info.state()))));
 			if (info.nbt() != null && randomizable(info.state(), p)) random.nextLong();
 		}
 		return out;

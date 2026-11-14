@@ -17,7 +17,7 @@
       "minecraft:geometry": "minecraft:geometry.full_block",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_vanilla_block_obsidian",
+          "texture": "gf_vanilla_block_obsidian",
           "render_method": "opaque"
         }
       }

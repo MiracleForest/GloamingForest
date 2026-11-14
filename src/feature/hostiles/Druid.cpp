@@ -2,7 +2,7 @@
 // Translated from the upstream 4.8 source (commit 9e40a757):
 //   src/main/java/gloamingforest/entity/monster/SkeletonDruid.java
 //   src/main/java/gloamingforest/entity/projectile/NatureBolt.java
-//   src/main/java/gloamingforest/entity/projectile/TFThrowable.java
+//   src/main/java/gloamingforest/entity/projectile/GloamingThrowable.java
 //   src/main/java/gloamingforest/util/entities/EntityUtil.java (canDestroyBlock)
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
@@ -133,7 +133,7 @@ bool boltHitBlock(Actor& bolt, BlockPos const& pos, int) {
 bool boltHitEntity(Actor& bolt, Actor& target) {
     Actor* owner = gf::projectile::ext::owner(bolt);
     if (isLiving(target) && (!owner || (&target != owner && &target != owner->getVehicle()))) {
-        // TFDamageTypes.LEAF_BRAIN, indirect: the bolt, by its owner
+        // GloamingDamageTypes.LEAF_BRAIN, indirect: the bolt, by its owner
         if (gf::combat::hurt(target, 2.0F, "gloamingforest:leaf_brain", owner, &bolt) && difficulty() != 0) {
             int seconds = difficulty() == 3 ? 7 : 3;
             addEffect(target, Effect::Poison, seconds * 20, 0);
@@ -170,7 +170,7 @@ void install() {
             dropEquipment(*m, drops, 0.085F, 0.085F, ctx.player != nullptr, ctx.attacker);
         }
     });
-    // NatureBolt: a TFThrowable with gravity 0.003, a happy villager trail of 5
+    // NatureBolt: a GloamingThrowable with gravity 0.003, a happy villager trail of 5
     gf::projectile::Spec bolt;
     bolt.gravity     = 0.003f;
     bolt.drag        = 0.99f;

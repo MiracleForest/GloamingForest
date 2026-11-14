@@ -20,14 +20,14 @@
       "minecraft:tags": ["minecraft:is_axe_item_destructible", "minecraft:is_sword_item_destructible"],
       "minecraft:map_color": "#007c00",
       "minecraft:collision_box": false,
-      "minecraft:geometry": "geometry.tf.minecraft.block.cross",
+      "minecraft:geometry": "geometry.gf.minecraft.block.cross",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_darkwood_sapling",
+          "texture": "gf_block_darkwood_sapling",
           "render_method": "alpha_test"
         },
         "cross": {
-          "texture": "tf_block_darkwood_sapling",
+          "texture": "gf_block_darkwood_sapling",
           "render_method": "alpha_test"
         }
       },

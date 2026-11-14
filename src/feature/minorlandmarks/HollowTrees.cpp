@@ -669,7 +669,7 @@ void installHollowTrees() {
         HollowTreeConfig config = HollowTreeConfig::defaults();
         if (auto const* d = gf::landmark::descriptor(key)) config = HollowTreeConfig::fromJson(d->extra);
         if (std::string(key) == kSwampHollowTree && !(gf::landmark::descriptor(key) && gf::landmark::descriptor(key)->extra.contains("allow_in_water")))
-            config.allowInWater = true; // TFStructures: the swamp hollow tree may stand in water
+            config.allowInWater = true; // GloamingStructures: the swamp hollow tree may stand in water
         gf::landmark::registerGenerator(key, gf::landmark::Generator{
             .layout =
                 [config](gf::landmark::LayoutContext& ctx) {

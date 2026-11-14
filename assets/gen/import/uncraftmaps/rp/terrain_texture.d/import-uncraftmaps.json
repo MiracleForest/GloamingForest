@@ -1,14 +1,14 @@
 {
-  "tf_block_uncrafting_glow": {
+  "gf_block_uncrafting_glow": {
     "textures": "textures/gloamingforest/block/uncrafting_glow"
   },
-  "tf_block_uncrafting_glow_side": {
+  "gf_block_uncrafting_glow_side": {
     "textures": "textures/gloamingforest/block/uncrafting_glow_side"
   },
-  "tf_block_uncrafting_side": {
+  "gf_block_uncrafting_side": {
     "textures": "textures/gloamingforest/block/uncrafting_side"
   },
-  "tf_block_uncrafting_top": {
+  "gf_block_uncrafting_top": {
     "textures": "textures/gloamingforest/block/uncrafting_top"
   }
 }

@@ -22,31 +22,31 @@
       "minecraft:geometry": "minecraft:geometry.full_block",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_etched_nagastone_down_weathered",
+          "texture": "gf_block_etched_nagastone_down_weathered",
           "render_method": "opaque"
         },
         "up": {
-          "texture": "tf_block_stone_tiles_weathered",
+          "texture": "gf_block_stone_tiles_weathered",
           "render_method": "opaque"
         },
         "down": {
-          "texture": "tf_block_stone_tiles_weathered",
+          "texture": "gf_block_stone_tiles_weathered",
           "render_method": "opaque"
         },
         "north": {
-          "texture": "tf_block_etched_nagastone_down_weathered",
+          "texture": "gf_block_etched_nagastone_down_weathered",
           "render_method": "opaque"
         },
         "south": {
-          "texture": "tf_block_etched_nagastone_down_weathered",
+          "texture": "gf_block_etched_nagastone_down_weathered",
           "render_method": "opaque"
         },
         "east": {
-          "texture": "tf_block_etched_nagastone_down_weathered",
+          "texture": "gf_block_etched_nagastone_down_weathered",
           "render_method": "opaque"
         },
         "west": {
-          "texture": "tf_block_etched_nagastone_down_weathered",
+          "texture": "gf_block_etched_nagastone_down_weathered",
           "render_method": "opaque"
         }
       }
@@ -58,31 +58,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_etched_nagastone_down_weathered",
+              "texture": "gf_block_etched_nagastone_down_weathered",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_block_stone_tiles_weathered",
+              "texture": "gf_block_stone_tiles_weathered",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_block_stone_tiles_weathered",
+              "texture": "gf_block_stone_tiles_weathered",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_block_etched_nagastone_down_weathered",
+              "texture": "gf_block_etched_nagastone_down_weathered",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_block_etched_nagastone_down_weathered",
+              "texture": "gf_block_etched_nagastone_down_weathered",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_block_etched_nagastone_down_weathered",
+              "texture": "gf_block_etched_nagastone_down_weathered",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_block_etched_nagastone_down_weathered",
+              "texture": "gf_block_etched_nagastone_down_weathered",
               "render_method": "opaque"
             }
           },
@@ -96,31 +96,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_etched_nagastone_right_weathered",
+              "texture": "gf_block_etched_nagastone_right_weathered",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_block_etched_nagastone_left_weathered",
+              "texture": "gf_block_etched_nagastone_left_weathered",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_block_etched_nagastone_right_weathered",
+              "texture": "gf_block_etched_nagastone_right_weathered",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_block_etched_nagastone_left_weathered",
+              "texture": "gf_block_etched_nagastone_left_weathered",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_block_etched_nagastone_right_weathered",
+              "texture": "gf_block_etched_nagastone_right_weathered",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_block_stone_tiles_weathered",
+              "texture": "gf_block_stone_tiles_weathered",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_block_stone_tiles_weathered",
+              "texture": "gf_block_stone_tiles_weathered",
               "render_method": "opaque"
             }
           },
@@ -134,31 +134,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_etched_nagastone_up_weathered",
+              "texture": "gf_block_etched_nagastone_up_weathered",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_block_etched_nagastone_up_weathered",
+              "texture": "gf_block_etched_nagastone_up_weathered",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_block_etched_nagastone_up_weathered",
+              "texture": "gf_block_etched_nagastone_up_weathered",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_block_stone_tiles_weathered",
+              "texture": "gf_block_stone_tiles_weathered",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_block_stone_tiles_weathered",
+              "texture": "gf_block_stone_tiles_weathered",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_block_etched_nagastone_right_weathered",
+              "texture": "gf_block_etched_nagastone_right_weathered",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_block_etched_nagastone_left_weathered",
+              "texture": "gf_block_etched_nagastone_left_weathered",
               "render_method": "opaque"
             }
           },
@@ -172,31 +172,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_etched_nagastone_down_weathered",
+              "texture": "gf_block_etched_nagastone_down_weathered",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_block_etched_nagastone_down_weathered",
+              "texture": "gf_block_etched_nagastone_down_weathered",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_block_etched_nagastone_down_weathered",
+              "texture": "gf_block_etched_nagastone_down_weathered",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_block_stone_tiles_weathered",
+              "texture": "gf_block_stone_tiles_weathered",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_block_stone_tiles_weathered",
+              "texture": "gf_block_stone_tiles_weathered",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_block_etched_nagastone_left_weathered",
+              "texture": "gf_block_etched_nagastone_left_weathered",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_block_etched_nagastone_right_weathered",
+              "texture": "gf_block_etched_nagastone_right_weathered",
               "render_method": "opaque"
             }
           },
@@ -210,31 +210,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_etched_nagastone_up_weathered",
+              "texture": "gf_block_etched_nagastone_up_weathered",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_block_stone_tiles_weathered",
+              "texture": "gf_block_stone_tiles_weathered",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_block_stone_tiles_weathered",
+              "texture": "gf_block_stone_tiles_weathered",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_block_etched_nagastone_up_weathered",
+              "texture": "gf_block_etched_nagastone_up_weathered",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_block_etched_nagastone_up_weathered",
+              "texture": "gf_block_etched_nagastone_up_weathered",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_block_etched_nagastone_up_weathered",
+              "texture": "gf_block_etched_nagastone_up_weathered",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_block_etched_nagastone_up_weathered",
+              "texture": "gf_block_etched_nagastone_up_weathered",
               "render_method": "opaque"
             }
           },
@@ -248,31 +248,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_etched_nagastone_left_weathered",
+              "texture": "gf_block_etched_nagastone_left_weathered",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_block_etched_nagastone_right_weathered",
+              "texture": "gf_block_etched_nagastone_right_weathered",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_block_etched_nagastone_left_weathered",
+              "texture": "gf_block_etched_nagastone_left_weathered",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_block_etched_nagastone_right_weathered",
+              "texture": "gf_block_etched_nagastone_right_weathered",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_block_etched_nagastone_left_weathered",
+              "texture": "gf_block_etched_nagastone_left_weathered",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_block_stone_tiles_weathered",
+              "texture": "gf_block_stone_tiles_weathered",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_block_stone_tiles_weathered",
+              "texture": "gf_block_stone_tiles_weathered",
               "render_method": "opaque"
             }
           },

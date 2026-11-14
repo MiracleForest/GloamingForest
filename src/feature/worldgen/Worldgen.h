@@ -8,7 +8,7 @@
 //
 //     gf::worldgen::setBiomeSource([](int qx, int qy, int qz) { return layers.biomeAt(qx, qz); });  // U1
 //     gf::worldgen::setTerrain([](gf::worldgen::Chunk& c) { ... });                                 // U2
-//     gf::worldgen::registerCarver("gloamingforest:tf_caves", carve);                               // U2
+//     gf::worldgen::registerCarver("gloamingforest:gf_caves", carve);                               // U2
 //     gf::worldgen::addStage(gf::worldgen::Stage::Pieces, "landmark.pieces", 0, placePieces);       // F6/F7
 //
 // Generation is deterministic for a seed and may run on worker threads: providers must be
@@ -72,7 +72,7 @@ public:
 
 /// Biome at quart (4-block) coordinates (Java's BiomeSource#getNoiseBiome); returns a biome id.
 using BiomeSourceFn = std::function<std::string(int quartX, int quartY, int quartZ)>;
-/// upstream's "main biome" of a column (TFBiomeProvider: the layer stack result before underground
+/// upstream's "main biome" of a column (GloamingBiomeProvider: the layer stack result before underground
 /// biomes); used by landmark placement and the magic map.
 using MainBiomeFn     = std::function<std::string(int blockX, int blockZ)>;
 using TerrainProvider = std::function<void(Chunk& chunk)>;
@@ -92,7 +92,7 @@ void setMainBiomeSource(MainBiomeFn fn);
 /// The base terrain (density -> stone / water) and the surface rules (U2).
 void setTerrain(TerrainProvider fn);
 void setSurface(SurfaceProvider fn);
-/// A carver referenced by id from biome / configured_carver JSON ("gloamingforest:tf_caves").
+/// A carver referenced by id from biome / configured_carver JSON ("gloamingforest:gf_caves").
 void registerCarver(std::string const& id, CarverFn fn);
 /// A chunk blanket processor ("gloamingforest:canopy", "gloamingforest:glacier"; Blanket stage).
 void registerBlanket(std::string const& id, BlanketFn fn);

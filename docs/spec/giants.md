@@ -20,8 +20,8 @@ tags are in the `neoforge` namespace (`#neoforge:is_physical`, `#neoforge:is_mag
 
 ## 1. Structure `gloamingforest:giant_house`
 
-Sources: `world/components/structures/type/GiantHouseStructure.java`; the pieces are U27's (`gloamingforest:TFClCa`
-CloudCastleComponent, `gloamingforest:TFCloud`, `gloamingforest:TFClTr`; see `docs/spec/caves.md` section 1.1), used here
+Sources: `world/components/structures/type/GiantHouseStructure.java`; the pieces are U27's (`gloamingforest:GloamingClCa`
+CloudCastleComponent, `gloamingforest:GloamingCloud`, `gloamingforest:GloamingClTr`; see `docs/spec/caves.md` section 1.1), used here
 by piece-type id through F7 (R2).
 
 | Field | Value |
@@ -40,8 +40,8 @@ by piece-type id through F7 (R2).
 
 Start position: `x = chunkX x 16`, `z = chunkZ x 16` (not centred), y = sea level (0); piece random
 `RandomSource.create(seed + chunkX x 25117 + chunkZ x 151121)`. First piece: `CloudCastleComponent(1, x, y + 168, z)`
-(type id `gloamingforest:TFClCa`, U27), rounded to multiples of 4; its box starts 4 lower (minY 164): fluffy cloud slab y 164..167, castle walls from y 168, the `TFCloud` at minY + 3 = 167, plus the two
-`TFClTr` cloud trees (all U27 pieces). The castle places one giant miner and one armored giant (persistent). The
+(type id `gloamingforest:GloamingClCa`, U27), rounded to multiples of 4; its box starts 4 lower (minY 164): fluffy cloud slab y 164..167, castle walls from y 168, the `GloamingCloud` at minY + 3 = 167, plus the two
+`GloamingClTr` cloud trees (all U27 pieces). The castle places one giant miner and one armored giant (persistent). The
 structure is conquerable (`ConquerableStructure`) but has no boss; F6 handles the lock and hint.
 
 Golden hash `giants.cloud_castle_hash` (R19): force-start the structure at a fixed seed and hash the castle volume
@@ -49,7 +49,7 @@ Golden hash `giants.cloud_castle_hash` (R19): force-start the structure at a fix
 
 ## 2. Blocks
 
-Sources: `init/TFBlocks.java`, `block/UberousSoilBlock.java`, `block/GrowingBeanstalkBlock.java`,
+Sources: `init/GloamingBlocks.java`, `block/UberousSoilBlock.java`, `block/GrowingBeanstalkBlock.java`,
 `block/entity/GrowingBeanstalkBlockEntity.java`, `block/SpecialStemLeavesBlock.java`, `block/CloudBlock.java`,
 `block/WispyCloudBlock.java`, `block/GiantBlock.java`, `block/GiantLeavesBlock.java`, `asmhooks/BlockHooks.java`,
 `client/event/CloudEvents.java`, `client/event/ColorHandler.java`, `client/model/block/giantblock/GiantBlockModel.java`,
@@ -230,11 +230,11 @@ drop themselves (survives explosion); `gloamingforest:blocks/wispy_cloud` drops 
 
 ## 3. Items
 
-Sources: `item/GiantPickItem.java`, `item/GiantSwordItem.java`, `util/TFToolMaterials.java`, `events/ToolEvents.java`,
+Sources: `item/GiantPickItem.java`, `item/GiantSwordItem.java`, `util/GloamingToolMaterials.java`, `events/ToolEvents.java`,
 `components/entity/GiantPickaxeMiningAttachment.java`, `loot/conditions/GiantPickUsedCondition.java`,
 `loot/modifiers/GiantToolGroupingModifier.java`, `events/RegistrationEvents.java` (conversions).
 
-Tier `TFToolMaterials.GIANT`: incorrect blocks `block/#gloamingforest:incorrect_for_giant_tool`, durability 1024,
+Tier `GloamingToolMaterials.GIANT`: incorrect blocks `block/#gloamingforest:incorrect_for_giant_tool`, durability 1024,
 speed 4.0, attack bonus 1.0, enchantability 5, repair `#gloamingforest:repairs_giant_tools` (= giant cobblestone; U7 tag).
 
 | Id | Class | Attributes (main hand) | Behaviour |
@@ -281,8 +281,8 @@ All are vanilla crafting recipes owned by U29 (R4, owners.tsv); unlock advanceme
 
 ## 5. Mobs
 
-Sources: `entity/monster/GiantMiner.java`, `entity/monster/ArmoredGiant.java`, `client/renderer/entity/TFGiantRenderer.java`,
-`init/TFEntities.java`, `events/RegistrationEvents.java`.
+Sources: `entity/monster/GiantMiner.java`, `entity/monster/ArmoredGiant.java`, `client/renderer/entity/GloamingGiantRenderer.java`,
+`init/GloamingEntities.java`, `events/RegistrationEvents.java`.
 
 | Field | `gloamingforest:giant_miner` | `gloamingforest:armored_giant` (extends GiantMiner) |
 |---|---|---|
@@ -299,7 +299,7 @@ Sources: `entity/monster/GiantMiner.java`, `entity/monster/ArmoredGiant.java`, `
 | Loot | `gloamingforest:entities/giant_miner`: giant pickaxe, killed by player | `gloamingforest:entities/armored_giant`: giant sword, killed by player |
 | Egg | `gloamingforest:giant_miner_spawn_egg` 0x211b52 / 0x9a9a9a | `gloamingforest:armored_giant_spawn_egg` 0x239391 / 0x9a9a9a |
 
-Render (`TFGiantRenderer`): vanilla player model (wide or slim) scaled x 4, shadow 1.8, humanoid armour layer, held items
+Render (`GloamingGiantRenderer`): vanilla player model (wide or slim) scaled x 4, shadow 1.8, humanoid armour layer, held items
 through `GiantItemInHandLayer` (vanilla item-in-hand with the item moved `(+-1/16, 0, -0.5)` and scaled 0.25 so it fits
 the hand). Skin: if `client.giantSkinUUIDs` is not empty, the profile at `abs((int) uuid.mostSignificantBits) % size`
 (fetched once at config load on a worker thread; slim model when that skin is slim); else the **viewing player's own

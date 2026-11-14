@@ -17,22 +17,22 @@
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 15
       },
-      "minecraft:geometry": "geometry.tf.gloamingforest.block.mason_jar",
+      "minecraft:geometry": "geometry.gf.gloamingforest.block.mason_jar",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_jar_side",
+          "texture": "gf_block_jar_side",
           "render_method": "alpha_test"
         },
         "bottom": {
-          "texture": "tf_block_jar_bottom",
+          "texture": "gf_block_jar_bottom",
           "render_method": "alpha_test"
         },
         "side": {
-          "texture": "tf_block_jar_side",
+          "texture": "gf_block_jar_side",
           "render_method": "alpha_test"
         },
         "top": {
-          "texture": "tf_block_jar_top",
+          "texture": "gf_block_jar_top",
           "render_method": "alpha_test"
         }
       },

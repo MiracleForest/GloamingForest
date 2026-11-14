@@ -84,8 +84,8 @@
   "advancement.gloamingforest.uncraft_uncrafting_table.desc": "Desfabrique uma Bancada de Desfabricação",
   "config.gloamingforest.locked_toasts": "Desativar Brindes de Bioma Bloqueado",
   "config.gloamingforest.locked_toasts.tooltip": "Desativa os brindes que aparecem ao entrar em um bioma bloqueado. Não recomendado se você não estiver familiarizado com a progressão.",
-  "gamerule.tfEnforcedProgression": "Floresta Crepuscular: Progressão Forçada",
-  "gamerule.tfEnforcedProgression.description": "Alguns biomas da Floresta Crepuscular ficarão bloqueados até que você derrote certos chefes na dimensão. (Você pode verificar a ordem de progressão em seus avanços)",
+  "gamerule.gloamingEnforcedProgression": "Gloaming Forest: Progressão Forçada",
+  "gamerule.gloamingEnforcedProgression.description": "Alguns biomas da Gloaming Forest ficarão bloqueados até que você derrote certos chefes na dimensão. (Você pode verificar a ordem de progressão em seus avanços)",
   "misc.gloamingforest.biome_locked": "Bioma Bloqueado!",
   "misc.gloamingforest.biome_locked_2": "Verifique seus avanços"
 }

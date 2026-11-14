@@ -309,8 +309,8 @@ void sendClockOf(Player& player, Level& level, bool inGloaming) {
 // ---- which players ----------------------------------------------------------------------------------------
 
 bool inGloaming(Player const& p) {
-    int tf = gloamingId();
-    return tf >= 0 && static_cast<int>(p.getDimensionId()) == tf;
+    int upsrc = gloamingId();
+    return upsrc >= 0 && static_cast<int>(p.getDimensionId()) == upsrc;
 }
 
 Player* playerOfNetwork(NetworkIdentifier const& id, SubClientId sub) {
@@ -487,14 +487,14 @@ void syncClocks(Level& level) {
     std::vector<std::int64_t>                  staying;
     level.forEachPlayer([&](Player& p) {
         auto id   = idOf(p);
-        bool inTf = inGloaming(p);
+        bool inside = inGloaming(p);
         bool was;
         {
             std::lock_guard lock(timeMutex());
             was = inGloamingClock().contains(id);
         }
-        if (inTf && was) staying.push_back(id);
-        if (inTf != was || (inTf && renew)) changes.emplace_back(id, inTf);
+        if (inside && was) staying.push_back(id);
+        if (inside != was || (inside && renew)) changes.emplace_back(id, inside);
         return true;
     });
     // the clock the clients of players who stayed inside ended the last tick with
@@ -516,15 +516,15 @@ void syncClocks(Level& level) {
             );
         }
     }
-    for (auto [id, inTf] : changes) {
+    for (auto [id, inside] : changes) {
         auto* p = playerById(id);
         if (!p) continue;
         {
             std::lock_guard lock(timeMutex());
-            if (inTf) inGloamingClock().insert(id);
+            if (inside) inGloamingClock().insert(id);
             else inGloamingClock().erase(id);
         }
-        sendClockOf(*p, level, inTf);
+        sendClockOf(*p, level, inside);
     }
 }
 

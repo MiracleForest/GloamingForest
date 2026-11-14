@@ -93,11 +93,11 @@
       },
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_violet_force_field",
+          "texture": "gf_block_violet_force_field",
           "render_method": "blend"
         },
         "pane": {
-          "texture": "tf_block_violet_force_field",
+          "texture": "gf_block_violet_force_field",
           "render_method": "blend"
         }
       },

@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.cube_of_annihilation",
   "layer": {
     "name": "cube_of_annihilation",
-    "field": "TFModelLayers.CUBE_OF_ANNIHILATION",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.CUBE_OF_ANNIHILATION, CubeOfAnnihilationModel::create);"
+    "field": "GloamingModelLayers.CUBE_OF_ANNIHILATION",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.CUBE_OF_ANNIHILATION, CubeOfAnnihilationModel::create);"
   },
   "texture_size": [64, 64],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/cubeofannihilation",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/cubeofannihilation.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/cubeofannihilation.png"
     }
   ],
   "bones": [

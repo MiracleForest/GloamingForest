@@ -1,13 +1,13 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/world/components/structures/TFStructureComponentOld.java
+//   src/main/java/gloamingforest/world/components/structures/GloamingStructureComponentOld.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
 
 // Contract "structure", shared bases (header owned by F0, implemented by F7; rule R18).
-// TFStructureComponentOld: the procedural piece base of the older upstream structures (lich tower wings,
+// GloamingStructureComponentOld: the procedural piece base of the older upstream structures (lich tower wings,
 // dark tower, aurora palace, mushroom tower, labyrinth, knight stronghold, final castle, troll
 // caves, hollow hills ...): orientation without vanilla's mirror, rotated placement helpers,
 // spawners, treasure chests, tripwires, signs, ground level probing and the beardifier box.

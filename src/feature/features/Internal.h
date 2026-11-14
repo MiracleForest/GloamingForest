@@ -141,17 +141,17 @@ void clearBlockCache();
 /// vanilla blocks (Block::canSurvive answers) and for blocks without a rule.
 enum class Survival {
     Engine,
-    Bush,               ///< BushBlock#mayPlaceOn: #minecraft:dirt or farmland below (saplings, TFPlantBlock)
+    Bush,               ///< BushBlock#mayPlaceOn: #minecraft:dirt or farmland below (saplings, GloamingPlantBlock)
     SturdyBelow,        ///< MossPatchBlock: a sturdy top face below
     FallenLeaves,       ///< FallenLeavesBlock: a sturdy top face or water below
     Mushgloom,          ///< MushgloomBlock: a sturdy top face or uberous soil below
     Mushroom,           ///< MushroomBlock: #minecraft:mushroom_grow_block or a solid block below
-    HangingPlant,       ///< TFPlantBlock.canPlaceRootAt: #gloamingforest:plants_hang_on above
+    HangingPlant,       ///< GloamingPlantBlock.canPlaceRootAt: #gloamingforest:plants_hang_on above
     RootStrand,         ///< RootStrandBlock: plants_hang_on or another root strand above
     TrollRoot,          ///< TrollRootBlock: #minecraft:base_stone_overworld or a troll root block above
     ThornRose,          ///< ThornRoseBlock: thorns or a sturdy face behind it
     Waterlily,          ///< WaterlilyBlock: a water source or ice below, no fluid at the block
-    BerryBush,          ///< BerryBushBlock: #gloamingforest:tf_berry_bushes_survive below
+    BerryBush,          ///< BerryBushBlock: #gloamingforest:gf_berry_bushes_survive below
     DarkTowerBerryBush, ///< DarkTowerBerryBushBlock: #gloamingforest:dark_tower_berry_bushes_survive below
     OreBerry,           ///< OreBerryBlock: #gloamingforest:oreberry_bushes_survive below
 };

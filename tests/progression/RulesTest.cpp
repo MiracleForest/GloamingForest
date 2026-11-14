@@ -110,12 +110,12 @@ TEST(ProgressionRules, TreeLayoutMatchesJava) {
     }
 }
 
-TEST(ProgressionRules, TreeLayoutTfTree) {
-    auto const& tf = kGolden.front();
-    ASSERT_STREQ(tf.name, "gloamingforest");
-    EXPECT_EQ(tf.nodes.size(), 45u);
+TEST(ProgressionRules, TreeLayoutGloamingTree) {
+    auto const& upsrc = kGolden.front();
+    ASSERT_STREQ(upsrc.name, "gloamingforest");
+    EXPECT_EQ(upsrc.nodes.size(), 45u);
     std::vector<TreeNode> nodes;
-    for (auto const& n : tf.nodes) nodes.push_back({n.id, n.parent, n.display});
+    for (auto const& n : upsrc.nodes) nodes.push_back({n.id, n.parent, n.display});
     layoutTree(nodes);
     auto at = [&](char const* id) {
         return *std::find_if(nodes.begin(), nodes.end(), [&](TreeNode const& n) { return n.id == std::string("gloamingforest:") + id; });

@@ -17,30 +17,30 @@
       },
       "minecraft:tags": ["minecraft:is_pickaxe_item_destructible"],
       "minecraft:map_color": "#707070",
-      "minecraft:geometry": "geometry.tf.gloamingforest.block.trophy_pedestal",
+      "minecraft:geometry": "geometry.gf.gloamingforest.block.trophy_pedestal",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_pedestal_top",
+          "texture": "gf_block_pedestal_top",
           "render_method": "blend"
         },
         "east": {
-          "texture": "tf_block_pedestal_ur-ghast_latent",
+          "texture": "gf_block_pedestal_ur-ghast_latent",
           "render_method": "blend"
         },
         "end": {
-          "texture": "tf_block_pedestal_top",
+          "texture": "gf_block_pedestal_top",
           "render_method": "blend"
         },
         "north": {
-          "texture": "tf_block_pedestal_naga_latent",
+          "texture": "gf_block_pedestal_naga_latent",
           "render_method": "blend"
         },
         "south": {
-          "texture": "tf_block_pedestal_lich_latent",
+          "texture": "gf_block_pedestal_lich_latent",
           "render_method": "blend"
         },
         "west": {
-          "texture": "tf_block_pedestal_hydra_latent",
+          "texture": "gf_block_pedestal_hydra_latent",
           "render_method": "blend"
         }
       },
@@ -58,30 +58,30 @@
       {
         "condition": "!q.block_state('gloamingforest:active')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.trophy_pedestal",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.trophy_pedestal",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_pedestal_top",
+              "texture": "gf_block_pedestal_top",
               "render_method": "blend"
             },
             "east": {
-              "texture": "tf_block_pedestal_ur-ghast_latent",
+              "texture": "gf_block_pedestal_ur-ghast_latent",
               "render_method": "blend"
             },
             "end": {
-              "texture": "tf_block_pedestal_top",
+              "texture": "gf_block_pedestal_top",
               "render_method": "blend"
             },
             "north": {
-              "texture": "tf_block_pedestal_naga_latent",
+              "texture": "gf_block_pedestal_naga_latent",
               "render_method": "blend"
             },
             "south": {
-              "texture": "tf_block_pedestal_lich_latent",
+              "texture": "gf_block_pedestal_lich_latent",
               "render_method": "blend"
             },
             "west": {
-              "texture": "tf_block_pedestal_hydra_latent",
+              "texture": "gf_block_pedestal_hydra_latent",
               "render_method": "blend"
             }
           },
@@ -98,66 +98,66 @@
       {
         "condition": "q.block_state('gloamingforest:active')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.trophy_pedestal_active",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.trophy_pedestal_active",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_pedestal_top",
+              "texture": "gf_block_pedestal_top",
               "render_method": "blend"
             },
             "east": {
-              "texture": "tf_block_pedestal_ur-ghast_latent",
+              "texture": "gf_block_pedestal_ur-ghast_latent",
               "render_method": "blend"
             },
             "east2": {
-              "texture": "tf_block_pedestal_ur-ghast_glow",
+              "texture": "gf_block_pedestal_ur-ghast_glow",
               "render_method": "blend"
             },
             "east3": {
-              "texture": "tf_block_pedestal_ur-ghast",
+              "texture": "gf_block_pedestal_ur-ghast",
               "render_method": "blend"
             },
             "end": {
-              "texture": "tf_block_pedestal_top",
+              "texture": "gf_block_pedestal_top",
               "render_method": "blend"
             },
             "end2": {
-              "texture": "tf_block_pedestal_top_glow",
+              "texture": "gf_block_pedestal_top_glow",
               "render_method": "blend"
             },
             "north": {
-              "texture": "tf_block_pedestal_naga_latent",
+              "texture": "gf_block_pedestal_naga_latent",
               "render_method": "blend"
             },
             "north2": {
-              "texture": "tf_block_pedestal_naga_glow",
+              "texture": "gf_block_pedestal_naga_glow",
               "render_method": "blend"
             },
             "north3": {
-              "texture": "tf_block_pedestal_naga",
+              "texture": "gf_block_pedestal_naga",
               "render_method": "blend"
             },
             "south": {
-              "texture": "tf_block_pedestal_lich_latent",
+              "texture": "gf_block_pedestal_lich_latent",
               "render_method": "blend"
             },
             "south2": {
-              "texture": "tf_block_pedestal_lich_glow",
+              "texture": "gf_block_pedestal_lich_glow",
               "render_method": "blend"
             },
             "south3": {
-              "texture": "tf_block_pedestal_lich",
+              "texture": "gf_block_pedestal_lich",
               "render_method": "blend"
             },
             "west": {
-              "texture": "tf_block_pedestal_hydra_latent",
+              "texture": "gf_block_pedestal_hydra_latent",
               "render_method": "blend"
             },
             "west2": {
-              "texture": "tf_block_pedestal_hydra_glow",
+              "texture": "gf_block_pedestal_hydra_glow",
               "render_method": "blend"
             },
             "west3": {
-              "texture": "tf_block_pedestal_hydra",
+              "texture": "gf_block_pedestal_hydra",
               "render_method": "blend"
             }
           },

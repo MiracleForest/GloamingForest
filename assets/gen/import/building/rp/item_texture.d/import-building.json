@@ -1,11 +1,11 @@
 {
-  "tf_block_canopy_window": {
+  "gf_block_canopy_window": {
     "textures": "textures/gloamingforest/block/canopy_window"
   },
-  "tf_block_rope": {
+  "gf_block_rope": {
     "textures": "textures/gloamingforest/block/rope"
   },
-  "tf_item_tf_banner_pattern": {
-    "textures": "textures/gloamingforest/item/tf_banner_pattern"
+  "gf_item_gf_banner_pattern": {
+    "textures": "textures/gloamingforest/item/gf_banner_pattern"
   }
 }

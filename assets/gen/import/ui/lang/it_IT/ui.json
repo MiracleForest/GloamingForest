@@ -1,7 +1,7 @@
 {
   "gui.gloamingforest.crumble_horn_jei": "Corno sbriciolante",
   "gui.gloamingforest.moonworm_queen_jei": "Riparazione della Regina verme lunare",
-  "gui.gloamingforest.optifine.message": "Prima di proseguire, tieni nota del fatto che la Optifine può causare crash, bug visivi alle entità multi-parte e molti altri problemi.\n\nPrima di segnalare un bug, per favore prima rimuovi la Optifine e controlla se il suddetto bug è ancora presente.\n\nI problemi relativi alla Optifine non possono essere risolti dalla mod della Foresta del Crepuscolo.\n\nQuesta schermata può essere disabilitata nel file di configurazione.",
+  "gui.gloamingforest.optifine.message": "Prima di proseguire, tieni nota del fatto che la Optifine può causare crash, bug visivi alle entità multi-parte e molti altri problemi.\n\nPrima di segnalare un bug, per favore prima rimuovi la Optifine e controlla se il suddetto bug è ancora presente.\n\nI problemi relativi alla Optifine non possono essere risolti dalla mod della Gloaming Forest.\n\nQuesta schermata può essere disabilitata nel file di configurazione.",
   "gui.gloamingforest.optifine.suggestions": "Ecco una selezione di mod che suggeriamo di usare al posto della Optifine.",
   "gui.gloamingforest.optifine.title": "ATTENZIONE: OPTIFINE RILEVATA",
   "gui.gloamingforest.progression_end.discord": "Server di Discord",

@@ -172,7 +172,7 @@ private:
         Vec3 const feet = player.getFeetPos();
         // Entity#getEyeY: the player's eye height (1.62 standing, 1.27 crouching)
         double const eyeY = feet.y + (player.isSneaking() ? 1.27 : 1.62);
-        if (!isTfBiome(biomeIdOf(region.getBiome(game::blockPosOf(feet))))) return;
+        if (!isGloamingBiome(biomeIdOf(region.getBiome(game::blockPosOf(feet))))) return;
         auto const&                        s = mood::kGloaming;
         std::uniform_int_distribution<int> axis(0, s.blockSearch * 2);
         // Java draws x, y, z in that order

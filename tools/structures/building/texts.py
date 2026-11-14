@@ -1,7 +1,7 @@
 # GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 # Translated from the upstream 4.8 source (commit 9e40a757):
 #   src/main/java/gloamingforest/block/TrophyWallBlock.java (getDescriptionId: the trophy item's)
-#   src/main/java/gloamingforest/init/TFBannerPatterns.java (block.minecraft.banner.gloamingforest.*)
+#   src/main/java/gloamingforest/init/GloamingBannerPatterns.java (block.minecraft.banner.gloamingforest.*)
 # Copyright (c) the upstream authors (see NOTICE).
 # Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 # of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -11,7 +11,7 @@
 # - the wall trophies' block names are their trophy's name (TrophyWallBlock#getDescriptionId returns
 #   the standing trophy's), in every locale F1 wrote building texts for;
 # - Bedrock's banner layer lines item.banner.<pattern>.<colour> of upstream's nine patterns (Bedrock names a
-#   banner layer by the pattern's name, banners.py's tf_<boss>) from upstream's
+#   banner layer by the pattern's name, banners.py's gf_<boss>) from upstream's
 #   block.minecraft.banner.gloamingforest.<asset>.<colour> (F9's imported lang), en_US where a locale
 #   has none.
 #
@@ -29,7 +29,7 @@ OUT = os.path.join(ROOT, "assets", "pack", "rp", "texts.d")
 
 BOSSES = ["naga", "lich", "hydra", "ur_ghast", "knight_phantom", "snow_queen", "minoshroom", "alpha_yeti", "quest_ram"]
 # upstream's banner_pattern asset ids per Bedrock pattern name (Banners.cpp)
-PATTERNS = {"tf_" + b: b for b in BOSSES}
+PATTERNS = {"gf_" + b: b for b in BOSSES}
 # Java DyeColor -> Bedrock's colour suffix of item.banner.* keys
 COLORS = {"white": "white", "orange": "orange", "magenta": "magenta", "light_blue": "lightBlue", "yellow": "yellow",
           "lime": "lime", "pink": "pink", "gray": "gray", "light_gray": "silver", "cyan": "cyan", "purple": "purple",
@@ -61,7 +61,7 @@ def outputs():
     english = read_json(os.path.join(F9_LANG, "en_US", "item.json"))
     for locale in sorted(os.listdir(GEN_TEXTS)):
         gen = read_lang(os.path.join(GEN_TEXTS, locale, "building.lang"))
-        tf = read_json(os.path.join(F9_LANG, locale, "item.json"))
+        upsrc = read_json(os.path.join(F9_LANG, locale, "item.json"))
         lines = []
         for b in BOSSES:
             name = gen.get("tile.gloamingforest:%s_trophy.name" % b)
@@ -70,7 +70,7 @@ def outputs():
         for pattern, asset in PATTERNS.items():
             for java, bedrock in COLORS.items():
                 key = "block.minecraft.banner.gloamingforest.%s.%s" % (asset, java)
-                text = tf.get(key) or english.get(key)
+                text = upsrc.get(key) or english.get(key)
                 if text:
                     lines.append("item.banner.%s.%s=%s" % (pattern, bedrock, text))
         files[os.path.join(OUT, locale, "building.lang")] = "\n".join(lines) + "\n"

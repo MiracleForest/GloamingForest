@@ -10,7 +10,7 @@
         "default": "textures/misc/missing_texture"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.seeker_arrow"
+        "default": "geometry.gf.skeleton.seeker_arrow"
       },
       "render_controllers": ["controller.render.default"]
     }

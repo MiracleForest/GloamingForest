@@ -8,9 +8,9 @@
   report reads upstream and this repository instead):
 
   1. Registered ids: upstream's own registrations at 9e40a757 from the shared checkout (rule R24,
-     pwsh tools/upstream/fetch.ps1): init/TFBlocks.java and init/TFItems.java (`register*("<path>", () ->
-     new <Class>(...))`) and init/TFEntities.java (`make*(TFEntityNames.<NAME>, <Class>::new, ...)`
-     with the names of entity/TFEntityNames.java). Commented-out registrations do not count.
+     pwsh tools/upstream/fetch.ps1): init/GloamingBlocks.java and init/GloamingItems.java (`register*("<path>", () ->
+     new <Class>(...))`) and init/GloamingEntities.java (`make*(GloamingEntityNames.<NAME>, <Class>::new, ...)`
+     with the names of entity/GloamingEntityNames.java). Commented-out registrations do not count.
   2. Needs behaviour: the id's class is one of upstream's own (a src/main/java/gloamingforest/**/<Class>.java
      exists; for a nested class such as JarItem.MasonJarItem the outer one). Ids built from vanilla
      classes (Block, StairBlock, Item, ArmorItem, ...) are complete with the imported skeleton plus
@@ -47,13 +47,13 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path "$PSScriptRoot/../..").Path
-$tf = if ($env:GF_UPSTREAM_HOME) { $env:GF_UPSTREAM_HOME } else { Join-Path $env:LOCALAPPDATA 'gf-upstream/view' }
-$java = Join-Path $tf 'src/main/java/gloamingforest'
-if (-not (Test-Path $java)) { throw "upstream checkout not found at $tf (pwsh tools/upstream/fetch.ps1)" }
+$upsrc = if ($env:GF_UPSTREAM_HOME) { $env:GF_UPSTREAM_HOME } else { Join-Path $env:LOCALAPPDATA 'gf-upstream/view' }
+$java = Join-Path $upsrc 'src/main/java/gloamingforest'
+if (-not (Test-Path $java)) { throw "upstream checkout not found at $upsrc (pwsh tools/upstream/fetch.ps1)" }
 
 # ---- 1-2: upstream registrations and their classes ------------------------------------------------------
-$tfClasses = [Collections.Generic.HashSet[string]]::new()
-Get-ChildItem $java -Recurse -Filter *.java -File | ForEach-Object { [void]$tfClasses.Add($_.BaseName) }
+$gloamingClasses = [Collections.Generic.HashSet[string]]::new()
+Get-ChildItem $java -Recurse -Filter *.java -File | ForEach-Object { [void]$gloamingClasses.Add($_.BaseName) }
 
 function Get-JavaLines([string]$file) {
     # drop // comments and /* */ blocks: commented-out registrations do not count
@@ -65,7 +65,7 @@ function Get-JavaLines([string]$file) {
 $registered = [Collections.Generic.List[object]]::new()
 function Add-Registered([string]$kind, [string]$path, [string]$class) {
     $outer = ($class -split '\.')[0]
-    $registered.Add([pscustomobject]@{ Kind = $kind; Id = "gloamingforest:$path"; Path = $path; Class = $class; Custom = $tfClasses.Contains($outer) })
+    $registered.Add([pscustomobject]@{ Kind = $kind; Id = "gloamingforest:$path"; Path = $path; Class = $class; Custom = $gloamingClasses.Contains($outer) })
 }
 # `DeferredBlock<T> NAME = <register or helper>("<path>", ... new <Class>(...))`: the constructed class,
 # else (a helper such as ominousCandle("<path>", ...)) the declared type T
@@ -76,16 +76,16 @@ function Add-Declared([string]$kind, [string]$file) {
         Add-Registered $kind $m.Groups[2].Value $(if ($new.Success) { $new.Groups[1].Value } else { $m.Groups[1].Value })
     }
 }
-if ($Kind -contains 'block') { Add-Declared block 'init/TFBlocks.java' }
-if ($Kind -contains 'item') { Add-Declared item 'init/TFItems.java' }
+if ($Kind -contains 'block') { Add-Declared block 'init/GloamingBlocks.java' }
+if ($Kind -contains 'item') { Add-Declared item 'init/GloamingItems.java' }
 if ($Kind -contains 'entity') {
     $names = @{}
-    foreach ($m in [regex]::Matches((Get-JavaLines 'entity/TFEntityNames.java') -join "`n", '(\w+)\s*=\s*prefix\("([a-z0-9_/]+)"\)')) { $names[$m.Groups[1].Value] = $m.Groups[2].Value }
-    # make(TFEntityNames.X, Class::new, ...), build*(TFEntityNames.X, makeCastedBuilder(Class.class, Class::new, ...)) ...
-    foreach ($m in [regex]::Matches((Get-JavaLines 'init/TFEntities.java') -join "`n", '(?:make|build)\w*\(\s*TFEntityNames\.(\w+)\s*,[^;]*?([\w.]+)::new')) {
+    foreach ($m in [regex]::Matches((Get-JavaLines 'entity/GloamingEntityNames.java') -join "`n", '(\w+)\s*=\s*prefix\("([a-z0-9_/]+)"\)')) { $names[$m.Groups[1].Value] = $m.Groups[2].Value }
+    # make(GloamingEntityNames.X, Class::new, ...), build*(GloamingEntityNames.X, makeCastedBuilder(Class.class, Class::new, ...)) ...
+    foreach ($m in [regex]::Matches((Get-JavaLines 'init/GloamingEntities.java') -join "`n", '(?:make|build)\w*\(\s*GloamingEntityNames\.(\w+)\s*,[^;]*?([\w.]+)::new')) {
         $path = $names[$m.Groups[1].Value]
         if ($path) { Add-Registered entity $path $m.Groups[2].Value }
-        else { Write-Warning "TFEntityNames.$($m.Groups[1].Value) not found" }
+        else { Write-Warning "GloamingEntityNames.$($m.Groups[1].Value) not found" }
     }
 }
 

@@ -18,15 +18,15 @@
       "minecraft:map_color": "#7f3fb2",
       "minecraft:collision_box": false,
       "minecraft:geometry": {
-        "identifier": "geometry.tf.gloamingforest.block.ominous_fire.multipart"
+        "identifier": "geometry.gf.gloamingforest.block.ominous_fire.multipart"
       },
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_ominous_fire_0",
+          "texture": "gf_block_ominous_fire_0",
           "render_method": "alpha_test"
         },
         "t_gloamingforest_block_ominous_fire_0": {
-          "texture": "tf_block_ominous_fire_0",
+          "texture": "gf_block_ominous_fire_0",
           "render_method": "alpha_test"
         }
       },

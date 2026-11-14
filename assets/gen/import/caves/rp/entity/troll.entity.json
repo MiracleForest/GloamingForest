@@ -10,7 +10,7 @@
         "default": "textures/gloamingforest/entity/troll"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.troll"
+        "default": "geometry.gf.skeleton.troll"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

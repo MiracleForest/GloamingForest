@@ -10,7 +10,7 @@
         "default": "textures/misc/missing_texture"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.magic_painting"
+        "default": "geometry.gf.skeleton.magic_painting"
       },
       "render_controllers": ["controller.render.default"]
     }

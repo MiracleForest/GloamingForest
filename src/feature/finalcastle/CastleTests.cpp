@@ -169,7 +169,7 @@ Site siteNear(int dim) {
 
 // Recorded from the translation (GloamingForest's own goldens, seed 20260521, the site nearest to
 // the origin of the e2e world, y 0).
-constexpr char kLayout[] = "TFFCBeF21=1 TFFCBelTo=1 TFFCBoGaz=1 TFFCBri=34 TFFCDamT=8 TFFCDunBoR=1 TFFCDunEn=2 TFFCDunEx=2 TFFCDunR31=17 TFFCDunSt=6 TFFCEnBoTo=1 TFFCEnSiTo=1 TFFCEnSt=4 TFFCEnTo=1 TFFCFTh21=12 TFFCLaTo=1 TFFCMain=1 TFFCMur=2 TFFCRo13Con=12 TFFCRo13Cr=7 TFFCRo13Pk=2 TFFCRo48Cr=1 TFFCRo9Cr=4 TFFCSiTo=18 TFFCStTo=3 TFFCToF13=28 TFFCToF48=1 TFFCWrT=4 TFJigsawTemplate=3 -634,-14,374,560,200,651";
+constexpr char kLayout[] = "GloamingFCBeF21=1 GloamingFCBelTo=1 GloamingFCBoGaz=1 GloamingFCBri=34 GloamingFCDamT=8 GloamingFCDunBoR=1 GloamingFCDunEn=2 GloamingFCDunEx=2 GloamingFCDunR31=17 GloamingFCDunSt=6 GloamingFCEnBoTo=1 GloamingFCEnSiTo=1 GloamingFCEnSt=4 GloamingFCEnTo=1 GloamingFCFTh21=12 GloamingFCLaTo=1 GloamingFCMain=1 GloamingFCMur=2 GloamingFCRo13Con=12 GloamingFCRo13Cr=7 GloamingFCRo13Pk=2 GloamingFCRo48Cr=1 GloamingFCRo9Cr=4 GloamingFCSiTo=18 GloamingFCStTo=3 GloamingFCToF13=28 GloamingFCToF48=1 GloamingFCWrT=4 GloamingJigsawTemplate=3 -634,-14,374,560,200,651";
 constexpr char kHash[]   = "5de8f9303d4ac1b0"; // site chunk (-31, 29)
 
 } // namespace
@@ -196,7 +196,7 @@ GF_REGISTER_SELFTEST("finalcastle.castle_layout", [](Context& ctx) -> ll::coro::
     ctx.check(types[type::DungeonSteps] >= 5, "four flights from the keep and one per exit");
     ctx.check(types[type::ForgeRoom] <= 1, "at most one forge room");
     ctx.check(types[type::Mural] == 2, "two murals");
-    ctx.check(types["gloamingforest:TFJigsawTemplate"] == 3, "three template pieces (gazebo, large tower, bell tower)");
+    ctx.check(types["gloamingforest:GloamingJigsawTemplate"] == 3, "three template pieces (gazebo, large tower, bell tower)");
 
     // the murals: 35 x 30 on the front, 19 x 12 inside
     int murals = 0;

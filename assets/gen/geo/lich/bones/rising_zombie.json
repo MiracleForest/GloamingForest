@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.rising_zombie",
   "layer": {
     "name": "rising_zombie",
-    "field": "TFModelLayers.RISING_ZOMBIE",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.RISING_ZOMBIE, () -> LayerDefinition.create(HumanoidModel.createMesh(CubeDeformation.NONE, 0.0F), 64, 64));"
+    "field": "GloamingModelLayers.RISING_ZOMBIE",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.RISING_ZOMBIE, () -> LayerDefinition.create(HumanoidModel.createMesh(CubeDeformation.NONE, 0.0F), 64, 64));"
   },
   "texture_size": [64, 32],
   "textures": [
     {
       "bedrock": "textures/entity/zombie/zombie",
-      "tf": "(vanilla) minecraft:entity/zombie/zombie.png"
+      "upsrc": "(vanilla) minecraft:entity/zombie/zombie.png"
     }
   ],
   "bones": [

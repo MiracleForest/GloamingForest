@@ -10,7 +10,7 @@
         "default": "textures/misc/missing_texture"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.giant_miner"
+        "default": "geometry.gf.skeleton.giant_miner"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

@@ -10,7 +10,7 @@
 namespace gf::feature::giants {
 
 /// The cloud castle's piece type (U27's CloudCastleComponent).
-inline constexpr char kCloudCastlePiece[] = "gloamingforest:TFClCa";
+inline constexpr char kCloudCastlePiece[] = "gloamingforest:GloamingClCa";
 /// The saved form of CloudCastleComponent(1, x, y, z).
 [[nodiscard]] structure::Json cloudCastleTag(int x, int y, int z);
 /// Whether the cloud castle piece type is registered (U27 merged).

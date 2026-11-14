@@ -1,8 +1,8 @@
-block.gloamingforest.gloaming_portal=Dämmerwald-Portal
+block.gloamingforest.gloaming_portal=Gloaming Forest-Portal
 config.gloamingforest.max_portal_size=Maximalgröße des Portals
 config.gloamingforest.origin_dimension=Ursprungsdimenion
-dimension.gloamingforest.gloaming_forest=Dämmerwald
+dimension.gloamingforest.gloaming_forest=Gloaming Forest
 misc.gloamingforest.portal_unsafe=Es scheint hier nicht sicher zu sein...
 misc.gloamingforest.portal_unworthy=Das Portalbecken reagiert nicht. Vielleicht wurde etwas übersehen?
-subtitles.gloamingforest.block.portal.whoosh=Dämmerwald-Portal ruft
-tile.gloamingforest:gloaming_portal.name=Dämmerwald-Portal
+subtitles.gloamingforest.block.portal.whoosh=Gloaming Forest-Portal ruft
+tile.gloamingforest:gloaming_portal.name=Gloaming Forest-Portal

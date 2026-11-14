@@ -24,14 +24,14 @@
       },
       "minecraft:tags": ["minecraft:is_pickaxe_item_destructible"],
       "minecraft:map_color": "#707070",
-      "minecraft:geometry": "geometry.tf.gloamingforest.block.candelabra",
+      "minecraft:geometry": "geometry.gf.gloamingforest.block.candelabra",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_candelabra",
+          "texture": "gf_block_candelabra",
           "render_method": "alpha_test"
         },
         "candelabra": {
-          "texture": "tf_block_candelabra",
+          "texture": "gf_block_candelabra",
           "render_method": "alpha_test"
         }
       },
@@ -52,14 +52,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east' && !q.block_state('gloamingforest:on_wall')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.candelabra",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.candelabra",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_candelabra",
+              "texture": "gf_block_candelabra",
               "render_method": "alpha_test"
             },
             "candelabra": {
-              "texture": "tf_block_candelabra",
+              "texture": "gf_block_candelabra",
               "render_method": "alpha_test"
             }
           },
@@ -79,14 +79,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:on_wall')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.wall_candelabra",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.wall_candelabra",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_candelabra",
+              "texture": "gf_block_candelabra",
               "render_method": "alpha_test"
             },
             "candelabra": {
-              "texture": "tf_block_candelabra",
+              "texture": "gf_block_candelabra",
               "render_method": "alpha_test"
             }
           },
@@ -106,14 +106,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north' && !q.block_state('gloamingforest:on_wall')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.candelabra",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.candelabra",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_candelabra",
+              "texture": "gf_block_candelabra",
               "render_method": "alpha_test"
             },
             "candelabra": {
-              "texture": "tf_block_candelabra",
+              "texture": "gf_block_candelabra",
               "render_method": "alpha_test"
             }
           },
@@ -133,14 +133,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:on_wall')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.wall_candelabra",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.wall_candelabra",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_candelabra",
+              "texture": "gf_block_candelabra",
               "render_method": "alpha_test"
             },
             "candelabra": {
-              "texture": "tf_block_candelabra",
+              "texture": "gf_block_candelabra",
               "render_method": "alpha_test"
             }
           },
@@ -160,14 +160,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south' && !q.block_state('gloamingforest:on_wall')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.candelabra",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.candelabra",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_candelabra",
+              "texture": "gf_block_candelabra",
               "render_method": "alpha_test"
             },
             "candelabra": {
-              "texture": "tf_block_candelabra",
+              "texture": "gf_block_candelabra",
               "render_method": "alpha_test"
             }
           },
@@ -187,14 +187,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:on_wall')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.wall_candelabra",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.wall_candelabra",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_candelabra",
+              "texture": "gf_block_candelabra",
               "render_method": "alpha_test"
             },
             "candelabra": {
-              "texture": "tf_block_candelabra",
+              "texture": "gf_block_candelabra",
               "render_method": "alpha_test"
             }
           },
@@ -214,14 +214,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west' && !q.block_state('gloamingforest:on_wall')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.candelabra",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.candelabra",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_candelabra",
+              "texture": "gf_block_candelabra",
               "render_method": "alpha_test"
             },
             "candelabra": {
-              "texture": "tf_block_candelabra",
+              "texture": "gf_block_candelabra",
               "render_method": "alpha_test"
             }
           },
@@ -241,14 +241,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:on_wall')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.wall_candelabra",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.wall_candelabra",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_candelabra",
+              "texture": "gf_block_candelabra",
               "render_method": "alpha_test"
             },
             "candelabra": {
-              "texture": "tf_block_candelabra",
+              "texture": "gf_block_candelabra",
               "render_method": "alpha_test"
             }
           },

@@ -89,7 +89,7 @@ int maxDamage(ItemStack const& s) { return s.mItem ? s.mItem->getMaxDamage() : 0
 
 } // namespace
 
-// Each item's durability, stack size and rarity (TFItems registrations).
+// Each item's durability, stack size and rarity (GloamingItems registrations).
 GF_REGISTER_SELFTEST("weapons.items", [](Context& ctx) {
     struct Row {
         char const*            id;

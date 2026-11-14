@@ -27,23 +27,23 @@
       "traits": ["connected_texture"],
       "render_method": "blend",
       "textures": {
-        "*": "tf_aurora_ct_base",
-        "overlay": "tf_block_auroralized_glass",
-        "connected": "tf_block_auroralized_glass_ct"
+        "*": "gf_aurora_ct_base",
+        "overlay": "gf_block_auroralized_glass",
+        "connected": "gf_block_auroralized_glass_ct"
       },
       "components": {
         "minecraft:material_instances": {
           "*": {
-            "texture": "tf_aurora_ct_base",
+            "texture": "gf_aurora_ct_base",
             "render_method": "blend"
           },
           "overlay": {
-            "texture": "tf_block_auroralized_glass",
+            "texture": "gf_block_auroralized_glass",
             "render_method": "blend",
             "tint_method": "water"
           },
           "connected": {
-            "texture": "tf_block_auroralized_glass_ct",
+            "texture": "gf_block_auroralized_glass_ct",
             "render_method": "blend",
             "tint_method": "water"
           }
@@ -53,7 +53,7 @@
           "geometry": "minecraft:geometry.full_block",
           "material_instances": {
             "*": {
-              "texture": "tf_aurora_item_auroralized_glass",
+              "texture": "gf_aurora_item_auroralized_glass",
               "render_method": "blend"
             }
           }

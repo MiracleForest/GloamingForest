@@ -1,83 +1,83 @@
 {
-  "tf_lichdecor_black_candle_lit": {
+  "gf_lichdecor_black_candle_lit": {
     "textures": "textures/blocks/candles/black_candle_lit"
   },
-  "tf_lichdecor_blue_candle_lit": {
+  "gf_lichdecor_blue_candle_lit": {
     "textures": "textures/blocks/candles/blue_candle_lit"
   },
-  "tf_lichdecor_brazier": {
+  "gf_lichdecor_brazier": {
     "textures": "textures/gloamingforest/entity/brazier/brazier"
   },
-  "tf_lichdecor_brazier_lit": {
+  "gf_lichdecor_brazier_lit": {
     "textures": "textures/gloamingforest/entity/brazier/brazier_lit"
   },
-  "tf_lichdecor_brown_candle_lit": {
+  "gf_lichdecor_brown_candle_lit": {
     "textures": "textures/blocks/candles/brown_candle_lit"
   },
-  "tf_lichdecor_candle": {
+  "gf_lichdecor_candle": {
     "textures": "textures/blocks/candles/candle"
   },
-  "tf_lichdecor_candle_lit": {
+  "gf_lichdecor_candle_lit": {
     "textures": "textures/blocks/candles/candle_lit"
   },
-  "tf_lichdecor_cyan_candle_lit": {
+  "gf_lichdecor_cyan_candle_lit": {
     "textures": "textures/blocks/candles/cyan_candle_lit"
   },
-  "tf_lichdecor_gray_candle_lit": {
+  "gf_lichdecor_gray_candle_lit": {
     "textures": "textures/blocks/candles/gray_candle_lit"
   },
-  "tf_lichdecor_green_candle_lit": {
+  "gf_lichdecor_green_candle_lit": {
     "textures": "textures/blocks/candles/green_candle_lit"
   },
-  "tf_lichdecor_light_blue_candle_lit": {
+  "gf_lichdecor_light_blue_candle_lit": {
     "textures": "textures/blocks/candles/light_blue_candle_lit"
   },
-  "tf_lichdecor_light_gray_candle_lit": {
+  "gf_lichdecor_light_gray_candle_lit": {
     "textures": "textures/blocks/candles/light_gray_candle_lit"
   },
-  "tf_lichdecor_lime_candle_lit": {
+  "gf_lichdecor_lime_candle_lit": {
     "textures": "textures/blocks/candles/lime_candle_lit"
   },
-  "tf_lichdecor_magenta_candle_lit": {
+  "gf_lichdecor_magenta_candle_lit": {
     "textures": "textures/blocks/candles/magenta_candle_lit"
   },
-  "tf_lichdecor_orange_candle_lit": {
+  "gf_lichdecor_orange_candle_lit": {
     "textures": "textures/blocks/candles/orange_candle_lit"
   },
-  "tf_lichdecor_pink_candle_lit": {
+  "gf_lichdecor_pink_candle_lit": {
     "textures": "textures/blocks/candles/pink_candle_lit"
   },
-  "tf_lichdecor_purple_candle_lit": {
+  "gf_lichdecor_purple_candle_lit": {
     "textures": "textures/blocks/candles/purple_candle_lit"
   },
-  "tf_lichdecor_red_candle_lit": {
+  "gf_lichdecor_red_candle_lit": {
     "textures": "textures/blocks/candles/red_candle_lit"
   },
-  "tf_lichdecor_skull_chest": {
+  "gf_lichdecor_skull_chest": {
     "textures": "textures/gloamingforest/entity/casket/skull_chest"
   },
-  "tf_lichdecor_skull_creeper": {
+  "gf_lichdecor_skull_creeper": {
     "textures": "textures/entity/creeper/creeper"
   },
-  "tf_lichdecor_skull_piglin": {
+  "gf_lichdecor_skull_piglin": {
     "textures": "textures/entity/piglin/piglin"
   },
-  "tf_lichdecor_skull_player": {
+  "gf_lichdecor_skull_player": {
     "textures": "textures/entity/steve"
   },
-  "tf_lichdecor_skull_skeleton": {
+  "gf_lichdecor_skull_skeleton": {
     "textures": "textures/entity/skeleton/skeleton"
   },
-  "tf_lichdecor_skull_wither_skeleton": {
+  "gf_lichdecor_skull_wither_skeleton": {
     "textures": "textures/entity/skeleton/wither_skeleton"
   },
-  "tf_lichdecor_skull_zombie": {
+  "gf_lichdecor_skull_zombie": {
     "textures": "textures/entity/zombie/zombie"
   },
-  "tf_lichdecor_white_candle_lit": {
+  "gf_lichdecor_white_candle_lit": {
     "textures": "textures/blocks/candles/white_candle_lit"
   },
-  "tf_lichdecor_yellow_candle_lit": {
+  "gf_lichdecor_yellow_candle_lit": {
     "textures": "textures/blocks/candles/yellow_candle_lit"
   }
 }

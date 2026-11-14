@@ -1,6 +1,6 @@
 {
   "carvers": {
-    "air": "gloamingforest:tf_caves"
+    "air": "gloamingforest:gf_caves"
   },
   "downfall": 1.0,
   "effects": {
@@ -65,7 +65,7 @@
       "gloamingforest:tree/large_gloaming_oak_tree",
       "gloamingforest:tree/dead_canopy_tree",
       "gloamingforest:pumpkin_lamppost",
-      "gloamingforest:tf_oak_fallen_log",
+      "gloamingforest:gf_oak_fallen_log",
       "gloamingforest:canopy_fallen_log",
       "gloamingforest:webs",
       "gloamingforest:fallen_leaves",

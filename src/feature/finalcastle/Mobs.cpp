@@ -97,10 +97,10 @@ void performRangedAttack(Mob& self, Actor& target) {
     gf::fx::sound(self.getDimension(), "minecraft:entity.ghast.shoot", feet, 1.0F, 1.0F / (random.nextFloat() * 0.4F + 0.8F));
     int  difficulty = 2;
     if (auto level = ll::service::getLevel()) difficulty = static_cast<int>(level->getDifficulty());
-    auto tf   = target.getFeetPos();
-    // new NatureBolt(level, this): TFThrowable at the owner's eyes - 0.1 (gf::projectile::shoot's start)
+    auto upsrc   = target.getFeetPos();
+    // new NatureBolt(level, this): GloamingThrowable at the owner's eyes - 0.1 (gf::projectile::shoot's start)
     double boltY = fe::eyeOf(self).y - 0.1;
-    auto   shot  = cf::adherentShot(cf::DVec{feet.x, feet.y, feet.z}, boltY, cf::DVec{tf.x, tf.y, tf.z}, fe::eyeOf(target).y - tf.y, difficulty);
+    auto   shot  = cf::adherentShot(cf::DVec{feet.x, feet.y, feet.z}, boltY, cf::DVec{upsrc.x, upsrc.y, upsrc.z}, fe::eyeOf(target).y - upsrc.y, difficulty);
     gf::projectile::shoot(self, id::NatureBolt, Vec3{static_cast<float>(shot.direction.x), static_cast<float>(shot.direction.y), static_cast<float>(shot.direction.z)},
                           shot.velocity, shot.inaccuracy);
     ++gAdherentShots;

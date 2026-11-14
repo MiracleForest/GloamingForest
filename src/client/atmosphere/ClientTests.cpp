@@ -174,7 +174,7 @@ GF_REGISTER_SELFTEST("atmosphere.client_weather_real", [](Context& ctx) -> ll::c
         co_return;
     }
     if (!gf::progression::client::enforced()) {
-        ctx.info("tfEnforcedProgression is off: the biomes are not locked");
+        ctx.info("gloamingEnforcedProgression is off: the biomes are not locked");
         co_return;
     }
     auto* lp = gf::client::currentPlayer();

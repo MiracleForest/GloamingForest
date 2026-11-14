@@ -1,6 +1,6 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/init/TFDimension.java
+//   src/main/java/gloamingforest/init/GloamingDimension.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -114,7 +114,7 @@ bool isGloaming(DimensionType dimension) {
 }
 
 // Within a dimension the move is immediate. Into another dimension it is asynchronous on Bedrock:
-// the destination area loads first while the player waits where it is (TFTeleporter#placeEntity
+// the destination area loads first while the player waits where it is (GloamingTeleporter#placeEntity
 // runs with the destination loaded), then the player moves there with its riders and the client
 // loads the dimension. True means the move was started; portal::onTeleported listeners hear of it
 // once the player is there, and a move that does not complete is logged and told to the player.

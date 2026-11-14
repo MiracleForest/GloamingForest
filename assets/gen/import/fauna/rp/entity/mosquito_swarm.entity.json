@@ -10,7 +10,7 @@
         "default": "textures/gloamingforest/entity/mosquitoswarm"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.mosquito_swarm"
+        "default": "geometry.gf.skeleton.mosquito_swarm"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

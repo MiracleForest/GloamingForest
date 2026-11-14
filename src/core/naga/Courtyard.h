@@ -43,20 +43,20 @@ void generateMaze(Maze& maze, CornerClipping& clipping, jrand::RandomSource& ran
 
 /// The piece kinds of the courtyard (their StructurePieceType ids in pieceTypeId).
 enum class PieceKind {
-    HedgeCap,          ///< TFNCCp  NagaCourtyardHedgeCapComponent
-    HedgeCapPillar,    ///< TFNCCpP NagaCourtyardHedgeCapPillarComponent
-    HedgeCorner,       ///< TFNCCr
-    HedgeT,            ///< TFNCT
-    HedgeLine,         ///< TFNCLn
-    HedgeIntersection, ///< TFNCIs
-    HedgePadder,       ///< TFNCPd
-    Terrace,           ///< TFNCTe CourtyardTerrace
-    TerraceHedge,      ///< TFNCHe CourtyardTerraceHedge
-    Path,              ///< TFNCPa CourtyardPathPiece
-    Wall,              ///< TFNCWl CourtyardWall
-    WallPadder,        ///< TFNCWP CourtyardWallPadder
-    WallCornerOuter,   ///< TFNCWC CourtyardWallCornerOuter
-    WallCornerInner,   ///< TFNCWA CourtyardWallCornerInner
+    HedgeCap,          ///< GloamingNCCp  NagaCourtyardHedgeCapComponent
+    HedgeCapPillar,    ///< GloamingNCCpP NagaCourtyardHedgeCapPillarComponent
+    HedgeCorner,       ///< GloamingNCCr
+    HedgeT,            ///< GloamingNCT
+    HedgeLine,         ///< GloamingNCLn
+    HedgeIntersection, ///< GloamingNCIs
+    HedgePadder,       ///< GloamingNCPd
+    Terrace,           ///< GloamingNCTe CourtyardTerrace
+    TerraceHedge,      ///< GloamingNCHe CourtyardTerraceHedge
+    Path,              ///< GloamingNCPa CourtyardPathPiece
+    Wall,              ///< GloamingNCWl CourtyardWall
+    WallPadder,        ///< GloamingNCWP CourtyardWallPadder
+    WallCornerOuter,   ///< GloamingNCWC CourtyardWallCornerOuter
+    WallCornerInner,   ///< GloamingNCWA CourtyardWallCornerInner
 };
 [[nodiscard]] char const* pieceTypeId(PieceKind kind);
 

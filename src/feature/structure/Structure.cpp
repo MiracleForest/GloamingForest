@@ -1,8 +1,8 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/world/components/structures/TFStructureComponent.java
-//   src/main/java/gloamingforest/init/TFStructurePieceTypes.java
-//   src/main/java/gloamingforest/init/TFStructureProcessors.java
+//   src/main/java/gloamingforest/world/components/structures/GloamingStructureComponent.java
+//   src/main/java/gloamingforest/init/GloamingStructurePieceTypes.java
+//   src/main/java/gloamingforest/init/GloamingStructureProcessors.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -312,7 +312,7 @@ bool Piece::placeChest(Region& region, BlockBox const& chunkBox, RandomSource& r
 bool Piece::placeSpawner(Region& region, BlockBox const& chunkBox, int x, int y, int z, std::string const& entityId) {
     BlockPos pos = getWorldPos(x, y, z);
     if (!chunkBox.contains(pos.x, pos.y, pos.z)) return false;
-    // a boss spawner is a block of its own (upstream places TFBlocks.*_BOSS_SPAWNER with placeBlock): an
+    // a boss spawner is a block of its own (upstream places GloamingBlocks.*_BOSS_SPAWNER with placeBlock): an
     // id the block registry knows is placed as that block, any other id is the mob of a spawner.
     // Bedrock's block ids that are also mob ids stay mobs.
     static constexpr std::string_view kMobsNamedLikeBlocks[] = {"minecraft:slime", "minecraft:tnt"};

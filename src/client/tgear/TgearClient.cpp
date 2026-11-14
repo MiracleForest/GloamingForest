@@ -7,7 +7,7 @@
 //   src/main/java/gloamingforest/client/model/entity/RedThreadModel.java
 //   src/main/java/gloamingforest/client/model/item/TravellersGearItemModel.java
 //   src/main/java/gloamingforest/item/travellers_gear/TravellersArmorItem.java
-//   src/main/java/gloamingforest/init/TFKeyBinds.java
+//   src/main/java/gloamingforest/init/GloamingKeyBinds.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -511,8 +511,8 @@ Vec3 placeOnFace(int face, Vec3 const& m) {
     return Vec3{xyz.x + x2, xyz.y + y2, xyz.z + z1};
 }
 
-/// upstream's red_thread.png (32 x 32, ARGB per texel), read from the resource pack's tf-derived texel table
-/// (textures/gloamingforest/entity/tgear/tf-derived/red_thread_texels.json): the connections are drawn
+/// upstream's red_thread.png (32 x 32, ARGB per texel), read from the resource pack's upstream-derived texel table
+/// (textures/gloamingforest/entity/tgear/upstream-derived/red_thread_texels.json): the connections are drawn
 /// texel by texel as coloured quads (the colour materials draw vertex colours; the textured immediate
 /// path sampled grey on 1.26.51, docs/units/tgear.md).
 struct ThreadTexels {
@@ -666,8 +666,8 @@ std::optional<ext::tgear::client::IconLayers> gearIcon(ItemStack const& stack) {
     if (dir.empty()) return std::nullopt;
     bool                          broken = tg::isBroken(stack);
     ext::tgear::client::IconLayers layers;
-    if (broken) layers.base = "tf_tgear_" + dir + "_broken";
-    std::string prefix = "tf_tgear_mod_" + dir + (broken ? "_broken_" : "_");
+    if (broken) layers.base = "gf_tgear_" + dir + "_broken";
+    std::string prefix = "gf_tgear_mod_" + dir + (broken ? "_broken_" : "_");
     for (auto const& m : tg::insertableModifiers(stack)) layers.overlays.push_back(prefix + m.substr(m.find(':') + 1));
     if (id == tg::ids::kVest && tg::hasGloves(stack)) layers.overlays.push_back(prefix + "gloves");
     if (layers.base.empty() && layers.overlays.empty()) return std::nullopt;
@@ -678,9 +678,9 @@ std::optional<ext::tgear::client::IconLayers> gearIcon(ItemStack const& stack) {
 /// 0.5, >= 4: 0.25) picks red_thread_bundle_2 / _1 / _0.
 std::optional<ext::tgear::client::IconLayers> threadIcon(ItemStack const& stack) {
     int n = items::countOf(stack);
-    if (n >= 32) return ext::tgear::client::IconLayers{.base = "tf_tgear_red_thread_bundle_2"};
-    if (n >= 16) return ext::tgear::client::IconLayers{.base = "tf_tgear_red_thread_bundle_1"};
-    if (n >= 4) return ext::tgear::client::IconLayers{.base = "tf_tgear_red_thread_bundle_0"};
+    if (n >= 32) return ext::tgear::client::IconLayers{.base = "gf_tgear_red_thread_bundle_2"};
+    if (n >= 16) return ext::tgear::client::IconLayers{.base = "gf_tgear_red_thread_bundle_1"};
+    if (n >= 4) return ext::tgear::client::IconLayers{.base = "gf_tgear_red_thread_bundle_0"};
     return std::nullopt;
 }
 

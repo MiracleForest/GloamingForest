@@ -23,18 +23,18 @@
       },
       "minecraft:tags": ["minecraft:is_axe_item_destructible"],
       "minecraft:map_color": "#815631",
-      "minecraft:geometry": "geometry.tf.gloamingforest.block.util.corrected_door_bottom_left",
+      "minecraft:geometry": "geometry.gf.gloamingforest.block.util.corrected_door_bottom_left",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_wood_door_sort_lower",
+          "texture": "gf_block_wood_door_sort_lower",
           "render_method": "alpha_test"
         },
         "bottom": {
-          "texture": "tf_block_wood_door_sort_lower",
+          "texture": "gf_block_wood_door_sort_lower",
           "render_method": "alpha_test"
         },
         "side": {
-          "texture": "tf_block_wood_door_sort_side",
+          "texture": "gf_block_wood_door_sort_side",
           "render_method": "alpha_test"
         }
       },
@@ -55,18 +55,18 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'left' && !q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.corrected_door_bottom_left",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.util.corrected_door_bottom_left",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_door_sort_lower",
+              "texture": "gf_block_wood_door_sort_lower",
               "render_method": "alpha_test"
             },
             "bottom": {
-              "texture": "tf_block_wood_door_sort_lower",
+              "texture": "gf_block_wood_door_sort_lower",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_wood_door_sort_side",
+              "texture": "gf_block_wood_door_sort_side",
               "render_method": "alpha_test"
             }
           },
@@ -86,18 +86,18 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'left' && q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.corrected_door_bottom_left_open",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.util.corrected_door_bottom_left_open",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_door_sort_lower",
+              "texture": "gf_block_wood_door_sort_lower",
               "render_method": "alpha_test"
             },
             "bottom": {
-              "texture": "tf_block_wood_door_sort_lower",
+              "texture": "gf_block_wood_door_sort_lower",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_wood_door_sort_side",
+              "texture": "gf_block_wood_door_sort_side",
               "render_method": "alpha_test"
             }
           },
@@ -117,18 +117,18 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'right' && !q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.corrected_door_bottom_right",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.util.corrected_door_bottom_right",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_door_sort_lower",
+              "texture": "gf_block_wood_door_sort_lower",
               "render_method": "alpha_test"
             },
             "bottom": {
-              "texture": "tf_block_wood_door_sort_lower",
+              "texture": "gf_block_wood_door_sort_lower",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_wood_door_sort_side",
+              "texture": "gf_block_wood_door_sort_side",
               "render_method": "alpha_test"
             }
           },
@@ -148,18 +148,18 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'right' && q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.corrected_door_bottom_right_open",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.util.corrected_door_bottom_right_open",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_door_sort_lower",
+              "texture": "gf_block_wood_door_sort_lower",
               "render_method": "alpha_test"
             },
             "bottom": {
-              "texture": "tf_block_wood_door_sort_lower",
+              "texture": "gf_block_wood_door_sort_lower",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_wood_door_sort_side",
+              "texture": "gf_block_wood_door_sort_side",
               "render_method": "alpha_test"
             }
           },
@@ -179,18 +179,18 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'left' && !q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.corrected_door_top_left",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.util.corrected_door_top_left",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_door_sort_upper",
+              "texture": "gf_block_wood_door_sort_upper",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_wood_door_sort_side",
+              "texture": "gf_block_wood_door_sort_side",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_block_wood_door_sort_upper",
+              "texture": "gf_block_wood_door_sort_upper",
               "render_method": "alpha_test"
             }
           },
@@ -210,18 +210,18 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'left' && q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.corrected_door_top_left_open",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.util.corrected_door_top_left_open",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_door_sort_upper",
+              "texture": "gf_block_wood_door_sort_upper",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_wood_door_sort_side",
+              "texture": "gf_block_wood_door_sort_side",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_block_wood_door_sort_upper",
+              "texture": "gf_block_wood_door_sort_upper",
               "render_method": "alpha_test"
             }
           },
@@ -241,18 +241,18 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'right' && !q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.corrected_door_top_right",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.util.corrected_door_top_right",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_door_sort_upper",
+              "texture": "gf_block_wood_door_sort_upper",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_wood_door_sort_side",
+              "texture": "gf_block_wood_door_sort_side",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_block_wood_door_sort_upper",
+              "texture": "gf_block_wood_door_sort_upper",
               "render_method": "alpha_test"
             }
           },
@@ -272,18 +272,18 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'right' && q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.corrected_door_top_right_open",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.util.corrected_door_top_right_open",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_door_sort_upper",
+              "texture": "gf_block_wood_door_sort_upper",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_wood_door_sort_side",
+              "texture": "gf_block_wood_door_sort_side",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_block_wood_door_sort_upper",
+              "texture": "gf_block_wood_door_sort_upper",
               "render_method": "alpha_test"
             }
           },
@@ -303,18 +303,18 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'left' && !q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.corrected_door_bottom_left",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.util.corrected_door_bottom_left",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_door_sort_lower",
+              "texture": "gf_block_wood_door_sort_lower",
               "render_method": "alpha_test"
             },
             "bottom": {
-              "texture": "tf_block_wood_door_sort_lower",
+              "texture": "gf_block_wood_door_sort_lower",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_wood_door_sort_side",
+              "texture": "gf_block_wood_door_sort_side",
               "render_method": "alpha_test"
             }
           },
@@ -334,18 +334,18 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'left' && q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.corrected_door_bottom_left_open",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.util.corrected_door_bottom_left_open",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_door_sort_lower",
+              "texture": "gf_block_wood_door_sort_lower",
               "render_method": "alpha_test"
             },
             "bottom": {
-              "texture": "tf_block_wood_door_sort_lower",
+              "texture": "gf_block_wood_door_sort_lower",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_wood_door_sort_side",
+              "texture": "gf_block_wood_door_sort_side",
               "render_method": "alpha_test"
             }
           },
@@ -365,18 +365,18 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'right' && !q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.corrected_door_bottom_right",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.util.corrected_door_bottom_right",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_door_sort_lower",
+              "texture": "gf_block_wood_door_sort_lower",
               "render_method": "alpha_test"
             },
             "bottom": {
-              "texture": "tf_block_wood_door_sort_lower",
+              "texture": "gf_block_wood_door_sort_lower",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_wood_door_sort_side",
+              "texture": "gf_block_wood_door_sort_side",
               "render_method": "alpha_test"
             }
           },
@@ -396,18 +396,18 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'right' && q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.corrected_door_bottom_right_open",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.util.corrected_door_bottom_right_open",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_door_sort_lower",
+              "texture": "gf_block_wood_door_sort_lower",
               "render_method": "alpha_test"
             },
             "bottom": {
-              "texture": "tf_block_wood_door_sort_lower",
+              "texture": "gf_block_wood_door_sort_lower",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_wood_door_sort_side",
+              "texture": "gf_block_wood_door_sort_side",
               "render_method": "alpha_test"
             }
           },
@@ -427,18 +427,18 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'left' && !q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.corrected_door_top_left",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.util.corrected_door_top_left",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_door_sort_upper",
+              "texture": "gf_block_wood_door_sort_upper",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_wood_door_sort_side",
+              "texture": "gf_block_wood_door_sort_side",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_block_wood_door_sort_upper",
+              "texture": "gf_block_wood_door_sort_upper",
               "render_method": "alpha_test"
             }
           },
@@ -458,18 +458,18 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'left' && q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.corrected_door_top_left_open",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.util.corrected_door_top_left_open",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_door_sort_upper",
+              "texture": "gf_block_wood_door_sort_upper",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_wood_door_sort_side",
+              "texture": "gf_block_wood_door_sort_side",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_block_wood_door_sort_upper",
+              "texture": "gf_block_wood_door_sort_upper",
               "render_method": "alpha_test"
             }
           },
@@ -489,18 +489,18 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'right' && !q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.corrected_door_top_right",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.util.corrected_door_top_right",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_door_sort_upper",
+              "texture": "gf_block_wood_door_sort_upper",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_wood_door_sort_side",
+              "texture": "gf_block_wood_door_sort_side",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_block_wood_door_sort_upper",
+              "texture": "gf_block_wood_door_sort_upper",
               "render_method": "alpha_test"
             }
           },
@@ -520,18 +520,18 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'right' && q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.corrected_door_top_right_open",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.util.corrected_door_top_right_open",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_door_sort_upper",
+              "texture": "gf_block_wood_door_sort_upper",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_wood_door_sort_side",
+              "texture": "gf_block_wood_door_sort_side",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_block_wood_door_sort_upper",
+              "texture": "gf_block_wood_door_sort_upper",
               "render_method": "alpha_test"
             }
           },
@@ -551,18 +551,18 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'left' && !q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.corrected_door_bottom_left",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.util.corrected_door_bottom_left",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_door_sort_lower",
+              "texture": "gf_block_wood_door_sort_lower",
               "render_method": "alpha_test"
             },
             "bottom": {
-              "texture": "tf_block_wood_door_sort_lower",
+              "texture": "gf_block_wood_door_sort_lower",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_wood_door_sort_side",
+              "texture": "gf_block_wood_door_sort_side",
               "render_method": "alpha_test"
             }
           },
@@ -582,18 +582,18 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'left' && q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.corrected_door_bottom_left_open",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.util.corrected_door_bottom_left_open",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_door_sort_lower",
+              "texture": "gf_block_wood_door_sort_lower",
               "render_method": "alpha_test"
             },
             "bottom": {
-              "texture": "tf_block_wood_door_sort_lower",
+              "texture": "gf_block_wood_door_sort_lower",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_wood_door_sort_side",
+              "texture": "gf_block_wood_door_sort_side",
               "render_method": "alpha_test"
             }
           },
@@ -613,18 +613,18 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'right' && !q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.corrected_door_bottom_right",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.util.corrected_door_bottom_right",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_door_sort_lower",
+              "texture": "gf_block_wood_door_sort_lower",
               "render_method": "alpha_test"
             },
             "bottom": {
-              "texture": "tf_block_wood_door_sort_lower",
+              "texture": "gf_block_wood_door_sort_lower",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_wood_door_sort_side",
+              "texture": "gf_block_wood_door_sort_side",
               "render_method": "alpha_test"
             }
           },
@@ -644,18 +644,18 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'right' && q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.corrected_door_bottom_right_open",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.util.corrected_door_bottom_right_open",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_door_sort_lower",
+              "texture": "gf_block_wood_door_sort_lower",
               "render_method": "alpha_test"
             },
             "bottom": {
-              "texture": "tf_block_wood_door_sort_lower",
+              "texture": "gf_block_wood_door_sort_lower",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_wood_door_sort_side",
+              "texture": "gf_block_wood_door_sort_side",
               "render_method": "alpha_test"
             }
           },
@@ -675,18 +675,18 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'left' && !q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.corrected_door_top_left",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.util.corrected_door_top_left",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_door_sort_upper",
+              "texture": "gf_block_wood_door_sort_upper",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_wood_door_sort_side",
+              "texture": "gf_block_wood_door_sort_side",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_block_wood_door_sort_upper",
+              "texture": "gf_block_wood_door_sort_upper",
               "render_method": "alpha_test"
             }
           },
@@ -706,18 +706,18 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'left' && q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.corrected_door_top_left_open",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.util.corrected_door_top_left_open",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_door_sort_upper",
+              "texture": "gf_block_wood_door_sort_upper",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_wood_door_sort_side",
+              "texture": "gf_block_wood_door_sort_side",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_block_wood_door_sort_upper",
+              "texture": "gf_block_wood_door_sort_upper",
               "render_method": "alpha_test"
             }
           },
@@ -737,18 +737,18 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'right' && !q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.corrected_door_top_right",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.util.corrected_door_top_right",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_door_sort_upper",
+              "texture": "gf_block_wood_door_sort_upper",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_wood_door_sort_side",
+              "texture": "gf_block_wood_door_sort_side",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_block_wood_door_sort_upper",
+              "texture": "gf_block_wood_door_sort_upper",
               "render_method": "alpha_test"
             }
           },
@@ -768,18 +768,18 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'right' && q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.corrected_door_top_right_open",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.util.corrected_door_top_right_open",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_door_sort_upper",
+              "texture": "gf_block_wood_door_sort_upper",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_wood_door_sort_side",
+              "texture": "gf_block_wood_door_sort_side",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_block_wood_door_sort_upper",
+              "texture": "gf_block_wood_door_sort_upper",
               "render_method": "alpha_test"
             }
           },
@@ -799,18 +799,18 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'left' && !q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.corrected_door_bottom_left",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.util.corrected_door_bottom_left",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_door_sort_lower",
+              "texture": "gf_block_wood_door_sort_lower",
               "render_method": "alpha_test"
             },
             "bottom": {
-              "texture": "tf_block_wood_door_sort_lower",
+              "texture": "gf_block_wood_door_sort_lower",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_wood_door_sort_side",
+              "texture": "gf_block_wood_door_sort_side",
               "render_method": "alpha_test"
             }
           },
@@ -830,18 +830,18 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'left' && q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.corrected_door_bottom_left_open",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.util.corrected_door_bottom_left_open",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_door_sort_lower",
+              "texture": "gf_block_wood_door_sort_lower",
               "render_method": "alpha_test"
             },
             "bottom": {
-              "texture": "tf_block_wood_door_sort_lower",
+              "texture": "gf_block_wood_door_sort_lower",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_wood_door_sort_side",
+              "texture": "gf_block_wood_door_sort_side",
               "render_method": "alpha_test"
             }
           },
@@ -861,18 +861,18 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'right' && !q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.corrected_door_bottom_right",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.util.corrected_door_bottom_right",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_door_sort_lower",
+              "texture": "gf_block_wood_door_sort_lower",
               "render_method": "alpha_test"
             },
             "bottom": {
-              "texture": "tf_block_wood_door_sort_lower",
+              "texture": "gf_block_wood_door_sort_lower",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_wood_door_sort_side",
+              "texture": "gf_block_wood_door_sort_side",
               "render_method": "alpha_test"
             }
           },
@@ -892,18 +892,18 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'lower' && q.block_state('gloamingforest:hinge') == 'right' && q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.corrected_door_bottom_right_open",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.util.corrected_door_bottom_right_open",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_door_sort_lower",
+              "texture": "gf_block_wood_door_sort_lower",
               "render_method": "alpha_test"
             },
             "bottom": {
-              "texture": "tf_block_wood_door_sort_lower",
+              "texture": "gf_block_wood_door_sort_lower",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_wood_door_sort_side",
+              "texture": "gf_block_wood_door_sort_side",
               "render_method": "alpha_test"
             }
           },
@@ -923,18 +923,18 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'left' && !q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.corrected_door_top_left",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.util.corrected_door_top_left",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_door_sort_upper",
+              "texture": "gf_block_wood_door_sort_upper",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_wood_door_sort_side",
+              "texture": "gf_block_wood_door_sort_side",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_block_wood_door_sort_upper",
+              "texture": "gf_block_wood_door_sort_upper",
               "render_method": "alpha_test"
             }
           },
@@ -954,18 +954,18 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'left' && q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.corrected_door_top_left_open",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.util.corrected_door_top_left_open",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_door_sort_upper",
+              "texture": "gf_block_wood_door_sort_upper",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_wood_door_sort_side",
+              "texture": "gf_block_wood_door_sort_side",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_block_wood_door_sort_upper",
+              "texture": "gf_block_wood_door_sort_upper",
               "render_method": "alpha_test"
             }
           },
@@ -985,18 +985,18 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'right' && !q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.corrected_door_top_right",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.util.corrected_door_top_right",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_door_sort_upper",
+              "texture": "gf_block_wood_door_sort_upper",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_wood_door_sort_side",
+              "texture": "gf_block_wood_door_sort_side",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_block_wood_door_sort_upper",
+              "texture": "gf_block_wood_door_sort_upper",
               "render_method": "alpha_test"
             }
           },
@@ -1016,18 +1016,18 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'upper' && q.block_state('gloamingforest:hinge') == 'right' && q.block_state('gloamingforest:open')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.util.corrected_door_top_right_open",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.util.corrected_door_top_right_open",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_door_sort_upper",
+              "texture": "gf_block_wood_door_sort_upper",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_wood_door_sort_side",
+              "texture": "gf_block_wood_door_sort_side",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_block_wood_door_sort_upper",
+              "texture": "gf_block_wood_door_sort_upper",
               "render_method": "alpha_test"
             }
           },

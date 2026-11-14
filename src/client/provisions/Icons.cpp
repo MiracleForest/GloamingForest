@@ -6,10 +6,10 @@
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // U10 (provisions), client mod: Experiment 115's item model overrides. upstream gives the item an
-// EXPERIMENT_115_VARIANTS component only for advancement icons (TFAdvancementGenerator): "think"
+// EXPERIMENT_115_VARIANTS component only for advancement icons (GloamingAdvancementGenerator): "think"
 // shows item/think115, "full" the block model experiment115_8_8_regenerating. The component travels
 // as item data "gloamingforest:e115_variant" (U14's advancement icons); "think" swaps the slot icon
-// through U11's icon layers (item atlas key tf_provisions_think115). "full" keeps the item icon: a
+// through U11's icon layers (item atlas key gf_provisions_think115). "full" keeps the item icon: a
 // 3D block model has no item atlas sprite (docs/units/provisions.md).
 #ifdef GF_CLIENT
 
@@ -30,7 +30,7 @@ namespace icons = ::gf::ext::tgear::client;
 
 std::optional<icons::IconLayers> e115Icon(ItemStack const& stack) {
     auto v = game::items::getData(stack, "gloamingforest:e115_variant");
-    if (v.is_string() && v.get<std::string>() == "think") return icons::IconLayers{.base = "tf_provisions_think115"};
+    if (v.is_string() && v.get<std::string>() == "think") return icons::IconLayers{.base = "gf_provisions_think115"};
     return std::nullopt;
 }
 

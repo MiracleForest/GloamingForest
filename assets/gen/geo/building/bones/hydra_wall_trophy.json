@@ -3,8 +3,8 @@
   "source": "TrophyRenderer.render + HydraHeadModel.renderTrophy (wall, facing north, mouth angle 0.5)",
   "layer": {
     "name": "hydra_trophy",
-    "field": "TFModelLayers.HYDRA_TROPHY",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.HYDRA_TROPHY, HydraHeadModel::checkForPack);"
+    "field": "GloamingModelLayers.HYDRA_TROPHY",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.HYDRA_TROPHY, HydraHeadModel::checkForPack);"
   },
   "frame": "world",
   "geometries": [
@@ -12,7 +12,7 @@
       "identifier": "geometry.gloamingforest.hydra_wall_trophy",
       "texture": {
         "bedrock": "textures/gloamingforest/entity/hydra4",
-        "tf": "src/main/resources/assets/gloamingforest/textures/entity/hydra4.png"
+        "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/hydra4.png"
       },
       "material": "entity_alphatest"
     }

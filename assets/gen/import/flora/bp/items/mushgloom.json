@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_block_mushgloom"
+          "default": "gf_block_mushgloom"
         }
       },
       "minecraft:display_name": {

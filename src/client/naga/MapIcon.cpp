@@ -1,11 +1,11 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/init/TFMapDecorations.java (NAGA_COURTYARD)
+//   src/main/java/gloamingforest/init/GloamingMapDecorations.java (NAGA_COURTYARD)
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// The map decoration type gloamingforest:naga_courtyard (U20): TFMapDecorations registers it as
+// The map decoration type gloamingforest:naga_courtyard (U20): GloamingMapDecorations registers it as
 // MapDecorationType(gloamingforest:naga_courtyard, showOnItemFrame true, mapColor -1,
 // explorationMapElement false, trackCount true), drawn with the map_decorations atlas sprite
 // textures/map/decorations/naga_courtyard.png (imported by F1 to

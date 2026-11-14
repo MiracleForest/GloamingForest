@@ -20,7 +20,7 @@
 //   at 0, so the effect is identical.
 // - announceAdvancements, doPatrolSpawning, doTraderSpawning: Bedrock has no such gamerules (its
 //   patrols and wandering traders have no switch; upstream's advancements are the mod's, U14).
-// - tfEnforcedProgression false and `execute in gloamingforest:gloaming_forest run teleport ~ 128 ~`:
+// - gloamingEnforcedProgression false and `execute in gloamingforest:gloaming_forest run teleport ~ 128 ~`:
 //   a pack function cannot name the mod's /gloamingforest gamerule (BDS parses functions before
 //   mod commands exist) nor a custom dimension, so the function ends with
 //   `scriptevent gloamingforest:dev_new_world`, which this module answers: the rule is set through
@@ -59,7 +59,7 @@ constexpr char kDevNewWorldEvent[] = "gloamingforest:dev_new_world";
 constexpr char kDevNewWorld[] = R"(# gloamingforest:dev_new_world (the upstream 4.8): development world settings.
 # Java's randomTickSpeed -1 is 0 here (no random ticks either way). Java's announceAdvancements,
 # doPatrolSpawning and doTraderSpawning have no Bedrock gamerule. The scriptevent sets the mod's
-# tfEnforcedProgression rule to false and sends the caller into the Gloaming Forest at y 128.
+# gloamingEnforcedProgression rule to false and sends the caller into the Gloaming Forest at y 128.
 gamerule dodaylightcycle false
 gamerule doentitydrops false
 gamerule domobloot false
@@ -107,13 +107,13 @@ double teleportationScale(DimensionType from) {
     return source / to;
 }
 
-/// The Gloaming Forest part of dev_new_world (tfEnforcedProgression, the teleport).
+/// The Gloaming Forest part of dev_new_world (gloamingEnforcedProgression, the teleport).
 void runDevNewWorld(CommandOrigin const& origin, CommandOutput& output) {
     ++gDevNewWorldRuns;
-    bool rule = gamerules::set("tfEnforcedProgression", false);
-    gf::log().info("worldgen: dev_new_world: tfEnforcedProgression false ({})", rule ? "set" : "rule not registered");
+    bool rule = gamerules::set("gloamingEnforcedProgression", false);
+    gf::log().info("worldgen: dev_new_world: gloamingEnforcedProgression false ({})", rule ? "set" : "rule not registered");
     Actor* entity = origin.getEntity();
-    if (!rule) output.success("dev_new_world: the tfEnforcedProgression gamerule is not registered (not changed)");
+    if (!rule) output.success("dev_new_world: the gloamingEnforcedProgression gamerule is not registered (not changed)");
     if (!entity) {
         // Java: `teleport ~ 128 ~` needs an entity; from the console only the rules change
         output.success("dev_new_world: no entity to teleport");

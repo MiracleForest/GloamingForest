@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_block_fiddlehead"
+          "default": "gf_block_fiddlehead"
         }
       },
       "minecraft:display_name": {

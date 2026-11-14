@@ -75,7 +75,7 @@ struct BerryBush {
     bool setBush(BlockPos const& pos, int age) {
         if (!inside(level, pos)) return false;
         Block const& replace = level.getBlock(pos);
-        if (!kit::hasTag(replace, "gloamingforest:tf_berry_bushes_replace") || kit::hasTag(replace, "minecraft:features_cannot_replace") || kit::isFluid(replace))
+        if (!kit::hasTag(replace, "gloamingforest:gf_berry_bushes_replace") || kit::hasTag(replace, "minecraft:features_cannot_replace") || kit::isFluid(replace))
             return false;
         BlockPos     downPos = relative(pos, Down);
         Block const& below   = at(level, downPos);

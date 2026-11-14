@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.tf.gloamingforest.block.locked_vanishing_block",
+        "identifier": "geometry.gf.gloamingforest.block.locked_vanishing_block",
         "texture_width": 16,
         "texture_height": 16,
         "visible_bounds_width": 3,

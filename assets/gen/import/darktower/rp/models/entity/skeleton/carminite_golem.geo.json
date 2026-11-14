@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.tf.skeleton.carminite_golem",
+        "identifier": "geometry.gf.skeleton.carminite_golem",
         "texture_width": 128,
         "texture_height": 64,
         "visible_bounds_width": 3,

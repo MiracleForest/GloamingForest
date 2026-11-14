@@ -353,16 +353,16 @@ Vec2 agileRangerInput(Vec2 const& move, double slowdown) {
     // (measured with a bow: 0.122 of a key's 1; other items have their own), so upstream's input is the
     // input without the current use's slowdown, at most length 1
     if (slowdown <= 0) slowdown = kBedrockItemUseSlowdown;
-    Vec2  tf{static_cast<float>(move.x / slowdown), static_cast<float>(move.y / slowdown)};
-    float l2 = tf.x * tf.x + tf.y * tf.y;
+    Vec2  upsrc{static_cast<float>(move.x / slowdown), static_cast<float>(move.y / slowdown)};
+    float l2 = upsrc.x * upsrc.x + upsrc.y * upsrc.y;
     if (l2 > 1.0f) {
         float l = std::sqrt(l2);
-        tf.x /= l, tf.y /= l;
+        upsrc.x /= l, upsrc.y /= l;
     }
-    return tf;
+    return upsrc;
 }
 
-Vec3 inputDelta(Actor& a, Vec2 const& engineMove, Vec2 const& tfMove, bool onGround, bool sprinting, bool unrestrained) {
+Vec3 inputDelta(Actor& a, Vec2 const& engineMove, Vec2 const& gloamingMove, bool onGround, bool sprinting, bool unrestrained) {
     double scale = sprinting ? 0.026 : 0.02; // LivingEntity#getFlyingSpeed of players
     if (onGround) {
         Vec3     feet = a.getFeetPos();
@@ -375,7 +375,7 @@ Vec3 inputDelta(Actor& a, Vec2 const& engineMove, Vec2 const& tfMove, bool onGro
     }
     double yaw = a.getRotation().y;
     auto   e   = tg::inputAcceleration(engineMove.x, engineMove.y, yaw, scale);
-    auto   t   = tg::inputAcceleration(tfMove.x, tfMove.y, yaw, scale);
+    auto   t   = tg::inputAcceleration(gloamingMove.x, gloamingMove.y, yaw, scale);
     return Vec3{static_cast<float>(t.x - e.x), 0.0f, static_cast<float>(t.z - e.z)};
 }
 
@@ -1019,22 +1019,22 @@ void tickPlayer(Player& player) {
     // unsneaked input) as the velocity they make, as the client adds them
     if (companion && in) {
         Vec2 const move = in->mMove;
-        Vec2       tf   = move;
+        Vec2       upsrc   = move;
         if (st.straightAhead) {
             auto s2 = tg::straightAheadInput(move.x, move.y, tg::kStraightAheadMultiplier);
-            tf      = Vec2{s2.strafe, s2.forward};
+            upsrc      = Vec2{s2.strafe, s2.forward};
         }
         if (has(mask, Mod::AgileRanger) && player.getItemUseDuration() > 0 && player.getVehicle() == nullptr && agileRangerItem(player.getCarriedItem()))
         {
-            tf = agileRangerInput(tf, itemUseSlowdownOf(move, in->mRawInputState->mAnalogMoveVector)); // handleAgileRanger
+            upsrc = agileRangerInput(upsrc, itemUseSlowdownOf(move, in->mRawInputState->mAnalogMoveVector)); // handleAgileRanger
             if (!st.loggedAgile && (move.x != 0 || move.y != 0)) {
                 st.loggedAgile = true;
                 log().info("tgmove: {} agile ranger, server input length while drawing {:.3f}", player.getRealName(), std::sqrt(move.x * move.x + move.y * move.y));
             }
         }
-        if (st.gliding && player.isSneaking() && !onGround) tg::unsneakImpulse(tf.y, tf.x, false);
-        if (tf.x != move.x || tf.y != move.y) {
-            delta = delta + inputDelta(player, move, tf, onGround, player.isSprinting(), unrestrained);
+        if (st.gliding && player.isSneaking() && !onGround) tg::unsneakImpulse(upsrc.y, upsrc.x, false);
+        if (upsrc.x != move.x || upsrc.y != move.y) {
+            delta = delta + inputDelta(player, move, upsrc, onGround, player.isSprinting(), unrestrained);
             setPosDelta(player, delta);
         }
     }

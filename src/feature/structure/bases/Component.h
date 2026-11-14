@@ -1,7 +1,7 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/world/components/structures/TFStructureComponent.java
-//   src/main/java/gloamingforest/world/components/structures/TFStructureDecorator.java
+//   src/main/java/gloamingforest/world/components/structures/GloamingStructureComponent.java
+//   src/main/java/gloamingforest/world/components/structures/GloamingStructureDecorator.java
 //   src/main/java/gloamingforest/world/components/structures/UtilityPiece.java
 //   src/main/java/gloamingforest/world/components/structures/SpawnIndexProvider.java
 //   src/main/java/gloamingforest/world/components/structures/util/SortablePiece.java
@@ -12,7 +12,7 @@
 #pragma once
 
 // Contract "structure", shared bases (header owned by F0, implemented by F7; rule R18). The root of
-// upstream's piece hierarchy: TFStructureComponent (spawn index, decorator, progression protection), the
+// upstream's piece hierarchy: GloamingStructureComponent (spawn index, decorator, progression protection), the
 // decorator block sets and the utility piece. Declarations only: the behaviour is F7's, translated
 // from the Java files above (bases/Bases.cpp holds the neutral stubs until then).
 //
@@ -34,7 +34,7 @@ using PieceList = std::vector<std::unique_ptr<Piece>>;
 /// StructurePieceAccessor#findCollisionPiece: the first piece of `pieces` whose box intersects `box`.
 [[nodiscard]] Piece* findCollisionPiece(PieceList const& pieces, BlockBox const& box);
 
-/// TFStructureDecorator: the block set a structure family builds with. W1 units register their
+/// GloamingStructureDecorator: the block set a structure family builds with. W1 units register their
 /// subclasses (StructureDecoratorDarkTower "DecoDarkTower", IceTowerDecorator "DecoIceTower",
 /// MushroomTowerDecorator "DecoMushroomTower", StrongholdDecorator "DecoStronghold",
 /// StructureTFDecoratorCastle "DecoCastle") by their save string.
@@ -53,18 +53,18 @@ struct Decorator {
     /// getDecoString: the save string of this decorator ("" for the default one).
     [[nodiscard]] virtual std::string decoString() const { return {}; }
 };
-/// The default decorator (TFStructureDecorator's field initialisers).
+/// The default decorator (GloamingStructureDecorator's field initialisers).
 [[nodiscard]] std::unique_ptr<Decorator> defaultDecorator();
-/// TFStructureDecorator.getDecoFor: a registered decorator by save string, else the default one.
+/// GloamingStructureDecorator.getDecoFor: a registered decorator by save string, else the default one.
 [[nodiscard]] std::unique_ptr<Decorator> decoratorFor(std::string const& decoString);
 void registerDecorator(std::string const& decoString, std::function<std::unique_ptr<Decorator>()> factory);
 
-/// TFStructureComponent: StructurePiece + SpawnIndexProvider + ProgressionPiece.
+/// GloamingStructureComponent: StructurePiece + SpawnIndexProvider + ProgressionPiece.
 class Component : public Piece {
 public:
-    /// TFStructureComponent(type, i, boundingBox).
+    /// GloamingStructureComponent(type, i, boundingBox).
     Component(std::string typeId, int genDepth, BlockBox const& box);
-    /// TFStructureComponent(type, i, x, y, z): a one-block box at (x, y, z).
+    /// GloamingStructureComponent(type, i, x, y, z): a one-block box at (x, y, z).
     Component(std::string typeId, int genDepth, int x, int y, int z);
 
     std::unique_ptr<Decorator> deco;           ///< saved as "deco" (decoString)
@@ -81,7 +81,7 @@ public:
     void               load(Json const& data) override;
 
 protected:
-    /// TFStructureComponent#placeBlock: also schedules the post-processing upstream's list of blocks needs
+    /// GloamingStructureComponent#placeBlock: also schedules the post-processing upstream's list of blocks needs
     /// (fences, torches, ladders, stairs, chests, liquids, force fields, thorns, gravel ...).
     void placeBlockScheduled(Region& region, Block const& block, int x, int y, int z, BlockBox const& sbb);
     /// setInvisibleTextEntity (debug text displays; no-op unless debugging).
@@ -96,7 +96,7 @@ public:
     [[nodiscard]] virtual int getSortKey() const = 0;
 };
 
-/// UtilityPiece ("gloamingforest:TFUtilityPiece"): an empty piece that only reserves a box;
+/// UtilityPiece ("gloamingforest:GloamingUtilityPiece"): an empty piece that only reserves a box;
 /// `allowFeatures` (saved "allow_features") lets decoration generate inside it.
 class UtilityPiece : public Piece {
 public:

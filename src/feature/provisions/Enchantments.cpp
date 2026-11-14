@@ -1,6 +1,6 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/init/TFEnchantments.java
+//   src/main/java/gloamingforest/init/GloamingEnchantments.java
 //   src/main/java/gloamingforest/enchantment/ApplyFrostedEffect.java
 //   src/main/java/gloamingforest/enchantment/SmashBlocksEffect.java
 //   src/main/java/gloamingforest/enchantment/RechargeScepterEffect.java

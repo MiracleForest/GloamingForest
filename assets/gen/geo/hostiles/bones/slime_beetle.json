@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.slime_beetle",
   "layer": {
     "name": "slime_beetle",
-    "field": "TFModelLayers.SLIME_BEETLE",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.SLIME_BEETLE, SlimeBeetleModel::checkForPack);"
+    "field": "GloamingModelLayers.SLIME_BEETLE",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.SLIME_BEETLE, SlimeBeetleModel::checkForPack);"
   },
   "texture_size": [64, 64],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/slimebeetle",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/slimebeetle.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/slimebeetle.png"
     }
   ],
   "bones": [

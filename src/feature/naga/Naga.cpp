@@ -620,7 +620,7 @@ void tickSegment(Mob& naga, NagaState& s, int i) {
                 }));
             for (auto* e : others) {
                 if (e == &naga) continue; // NagaSegment#is: the Naga and its own parts
-                if (ge::ext::parentOf(*e)) continue; // parts (TFPart, PartEntity) are not pushable
+                if (ge::ext::parentOf(*e)) continue; // parts (GloamingPart, PartEntity) are not pushable
                 // Entity#isPushable: living entities (alive, not spectators), boats and minecarts;
                 // Bedrock's minecraft:pushable is_pushable (absent on items, XP orbs, arrows, falling
                 // blocks and armor stands, false on the Naga and the parts)

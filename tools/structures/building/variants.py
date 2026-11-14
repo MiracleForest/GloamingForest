@@ -6,9 +6,9 @@
 #   python tools/structures/building/variants.py           # writes the files below
 #   python tools/structures/building/variants.py --check   # fails when a written file is stale
 #
-#   assets/pack/rp/textures/blocks/building/tf-derived/<texture>_<transform>.png (+ SOURCES.json)
+#   assets/pack/rp/textures/blocks/building/upstream-derived/<texture>_<transform>.png (+ SOURCES.json)
 #   assets/pack/bp/blocks/building/<block>.json   (the imported block, each face on its own atlas key)
-#   terrain entries tf_building_var_<block>_<face> (merged into terrain_texture.d/building.json by
+#   terrain entries gf_building_var_<block>_<face> (merged into terrain_texture.d/building.json by
 #   trophies.py, which imports terrain())
 #
 # A Java blockstate with a list of models picks one per position (equal weights). Bedrock cannot
@@ -20,7 +20,7 @@
 # the face's atlas key, so one variant index means the same model on every face. Faces use Java's
 # default UV frames (FaceBakery), which Bedrock's full block faces share.
 #
-# The derived textures are upstream textures turned or mirrored: CC BY-NC-SA 4.0 (tf-derived/SOURCES.json).
+# The derived textures are upstream textures turned or mirrored: CC BY-NC-SA 4.0 (upstream-derived/SOURCES.json).
 # The towerwood blocks keep their tint (ColorHandler, client mod) on placed blocks; their block
 # items get an untinted item visual (ColorHandler returns -1 without a position: inventory items are
 # drawn untinted).
@@ -34,10 +34,10 @@ import zlib
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 GEN = os.path.join(ROOT, "assets", "gen", "import")
-OUT_TEX = os.path.join(ROOT, "assets", "pack", "rp", "textures", "blocks", "building", "tf-derived")
-TEX_PATH = "textures/blocks/building/tf-derived/"
+OUT_TEX = os.path.join(ROOT, "assets", "pack", "rp", "textures", "blocks", "building", "upstream-derived")
+TEX_PATH = "textures/blocks/building/upstream-derived/"
 OUT_BLOCKS = os.path.join(ROOT, "assets", "pack", "bp", "blocks", "building")
-TF_TEX = "src/main/resources/assets/gloamingforest/textures/block/"
+GF_TEX = "src/main/resources/assets/gloamingforest/textures/block/"
 NS = "gloamingforest:"
 
 # blockstate variants: (texture, x, y, flipped); the textures of upstream's models
@@ -225,7 +225,7 @@ def gen_block(block):
 
 
 def key(block, inst):
-    return "tf_building_var_%s_%s" % (block, inst)
+    return "gf_building_var_%s_%s" % (block, inst)
 
 
 def outputs():
@@ -239,7 +239,7 @@ def outputs():
         if path not in files:
             img = read_png(source_png(tex))
             files[path] = write_png(img[0], img[1], apply(img, t))
-            sources[name + ".png"] = TF_TEX + tex + ".png"
+            sources[name + ".png"] = GF_TEX + tex + ".png"
         return TEX_PATH + name
 
     for block, variants in VARIANTS.items():
@@ -263,8 +263,8 @@ def outputs():
         if block in TINTED:
             # ColorHandler: no tint without a position (the block item in the inventory, in hand)
             untinted = {k: v for k, v in mats["*"].items() if k != "tint_method"}
-            untinted["texture"] = "tf_building_icon_" + block
-            terrain["tf_building_icon_" + block] = {"textures": "textures/gloamingforest/block/" + block}
+            untinted["texture"] = "gf_building_icon_" + block
+            terrain["gf_building_icon_" + block] = {"textures": "textures/gloamingforest/block/" + block}
             comps["minecraft:item_visual"] = {
                 "geometry": comps.get("minecraft:geometry", "minecraft:geometry.full_block"),
                 "material_instances": {"*": untinted},

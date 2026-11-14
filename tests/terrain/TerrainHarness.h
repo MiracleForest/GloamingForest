@@ -104,7 +104,7 @@ struct World {
     [[nodiscard]] TerrainSampler sampler() const {
         return [this](int x, int z) { return sampleTerrain(x, z, [this](int qx, int qz) { return biomes.column(qx, qz); }); };
     }
-    /// TFBiomeProvider#getNoiseBiome (nullptr outside the grid).
+    /// GloamingBiomeProvider#getNoiseBiome (nullptr outside the grid).
     [[nodiscard]] std::string const* noiseBiome(int qx, int qy, int qz) const {
         auto const* c = biomes.column(qx, qz);
         return c ? &c->biomeAt(qy) : nullptr;

@@ -23,7 +23,7 @@
 --   Checks   integer block states 0..n, block permutation budget, dangling gloamingforest:
 --            references in BP / data (per kind: a `block` key must name a block; the values of
 --            tag-valued keys name tags; the reviewed ids of tools/import/known-ids.json are known
---            by kind, its tfDangling references are warnings; template pools are the keys of the
+--            by kind, its gloamingDangling references are warnings; template pools are the keys of the
 --            imported gloaming/template_definition files, template ids and jigsaw connector names
 --            those the structures/**.gft.json define), every asset file has an owner
 --            (docs/spec/owners.tsv), the pack path probes (checks.packPathProbes: a file in a
@@ -812,7 +812,7 @@ end
 -- The reviewed references of tools/import/known-ids.json (F1, cfg.checks.knownIds): {ids = {ref ->
 -- kind}, dangling = {ref -> {kind, reason}}, tagKeys = {key -> true}}, kinds by reviewed_kind. "ids"
 -- are ids upstream registers in code (codec types, texture locations, template pools), known by their kind;
--- "tfDangling" are references dangling in upstream itself, kept verbatim for parity: a warning, never an error.
+-- "gloamingDangling" are references dangling in upstream itself, kept verbatim for parity: a warning, never an error.
 local function load_reviewed(projectdir, cfg)
     local reviewed = {ids = {}, dangling = {}, tagKeys = {}}
     local rel_file = cfg.checks.knownIds
@@ -824,8 +824,8 @@ local function load_reviewed(projectdir, cfg)
         if type(e) ~= "table" or type(e.kind) ~= "string" then fail("%s: ids.%s has no kind", rel_file, ref)
         else reviewed.ids[ref] = reviewed_kind(ref, e.kind) end
     end
-    for ref, e in json_pairs(doc.tfDangling or {}) do
-        if type(e) ~= "table" or type(e.kind) ~= "string" then fail("%s: tfDangling.%s has no kind", rel_file, ref)
+    for ref, e in json_pairs(doc.gloamingDangling or {}) do
+        if type(e) ~= "table" or type(e.kind) ~= "string" then fail("%s: gloamingDangling.%s has no kind", rel_file, ref)
         else reviewed.dangling[ref] = {kind = reviewed_kind(ref, e.kind), reason = type(e.reason) == "string" and e.reason or ""} end
     end
     for key, _ in json_pairs(doc.tagValuedKeys or {}) do reviewed.tagKeys[key] = true end
@@ -835,7 +835,7 @@ end
 -- Every "gloamingforest:..." string value in BP / data JSON must name something that exists, of the
 -- kind its key implies: `"block": "gloamingforest:naga"` fails when naga is only an entity. The value
 -- of a tag-valued key names a tag ('#' or not) of the registry its context gives (a recipe's "tag" is
--- an item tag, generates_on a block tag). A reference listed as tfDangling (dangling in upstream itself) of
+-- an item tag, generates_on a block tag). A reference listed as gloamingDangling (dangling in upstream itself) of
 -- the same kind is a warning.
 local function check_dangling(jsonfiles, known, cfg, datadir, reviewed)
     local nss = cfg.checks.danglingNamespaces or {}
@@ -870,7 +870,7 @@ local function check_dangling(jsonfiles, known, cfg, datadir, reviewed)
         for _, k in ipairs(kinds) do table.insert(regs, tag_registry(k) or k) end
         return table.concat(table.unique(regs), " / ") .. " tag"
     end
-    -- A tfDangling entry covers a reference of its own kind only: a tag entry ("tag:<registry>")
+    -- A gloamingDangling entry covers a reference of its own kind only: a tag entry ("tag:<registry>")
     -- a tag reference, an id entry an id reference of one of the kinds the key allows.
     local function dangling_entry(v, id, hash, istag, kinds)
         local d = reviewed.dangling[v] or (istag and reviewed.dangling[hash and id or ("#" .. id)]) or nil
@@ -904,7 +904,7 @@ local function check_dangling(jsonfiles, known, cfg, datadir, reviewed)
                     if not exists(id, istag, kinds) then
                         local d = dangling_entry(v, id, hash, istag, kinds)
                         if d then
-                            warn("dangling reference '%s' (%s) in %s: dangling in upstream itself, kept for parity (tools/import/known-ids.json tfDangling): %s",
+                            warn("dangling reference '%s' (%s) in %s: dangling in upstream itself, kept for parity (tools/import/known-ids.json gloamingDangling): %s",
                                 v, d.kind, ctx.file, d.reason)
                         else
                             fail("dangling reference '%s' (not a known %s) in %s", v, kinds_text(kinds, istag), ctx.file)
@@ -1039,13 +1039,13 @@ local function build_pack(projectdir, cfg, pack, outdir, version, with_gen)
     local manual = manual_files(path.join(projectdir, pack.manual))
     local files = layered_files(gen, manual, pack.root)
     local jsons = {}
-    -- Hand-made files derived from upstream's CC BY-NC-SA assets live under a "tf-derived/" directory
+    -- Hand-made files derived from upstream's CC BY-NC-SA assets live under a "upstream-derived/" directory
     -- next to a SOURCES.json naming their upstream source files (AGENTS.md, assets/LICENSE). They stay
-    -- CC BY-NC-SA 4.0: the pack lists them in tf-derived-sources.txt beside LICENSE-ASSETS.txt.
+    -- CC BY-NC-SA 4.0: the pack lists them in upstream-derived-sources.txt beside LICENSE-ASSETS.txt.
     local derived = {}
     for _, r in ipairs(table.keys(files)) do
         local file = files[r]
-        local prefix, sub = r:match("^(.-tf%-derived)/(.+)$")
+        local prefix, sub = r:match("^(.-upsrc%-derived)/(.+)$")
         if prefix and sub == "SOURCES.json" then
             files[r] = nil -- attribution data, not pack content
         elseif prefix then
@@ -1110,7 +1110,7 @@ local function build_pack(projectdir, cfg, pack, outdir, version, with_gen)
         local rels = table.keys(derived)
         table.sort(rels)
         for _, r in ipairs(rels) do table.insert(lines, r .. " <- " .. table.concat(derived[r], ", ")) end
-        io.writefile(path.join(dst, "tf-derived-sources.txt"), table.concat(lines, "\n") .. "\n")
+        io.writefile(path.join(dst, "upstream-derived-sources.txt"), table.concat(lines, "\n") .. "\n")
     end
     return dst, jsons
 end

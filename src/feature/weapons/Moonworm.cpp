@@ -3,14 +3,14 @@
 //   src/main/java/gloamingforest/item/MoonwormQueenItem.java
 //   src/main/java/gloamingforest/entity/projectile/MoonwormShot.java
 //   src/main/java/gloamingforest/item/recipe/MoonwormQueenRepairRecipe.java
-//   src/main/java/gloamingforest/dispenser/TFDispenserBehaviors.java (moonworm queen)
+//   src/main/java/gloamingforest/dispenser/GloamingDispenserBehaviors.java (moonworm queen)
 //   src/main/java/gloamingforest/dispenser/DamageableStackDispenseBehavior.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // gloamingforest:moonworm_queen places U6's gloamingforest:moonworm block (by id) like a block
-// item and, held for more than 12 ticks, shoots gloamingforest:moonworm_shot (a TFThrowable,
+// item and, held for more than 12 ticks, shoots gloamingforest:moonworm_shot (a GloamingThrowable,
 // gravity 0.03) that sticks a moonworm where it lands. The repair recipe
 // (gloamingforest:moonworm_queen_repair_recipe: one damaged queen and 1..8 torchberries) is a
 // special crafting recipe on the BP layouts moonworm_queen_repair_recipe_1.._8.
@@ -212,7 +212,7 @@ void registerMoonworm() {
         });
         return gf::interactions::Result::Consume;
     });
-    // TFDispenserBehaviors: a DamageableStackDispenseBehavior shooting moonworm shots
+    // GloamingDispenserBehaviors: a DamageableStackDispenseBehavior shooting moonworm shots
     gf::item::registerDispense(kMoonwormQueen, [](BlockSource& region, BlockPos const& at, int facing, ItemStack& stack) {
         if (facing < 0 || facing > 5) return false;
         int max = stack.mItem ? stack.mItem->getMaxDamage() : 0;

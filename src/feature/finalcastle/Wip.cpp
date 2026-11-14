@@ -1,7 +1,7 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
 //   src/main/java/gloamingforest/world/components/structures/finalcastle/FinalCastleBossGazeboComponent.java
-//   src/main/java/gloamingforest/world/components/structures/TFStructureComponent.java (setInvisibleTextEntity)
+//   src/main/java/gloamingforest/world/components/structures/GloamingStructureComponent.java (setInvisibleTextEntity)
 //   src/main/java/gloamingforest/events/EntityEvents.java (removeCastleTextIfAttacked)
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part

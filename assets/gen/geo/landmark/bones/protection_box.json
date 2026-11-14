@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.protection_box",
   "layer": {
     "name": "protection_box",
-    "field": "TFModelLayers.PROTECTION_BOX",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.PROTECTION_BOX, () -> LayerDefinition.create(ProtectionBoxModel.createMesh(), 16, 16));"
+    "field": "GloamingModelLayers.PROTECTION_BOX",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.PROTECTION_BOX, () -> LayerDefinition.create(ProtectionBoxModel.createMesh(), 16, 16));"
   },
   "texture_size": [16, 16],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/protectionbox",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/protectionbox.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/protectionbox.png"
     }
   ],
   "bones": [

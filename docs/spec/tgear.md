@@ -42,9 +42,9 @@ client.world.
 `client/model/armor/{TravellersGearModels,TravellersWingsModel}.java`, `client/model/item/TravellersGearItemModel.java`,
 `block/RedThreadBlock.java`, `block/entity/RedThreadBlockEntity.java`, `client/renderer/block/RedThreadRenderer.java`,
 `client/model/entity/RedThreadModel.java`, `network/{GogglesZoom,SwapHotbar,CycleMapSlot}Packet.java`,
-`command/TravellersGearCommand.java`, `init/TFKeyBinds.java`, `init/TFKeyBindsCategories.java`,
-`init/TFArmorMaterials.java`, `init/TFAttributeModifiers.java`, `asmhooks/PlayerHooks.java` (efficient eater),
-`advancements/AddModifierTrigger.java`, `config/TFClientConfig.java`.
+`command/TravellersGearCommand.java`, `init/GloamingKeyBinds.java`, `init/GloamingKeyBindsCategories.java`,
+`init/GloamingArmorMaterials.java`, `init/GloamingAttributeModifiers.java`, `asmhooks/PlayerHooks.java` (efficient eater),
+`advancements/AddModifierTrigger.java`, `config/GloamingClientConfig.java`.
 
 ## 3. Behaviour
 
@@ -100,10 +100,10 @@ layer `gloamingforest:travellers`. All pieces carry `gloamingforest:travellers_a
   `gloamingforest:travellers_modifiers` registry (`ResourceKeyArgument`, suggestions = the registry's keys; a
   malformed id is a parse error). Both act on the executing player's main-hand stack; checks in this order, the
   first failure is the command error:
-  - both: the key is not in the registry -> `commands.tffeature.invalid_modifier` (the id) — checked first, by
+  - both: the key is not in the registry -> `commands.gloamingfeature.invalid_modifier` (the id) — checked first, by
     `ResourceKeyArgument.resolveKey` in the `executes` lambda before `validate()`, so the console naming an unknown id
     gets `invalid_modifier`, not `not_player`; the source is not a player, or is a fake player ->
-    `commands.tffeature.not_player`; the main-hand item is not `TravellersModifiable` (the six items of 3.1) ->
+    `commands.gloamingfeature.not_player`; the main-hand item is not `TravellersModifiable` (the six items of 3.1) ->
     `not_travellers_gear`; the modifier is an ability (`builtin` type, or `attribute` with `builtin_modifier`:
     `zoom`, `swift_swim`, `swap_hotbar_ability`, `high_jump`, `step_up`) -> `ability_modifier`;
   - `add_modifier`: insertable modifiers on the stack >= the item's modifier slots (always for gloves and belt, 0
@@ -111,27 +111,27 @@ layer `gloamingforest:travellers`. All pieces carry `gloamingforest:travellers_a
     slot (`getEquipmentSlotForItem`) is not in the modifier's slot group -> `wrong_modifier_slot` (modifier name);
     then the modifier is added with its default value (`component`: the registry default; `transferable_component`
     `swap_hotbar`: the marker + an empty 9-slot `minecraft:container`; `attribute` `aquatic_agility`: the marker +
-    its attribute entries) and `commands.tffeature.added_modifier` (modifier name, stack hover name) is sent to the
+    its attribute entries) and `commands.gloamingfeature.added_modifier` (modifier name, stack hover name) is sent to the
     source and broadcast to operators;
   - `remove_modifier`: the stack lacks it -> `no_modifier` (modifier name); otherwise its component(s) are removed
     (`aquatic_agility`: the marker and its attribute entries; `swap_hotbar`: the marker and the `minecraft:container`;
     the items stored by `swap_hotbar` / `item_display` are deleted, not given back as by the grindstone) and
-    `commands.tffeature.removed_modifier` (modifier name, stack hover name) is sent and broadcast.
+    `commands.gloamingfeature.removed_modifier` (modifier name, stack hover name) is sent and broadcast.
   The modifier name (`TravellersModifiersManager.getModifierTooltipComponent`, built only after the four common
   checks) is **a literal rendered on the server**, not a translatable component: `TooltipStringInterpolator.render`
   translates `travellers_gear.modifier.gloamingforest.<id>` with the server's language (`Component.translatable(key)
   .getString()`: the host's selected language on an integrated server; en_us on a dedicated server, where NeoForge's
-  `LanguageHook` loads the mods' en_us), replaces every `${tfkeybinds/<key name>}` with that key mapping's current
+  `LanguageHook` loads the mods' en_us), replaces every `${gloamingkeybinds/<key name>}` with that key mapping's current
   binding name (`KeyModifier.getCombinedName`, e.g. `C`; an unbound key gives `key.keyboard.unknown`, "Not Bound"; a
   key name upstream does not register gives "Nonexistent key") and wraps the result in `Component.literal`. The same
   literal goes to the source and into the operator broadcast; the stack name stays a translatable hover name. Three
   insertable modifiers have a placeholder in their name: `item_display` (`key.gloamingforest.item_display_map_cycle`),
   `red_thread_vision` and `swap_hotbar` (`zoom` and `swap_hotbar_ability` have one too but are rejected as abilities
-  before the name is built). On a dedicated server upstream's placeholder lookup loads `TFKeyBinds`, whose
+  before the name is built). On a dedicated server upstream's placeholder lookup loads `GloamingKeyBinds`, whose
   `net.minecraft.client.KeyMapping` does not exist there (not in the 1.21.1 server jar), so for these three upstream ends
   in a `NoClassDefFoundError`, an `Error` that `Commands.performCommand` (it catches `Exception`) does not turn into a
   command failure. Neither path checks the broken state or fires `gloamingforest:add_modifier` (only crafting does).
-  The ten `commands.tffeature.*` keys are F6's in owners.tsv (the partition of upstream's `commands.tffeature.*` keys), so
+  The ten `commands.gloamingfeature.*` keys are F6's in owners.tsv (the partition of upstream's `commands.gloamingfeature.*` keys), so
   U11 uses them with `tr(key, fallback)` and these English texts: `not_player` "This command must be run by a valid
   player!", `not_travellers_gear` "You are not holding a piece of Traveller's Gear", `ability_modifier` "Abilities
   cannot be added or removed from Traveller's Gear", `too_many_modifiers` "This piece of Traveller's Gear already
@@ -228,7 +228,7 @@ corners; full-bright glow render type while the viewer holds red thread or has r
 - `/gloamingforest travellers_gear` messages: render the modifier name once on the server, as upstream does, in the
   server's language (`tr("travellers_gear.modifier.gloamingforest.<id>", English name)`; not the source player's
   language: upstream's integrated server uses the host's language for every source, its dedicated server en_us), expand
-  each `${tfkeybinds/<key name>}` the way `TooltipStringInterpolator` does, and send that same text to the source and
+  each `${gloamingkeybinds/<key name>}` the way `TooltipStringInterpolator` does, and send that same text to the source and
   in the operator broadcast (the stack name is the item's own name). The client build in a local world (upstream's
   integrated server) uses the host's language and puts in the host's current binding of that key (`client::keys`,
   "Not Bound" when unbound). The server build (BDS) has no player key bindings and must not fail as upstream's dedicated
@@ -300,17 +300,17 @@ Every id this unit owns in `docs/spec/owners.tsv`, with the upstream 4.8 data th
 
 ### Blocks (1)
 
-Item column: `BlockItem` = upstream registers a plain block item with the block (`TFBlocks.register`), the id is also a `block_item` row; `-` = no item of the same id (the block is placed by another item, or has none).
+Item column: `BlockItem` = upstream registers a plain block item with the block (`GloamingBlocks.register`), the id is also a `block_item` row; `-` = no item of the same id (the block is placed by another item, or has none).
 
 Block states come from upstream's blockstate JSON (`multipart:` lists only the property values the model parts test). Notes collect `RegistrationEvents` (fire, axe stripping, flower pots, jar lids), dispenser behaviours and the `neoforge:compostables` / `neoforge:furnace_fuels` data maps.
 
-| Block | English name | upstream registration (`TFBlocks`) | Block states | Item | Loot (`blocks/<id>`) | Notes |
+| Block | English name | upstream registration (`GloamingBlocks`) | Block states | Item | Loot (`blocks/<id>`) | Notes |
 |---|---|---|---|---|---|---|
-| `gloamingforest:red_thread` | Red Thread | `register("red_thread", new RedThreadBlock(Properties.of().instabreak().mapColor(FIRE).isValidSpawn(TFBlocks::noSpawning).noCollission().noOcclusion().noTerrainParticles().pushReaction(DESTROY)));` |  | BlockItem | rolls 1: red_thread {count 1 (add) [if state east=true]; count 1 (add) [if state west=true]; count 1 (add) [if state north=true]; count 1 (add) [if state south=true]; count 1 (add) [if state up=true]; count 1 (add) [if state down=true]; count -1 (add); explosion_decay} |  |
+| `gloamingforest:red_thread` | Red Thread | `register("red_thread", new RedThreadBlock(Properties.of().instabreak().mapColor(FIRE).isValidSpawn(GloamingBlocks::noSpawning).noCollission().noOcclusion().noTerrainParticles().pushReaction(DESTROY)));` |  | BlockItem | rolls 1: red_thread {count 1 (add) [if state east=true]; count 1 (add) [if state west=true]; count 1 (add) [if state north=true]; count 1 (add) [if state south=true]; count 1 (add) [if state up=true]; count 1 (add) [if state down=true]; count -1 (add); explosion_decay} |  |
 
 ### Items (6)
 
-| Item | English name | upstream registration (`TFItems`) | Notes |
+| Item | English name | upstream registration (`GloamingItems`) | Notes |
 |---|---|---|---|
 | `gloamingforest:travellers_belt` | Traveller's Belt | `ITEMS.register("travellers_belt", new TravellersArmorBeltItem(ArmorItem.Type.LEGGINGS, TravellersArmorBeltItem.beltProperties(new Item.Properties().stacksTo(1)), 0));` | item tags: #mc:leg_armor |
 | `gloamingforest:travellers_boots` | Traveller's Boots | `ITEMS.register("travellers_boots", new TravellersArmorItem(ArmorItem.Type.BOOTS, TravellersArmorItem.bootsProperties(new Item.Properties()), 3, 12));` | item tags: #mc:foot_armor, #mc:freeze_immune_wearables |
@@ -321,19 +321,19 @@ Block states come from upstream's blockstate JSON (`multipart:` lists only the p
 
 ### Block entity types (1)
 
-| Id | upstream registration (`TFBlockEntities.java`) |
+| Id | upstream registration (`GloamingBlockEntities.java`) |
 |---|---|
-| `gloamingforest:red_thread` | `BLOCK_ENTITIES.register("red_thread", () -> BlockEntityType.Builder.of(RedThreadBlockEntity::new, TFBlocks.RED_THREAD.get()).build(null));` |
+| `gloamingforest:red_thread` | `BLOCK_ENTITIES.register("red_thread", () -> BlockEntityType.Builder.of(RedThreadBlockEntity::new, GloamingBlocks.RED_THREAD.get()).build(null));` |
 
 ### Particle types (1)
 
-| Id | upstream registration (`TFParticleType.java`) |
+| Id | upstream registration (`GloamingParticleType.java`) |
 |---|---|
 | `gloamingforest:perfect_dodge` | `PARTICLE_TYPES.register("perfect_dodge", new SimpleParticleType(false));` |
 
 ### Data components (19)
 
-| Id | upstream registration (`TFDataComponents.java`) |
+| Id | upstream registration (`GloamingDataComponents.java`) |
 |---|---|
 | `gloamingforest:all_night_goggles` | `COMPONENTS.register("all_night_goggles", () -> DataComponentType.<Unit>builder().persistent(Codec.unit(Unit.INSTANCE)).networkSynchronized(StreamCodec.unit(Unit.INSTANCE)).cacheEncoding().build());` |
 | `gloamingforest:arrow_magnetism` | `COMPONENTS.register("arrow_magnetism", () -> DataComponentType.<Unit>builder().persistent(Codec.unit(Unit.INSTANCE)).networkSynchronized(StreamCodec.unit(Unit.INSTANCE)).cacheEncoding().build());` |
@@ -357,20 +357,20 @@ Block states come from upstream's blockstate JSON (`multipart:` lists only the p
 
 ### Data attachments (2)
 
-| Id | upstream registration (`TFDataAttachments.java`) |
+| Id | upstream registration (`GloamingDataAttachments.java`) |
 |---|---|
 | `gloamingforest:is_using_goggles_zoom_modifier` | `ATTACHMENT_TYPES.register("is_using_goggles_zoom_modifier", () -> AttachmentType.builder(() -> false).serialize(Codec.BOOL).sync(ByteBufCodecs.BOOL).build());` |
 | `gloamingforest:travellers_goggles_red_thread_vision` | `ATTACHMENT_TYPES.register("travellers_goggles_red_thread_vision", () -> AttachmentType.builder(() -> true).serialize(Codec.BOOL).build());` |
 
 ### Armor materials (1)
 
-| Id | upstream registration (`TFArmorMaterials.java`) |
+| Id | upstream registration (`GloamingArmorMaterials.java`) |
 |---|---|
-| `gloamingforest:travellers` | `ARMOR_MATERIALS.register("travellers", new ArmorMaterial(Util.make(new EnumMap<>(ArmorItem.Type.class), map -> { map.put(ArmorItem.Type.BOOTS, 2); map.put(ArmorItem.Type.LEGGINGS, 3); map.put(ArmorItem.Type.CHESTPLATE, 4); map.put(ArmorItem.Type.HELMET, 2); map.put(ArmorItem.Type.BODY, 4); }), 0, SoundEvents.ARMOR_EQUIP_GENERIC, () -> Ingredient.of(TFItems.TANNED_LEATHER), List.of(new ArmorMaterial.Layer(GloamingForestMod.prefix("travellers"))), 0F, 0.0F)); ;; }), 0, SoundEvents.ARMOR_EQUIP_GENERIC, () -> Ingredient.of(TFItems.TANNED_LEATHER), List.of(new ArmorMaterial.Layer(GloamingForestMod.prefix("travellers"))), 0F, 0.0F));` |
+| `gloamingforest:travellers` | `ARMOR_MATERIALS.register("travellers", new ArmorMaterial(Util.make(new EnumMap<>(ArmorItem.Type.class), map -> { map.put(ArmorItem.Type.BOOTS, 2); map.put(ArmorItem.Type.LEGGINGS, 3); map.put(ArmorItem.Type.CHESTPLATE, 4); map.put(ArmorItem.Type.HELMET, 2); map.put(ArmorItem.Type.BODY, 4); }), 0, SoundEvents.ARMOR_EQUIP_GENERIC, () -> Ingredient.of(GloamingItems.TANNED_LEATHER), List.of(new ArmorMaterial.Layer(GloamingForestMod.prefix("travellers"))), 0F, 0.0F)); ;; }), 0, SoundEvents.ARMOR_EQUIP_GENERIC, () -> Ingredient.of(GloamingItems.TANNED_LEATHER), List.of(new ArmorMaterial.Layer(GloamingForestMod.prefix("travellers"))), 0F, 0.0F));` |
 
 ### Recipe serializers / types (3)
 
-| Id | upstream registration (`TFRecipes.java`) |
+| Id | upstream registration (`GloamingRecipes.java`) |
 |---|---|
 | `gloamingforest:travellers_gear_modifier_shaped_recipe` | `RECIPE_SERIALIZERS.register("travellers_gear_modifier_shaped_recipe", TravellersGearModifierShapedRecipe.Serializer::new);` |
 | `gloamingforest:travellers_gear_modifier_shapeless_recipe` | `RECIPE_SERIALIZERS.register("travellers_gear_modifier_shapeless_recipe", TravellersGearModifierShapelessRecipe.Serializer::new);` |
@@ -378,18 +378,18 @@ Block states come from upstream's blockstate JSON (`multipart:` lists only the p
 
 ### Advancement triggers (1)
 
-| Id | upstream registration (`TFAdvancements.java`) |
+| Id | upstream registration (`GloamingAdvancements.java`) |
 |---|---|
 | `gloamingforest:add_modifier` | `TRIGGERS.register("add_modifier", AddModifierTrigger::new);` |
 
 ### Key bindings (4)
 
-| Id | upstream registration (`TFKeyBinds.java`) |
+| Id | upstream registration (`GloamingKeyBinds.java`) |
 |---|---|
-| `gloamingforest:item_display_map_cycle` | `register("item_display_map_cycle", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_C, TFKeyBindsCategories.TRAVELLERS_GEAR);` |
-| `gloamingforest:red_thread_vision` | `register("red_thread_vision", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_UNKNOWN, TFKeyBindsCategories.TRAVELLERS_GEAR);` |
-| `gloamingforest:swap_hotbar` | `register("swap_hotbar", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_V, TFKeyBindsCategories.TRAVELLERS_GEAR);` |
-| `gloamingforest:zoom` | `register("zoom", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_Z, TFKeyBindsCategories.TRAVELLERS_GEAR);` |
+| `gloamingforest:item_display_map_cycle` | `register("item_display_map_cycle", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_C, GloamingKeyBindsCategories.TRAVELLERS_GEAR);` |
+| `gloamingforest:red_thread_vision` | `register("red_thread_vision", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_UNKNOWN, GloamingKeyBindsCategories.TRAVELLERS_GEAR);` |
+| `gloamingforest:swap_hotbar` | `register("swap_hotbar", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_V, GloamingKeyBindsCategories.TRAVELLERS_GEAR);` |
+| `gloamingforest:zoom` | `register("zoom", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_Z, GloamingKeyBindsCategories.TRAVELLERS_GEAR);` |
 
 ### Registry entries (12)
 
@@ -482,7 +482,7 @@ See [config.md](config.md) for the section mapping; defaults and translation ids
 | `client.Item Display Modifier Settings.screenOffsetX` | `4` | `screen_offset_x` | Display X Offset — Defines the starting Y offset for all display modifiers on the screen. |
 | `client.Item Display Modifier Settings.screenOffsetY` | `4` | `screen_offset_y` | Display Y Offset — Defines the starting Y offset for all display modifiers on the screen. |
 | `client.Item Display Modifier Settings.screenScale` | `1.0D` | `screen_scale` | Display Scale — Defines the scale of all display modifiers on the screen. |
-| `client.Item Display Modifier Settings.twentyFourHourFormat` | `TFConfig.use24HourTimeDefault()` | `twenty_four_hour_format` | 24-Hour Format — If ON, the clock upgrade displays time in 24-hour format instead of 12-hour format. |
+| `client.Item Display Modifier Settings.twentyFourHourFormat` | `GloamingConfig.use24HourTimeDefault()` | `twenty_four_hour_format` | 24-Hour Format — If ON, the clock upgrade displays time in 24-hour format instead of 12-hour format. |
 
 ### subcommand (3)
 
@@ -535,13 +535,13 @@ Keys already shown above (block/item/entity names, subtitles) are not repeated. 
 | `travellers_gear.modifier.gloamingforest.haste` | Haste |
 | `travellers_gear.modifier.gloamingforest.haste.description` | Grants Haste II |
 | `travellers_gear.modifier.gloamingforest.high_jump` | High Jump |
-| `travellers_gear.modifier.gloamingforest.item_display` | Item Display (keybind: ${tfkeybinds/key.gloamingforest.item_display_map_cycle}) |
+| `travellers_gear.modifier.gloamingforest.item_display` | Item Display (keybind: ${gloamingkeybinds/key.gloamingforest.item_display_map_cycle}) |
 | `travellers_gear.modifier.gloamingforest.item_display.clock.unknown` | Time Unknown |
 | `travellers_gear.modifier.gloamingforest.item_display.compass.lodestone` | %s (%s blocks away) |
 | `travellers_gear.modifier.gloamingforest.item_display.description` | Right-click items on the Goggles to add displays |
 | `travellers_gear.modifier.gloamingforest.perfect_dodge` | Perfect Dodge |
 | `travellers_gear.modifier.gloamingforest.perfect_dodge.description` | 30% chance to dodge projectiles |
-| `travellers_gear.modifier.gloamingforest.red_thread_vision` | Red Thread Vision (keybind: ${tfkeybinds/key.gloamingforest.red_thread_vision}) |
+| `travellers_gear.modifier.gloamingforest.red_thread_vision` | Red Thread Vision (keybind: ${gloamingkeybinds/key.gloamingforest.red_thread_vision}) |
 | `travellers_gear.modifier.gloamingforest.red_thread_vision.description` | Allows you to see placed Red Thread |
 | `travellers_gear.modifier.gloamingforest.side_step` | Sidestep |
 | `travellers_gear.modifier.gloamingforest.side_step.description` | Double-tap %s or %s to do a dash |
@@ -552,14 +552,14 @@ Keys already shown above (block/item/entity names, subtitles) are not repeated. 
 | `travellers_gear.modifier.gloamingforest.step_up` | Step-Up |
 | `travellers_gear.modifier.gloamingforest.straight_ahead` | Straight Ahead |
 | `travellers_gear.modifier.gloamingforest.straight_ahead.description` | Increases forward movement speed |
-| `travellers_gear.modifier.gloamingforest.swap_hotbar` | Swap Hotbar (keybind: ${tfkeybinds/key.gloamingforest.swap_hotbar}) |
-| `travellers_gear.modifier.gloamingforest.swap_hotbar_ability` | Swap Hotbar (keybind: ${tfkeybinds/key.gloamingforest.swap_hotbar}) |
+| `travellers_gear.modifier.gloamingforest.swap_hotbar` | Swap Hotbar (keybind: ${gloamingkeybinds/key.gloamingforest.swap_hotbar}) |
+| `travellers_gear.modifier.gloamingforest.swap_hotbar_ability` | Swap Hotbar (keybind: ${gloamingkeybinds/key.gloamingforest.swap_hotbar}) |
 | `travellers_gear.modifier.gloamingforest.swap_hotbar.description` | Allows you to store and withdraw your hotbar |
 | `travellers_gear.modifier.gloamingforest.swift_swim` | Swift Swim |
 | `travellers_gear.modifier.gloamingforest.unrestrained` | Unrestrained |
 | `travellers_gear.modifier.gloamingforest.unrestrained.description` | Prevents blocks from slowing you down |
 | `travellers_gear.modifier.gloamingforest.water_walk` | Water Walk |
 | `travellers_gear.modifier.gloamingforest.water_walk.description` | Allows you to walk on Water |
-| `travellers_gear.modifier.gloamingforest.zoom` | Zoom (keybind: ${tfkeybinds/key.gloamingforest.zoom}) |
+| `travellers_gear.modifier.gloamingforest.zoom` | Zoom (keybind: ${gloamingkeybinds/key.gloamingforest.zoom}) |
 | `travellers_gear.shift_info` | Hold %s for info |
 

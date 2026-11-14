@@ -91,7 +91,7 @@ std::int64_t sessionId() {
 }
 
 /// upstream's chests are in this build (F1's skeleton through tools/families).
-bool tfChests(Context& ctx) {
+bool gloamingChests(Context& ctx) {
     if (fam::entryOf(kChest) && gf::game::blockWith(kChest) && gf::game::blockWith(kTrappedChest)) return true;
     ctx.info("no upstream chests in this build: skipped");
     return false;
@@ -304,7 +304,7 @@ GF_REGISTER_SELFTEST("families.chest_hoppers", [](Context& ctx) -> ll::coro::Cor
     // double inventory (ChestBlock#getAnalogOutputSignal: getRedstoneSignalFromContainer of both)
     // and a single chest's own; while a half is blocked (a redstone conductor on it) the comparator
     // reads 0 (getContainer(.., false) finds none) but hoppers still reach it (getContainer(.., true))
-    if (!tfChests(ctx)) co_return;
+    if (!gloamingChests(ctx)) co_return;
     auto box = co_await ctx.flatArea(6145, 5);
     auto p   = ctx.testPos(6145, 0);
     ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
@@ -463,7 +463,7 @@ GF_REGISTER_SELFTEST("families.chest_hoppers_more", [](Context& ctx) -> ll::coro
     // (DropperBlock#dispenseFrom); a hopper's first look at an unopened chest rolls its loot table
     // (RandomizableContainer#unpackLootTable(null)); a hopper minecart under a chest empties it; a
     // block hidden from hoppers (feature/ext/families/Hoppers.h) gives them nothing
-    if (!tfChests(ctx)) co_return;
+    if (!gloamingChests(ctx)) co_return;
     auto box = co_await ctx.flatArea(6100, 5);
     auto p   = ctx.testPos(6100, 0);
     ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
@@ -569,7 +569,7 @@ GF_REGISTER_SELFTEST("families.chest_persist_a_write", [](Context& ctx) -> ll::c
     // a double chest with stacks in both halves' block actors, and a chest as an earlier build left
     // it: no block actor, its stacks in F10's block data backend (families.chest_persist_b_read
     // reads them after a reload, or in the same session)
-    if (!tfChests(ctx)) co_return;
+    if (!gloamingChests(ctx)) co_return;
     auto q = ctx.testPos(6128, 1);
     ctx.require(co_await ctx.ensureLoaded(q), "test area loaded");
     auto& region = *ctx.region();
@@ -605,7 +605,7 @@ GF_REGISTER_SELFTEST("families.chest_persist_a_write", [](Context& ctx) -> ll::c
 });
 
 GF_REGISTER_SELFTEST("families.chest_persist_b_read", [](Context& ctx) -> ll::coro::CoroTask<> {
-    if (!tfChests(ctx)) co_return;
+    if (!gloamingChests(ctx)) co_return;
     auto q = ctx.testPos(6128, 1);
     ctx.require(co_await ctx.ensureLoaded(q), "test area loaded");
     auto& region = *ctx.region();
@@ -648,7 +648,7 @@ GF_REGISTER_SELFTEST("families.chest_hoppers_screen", [](Context& ctx) -> ll::co
     // client mod user's open chest screen gets fresh data after the tick a hopper filled the chest,
     // for a single chest and for a double chest opened on its LEFT half (the screen's context; the
     // hopper on that half fills the right half's first slot)
-    if (!tfChests(ctx)) co_return;
+    if (!gloamingChests(ctx)) co_return;
     auto box = co_await ctx.flatArea(6145, 5);
     auto p   = ctx.testPos(6145, 0);
     ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
@@ -749,7 +749,7 @@ GF_REGISTER_SELFTEST("families.chest_migrate_lazy", [](Context& ctx) -> ll::coro
     // covers that). A hopper's look at it moves them first: the hopper reaches a double chest of 54
     // slots with the stacks in place (not one half). A player's click opens a screen that shows them
     // where they wait (F10's reads), and the next tick moves them.
-    if (!tfChests(ctx)) co_return;
+    if (!gloamingChests(ctx)) co_return;
     auto box = co_await ctx.flatArea(6100, 5);
     auto p   = ctx.testPos(6100, 0);
     ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
@@ -798,7 +798,7 @@ GF_REGISTER_SELFTEST("families.chest_migrate_click", [](Context& ctx) -> ll::cor
     // block data stacks (F10's BlockData backend) and the next tick gives the chest its block actor
     // with them, the screen staying open and following the block actor's container from then on
     // (F10's change notices)
-    if (!tfChests(ctx)) co_return;
+    if (!gloamingChests(ctx)) co_return;
     auto box = co_await ctx.flatArea(6100, 5);
     auto p   = ctx.testPos(6100, 0);
     ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
@@ -850,7 +850,7 @@ GF_REGISTER_SELFTEST("families.chest_migrate_click_double", [](Context& ctx) -> 
     // too, on the next tick, never inside GameMode::useItemOn; meanwhile the screen shows the native
     // stacks of the left half and the block data stacks of the right half side by side (the right half
     // first: slots 0..26)
-    if (!tfChests(ctx)) co_return;
+    if (!gloamingChests(ctx)) co_return;
     auto box = co_await ctx.flatArea(6100, 5);
     auto p   = ctx.testPos(6100, 0);
     ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
@@ -914,7 +914,7 @@ GF_REGISTER_SELFTEST("families.chest_hopper_half_without_actor", [](Context& ctx
     // the left half makes no block actor inside the game's hopper code and sees the left half alone
     // that tick; the right half gets its block actor (with its block data stacks) at the end of the
     // tick, and from then on the hopper sees Java's 54-slot CompoundContainer
-    if (!tfChests(ctx)) co_return;
+    if (!gloamingChests(ctx)) co_return;
     auto box = co_await ctx.flatArea(6100, 5);
     auto p   = ctx.testPos(6100, 0);
     ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
@@ -966,7 +966,7 @@ GF_REGISTER_SELFTEST("families.chest_screen_context", [](Context& ctx) -> ll::co
     // inventory contract opened it for (feature/ext/combat/InventoryChanges.h): the half a player
     // clicked, or the half code opened it for. A click that opens nothing (sneaking with an item: the
     // item is used) leaves no screen; a screen code opens over another takes the new context
-    if (!tfChests(ctx)) co_return;
+    if (!gloamingChests(ctx)) co_return;
     auto box = co_await ctx.flatArea(6145, 5);
     auto p   = ctx.testPos(6145, 0);
     ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
@@ -1037,7 +1037,7 @@ GF_REGISTER_SELFTEST("families.chest_migrate_removed", [](Context& ctx) -> ll::c
     // the block, blockdata::onErase, and the block actor's own, DataDrivenBlockActor::onRemoved).
     // A neighbouring chunk's first tick moves such a chest's stacks into its block actor (Chests.cpp
     // settleNeighbourChests), so a comparator or a hopper next to an unticked chunk reads them.
-    if (!tfChests(ctx)) co_return;
+    if (!gloamingChests(ctx)) co_return;
     auto box = co_await ctx.flatArea(6100, 5);
     auto p   = ctx.testPos(6100, 0);
     ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");
@@ -1109,7 +1109,7 @@ GF_REGISTER_SELFTEST("families.chest_crafter", [](Context& ctx) -> ll::coro::Cor
     // finds the chest in front of the crafter and HopperBlockEntity.addItem puts the crafted stack in
     // it (a double chest: its CompoundContainer, the RIGHT half first); only what does not fit would
     // be ejected into the world
-    if (!tfChests(ctx)) co_return;
+    if (!gloamingChests(ctx)) co_return;
     auto box = co_await ctx.flatArea(6145, 5);
     auto p   = ctx.testPos(6145, 0);
     ctx.require(co_await ctx.ensureLoaded(p), "test area loaded");

@@ -3,13 +3,13 @@
   "geometry": "geometry.wolf",
   "layer": {
     "name": "winter_wolf",
-    "field": "TFModelLayers.WINTER_WOLF",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.WINTER_WOLF, () -> LayerDefinition.create(WolfModel.createMeshDefinition(CubeDeformation.NONE), 64, 32));"
+    "field": "GloamingModelLayers.WINTER_WOLF",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.WINTER_WOLF, () -> LayerDefinition.create(WolfModel.createMeshDefinition(CubeDeformation.NONE), 64, 32));"
   },
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/winterwolf",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/winterwolf.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/winterwolf.png"
     }
   ]
 }

@@ -8,7 +8,7 @@
         "lines": "entity_alphablend"
       },
       "textures": {
-        "default": "textures/entity/questcamps/tf-derived/questram_tinted",
+        "default": "textures/entity/questcamps/upstream-derived/questram_tinted",
         "lines": "textures/gloamingforest/entity/questram_lines"
       },
       "geometry": {

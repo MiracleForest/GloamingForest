@@ -1,7 +1,7 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
 //   src/main/java/gloamingforest/client/GloamingForestRenderInfo.java
-//   src/main/java/gloamingforest/client/renderer/TFSkyRenderer.java
+//   src/main/java/gloamingforest/client/renderer/GloamingSkyRenderer.java
 //   src/main/java/gloamingforest/client/event/FogHandler.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
@@ -158,7 +158,7 @@ Rgb cloudColor(float tod, float rain, float thunder) {
 
 std::vector<std::array<Vec3f, 4>> voidPlateQuads() {
     // LevelRenderer#buildSkyDisc(-16): x by signum(y) * 512, z by 512, the fan's centre at (0, y, 0);
-    // TFSkyRenderer draws it 12 higher
+    // GloamingSkyRenderer draws it 12 higher
     constexpr float                   y = -16.0f + 12.0f;
     constexpr float                   f = -512.0f;
     std::vector<std::array<Vec3f, 4>> out;

@@ -19,82 +19,82 @@
       },
       "minecraft:tags": ["minecraft:is_axe_item_destructible"],
       "minecraft:map_color": "#f7e9a3",
-      "minecraft:geometry": "geometry.tf.gloamingforest.block.carminite_builder",
+      "minecraft:geometry": "geometry.gf.gloamingforest.block.carminite_builder",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_towerdev_builder_off",
+          "texture": "gf_block_towerdev_builder_off",
           "render_method": "alpha_test"
         },
         "bottom": {
-          "texture": "tf_block_towerdev_builder_off",
+          "texture": "gf_block_towerdev_builder_off",
           "render_method": "alpha_test"
         },
         "bottom2": {
-          "texture": "tf_block_tower_device_level_1_towerdev_builder_off_1",
+          "texture": "gf_block_tower_device_level_1_towerdev_builder_off_1",
           "render_method": "alpha_test"
         },
         "bottom3": {
-          "texture": "tf_block_tower_device_level_2_towerdev_builder_off_2",
+          "texture": "gf_block_tower_device_level_2_towerdev_builder_off_2",
           "render_method": "alpha_test"
         },
         "east": {
-          "texture": "tf_block_towerdev_builder_off",
+          "texture": "gf_block_towerdev_builder_off",
           "render_method": "alpha_test"
         },
         "east2": {
-          "texture": "tf_block_tower_device_level_1_towerdev_builder_off_1",
+          "texture": "gf_block_tower_device_level_1_towerdev_builder_off_1",
           "render_method": "alpha_test"
         },
         "east3": {
-          "texture": "tf_block_tower_device_level_2_towerdev_builder_off_2",
+          "texture": "gf_block_tower_device_level_2_towerdev_builder_off_2",
           "render_method": "alpha_test"
         },
         "north": {
-          "texture": "tf_block_towerdev_builder_off",
+          "texture": "gf_block_towerdev_builder_off",
           "render_method": "alpha_test"
         },
         "north2": {
-          "texture": "tf_block_tower_device_level_1_towerdev_builder_off_1",
+          "texture": "gf_block_tower_device_level_1_towerdev_builder_off_1",
           "render_method": "alpha_test"
         },
         "north3": {
-          "texture": "tf_block_tower_device_level_2_towerdev_builder_off_2",
+          "texture": "gf_block_tower_device_level_2_towerdev_builder_off_2",
           "render_method": "alpha_test"
         },
         "south": {
-          "texture": "tf_block_towerdev_builder_off",
+          "texture": "gf_block_towerdev_builder_off",
           "render_method": "alpha_test"
         },
         "south2": {
-          "texture": "tf_block_tower_device_level_1_towerdev_builder_off_1",
+          "texture": "gf_block_tower_device_level_1_towerdev_builder_off_1",
           "render_method": "alpha_test"
         },
         "south3": {
-          "texture": "tf_block_tower_device_level_2_towerdev_builder_off_2",
+          "texture": "gf_block_tower_device_level_2_towerdev_builder_off_2",
           "render_method": "alpha_test"
         },
         "top": {
-          "texture": "tf_block_towerdev_builder_off",
+          "texture": "gf_block_towerdev_builder_off",
           "render_method": "alpha_test"
         },
         "top2": {
-          "texture": "tf_block_tower_device_level_1_towerdev_builder_off_1",
+          "texture": "gf_block_tower_device_level_1_towerdev_builder_off_1",
           "render_method": "alpha_test"
         },
         "top3": {
-          "texture": "tf_block_tower_device_level_2_towerdev_builder_off_2",
+          "texture": "gf_block_tower_device_level_2_towerdev_builder_off_2",
           "render_method": "alpha_test"
         },
         "west": {
-          "texture": "tf_block_towerdev_builder_off",
+          "texture": "gf_block_towerdev_builder_off",
           "render_method": "alpha_test"
         },
         "west2": {
-          "texture": "tf_block_tower_device_level_1_towerdev_builder_off_1",
+          "texture": "gf_block_tower_device_level_1_towerdev_builder_off_1",
           "render_method": "alpha_test"
         },
         "west3": {
-          "texture": "tf_block_tower_device_level_2_towerdev_builder_off_2",
+          "texture": "gf_block_tower_device_level_2_towerdev_builder_off_2",
           "render_method": "alpha_test"
         }
       },
@@ -104,82 +104,82 @@
       {
         "condition": "q.block_state('gloamingforest:state') == 'builder_active'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.carminite_builder_active",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.carminite_builder_active",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_towerdev_builder_on",
+              "texture": "gf_block_towerdev_builder_on",
               "render_method": "alpha_test"
             },
             "bottom": {
-              "texture": "tf_block_towerdev_builder_on",
+              "texture": "gf_block_towerdev_builder_on",
               "render_method": "alpha_test"
             },
             "bottom2": {
-              "texture": "tf_block_tower_device_level_1_towerdev_builder_on_1",
+              "texture": "gf_block_tower_device_level_1_towerdev_builder_on_1",
               "render_method": "alpha_test"
             },
             "bottom3": {
-              "texture": "tf_block_tower_device_level_2_towerdev_builder_on_2",
+              "texture": "gf_block_tower_device_level_2_towerdev_builder_on_2",
               "render_method": "alpha_test"
             },
             "east": {
-              "texture": "tf_block_towerdev_builder_on",
+              "texture": "gf_block_towerdev_builder_on",
               "render_method": "alpha_test"
             },
             "east2": {
-              "texture": "tf_block_tower_device_level_1_towerdev_builder_on_1",
+              "texture": "gf_block_tower_device_level_1_towerdev_builder_on_1",
               "render_method": "alpha_test"
             },
             "east3": {
-              "texture": "tf_block_tower_device_level_2_towerdev_builder_on_2",
+              "texture": "gf_block_tower_device_level_2_towerdev_builder_on_2",
               "render_method": "alpha_test"
             },
             "north": {
-              "texture": "tf_block_towerdev_builder_on",
+              "texture": "gf_block_towerdev_builder_on",
               "render_method": "alpha_test"
             },
             "north2": {
-              "texture": "tf_block_tower_device_level_1_towerdev_builder_on_1",
+              "texture": "gf_block_tower_device_level_1_towerdev_builder_on_1",
               "render_method": "alpha_test"
             },
             "north3": {
-              "texture": "tf_block_tower_device_level_2_towerdev_builder_on_2",
+              "texture": "gf_block_tower_device_level_2_towerdev_builder_on_2",
               "render_method": "alpha_test"
             },
             "south": {
-              "texture": "tf_block_towerdev_builder_on",
+              "texture": "gf_block_towerdev_builder_on",
               "render_method": "alpha_test"
             },
             "south2": {
-              "texture": "tf_block_tower_device_level_1_towerdev_builder_on_1",
+              "texture": "gf_block_tower_device_level_1_towerdev_builder_on_1",
               "render_method": "alpha_test"
             },
             "south3": {
-              "texture": "tf_block_tower_device_level_2_towerdev_builder_on_2",
+              "texture": "gf_block_tower_device_level_2_towerdev_builder_on_2",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_block_towerdev_builder_on",
+              "texture": "gf_block_towerdev_builder_on",
               "render_method": "alpha_test"
             },
             "top2": {
-              "texture": "tf_block_tower_device_level_1_towerdev_builder_on_1",
+              "texture": "gf_block_tower_device_level_1_towerdev_builder_on_1",
               "render_method": "alpha_test"
             },
             "top3": {
-              "texture": "tf_block_tower_device_level_2_towerdev_builder_on_2",
+              "texture": "gf_block_tower_device_level_2_towerdev_builder_on_2",
               "render_method": "alpha_test"
             },
             "west": {
-              "texture": "tf_block_towerdev_builder_on",
+              "texture": "gf_block_towerdev_builder_on",
               "render_method": "alpha_test"
             },
             "west2": {
-              "texture": "tf_block_tower_device_level_1_towerdev_builder_on_1",
+              "texture": "gf_block_tower_device_level_1_towerdev_builder_on_1",
               "render_method": "alpha_test"
             },
             "west3": {
-              "texture": "tf_block_tower_device_level_2_towerdev_builder_on_2",
+              "texture": "gf_block_tower_device_level_2_towerdev_builder_on_2",
               "render_method": "alpha_test"
             }
           },
@@ -190,82 +190,82 @@
       {
         "condition": "q.block_state('gloamingforest:state') == 'builder_inactive'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.carminite_builder",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.carminite_builder",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_towerdev_builder_off",
+              "texture": "gf_block_towerdev_builder_off",
               "render_method": "alpha_test"
             },
             "bottom": {
-              "texture": "tf_block_towerdev_builder_off",
+              "texture": "gf_block_towerdev_builder_off",
               "render_method": "alpha_test"
             },
             "bottom2": {
-              "texture": "tf_block_tower_device_level_1_towerdev_builder_off_1",
+              "texture": "gf_block_tower_device_level_1_towerdev_builder_off_1",
               "render_method": "alpha_test"
             },
             "bottom3": {
-              "texture": "tf_block_tower_device_level_2_towerdev_builder_off_2",
+              "texture": "gf_block_tower_device_level_2_towerdev_builder_off_2",
               "render_method": "alpha_test"
             },
             "east": {
-              "texture": "tf_block_towerdev_builder_off",
+              "texture": "gf_block_towerdev_builder_off",
               "render_method": "alpha_test"
             },
             "east2": {
-              "texture": "tf_block_tower_device_level_1_towerdev_builder_off_1",
+              "texture": "gf_block_tower_device_level_1_towerdev_builder_off_1",
               "render_method": "alpha_test"
             },
             "east3": {
-              "texture": "tf_block_tower_device_level_2_towerdev_builder_off_2",
+              "texture": "gf_block_tower_device_level_2_towerdev_builder_off_2",
               "render_method": "alpha_test"
             },
             "north": {
-              "texture": "tf_block_towerdev_builder_off",
+              "texture": "gf_block_towerdev_builder_off",
               "render_method": "alpha_test"
             },
             "north2": {
-              "texture": "tf_block_tower_device_level_1_towerdev_builder_off_1",
+              "texture": "gf_block_tower_device_level_1_towerdev_builder_off_1",
               "render_method": "alpha_test"
             },
             "north3": {
-              "texture": "tf_block_tower_device_level_2_towerdev_builder_off_2",
+              "texture": "gf_block_tower_device_level_2_towerdev_builder_off_2",
               "render_method": "alpha_test"
             },
             "south": {
-              "texture": "tf_block_towerdev_builder_off",
+              "texture": "gf_block_towerdev_builder_off",
               "render_method": "alpha_test"
             },
             "south2": {
-              "texture": "tf_block_tower_device_level_1_towerdev_builder_off_1",
+              "texture": "gf_block_tower_device_level_1_towerdev_builder_off_1",
               "render_method": "alpha_test"
             },
             "south3": {
-              "texture": "tf_block_tower_device_level_2_towerdev_builder_off_2",
+              "texture": "gf_block_tower_device_level_2_towerdev_builder_off_2",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_block_towerdev_builder_off",
+              "texture": "gf_block_towerdev_builder_off",
               "render_method": "alpha_test"
             },
             "top2": {
-              "texture": "tf_block_tower_device_level_1_towerdev_builder_off_1",
+              "texture": "gf_block_tower_device_level_1_towerdev_builder_off_1",
               "render_method": "alpha_test"
             },
             "top3": {
-              "texture": "tf_block_tower_device_level_2_towerdev_builder_off_2",
+              "texture": "gf_block_tower_device_level_2_towerdev_builder_off_2",
               "render_method": "alpha_test"
             },
             "west": {
-              "texture": "tf_block_towerdev_builder_off",
+              "texture": "gf_block_towerdev_builder_off",
               "render_method": "alpha_test"
             },
             "west2": {
-              "texture": "tf_block_tower_device_level_1_towerdev_builder_off_1",
+              "texture": "gf_block_tower_device_level_1_towerdev_builder_off_1",
               "render_method": "alpha_test"
             },
             "west3": {
-              "texture": "tf_block_tower_device_level_2_towerdev_builder_off_2",
+              "texture": "gf_block_tower_device_level_2_towerdev_builder_off_2",
               "render_method": "alpha_test"
             }
           },
@@ -276,82 +276,82 @@
       {
         "condition": "q.block_state('gloamingforest:state') == 'builder_timeout'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.carminite_builder_timeout",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.carminite_builder_timeout",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_towerdev_builder_timeout",
+              "texture": "gf_block_towerdev_builder_timeout",
               "render_method": "alpha_test"
             },
             "bottom": {
-              "texture": "tf_block_towerdev_builder_timeout",
+              "texture": "gf_block_towerdev_builder_timeout",
               "render_method": "alpha_test"
             },
             "bottom2": {
-              "texture": "tf_block_tower_device_level_2_towerdev_builder_timeout_1",
+              "texture": "gf_block_tower_device_level_2_towerdev_builder_timeout_1",
               "render_method": "alpha_test"
             },
             "bottom3": {
-              "texture": "tf_block_tower_device_level_3_towerdev_builder_timeout_2",
+              "texture": "gf_block_tower_device_level_3_towerdev_builder_timeout_2",
               "render_method": "alpha_test"
             },
             "east": {
-              "texture": "tf_block_towerdev_builder_timeout",
+              "texture": "gf_block_towerdev_builder_timeout",
               "render_method": "alpha_test"
             },
             "east2": {
-              "texture": "tf_block_tower_device_level_2_towerdev_builder_timeout_1",
+              "texture": "gf_block_tower_device_level_2_towerdev_builder_timeout_1",
               "render_method": "alpha_test"
             },
             "east3": {
-              "texture": "tf_block_tower_device_level_3_towerdev_builder_timeout_2",
+              "texture": "gf_block_tower_device_level_3_towerdev_builder_timeout_2",
               "render_method": "alpha_test"
             },
             "north": {
-              "texture": "tf_block_towerdev_builder_timeout",
+              "texture": "gf_block_towerdev_builder_timeout",
               "render_method": "alpha_test"
             },
             "north2": {
-              "texture": "tf_block_tower_device_level_2_towerdev_builder_timeout_1",
+              "texture": "gf_block_tower_device_level_2_towerdev_builder_timeout_1",
               "render_method": "alpha_test"
             },
             "north3": {
-              "texture": "tf_block_tower_device_level_3_towerdev_builder_timeout_2",
+              "texture": "gf_block_tower_device_level_3_towerdev_builder_timeout_2",
               "render_method": "alpha_test"
             },
             "south": {
-              "texture": "tf_block_towerdev_builder_timeout",
+              "texture": "gf_block_towerdev_builder_timeout",
               "render_method": "alpha_test"
             },
             "south2": {
-              "texture": "tf_block_tower_device_level_2_towerdev_builder_timeout_1",
+              "texture": "gf_block_tower_device_level_2_towerdev_builder_timeout_1",
               "render_method": "alpha_test"
             },
             "south3": {
-              "texture": "tf_block_tower_device_level_3_towerdev_builder_timeout_2",
+              "texture": "gf_block_tower_device_level_3_towerdev_builder_timeout_2",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_block_towerdev_builder_timeout",
+              "texture": "gf_block_towerdev_builder_timeout",
               "render_method": "alpha_test"
             },
             "top2": {
-              "texture": "tf_block_tower_device_level_2_towerdev_builder_timeout_1",
+              "texture": "gf_block_tower_device_level_2_towerdev_builder_timeout_1",
               "render_method": "alpha_test"
             },
             "top3": {
-              "texture": "tf_block_tower_device_level_3_towerdev_builder_timeout_2",
+              "texture": "gf_block_tower_device_level_3_towerdev_builder_timeout_2",
               "render_method": "alpha_test"
             },
             "west": {
-              "texture": "tf_block_towerdev_builder_timeout",
+              "texture": "gf_block_towerdev_builder_timeout",
               "render_method": "alpha_test"
             },
             "west2": {
-              "texture": "tf_block_tower_device_level_2_towerdev_builder_timeout_1",
+              "texture": "gf_block_tower_device_level_2_towerdev_builder_timeout_1",
               "render_method": "alpha_test"
             },
             "west3": {
-              "texture": "tf_block_tower_device_level_3_towerdev_builder_timeout_2",
+              "texture": "gf_block_tower_device_level_3_towerdev_builder_timeout_2",
               "render_method": "alpha_test"
             }
           },

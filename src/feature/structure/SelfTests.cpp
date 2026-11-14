@@ -451,7 +451,7 @@ GF_REGISTER_SELFTEST("structure.piece_coordinates", [](Context& ctx) {
     ctx.check(vanilla.getWorldPos(1, 2, 3) == BlockPos(106, 12, 201), "vanilla WEST");
     vanilla.orientation = Orientation::East;
     ctx.check(vanilla.getWorldPos(1, 2, 3) == BlockPos(103, 12, 201), "vanilla EAST");
-    // TFStructureComponentOld#getWorldX/Z and setOrientation
+    // GloamingStructureComponentOld#getWorldX/Z and setOrientation
     TestPiece north(box, Orientation::North), south(box, Orientation::South), west(box, Orientation::West), east(box, Orientation::East), none(box, std::nullopt);
     ctx.check(north.getWorldPos(1, 2, 3) == BlockPos(108, 12, 211) && north.rotation == Rotation::None, "upstream NORTH");
     ctx.check(south.getWorldPos(1, 2, 3) == BlockPos(101, 12, 203) && south.rotation == Rotation::Clockwise180, "upstream SOUTH");
@@ -1052,7 +1052,7 @@ GF_REGISTER_SELFTEST("structure.maze", [](Context& ctx) {
 
 GF_REGISTER_SELFTEST("structure.hollow_hill", [](Context& ctx) {
     MemoryRegion      mem;
-    bases::HollowHill hill("gloamingforest:TFHill", 0, 1, 0, 0, 0, "gloamingforest:small_hollow_hill");
+    bases::HollowHill hill("gloamingforest:GloamingHill", 0, 1, 0, 0, 0, "gloamingforest:small_hollow_hill");
     ctx.check(hill.getOrientation() == std::optional<Orientation>(Orientation::South), "hills face south");
     // a stone dome with water in it, so the drain and the speleothems have work
     BlockBox box = hill.bbox;
@@ -1066,7 +1066,7 @@ GF_REGISTER_SELFTEST("structure.hollow_hill", [](Context& ctx) {
     hill.postProcess(mem, random, box, BlockPos{0, 0, 0});
     checkGolden(ctx, "hollow_hill_small", mem.hash(BlockBox{box.minX, box.minY - 1, box.minZ, box.maxX, box.maxY + 1, box.maxZ}));
     auto saved  = hill.save();
-    bases::HollowHill back("gloamingforest:TFHill", 0, 1, 0, 0, 0, "x");
+    bases::HollowHill back("gloamingforest:GloamingHill", 0, 1, 0, 0, 0, "x");
     back.load(saved);
     ctx.check(back.save() == saved, "a hill saves and loads back");
 });
@@ -1088,7 +1088,7 @@ GF_REGISTER_SELFTEST("structure.tower", [](Context& ctx) {
     }
     std::string layout;
     for (auto const& [t, n] : types) layout += t + "=" + std::to_string(n) + " ";
-    ctx.check(types["gloamingforest:TFLTWin"] > 0, "wings grow from the main tower");
+    ctx.check(types["gloamingforest:GloamingLTWin"] > 0, "wings grow from the main tower");
     ctx.check(types.size() >= 4, "wings, beards and roofs (" + layout + ")");
     checkGolden(ctx, "tower_layout", layout + std::to_string(all.minX) + "," + std::to_string(all.minZ) + "," + std::to_string(all.maxX) + "," +
                                          std::to_string(all.maxY) + "," + std::to_string(all.maxZ));
@@ -1100,10 +1100,10 @@ GF_REGISTER_SELFTEST("structure.tower", [](Context& ctx) {
     checkGolden(ctx, "tower_blocks", mem.hash(all));
     // persistence of a wing
     for (auto const& p : pieces)
-        if (p->typeId == "gloamingforest:TFLTWin") {
+        if (p->typeId == "gloamingforest:GloamingLTWin") {
             auto&           wing = static_cast<bases::TowerWing&>(*p);
             auto            saved = wing.save();
-            bases::TowerWing copy("gloamingforest:TFLTWin", 0, 0, 0, 0, 3, 6, Orientation::North);
+            bases::TowerWing copy("gloamingforest:GloamingLTWin", 0, 0, 0, 0, 3, 6, Orientation::North);
             copy.load(saved);
             ctx.check(copy.save() == saved, "a tower wing saves and loads back");
             break;
@@ -1337,12 +1337,12 @@ std::string boxText(double const* b) {
 
 /// The box of a painting is upstream's box for its block and facing: the same center and the same width
 /// and height (Bedrock insets a painting's box by 1/32 at each edge).
-bool sameBox(double const* actual, double const* tf, Orientation facing) {
+bool sameBox(double const* actual, double const* upsrc, Orientation facing) {
     for (int i = 0; i < 3; i++)
-        if (std::abs((actual[i] + actual[i + 3]) / 2 - (tf[i] + tf[i + 3]) / 2) > 0.05) return false;
+        if (std::abs((actual[i] + actual[i + 3]) / 2 - (upsrc[i] + upsrc[i + 3]) / 2) > 0.05) return false;
     bool alongX = facing == Orientation::East || facing == Orientation::West;
     int  wide   = alongX ? 2 : 0; // the axis the painting's width lies along
-    return std::abs((actual[wide + 3] - actual[wide]) - (tf[wide + 3] - tf[wide])) < 0.07 && std::abs((actual[4] - actual[1]) - (tf[4] - tf[1])) < 0.07;
+    return std::abs((actual[wide + 3] - actual[wide]) - (upsrc[wide + 3] - upsrc[wide])) < 0.07 && std::abs((actual[4] - actual[1]) - (upsrc[4] - upsrc[1])) < 0.07;
 }
 
 /// A painting template: a 3 x 3 stone wall at z 0, air in front at z 1, a 2 x 2 painting (baroque)
@@ -1411,14 +1411,14 @@ GF_REGISTER_SELFTEST("structure.paintings", [](Context& ctx) -> ll::coro::CoroTa
     // which block Bedrock's placement position is: the box the game gives a painting placed from
     // the covered block and from the wall block, against upstream's box for the covered block
     {
-        double tf[6];
-        paintings::boundingBox(front, Orientation::South, kebabVariant, tf);
+        double upsrc[6];
+        paintings::boundingBox(front, Orientation::South, kebabVariant, upsrc);
         auto covered = blockentities::paintingBoxFor(front, Orientation::South, "kebab");
         auto wall    = blockentities::paintingBoxFor(BlockPos{front.x, front.y, front.z - 1}, Orientation::South, "kebab");
-        ctx.info("upstream box " + boxText(tf) + "; placed from the covered block " + (covered ? boxText(covered->data()) : std::string("-")) +
+        ctx.info("upstream box " + boxText(upsrc) + "; placed from the covered block " + (covered ? boxText(covered->data()) : std::string("-")) +
                  ", from the wall " + (wall ? boxText(wall->data()) : std::string("-")));
         auto used = blockentities::paintingBoxFor(blockentities::paintingPlacement(front, Orientation::South), Orientation::South, "kebab");
-        ctx.check(used && sameBox(used->data(), tf, Orientation::South), "the placement position F7 gives the game yields upstream's box");
+        ctx.check(used && sameBox(used->data(), upsrc, Orientation::South), "the placement position F7 gives the game yields upstream's box");
     }
     int before = 0;
     {
@@ -1468,11 +1468,11 @@ GF_REGISTER_SELFTEST("structure.paintings", [](Context& ctx) -> ll::coro::CoroTa
     for (auto* a : overlapDrop) a->despawn();
     if (kebab) {
         // where it hangs: upstream's box for the requested block
-        double tf[6];
-        paintings::boundingBox(front, Orientation::South, kebabVariant, tf);
+        double upsrc[6];
+        paintings::boundingBox(front, Orientation::South, kebabVariant, upsrc);
         AABB const& b = kebab->getAABB();
         double      actual[6]{b.min.x, b.min.y, b.min.z, b.max.x, b.max.y, b.max.z};
-        ctx.check(sameBox(actual, tf, Orientation::South), "the kebab hangs where upstream hangs it: " + boxText(actual) + ", upstream " + boxText(tf));
+        ctx.check(sameBox(actual, upsrc, Orientation::South), "the kebab hangs where upstream hangs it: " + boxText(actual) + ", upstream " + boxText(upsrc));
         auto d = blockentities::describePainting(*kebab);
         ctx.check(d && d->block == front && d->facing == Orientation::South && d->variant == "minecraft:kebab", "the painting reads back as its block, facing and variant");
         // structure_util capture keeps it: the template's painting entity names the block it covers
@@ -1489,11 +1489,11 @@ GF_REGISTER_SELFTEST("structure.paintings", [](Context& ctx) -> ll::coro::CoroTa
     }
     ctx.check(baroque != nullptr, "the template's 2 x 2 painting hangs (baroque)");
     if (baroque) {
-        double tf[6];
-        paintings::boundingBox(templatePainting, Orientation::West, baroqueVariant, tf);
+        double upsrc[6];
+        paintings::boundingBox(templatePainting, Orientation::West, baroqueVariant, upsrc);
         AABB const& b = baroque->getAABB();
         double      actual[6]{b.min.x, b.min.y, b.min.z, b.max.x, b.max.y, b.max.z};
-        ctx.check(sameBox(actual, tf, Orientation::West), "the rotated template painting covers its block, facing west: " + boxText(actual) + ", upstream " + boxText(tf));
+        ctx.check(sameBox(actual, upsrc, Orientation::West), "the rotated template painting covers its block, facing west: " + boxText(actual) + ", upstream " + boxText(upsrc));
     }
     auto dropped = itemsIn(*source, BlockBox{noWall.x - 1, noWall.y - 1, noWall.z - 1, noWall.x + 1, noWall.y + 1, noWall.z + 1}, "minecraft:painting");
     ctx.check(!dropped.empty(), "the painting the game refused dropped as a painting item");

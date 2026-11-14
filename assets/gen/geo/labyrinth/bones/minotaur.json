@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.minotaur",
   "layer": {
     "name": "minotaur",
-    "field": "TFModelLayers.MINOTAUR",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.MINOTAUR, MinotaurModel::checkForPack);"
+    "field": "GloamingModelLayers.MINOTAUR",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.MINOTAUR, MinotaurModel::checkForPack);"
   },
   "texture_size": [64, 32],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/minotaur",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/minotaur.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/minotaur.png"
     }
   ],
   "bones": [

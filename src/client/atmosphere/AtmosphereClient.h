@@ -37,7 +37,7 @@ void setPreview(nlohmann::json const& msg);
 [[nodiscard]] bool cameraInFluidNow();
 /// Sets upstream's sky provider for the Gloaming Forest dimension (once it is known).
 void installProvider();
-/// TFConfig#getValidAuroraBiomes now: the config's biomes that parse and that the world knows (as
+/// GloamingConfig#getValidAuroraBiomes now: the config's biomes that parse and that the world knows (as
 /// Bedrock names them: vanilla ones without "minecraft:").
 [[nodiscard]] std::vector<std::string> validAuroraBiomes();
 /// The configured auroraBiomes as written in the client's config.

@@ -1,47 +1,47 @@
 {
-  "tf_finalcastle_door_overlay_yellow": {
+  "gf_finalcastle_door_overlay_yellow": {
     "textures": {
       "path": "textures/gloamingforest/block/castle_door_rune_corners",
       "tint_color": "#ffff00"
     }
   },
-  "tf_finalcastle_door_connected_yellow": {
+  "gf_finalcastle_door_connected_yellow": {
     "textures": {
       "path": "textures/gloamingforest/block/castle_door_rune_ctm",
       "tint_color": "#ffff00"
     }
   },
-  "tf_finalcastle_door_overlay_violet": {
+  "gf_finalcastle_door_overlay_violet": {
     "textures": {
       "path": "textures/gloamingforest/block/castle_door_rune_corners",
       "tint_color": "#4b0082"
     }
   },
-  "tf_finalcastle_door_connected_violet": {
+  "gf_finalcastle_door_connected_violet": {
     "textures": {
       "path": "textures/gloamingforest/block/castle_door_rune_ctm",
       "tint_color": "#4b0082"
     }
   },
-  "tf_finalcastle_door_overlay_pink": {
+  "gf_finalcastle_door_overlay_pink": {
     "textures": {
       "path": "textures/gloamingforest/block/castle_door_rune_corners",
       "tint_color": "#ff00ff"
     }
   },
-  "tf_finalcastle_door_connected_pink": {
+  "gf_finalcastle_door_connected_pink": {
     "textures": {
       "path": "textures/gloamingforest/block/castle_door_rune_ctm",
       "tint_color": "#ff00ff"
     }
   },
-  "tf_finalcastle_door_overlay_blue": {
+  "gf_finalcastle_door_overlay_blue": {
     "textures": {
       "path": "textures/gloamingforest/block/castle_door_rune_corners",
       "tint_color": "#00ffff"
     }
   },
-  "tf_finalcastle_door_connected_blue": {
+  "gf_finalcastle_door_connected_blue": {
     "textures": {
       "path": "textures/gloamingforest/block/castle_door_rune_ctm",
       "tint_color": "#00ffff"

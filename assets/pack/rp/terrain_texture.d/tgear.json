@@ -1,5 +1,5 @@
 {
-  "tf_tgear_red_thread": {
-    "textures": "textures/gloamingforest/entity/tgear/tf-derived/red_thread"
+  "gf_tgear_red_thread": {
+    "textures": "textures/gloamingforest/entity/tgear/upstream-derived/red_thread"
   }
 }

@@ -1,6 +1,6 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/init/TFStructureProcessors.java
+//   src/main/java/gloamingforest/init/GloamingStructureProcessors.java
 //   src/main/java/gloamingforest/world/components/processors/BoxCuttingProcessor.java
 //   src/main/java/gloamingforest/world/components/processors/CobbleVariants.java
 //   src/main/java/gloamingforest/world/components/processors/InfestBlocksProcessor.java
@@ -245,7 +245,7 @@ std::optional<BlockInfo> softReplace(Region& region, BlockInfo const&, BlockInfo
     return std::nullopt;
 }
 
-/// EntityType#getWidth of 1.21.1 (vanilla) and upstream 4.8 (TFEntities) mobs, for SpawnerProcessor's
+/// EntityType#getWidth of 1.21.1 (vanilla) and upstream 4.8 (GloamingEntities) mobs, for SpawnerProcessor's
 /// entity_width_max; 0 for an unknown type (no rescale, as upstream's orElse(0f)).
 float entityWidth(std::string const& id) {
     static std::unordered_map<std::string, float> const widths{

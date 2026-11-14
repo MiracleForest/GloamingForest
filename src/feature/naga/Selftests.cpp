@@ -174,7 +174,7 @@ private:
 
 // ---- the entity ------------------------------------------------------------------------------------
 
-// TFEntities.NAGA and Naga#registerAttributes (tests/golden/mobs.json) plus finalizeSpawn's
+// GloamingEntities.NAGA and Naga#registerAttributes (tests/golden/mobs.json) plus finalizeSpawn's
 // difficulty health boost: EASY 120, NORMAL 200, HARD 250.
 GF_REGISTER_SELFTEST("naga.spawn_health", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto box = co_await ctx.flatArea(2000, 12);
@@ -886,7 +886,7 @@ GF_REGISTER_SELFTEST("naga.death", [](Context& ctx) -> ll::coro::CoroTask<> {
 });
 
 #ifdef GF_CLIENT
-// TFMapDecorations.NAGA_COURTYARD: the client draws the decoration with upstream's map icon.
+// GloamingMapDecorations.NAGA_COURTYARD: the client draws the decoration with upstream's map icon.
 GF_REGISTER_SELFTEST("naga.map_icon", [](Context& ctx) {
     auto icon = gf::client::maps::iconOf("gloamingforest:naga_courtyard");
     ctx.check(icon == "textures/gloamingforest/map/decorations/naga_courtyard", "the naga_courtyard map decoration has upstream's icon (" + icon + ")");
@@ -994,14 +994,14 @@ GF_REGISTER_SELFTEST("naga.courtyard_start", [](Context& ctx) {
     auto pieces = gf::landmark::ext::startPieces(*forced);
     std::map<std::string, int> types;
     for (auto const& p : pieces) types[p.type]++;
-    ctx.check(!pieces.empty() && pieces.front().type == "gloamingforest:TFNCMn", "CourtyardMain is the first piece");
+    ctx.check(!pieces.empty() && pieces.front().type == "gloamingforest:GloamingNCMn", "CourtyardMain is the first piece");
     ctx.check(pieces.size() >= 120 && pieces.size() <= 400, "the courtyard has " + std::to_string(pieces.size()) + " pieces");
-    ctx.check(types["gloamingforest:TFJigsawTemplate"] == 1, "the spawner piece from pool courtyard/center");
-    ctx.check(types["gloamingforest:TFNCWC"] == 8 && types["gloamingforest:TFNCWA"] == 4, "8 outer and 4 inner wall corners");
-    ctx.check(types["gloamingforest:TFNCPa"] > 0 && types["gloamingforest:TFNCWl"] > 0, "paths and walls");
+    ctx.check(types["gloamingforest:GloamingJigsawTemplate"] == 1, "the spawner piece from pool courtyard/center");
+    ctx.check(types["gloamingforest:GloamingNCWC"] == 8 && types["gloamingforest:GloamingNCWA"] == 4, "8 outer and 4 inner wall corners");
+    ctx.check(types["gloamingforest:GloamingNCPa"] > 0 && types["gloamingforest:GloamingNCWl"] > 0, "paths and walls");
     bool spawnerAtCenter = false;
     for (auto const& p : pieces)
-        if (p.type == "gloamingforest:TFJigsawTemplate") spawnerAtCenter = p.box.contains(forced->center.x + 1, p.box.minY, forced->center.z + 1);
+        if (p.type == "gloamingforest:GloamingJigsawTemplate") spawnerAtCenter = p.box.contains(forced->center.x + 1, p.box.minY, forced->center.z + 1);
     ctx.check(spawnerAtCenter, "the spawner dais is at the courtyard's center");
 });
 
@@ -1198,14 +1198,14 @@ GF_REGISTER_SELFTEST("naga.display_courtyard", [](Context& ctx) -> ll::coro::Cor
 
 namespace {
 
-/// tfEnforcedProgression for the length of a test.
+/// gloamingEnforcedProgression for the length of a test.
 struct WalkEnforcedScope {
     bool previous = false;
     WalkEnforcedScope() {
-        previous = gf::gamerules::getBool("tfEnforcedProgression");
-        gf::gamerules::set("tfEnforcedProgression", true);
+        previous = gf::gamerules::getBool("gloamingEnforcedProgression");
+        gf::gamerules::set("gloamingEnforcedProgression", true);
     }
-    ~WalkEnforcedScope() { gf::gamerules::set("tfEnforcedProgression", previous); }
+    ~WalkEnforcedScope() { gf::gamerules::set("gloamingEnforcedProgression", previous); }
 };
 
 /// The landmark of a boss against upstream's structure record (LandmarkStructure: AdvancementLockConfig,

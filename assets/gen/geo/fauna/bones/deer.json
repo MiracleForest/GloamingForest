@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.deer",
   "layer": {
     "name": "deer",
-    "field": "TFModelLayers.DEER",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.DEER, DeerModel::checkForPack);"
+    "field": "GloamingModelLayers.DEER",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.DEER, DeerModel::checkForPack);"
   },
   "texture_size": [64, 32],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/wilddeer",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/wilddeer.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/wilddeer.png"
     }
   ],
   "bones": [

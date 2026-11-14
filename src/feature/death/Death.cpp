@@ -16,7 +16,7 @@
 //      the armour (head, chest, legs, feet) and the off-hand, in that order, as the player's
 //      real slot stacks (a keeper may compare addresses with the player's inventory to know the
 //      slot); a stack a keeper keeps leaves the inventory and is stored in the world DB
-//      ("gf:combat:kept:<uuid>", upstream's TFCharmInventory persistent tag). Items in the
+//      ("gf:combat:kept:<uuid>", upstream's GloamingCharmInventory persistent tag). Items in the
 //      gloamingforest:kept_on_death tag are always kept (the lowest keeper).
 //   3. `onDropsRemaining` handlers get the stacks still in the inventory and may take any of them
 //      (the keepsake casket); what they leave is dropped by the game.

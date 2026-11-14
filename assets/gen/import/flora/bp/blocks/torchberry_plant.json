@@ -24,14 +24,14 @@
         "destroy_chance_modifier": 100
       },
       "minecraft:collision_box": false,
-      "minecraft:geometry": "geometry.tf.minecraft.block.cross",
+      "minecraft:geometry": "geometry.gf.minecraft.block.cross",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_torchberry_plant",
+          "texture": "gf_block_torchberry_plant",
           "render_method": "alpha_test"
         },
         "cross": {
-          "texture": "tf_block_torchberry_plant",
+          "texture": "gf_block_torchberry_plant",
           "render_method": "alpha_test"
         }
       },
@@ -45,14 +45,14 @@
       {
         "condition": "!q.block_state('gloamingforest:has_torchberries')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.cross",
+          "minecraft:geometry": "geometry.gf.minecraft.block.cross",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_torchberry_plant",
+              "texture": "gf_block_torchberry_plant",
               "render_method": "alpha_test"
             },
             "cross": {
-              "texture": "tf_block_torchberry_plant",
+              "texture": "gf_block_torchberry_plant",
               "render_method": "alpha_test"
             }
           },
@@ -65,18 +65,18 @@
       {
         "condition": "q.block_state('gloamingforest:has_torchberries')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.torchberry_plant",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.torchberry_plant",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_torchberry_plant",
+              "texture": "gf_block_torchberry_plant",
               "render_method": "alpha_test"
             },
             "cross": {
-              "texture": "tf_block_torchberry_plant",
+              "texture": "gf_block_torchberry_plant",
               "render_method": "alpha_test"
             },
             "cross2": {
-              "texture": "tf_block_torchberry_plant_glow",
+              "texture": "gf_block_torchberry_plant_glow",
               "render_method": "alpha_test"
             }
           },

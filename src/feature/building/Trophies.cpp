@@ -4,7 +4,7 @@
 //   src/main/java/gloamingforest/block/TrophyBlock.java
 //   src/main/java/gloamingforest/block/TrophyWallBlock.java
 //   src/main/java/gloamingforest/item/TrophyItem.java
-//   src/main/java/gloamingforest/dispenser/TFDispenserBehaviors.java
+//   src/main/java/gloamingforest/dispenser/GloamingDispenserBehaviors.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).

@@ -10,7 +10,7 @@
         "default": "textures/misc/missing_texture"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.towerwood_borer"
+        "default": "geometry.gf.skeleton.towerwood_borer"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

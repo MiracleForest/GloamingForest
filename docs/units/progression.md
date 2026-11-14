@@ -11,7 +11,7 @@ The criteria engine reads these keys (an id may be a string or an object with `i
 
 | Trigger | Fired by | Data the engine reads |
 |---|---|---|
-| `gloamingforest:make_tf_portal` | F4 | none |
+| `gloamingforest:make_gf_portal` | F4 | none |
 | `gloamingforest:hurt_boss` | F8 (boss fight participants, also the group advancement on death) | `entity` (`hurt_entity`, `boss`, `type`): the boss's entity id |
 | `gloamingforest:kill_bug` | U6 | `bug` or `block`: the bug's block id |
 | `gloamingforest:broke_glass_sword` | U8 | none |

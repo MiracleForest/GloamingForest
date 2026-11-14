@@ -1,13 +1,13 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/config/TFCommonConfig.java
-//   src/main/java/gloamingforest/config/TFConfig.java
+//   src/main/java/gloamingforest/config/GloamingCommonConfig.java
+//   src/main/java/gloamingforest/config/GloamingConfig.java
 //   src/main/java/gloamingforest/network/SyncUncraftingTableConfigPacket.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// Config section "uncraftmaps" and its sync to companions (TFConfig#syncUncraftingConfig: on
+// Config section "uncraftmaps" and its sync to companions (GloamingConfig#syncUncraftingConfig: on
 // login and after a config reload, SyncUncraftingTableConfigPacket to every player).
 #include "feature/uncraftmaps/Config.h"
 
@@ -106,7 +106,7 @@ public:
         net::onCompanionJoined([](Player& p) { syncTo(p); });
         gf::config::onReload([] { syncAll(); });
         // UncraftingTableCondition (recipe condition of gloamingforest:uncrafting_table):
-        // !TFConfig.disableEntireTable
+        // !GloamingConfig.disableEntireTable
         recipes::ext::registerCondition("gloamingforest:uncrafting_table_enabled", [](nlohmann::json const&) { return !config().disableUncraftingTable; });
         // The same condition on the table's own BP crafting recipe (Bedrock loads it whatever the
         // config): a special crafting gate over that layout refuses the craft while the table is

@@ -66,6 +66,6 @@
 {"lattice_chunk00", "0,0;-3,-1;0,3;-3,1;0,7;-3,5;0,10;-3,8;6,0;-3,12;6,3;3,-1;6,7;3,1;6,10;3,5;3,8;3,12;"},
 {"maze_6x6", "a900f988d15e0ff5"},
 {"hollow_hill_small", "7b9a9299709faca8"},
-{"tower_layout", "gloamingforest:TFLTBA=34 gloamingforest:TFLTBea=12 gloamingforest:TFLTBri=7 gloamingforest:TFLTMai=1 gloamingforest:TFLTOut=4 gloamingforest:TFLTRAS=20 gloamingforest:TFLTRF=11 gloamingforest:TFLTRGF=3 gloamingforest:TFLTRPO=6 gloamingforest:TFLTRSF=4 gloamingforest:TFLTRSt=4 gloamingforest:TFLTRStO=3 gloamingforest:TFLTWin=46 -16,-21,39,144,39"},
+{"tower_layout", "gloamingforest:GloamingLTBA=34 gloamingforest:GloamingLTBea=12 gloamingforest:GloamingLTBri=7 gloamingforest:GloamingLTMai=1 gloamingforest:GloamingLTOut=4 gloamingforest:GloamingLTRAS=20 gloamingforest:GloamingLTRF=11 gloamingforest:GloamingLTRGF=3 gloamingforest:GloamingLTRPO=6 gloamingforest:GloamingLTRSF=4 gloamingforest:GloamingLTRSt=4 gloamingforest:GloamingLTRStO=3 gloamingforest:GloamingLTWin=46 -16,-21,39,144,39"},
 {"tower_blocks", "7f419aede8b5cfc3"},
 {"component_helpers", "c7caf7366f3b8f18"},

@@ -1,6 +1,6 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/enums/extensions/TFBoatTypeEnumExtension.java
+//   src/main/java/gloamingforest/enums/extensions/GloamingBoatTypeEnumExtension.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -87,10 +87,10 @@ void destroyWith(Actor& boat, bool chest, Origin&& origin) {
         return;
     }
     auto const& fn = replacement();
-    std::optional<std::string> tf;
-    if (fn && !boat.getDimensionBlockSource().getLevel().isClientSide()) tf = fn(boat);
-    std::string expected = tf ? expectedDrop(boat, chest) : std::string();
-    if (!tf) {
+    std::optional<std::string> upsrc;
+    if (fn && !boat.getDimensionBlockSource().getLevel().isClientSide()) upsrc = fn(boat);
+    std::string expected = upsrc ? expectedDrop(boat, chest) : std::string();
+    if (!upsrc) {
         origin();
         return;
     }
@@ -135,14 +135,14 @@ void destroyWith(Actor& boat, bool chest, Origin&& origin) {
         Vec3 motion = a->getPosDelta();
         int  delay  = a->pickupDelay();
         a->remove();
-        if (auto s = game::items::make(*tf, 1)) {
+        if (auto s = game::items::make(*upsrc, 1)) {
             // the same spot, motion and pickup delay as the game's drop
             if (auto* fresh = region.getLevel().getSpawner().spawnItem(region, *s, nullptr, at, 0)) {
                 static_cast<ItemActor*>(fresh)->pickupDelay() = delay;
                 const_cast<Vec3&>(fresh->getPosDelta())       = motion;
             }
         }
-        log().info("woodwork: a destroyed {} dropped {}", boat.getTypeName(), *tf);
+        log().info("woodwork: a destroyed {} dropped {}", boat.getTypeName(), *upsrc);
         return; // one per boat
     }
 }

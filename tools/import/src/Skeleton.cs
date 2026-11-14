@@ -1,5 +1,5 @@
 // GloamingForest import tool (contract "import", unit F1): the content skeleton (items, block items with
-// 2D icons, entities with placeholder visuals and spawn eggs), the creative catalog (TFCreativeTabs),
+// 2D icons, entities with placeholder visuals and spawn eggs), the creative catalog (GloamingCreativeTabs),
 // block families, particle and sound-event skeletons, and the id list the in-game selftests check.
 using System;
 using System.Collections.Generic;
@@ -29,7 +29,7 @@ namespace GfImport
                 var layers = Enumerable.Range(0, 5).Select(i => m.Resolve("#layer" + i)).Where(x => x != null).ToList();
                 tex = layers.FirstOrDefault(l => l.StartsWith("gloamingforest:", StringComparison.Ordinal)) ?? layers.FirstOrDefault();
             }
-            if (tex == null && TfTextures.ContainsKey("gloamingforest:item/" + id)) tex = "gloamingforest:item/" + id;
+            if (tex == null && GloamingTextures.ContainsKey("gloamingforest:item/" + id)) tex = "gloamingforest:item/" + id;
             if (tex == null && m != null) tex = m.Particle;
             return tex == null ? null : UseTexture(tex, owner, "item");
         }
@@ -70,7 +70,7 @@ namespace GfImport
         public void ImportItems()
         {
             var inTabs = new HashSet<string>(Tabs.SelectMany(t => t.Items), StringComparer.Ordinal);
-            // items registered in TFItems (some share their id with the block they place)
+            // items registered in GloamingItems (some share their id with the block they place)
             foreach (var full in Ids("item"))
             {
                 string id = full.Substring("gloamingforest:".Length);
@@ -134,7 +134,7 @@ namespace GfImport
             string squash = id.Replace("_", "");
             if (entityTextures == null)
             {
-                entityTextures = TfTextures.Keys.Where(k => k.StartsWith("gloamingforest:entity/", StringComparison.Ordinal)).OrderBy(k => k, StringComparer.Ordinal).ToList();
+                entityTextures = GloamingTextures.Keys.Where(k => k.StartsWith("gloamingforest:entity/", StringComparison.Ordinal)).OrderBy(k => k, StringComparer.Ordinal).ToList();
                 // entity textures sit directly in textures/entity (or in a folder named after the entity);
                 // banner, boat, chest, shield and sign folders hold block / item textures
                 topEntityTextures = entityTextures.Where(k => k.IndexOf('/', "gloamingforest:entity/".Length) < 0).ToList();
@@ -157,7 +157,7 @@ namespace GfImport
                 string id = full.Substring("gloamingforest:".Length);
                 string owner = OwnerOf("entity", full);
                 JEntity e;
-                if (!JEntities.TryGetValue(id, out e)) { Warn("entity " + id + " not found in TFEntities.java"); e = new JEntity { Id = id }; }
+                if (!JEntities.TryGetValue(id, out e)) { Warn("entity " + id + " not found in GloamingEntities.java"); e = new JEntity { Id = id }; }
                 // upstream registers a spawn egg only for the entities owners.tsv lists one for (make(..., 0, 0) has none)
                 e.HasEgg = OwnerOf("spawn_egg", full + "_spawn_egg") != null;
                 var comps = J.Obj();
@@ -185,9 +185,9 @@ namespace GfImport
                 {
                     UseTexture(tex, owner, "path");
                     int w, h;
-                    if (Png.TrySize(File.ReadAllBytes(TfTextures[tex]), out w, out h)) { tw = w; th = h; }
+                    if (Png.TrySize(File.ReadAllBytes(GloamingTextures[tex]), out w, out h)) { tw = w; th = h; }
                 }
-                string geoId = "geometry.tf.skeleton." + id;
+                string geoId = "geometry.gf.skeleton." + id;
                 double bw = Math.Max(1, Math.Round(e.Width * 16)), bh = Math.Max(1, Math.Round(e.Height * 16));
                 var cube = J.Obj().Set("origin", J.Arr(new[] { J.Num(-bw / 2), J.Num(0), J.Num(-bw / 2) }))
                     .Set("size", J.Arr(new[] { J.Num(bw), J.Num(bh), J.Num(bw) }))
@@ -326,8 +326,8 @@ namespace GfImport
                 // waterloggable, in the contract's order of specificity)
                 var traits = Traits(bi, climbable);
                 if (fam == null)
-                    foreach (var tf in new[] { "climbable", "lightable", "snowloggable", "connected_texture", "waterloggable" })
-                        if (traits.Contains(tf)) { fam = tf; break; }
+                    foreach (var upsrc in new[] { "climbable", "lightable", "snowloggable", "connected_texture", "waterloggable" })
+                        if (traits.Contains(upsrc)) { fam = upsrc; break; }
                 bi.Family = fam;
                 bi.Traits = traits;
             }
@@ -357,7 +357,7 @@ namespace GfImport
                     var src = JBlocks.Values.FirstOrDefault(b => b.Const == cm.Groups[1].Value);
                     if (src != null) p.Set("copyOf", "gloamingforest:" + src.Id);
                 }
-                var wm = Regex.Match(bi.J.Stmt ?? "", @"TFWoodTypes\.(\w+)");
+                var wm = Regex.Match(bi.J.Stmt ?? "", @"GloamingWoodTypes\.(\w+)");
                 if (wm.Success) p.Set("woodType", wm.Groups[1].Value.ToLowerInvariant());
                 var pot = Regex.Match(bi.J.Stmt ?? "", @"SpecialFlowerPotBlock\([^,]+,\s*(\w+)\s*,");
                 if (pot.Success)
@@ -494,12 +494,12 @@ namespace GfImport
                 int w = 8, h = 8;
                 J uv = null;
                 bool visible = true;
-                if (first != null && first.StartsWith("gloamingforest:", StringComparison.Ordinal) && TfTextures.ContainsKey(first))
+                if (first != null && first.StartsWith("gloamingforest:", StringComparison.Ordinal) && GloamingTextures.ContainsKey(first))
                 {
                     UseTexture(first, owner, "path");
                     path = TexPath(first);
                     int pw, ph;
-                    if (Png.TrySize(File.ReadAllBytes(TfTextures[first]), out pw, out ph)) { w = pw; h = Math.Min(ph, pw); }
+                    if (Png.TrySize(File.ReadAllBytes(GloamingTextures[first]), out pw, out ph)) { w = pw; h = Math.Min(ph, pw); }
                     uv = J.Obj().Set("texture_width", w).Set("texture_height", h)
                         .Set("uv", J.Arr(new[] { J.Num(0), J.Num(0) })).Set("uv_size", J.Arr(new[] { J.Num(w), J.Num(h) }));
                 }

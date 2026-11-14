@@ -20,22 +20,22 @@
         "catch_chance_modifier": 5,
         "destroy_chance_modifier": 5
       },
-      "minecraft:geometry": "geometry.tf.gloamingforest.block.vertical_hollow_log",
+      "minecraft:geometry": "geometry.gf.gloamingforest.block.vertical_hollow_log",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_vanilla_block_spruce_log",
+          "texture": "gf_vanilla_block_spruce_log",
           "render_method": "opaque"
         },
         "inner": {
-          "texture": "tf_vanilla_block_stripped_spruce_log",
+          "texture": "gf_vanilla_block_stripped_spruce_log",
           "render_method": "opaque"
         },
         "side": {
-          "texture": "tf_vanilla_block_spruce_log",
+          "texture": "gf_vanilla_block_spruce_log",
           "render_method": "opaque"
         },
         "top": {
-          "texture": "tf_vanilla_block_spruce_log_top",
+          "texture": "gf_vanilla_block_spruce_log_top",
           "render_method": "opaque"
         }
       },

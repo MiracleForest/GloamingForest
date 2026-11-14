@@ -1,13 +1,13 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/config/TFCommonConfig.java
+//   src/main/java/gloamingforest/config/GloamingCommonConfig.java
 //   src/main/java/gloamingforest/network/SyncUncraftingTableConfigPacket.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
 
-// Config section "uncraftmaps" (rule R13): upstream's ten "Uncrafting Table" keys of TFCommonConfig
+// Config section "uncraftmaps" (rule R13): upstream's ten "Uncrafting Table" keys of GloamingCommonConfig
 // (docs/spec/config.md), synced to companions as SyncUncraftingTableConfigPacket does
 // ("uncraftmaps.sync_config", at the handshake and after /gloamingforest reload).
 

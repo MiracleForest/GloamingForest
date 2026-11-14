@@ -32,11 +32,11 @@ Contracts: recipes, inventory, client.ui, client.world, landmark, data, progress
 `inventory/slot/{UncraftingSlot,AssemblySlot,UncraftingResultSlot}.java`, `client/UncraftingScreen.java`,
 `client/UncraftingRecipeBookComponent.java`, `item/recipe/UncraftingRecipe.java`, `item/recipe/UncraftingTableCondition.java`,
 `loot/conditions/UncraftingTableEnabledCondition.java`, `network/{UncraftingGui,SyncUncraftingTableConfig}Packet.java`,
-`config/{TFCommonConfig,TFConfig,ConfigSetup}.java`, `item/MagicMapItem.java`, `item/EmptyMagicMapItem.java`,
-`item/MazeMapItem.java`, `item/EmptyMazeMapItem.java`, `item/mapdata/{TFMagicMapData,TFMazeMapData}.java`,
+`config/{GloamingCommonConfig,GloamingConfig,ConfigSetup}.java`, `item/MagicMapItem.java`, `item/EmptyMagicMapItem.java`,
+`item/MazeMapItem.java`, `item/EmptyMazeMapItem.java`, `item/mapdata/{GloamingMagicMapData,GloamingMazeMapData}.java`,
 `item/recipe/{MagicMapCloning,MazeMapCloning}Recipe.java`, `network/{MagicMap,MazeMap}Packet.java`,
 `client/renderer/map/{ConqueredMapIconRenderer,MagicMapPlayerIconRenderer}.java`, `command/MapLocatorCommand.java`,
-`command/MapBiomesCommand.java`, `init/TFDataMaps.java`, `textures/gui/guigoblintinkering.png` (imported asset).
+`command/MapBiomesCommand.java`, `init/GloamingDataMaps.java`, `textures/gui/guigoblintinkering.png` (imported asset).
 
 ## 3. Behaviour
 
@@ -114,7 +114,7 @@ Slot indices / positions (GUI pixels, relative to the 176x166 frame):
 - Labels: title at (6, 6) colour 0x404040; "Inventory" at (7, 72); if `disableUncrafting`,
   `container.gloamingforest.uncrafting_table.uncrafting_disabled` in dark red at (6, 72) instead.
 
-### 3.4 Magic map (`EmptyMagicMapItem`, `MagicMapItem`, `TFMagicMapData`)
+### 3.4 Magic map (`EmptyMagicMapItem`, `MagicMapItem`, `GloamingMagicMapData`)
 
 - `magic_map` use: only in dimensions in `#gloamingforest:allows_magic_map_charting` (else action bar
   `misc.gloamingforest.magic_map_fail`); consumes one, stat used, `ui.cartography_table.take_result`, gives a
@@ -129,7 +129,7 @@ Slot indices / positions (GUI pixels, relative to the 176x166 frame):
   `ConqueredMapIconRenderer`; the player icon by `MagicMapPlayerIconRenderer`).
 - Tooltip: map id, or with advanced tooltips id, scale and level.
 
-### 3.5 Maze and ore maps (`EmptyMazeMapItem`, `MazeMapItem`, `TFMazeMapData`)
+### 3.5 Maze and ore maps (`EmptyMazeMapItem`, `MazeMapItem`, `GloamingMazeMapData`)
 
 - `maze_map` / `ore_map` use: creates `filled_maze_map` / `filled_ore_map` at scale 0 (1 block per pixel), centre
   snapped to 128-block cells (floor((x + 64)/128)*128 + 64 - 64), but inside a labyrinth chunk the map snaps to the
@@ -153,7 +153,7 @@ Upstream's literals below `/gloamingforest`, both permission 2:
   `<skip_known_structures>` a boolean (default false). An id or tag the registry does not have -> vanilla
   `commands.locate.structure.invalid`. The search is `ChunkGenerator.findNearestMapStructure(level, targets,
   BlockPos.containing(source position), 100, skip_known_structures)` in the source's dimension as upstream patches it: the
-  tf-asm transformer `ResolveNearestNonRandomSpreadMapStructureTransformer` inserts
+  upsrc-asm transformer `ResolveNearestNonRandomSpreadMapStructureTransformer` inserts
   `MapHooks.resolveNearestNonRandomSpreadMapStructure` before the method's **last** `return` (of its three; the one
   reached when no random-spread ring returned). The targets are grouped by structure placement (no placement at all,
   e.g. an empty tag: nothing found). Two searches, by placement:
@@ -239,16 +239,16 @@ Upstream's literals below `/gloamingforest`, both permission 2:
     converted to ABGR by `getMapColor` and converted again when written, so its red and blue end up swapped; without
     a data-map entry the colour is opaque black (`0xFF000000` is non-zero, so the grass-colour fallback never runs);
     each colour is cached for the rest of the session;
-  - every `height / 8` rows `commands.tffeature.biomepng.progress` with x / height x 100 formatted `#.00` (so the
+  - every `height / 8` rows `commands.gloamingfeature.biomepng.progress` with x / height x 100 formatted `#.00` (so the
     first is `.00`; a height from 1 to 7 makes the step 0: after the first row `x % 0` throws `ArithmeticException`
     and the command fails with `command.failed`); then, with
-    `showBiomePercents`, `commands.tffeature.biomepng.counts_header` (width, height) and one line per biome
+    `showBiomePercents`, `commands.gloamingfeature.biomepng.counts_header` (width, height) and one line per biome
     `<biome id>: <count>` + `§7 (<percent formatted #.00>%)` (upstream's counter starts at 0 for the first pixel, so each
     count is one short);
   - the PNG goes to `<world>/generated/biomemaps/<seed>/biome_map-<seed>-(<startX>.<startZ>)-(<startX + width>.<startZ
     + height>).png` with startX = floor(source x) - width/2, startZ = floor(source z) - height/2 (the name uses the
     source position, unlike the sampling); an existing file is kept, not overwritten; an I/O error ->
-    `commands.tffeature.biomepng.save_failed` (failure, result 0), else `commands.tffeature.biomepng.save_success`.
+    `commands.gloamingfeature.biomepng.save_failed` (failure, result 0), else `commands.gloamingfeature.biomepng.save_success`.
 
 ## 4. Bedrock adaptation notes
 
@@ -337,17 +337,17 @@ Every id this unit owns in `docs/spec/owners.tsv`, with the upstream 4.8 data th
 
 ### Blocks (1)
 
-Item column: `BlockItem` = upstream registers a plain block item with the block (`TFBlocks.register`), the id is also a `block_item` row; `-` = no item of the same id (the block is placed by another item, or has none).
+Item column: `BlockItem` = upstream registers a plain block item with the block (`GloamingBlocks.register`), the id is also a `block_item` row; `-` = no item of the same id (the block is placed by another item, or has none).
 
 Block states come from upstream's blockstate JSON (`multipart:` lists only the property values the model parts test). Notes collect `RegistrationEvents` (fire, axe stripping, flower pots, jar lids), dispenser behaviours and the `neoforge:compostables` / `neoforge:furnace_fuels` data maps.
 
-| Block | English name | upstream registration (`TFBlocks`) | Block states | Item | Loot (`blocks/<id>`) | Notes |
+| Block | English name | upstream registration (`GloamingBlocks`) | Block states | Item | Loot (`blocks/<id>`) | Notes |
 |---|---|---|---|---|---|---|
 | `gloamingforest:uncrafting_table` | Uncrafting Table | `register("uncrafting_table", new UncraftingTableBlock(Properties.of().ignitedByLava().mapColor(FIRE).sound(WOOD).strength(2.5F)));` | powered: false/true | BlockItem | self | block tags: #c:player_workstations/crafting_tables, #mc:mineable/axe, #mineable_with_block_and_chain |
 
 ### Items (8)
 
-| Item | English name | upstream registration (`TFItems`) | Notes |
+| Item | English name | upstream registration (`GloamingItems`) | Notes |
 |---|---|---|---|
 | `gloamingforest:filled_magic_map` | Magic Map | `ITEMS.register("filled_magic_map", new MagicMapItem(new Item.Properties()));` |  |
 | `gloamingforest:filled_maze_map` | Maze Map | `ITEMS.register("filled_maze_map", new MazeMapItem(false, new Item.Properties()));` |  |
@@ -360,7 +360,7 @@ Block states come from upstream's blockstate JSON (`multipart:` lists only the p
 
 ### Recipe serializers / types (3)
 
-| Id | upstream registration (`TFRecipes.java`) |
+| Id | upstream registration (`GloamingRecipes.java`) |
 |---|---|
 | `gloamingforest:magic_map_cloning_recipe` | `RECIPE_SERIALIZERS.register("magic_map_cloning_recipe", new SimpleCraftingRecipeSerializer<>(MagicMapCloningRecipe::new));` |
 | `gloamingforest:maze_map_cloning_recipe` | `RECIPE_SERIALIZERS.register("maze_map_cloning_recipe", new SimpleCraftingRecipeSerializer<>(MazeMapCloningRecipe::new));` |
@@ -368,25 +368,25 @@ Block states come from upstream's blockstate JSON (`multipart:` lists only the p
 
 ### Loot condition types (1)
 
-| Id | upstream registration (`TFLoot.java`) |
+| Id | upstream registration (`GloamingLoot.java`) |
 |---|---|
 | `gloamingforest:uncrafting_table_enabled` | `CONDITIONS.register("uncrafting_table_enabled", new LootItemConditionType(UncraftingTableEnabledCondition.CODEC)); ;; CONDITIONALS.register("uncrafting_table_enabled", () -> UncraftingTableCondition.CODEC);` |
 
 ### Menu types (1)
 
-| Id | upstream registration (`TFMenuTypes.java`) |
+| Id | upstream registration (`GloamingMenuTypes.java`) |
 |---|---|
 | `gloamingforest:uncrafting` | `CONTAINERS.register("uncrafting", new MenuType<>(UncraftingMenu::fromNetwork, FeatureFlags.REGISTRY.allFlags()));` |
 
 ### Stats (1)
 
-| Id | upstream registration (`TFStats.java`) |
+| Id | upstream registration (`GloamingStats.java`) |
 |---|---|
 | `gloamingforest:uncrafting_table_interactions` (Interactions with Uncrafting Table) | `makeTFStat("uncrafting_table_interactions");` |
 
 ### Advancement triggers (1)
 
-| Id | upstream registration (`TFAdvancements.java`) |
+| Id | upstream registration (`GloamingAdvancements.java`) |
 |---|---|
 | `gloamingforest:uncraft_item` | `TRIGGERS.register("uncraft_item", UncraftItemTrigger::new);` |
 
@@ -445,7 +445,7 @@ See [config.md](config.md) for the section mapping; defaults and translation ids
 | `common.Uncrafting Table.disableIngredientSwitching` | `false` | `ingredient_switching` | Disable Ingredient Switching — If true, the uncrafting table will no longer allow you to switch between ingredients if a recipe uses a tag for crafting. This will remove the functionality for ALL RECIPES! If you want to prevent certain ingredients from showing up in the first place, use the "gloamingforest:banned_uncrafting_ingredients" tag. |
 | `common.Uncrafting Table.disableUncrafting` | `false` | `disable_uncrafting` | Disable Uncrafting — Disables the uncrafting function of the uncrafting table. Recommended as a last resort if there's too many things to change about its behavior (or you're just lazy, I dont judge). Do note that special uncrafting recipes are not disabled as the mod relies on them for other things. |
 | `common.Uncrafting Table.disableUncraftingRecipes` | `List.of("gloamingforest:giant_log_to_oak_planks")` | `uncrafting_recipes` | Disabled Recipes — If you don't want to disable uncrafting altogether, and would rather disable certain recipes, this is for you. To add a recipe, add the mod id followed by the name of the recipe. You can check this in things like JEI. Example: "gloamingforest:firefly_particle_spawner" will disable uncrafting the particle spawner into a firefly jar, firefly, and poppy. If an item has multiple crafting recipes and you wish to disable them all, add the item to the "gloamingforest:banned_uncraftables" item tag. If you have a problematic ingredient, like infested towerwood for example, add the item to the "gloamingforest:banned_uncrafting_ingredients" item tag. |
-| `common.Uncrafting Table.disableUncraftingTable` | `false` | `disable_uncrafting_table` | Disable Uncrafting Table — Disables any usage of the uncrafting table, as well as prevents it from showing up in loot or crafted. Please note that table has more uses than just uncrafting, you can read about them here! http://benimatic.com/tfwiki/index.php?title=Uncrafting_Table It is highly recommended to keep the table enabled as the mod has special uncrafting exclusive recipes, but the option remains for people that dont want the table to be functional at all. If you are looking to just prevent normal crafting recipes from being reversed, consider using the 'disableUncrafting' option instead. |
+| `common.Uncrafting Table.disableUncraftingTable` | `false` | `disable_uncrafting_table` | Disable Uncrafting Table — Disables any usage of the uncrafting table, as well as prevents it from showing up in loot or crafted. Please note that table has more uses than just uncrafting, you can read about them here! http://benimatic.com/gloamingwiki/index.php?title=Uncrafting_Table It is highly recommended to keep the table enabled as the mod has special uncrafting exclusive recipes, but the option remains for people that dont want the table to be functional at all. If you are looking to just prevent normal crafting recipes from being reversed, consider using the 'disableUncrafting' option instead. |
 | `common.Uncrafting Table.enableShapelessCrafting` | `false` | `shapeless_uncrafting` | Shapeless Uncrafting — If true, the uncrafting table will also be allowed to uncraft shapeless recipes. The table was originally intended to only take shaped recipes, but this option remains for people who wish to keep the functionality. |
 | `common.Uncrafting Table.flipIdList` | `false` | `uncrafting_mod_id_flip` | Mod ID Blacklist — If true, this will invert the above option from a blacklist to a whitelist. |
 | `common.Uncrafting Table.flipRecipeList` | `false` | `uncrafting_recipes_flip` | Recipe Blacklist — If true, this will invert the above uncrafting recipe list from a blacklist to a whitelist. |
@@ -463,13 +463,13 @@ Keys already shown above (block/item/entity names, subtitles) are not repeated. 
 | Key | English |
 |---|---|
 | `block.gloamingforest.uncrafting_table.disabled` | This block has been disabled. |
-| `commands.tffeature.biomepng.counts_header` | Approximate biome-block counts within a %sx%s region |
-| `commands.tffeature.biomepng.progress` | %s%% Done mapping |
-| `commands.tffeature.biomepng.save_failed` | Could not save image! Please report this! |
-| `commands.tffeature.biomepng.save_success` | Image saved! |
+| `commands.gloamingfeature.biomepng.counts_header` | Approximate biome-block counts within a %sx%s region |
+| `commands.gloamingfeature.biomepng.progress` | %s%% Done mapping |
+| `commands.gloamingfeature.biomepng.save_failed` | Could not save image! Please report this! |
+| `commands.gloamingfeature.biomepng.save_success` | Image saved! |
 | `config.gloamingforest.disable_uncrafting` | Disable Uncrafting |
 | `config.gloamingforest.disable_uncrafting_table` | Disable Uncrafting Table |
-| `config.gloamingforest.disable_uncrafting_table.tooltip` | Disables any usage of the uncrafting table, as well as prevents it from showing up in loot or crafted. Please note that table has more uses than just uncrafting, you can read about them here! http://benimatic.com/tfwiki/index.php?title=Uncrafting_Table It is highly recommended to keep the table enabled as the mod has special uncrafting exclusive recipes, but the option remains for people that dont want the table to be functional at all. If you are looking to just prevent normal crafting recipes from being reversed, consider using the 'disableUncrafting' option instead. |
+| `config.gloamingforest.disable_uncrafting_table.tooltip` | Disables any usage of the uncrafting table, as well as prevents it from showing up in loot or crafted. Please note that table has more uses than just uncrafting, you can read about them here! http://benimatic.com/gloamingwiki/index.php?title=Uncrafting_Table It is highly recommended to keep the table enabled as the mod has special uncrafting exclusive recipes, but the option remains for people that dont want the table to be functional at all. If you are looking to just prevent normal crafting recipes from being reversed, consider using the 'disableUncrafting' option instead. |
 | `config.gloamingforest.disable_uncrafting.tooltip` | Disables the uncrafting function of the uncrafting table. Recommended as a last resort if there's too many things to change about its behavior (or you're just lazy, I dont judge). Do note that special uncrafting recipes are not disabled as the mod relies on them for other things. |
 | `config.gloamingforest.ingredient_switching` | Disable Ingredient Switching |
 | `config.gloamingforest.ingredient_switching.tooltip` | If true, the uncrafting table will no longer allow you to switch between ingredients if a recipe uses a tag for crafting. This will remove the functionality for ALL RECIPES! If you want to prevent certain ingredients from showing up in the first place, use the "gloamingforest:banned_uncrafting_ingredients" tag. |

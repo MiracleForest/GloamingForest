@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.hydra_mortar",
   "layer": {
     "name": "hydra_mortar",
-    "field": "TFModelLayers.HYDRA_MORTAR",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.HYDRA_MORTAR, HydraMortarModel::create);"
+    "field": "GloamingModelLayers.HYDRA_MORTAR",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.HYDRA_MORTAR, HydraMortarModel::create);"
   },
   "texture_size": [32, 32],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/hydramortar",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/hydramortar.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/hydramortar.png"
     }
   ],
   "bones": [

@@ -10,7 +10,7 @@
 // y by the decoration config's elevation rule) and hands the layout getFirstPiece's random;
 // addChildren draws from Structure.GenerationContext#random() (ext::contextRandom).
 //
-// Terrain: NeoForge's Beardifier takes every TFStructureComponentOld (a PieceBeardifierModifier)
+// Terrain: NeoForge's Beardifier takes every GloamingStructureComponentOld (a PieceBeardifierModifier)
 // with its own adjustment, which is NONE except for DarkTowerEntranceComponent (BEARD_BOX, its box,
 // ground level delta 1 from TowerWingComponent); the structure's BEARD_THIN applies to no piece.
 // The terraformer adds the entrance towers' beard boxes.

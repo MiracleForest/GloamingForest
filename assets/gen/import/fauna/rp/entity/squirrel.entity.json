@@ -10,7 +10,7 @@
         "default": "textures/gloamingforest/entity/squirrel2"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.squirrel"
+        "default": "geometry.gf.skeleton.squirrel"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

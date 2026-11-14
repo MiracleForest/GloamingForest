@@ -9,7 +9,7 @@
 //     (PiglinAi#angerNearbyPiglins), the chest block's own reactions to the openers (F11's lids
 //     and trapped chest signal), a loot table unpacked through LootTable#fill with the opener and
 //     the opener's luck, and the slots of a double chest over a world reload
-//     (combat.tf_chest_persist_save / _verify around a restart);
+//     (combat.gf_chest_persist_save / _verify around a restart);
 //   - tag matchers through F9's gf::tags: damage type tags, loot entries and conditions;
 //   - upstream's MissingAdvancementToast (what showMissing sends) and, in the client build, the toast
 //     F12 queues for it (its lines, icon, colours) and the fx.particle route of companions through
@@ -228,7 +228,7 @@ std::optional<float> setLuck(Player& p, float value) {
 
 // ---- upstream's chests: the declarations tools/families writes ---------------------------------------------
 
-GF_REGISTER_SELFTEST("combat.tf_chests_declared", [](Context& ctx) {
+GF_REGISTER_SELFTEST("combat.gf_chests_declared", [](Context& ctx) {
     static constexpr char const* kWoods[] = {"gloaming_oak", "canopy", "mangrove", "dark", "time", "transformation", "mining", "sorting"};
     int                          good     = 0;
     for (auto const* wood : kWoods) {
@@ -255,7 +255,7 @@ GF_REGISTER_SELFTEST("combat.tf_chests_declared", [](Context& ctx) {
 
 // ---- upstream's double chest: storage, one screen, stats, sounds, comparators, a broken half -------------------
 
-GF_REGISTER_SELFTEST("combat.tf_double_chest", [](Context& ctx) -> ll::coro::CoroTask<> {
+GF_REGISTER_SELFTEST("combat.gf_double_chest", [](Context& ctx) -> ll::coro::CoroTask<> {
     namespace rs = gf::redstone;
     // facing north: a left half's partner is east of it (ChestBlock#getConnectedDirection)
     auto left  = ctx.testPos(6031);
@@ -400,7 +400,7 @@ GF_REGISTER_SELFTEST("combat.tf_double_chest", [](Context& ctx) -> ll::coro::Cor
 
 // ---- upstream's double chest on a vanilla client: the game's large chest screen ---------------------------------
 
-GF_REGISTER_SELFTEST("combat.tf_double_chest_vanilla", [](Context& ctx) -> ll::coro::CoroTask<> {
+GF_REGISTER_SELFTEST("combat.gf_double_chest_vanilla", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto left  = ctx.testPos(6065);
     auto right = ctx.testPos(6066);
     ctx.require(co_await ctx.ensureLoaded(left), "test area loaded");
@@ -468,7 +468,7 @@ GF_REGISTER_SELFTEST("combat.tf_double_chest_vanilla", [](Context& ctx) -> ll::c
 
 // ---- upstream's trapped chest: the vanilla screen, the stat, the signal -------------------------------------------
 
-GF_REGISTER_SELFTEST("combat.tf_trapped_chest", [](Context& ctx) -> ll::coro::CoroTask<> {
+GF_REGISTER_SELFTEST("combat.gf_trapped_chest", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto pos = ctx.testPos(6036);
     ctx.require(co_await ctx.ensureLoaded(pos), "test area loaded");
     auto pid = ctx.player().getOrCreateUniqueID().rawID;
@@ -575,7 +575,7 @@ bool angry(std::int64_t piglin) {
 }
 } // namespace
 
-GF_REGISTER_SELFTEST("combat.tf_chest_piglins", [](Context& ctx) -> ll::coro::CoroTask<> {
+GF_REGISTER_SELFTEST("combat.gf_chest_piglins", [](Context& ctx) -> ll::coro::CoroTask<> {
     // the player opens the chest standing 2 blocks south of it (rightClick); piglins east of it:
     // one in the open (sees the player), one behind a stone wall (8 blocks: in range, unseen), one
     // 20 blocks away (beyond the player's box inflated by 16)
@@ -661,17 +661,17 @@ GF_REGISTER_SELFTEST("combat.tf_chest_piglins", [](Context& ctx) -> ll::coro::Co
 
 // ---- upstream's chest with a loot table: LootTable#fill with the opener and its luck -----------------------------
 
-GF_REGISTER_SELFTEST("combat.tf_chest_loot", [](Context& ctx) -> ll::coro::CoroTask<> {
+GF_REGISTER_SELFTEST("combat.gf_chest_loot", [](Context& ctx) -> ll::coro::CoroTask<> {
     namespace loot = gf::loot;
     // RandomizableContainer#unpackLootTable: THIS_ENTITY is the opener, the luck the opener's, no
     // killer player; LootTable#fill spreads the stacks over the empty slots
-    loot::registerTable("gf_test:combat/tf_chest", JsonT::parse(R"({"type":"minecraft:chest","pools":[
+    loot::registerTable("gf_test:combat/gf_chest", JsonT::parse(R"({"type":"minecraft:chest","pools":[
         {"rolls":0,"bonus_rolls":1,"entries":[{"type":"minecraft:item","name":"minecraft:emerald"}]},
         {"rolls":1,"conditions":[{"condition":"minecraft:entity_properties","entity":"this","predicate":{"type":"minecraft:player"}}],
          "entries":[{"type":"minecraft:item","name":"minecraft:diamond","functions":[{"function":"minecraft:set_count","count":12}]}]},
         {"rolls":1,"conditions":[{"condition":"minecraft:killed_by_player"}],"entries":[{"type":"minecraft:item","name":"minecraft:stick"}]}]})"));
     struct TableScope {
-        ~TableScope() { gf::loot::registerTable("gf_test:combat/tf_chest", nullptr); }
+        ~TableScope() { gf::loot::registerTable("gf_test:combat/gf_chest", nullptr); }
     } tableScope;
     auto pos  = ctx.testPos(6037);
     auto real = ctx.testPos(6038);
@@ -681,10 +681,10 @@ GF_REGISTER_SELFTEST("combat.tf_chest_loot", [](Context& ctx) -> ll::coro::CoroT
     ctx.cleanupBlock(pos);
     ctx.cleanupBlock(real);
     auto* region = ctx.region();
-    ctx.require(loot::placeContainer(*region, gf::game::blockPos(pos), kOakChest, 2, "gf_test:combat/tf_chest", 4242), "a gloaming oak chest placed with a loot table");
+    ctx.require(loot::placeContainer(*region, gf::game::blockPos(pos), kOakChest, 2, "gf_test:combat/gf_chest", 4242), "a gloaming oak chest placed with a loot table");
     ctx.check(ctx.blockAt(pos) == kOakChest && strStateAt(pos, kFacing) == "north", "placeContainer turned the upstream chest north");
     auto pending = inv::pendingLoot(pos);
-    ctx.check(pending && pending->first == "gf_test:combat/tf_chest" && pending->second == 4242, "the table waits in the chest's block data");
+    ctx.check(pending && pending->first == "gf_test:combat/gf_chest" && pending->second == 4242, "the table waits in the chest's block data");
     CompanionScope companion(ctx.player());
     float                luck = 0.f;
     std::optional<float> oldLuck;
@@ -730,13 +730,13 @@ GF_REGISTER_SELFTEST("combat.tf_chest_loot", [](Context& ctx) -> ll::coro::CoroT
 });
 
 // ---- upstream's double chest keeps its slots over a world reload ---------------------------------------------
-// combat.tf_chest_persist_save puts a gloaming oak double chest 3 blocks under testPos 6039 / 6040 and
-// writes a marker (gf:combat:tf_chest_probe); combat.tf_chest_persist_verify checks both halves,
+// combat.gf_chest_persist_save puts a gloaming oak double chest 3 blocks under testPos 6039 / 6040 and
+// writes a marker (gf:combat:gf_chest_probe); combat.gf_chest_persist_verify checks both halves,
 // erases the marker and puts the blocks that were there back. The server scenario runs them around a
 // restart; a glob run sorts save before verify, so nothing stays in the world after it.
 
 namespace {
-constexpr char kTfPersistKey[] = "gf:combat:tf_chest_probe";
+constexpr char kGloamingPersistKey[] = "gf:combat:gf_chest_probe";
 
 std::pair<GlobalPos, GlobalPos> persistHalves(Context& ctx, BlockSource const& region) {
     auto left  = ctx.testPos(6039);
@@ -749,7 +749,7 @@ JsonT posJson(GlobalPos const& p) { return {p.dim, p.x, p.y, p.z}; }
 GlobalPos posOf(JsonT const& j) { return GlobalPos{j[0].get<int>(), j[1].get<int>(), j[2].get<int>(), j[3].get<int>()}; }
 } // namespace
 
-GF_REGISTER_SELFTEST("combat.tf_chest_persist_save", [](Context& ctx) -> ll::coro::CoroTask<> {
+GF_REGISTER_SELFTEST("combat.gf_chest_persist_save", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto* region = ctx.region();
     ctx.require(region != nullptr, "the overworld is available");
     auto [left, right] = persistHalves(ctx, *region);
@@ -757,7 +757,7 @@ GF_REGISTER_SELFTEST("combat.tf_chest_persist_save", [](Context& ctx) -> ll::cor
     region = ctx.region();
     // the blocks that were there come back after the read (an earlier write's record wins)
     std::string wasL = ctx.blockAt(left), wasR = ctx.blockAt(right);
-    if (auto prev = db::get(kTfPersistKey)) {
+    if (auto prev = db::get(kGloamingPersistKey)) {
         wasL = prev->value("wasLeft", wasL);
         wasR = prev->value("wasRight", wasR);
     }
@@ -776,17 +776,17 @@ GF_REGISTER_SELFTEST("combat.tf_chest_persist_save", [](Context& ctx) -> ll::cor
     int                n = 2 + static_cast<int>(rd() % 60), m = 2 + static_cast<int>(rd() % 60);
     hl->set(left, 13, *items::make("minecraft:gold_ingot", n));
     hr->set(right, 2, *items::make("minecraft:emerald", m));
-    db::put(kTfPersistKey, {{"left", posJson(left)}, {"right", posJson(right)}, {"gold", n}, {"emeralds", m}, {"wasLeft", wasL}, {"wasRight", wasR}});
-    ctx.info("tf chest marker written gold=" + std::to_string(n) + " emeralds=" + std::to_string(m));
+    db::put(kGloamingPersistKey, {{"left", posJson(left)}, {"right", posJson(right)}, {"gold", n}, {"emeralds", m}, {"wasLeft", wasL}, {"wasRight", wasR}});
+    ctx.info("upsrc chest marker written gold=" + std::to_string(n) + " emeralds=" + std::to_string(m));
 });
 
-GF_REGISTER_SELFTEST("combat.tf_chest_persist_verify", [](Context& ctx) -> ll::coro::CoroTask<> {
-    auto marker = db::get(kTfPersistKey);
+GF_REGISTER_SELFTEST("combat.gf_chest_persist_verify", [](Context& ctx) -> ll::coro::CoroTask<> {
+    auto marker = db::get(kGloamingPersistKey);
     if (!marker) {
-        ctx.info("no tf chest marker (combat.tf_chest_persist_save did not run before): nothing to check");
+        ctx.info("no upsrc chest marker (combat.gf_chest_persist_save did not run before): nothing to check");
         co_return;
     }
-    db::erase(kTfPersistKey);
+    db::erase(kGloamingPersistKey);
     auto left  = posOf((*marker)["left"]);
     auto right = posOf((*marker)["right"]);
     int  n = marker->value("gold", -1), m = marker->value("emeralds", -1);
@@ -801,7 +801,7 @@ GF_REGISTER_SELFTEST("combat.tf_chest_persist_verify", [](Context& ctx) -> ll::c
         ctx.check(ok, "each half kept its slots (" + std::to_string(items::countOf(gold)) + " gold, " + std::to_string(items::countOf(em)) + " emeralds)");
         auto parts = inv::partsOf(left);
         ctx.check(parts.size() == 2 && parts[0] == right, "the halves still pair");
-        if (ok) ctx.info("tf chest marker verified gold=" + std::to_string(n) + " emeralds=" + std::to_string(m));
+        if (ok) ctx.info("upsrc chest marker verified gold=" + std::to_string(n) + " emeralds=" + std::to_string(m));
     }
     // the blocks that were there come back (the slots go without dropping)
     for (auto const& [pos, key] : {std::pair{left, "wasLeft"}, std::pair{right, "wasRight"}}) {
@@ -1160,21 +1160,21 @@ GF_REGISTER_SELFTEST("combat.client_fx_native", [](Context& ctx) -> ll::coro::Co
     ctx.check(fxc::clientCounters().native > before.native, "fx.particle went to the native sink");
     ctx.check(sRuns.load() == 2, "F12's factory ran for both particles with the call's velocity and params (" + std::to_string(sRuns.load()) + ")");
     // an upstream particle id without a factory: its resource pack effect (vanilla clients see the same)
-    std::string tfId;
+    std::string gfId;
     bool        hasFactory = false;
     for (auto const& [id, factory] : cl::particles::declared()) {
         if (id == "gloamingforest:large_flame") {
-            tfId       = id;
+            gfId       = id;
             hasFactory = factory;
         }
     }
-    ctx.require(!tfId.empty(), "gloamingforest:large_flame is one of upstream's declared particles");
-    ctx.require(!gf::fx::resolveParticle(tfId).effect.empty(), "the resource pack has its effect");
+    ctx.require(!gfId.empty(), "gloamingforest:large_flame is one of upstream's declared particles");
+    ctx.require(!gf::fx::resolveParticle(gfId).effect.empty(), "the resource pack has its effect");
     before = fxc::clientCounters();
     {
         auto w = at();
         ctx.require(w.has_value(), "the companion player");
-        gf::fx::particle(*w->second, tfId, w->first, Vec3{0.f, 0.05f, 0.02f}, 3, JsonT{{"spread", {0.3, 0.3, 0.3}}, {"probe", "combat.client_fx_native"}});
+        gf::fx::particle(*w->second, gfId, w->first, Vec3{0.f, 0.05f, 0.02f}, 3, JsonT{{"spread", {0.3, 0.3, 0.3}}, {"probe", "combat.client_fx_native"}});
     }
     for (int i = 0; i < 60 && fxc::clientCounters().native == before.native && fxc::clientCounters().effects == before.effects; ++i) co_await ctx.ticks(1);
     auto after = fxc::clientCounters();

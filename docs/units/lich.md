@@ -13,7 +13,7 @@ What the unit implements, how it maps upstream 4.8 onto Bedrock, and what is sti
 | `src/feature/lich/Tower.cpp` | `LichTowerStructure` and all 21 lichtowerrevamp pieces (foyer, foyer decor, base with its `TrimProcessor`, base trim, segments, boss room / boundary / roof, spawner bridges with the 180-degree flip, wing bridges, wing rooms with ladders / roofs / beards / decor and every room marker, room decor with upstream's trees, magic gallery with its magic painting, and the yard: `LichYardBox`, `LichPerimeterFence`, `LichYardGrave`, `LichYardLights`), their piece type factories, the spawn labels (yard 0, interior 1, empty 2, Deny) and the terraformer |
 | `src/feature/lich/Pending.*`, `Edits.cpp` | the block entity contents and entities the pieces add while a chunk generates (lectern book or Death Tome mimic, brewing stand, mason jar, chiseled shelf, sinister spawner, chest loot with facing, leashed zombies, magic painting): rolled at generation as upstream rolls them, applied on the server thread once the chunk is loaded (`gf:lich:pending`) |
 | `src/feature/lich/Module.cpp` | registration, the `gloamingforest:is_minion` loot condition, the level tick (phase-1 boss bar progress, the queued edits, the leashes) |
-| `src/client/lich/MapIcon.cpp` | client mod: the magic map icon of `gloamingforest:lich_tower` (`TFMapDecorations.LICH_TOWER`) |
+| `src/client/lich/MapIcon.cpp` | client mod: the magic map icon of `gloamingforest:lich_tower` (`GloamingMapDecorations.LICH_TOWER`) |
 | `src/core/lich/TowerMath.*`, `Simplex.*` | pure parts (BlockPos#asLong, Mth tables, boss room candle ring, stair decay levels, JOML's simplex noise for the yard), gtested in `tests/lich` |
 | `tools/structures/lich/**` | the original template designs (rule R19): `root/` (tower, bridges, mob bridges, placeholder rooms, yard graves and fences, one-block stamps) and `gallery/` |
 | `tools/import/overrides/lich.json` | the client entity definitions (geometry, textures, animations, render controllers) and the `angry_lich` particle, patched into the imported files |
@@ -29,7 +29,7 @@ What the unit implements, how it maps upstream 4.8 onto Bedrock, and what is sti
   state in Java) runs in the client entity's Molang with the same rule.
 - The per-actor state (shield, summons, clone links, a minion's master, a tome's lectern, the rising ticks) is saved
   in the actor's document (`gf::entity::data`); the maps are caches rebuilt from it after an unload.
-- Shadow clones render with an upstream-derived translucent texture (`textures/gloamingforest/lich/tf-derived`, the
+- Shadow clones render with an upstream-derived translucent texture (`textures/gloamingforest/lich/upstream-derived`, the
   SHADOW_CLONE colour 0.333 x RGB, alpha 0.5) plus the eyes texture as an emissive layer; their ambient sound is
   removed by a component group (`Lich#getAmbientSound` is null for clones).
 - `Lich#hurt` runs as a `gf::combat::onIncoming` handler (priority High) so it sees the direct entity (shield break

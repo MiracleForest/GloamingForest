@@ -28,7 +28,7 @@ Write-Step "generated Gloaming Forest chunks ($($world.Matches[0].Groups[3].Valu
 $sky = $log | Select-String -Pattern 'terrain: skylight islands in (\d+) of (\d+) columns, (\d+) chunks checked' | Select-Object -Last 1
 if (-not $sky) { throw 'terrain.skylight_option logged no island count' }
 Write-Step "skylight: islands in $($sky.Matches[0].Groups[1].Value) of $($sky.Matches[0].Groups[2].Value) columns, $($sky.Matches[0].Groups[3].Value) island chunks checked"
-$caves = $log | Select-String -Pattern 'tf_caves carved (\d+) blocks, dirt roof blocks (\d+)' | Select-Object -Last 1
+$caves = $log | Select-String -Pattern 'gf_caves carved (\d+) blocks, dirt roof blocks (\d+)' | Select-Object -Last 1
 if ($caves) { Write-Step "caves: $($caves.Matches[0].Groups[1].Value) carved, $($caves.Matches[0].Groups[2].Value) dirt roof blocks" }
 $preset = Get-ServerLog | Select-String -Pattern 'terrain: world preset (\w+)' | Select-Object -Last 1
 if (-not $preset) { throw 'no terrain world preset line' }

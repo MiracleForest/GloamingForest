@@ -1,14 +1,14 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/enums/extensions/TFRarityEnumExtension.java
-//   src/main/java/gloamingforest/TFEnumExtensions.java
-//   src/main/java/gloamingforest/init/TFItems.java
+//   src/main/java/gloamingforest/enums/extensions/GloamingRarityEnumExtension.java
+//   src/main/java/gloamingforest/GloamingEnumExtensions.java
+//   src/main/java/gloamingforest/init/GloamingItems.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // upstream's GLOAMING rarity (Rarity_GLOAMING: ChatFormatting.DARK_GREEN names) and its items: the nine
-// boss trophies and the nine banner patterns of TFItems. The client mod colours their names
+// boss trophies and the nine banner patterns of GloamingItems. The client mod colours their names
 // (client/item/ItemClient.cpp); Bedrock's Rarity has only common / uncommon / rare / epic.
 #include <map>
 #include <mutex>

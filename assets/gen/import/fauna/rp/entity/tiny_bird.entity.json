@@ -10,7 +10,7 @@
         "default": "textures/gloamingforest/entity/tinybirdblue"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.tiny_bird"
+        "default": "geometry.gf.skeleton.tiny_bird"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

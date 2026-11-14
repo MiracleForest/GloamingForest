@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_item_lamp_of_cinders"
+          "default": "gf_item_lamp_of_cinders"
         }
       },
       "minecraft:display_name": {

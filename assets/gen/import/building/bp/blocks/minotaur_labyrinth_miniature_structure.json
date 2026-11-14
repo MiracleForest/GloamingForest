@@ -19,38 +19,38 @@
       },
       "minecraft:tags": ["minecraft:is_pickaxe_item_destructible"],
       "minecraft:collision_box": false,
-      "minecraft:geometry": "geometry.tf.gloamingforest.block.miniature.labyrinth",
+      "minecraft:geometry": "geometry.gf.gloamingforest.block.miniature.labyrinth",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_mazestone",
+          "texture": "gf_block_mazestone",
           "render_method": "opaque"
         },
         "brick": {
-          "texture": "tf_block_mazestone_brick",
+          "texture": "gf_block_mazestone_brick",
           "render_method": "opaque"
         },
         "brown_mushroom": {
-          "texture": "tf_vanilla_block_brown_mushroom_block",
+          "texture": "gf_vanilla_block_brown_mushroom_block",
           "render_method": "opaque"
         },
         "mazestone": {
-          "texture": "tf_block_mazestone",
+          "texture": "gf_block_mazestone",
           "render_method": "opaque"
         },
         "mosaic": {
-          "texture": "tf_block_mazestone_mosaic",
+          "texture": "gf_block_mazestone_mosaic",
           "render_method": "opaque"
         },
         "mycelium": {
-          "texture": "tf_vanilla_block_mycelium_top",
+          "texture": "gf_vanilla_block_mycelium_top",
           "render_method": "opaque"
         },
         "planks": {
-          "texture": "tf_vanilla_block_oak_planks",
+          "texture": "gf_vanilla_block_oak_planks",
           "render_method": "opaque"
         },
         "red_mushroom": {
-          "texture": "tf_vanilla_block_red_mushroom_block",
+          "texture": "gf_vanilla_block_red_mushroom_block",
           "render_method": "opaque"
         }
       },
@@ -64,38 +64,38 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.miniature.labyrinth",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.miniature.labyrinth",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_mazestone",
+              "texture": "gf_block_mazestone",
               "render_method": "opaque"
             },
             "brick": {
-              "texture": "tf_block_mazestone_brick",
+              "texture": "gf_block_mazestone_brick",
               "render_method": "opaque"
             },
             "brown_mushroom": {
-              "texture": "tf_vanilla_block_brown_mushroom_block",
+              "texture": "gf_vanilla_block_brown_mushroom_block",
               "render_method": "opaque"
             },
             "mazestone": {
-              "texture": "tf_block_mazestone",
+              "texture": "gf_block_mazestone",
               "render_method": "opaque"
             },
             "mosaic": {
-              "texture": "tf_block_mazestone_mosaic",
+              "texture": "gf_block_mazestone_mosaic",
               "render_method": "opaque"
             },
             "mycelium": {
-              "texture": "tf_vanilla_block_mycelium_top",
+              "texture": "gf_vanilla_block_mycelium_top",
               "render_method": "opaque"
             },
             "planks": {
-              "texture": "tf_vanilla_block_oak_planks",
+              "texture": "gf_vanilla_block_oak_planks",
               "render_method": "opaque"
             },
             "red_mushroom": {
-              "texture": "tf_vanilla_block_red_mushroom_block",
+              "texture": "gf_vanilla_block_red_mushroom_block",
               "render_method": "opaque"
             }
           },
@@ -111,38 +111,38 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.miniature.labyrinth",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.miniature.labyrinth",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_mazestone",
+              "texture": "gf_block_mazestone",
               "render_method": "opaque"
             },
             "brick": {
-              "texture": "tf_block_mazestone_brick",
+              "texture": "gf_block_mazestone_brick",
               "render_method": "opaque"
             },
             "brown_mushroom": {
-              "texture": "tf_vanilla_block_brown_mushroom_block",
+              "texture": "gf_vanilla_block_brown_mushroom_block",
               "render_method": "opaque"
             },
             "mazestone": {
-              "texture": "tf_block_mazestone",
+              "texture": "gf_block_mazestone",
               "render_method": "opaque"
             },
             "mosaic": {
-              "texture": "tf_block_mazestone_mosaic",
+              "texture": "gf_block_mazestone_mosaic",
               "render_method": "opaque"
             },
             "mycelium": {
-              "texture": "tf_vanilla_block_mycelium_top",
+              "texture": "gf_vanilla_block_mycelium_top",
               "render_method": "opaque"
             },
             "planks": {
-              "texture": "tf_vanilla_block_oak_planks",
+              "texture": "gf_vanilla_block_oak_planks",
               "render_method": "opaque"
             },
             "red_mushroom": {
-              "texture": "tf_vanilla_block_red_mushroom_block",
+              "texture": "gf_vanilla_block_red_mushroom_block",
               "render_method": "opaque"
             }
           },
@@ -158,38 +158,38 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.miniature.labyrinth",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.miniature.labyrinth",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_mazestone",
+              "texture": "gf_block_mazestone",
               "render_method": "opaque"
             },
             "brick": {
-              "texture": "tf_block_mazestone_brick",
+              "texture": "gf_block_mazestone_brick",
               "render_method": "opaque"
             },
             "brown_mushroom": {
-              "texture": "tf_vanilla_block_brown_mushroom_block",
+              "texture": "gf_vanilla_block_brown_mushroom_block",
               "render_method": "opaque"
             },
             "mazestone": {
-              "texture": "tf_block_mazestone",
+              "texture": "gf_block_mazestone",
               "render_method": "opaque"
             },
             "mosaic": {
-              "texture": "tf_block_mazestone_mosaic",
+              "texture": "gf_block_mazestone_mosaic",
               "render_method": "opaque"
             },
             "mycelium": {
-              "texture": "tf_vanilla_block_mycelium_top",
+              "texture": "gf_vanilla_block_mycelium_top",
               "render_method": "opaque"
             },
             "planks": {
-              "texture": "tf_vanilla_block_oak_planks",
+              "texture": "gf_vanilla_block_oak_planks",
               "render_method": "opaque"
             },
             "red_mushroom": {
-              "texture": "tf_vanilla_block_red_mushroom_block",
+              "texture": "gf_vanilla_block_red_mushroom_block",
               "render_method": "opaque"
             }
           },
@@ -205,38 +205,38 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.miniature.labyrinth",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.miniature.labyrinth",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_mazestone",
+              "texture": "gf_block_mazestone",
               "render_method": "opaque"
             },
             "brick": {
-              "texture": "tf_block_mazestone_brick",
+              "texture": "gf_block_mazestone_brick",
               "render_method": "opaque"
             },
             "brown_mushroom": {
-              "texture": "tf_vanilla_block_brown_mushroom_block",
+              "texture": "gf_vanilla_block_brown_mushroom_block",
               "render_method": "opaque"
             },
             "mazestone": {
-              "texture": "tf_block_mazestone",
+              "texture": "gf_block_mazestone",
               "render_method": "opaque"
             },
             "mosaic": {
-              "texture": "tf_block_mazestone_mosaic",
+              "texture": "gf_block_mazestone_mosaic",
               "render_method": "opaque"
             },
             "mycelium": {
-              "texture": "tf_vanilla_block_mycelium_top",
+              "texture": "gf_vanilla_block_mycelium_top",
               "render_method": "opaque"
             },
             "planks": {
-              "texture": "tf_vanilla_block_oak_planks",
+              "texture": "gf_vanilla_block_oak_planks",
               "render_method": "opaque"
             },
             "red_mushroom": {
-              "texture": "tf_vanilla_block_red_mushroom_block",
+              "texture": "gf_vanilla_block_red_mushroom_block",
               "render_method": "opaque"
             }
           },

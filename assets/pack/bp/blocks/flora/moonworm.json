@@ -41,7 +41,7 @@
       "minecraft:geometry": "geometry.gloamingforest.flora.moonworm",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_flora_moonworm_model",
+          "texture": "gf_flora_moonworm_model",
           "render_method": "alpha_test"
         }
       },

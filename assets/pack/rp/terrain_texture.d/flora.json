@@ -1,11 +1,11 @@
 {
-  "tf_flora_firefly_model": {
+  "gf_flora_firefly_model": {
     "textures": "textures/gloamingforest/entity/firefly-tiny"
   },
-  "tf_flora_cicada_model": {
+  "gf_flora_cicada_model": {
     "textures": "textures/gloamingforest/entity/cicada-model"
   },
-  "tf_flora_moonworm_model": {
+  "gf_flora_moonworm_model": {
     "textures": "textures/gloamingforest/entity/moonworm"
   }
 }

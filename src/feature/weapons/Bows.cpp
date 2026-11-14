@@ -19,7 +19,7 @@
 //     speed power * 2.5; its arrows strip the victim's hurt cooldown;
 //   - ender_bow: a vanilla arrow tagged gloamingforest:ender: the shooter and a hit living non-boss
 //     swap places;
-//   - seeker_bow / ice_bow: upstream's own arrow entities (F8's TFArrow kit), seeker_arrow homing
+//   - seeker_bow / ice_bow: upstream's own arrow entities (F8's GloamingArrow kit), seeker_arrow homing
 //     (SeekerArrow#updateTarget, steering), ice_arrow chilling.
 
 #include "feature/weapons/Weapons.h"

@@ -1,6 +1,6 @@
 {
   "carvers": {
-    "air": "gloamingforest:tf_caves"
+    "air": "gloamingforest:gf_caves"
   },
   "creature_spawn_probability": 0.15,
   "downfall": 0.4,

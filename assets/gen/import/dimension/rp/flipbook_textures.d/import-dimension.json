@@ -1,7 +1,7 @@
 [
   {
     "flipbook_texture": "textures/gloamingforest/block/portal_barrier",
-    "atlas_tile": "tf_block_portal_barrier",
+    "atlas_tile": "gf_block_portal_barrier",
     "ticks_per_frame": 2,
     "blend_frames": true
   }

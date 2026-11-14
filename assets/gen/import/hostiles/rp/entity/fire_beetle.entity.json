@@ -10,7 +10,7 @@
         "default": "textures/gloamingforest/entity/firebeetle"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.fire_beetle"
+        "default": "geometry.gf.skeleton.fire_beetle"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

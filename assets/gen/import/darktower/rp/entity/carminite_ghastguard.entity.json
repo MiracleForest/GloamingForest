@@ -10,7 +10,7 @@
         "default": "textures/misc/missing_texture"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.carminite_ghastguard"
+        "default": "geometry.gf.skeleton.carminite_ghastguard"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

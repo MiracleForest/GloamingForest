@@ -22,31 +22,31 @@
       "minecraft:geometry": "minecraft:geometry.full_block",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_time_log_core",
+          "texture": "gf_block_time_log_core",
           "render_method": "opaque"
         },
         "up": {
-          "texture": "tf_block_time_log_top",
+          "texture": "gf_block_time_log_top",
           "render_method": "opaque"
         },
         "down": {
-          "texture": "tf_block_time_log_top",
+          "texture": "gf_block_time_log_top",
           "render_method": "opaque"
         },
         "north": {
-          "texture": "tf_block_time_log_core",
+          "texture": "gf_block_time_log_core",
           "render_method": "opaque"
         },
         "south": {
-          "texture": "tf_block_time_log_core",
+          "texture": "gf_block_time_log_core",
           "render_method": "opaque"
         },
         "east": {
-          "texture": "tf_block_time_log_core",
+          "texture": "gf_block_time_log_core",
           "render_method": "opaque"
         },
         "west": {
-          "texture": "tf_block_time_log_core",
+          "texture": "gf_block_time_log_core",
           "render_method": "opaque"
         }
       },
@@ -62,31 +62,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_time_log_core",
+              "texture": "gf_block_time_log_core",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_block_time_log_top",
+              "texture": "gf_block_time_log_top",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_block_time_log_top",
+              "texture": "gf_block_time_log_top",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_block_time_log_core",
+              "texture": "gf_block_time_log_core",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_block_time_log_core",
+              "texture": "gf_block_time_log_core",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_block_time_log_core",
+              "texture": "gf_block_time_log_core",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_block_time_log_core",
+              "texture": "gf_block_time_log_core",
               "render_method": "opaque"
             }
           },
@@ -103,31 +103,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_time_log_core",
+              "texture": "gf_block_time_log_core",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_block_time_log_top",
+              "texture": "gf_block_time_log_top",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_block_time_log_top",
+              "texture": "gf_block_time_log_top",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_block_time_log_core",
+              "texture": "gf_block_time_log_core",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_block_time_log_core",
+              "texture": "gf_block_time_log_core",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_block_time_log_core",
+              "texture": "gf_block_time_log_core",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_block_time_log_core",
+              "texture": "gf_block_time_log_core",
               "render_method": "opaque"
             }
           },
@@ -144,31 +144,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_time_log_core",
+              "texture": "gf_block_time_log_core",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_block_time_log_top",
+              "texture": "gf_block_time_log_top",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_block_time_log_top",
+              "texture": "gf_block_time_log_top",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_block_time_log_core",
+              "texture": "gf_block_time_log_core",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_block_time_log_core",
+              "texture": "gf_block_time_log_core",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_block_time_log_core",
+              "texture": "gf_block_time_log_core",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_block_time_log_core",
+              "texture": "gf_block_time_log_core",
               "render_method": "opaque"
             }
           },
@@ -185,31 +185,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_time_log_core_on",
+              "texture": "gf_block_time_log_core_on",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_block_time_log_top",
+              "texture": "gf_block_time_log_top",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_block_time_log_top",
+              "texture": "gf_block_time_log_top",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_block_time_log_core_on",
+              "texture": "gf_block_time_log_core_on",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_block_time_log_core_on",
+              "texture": "gf_block_time_log_core_on",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_block_time_log_core_on",
+              "texture": "gf_block_time_log_core_on",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_block_time_log_core_on",
+              "texture": "gf_block_time_log_core_on",
               "render_method": "opaque"
             }
           },
@@ -226,31 +226,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_time_log_core_on",
+              "texture": "gf_block_time_log_core_on",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_block_time_log_top",
+              "texture": "gf_block_time_log_top",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_block_time_log_top",
+              "texture": "gf_block_time_log_top",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_block_time_log_core_on",
+              "texture": "gf_block_time_log_core_on",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_block_time_log_core_on",
+              "texture": "gf_block_time_log_core_on",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_block_time_log_core_on",
+              "texture": "gf_block_time_log_core_on",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_block_time_log_core_on",
+              "texture": "gf_block_time_log_core_on",
               "render_method": "opaque"
             }
           },
@@ -267,31 +267,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_time_log_core_on",
+              "texture": "gf_block_time_log_core_on",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_block_time_log_top",
+              "texture": "gf_block_time_log_top",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_block_time_log_top",
+              "texture": "gf_block_time_log_top",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_block_time_log_core_on",
+              "texture": "gf_block_time_log_core_on",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_block_time_log_core_on",
+              "texture": "gf_block_time_log_core_on",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_block_time_log_core_on",
+              "texture": "gf_block_time_log_core_on",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_block_time_log_core_on",
+              "texture": "gf_block_time_log_core_on",
               "render_method": "opaque"
             }
           },

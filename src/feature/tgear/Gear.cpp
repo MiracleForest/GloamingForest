@@ -7,7 +7,7 @@
 //   src/main/java/gloamingforest/item/travellers_gear/modifiers/TransferableComponentModifier.java
 //   src/main/java/gloamingforest/item/travellers_gear/modifiers/TravellersModifier.java
 //   src/main/java/gloamingforest/components/item/ItemDisplayContents.java
-//   src/main/java/gloamingforest/init/TFKeyBinds.java
+//   src/main/java/gloamingforest/init/GloamingKeyBinds.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -194,7 +194,7 @@ bool isActive(Actor const& player, std::string const& rawId) {
 }
 
 int armorPointsOf(std::string const& itemId) {
-    // TFArmorMaterials.TRAVELLERS defense: helmet 2, chestplate 4, leggings 3, boots 2 (the BP items'
+    // GloamingArmorMaterials.TRAVELLERS defense: helmet 2, chestplate 4, leggings 3, boots 2 (the BP items'
     // minecraft:wearable protection); the gloves and the belt are cosmetic (0)
     if (itemId == ids::kGoggles || itemId == ids::kBoots) return 2;
     if (itemId == ids::kVest) return 4;
@@ -355,7 +355,7 @@ void setGloves(ItemStack& stack, bool gloves) { items::setData(stack, kGlovesKey
 // ---- names -----------------------------------------------------------------------------------------
 
 std::string defaultKeyName(std::string const& keyName) {
-    // TFKeyBinds: item_display_map_cycle C, red_thread_vision unbound, swap_hotbar V, zoom Z
+    // GloamingKeyBinds: item_display_map_cycle C, red_thread_vision unbound, swap_hotbar V, zoom Z
     if (keyName == "key.gloamingforest.item_display_map_cycle") return "C";
     if (keyName == "key.gloamingforest.swap_hotbar") return "V";
     if (keyName == "key.gloamingforest.zoom") return "Z";

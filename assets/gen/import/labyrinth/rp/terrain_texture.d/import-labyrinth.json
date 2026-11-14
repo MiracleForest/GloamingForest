@@ -1,8 +1,8 @@
 {
-  "tf_block_maze_slime_block": {
+  "gf_block_maze_slime_block": {
     "textures": "textures/gloamingforest/block/maze_slime_block"
   },
-  "tf_vanilla_block_slime_block": {
+  "gf_vanilla_block_slime_block": {
     "textures": "textures/blocks/slime"
   }
 }

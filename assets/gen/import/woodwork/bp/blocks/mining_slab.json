@@ -23,22 +23,22 @@
         "catch_chance_modifier": 5,
         "destroy_chance_modifier": 20
       },
-      "minecraft:geometry": "geometry.tf.minecraft.block.slab",
+      "minecraft:geometry": "geometry.gf.minecraft.block.slab",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_wood_planks_mine_0",
+          "texture": "gf_block_wood_planks_mine_0",
           "render_method": "opaque"
         },
         "bottom": {
-          "texture": "tf_block_wood_planks_mine_0",
+          "texture": "gf_block_wood_planks_mine_0",
           "render_method": "opaque"
         },
         "side": {
-          "texture": "tf_block_wood_planks_mine_0",
+          "texture": "gf_block_wood_planks_mine_0",
           "render_method": "opaque"
         },
         "top": {
-          "texture": "tf_block_wood_planks_mine_0",
+          "texture": "gf_block_wood_planks_mine_0",
           "render_method": "opaque"
         }
       },
@@ -56,22 +56,22 @@
       {
         "condition": "q.block_state('gloamingforest:type') == 'bottom'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.slab",
+          "minecraft:geometry": "geometry.gf.minecraft.block.slab",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_mine_0",
+              "texture": "gf_block_wood_planks_mine_0",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_wood_planks_mine_0",
+              "texture": "gf_block_wood_planks_mine_0",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_wood_planks_mine_0",
+              "texture": "gf_block_wood_planks_mine_0",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_wood_planks_mine_0",
+              "texture": "gf_block_wood_planks_mine_0",
               "render_method": "opaque"
             }
           },
@@ -94,31 +94,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_mine_0",
+              "texture": "gf_block_wood_planks_mine_0",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_block_wood_planks_mine_0",
+              "texture": "gf_block_wood_planks_mine_0",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_block_wood_planks_mine_0",
+              "texture": "gf_block_wood_planks_mine_0",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_block_wood_planks_mine_0",
+              "texture": "gf_block_wood_planks_mine_0",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_block_wood_planks_mine_0",
+              "texture": "gf_block_wood_planks_mine_0",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_block_wood_planks_mine_0",
+              "texture": "gf_block_wood_planks_mine_0",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_block_wood_planks_mine_0",
+              "texture": "gf_block_wood_planks_mine_0",
               "render_method": "opaque"
             }
           },
@@ -132,22 +132,22 @@
       {
         "condition": "q.block_state('gloamingforest:type') == 'top'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.slab",
+          "minecraft:geometry": "geometry.gf.minecraft.block.slab",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_mine_0",
+              "texture": "gf_block_wood_planks_mine_0",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_wood_planks_mine_0",
+              "texture": "gf_block_wood_planks_mine_0",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_wood_planks_mine_0",
+              "texture": "gf_block_wood_planks_mine_0",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_wood_planks_mine_0",
+              "texture": "gf_block_wood_planks_mine_0",
               "render_method": "opaque"
             }
           },

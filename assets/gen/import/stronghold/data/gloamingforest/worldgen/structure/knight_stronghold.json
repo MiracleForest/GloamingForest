@@ -75,21 +75,21 @@
           "generation": 3,
           "pages": [
             {
-              "raw": "{\"translate\":\"gloamingforest.book.tfstronghold.1\"}"
+              "raw": "{\"translate\":\"gloamingforest.book.gloamingstronghold.1\"}"
             },
             {
-              "raw": "{\"translate\":\"gloamingforest.book.tfstronghold.2\"}"
+              "raw": "{\"translate\":\"gloamingforest.book.gloamingstronghold.2\"}"
             },
             {
-              "raw": "{\"translate\":\"gloamingforest.book.tfstronghold.3\"}"
+              "raw": "{\"translate\":\"gloamingforest.book.gloamingstronghold.3\"}"
             },
             {
-              "raw": "{\"translate\":\"gloamingforest.book.tfstronghold.4\"}"
+              "raw": "{\"translate\":\"gloamingforest.book.gloamingstronghold.4\"}"
             }
           ],
           "resolved": true,
           "title": {
-            "raw": "gloamingforest.book.tfstronghold"
+            "raw": "gloamingforest.book.gloamingstronghold"
           }
         },
         "gloamingforest:translatable_book": {}

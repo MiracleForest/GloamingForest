@@ -53,7 +53,7 @@ struct DifficultyScope {
 
 std::string coords(core::GlobalPos const& p) { return std::to_string(p.x) + " " + std::to_string(p.y) + " " + std::to_string(p.z); }
 
-st::CommandResult tf(st::Context& ctx, std::string const& rest) { return st::runServerCommand("gloamingforest " + rest, ctx.dimension()); }
+st::CommandResult upsrc(st::Context& ctx, std::string const& rest) { return st::runServerCommand("gloamingforest " + rest, ctx.dimension()); }
 
 /// A use-on as the hooks dispatch it.
 ia::Result useOn(st::Context& ctx, core::GlobalPos const& pos, std::string const& itemId, int face, ia::Vec hit, bool sneaking) {
@@ -74,7 +74,7 @@ ll::coro::CoroTask<> sinisterCommand(st::Context& ctx) {
     ctx.require(ctx.setBlock(other, "minecraft:stone"), "stone placed");
     auto at = coords(pos), stone = coords(other);
     auto expect = [&](std::string const& cmd, int count) {
-        auto r = tf(ctx, cmd);
+        auto r = upsrc(ctx, cmd);
         ctx.check(r.successCount == count, "/gloamingforest " + cmd + " returns " + std::to_string(count) + " (got " + std::to_string(r.successCount) + ": " + r.messages + ")");
     };
     expect("sinister_spawner add_particle minecraft:smoke " + at, 1);
@@ -92,9 +92,9 @@ ll::coro::CoroTask<> sinisterCommand(st::Context& ctx) {
     expect("sinister_spawner set_loot gloamingforest:blocks/ominous_spawner_drops " + stone, 0);
     expect("sinister_spawner clear_loot " + stone, 0);
     // argument errors fail the command and change nothing
-    auto bad = tf(ctx, "sinister_spawner add_particle gloamingforest:no_such_particle " + at);
+    auto bad = upsrc(ctx, "sinister_spawner add_particle gloamingforest:no_such_particle " + at);
     ctx.check(!bad.ok && bad.messages.find("Unknown particle: gloamingforest:no_such_particle") != std::string::npos, "an unknown particle fails: " + bad.messages);
-    auto badLoot = tf(ctx, "sinister_spawner set_loot gloamingforest:no_such_table " + at);
+    auto badLoot = upsrc(ctx, "sinister_spawner set_loot gloamingforest:no_such_table " + at);
     ctx.check(!badLoot.ok && badLoot.messages.find("Failed to parse structure: Failed to get element ResourceKey[minecraft:loot_table / gloamingforest:no_such_table]") != std::string::npos,
               "an unknown loot table fails: " + badLoot.messages);
     auto s = gf::boss::ext::sinisterSpawner(*ctx.region(), game::blockPos(pos));
@@ -105,7 +105,7 @@ ll::coro::CoroTask<> sinisterCommand(st::Context& ctx) {
     expect("sinister_spawner add_particle " + dust + " " + at, 1);
     expect("sinister_spawner remove_particle " + dust + " " + at, 0);
     // no 'spawner' alias
-    auto alias = tf(ctx, "spawner add_particle minecraft:smoke " + at);
+    auto alias = upsrc(ctx, "spawner add_particle minecraft:smoke " + at);
     ctx.check(!alias.ok, "/gloamingforest spawner is not registered");
 }
 

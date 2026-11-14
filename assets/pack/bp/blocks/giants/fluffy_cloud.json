@@ -18,7 +18,7 @@
       "minecraft:geometry": "minecraft:geometry.full_block",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_fluffy_cloud",
+          "texture": "gf_block_fluffy_cloud",
           "render_method": "opaque"
         }
       },

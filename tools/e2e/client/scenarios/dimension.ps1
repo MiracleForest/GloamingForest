@@ -86,9 +86,9 @@ function Write-OverlayRamp($frames, $reference, [string]$startPattern, [int]$sin
         $c = Get-MeanColour $f.Path
         $alpha = Get-FadeAlpha $c $reference
         $t = if ($t0) { [Math]::Round(($f.Time - $t0).TotalSeconds, 2) } else { $null }
-        $tf = if ($null -ne $t) { [Math]::Round(0.75 * [Math]::Min(1.0, ($t * 20.0 + 1.0) / 60.0), 2) } else { $null }
-        Write-Step ("{0}: mean colour {1:N0} {2:N0} {3:N0}, opacity {4} at {5} s (upstream {6})" -f $f.Label, $c[0], $c[1], $c[2], $alpha, $t, $tf)
-        $rows += [pscustomobject]@{ Label = $f.Label; Alpha = $alpha; T = $t; Tf = $tf }
+        $upsrc = if ($null -ne $t) { [Math]::Round(0.75 * [Math]::Min(1.0, ($t * 20.0 + 1.0) / 60.0), 2) } else { $null }
+        Write-Step ("{0}: mean colour {1:N0} {2:N0} {3:N0}, opacity {4} at {5} s (upstream {6})" -f $f.Label, $c[0], $c[1], $c[2], $alpha, $t, $upsrc)
+        $rows += [pscustomobject]@{ Label = $f.Label; Alpha = $alpha; T = $t; Upsrc = $upsrc }
     }
     return $rows
 }
@@ -170,8 +170,8 @@ $rampRows = Write-OverlayRamp $frames $reference $startPattern $mark
 # Bedrock's fade grows to opaque only: it grows at upstream's rate and is upstream's 0.75 at the trip, opaque
 # after it. Before 2.5 s it must stay near upstream's ramp (round 3 had it at 0.65 after 0.5 s)
 foreach ($row in $rampRows) {
-    if ($null -ne $row.T -and $row.T -lt 2.6 -and $row.Alpha -gt $row.Tf + 0.25) {
-        throw "the portal overlay is too opaque too early: $($row.Alpha) at $($row.T) s (upstream $($row.Tf))"
+    if ($null -ne $row.T -and $row.T -lt 2.6 -and $row.Alpha -gt $row.Upsrc + 0.25) {
+        throw "the portal overlay is too opaque too early: $($row.Alpha) at $($row.T) s (upstream $($row.Upsrc))"
     }
 }
 $enter = Get-LeviLog -Since $mark | Select-String -Pattern 'enters the portal at' | Select-Object -First 1
@@ -255,7 +255,7 @@ Save-Screenshot 'gloaming-bottom' | Out-Null
 Invoke-Chat "/fill $px -31 $pz $px 255 $pz air"
 
 # and back through the return portal, in survival (the trip, the overlay / fade and the delay of a
-# survival player: playersTfPortalDefaultDelay)
+# survival player: playersGloamingPortalDefaultDelay)
 if (-not $built) { throw 'no "built a portal" line: the return portal is unknown' }
 $x = [int]$built.Matches[0].Groups[1].Value; $y = [int]$built.Matches[0].Groups[2].Value; $z = [int]$built.Matches[0].Groups[3].Value
 Invoke-Chat '/gamemode survival'

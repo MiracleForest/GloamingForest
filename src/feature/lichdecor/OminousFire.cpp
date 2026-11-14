@@ -2,7 +2,7 @@
 // Translated from the upstream 4.8 source (commit 9e40a757):
 //   src/main/java/gloamingforest/block/OminousFireBlock.java
 //   src/main/java/gloamingforest/events/EntityEvents.java (ominousFireConversion, zombifiedPlayerAttacks)
-//   src/main/java/gloamingforest/init/TFDataMaps.java (OMINOUS_FIRE)
+//   src/main/java/gloamingforest/init/GloamingDataMaps.java (OMINOUS_FIRE)
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -57,7 +57,7 @@ namespace gf::feature::lichdecor::light {
 
 namespace {
 
-constexpr char kZombifiedKey[] = "lichdecor:zombified_player"; ///< TFDataAttachments.ZOMBIFIED_PLAYER (the player's name)
+constexpr char kZombifiedKey[] = "lichdecor:zombified_player"; ///< GloamingDataAttachments.ZOMBIFIED_PLAYER (the player's name)
 
 bool isFluid(Block const& b) {
     auto const& id = b.getTypeName();
@@ -142,7 +142,7 @@ bool onLethal(Actor& victim, gf::combat::DamageInfo const& d) {
         Vec2   rot    = victim.getRotation();
         std::string name = player.getRealName();
         Actor* zombie = gf::spawn::spawnMob(region, "minecraft:zombie", feet, gf::spawn::SpawnReason::Conversion, [&](Actor& a) {
-            gf::entity::data(a, kZombifiedKey) = name; // TFDataAttachments.ZOMBIFIED_PLAYER
+            gf::entity::data(a, kZombifiedKey) = name; // GloamingDataAttachments.ZOMBIFIED_PLAYER
         });
         if (zombie) {
             const_cast<Vec2&>(zombie->getRotation()) = rot;

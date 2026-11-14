@@ -3,22 +3,22 @@
   "geometry": "geometry.gloamingforest.keepsake_casket",
   "layer": {
     "name": "keepsake_casket",
-    "field": "TFModelLayers.KEEPSAKE_CASKET",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.KEEPSAKE_CASKET, () -> SkullChestRenderer.create(true));"
+    "field": "GloamingModelLayers.KEEPSAKE_CASKET",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.KEEPSAKE_CASKET, () -> SkullChestRenderer.create(true));"
   },
   "texture_size": [64, 64],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/casket/keepsake_casket_0",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/casket/keepsake_casket_0.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/casket/keepsake_casket_0.png"
     },
     {
       "bedrock": "textures/gloamingforest/entity/casket/keepsake_casket_1",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/casket/keepsake_casket_1.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/casket/keepsake_casket_1.png"
     },
     {
       "bedrock": "textures/gloamingforest/entity/casket/keepsake_casket_2",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/casket/keepsake_casket_2.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/casket/keepsake_casket_2.png"
     }
   ],
   "bones": [

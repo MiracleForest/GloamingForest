@@ -13,7 +13,7 @@
 // particles reach every client through the server (protection box entities and the protection
 // particle), so this keeps the area boxes for client features. landmark.structure_protection
 // carries StructureProtectionPacket's (box, protected) pairs or "all clear": the protection weather
-// (TFWeatherRenderer#setProtectedBoxes, U15) reads them through the landmark extension.
+// (GloamingWeatherRenderer#setProtectedBoxes, U15) reads them through the landmark extension.
 
 #ifdef GF_CLIENT
 

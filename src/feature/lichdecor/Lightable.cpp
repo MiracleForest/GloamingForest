@@ -40,7 +40,7 @@ namespace gf::feature::lichdecor::light {
 namespace {
 
 /// upstream's CandleColors in value order (0 plain .. 16 brown).
-constexpr std::array<std::string_view, 17> kTfColors{"",     "white", "light_gray", "gray", "black",  "red",    "orange",  "yellow", "green",
+constexpr std::array<std::string_view, 17> kGloamingColors{"",     "white", "light_gray", "gray", "black",  "red",    "orange",  "yellow", "green",
                                                      "lime", "blue",  "cyan",       "light_blue", "purple", "magenta", "pink", "brown"};
 
 struct Stashed {
@@ -61,14 +61,14 @@ GlobalPos gpos(BlockSource& region, BlockPos const& pos) { return GlobalPos{stat
 
 } // namespace
 
-std::string candleOfTfColor(int value) {
+std::string candleOfGloamingColor(int value) {
     if (value <= 0 || value > 16) return "minecraft:candle";
-    return "minecraft:" + std::string(kTfColors[static_cast<std::size_t>(value)]) + "_candle";
+    return "minecraft:" + std::string(kGloamingColors[static_cast<std::size_t>(value)]) + "_candle";
 }
 
-int tfColorOfCandle(std::string_view id) {
+int gloamingColorOfCandle(std::string_view id) {
     for (int i = 0; i <= 16; ++i)
-        if (id == candleOfTfColor(i)) return i;
+        if (id == candleOfGloamingColor(i)) return i;
     return -1;
 }
 

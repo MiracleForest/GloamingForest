@@ -50,7 +50,7 @@ Fixed:
   translucent as Java's translucentMovingBlock; the random tumble uses drawGeo's y-x-z order). Selftest
   `provisions.frosted_sync`; the client scenario frosts a showcase pig (not run this round).
 - **Experiment 115 icons** (client mod): the `think` variant (`gloamingforest:e115_variant`, the advancement icon of
-  `experiment_115_115`) shows `item/think115` through U11's icon layers (`tf_provisions_think115`).
+  `experiment_115_115`) shows `item/think115` through U11's icon layers (`gf_provisions_think115`).
 
 Open:
 

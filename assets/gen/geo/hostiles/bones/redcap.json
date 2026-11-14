@@ -3,18 +3,18 @@
   "geometry": "geometry.gloamingforest.redcap",
   "layer": {
     "name": "redcap",
-    "field": "TFModelLayers.REDCAP",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.REDCAP, RedcapModel::checkForPack);"
+    "field": "GloamingModelLayers.REDCAP",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.REDCAP, RedcapModel::checkForPack);"
   },
   "texture_size": [64, 32],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/redcap",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/redcap.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/redcap.png"
     },
     {
       "bedrock": "textures/gloamingforest/entity/redcapsapper",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/redcapsapper.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/redcapsapper.png"
     }
   ],
   "bones": [

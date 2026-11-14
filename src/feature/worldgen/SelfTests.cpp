@@ -495,7 +495,7 @@ GF_REGISTER_SELFTEST("worldgen.functions", [](Context& ctx) -> ll::coro::CoroTas
     ctx.check(ctx.blockAt(keep) == "minecraft:cobblestone", "cobblestone kept");
     ctx.check(ctx.blockAt(high) == "minecraft:stone", "stone above y 15 kept");
 
-    // dev_new_world: the gamerules, then the scriptevent (tfEnforcedProgression, the teleport)
+    // dev_new_world: the gamerules, then the scriptevent (gloamingEnforcedProgression, the teleport)
     using I = GameRules::GameRulesIndex;
     std::pair<I, char const*> rules[] = {
         {I::DoDaylightCycle, "dodaylightcycle"}, {I::DoEntityDrops, "doentitydrops"}, {I::DoMobLoot, "domobloot"},
@@ -504,9 +504,9 @@ GF_REGISTER_SELFTEST("worldgen.functions", [](Context& ctx) -> ll::coro::CoroTas
     };
     std::vector<std::pair<std::string, std::string>> saved;
     for (auto const& [index, name] : rules) saved.emplace_back(name, ruleText(index));
-    // dev_new_world's scriptevent also turns upstream's tfEnforcedProgression off (gf::gamerules): the
+    // dev_new_world's scriptevent also turns upstream's gloamingEnforcedProgression off (gf::gamerules): the
     // tests that run after this one (landmark protection, progression) need it back
-    auto progression = gf::gamerules::get("tfEnforcedProgression");
+    auto progression = gf::gamerules::get("gloamingEnforcedProgression");
     struct RestoreRules { // the shared test world gets its rules back even when a check aborts
         Context&                                          c;
         std::vector<std::pair<std::string, std::string>>& rules;
@@ -514,7 +514,7 @@ GF_REGISTER_SELFTEST("worldgen.functions", [](Context& ctx) -> ll::coro::CoroTas
         ~RestoreRules() {
             for (auto const& [name, value] : rules)
                 if (!value.empty()) runCommand(c, "gamerule " + name + " " + value);
-            (void)gf::gamerules::set("tfEnforcedProgression", progression);
+            (void)gf::gamerules::set("gloamingEnforcedProgression", progression);
         }
     } restoreRules{ctx, saved, progression};
     int before = gf::worldgen::detail::devNewWorldRuns();
@@ -523,7 +523,7 @@ GF_REGISTER_SELFTEST("worldgen.functions", [](Context& ctx) -> ll::coro::CoroTas
     std::string expected[] = {"false", "false", "false", "false", "false", "false", "true", "0"};
     for (std::size_t i = 0; i < std::size(rules); ++i)
         ctx.check(ruleText(rules[i].first) == expected[i], std::string(rules[i].second) + " = " + expected[i] + " (" + ruleText(rules[i].first) + ")");
-    ctx.check(gf::worldgen::detail::devNewWorldRuns() == before + 1, "the function's scriptevent reached the mod (tfEnforcedProgression, teleport)");
+    ctx.check(gf::worldgen::detail::devNewWorldRuns() == before + 1, "the function's scriptevent reached the mod (gloamingEnforcedProgression, teleport)");
 
     // run by a player in the overworld: `execute in gloamingforest:gloaming_forest run teleport ~ 128 ~`
     // (x / z times 8, the overworld's coordinate scale over the Gloaming Forest's 0.125)
@@ -548,8 +548,8 @@ GF_REGISTER_SELFTEST("worldgen.functions", [](Context& ctx) -> ll::coro::CoroTas
                   "at x * 8, y 128, z * 8 (" + std::to_string(to.x) + " " + std::to_string(to.y) + " " + std::to_string(to.z) + ")");
         gf::log().info("worldgen functions: dev_new_world sent {} to the Gloaming Forest at {:.1f} {:.1f} {:.1f}", name, to.x, to.y, to.z);
     }
-    (void)gf::gamerules::set("tfEnforcedProgression", progression);
-    ctx.check(gf::gamerules::get("tfEnforcedProgression") == progression, "tfEnforcedProgression is restored for the tests that follow");
+    (void)gf::gamerules::set("gloamingEnforcedProgression", progression);
+    ctx.check(gf::gamerules::get("gloamingEnforcedProgression") == progression, "gloamingEnforcedProgression is restored for the tests that follow");
     gf::log().info("worldgen functions: dev_powerwash_chunk and dev_new_world ran");
 });
 
@@ -969,7 +969,7 @@ GF_REGISTER_SELFTEST("worldgen.tags", [](Context& ctx) {
                   "structures_allowed: #gloamingforest:landmark holds upstream's 16 landmarks (" + std::to_string(all->size()) + ")");
     }
 
-    // BlockState#canBeReplaced (Properties#replaceable): vanilla's and TFBlocks'
+    // BlockState#canBeReplaced (Properties#replaceable): vanilla's and GloamingBlocks'
     static constexpr std::pair<char const*, bool> replaceable[] = {
         {"minecraft:short_grass", true},           {"minecraft:snow_layer", true},          {"minecraft:bubble_column", true},
         {"minecraft:water", true},                 {"minecraft:snow", false},               {"minecraft:stone", false},

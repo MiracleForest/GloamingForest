@@ -1,50 +1,50 @@
 {
-  "tf_item_block_and_chain": {
+  "gf_item_block_and_chain": {
     "textures": "textures/gloamingforest/item/block_and_chain"
   },
-  "tf_item_crumble_horn": {
+  "gf_item_crumble_horn": {
     "textures": "textures/gloamingforest/item/crumble_horn"
   },
-  "tf_item_cube_of_annihilation": {
+  "gf_item_cube_of_annihilation": {
     "textures": "textures/gloamingforest/item/cube_of_annihilation"
   },
-  "tf_item_cube_talisman": {
+  "gf_item_cube_talisman": {
     "textures": "textures/gloamingforest/item/cube_talisman"
   },
-  "tf_item_ender_bow": {
+  "gf_item_ender_bow": {
     "textures": "textures/gloamingforest/item/ender_bow"
   },
-  "tf_item_glass_sword_solid": {
+  "gf_item_glass_sword_solid": {
     "textures": "textures/gloamingforest/item/glass_sword_solid"
   },
-  "tf_item_ice_bomb": {
+  "gf_item_ice_bomb": {
     "textures": "textures/gloamingforest/item/ice_bomb"
   },
-  "tf_item_ice_bow_solid": {
+  "gf_item_ice_bow_solid": {
     "textures": "textures/gloamingforest/item/ice_bow_solid"
   },
-  "tf_item_ice_sword_solid": {
+  "gf_item_ice_sword_solid": {
     "textures": "textures/gloamingforest/item/ice_sword_solid"
   },
-  "tf_item_lamp_of_cinders": {
+  "gf_item_lamp_of_cinders": {
     "textures": "textures/gloamingforest/item/lamp_of_cinders"
   },
-  "tf_item_moonworm_queen": {
+  "gf_item_moonworm_queen": {
     "textures": "textures/gloamingforest/item/moonworm_queen"
   },
-  "tf_item_ore_magnet": {
+  "gf_item_ore_magnet": {
     "textures": "textures/gloamingforest/item/ore_magnet"
   },
-  "tf_item_peacock_feather_fan": {
+  "gf_item_peacock_feather_fan": {
     "textures": "textures/gloamingforest/item/peacock_feather_fan"
   },
-  "tf_item_seeker_bow": {
+  "gf_item_seeker_bow": {
     "textures": "textures/gloamingforest/item/seeker_bow"
   },
-  "tf_item_transformation_powder": {
+  "gf_item_transformation_powder": {
     "textures": "textures/gloamingforest/item/transformation_powder"
   },
-  "tf_item_triple_bow": {
+  "gf_item_triple_bow": {
     "textures": "textures/gloamingforest/item/triple_bow"
   }
 }

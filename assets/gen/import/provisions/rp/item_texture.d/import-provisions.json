@@ -1,101 +1,101 @@
 {
-  "tf_item_beef_jerky": {
+  "gf_item_beef_jerky": {
     "textures": "textures/gloamingforest/item/beef_jerky"
   },
-  "tf_item_berry_medley": {
+  "gf_item_berry_medley": {
     "textures": "textures/gloamingforest/item/berry_medley"
   },
-  "tf_item_chicken_jerky": {
+  "gf_item_chicken_jerky": {
     "textures": "textures/gloamingforest/item/chicken_jerky"
   },
-  "tf_item_cod_jerky": {
+  "gf_item_cod_jerky": {
     "textures": "textures/gloamingforest/item/cod_jerky"
   },
-  "tf_item_cooked_meef": {
+  "gf_item_cooked_meef": {
     "textures": "textures/gloamingforest/item/cooked_meef"
   },
-  "tf_item_cooked_venison": {
+  "gf_item_cooked_venison": {
     "textures": "textures/gloamingforest/item/cooked_venison"
   },
-  "tf_item_experiment_115": {
+  "gf_item_experiment_115": {
     "textures": "textures/gloamingforest/item/experiment_115"
   },
-  "tf_item_fugu_jerky": {
+  "gf_item_fugu_jerky": {
     "textures": "textures/gloamingforest/item/fugu_jerky"
   },
-  "tf_item_hydra_chop": {
+  "gf_item_hydra_chop": {
     "textures": "textures/gloamingforest/item/hydra_chop"
   },
-  "tf_item_maze_wafer": {
+  "gf_item_maze_wafer": {
     "textures": "textures/gloamingforest/item/maze_wafer"
   },
-  "tf_item_meef_jerky": {
+  "gf_item_meef_jerky": {
     "textures": "textures/gloamingforest/item/meef_jerky"
   },
-  "tf_item_meef_stroganoff": {
+  "gf_item_meef_stroganoff": {
     "textures": "textures/gloamingforest/item/meef_stroganoff"
   },
-  "tf_item_monster_jerky": {
+  "gf_item_monster_jerky": {
     "textures": "textures/gloamingforest/item/monster_jerky"
   },
-  "tf_item_moss_soup": {
+  "gf_item_moss_soup": {
     "textures": "textures/gloamingforest/item/moss_soup"
   },
-  "tf_item_music_disc_findings": {
+  "gf_item_music_disc_findings": {
     "textures": "textures/gloamingforest/item/music_disc_findings"
   },
-  "tf_item_music_disc_home": {
+  "gf_item_music_disc_home": {
     "textures": "textures/gloamingforest/item/music_disc_home"
   },
-  "tf_item_music_disc_maker": {
+  "gf_item_music_disc_maker": {
     "textures": "textures/gloamingforest/item/music_disc_maker"
   },
-  "tf_item_music_disc_motion": {
+  "gf_item_music_disc_motion": {
     "textures": "textures/gloamingforest/item/music_disc_motion"
   },
-  "tf_item_music_disc_radiance": {
+  "gf_item_music_disc_radiance": {
     "textures": "textures/gloamingforest/item/music_disc_radiance"
   },
-  "tf_item_music_disc_steps": {
+  "gf_item_music_disc_steps": {
     "textures": "textures/gloamingforest/item/music_disc_steps"
   },
-  "tf_item_music_disc_superstitious": {
+  "gf_item_music_disc_superstitious": {
     "textures": "textures/gloamingforest/item/music_disc_superstitious"
   },
-  "tf_item_music_disc_thread": {
+  "gf_item_music_disc_thread": {
     "textures": "textures/gloamingforest/item/music_disc_thread"
   },
-  "tf_item_music_disc_wayfarer": {
+  "gf_item_music_disc_wayfarer": {
     "textures": "textures/gloamingforest/item/music_disc_wayfarer"
   },
-  "tf_item_mutton_jerky": {
+  "gf_item_mutton_jerky": {
     "textures": "textures/gloamingforest/item/mutton_jerky"
   },
-  "tf_item_pork_jerky": {
+  "gf_item_pork_jerky": {
     "textures": "textures/gloamingforest/item/pork_jerky"
   },
-  "tf_item_rabbit_jerky": {
+  "gf_item_rabbit_jerky": {
     "textures": "textures/gloamingforest/item/rabbit_jerky"
   },
-  "tf_item_raw_meef": {
+  "gf_item_raw_meef": {
     "textures": "textures/gloamingforest/item/raw_meef"
   },
-  "tf_item_raw_venison": {
+  "gf_item_raw_venison": {
     "textures": "textures/gloamingforest/item/raw_venison"
   },
-  "tf_item_salmon_jerky": {
+  "gf_item_salmon_jerky": {
     "textures": "textures/gloamingforest/item/salmon_jerky"
   },
-  "tf_item_shika_senbei": {
+  "gf_item_shika_senbei": {
     "textures": "textures/gloamingforest/item/shika_senbei"
   },
-  "tf_item_tropical_fish_jerky": {
+  "gf_item_tropical_fish_jerky": {
     "textures": "textures/gloamingforest/item/tropical_fish_jerky"
   },
-  "tf_item_venison_jerky": {
+  "gf_item_venison_jerky": {
     "textures": "textures/gloamingforest/item/venison_jerky"
   },
-  "tf_vanilla_item_bread": {
+  "gf_vanilla_item_bread": {
     "textures": "textures/items/bread"
   }
 }

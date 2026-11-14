@@ -193,7 +193,7 @@ void wraithTick(Actor& self) {
 
 void install() {
     ge::registerType(id::Wraith, {.tick = wraithTick, .die = forgetActor});
-    // Wraith#doHurtTarget: first TFDamageTypes.HAUNT of its attack damage, then the vanilla hit, which
+    // Wraith#doHurtTarget: first GloamingDamageTypes.HAUNT of its attack damage, then the vanilla hit, which
     // the hurt's invulnerable time swallows (same amount): the haunt is the hit
     gf::combat::onIncoming(gf::combat::priority::Normal, [](gf::combat::DamageInfo& d) {
         if (!isType(d.attacker, id::Wraith) || (d.direct && d.direct != d.attacker) || d.type != "minecraft:mob_attack") return gf::combat::Verdict::Pass;

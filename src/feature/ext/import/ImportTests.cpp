@@ -332,7 +332,7 @@ GF_REGISTER_SELFTEST("import.light", [](Context& ctx) {
     }
 });
 
-// Hardness and explosion resistance upstream gives (written down by hand from TFBlocks.java and the block classes'
+// Hardness and explosion resistance upstream gives (written down by hand from GloamingBlocks.java and the block classes'
 // getExplosionResistance / getDestroyProgress overrides, independent of the generator), read back from the game's
 // block permutations. The game's units are calibrated on vanilla blocks, which the game stores at Java's values
 // (minecraft:oak_planks strength(2.0F, 3.0F), stone (1.5F, 6.0F), obsidian (50.0F, 1200.0F)): an upstream block must hold
@@ -422,8 +422,8 @@ GF_REGISTER_SELFTEST("import.behaviour", [](Context& ctx) {
     }
 });
 
-// upstream's own sound type (TFSoundTypes.JAR = DeferredSoundType(1.0F, 1.0F, JAR_BREAK, JAR_STEP, JAR_PLACE, JAR_HIT, JAR_FALL),
-// TFSounds "block.gloamingforest.jar.<event>") in the assembled resource pack the game plays from, written down by hand
+// upstream's own sound type (GloamingSoundTypes.JAR = DeferredSoundType(1.0F, 1.0F, JAR_BREAK, JAR_STEP, JAR_PLACE, JAR_HIT, JAR_FALL),
+// GloamingSounds "block.gloamingforest.jar.<event>") in the assembled resource pack the game plays from, written down by hand
 // from upstream 4.8 and Minecraft 1.21.1, independent of the generator: a SoundType of volume v and pitch p plays break
 // (LevelRenderer.levelEvent 2001) and place (BlockItem.place) at (v + 1) / 2, pitch p x 0.8, hit
 // (MultiPlayerGameMode.continueDestroyBlock) at (v + 1) / 8, pitch p x 0.5, step (Entity.playStepSound) at v x 0.15,
@@ -506,7 +506,7 @@ GF_REGISTER_SELFTEST("import.sound_types", [](Context& ctx) {
                         : !snd                  ? std::string("(none)")
                         : snd->is_string()      ? snd->get<std::string>()
                                                 : snd->dump();
-        ctx.check(s == "gloamingforest.jar", std::string(id) + ": RP blocks.json sound " + s + ", upstream gives TFSoundTypes.JAR -> gloamingforest.jar");
+        ctx.check(s == "gloamingforest.jar", std::string(id) + ": RP blocks.json sound " + s + ", upstream gives GloamingSoundTypes.JAR -> gloamingforest.jar");
     }
 });
 
@@ -546,7 +546,7 @@ namespace {
 /// neighborChanged that asks it) of its Java classes requires, written down by hand from Minecraft 1.21.1 and upstream 4.8.
 /// Every block stands on a floor block, minecraft:dirt unless a rule says otherwise: sturdy, solid and in
 /// #minecraft:dirt, it holds StandingSignBlock (isSolid below), PressurePlateBlock, DoorBlock's lower half,
-/// BushBlock.mayPlaceOn (saplings, TFPlantBlock), BerryBushBlock (#gloamingforest:tf_berry_bushes_survive),
+/// BushBlock.mayPlaceOn (saplings, GloamingPlantBlock), BerryBushBlock (#gloamingforest:gf_berry_bushes_survive),
 /// CritterBlock and ThornRoseBlock (default facing up: resting on the block below), MossPatchBlock, FallenLeavesBlock,
 /// MushgloomBlock, OminousFireBlock, Experiment115Block, CarpetBlock and CandelabraBlock (default on_wall false).
 struct Support {
@@ -582,7 +582,7 @@ Support supportOf(JDoc const& chain) {
         } else if (cls == "CeilingHangingSignBlock") {
             s.ceiling = "minecraft:dirt"; // CeilingHangingSignBlock.canSurvive: the block above has a sturdy centre
         } else if (cls == "TorchberryPlantBlock" || cls == "RootStrandBlock") {
-            s.ceiling = "minecraft:dirt"; // TFPlantBlock.canPlaceRootAt: the block above is #gloamingforest:plants_hang_on
+            s.ceiling = "minecraft:dirt"; // GloamingPlantBlock.canPlaceRootAt: the block above is #gloamingforest:plants_hang_on
         } else if (cls == "TrollRootBlock") {
             s.ceiling = "minecraft:stone"; // canPlaceRootBelow: the block above is #minecraft:base_stone_overworld
         } else if (cls == "RopeBlock") {
@@ -605,8 +605,8 @@ Support supportOf(JDoc const& chain) {
             s.states = {{"gloamingforest:down", true}}; // MultifaceBlock.updateShape: a block without a face goes
         } else if (cls == "LeavesBlock") {
             s.states = {{"gloamingforest:persistent", true}}; // LeavesBlock.randomTick: decays unless persistent (player placed)
-        } else if (cls == "TFPortalBlock") {
-            // TFPortalBlock.neighborChanged: a sturdy floor and #gloamingforest:portal/edge (grass, dirt) on all four sides,
+        } else if (cls == "GloamingPortalBlock") {
+            // GloamingPortalBlock.neighborChanged: a sturdy floor and #gloamingforest:portal/edge (grass, dirt) on all four sides,
             // else water again; poked to run that check in its frame
             s.sides = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
             s.poke  = true;

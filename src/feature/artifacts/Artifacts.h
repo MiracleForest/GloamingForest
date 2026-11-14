@@ -142,7 +142,7 @@ void actionBar(Player& player, std::string const& text);
 
 /// The scepter's remaining charges (max damage - damage).
 [[nodiscard]] int charges(ItemStack const& stack);
-/// TFItemStackUtils#hurtButDontBreak for scepters (never past the max damage).
+/// GloamingItemStackUtils#hurtButDontBreak for scepters (never past the max damage).
 void hurtButDontBreak(ItemStack& stack, int amount);
 /// RechargeScepterEffect#applyRecharge (renewal).
 void applyRecharge(ItemStack& scepter, Player& player);
@@ -226,7 +226,7 @@ void installCharmListeners(std::vector<ll::event::ListenerPtr>& out);
 /// The Bedrock natural dimension test of the moon dial.
 [[nodiscard]] std::string moonPhaseKeyFor(Actor const* viewer);
 void registerMisc();
-/// Whether an item carries the emperor's cloth (TFDataComponents.EMPEROR_CLOTH).
+/// Whether an item carries the emperor's cloth (GloamingDataComponents.EMPEROR_CLOTH).
 [[nodiscard]] bool hasCloth(ItemStack const& stack);
 void registerRecipes();
 /// The scepter repair recipes (gloamingforest:scepter_repair) as loaded: scepter, ingredients, durability.

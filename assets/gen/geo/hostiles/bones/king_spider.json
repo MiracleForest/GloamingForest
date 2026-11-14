@@ -3,14 +3,14 @@
   "geometry": "geometry.spider.v1.8",
   "layer": {
     "name": "king_spider",
-    "field": "TFModelLayers.KING_SPIDER",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.KING_SPIDER, SpiderModel::createSpiderBodyLayer);"
+    "field": "GloamingModelLayers.KING_SPIDER",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.KING_SPIDER, SpiderModel::createSpiderBodyLayer);"
   },
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/kingspider",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/kingspider.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/kingspider.png"
     }
   ],
-  "notes": ["TFSpiderRenderer scales it by 1.9."]
+  "notes": ["GloamingSpiderRenderer scales it by 1.9."]
 }

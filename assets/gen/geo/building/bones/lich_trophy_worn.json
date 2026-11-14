@@ -3,8 +3,8 @@
   "source": "CustomHeadLayer.translateToHead + the item model's 'head' display + ItemRenderer (builtin/entity) + ISTER + TrophyRenderer.render(null, 180, ItemDisplayContext.HEAD) + LichModel.renderTrophy (item form)",
   "layer": {
     "name": "lich_trophy",
-    "field": "TFModelLayers.LICH_TROPHY",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.LICH_TROPHY, LichModel::create);"
+    "field": "GloamingModelLayers.LICH_TROPHY",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.LICH_TROPHY, LichModel::create);"
   },
   "frame": "head",
   "slot": "head",
@@ -24,7 +24,7 @@
       "identifier": "geometry.gloamingforest.lich_trophy_worn",
       "texture": {
         "bedrock": "textures/gloamingforest/entity/gloaminglich64",
-        "tf": "src/main/resources/assets/gloamingforest/textures/entity/gloaminglich64.png"
+        "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/gloaminglich64.png"
       },
       "material": "entity_alphatest"
     }

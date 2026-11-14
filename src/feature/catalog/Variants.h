@@ -4,7 +4,7 @@
 // fold this into).
 //
 // upstream's tabs list a few items twice, the second time as a stack with data
-// (TFCreativeTabs#createGlassSwordAndLoreVer: the glass sword, then its creative-only lore version).
+// (GloamingCreativeTabs#createGlassSwordAndLoreVer: the glass sword, then its creative-only lore version).
 // The behavior pack's item_catalog lists item ids only, so the owner of the item registers the
 // variant here: a second creative entry of the item, right after the item's own entry in its group,
 // carrying the data `fn` writes on a copy of the item's entry. It is added to the server's creative

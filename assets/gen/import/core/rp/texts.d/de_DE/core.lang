@@ -1,4 +1,4 @@
-commands.tffeature.usage=/%s <info | reaktivieren | erobern | zentrum>
+commands.gloamingfeature.usage=/%s <info | reaktivieren | erobern | zentrum>
 gloamingforest.configuration.section.gloamingforest.client.toml=Client-Einstellungen
 gloamingforest.configuration.section.gloamingforest.client.toml.title=Client-Einstellungen
 gloamingforest.configuration.section.gloamingforest.common.toml=Allgemeine Einstellungen

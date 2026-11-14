@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_item_ore_magnet"
+          "default": "gf_item_ore_magnet"
         }
       },
       "minecraft:display_name": {

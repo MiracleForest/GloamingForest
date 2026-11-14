@@ -1070,7 +1070,7 @@ namespace Gf.Models
         void Assign(Expr target, string op, Expr value, Ctx c, AnimStatement st, int line)
         {
             ApplyNested(value, c, st, "the assigned value");
-            if (target is FieldExpr tfe) ApplyNested(tfe.Target, c, st, "the assigned part");
+            if (target is FieldExpr gloaminge) ApplyNested(gloaminge.Target, c, st, "the assigned part");
             if (target is IndexExpr tix) ApplyNested(tix, c, st, "the assigned element");
             if (target is NameExpr ln && c.Env.ContainsKey(ln.Name))
             {
@@ -1107,11 +1107,11 @@ namespace Gf.Models
                 AssignKey(c, path + "." + prop, op, rhs, d, why, st, line);
                 return;
             }
-            if (target is FieldExpr tf && IsPoseProp(tf.Name))
+            if (target is FieldExpr upsrc && IsPoseProp(upsrc.Name))
             {
-                Fail(st, "part '" + JavaText(tf.Target) + "' is not resolved (an array element or a part chosen at run time)");
-                foreach (var p in Candidates(tf.Target, c))
-                    SetKey(c, p + "." + tf.Name, Val.Unknown(PartName(c, p) + "." + tf.Name + " may be changed through '" + JavaText(tf.Target) + "' at line " + line, line));
+                Fail(st, "part '" + JavaText(upsrc.Target) + "' is not resolved (an array element or a part chosen at run time)");
+                foreach (var p in Candidates(upsrc.Target, c))
+                    SetKey(c, p + "." + upsrc.Name, Val.Unknown(PartName(c, p) + "." + upsrc.Name + " may be changed through '" + JavaText(upsrc.Target) + "' at line " + line, line));
                 return;
             }
             if (target is FieldExpr vis && (vis.Name == "visible" || vis.Name == "skipDraw" || vis.Name.EndsWith("Scale", StringComparison.Ordinal)))
@@ -1574,7 +1574,7 @@ namespace Gf.Models
                         string path, prop;
                         if (t is NameExpr n) { if (!c.Fields.ContainsKey(n.Name)) locals.Add(n.Name); }
                         else if (BoneProp(t, c.Fields, out path, out prop)) { if (IsPoseProp(prop)) keys.Add(path + "." + prop); }
-                        else if (t is FieldExpr tf && IsPoseProp(tf.Name)) foreach (var p in Candidates(tf.Target, c)) keys.Add(p + "." + tf.Name);
+                        else if (t is FieldExpr upsrc && IsPoseProp(upsrc.Name)) foreach (var p in Candidates(upsrc.Target, c)) keys.Add(p + "." + upsrc.Name);
                         continue;
                     }
                     var call = e as CallExpr;
@@ -1942,7 +1942,7 @@ namespace Gf.Models
         static MSym EnumConstant(FieldExpr f, Ctx c)
         {
             if (f.Name.Length == 0 || !f.Name.All(ch => char.IsUpper(ch) || char.IsDigit(ch) || ch == '_')) return null;
-            string type = f.Target is NameExpr tn ? tn.Name : f.Target is FieldExpr tf ? tf.Name : null;
+            string type = f.Target is NameExpr tn ? tn.Name : f.Target is FieldExpr upsrc ? upsrc.Name : null;
             if (type == null || type.Length == 0 || !char.IsUpper(type[0]) || type == "Mth" || type == "Math") return null;
             if (f.Target is NameExpr tn2 && (c.Env.ContainsKey(tn2.Name) || c.Fields.ContainsKey(tn2.Name))) return null;
             return new MSym { Name = type + "." + f.Name };

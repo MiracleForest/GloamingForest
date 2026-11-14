@@ -1,29 +1,29 @@
 {
-  "tf_block_fluffy_cloud": {
+  "gf_block_fluffy_cloud": {
     "textures": "textures/gloamingforest/block/fluffy_cloud"
   },
-  "tf_block_huge_stalk": {
+  "gf_block_huge_stalk": {
     "textures": "textures/gloamingforest/block/huge_stalk"
   },
-  "tf_block_huge_stalk_top": {
+  "gf_block_huge_stalk_top": {
     "textures": "textures/gloamingforest/block/huge_stalk_top"
   },
-  "tf_block_rainy_cloud": {
+  "gf_block_rainy_cloud": {
     "textures": "textures/gloamingforest/block/rainy_cloud"
   },
-  "tf_block_snowy_cloud": {
+  "gf_block_snowy_cloud": {
     "textures": "textures/gloamingforest/block/snowy_cloud"
   },
-  "tf_block_uberous_soil": {
+  "gf_block_uberous_soil": {
     "textures": "textures/gloamingforest/block/uberous_soil"
   },
-  "tf_block_wispy_cloud": {
+  "gf_block_wispy_cloud": {
     "textures": "textures/gloamingforest/block/wispy_cloud"
   },
-  "tf_vanilla_block_azalea_leaves": {
+  "gf_vanilla_block_azalea_leaves": {
     "textures": "textures/blocks/azalea_leaves"
   },
-  "tf_vanilla_block_cobblestone": {
+  "gf_vanilla_block_cobblestone": {
     "textures": "textures/blocks/cobblestone"
   }
 }

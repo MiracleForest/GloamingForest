@@ -18,8 +18,8 @@ $root = (Resolve-Path "$PSScriptRoot/../../../..").Path
 Write-Step 'tools/sounds/synth.ps1 -Check'
 & pwsh -NoProfile -File (Join-Path $root 'tools/sounds/synth.ps1') -Check
 if ($LASTEXITCODE -ne 0) { throw 'tools/sounds/synth.ps1 -Check failed: the rendered audio is not deterministic, not committed or not upstream''s' }
-$tf = if ($env:GF_UPSTREAM_HOME) { $env:GF_UPSTREAM_HOME } else { Join-Path $env:LOCALAPPDATA 'gf-upstream/view' }
-if (Test-Path (Join-Path $tf 'src/generated/resources/assets/gloamingforest/sounds.json')) {
+$upsrc = if ($env:GF_UPSTREAM_HOME) { $env:GF_UPSTREAM_HOME } else { Join-Path $env:LOCALAPPDATA 'gf-upstream/view' }
+if (Test-Path (Join-Path $upsrc 'src/generated/resources/assets/gloamingforest/sounds.json')) {
     Write-Step 'tools/sounds/baseline/generate.ps1 -Check'
     & pwsh -NoProfile -File (Join-Path $root 'tools/sounds/baseline/generate.ps1') -Check
     if ($LASTEXITCODE -ne 0) { throw 'tools/sounds/baseline/generate.ps1 -Check failed: the baseline or the inventory differs from upstream''s sounds.json' }

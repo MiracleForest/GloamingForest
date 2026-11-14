@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_item_raw_ironwood"
+          "default": "gf_item_raw_ironwood"
         }
       },
       "minecraft:display_name": {

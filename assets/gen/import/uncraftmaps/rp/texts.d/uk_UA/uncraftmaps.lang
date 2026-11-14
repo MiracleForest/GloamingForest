@@ -1,9 +1,9 @@
 block.gloamingforest.uncrafting_table=Стіл розбирання
 block.gloamingforest.uncrafting_table.disabled=Цей блок було вимкнено.
-commands.tffeature.biomepng.counts_header=Приблизна кількість блоків біому в регіоні %sx%s
-commands.tffeature.biomepng.progress=%s%% завершено зіставлення
-commands.tffeature.biomepng.save_failed=Не вдалося зберегти зображення! Звітуйте це!
-commands.tffeature.biomepng.save_success=Зображення збережено!
+commands.gloamingfeature.biomepng.counts_header=Приблизна кількість блоків біому в регіоні %sx%s
+commands.gloamingfeature.biomepng.progress=%s%% завершено зіставлення
+commands.gloamingfeature.biomepng.save_failed=Не вдалося зберегти зображення! Звітуйте це!
+commands.gloamingfeature.biomepng.save_success=Зображення збережено!
 config.gloamingforest.disable_uncrafting=Вимкнути розбирання
 config.gloamingforest.disable_uncrafting.tooltip=Вимикає функцію скасування таблиці скасування. Рекомендується як останній засіб, якщо потрібно змінити занадто багато речей у його поведінці (або ви просто ліниві, я не суджу).~LINEBREAK~Зауважте, що спеціальні рецепти розбирання не вимкнено, оскільки мод покладається на них для інших речей.
 config.gloamingforest.disable_uncrafting_table=Вимкнути стіл розбирання

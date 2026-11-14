@@ -19,18 +19,18 @@
         "explosion_resistance": 50
       },
       "minecraft:map_color": "#976d4d",
-      "minecraft:geometry": "geometry.tf.gloamingforest.block.slider",
+      "minecraft:geometry": "geometry.gf.gloamingforest.block.slider",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_slider_v",
+          "texture": "gf_block_slider_v",
           "render_method": "alpha_test"
         },
         "end": {
-          "texture": "tf_block_slider_top",
+          "texture": "gf_block_slider_top",
           "render_method": "alpha_test"
         },
         "side": {
-          "texture": "tf_block_slider_v",
+          "texture": "gf_block_slider_v",
           "render_method": "alpha_test"
         }
       },
@@ -48,18 +48,18 @@
       {
         "condition": "q.block_state('gloamingforest:axis') == 'x' && q.block_state('gloamingforest:delay') == 0",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.slider_horiz",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.slider_horiz",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_slider_h_90",
+              "texture": "gf_block_slider_h_90",
               "render_method": "alpha_test"
             },
             "end": {
-              "texture": "tf_block_slider_top",
+              "texture": "gf_block_slider_top",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_slider_h_90",
+              "texture": "gf_block_slider_h_90",
               "render_method": "alpha_test"
             }
           },
@@ -79,18 +79,18 @@
       {
         "condition": "q.block_state('gloamingforest:axis') == 'x' && q.block_state('gloamingforest:delay') == 1",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.slider_horiz",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.slider_horiz",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_slider_h_90",
+              "texture": "gf_block_slider_h_90",
               "render_method": "alpha_test"
             },
             "end": {
-              "texture": "tf_block_slider_top",
+              "texture": "gf_block_slider_top",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_slider_h_90",
+              "texture": "gf_block_slider_h_90",
               "render_method": "alpha_test"
             }
           },
@@ -110,18 +110,18 @@
       {
         "condition": "q.block_state('gloamingforest:axis') == 'x' && q.block_state('gloamingforest:delay') == 2",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.slider_horiz",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.slider_horiz",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_slider_h_90",
+              "texture": "gf_block_slider_h_90",
               "render_method": "alpha_test"
             },
             "end": {
-              "texture": "tf_block_slider_top",
+              "texture": "gf_block_slider_top",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_slider_h_90",
+              "texture": "gf_block_slider_h_90",
               "render_method": "alpha_test"
             }
           },
@@ -141,18 +141,18 @@
       {
         "condition": "q.block_state('gloamingforest:axis') == 'x' && q.block_state('gloamingforest:delay') == 3",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.slider_horiz",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.slider_horiz",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_slider_h_90",
+              "texture": "gf_block_slider_h_90",
               "render_method": "alpha_test"
             },
             "end": {
-              "texture": "tf_block_slider_top",
+              "texture": "gf_block_slider_top",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_slider_h_90",
+              "texture": "gf_block_slider_h_90",
               "render_method": "alpha_test"
             }
           },
@@ -172,18 +172,18 @@
       {
         "condition": "q.block_state('gloamingforest:axis') == 'y' && q.block_state('gloamingforest:delay') == 0",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.slider",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.slider",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_slider_v",
+              "texture": "gf_block_slider_v",
               "render_method": "alpha_test"
             },
             "end": {
-              "texture": "tf_block_slider_top",
+              "texture": "gf_block_slider_top",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_slider_v",
+              "texture": "gf_block_slider_v",
               "render_method": "alpha_test"
             }
           },
@@ -203,18 +203,18 @@
       {
         "condition": "q.block_state('gloamingforest:axis') == 'y' && q.block_state('gloamingforest:delay') == 1",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.slider",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.slider",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_slider_v",
+              "texture": "gf_block_slider_v",
               "render_method": "alpha_test"
             },
             "end": {
-              "texture": "tf_block_slider_top",
+              "texture": "gf_block_slider_top",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_slider_v",
+              "texture": "gf_block_slider_v",
               "render_method": "alpha_test"
             }
           },
@@ -234,18 +234,18 @@
       {
         "condition": "q.block_state('gloamingforest:axis') == 'y' && q.block_state('gloamingforest:delay') == 2",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.slider",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.slider",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_slider_v",
+              "texture": "gf_block_slider_v",
               "render_method": "alpha_test"
             },
             "end": {
-              "texture": "tf_block_slider_top",
+              "texture": "gf_block_slider_top",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_slider_v",
+              "texture": "gf_block_slider_v",
               "render_method": "alpha_test"
             }
           },
@@ -265,18 +265,18 @@
       {
         "condition": "q.block_state('gloamingforest:axis') == 'y' && q.block_state('gloamingforest:delay') == 3",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.slider",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.slider",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_slider_v",
+              "texture": "gf_block_slider_v",
               "render_method": "alpha_test"
             },
             "end": {
-              "texture": "tf_block_slider_top",
+              "texture": "gf_block_slider_top",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_slider_v",
+              "texture": "gf_block_slider_v",
               "render_method": "alpha_test"
             }
           },
@@ -296,18 +296,18 @@
       {
         "condition": "q.block_state('gloamingforest:axis') == 'z' && q.block_state('gloamingforest:delay') == 0",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.slider_horiz",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.slider_horiz",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_slider_h_90",
+              "texture": "gf_block_slider_h_90",
               "render_method": "alpha_test"
             },
             "end": {
-              "texture": "tf_block_slider_top",
+              "texture": "gf_block_slider_top",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_slider_h_90",
+              "texture": "gf_block_slider_h_90",
               "render_method": "alpha_test"
             }
           },
@@ -327,18 +327,18 @@
       {
         "condition": "q.block_state('gloamingforest:axis') == 'z' && q.block_state('gloamingforest:delay') == 1",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.slider_horiz",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.slider_horiz",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_slider_h_90",
+              "texture": "gf_block_slider_h_90",
               "render_method": "alpha_test"
             },
             "end": {
-              "texture": "tf_block_slider_top",
+              "texture": "gf_block_slider_top",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_slider_h_90",
+              "texture": "gf_block_slider_h_90",
               "render_method": "alpha_test"
             }
           },
@@ -358,18 +358,18 @@
       {
         "condition": "q.block_state('gloamingforest:axis') == 'z' && q.block_state('gloamingforest:delay') == 2",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.slider_horiz",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.slider_horiz",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_slider_h_90",
+              "texture": "gf_block_slider_h_90",
               "render_method": "alpha_test"
             },
             "end": {
-              "texture": "tf_block_slider_top",
+              "texture": "gf_block_slider_top",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_slider_h_90",
+              "texture": "gf_block_slider_h_90",
               "render_method": "alpha_test"
             }
           },
@@ -389,18 +389,18 @@
       {
         "condition": "q.block_state('gloamingforest:axis') == 'z' && q.block_state('gloamingforest:delay') == 3",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.slider_horiz",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.slider_horiz",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_slider_h_90",
+              "texture": "gf_block_slider_h_90",
               "render_method": "alpha_test"
             },
             "end": {
-              "texture": "tf_block_slider_top",
+              "texture": "gf_block_slider_top",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_slider_h_90",
+              "texture": "gf_block_slider_h_90",
               "render_method": "alpha_test"
             }
           },

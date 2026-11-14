@@ -46,14 +46,14 @@ namespace {
 void logPalaceViews(structure::bases::PieceList const& pieces) {
     bool boss = false, wing = false;
     for (auto const& p : pieces) {
-        if (!boss && p->typeId == "gloamingforest:TFITBoss") {
+        if (!boss && p->typeId == "gloamingforest:GloamingITBoss") {
             boss    = true;
             // on the room's floor in a corner free of the ice stairs, looking up across the
             // glowstone ceiling (y 38 .. 39) past the spawner (7, 34, 7)
             auto at = p->getWorldPos(4, 35, 4), look = p->getWorldPos(10, 39, 10);
             gf::log().info("aurora: snow queen room view {} {} {} facing {} {} {}", at.x, at.y, at.z, look.x, look.y, look.z);
         }
-        if (!wing && p->typeId == "gloamingforest:TFITWin") {
+        if (!wing && p->typeId == "gloamingforest:GloamingITWin") {
             wing    = true;
             auto at = p->getWorldPos(2, 2, 2), look = p->getWorldPos(6, 2, 6);
             gf::log().info("aurora: palace wing view {} {} {} facing {} {} {}", at.x, at.y, at.z, look.x, look.y, look.z);

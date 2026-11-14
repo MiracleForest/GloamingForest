@@ -2,7 +2,7 @@
 # the fixture boss gf_test:boss next to the real player: an orange bar (0xFF8000), a colour none of
 # Bedrock's 8 BossBarColor values has, with the Naga's NOTCHED_10 overlay, then a second fixture
 # boss with 3 linked parts, then a boss that dies with a 100-tick death animation:
-#   local / remote-mod   the client mod paints the bar in the exact RGB (TFBossBarPacket through
+#   local / remote-mod   the client mod paints the bar in the exact RGB (GloamingBossBarPacket through
 #                        ClientInstanceScreenModel::getBossBarColor) and gives the HUD bar's images
 #                        the notched textures; the client logs "client boss bar <id> coloured
 #                        #FF8000" and "... notched 10", the synced string list ("client entity data
@@ -70,7 +70,7 @@ if ($script:Mode -eq 'remote-vanilla') {
     # the bar's overlay (NOTCHED_10, the Naga's): the HUD bar's images got the notched textures
     $notch = Wait-LogLine "${clientLine}client boss bar -?\d+ notched 10 \(HUD bar" 30 -Since $mark
     Write-Step "notched textures applied: $notch"
-    # a synced value (TFDataSerializers.STRING_LIST) reached the client mod's readers
+    # a synced value (GloamingDataSerializers.STRING_LIST) reached the client mod's readers
     Wait-LogLine "${clientLine}client entity data -?\d+ gf_test:heads = \[`"left`",`"center`",`"right`"\]" 30 -Since $mark | Out-Null
 }
 Start-Sleep -Seconds 2

@@ -119,9 +119,9 @@ void center(CommandOrigin const& origin, CommandOutput& output) {
     auto* player  = commands::playerOf(origin);
     // Component#withStyle(DARK_GREEN)#getString(): the plain text, the style is dropped
     auto  name    = structureName(closest, player);
-    output.success(say(origin, "commands.tffeature.nearest", "The nearest feature is: %s", name));
-    output.success(say(origin, "commands.tffeature.center", "Center of feature: %s", shortString(cc.x, 0, cc.z)));
-    output.success(say(origin, "commands.tffeature.chunk", "Located in feature chunk: %s", fc ? "true" : "false"));
+    output.success(say(origin, "commands.gloamingfeature.nearest", "The nearest feature is: %s", name));
+    output.success(say(origin, "commands.gloamingfeature.center", "Center of feature: %s", shortString(cc.x, 0, cc.z)));
+    output.success(say(origin, "commands.gloamingfeature.chunk", "Located in feature chunk: %s", fc ? "true" : "false"));
     log().info("landmark: center {} {} -> {} at {} {} (in center chunk: {})", dx, dz, closest, cc.x, cc.z, fc);
 }
 
@@ -138,30 +138,30 @@ void infoCommand(CommandOrigin const& origin, CommandOutput& output) {
     }
     auto* player = commands::playerOf(origin);
     // FMLLoader.isProduction(): released builds warn that the command is WIP
-    output.success("§c§l" + say(origin, "commands.tffeature.info.wip", "This command is still WIP, some things may still be broken."));
-    output.success(say(origin, "commands.tffeature.nearest", "The nearest feature is: %s", structureName(inf->d.key, player)));
+    output.success("§c§l" + say(origin, "commands.gloamingfeature.info.wip", "This command is still WIP, some things may still be broken."));
+    output.success(say(origin, "commands.gloamingfeature.nearest", "The nearest feature is: %s", structureName(inf->d.key, player)));
     auto const& b   = rec->start.box;
     auto        box = "[" + std::to_string(b.minX) + ", " + std::to_string(b.minY) + ", " + std::to_string(b.minZ) + ", " + std::to_string(b.maxX) + ", "
              + std::to_string(b.maxY) + ", " + std::to_string(b.maxZ) + "]";
-    output.success(say(origin, "commands.tffeature.structure.boundaries", "Structure boundaries: %s", box));
+    output.success(say(origin, "commands.gloamingfeature.structure.boundaries", "Structure boundaries: %s", box));
     if (b.contains(pos.x, pos.y, pos.z)) {
-        output.success("§l§a" + say(origin, "commands.tffeature.structure.inside", "You are in a Landmark structure"));
+        output.success("§l§a" + say(origin, "commands.gloamingfeature.structure.inside", "You are in a Landmark structure"));
         if (inf->traits.conquerable) {
             bool c = rec->start.conquered;
-            output.success(std::string(c ? "§l§a" : "§l§c") + say(origin, "commands.tffeature.structure.conquer.status", "Structure conquer flag: %s", c ? "true" : "false"));
+            output.success(std::string(c ? "§l§a" : "§l§c") + say(origin, "commands.gloamingfeature.structure.conquer.status", "Structure conquer flag: %s", c ? "true" : "false"));
         }
         // what is the spawn list (upstream underlines it: Bedrock has no underline, and its §n is the
         // copper colour, so the line stays plain)
-        output.success(say(origin, "commands.tffeature.structure.spawn_list", "Spawn list for this area is:"));
+        output.success(say(origin, "commands.gloamingfeature.structure.spawn_list", "Spawn list for this area is:"));
         if (auto spawns = gf::landmark::ext::potentialSpawns(dim, "monster", pos.x, pos.y, pos.z)) {
             for (auto const& e : *spawns) {
                 // EntityType#getDescription().getString(): the entity's name in the reader's language
                 auto name = entityName(e.value("type", std::string{}), player);
-                output.success(say(origin, "commands.tffeature.structure.spawn_info", "%s, Weight %s", name, std::to_string(e.value("weight", 0))));
+                output.success(say(origin, "commands.gloamingfeature.structure.spawn_info", "%s, Weight %s", name, std::to_string(e.value("weight", 0))));
             }
         }
     } else {
-        output.success("§l§c" + say(origin, "commands.tffeature.structure.outside", "You are not in a Landmark structure"));
+        output.success("§l§c" + say(origin, "commands.gloamingfeature.structure.outside", "You are not in a Landmark structure"));
     }
     log().info("landmark: info at {} {} {}: {} conquered={}", pos.x, pos.y, pos.z, inf->d.key, rec->start.conquered);
 }
@@ -175,9 +175,9 @@ void conquer(CommandOrigin const& origin, CommandOutput& output, bool flag) {
     auto const* inf = rec ? info(rec->start.key) : nullptr;
     if (!rec || !rec->start.box.contains(pos.x, pos.y, pos.z) || !inf || !inf->traits.conquerable) {
         log().info("landmark: {} at {} {} {}: not in a structure", flag ? "conquer" : "conquer reactivate", pos.x, pos.y, pos.z);
-        return output.error(say(origin, "commands.tffeature.structure.required", "You are not in a structure"));
+        return output.error(say(origin, "commands.gloamingfeature.structure.required", "You are not in a structure"));
     }
-    output.success(say(origin, "commands.tffeature.structure.conquer.update", "Structure conquer flag was %s, changing to %s",
+    output.success(say(origin, "commands.gloamingfeature.structure.conquer.update", "Structure conquer flag was %s, changing to %s",
                        rec->start.conquered ? "true" : "false", flag ? "true" : "false"));
     if (rec->start.conquered != flag) {
         rec->start.conquered = flag;
@@ -256,7 +256,7 @@ void genbook(CommandOrigin const& origin, CommandOutput& output, std::optional<s
     }
     if (!player || player->isSimulatedPlayer()) {
         log().info("landmark: genbook {}: not run by a player", arg);
-        return output.error(say(origin, "commands.tffeature.not_player", "This command must be run by a valid player!"));
+        return output.error(say(origin, "commands.gloamingfeature.not_player", "This command must be run by a valid player!"));
     }
     int given = 0;
     if (!structure) {
@@ -327,8 +327,8 @@ void locate(CommandOrigin const& origin, CommandOutput& output, std::string cons
     // Minecraft's structures: in the Gloaming Forest none generates (no structure set of theirs has a
     // biome of upstream's biome source), so Java finds none there either and the search below answers
     // not_found; anywhere else Java finds them, and only Bedrock's own /locate can
-    auto tf = gloamingDim();
-    if ((!tf || *tf != dim) && std::any_of(holders.begin(), holders.end(), [](std::string const& k) { return info(k) == nullptr; })) {
+    auto upsrc = gloamingDim();
+    if ((!upsrc || *upsrc != dim) && std::any_of(holders.begin(), holders.end(), [](std::string const& k) { return info(k) == nullptr; })) {
         log().info("landmark: locate {}: not a Gloaming Forest structure", printable);
         return notGloamingStructure(origin, output, printable);
     }
@@ -472,8 +472,8 @@ std::optional<Located> locate(int dimension, std::string const& keyOrTag, int x,
     for (auto const& rec : fl::allRecords(dimension))
         if (rec->forced && !rec->placed && fl::isFixtureKey(rec->start.key) && std::find(targets.begin(), targets.end(), rec->start.key) != targets.end())
             consider(rec->start.key, rec->start.center.x, rec->start.center.z);
-    auto tf = fl::gloamingDim();
-    if (!tf || *tf != dimension) return best;
+    auto upsrc = fl::gloamingDim();
+    if (!upsrc || *upsrc != dimension) return best;
 
     auto seed    = fl::levelSeed();
     auto variety = [seed](int cx, int cz) { return cl::pickVariety(seed, cx, cz); };

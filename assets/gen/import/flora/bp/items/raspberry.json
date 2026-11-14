@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_item_raspberry"
+          "default": "gf_item_raspberry"
         }
       },
       "minecraft:display_name": {

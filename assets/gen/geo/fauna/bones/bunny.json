@@ -3,22 +3,22 @@
   "geometry": "geometry.gloamingforest.bunny",
   "layer": {
     "name": "bunny",
-    "field": "TFModelLayers.BUNNY",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.BUNNY, BunnyModel::create);"
+    "field": "GloamingModelLayers.BUNNY",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.BUNNY, BunnyModel::create);"
   },
   "texture_size": [32, 32],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/bunnybrown",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/bunnybrown.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/bunnybrown.png"
     },
     {
       "bedrock": "textures/gloamingforest/entity/bunnydutch",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/bunnydutch.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/bunnydutch.png"
     },
     {
       "bedrock": "textures/gloamingforest/entity/bunnywhite",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/bunnywhite.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/bunnywhite.png"
     }
   ],
   "bones": [

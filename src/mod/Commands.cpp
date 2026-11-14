@@ -1,7 +1,7 @@
 // Adapted from LiteLDev/Levitate v0.1.0 (src/mod/Commands.cpp), LGPL-3.0-or-later.
 //
-// `/gloamingforest` (no aliases; upstream's TFCommand):
-//   /gloamingforest                     usage (upstream: commands.tffeature.usage)
+// `/gloamingforest` (no aliases; upstream's GloamingCommand):
+//   /gloamingforest                     usage (upstream: commands.gloamingfeature.usage)
 //   /gloamingforest selftest [glob]     (op / console) run selftests
 //   /gloamingforest reload              (op / console) reload configs and translations
 //   /gloamingforest stubs               (op / console) list the contract stubs that were called
@@ -118,7 +118,7 @@ void registerAll() {
 
     // upstream: a bare /gloamingforest fails with its usage line.
     cmd.overload().execute([](CommandOrigin const&, CommandOutput& output) {
-        output.error(tr("commands.tffeature.usage", "Usage: /gloamingforest <subcommand>", "/gloamingforest"));
+        output.error(tr("commands.gloamingfeature.usage", "Usage: /gloamingforest <subcommand>", "/gloamingforest"));
     });
 
     auto selftest = [](CommandOrigin const& origin, CommandOutput& output, std::string const& glob) {

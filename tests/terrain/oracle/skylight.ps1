@@ -5,7 +5,7 @@
 # It reuses F13's oracle installation, dumper and RCON client unchanged (tools/oracle/lib/Oracle.psm1)
 # and differs from tools/oracle/run.ps1 in one thing: each fresh world gets a world datapack that
 # points the gloamingforest:gloaming_forest dimension at skylight_noise_gen, as upstream's "Skylight"
-# world preset does (TFDimensionData#SKYLIGHT_NOISE_GEN). The vanilla server loads a pack it finds
+# world preset does (GloamingDimensionData#SKYLIGHT_NOISE_GEN). The vanilla server loads a pack it finds
 # in world/datapacks when it creates the world ("Found new data pack file/gf_skylight, loading it
 # automatically"), before the dimension registry is built.
 #
@@ -91,7 +91,7 @@ try {
             if (Test-Path $p) { Remove-Item -Recurse -Force $p }
         }
         New-Item -ItemType Directory -Force (Join-Path $server 'mods') | Out-Null
-        Copy-Item -LiteralPath (Get-OracleTfJar) -Destination (Join-Path $server 'mods')
+        Copy-Item -LiteralPath (Get-OracleGloamingJar) -Destination (Join-Path $server 'mods')
         Copy-Item -LiteralPath $dumper -Destination (Join-Path $server 'mods')
         $runSpec = [ordered]@{}
         foreach ($k in $spec.Keys) { $runSpec[$k] = $spec[$k] }

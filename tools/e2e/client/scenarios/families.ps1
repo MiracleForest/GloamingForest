@@ -22,46 +22,46 @@
 #   out/families/families-8-snowloggable.png   the snowloggable close up (its 3 snow layers)
 #   out/families/families-9-sign-editor.png    the native sign editor (client mod: Java's
 #                                           SignEditScreen, the sign drawn with the line on it)
-#   out/families/families-10-tf-woodwork.png   upstream's own blocks through the kit: canopy door, sign,
+#   out/families/families-10-upsrc-woodwork.png   upstream's own blocks through the kit: canopy door, sign,
 #                                           wall sign, hanging and wall hanging sign, chest, trapped
 #                                           chest double, trapdoor, button (upstream's textures)
-#   out/families/families-11-tf-plants.png  a grown blackberry bush with 2 snow layers, a young
+#   out/families/families-11-upsrc-plants.png  a grown blackberry bush with 2 snow layers, a young
 #                                           blueberry bush with 1, upstream's leaves (time, mining, sorting,
 #                                           transformation, rainbow oak pre-tinted with Java's colour
 #                                           without a world; gloaming oak by the biome; canopy and
 #                                           mangrove: the client mod blends the biome foliage as
 #                                           ColorHandler, a vanilla client tints evergreen / birch),
 #                                           castle doors (connected textures), a time log
-#   out/families/families-12-tf-close.png   upstream's signs and chests close up
-#   out/families/families-13-tf-bush.png    the snowy berry bush close up (client mod: the grass
+#   out/families/families-12-upsrc-close.png   upstream's signs and chests close up
+#   out/families/families-13-upsrc-bush.png    the snowy berry bush close up (client mod: the grass
 #                                           below drawn snowy)
 #   out/families/families-15-ct-close.png   the six-face connected texture fixture close up (client
 #                                           mod: the corner piece at the L's inner corner)
 #   out/families/families-14-sign-form.png  remote-vanilla: the sign editor form (its title is the
 #                                           game's own sign.edit text)
-#   out/families/families-25-tf-chest-hopper.png   upstream's canopy double chest with a hopper on its left
+#   out/families/families-25-upsrc-chest-hopper.png   upstream's canopy double chest with a hopper on its left
 #                                           half that emptied itself into the chest
-#   out/families/families-26-tf-chest-hopper-screen.png   that chest right-clicked: the client mod's
+#   out/families/families-26-upsrc-chest-hopper-screen.png   that chest right-clicked: the client mod's
 #                                           54-slot chest screen (local, remote-mod) or the game's large
 #                                           chest screen (remote-vanilla) with the hopper's 3 gold
 #                                           ingots and 2 diamonds in the right half's first slots
-#   out/families/families-27-tf-chest-hopper-live-a.png  the same screen opened again while the hopper
+#   out/families/families-27-upsrc-chest-hopper-live-a.png  the same screen opened again while the hopper
 #                                           on the left half feeds it 64 cobblestone (one per 8 ticks)
-#   out/families/families-28-tf-chest-hopper-live-b.png  6 seconds later, the screen still open: more
+#   out/families/families-28-upsrc-chest-hopper-live-b.png  6 seconds later, the screen still open: more
 #                                           cobblestone in the right half's third slot (Java's ChestMenu
 #                                           broadcastChanges: the client mod's screen is refreshed after a
 #                                           hopper's tick, the vanilla screen follows F10's proxy)
-#   out/families/families-29-tf-slab-in-water.png  a gloaming oak slab the player placed into a water
+#   out/families/families-29-upsrc-slab-in-water.png  a gloaming oak slab the player placed into a water
 #                                           source (waterlogged; the content log names no missing
 #                                           place_in_water or chest sound)
-#   out/families/families-16-tf-sign-text.png        client mod: upstream's canopy signs written through the
+#   out/families/families-16-upsrc-sign-text.png        client mod: upstream's canopy signs written through the
 #                                           editor and coloured with items, from the north: the wall
 #                                           sign's front (4 black lines), the standing sign's back
 #                                           (blue, glowing: the dark blue outline), the hanging sign
 #                                           (glowing black: the cream outline), the wall hanging sign
 #                                           (red dye: dark red); Java's layout and scale per kind
-#   out/families/families-17-tf-sign-text-close.png  the same close up
-#   out/families/families-18-tf-sign-text-far.png    the same from 20 blocks: the blue glowing text
+#   out/families/families-17-upsrc-sign-text-close.png  the same close up
+#   out/families/families-18-upsrc-sign-text-far.png    the same from 20 blocks: the blue glowing text
 #                                           has no outline there (isOutlineVisible: 16 blocks), the
 #                                           black one keeps it
 #   out/families/families-19-sign-written.png       the sign families.sign_a_write wrote (server
@@ -186,7 +186,7 @@ $rows = @(
     },
     # upstream's own blocks through the kit (F1's skeleton and textures): canopy door, sign, wall sign,
     # hanging sign, wall hanging sign, chest, trapped chest double
-    @{ name = 'families-10-tf-woodwork'; x = 120; blocks = @(
+    @{ name = 'families-10-upsrc-woodwork'; x = 120; blocks = @(
             @(0, 0, 0, 'gloamingforest:canopy_door', "[`"$f`"=`"north`",`"gloamingforest:half`"=`"lower`"]"),
             @(0, 1, 0, 'gloamingforest:canopy_door', "[`"$f`"=`"north`",`"gloamingforest:half`"=`"upper`"]"),
             @(2, 0, 0, 'gloamingforest:canopy_sign', '["gloamingforest:rotation"=0]'),
@@ -207,7 +207,7 @@ $rows = @(
     # a snowy grown berry bush (upstream's shape and snow), upstream's leaves (the time, mining and rainbow oak
     # leaves pre-tinted with Java's colour without a world, gloaming oak by the biome), castle
     # doors (six-face connected textures)
-    @{ name = 'families-11-tf-plants'; x = 150; blocks = @(
+    @{ name = 'families-11-upsrc-plants'; x = 150; blocks = @(
             @(0, 0, 0, 'gloamingforest:blackberry_bush', '["gloamingforest:age"=3,"gloamingforest:layers"=2]'),
             @(2, 0, 0, 'gloamingforest:blueberry_bush', '["gloamingforest:age"=0,"gloamingforest:layers"=1]'),
             @(4, 0, 0, 'gloamingforest:time_leaves', '["gloamingforest:persistent"=true]'),
@@ -275,13 +275,13 @@ Invoke-Teleport "/tp @s 110.5 $($y + 1) $($z - 2.5) 0 40"
 Start-Sleep -Seconds 3
 Save-Screenshot 'families-8-snowloggable' | Out-Null
 # upstream's chests and signs close up (their upstream textures), and the snowy berry bush on the grass (the
-# client mod draws the grass below snowy, TFBushBlock.updateSnowBeneath)
+# client mod draws the grass below snowy, GloamingBushBlock.updateSnowBeneath)
 Invoke-Teleport "/tp @s 133 $($y + 1) $($z - 4) 0 15"
 Start-Sleep -Seconds 3
-Save-Screenshot 'families-12-tf-close' | Out-Null
+Save-Screenshot 'families-12-upsrc-close' | Out-Null
 Invoke-Teleport "/tp @s 170.5 $($y + 2) $($z - 3.5) 0 25"
 Start-Sleep -Seconds 3
-Save-Screenshot 'families-13-tf-bush' | Out-Null
+Save-Screenshot 'families-13-upsrc-bush' | Out-Null
 # the six-face connected texture fixture close up: its packs draw two connected sides as the
 # cornerless piece; the client mod draws the corner piece where the diagonal block is missing (the
 # inner corner of the L)
@@ -305,7 +305,7 @@ Invoke-Build "replaceitem block $hx $($y + 1) $z slot.container 1 diamond 2"
 Start-Sleep -Seconds 12 # 5 transfers of 8 ticks; the chat fades
 Invoke-Teleport "/tp @s $($hx + 1) $($y + 1) $($z - 4) 0 20"
 Start-Sleep -Seconds 3
-Save-Screenshot 'families-25-tf-chest-hopper' | Out-Null
+Save-Screenshot 'families-25-upsrc-chest-hopper' | Out-Null
 # stand south of the chest, looking north at it
 Invoke-Teleport "/tp @s $($hx + 0.5) $y $($z + 2.5) 180 30"
 Start-Sleep -Seconds 2
@@ -317,7 +317,7 @@ if (Test-ClientTrace) {
     Wait-LogLine 'inventory: \S+ opened the container at .* \(vanilla screen, large chest\)' 20 -Since $mark | Out-Null
 }
 Start-Sleep -Seconds 2
-Save-Screenshot 'families-26-tf-chest-hopper-screen' | Out-Null
+Save-Screenshot 'families-26-upsrc-chest-hopper-screen' | Out-Null
 Close-Screen
 Start-Sleep -Seconds 1
 # the hopper on the left half gets 64 cobblestone and the screen opens again at once: it moves one
@@ -332,9 +332,9 @@ if (Test-ClientTrace) {
     Wait-LogLine 'inventory: \S+ opened the container at .* \(vanilla screen, large chest\)' 20 -Since $mark | Out-Null
 }
 Start-Sleep -Seconds 1
-Save-Screenshot 'families-27-tf-chest-hopper-live-a' | Out-Null
+Save-Screenshot 'families-27-upsrc-chest-hopper-live-a' | Out-Null
 Start-Sleep -Seconds 6
-Save-Screenshot 'families-28-tf-chest-hopper-live-b' | Out-Null
+Save-Screenshot 'families-28-upsrc-chest-hopper-live-b' | Out-Null
 Close-Screen
 Start-Sleep -Seconds 1
 Invoke-Build "replaceitem block $hx $($y + 1) $z slot.container 0 air"
@@ -371,7 +371,7 @@ if ($script:Mode -ne 'remote-vanilla') {
     # entities' name tags hidden): the canopy wall sign's front (black), the standing sign's back
     # (blue dye, then glow ink: glowing blue with its outline), the hanging sign's front (glow ink:
     # black with the cream outline), the wall hanging sign's front (red dye: dark red)
-    $tf = $rows[4]
+    $upsrc = $rows[4]
     $script:signSlotWarnings = 0
     function Write-Sign([double]$x, [double]$yy, [double]$zz, [double]$pitch, [string[]]$lines) {
         Invoke-Teleport "/tp @s $x $yy $zz 0 $pitch"
@@ -409,7 +409,7 @@ if ($script:Mode -ne 'remote-vanilla') {
     # stand north of each sign (a teleport to a whole z stands in the block's middle: 1.5 blocks
     # from the sign's block) looking south at its board (the floor signs' boards about half a
     # block up: 25 degrees down; the hanging ones' at eye height: 6 degrees)
-    $sx = $tf.x
+    $sx = $upsrc.x
     Invoke-Build "replaceitem entity @a slot.weapon.mainhand 0 air"
     Write-Sign ($sx + 4.5) $y ($z - 2) 25 @('Welcome to', 'the', 'Gloaming', 'Forest')
     Write-Sign ($sx + 2.5) $y ($z - 2) 25 @('The back of', 'a canopy sign')
@@ -425,15 +425,15 @@ if ($script:Mode -ne 'remote-vanilla') {
     Start-Sleep -Seconds 1
     Invoke-Teleport "/tp @s $($sx + 6) $($y + 1) $($z - 6) 0 12"
     Start-Sleep -Seconds 2
-    Save-Screenshot 'families-16-tf-sign-text' | Out-Null
+    Save-Screenshot 'families-16-upsrc-sign-text' | Out-Null
     Invoke-Teleport "/tp @s $($sx + 5) $($y) $($z - 3) 0 8"
     Start-Sleep -Seconds 2
-    Save-Screenshot 'families-17-tf-sign-text-close' | Out-Null
+    Save-Screenshot 'families-17-upsrc-sign-text-close' | Out-Null
     # from 20 blocks away the coloured glowing text loses its outline (isOutlineVisible: 16 blocks);
     # the black one keeps it
     Invoke-Teleport "/tp @s $($sx + 5) $($y + 2) $($z - 20) 0 5"
     Start-Sleep -Seconds 2
-    Save-Screenshot 'families-18-tf-sign-text-far' | Out-Null
+    Save-Screenshot 'families-18-upsrc-sign-text-far' | Out-Null
 
     # Vanilla references in the same light: each upstream canopy sign (west) next to the game's own oak
     # sign (east of it: on the left in the pictures), written and coloured the same way (the game's
@@ -552,7 +552,7 @@ Invoke-Build "replaceitem entity @a slot.weapon.mainhand 0 gloamingforest:gloami
 Start-Sleep -Seconds 2
 Click 0.5 0.5 -Relative -Right
 Start-Sleep -Seconds 2
-Save-Screenshot 'families-29-tf-slab-in-water' | Out-Null
+Save-Screenshot 'families-29-upsrc-slab-in-water' | Out-Null
 Invoke-Build "replaceitem entity @a slot.weapon.mainhand 0 air"
 # the server confirms the slab went into the water and holds it (the screenshot alone hardly tells a
 # waterlogged slab from the floor): families.water_slab_probe names a gloaming_oak_slab with water

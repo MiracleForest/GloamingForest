@@ -21,37 +21,37 @@
       "minecraft:geometry": "minecraft:geometry.full_block",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_firejet_side",
+          "texture": "gf_block_firejet_side",
           "render_method": "opaque",
           "tint_method": "grass"
         },
         "up": {
-          "texture": "tf_block_firejet_top",
+          "texture": "gf_block_firejet_top",
           "render_method": "opaque",
           "tint_method": "grass"
         },
         "down": {
-          "texture": "tf_vanilla_block_black_concrete_powder",
+          "texture": "gf_vanilla_block_black_concrete_powder",
           "render_method": "opaque",
           "tint_method": "grass"
         },
         "north": {
-          "texture": "tf_block_firejet_side",
+          "texture": "gf_block_firejet_side",
           "render_method": "opaque",
           "tint_method": "grass"
         },
         "south": {
-          "texture": "tf_block_firejet_side",
+          "texture": "gf_block_firejet_side",
           "render_method": "opaque",
           "tint_method": "grass"
         },
         "east": {
-          "texture": "tf_block_firejet_side",
+          "texture": "gf_block_firejet_side",
           "render_method": "opaque",
           "tint_method": "grass"
         },
         "west": {
-          "texture": "tf_block_firejet_side",
+          "texture": "gf_block_firejet_side",
           "render_method": "opaque",
           "tint_method": "grass"
         }

@@ -12,7 +12,7 @@ every owned configured feature, placed feature and loot table in compact form (g
 | Net channels | `trees.*` |
 | Config | section `trees` (config_section `trees`): `common.Magic Trees.timeCoreRange`, `common.Magic Trees.transformationCoreRange`, `common.Magic Trees.miningCoreRange`, `common.Magic Trees.sortingCoreRange` (each default 16, range 0..128; a value <= 0 disables that core; translations `time_range`, `transformation_range`, `mining_range`, `sorting_range`) |
 | Contracts | features + worldgen (F5), landmark (F6: `no_structure` placement), families + blockevents (F11), inventory (F10, sorting core), client.render (F12 tints), fx (F10) |
-| Java sources | `init/{TFBlocks,TFFeatures,TFFeatureModifiers,TFConfiguredFeatures,TFPlacedFeatures}.java`, `block/{DarkLeavesBlock,HardenedDarkLeavesBlock,TransformationLeavesBlock,MangroveSaplingBlock,SpecialMagicLogBlock,TimeLogCoreBlock,TransLogCoreBlock,MineLogCoreBlock,SortLogCoreBlock}.java`, `world/components/feature/trees/*.java`, `world/components/feature/trees/treeplacers/*.java`, `world/components/feature/trees/growers/*.java`, `world/components/feature/config/TFTreeFeatureConfig.java`, `world/registration/TreeConfigurations.java`, `world/registration/TreeDecorators.java`, `util/FeaturePlacers.java`, `util/FeatureLogic.java`, `client/event/ColorHandler.java`, `client/particle/{LeafRune,Sorting,Transformation,LogCore}Particle.java` |
+| Java sources | `init/{GloamingBlocks,GloamingFeatures,GloamingFeatureModifiers,GloamingConfiguredFeatures,GloamingPlacedFeatures}.java`, `block/{DarkLeavesBlock,HardenedDarkLeavesBlock,TransformationLeavesBlock,MangroveSaplingBlock,SpecialMagicLogBlock,TimeLogCoreBlock,TransLogCoreBlock,MineLogCoreBlock,SortLogCoreBlock}.java`, `world/components/feature/trees/*.java`, `world/components/feature/trees/treeplacers/*.java`, `world/components/feature/trees/growers/*.java`, `world/components/feature/config/GloamingTreeFeatureConfig.java`, `world/registration/TreeConfigurations.java`, `world/registration/TreeDecorators.java`, `util/FeaturePlacers.java`, `util/FeatureLogic.java`, `client/event/ColorHandler.java`, `client/particle/{LeafRune,Sorting,Transformation,LogCore}Particle.java` |
 
 Not owned here: the logs, woods, stripped variants, planks and every other wood-set block (U4 woodwork), roots and
 liveroot, fireflies, mushgloom, troll-cave mushrooms' placement, hollow logs (U6 flora / U4), the hollow tree
@@ -60,7 +60,7 @@ clients get the default foliage map colour (magic leaves pre-coloured textures a
 All saplings: PLANT, push DESTROY, instabreak, grass sound, no collision, random ticks, vanilla sapling growth
 (`stage` 0-1, bone meal 45 %, light >= 9).
 
-| Sapling | Grower (`TFTreeGrowers`) | Potted |
+| Sapling | Grower (`GloamingTreeGrowers`) | Potted |
 |---|---|---|
 | `gloamingforest:gloaming_oak_sapling` ("Sickly Gloaming Oak Sapling") | `gloaming_oak` (vanilla `TreeGrower`, `secondaryChance 0.1`): 2x2: 90 % `gloamingforest:tree/forest_mega_oak_tree`, 10 % `tree/savannah_mega_oak_tree` (the same `secondaryChance 0.1`); single: 90 % `tree/gloaming_oak_tree`, 10 % `tree/large_gloaming_oak_tree` (RNG order below) | `gloamingforest:potted_gloaming_oak_sapling` |
 | `gloamingforest:canopy_sapling` | `canopy`: 2x2 -> `tree/mega_canopy_tree`, else `tree/canopy_tree` | `gloamingforest:potted_canopy_sapling` |
@@ -114,7 +114,7 @@ perform the effect, reschedule. Loot: the matching plain log (e.g. `gloamingfore
 |---|---|
 | Time | `8 * 3 * 20 = 480` random positions within `timeCoreRange` (cube, `nextInt(2r + 1) - r` per axis); blocks not in `#gloamingforest:time_core_excluded` (nether portal) get a random tick if they tick randomly and a block-entity tick if they have a ticker; each success sends a `gloamingforest:log_core_particle` (colour 0.953, 0.698, 0.0) at the block's top to players within 64. Sound `block.gloamingforest.core.time` (BLOCKS, 0.35, 0.5). |
 | Transformation | up to 16 tries of a random x/z offset within `transformationCoreRange` (y offset 0), skipping offsets farther than 16 blocks (distSq > 256) and columns already `gloamingforest:enchanted_forest`; the first other column has every 4x4x4 biome cell in its chunk column (x/z quart of that position, all sections) set to enchanted forest, the chunk marked unsaved and the biomes resent; 9 `gloamingforest:transformation_particle` flying from a 2-block ring to the column centre. Sound `block.gloamingforest.core.transformation` (0.1, random 0-2). |
-| Mining | one random position within `miningCoreRange`; `OreMagnetItem.doMagnet(level, core, target, true)` pulls ores toward the core; when something moved, play the magnet grab sound (U8's `item.gloamingforest.magnet.grab` event, `TFSounds.MAGNET_GRAB`, 0.1, 1.0). No core sound. |
+| Mining | one random position within `miningCoreRange`; `OreMagnetItem.doMagnet(level, core, target, true)` pulls ores toward the core; when something moved, play the magnet grab sound (U8's `item.gloamingforest.magnet.grab` event, `GloamingSounds.MAGNET_GRAB`, 0.1, 1.0). No core sound. |
 | Sorting | inputs: item handlers of block entities within 2 blocks of the core (all faces) and `#gloamingforest:sortable_entities` within 2 blocks; outputs: handlers within `sortingCoreRange` (cube) outside that inner box and sortable entities within 16; for each input, take the first extractable single item and move it into the output that already holds the most of that item (first non-full matching stack, else first empty valid slot); one item per input per cycle; a `gloamingforest:sorting_particle` flies from the output toward the input. No sound. |
 
 Particles (client, owned here): `gloamingforest:log_core_particle` (rising, colour from velocity, alpha fades in
@@ -141,12 +141,12 @@ sticks (explosion decay). Placed as the exposed-roots provider of the mangrove t
 
 | Id | Java class | Config | Summary (translate exactly) |
 |---|---|---|---|
-| `gloamingforest:mega_oak` | MegaOakTreeFeature (extends CanopyTreeFeature) | TFTreeFeatureConfig | 2x2 trunk of height `minHeight (+ nextInt(h/2) if 1/chanceFirst) (+ nextInt(5) if 1/chanceSecond)`; up to 7 fireflies on the trunk (1/3 each); 12-20 branches (tilt 0.15-0.5, length 5, from `height - 10 + b/2`, spread clamped to +-5) ending in 2.5 x 2.5 leaf spheroids; roots at the 4 trunk columns. Needs soil that sustains a canopy sapling. |
-| `gloamingforest:mega_canopy` | MegaCanopyTreeFeature | TFTreeFeatureConfig | 2x2 trunk `minHeight + nextInt(h/2) (1/chance1) + nextInt(h/4) (1/chance2)`; 7 fireflies (1/3); 6-8 branches length 15-18 tilt 0.25 from `height - 15 - (b + offset)`, each ending in a wood star and leaf discs radius 3 / 6 / 8 / 7 / 4.5 (odd circles, y +2..-2). |
+| `gloamingforest:mega_oak` | MegaOakTreeFeature (extends CanopyTreeFeature) | GloamingTreeFeatureConfig | 2x2 trunk of height `minHeight (+ nextInt(h/2) if 1/chanceFirst) (+ nextInt(5) if 1/chanceSecond)`; up to 7 fireflies on the trunk (1/3 each); 12-20 branches (tilt 0.15-0.5, length 5, from `height - 10 + b/2`, spread clamped to +-5) ending in 2.5 x 2.5 leaf spheroids; roots at the 4 trunk columns. Needs soil that sustains a canopy sapling. |
+| `gloamingforest:mega_canopy` | MegaCanopyTreeFeature | GloamingTreeFeatureConfig | 2x2 trunk `minHeight + nextInt(h/2) (1/chance1) + nextInt(h/4) (1/chance2)`; 7 fireflies (1/3); 6-8 branches length 15-18 tilt 0.25 from `height - 15 - (b + offset)`, each ending in a wood star and leaf discs radius 3 / 6 / 8 / 7 / 4.5 (odd circles, y +2..-2). |
 | `gloamingforest:dark_canopy_tree` | DarkCanopyTreeFeature | vanilla TreeConfiguration | vanilla-tree style placement that searches down to the ground, refuses water/unsuitable soil and needs 4 free blocks of trunk; foliage, decorators and roots per config (`tree/darkwood_tree`, `homegrown_darkwood_tree`, `darkwood_lantern_tree`, `dark_forest_oak_tree`, `dark_forest_birch_tree`, `dark_oak_bush`). |
-| `gloamingforest:large_winter_tree` | LargeWinterTreeFeature | TFTreeFeatureConfig | height 35, 1/3 +nextInt(10), then 1/8 +nextInt(10); 2x2 spruce trunk on dirt; leaf rings of radius by function per level (pine branches); 4-6 roots. |
-| `gloamingforest:miners_tree` | MiningTreeFeature | TFTreeFeatureConfig | trunk 0..9 tall, `gloamingforest:mining_log_core` one above the base (axis y, tick scheduled 20) if the spot is a log or replaceable; branches, a 3x3x3 leaf box, 3-4 roots. |
-| `gloamingforest:tree_of_time` | TimeTreeFeature | TFTreeFeatureConfig | tree with a `gloamingforest:time_log_core` placed one above the base and scheduled. |
+| `gloamingforest:large_winter_tree` | LargeWinterTreeFeature | GloamingTreeFeatureConfig | height 35, 1/3 +nextInt(10), then 1/8 +nextInt(10); 2x2 spruce trunk on dirt; leaf rings of radius by function per level (pine branches); 4-6 roots. |
+| `gloamingforest:miners_tree` | MiningTreeFeature | GloamingTreeFeatureConfig | trunk 0..9 tall, `gloamingforest:mining_log_core` one above the base (axis y, tick scheduled 20) if the spot is a log or replaceable; branches, a 3x3x3 leaf box, 3-4 roots. |
+| `gloamingforest:tree_of_time` | TimeTreeFeature | GloamingTreeFeatureConfig | tree with a `gloamingforest:time_log_core` placed one above the base and scheduled. |
 | `gloamingforest:anywhere_tree` | SnowTreeFeature | vanilla TreeConfiguration | a vanilla tree placer that can grow on any sturdy surface (snowy forest spruces). |
 | `gloamingforest:snow_under_trees` | SnowUnderTreeFeature | none | for every column of the chunk whose top motion-blocking block is leaves: place `minecraft:snow` on the highest non-leaf motion-blocking surface if it is air above a sturdy top face, and set `snowy = true` on the block below. |
 | `gloamingforest:canopy_brown_mushroom` | BrownCanopyMushroomFeature | HugeMushroomFeatureConfiguration | huge brown mushroom with a canopy-style branching stem. |
@@ -155,7 +155,7 @@ sticks (explosion decay). Placed as the exposed-roots provider of the mangrove t
 | `gloamingforest:canopy_red_spheroid_mushroom` | RedCanopyMushroomFeature(type 2) | same | spheroid cap |
 | `gloamingforest:canopy_red_flat_mushroom` | RedCanopyMushroomFeature(type 3) | same | flat cap |
 
-All `TFTreeFeature`s record trunk / leaf / root / decoration positions, run the config's decorators and then update
+All `GloamingTreeFeature`s record trunk / leaf / root / decoration positions, run the config's decorators and then update
 leaf distances (`TreeFeature.updateLeaves`) and shapes at the edge (vanilla post-processing).
 
 ## 6. Tree placers and decorators (owners kind `placement_modifier`)

@@ -1,9 +1,9 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/block/TFPortalBlock.java (entityInside, getPortalTransitionTime,
+//   src/main/java/gloamingforest/block/GloamingPortalBlock.java (entityInside, getPortalTransitionTime,
 //     getPortalDestination, animateTick)
-//   src/main/java/gloamingforest/components/entity/TFPortalAttachment.java
-//   src/main/java/gloamingforest/world/TFTeleporter.java (createTransition, createPosition)
+//   src/main/java/gloamingforest/components/entity/GloamingPortalAttachment.java
+//   src/main/java/gloamingforest/world/GloamingTeleporter.java (createTransition, createPosition)
 //   src/main/java/gloamingforest/world/NoReturnTeleporter.java
 //   src/main/java/gloamingforest/events/CapabilityEvents.java (spawnInTFIfNecessary, playerLogsIn)
 //   src/main/java/gloamingforest/events/ProgressionEvents.java (performProtectionAndPortalChecks)
@@ -11,7 +11,7 @@
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// Portal travel: the portal timer of players (TFPortalAttachment), vanilla's portal process
+// Portal travel: the portal timer of players (GloamingPortalAttachment), vanilla's portal process
 // (Entity#setAsInsidePortal / handlePortal / PortalProcessor with upstream's transition time: the
 // gamerule delay for players, 0 for every other entity) for players and for every other entity
 // that can use portals (items, mobs, vehicles with their riders), and the trip itself, plus the
@@ -84,7 +84,7 @@ namespace tp = teleporter;
 
 namespace {
 
-constexpr int  kMaxTicks           = 60;  // TFPortalAttachment.MAX_TICKS
+constexpr int  kMaxTicks           = 60;  // GloamingPortalAttachment.MAX_TICKS
 constexpr int  kPlayerChangeDelay  = 10;  // Player#getDimensionChangingDelay
 constexpr int  kEntityChangeDelay  = 300; // Entity#getDimensionChangingDelay
 constexpr int  kPortalTicketTicks  = 300; // TicketType.PORTAL timeout
@@ -95,7 +95,7 @@ constexpr int  kLoadRadius         = 18; // findPortalCoords scans 16 blocks aro
 /// Per-entity portal state (rule R16: keyed by unique id, never an Actor*).
 struct State {
     bool player = true;
-    // TFPortalAttachment (players)
+    // GloamingPortalAttachment (players)
     bool attachInside = false;
     int  portalTimer  = 0;
     // vanilla PortalProcessor + Entity#portalCooldown
@@ -139,7 +139,7 @@ Actor* actorById(std::int64_t id) {
     return level->fetchEntity(ActorUniqueID{id}, false);
 }
 
-// ---- banished (TFDataAttachments.BANISHED_TO_GLOAMING_FOREST, copyOnDeath) ---------------------------
+// ---- banished (GloamingDataAttachments.BANISHED_TO_GLOAMING_FOREST, copyOnDeath) ---------------------------
 
 std::unordered_set<std::string>& banished() {
     static std::unordered_set<std::string> s;
@@ -635,7 +635,7 @@ std::optional<BlockPos> knownPortal(int dest, BlockPos const& srcPos, BlockPos c
     return std::nullopt;
 }
 
-/// TFTeleporter#createTransition (+ createPosition): the destination is loaded first, the traveller
+/// GloamingTeleporter#createTransition (+ createPosition): the destination is loaded first, the traveller
 /// stays where it is until the teleporter found or built its portal, then moves there. When the
 /// destination does not load in time the trip is called off and the traveller stays at home.
 ll::coro::CoroTask<bool> runTransition(tp::Traveller t, int dest, BlockPos pos, bool forcedEntry) {
@@ -685,16 +685,16 @@ ll::coro::CoroTask<bool> runTransition(tp::Traveller t, int dest, BlockPos pos, 
     co_return true;
 }
 
-/// TFPortalBlock#getPortalDestination: the destination dimension and the scaled entry position.
+/// GloamingPortalBlock#getPortalDestination: the destination dimension and the scaled entry position.
 struct Destination {
     int      dim = 0;
     BlockPos pos;
 };
 std::optional<Destination> portalDestination(int src, BlockPos const& entry, bool quiet = false) {
     auto const& cfg = gf::config::get<DimensionConfig>();
-    int         tf  = gloamingId();
-    if (tf < 0) return std::nullopt;
-    std::optional<int> dest = src != tf ? std::optional<int>(tf) : dimensionByName(cfg.originDimension);
+    int         upsrc  = gloamingId();
+    if (upsrc < 0) return std::nullopt;
+    std::optional<int> dest = src != upsrc ? std::optional<int>(upsrc) : dimensionByName(cfg.originDimension);
     if (!dest) {
         if (!quiet) log().warn("dimension: the portal's origin dimension {} does not exist", cfg.originDimension);
         return std::nullopt;
@@ -705,7 +705,7 @@ std::optional<Destination> portalDestination(int src, BlockPos const& entry, boo
     return Destination{*dest, BlockPos{clamp(entry.x * scale), entry.y, clamp(entry.z * scale)}};
 }
 
-/// TFPortalBlock#getPortalDestination, then the trip.
+/// GloamingPortalBlock#getPortalDestination, then the trip.
 void startTrip(Actor& actor, BlockPos const& entry) {
     int  src  = static_cast<int>(actor.getDimensionId());
     auto dest = portalDestination(src, entry);
@@ -758,19 +758,19 @@ void preloadDestination(Player& player, State& st) {
 
 void newSpawnInGloamingForest(Player& player) {
     auto const& cfg = gf::config::get<DimensionConfig>();
-    if (!cfg.newPlayersSpawnInTF) return;
-    int tf = gloamingId();
-    if (tf < 0) return;
+    if (!cfg.newPlayersSpawnInGloaming) return;
+    int upsrc = gloamingId();
+    if (upsrc < 0) return;
     auto t = tp::capture(player);
     if (states()[t.id].travelling) return; // already on its way
     states()[t.id].travelling = true;
-    ll::coro::keepThis([t = std::move(t), tf, portal = cfg.portalForNewPlayer]() -> ll::coro::CoroTask<> {
+    ll::coro::keepThis([t = std::move(t), upsrc, portal = cfg.portalForNewPlayer]() -> ll::coro::CoroTask<> {
         TripGuard guard{t.id};
         // level.getHeightmapPos(MOTION_BLOCKING_NO_LEAVES, player.blockPosition()) in the Gloaming
         // Forest: its column is loaded first (the player stays where it is meanwhile)
         BlockPos column{t.srcPos.x, 0, t.srcPos.z};
-        auto     hold = co_await loadArea(tf, column, kLoadRadius);
-        auto*    region = game::regionOf(tf);
+        auto     hold = co_await loadArea(upsrc, column, kLoadRadius);
+        auto*    region = game::regionOf(upsrc);
         if (!hold || !region || !playerById(t.id)) {
             log().warn("dimension: the new spawn of {} in the Gloaming Forest was called off (it did not load)", t.name);
             co_return;
@@ -780,27 +780,27 @@ void newSpawnInGloamingForest(Player& player) {
         // became of the trip: here as soon as the trip starts (a player who leaves or a trip that
         // fails later stays banished, with the Gloaming Forest as its spawn)
         if (auto* p = playerById(t.id)) {
-            p->setRespawnPosition(newDefaultSpawn, DimensionType(tf));
+            p->setRespawnPosition(newDefaultSpawn, DimensionType(upsrc));
             setBanished(*p);
             log().info("dimension: {} now lives in the Gloaming Forest (spawn {} {} {})", t.name, newDefaultSpawn.x, newDefaultSpawn.y, newDefaultSpawn.z);
         }
         bool arrived = false;
         if (portal) {
-            arrived = co_await runTransition(t, tf, newDefaultSpawn, true);
+            arrived = co_await runTransition(t, upsrc, newDefaultSpawn, true);
         } else {
             // NoReturnTeleporter#createNoPortalTransition
             AreaHandle second;
             BlockPos   safe = tp::safeColumn(*region, t, newDefaultSpawn);
             if (!tp::areaLoaded(*region, safe, kLoadRadius)) {
-                second = co_await loadArea(tf, safe, kLoadRadius);
-                region = game::regionOf(tf);
+                second = co_await loadArea(upsrc, safe, kLoadRadius);
+                region = game::regionOf(upsrc);
                 if (!second || !region || !playerById(t.id)) co_return;
             }
             Vec3 safePos = tp::safePosInColumn(*region, t, Vec3{safe.x + 0.5f, safe.y + 0.5f, safe.z + 0.5f});
             Vec3 at        = tp::noReturnPlacePosition(*region, t, safePos);
             auto traveller = t;
-            arrived        = co_await moveTraveller(traveller, tf, at);
-            if (arrived) finishTrip(traveller, tf, at);
+            arrived        = co_await moveTraveller(traveller, upsrc, at);
+            if (arrived) finishTrip(traveller, upsrc, at);
             holdFor(std::move(second), 20);
         }
         holdFor(std::move(hold), 20);
@@ -833,7 +833,7 @@ bool teleportPlayer(Player& player, int dest, Vec3 const& at, float yaw, float p
         notifyTeleported(player, t.srcDim, dest);
         return true;
     }
-    // TFTeleporter#placeEntity semantics: the destination is loaded first (the player waits where
+    // GloamingTeleporter#placeEntity semantics: the destination is loaded first (the player waits where
     // it is), then the player and its riders move there
     st.travelling = true;
     ll::coro::keepThis([t, dest, at]() mutable -> ll::coro::CoroTask<> {
@@ -903,7 +903,7 @@ double displayTickChance(int dx, int dy, int dz) {
     return 667.0 * axis(dx, 16) * axis(dy, 16) * axis(dz, 16) + 667.0 * axis(dx, 32) * axis(dy, 32) * axis(dz, 32);
 }
 
-/// TFPortalBlock#animateTick ([VanillaCopy] of NetherPortalBlock#animateTick).
+/// GloamingPortalBlock#animateTick ([VanillaCopy] of NetherPortalBlock#animateTick).
 void animateTick(Dimension& dim, Block const& state, BlockPos const& pos) {
     int random = nextInt(100);
     if (game::intState(state, kOneWayState).value_or(0) != 0 && random < 80) return;
@@ -982,7 +982,7 @@ void tickPlayer(Player& player) {
 
     handlePortal(player, st, portalDelay(player));
 
-    // TFPortalBlock#entityInside
+    // GloamingPortalBlock#entityInside
     if (!st.travelling) {
         if (auto pos = touchedPortal(player, *region)) {
             if (!unworthy(player) && canUsePortal(player)) {
@@ -997,7 +997,7 @@ void tickPlayer(Player& player) {
         if (delay > 1 && st.portalTime >= std::max(0, delay - kPreloadTicks)) preloadDestination(player, st);
     }
 
-    // TFPortalAttachment#tick
+    // GloamingPortalAttachment#tick
     if (st.attachInside) {
         st.portalTimer = std::min(st.portalTimer + 1, kMaxTicks);
         if (!isInWall(player, *region)) {
@@ -1037,7 +1037,7 @@ void tickEntities() {
         if (!st.hasProcess && st.portalCooldown <= 0 && !st.travelling) it = states().erase(it);
         else ++it;
     }
-    // TFPortalBlock#entityInside for the entities in the indexed portal blocks, and what the
+    // GloamingPortalBlock#entityInside for the entities in the indexed portal blocks, and what the
     // portal's water does to every entity in it (players too)
     std::vector<std::pair<std::int64_t, BlockPos>> inside;
     std::vector<std::pair<std::int64_t, int>>      wet;
@@ -1201,9 +1201,9 @@ std::optional<core::GlobalPos> destinationFor(Player const& player) {
     namespace dim = feature::dimension;
     auto const& cfg = gf::config::get<dim::DimensionConfig>();
     int         src = static_cast<int>(player.getDimensionId());
-    int         tf  = dim::gloamingId();
-    if (tf < 0) return std::nullopt;
-    std::optional<int> dest = src != tf ? std::optional<int>(tf) : dim::dimensionByName(cfg.originDimension);
+    int         upsrc  = dim::gloamingId();
+    if (upsrc < 0) return std::nullopt;
+    std::optional<int> dest = src != upsrc ? std::optional<int>(upsrc) : dim::dimensionByName(cfg.originDimension);
     if (!dest) return std::nullopt;
     double   scale = dim::coordinateScaleOf(src) / dim::coordinateScaleOf(*dest);
     BlockPos at    = game::blockPosOf(player.getFeetPos());

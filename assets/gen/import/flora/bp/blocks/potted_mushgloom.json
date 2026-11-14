@@ -14,22 +14,22 @@
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 0
       },
-      "minecraft:geometry": "geometry.tf.minecraft.block.flower_pot_cross",
+      "minecraft:geometry": "geometry.gf.minecraft.block.flower_pot_cross",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_vanilla_block_flower_pot",
+          "texture": "gf_vanilla_block_flower_pot",
           "render_method": "alpha_test"
         },
         "dirt": {
-          "texture": "tf_vanilla_block_dirt",
+          "texture": "gf_vanilla_block_dirt",
           "render_method": "alpha_test"
         },
         "flowerpot": {
-          "texture": "tf_vanilla_block_flower_pot",
+          "texture": "gf_vanilla_block_flower_pot",
           "render_method": "alpha_test"
         },
         "plant": {
-          "texture": "tf_block_potted_mushgloom",
+          "texture": "gf_block_potted_mushgloom",
           "render_method": "alpha_test"
         }
       },

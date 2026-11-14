@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.cicada",
   "layer": {
     "name": "cicada",
-    "field": "TFModelLayers.CICADA",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.CICADA, CicadaModel::create);"
+    "field": "GloamingModelLayers.CICADA",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.CICADA, CicadaModel::create);"
   },
   "texture_size": [64, 32],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/cicada-model",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/cicada-model.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/cicada-model.png"
     }
   ],
   "bones": [

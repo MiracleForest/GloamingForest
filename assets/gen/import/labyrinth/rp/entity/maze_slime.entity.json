@@ -10,7 +10,7 @@
         "default": "textures/gloamingforest/entity/mazeslime"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.maze_slime"
+        "default": "geometry.gf.skeleton.maze_slime"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

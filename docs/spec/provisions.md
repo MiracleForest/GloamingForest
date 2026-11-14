@@ -27,11 +27,11 @@ Contracts: item, enchant+effects, combat, client.world, synth, progression.
 
 ## 2. Upstream sources
 
-`init/TFItems.java`, `init/TFBlocks.java`, `init/TFEnchantments.java`, `init/TFEnchantmentEffects.java`,
+`init/GloamingItems.java`, `init/GloamingBlocks.java`, `init/GloamingEnchantments.java`, `init/GloamingEnchantmentEffects.java`,
 `enchantment/{ApplyFrosted,SmashBlocks,RechargeScepter}Effect.java`, `components/entity/SmashBlocksEnchantmentAttachment.java`,
-`init/TFMobEffects.java`, `potions/FrostedEffect.java`, `events/EntityEvents.java` (`reduceFrostedEffectIfOnFire`),
-`init/TFJukeboxSongs.java`, `init/TFSounds.java`, `data/SoundGenerator.java` (music definition),
-`init/TFConfiguredFeatures.java` (`TFMUSICTYPE`), `world/registration/biomes/BiomeHelper.java` (background music),
+`init/GloamingMobEffects.java`, `potions/FrostedEffect.java`, `events/EntityEvents.java` (`reduceFrostedEffectIfOnFire`),
+`init/GloamingJukeboxSongs.java`, `init/GloamingSounds.java`, `data/SoundGenerator.java` (music definition),
+`init/GloamingConfiguredFeatures.java` (`GloamingMUSICTYPE`), `world/registration/biomes/BiomeHelper.java` (background music),
 `client/event/ClientGameEvents.java` (`setMusicInDimension`), `block/Experiment115Block.java`,
 `item/Experiment115Item.java`, `client/event/ClientRegistrationEvents.java` (E115 item predicates),
 `item/HydraChopItem.java`, `advancements/ConsumeHydraChopTrigger.java`, `item/CustomDamageSwordItem.java`,
@@ -191,17 +191,17 @@ Every id this unit owns in `docs/spec/owners.tsv`, with the upstream 4.8 data th
 
 ### Blocks (1)
 
-Item column: `BlockItem` = upstream registers a plain block item with the block (`TFBlocks.register`), the id is also a `block_item` row; `-` = no item of the same id (the block is placed by another item, or has none).
+Item column: `BlockItem` = upstream registers a plain block item with the block (`GloamingBlocks.register`), the id is also a `block_item` row; `-` = no item of the same id (the block is placed by another item, or has none).
 
 Block states come from upstream's blockstate JSON (`multipart:` lists only the property values the model parts test). Notes collect `RegistrationEvents` (fire, axe stripping, flower pots, jar lids), dispenser behaviours and the `neoforge:compostables` / `neoforge:furnace_fuels` data maps.
 
-| Block | English name | upstream registration (`TFBlocks`) | Block states | Item | Loot (`blocks/<id>`) | Notes |
+| Block | English name | upstream registration (`GloamingBlocks`) | Block states | Item | Loot (`blocks/<id>`) | Notes |
 |---|---|---|---|---|---|---|
 | `gloamingforest:experiment_115` | Experiment 115 | `BLOCKS.register("experiment_115", new Experiment115Block(Properties.of().noLootTable().pushReaction(DESTROY).randomTicks().sound(WOOL).strength(0.5F)));` | omnomnom: 0/1/2/3/4/5/6/7; regenerate: false/true | - | none (noLootTable) | compost chance 0.85; item tags: #c:foods/edible_when_placed, #mc:meat |
 
 ### Items (33)
 
-| Item | English name | upstream registration (`TFItems`) | Notes |
+| Item | English name | upstream registration (`GloamingItems`) | Notes |
 |---|---|---|---|
 | `gloamingforest:beef_jerky` | Beef Jerky | `ITEMS.register("beef_jerky", new Item(new Item.Properties().food(new FoodProperties.Builder().nutrition(6).saturationModifier(1.18F).build())));` | item tags: #c:foods, #c:foods/jerky, #mc:meat |
 | `gloamingforest:berry_medley` | Berry Medley | `ITEMS.register("berry_medley", new Item(new Item.Properties().food(new FoodProperties.Builder().nutrition(5).saturationModifier(0.6F).usingConvertsTo(Items.BOWL).build()).stacksTo(1)));` | item tags: #c:foods |
@@ -209,7 +209,7 @@ Block states come from upstream's blockstate JSON (`multipart:` lists only the p
 | `gloamingforest:cod_jerky` | Cod Jerky | `ITEMS.register("cod_jerky", new Item(new Item.Properties().food(new FoodProperties.Builder().nutrition(4).saturationModifier(0.875F).build())));` | item tags: #c:foods, #c:foods/jerky, #mc:meat |
 | `gloamingforest:cooked_meef` | Meef Steak | `ITEMS.register("cooked_meef", new Item(new Item.Properties().food(new FoodProperties.Builder().nutrition(7).saturationModifier(0.6F).build())));` | item tags: #c:foods/cooked_meat, #mc:meat |
 | `gloamingforest:cooked_venison` | Venison Steak | `ITEMS.register("cooked_venison", new Item(new Item.Properties().food(new FoodProperties.Builder().nutrition(6).saturationModifier(0.6F).build())));` | item tags: #c:foods/cooked_meat, #mc:meat |
-| `gloamingforest:experiment_115` | Experiment 115 | `ITEMS.register("experiment_115", new Experiment115Item(TFBlocks.EXPERIMENT_115.get(), new Item.Properties().food(new FoodProperties.Builder().nutrition(4).saturationModifier(0.3F).build())));` | compost chance 0.85; item tags: #c:foods/edible_when_placed, #mc:meat |
+| `gloamingforest:experiment_115` | Experiment 115 | `ITEMS.register("experiment_115", new Experiment115Item(GloamingBlocks.EXPERIMENT_115.get(), new Item.Properties().food(new FoodProperties.Builder().nutrition(4).saturationModifier(0.3F).build())));` | compost chance 0.85; item tags: #c:foods/edible_when_placed, #mc:meat |
 | `gloamingforest:fugu_jerky` | Fugu Jerky | `ITEMS.register("fugu_jerky", new Item(new Item.Properties().food(new FoodProperties.Builder().nutrition(2).saturationModifier(0.6F).build())));` | item tags: #c:foods, #c:foods/jerky, #mc:meat |
 | `gloamingforest:hydra_chop` | Hydra Chop | `ITEMS.register("hydra_chop", new HydraChopItem(new Item.Properties().fireResistant().food(new FoodProperties.Builder().nutrition(18).saturationModifier(2.0F).effect(new MobEffectInstance(MobEffects.REGENERATION, 100, 0), 1.0F).build()).rarity(UNCOMMON)));` | item tags: #c:foods/cooked_meat, #mc:meat |
 | `gloamingforest:maze_wafer` | Maze Wafer | `ITEMS.register("maze_wafer", new Item(new Item.Properties().food(new FoodProperties.Builder().nutrition(4).saturationModifier(0.6F).build())));` | compost chance 0.65; item tags: #c:foods |
@@ -217,15 +217,15 @@ Block states come from upstream's blockstate JSON (`multipart:` lists only the p
 | `gloamingforest:meef_stroganoff` | Meef Stroganoff | `ITEMS.register("meef_stroganoff", new Item(new Item.Properties().stacksTo(1).rarity(UNCOMMON).fireResistant().food(new FoodProperties.Builder().nutrition(14).saturationModifier(1.2F).alwaysEdible().effect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 3600), 1.0F).effect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 2400), 1.0F).usingConvertsTo(Items.BOWL).build())));` | item tags: #c:foods/soup, #mc:meat |
 | `gloamingforest:monster_jerky` | Monster Jerky | `ITEMS.register("monster_jerky", new Item(new Item.Properties().food(new FoodProperties.Builder().nutrition(4).saturationModifier(0.275F).build())));` | item tags: #c:foods, #c:foods/jerky, #mc:meat |
 | `gloamingforest:moss_soup` | Moss Soup | `ITEMS.register("moss_soup", new Item(new Item.Properties().food(new FoodProperties.Builder().nutrition(5).saturationModifier(0.6F).usingConvertsTo(Items.BOWL).build()).stacksTo(1)));` | item tags: #c:foods/soup |
-| `gloamingforest:music_disc_findings` | Music Disc | `ITEMS.register("music_disc_findings", new Item(new Item.Properties().stacksTo(1).rarity(RARE).jukeboxPlayable(TFJukeboxSongs.FINDINGS)));` | item tags: #c:music_discs |
-| `gloamingforest:music_disc_home` | Music Disc | `ITEMS.register("music_disc_home", new Item(new Item.Properties().stacksTo(1).rarity(RARE).jukeboxPlayable(TFJukeboxSongs.HOME)));` | item tags: #c:music_discs |
-| `gloamingforest:music_disc_maker` | Music Disc | `ITEMS.register("music_disc_maker", new Item(new Item.Properties().stacksTo(1).rarity(RARE).jukeboxPlayable(TFJukeboxSongs.MAKER)));` | item tags: #c:music_discs |
-| `gloamingforest:music_disc_motion` | Music Disc | `ITEMS.register("music_disc_motion", new Item(new Item.Properties().stacksTo(1).rarity(RARE).jukeboxPlayable(TFJukeboxSongs.MOTION)));` | item tags: #c:music_discs |
-| `gloamingforest:music_disc_radiance` | Music Disc | `ITEMS.register("music_disc_radiance", new Item(new Item.Properties().stacksTo(1).rarity(RARE).jukeboxPlayable(TFJukeboxSongs.RADIANCE)));` | item tags: #c:music_discs |
-| `gloamingforest:music_disc_steps` | Music Disc | `ITEMS.register("music_disc_steps", new Item(new Item.Properties().stacksTo(1).rarity(RARE).jukeboxPlayable(TFJukeboxSongs.STEPS)));` | item tags: #c:music_discs |
-| `gloamingforest:music_disc_superstitious` | Music Disc | `ITEMS.register("music_disc_superstitious", new Item(new Item.Properties().stacksTo(1).rarity(RARE).jukeboxPlayable(TFJukeboxSongs.SUPERSTITIOUS)));` | item tags: #c:music_discs |
-| `gloamingforest:music_disc_thread` | Music Disc | `ITEMS.register("music_disc_thread", new Item(new Item.Properties().stacksTo(1).rarity(RARE).jukeboxPlayable(TFJukeboxSongs.THREAD)));` | item tags: #c:music_discs |
-| `gloamingforest:music_disc_wayfarer` | Music Disc | `ITEMS.register("music_disc_wayfarer", new Item(new Item.Properties().stacksTo(1).rarity(RARE).jukeboxPlayable(TFJukeboxSongs.WAYFARER)));` | item tags: #c:music_discs |
+| `gloamingforest:music_disc_findings` | Music Disc | `ITEMS.register("music_disc_findings", new Item(new Item.Properties().stacksTo(1).rarity(RARE).jukeboxPlayable(GloamingJukeboxSongs.FINDINGS)));` | item tags: #c:music_discs |
+| `gloamingforest:music_disc_home` | Music Disc | `ITEMS.register("music_disc_home", new Item(new Item.Properties().stacksTo(1).rarity(RARE).jukeboxPlayable(GloamingJukeboxSongs.HOME)));` | item tags: #c:music_discs |
+| `gloamingforest:music_disc_maker` | Music Disc | `ITEMS.register("music_disc_maker", new Item(new Item.Properties().stacksTo(1).rarity(RARE).jukeboxPlayable(GloamingJukeboxSongs.MAKER)));` | item tags: #c:music_discs |
+| `gloamingforest:music_disc_motion` | Music Disc | `ITEMS.register("music_disc_motion", new Item(new Item.Properties().stacksTo(1).rarity(RARE).jukeboxPlayable(GloamingJukeboxSongs.MOTION)));` | item tags: #c:music_discs |
+| `gloamingforest:music_disc_radiance` | Music Disc | `ITEMS.register("music_disc_radiance", new Item(new Item.Properties().stacksTo(1).rarity(RARE).jukeboxPlayable(GloamingJukeboxSongs.RADIANCE)));` | item tags: #c:music_discs |
+| `gloamingforest:music_disc_steps` | Music Disc | `ITEMS.register("music_disc_steps", new Item(new Item.Properties().stacksTo(1).rarity(RARE).jukeboxPlayable(GloamingJukeboxSongs.STEPS)));` | item tags: #c:music_discs |
+| `gloamingforest:music_disc_superstitious` | Music Disc | `ITEMS.register("music_disc_superstitious", new Item(new Item.Properties().stacksTo(1).rarity(RARE).jukeboxPlayable(GloamingJukeboxSongs.SUPERSTITIOUS)));` | item tags: #c:music_discs |
+| `gloamingforest:music_disc_thread` | Music Disc | `ITEMS.register("music_disc_thread", new Item(new Item.Properties().stacksTo(1).rarity(RARE).jukeboxPlayable(GloamingJukeboxSongs.THREAD)));` | item tags: #c:music_discs |
+| `gloamingforest:music_disc_wayfarer` | Music Disc | `ITEMS.register("music_disc_wayfarer", new Item(new Item.Properties().stacksTo(1).rarity(RARE).jukeboxPlayable(GloamingJukeboxSongs.WAYFARER)));` | item tags: #c:music_discs |
 | `gloamingforest:mutton_jerky` | Mutton Jerky | `ITEMS.register("mutton_jerky", new Item(new Item.Properties().food(new FoodProperties.Builder().nutrition(4).saturationModifier(1.35F).build())));` | item tags: #c:foods, #c:foods/jerky, #mc:meat |
 | `gloamingforest:pork_jerky` | Pork Jerky | `ITEMS.register("pork_jerky", new Item(new Item.Properties().food(new FoodProperties.Builder().nutrition(6).saturationModifier(1.18F).build())));` | item tags: #c:foods, #c:foods/jerky, #mc:meat |
 | `gloamingforest:rabbit_jerky` | Rabbit Jerky | `ITEMS.register("rabbit_jerky", new Item(new Item.Properties().food(new FoodProperties.Builder().nutrition(4).saturationModifier(0.925F).build())));` | item tags: #c:foods, #c:foods/jerky, #mc:meat |
@@ -233,31 +233,31 @@ Block states come from upstream's blockstate JSON (`multipart:` lists only the p
 | `gloamingforest:raw_venison` | Raw Venison | `ITEMS.register("raw_venison", new Item(new Item.Properties().food(new FoodProperties.Builder().nutrition(2).saturationModifier(0.3F).build())));` | item tags: #alexscaves:raw_meats, #c:foods/raw_meat, #farmersdelight:cabbage_roll_ingredients, #mc:meat |
 | `gloamingforest:salmon_jerky` | Salmon Jerky | `ITEMS.register("salmon_jerky", new Item(new Item.Properties().food(new FoodProperties.Builder().nutrition(4).saturationModifier(1.35F).build())));` | item tags: #c:foods, #c:foods/jerky, #mc:meat |
 | `gloamingforest:shika_senbei` | Shika Senbei | `ITEMS.register("shika_senbei", new Item(new Item.Properties().food(new FoodProperties.Builder().nutrition(4).saturationModifier(1.0F).build())));` | item tags: #deer_tempt_items |
-| `gloamingforest:stale_bread` | Stale Bread | `ITEMS.register("stale_bread", new CustomDamageSwordItem(TFDamageTypes.STALE_SANDWICH, Tiers.WOOD, new Item.Properties().stacksTo(1).attributes(SwordItem.createAttributes(Tiers.WOOD, 3, -2.4F).withTooltip(false))));` |  |
+| `gloamingforest:stale_bread` | Stale Bread | `ITEMS.register("stale_bread", new CustomDamageSwordItem(GloamingDamageTypes.STALE_SANDWICH, Tiers.WOOD, new Item.Properties().stacksTo(1).attributes(SwordItem.createAttributes(Tiers.WOOD, 3, -2.4F).withTooltip(false))));` |  |
 | `gloamingforest:tropical_fish_jerky` | Tropical Fish Jerky | `ITEMS.register("tropical_fish_jerky", new Item(new Item.Properties().food(new FoodProperties.Builder().nutrition(2).saturationModifier(0.6F).build())));` | item tags: #c:foods, #c:foods/jerky, #mc:meat |
 | `gloamingforest:venison_jerky` | Venison Jerky | `ITEMS.register("venison_jerky", new Item(new Item.Properties().food(new FoodProperties.Builder().nutrition(6).saturationModifier(1.18F).build())));` | item tags: #c:foods, #c:foods/jerky, #mc:meat |
 
 ### Data components (1)
 
-| Id | upstream registration (`TFDataComponents.java`) |
+| Id | upstream registration (`GloamingDataComponents.java`) |
 |---|---|
 | `gloamingforest:e115_variant` | `COMPONENTS.register("e115_variant", () -> DataComponentType.<String>builder().persistent(Codec.STRING).networkSynchronized(ByteBufCodecs.STRING_UTF8).build());` |
 
 ### Data attachments (1)
 
-| Id | upstream registration (`TFDataAttachments.java`) |
+| Id | upstream registration (`GloamingDataAttachments.java`) |
 |---|---|
 | `gloamingforest:smash_blocks` | `ATTACHMENT_TYPES.register("smash_blocks", () -> AttachmentType.builder(new SmashBlocksEnchantmentAttachment()).serialize(SmashBlocksEnchantmentAttachment.CODEC).build());` |
 
 ### Mob effects (1)
 
-| Id | upstream registration (`TFMobEffects.java`) |
+| Id | upstream registration (`GloamingMobEffects.java`) |
 |---|---|
 | `gloamingforest:frosted` | `MOB_EFFECTS.register("frosted", FrostedEffect::new);` |
 
 ### Enchantment effect types (3)
 
-| Id | upstream registration (`TFEnchantmentEffects.java`) |
+| Id | upstream registration (`GloamingEnchantmentEffects.java`) |
 |---|---|
 | `gloamingforest:apply_frosted` | `ENTITY_EFFECTS.register("apply_frosted", () -> ApplyFrostedEffect.CODEC);` |
 | `gloamingforest:recharge_scepter` | `ENTITY_EFFECTS.register("recharge_scepter", () -> RechargeScepterEffect.CODEC);` |
@@ -265,13 +265,13 @@ Block states come from upstream's blockstate JSON (`multipart:` lists only the p
 
 ### Stats (1)
 
-| Id | upstream registration (`TFStats.java`) |
+| Id | upstream registration (`GloamingStats.java`) |
 |---|---|
 | `gloamingforest:e115_slices_eaten` (Experiment 115 Slices Eaten) | `makeTFStat("e115_slices_eaten");` |
 
 ### Advancement triggers (1)
 
-| Id | upstream registration (`TFAdvancements.java`) |
+| Id | upstream registration (`GloamingAdvancements.java`) |
 |---|---|
 | `gloamingforest:consume_hydra_chop_on_low_hunger` | `TRIGGERS.register("consume_hydra_chop_on_low_hunger", SimpleAdvancementTrigger::new);` |
 

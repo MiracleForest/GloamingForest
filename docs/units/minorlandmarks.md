@@ -5,8 +5,8 @@ Spec: [docs/spec/minorlandmarks.md](../spec/minorlandmarks.md). Code: `src/featu
 
 | File | What |
 |---|---|
-| `Landmarks.cpp` | the hollow hills (F7's `bases::HollowHill` as `gloamingforest:TFHill`, upstream's terraformer) and the hedge maze (`HedgeMazeComponent` on F7's `bases::Maze`, the inverted pyramid terraformer); F6 generators |
-| `HollowTrees.cpp` | `HollowTreeStructure` and the six hollow tree pieces (`TFHTTr`, `TFHTLB`, `TFHTMB`, `TFHTSB`, `TFHTRo`, `TFHTLD`) |
+| `Landmarks.cpp` | the hollow hills (F7's `bases::HollowHill` as `gloamingforest:GloamingHill`, upstream's terraformer) and the hedge maze (`HedgeMazeComponent` on F7's `bases::Maze`, the inverted pyramid terraformer); F6 generators |
+| `HollowTrees.cpp` | `HollowTreeStructure` and the six hollow tree pieces (`GloamingHTTr`, `GloamingHTLB`, `GloamingHTMB`, `GloamingHTSB`, `GloamingHTRo`, `GloamingHTLD`) |
 | `FallenTrunks.cpp` | `FallenTrunkStructure`, `FallenTrunkPiece` (+ `Hole`) and `TrunkUnderDensityFunction` as the start's terraformer |
 | `Features.cpp` | the 12 feature types (block_spike, dark_forest_placer, fallen_hollow_log, fallen_small_log, foundation, hollow_stump, lampposts, monolith, mycelium_blob, small_lake, webs, wood_roots) |
 | `Hedge.cpp` | `HedgeBlock`: contact damage (F11 block events), punch and break damage (interactions), the 10-tick re-check |

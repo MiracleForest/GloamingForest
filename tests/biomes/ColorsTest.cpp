@@ -67,7 +67,7 @@ TEST(BiomeColors, DarkForestCenterAndSpooky) {
     EXPECT_GT(grassDark, 0);
 }
 
-TEST(BiomeColors, HandlersOnlyForTfBiomes) {
+TEST(BiomeColors, HandlersOnlyForGloamingBiomes) {
     EXPECT_FALSE(c::grass("gloamingforest:forest", 0x123456, 0, 0).has_value());
     EXPECT_FALSE(c::foliage("minecraft:plains", 0x123456, 0, 0).has_value());
     EXPECT_TRUE(c::isPositional("gloamingforest:spooky_forest"));
@@ -98,7 +98,7 @@ TEST(BiomeColors, DarkForestCenterStaticColoursAreTheCommonOnes) {
     EXPECT_GT(common * 2, n) << common << " of " << n;
 }
 
-TEST(BiomeColors, EveryTfBiomeHasAColourAtEveryColumn) {
+TEST(BiomeColors, EveryGloamingBiomeHasAColourAtEveryColumn) {
     // Java's blend reads each column's own biome colour: every upstream biome answers (a modifier or its
     // static colour); a vanilla biome does not
     char const* ids[] = {"clearing", "dark_forest", "dark_forest_center", "dense_forest", "dense_mushroom_forest", "enchanted_forest",
@@ -118,7 +118,7 @@ TEST(BiomeColors, EveryTfBiomeHasAColourAtEveryColumn) {
     EXPECT_FALSE(c::water("minecraft:plains").has_value());
 }
 
-TEST(BiomeColors, StaticColoursAreTfJsonOrTheColourMap) {
+TEST(BiomeColors, StaticColoursAreGloamingJsonOrTheColourMap) {
     // upstream's JSON colours
     EXPECT_EQ(c::grassAt("gloamingforest:snowy_forest", 0, 0), 0xFFFFFF);
     EXPECT_EQ(c::foliageAt("gloamingforest:snowy_forest", 0, 0), 0xFFFFFF);
@@ -134,7 +134,7 @@ TEST(BiomeColors, StaticColoursAreTfJsonOrTheColourMap) {
     EXPECT_EQ(c::grassAt("gloamingforest:enchanted_forest", center.x + 8, center.z), 0x00FF7F);
 }
 
-TEST(BiomeColors, WaterColoursAreTfJson) {
+TEST(BiomeColors, WaterColoursAreGloamingJson) {
     EXPECT_EQ(c::water("gloamingforest:fire_swamp"), 0x6C2C2C);
     EXPECT_EQ(c::water("gloamingforest:swamp"), 0x95B55F);
     EXPECT_EQ(c::water("gloamingforest:spooky_forest"), 0xBC8857);

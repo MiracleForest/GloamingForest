@@ -10,7 +10,7 @@
         "default": "textures/gloamingforest/entity/kingspider"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.king_spider"
+        "default": "geometry.gf.skeleton.king_spider"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

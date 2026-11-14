@@ -22,7 +22,7 @@
 #pragma once
 
 // Contract "structure", shared bases (header owned by F0, implemented by F7; rule R18). The 16
-// classes of upstream's old lich tower ("TFLT*" piece types): the wing with its openings, stairs,
+// classes of upstream's old lich tower ("GloamingLT*" piece types): the wing with its openings, stairs,
 // windows, floors and decorations, its main / bridge / outbuilding variants, the beards under it
 // and the roofs on it. They are the base of the dark tower (U26), the aurora palace and the
 // mushroom tower (U28); those units subclass them and override the virtual members, as in Java.
@@ -40,7 +40,7 @@ namespace gf::structure::bases {
 
 class TowerRoof;
 
-/// TowerWingComponent ("gloamingforest:TFLTWin").
+/// TowerWingComponent ("gloamingforest:GloamingLTWin").
 class TowerWing : public ComponentOld {
 public:
     /// TowerWingComponent(type, i, x, y, z, pSize, pHeight, direction): a size x height x size wing.
@@ -148,7 +148,7 @@ protected:
     std::array<bool, 4>   openingTowards{false, false, true, false};
 };
 
-/// TowerMainComponent ("gloamingforest:TFLTMai"): the lich tower's main wing with the lich room.
+/// TowerMainComponent ("gloamingforest:GloamingLTMai"): the lich tower's main wing with the lich room.
 class TowerMain : public TowerWing {
 public:
     TowerMain(RandomSource& random, int genDepth, int x, int y, int z);
@@ -170,7 +170,7 @@ protected:
     virtual void decorateTorches(Region& region, RandomSource& random, int floorLevel, BlockBox const& sbb);
 };
 
-/// TowerBridgeComponent ("gloamingforest:TFLTBri"): a short bridge that leads to a new wing.
+/// TowerBridgeComponent ("gloamingforest:GloamingLTBri"): a short bridge that leads to a new wing.
 class TowerBridge : public TowerWing {
 public:
     TowerBridge(int genDepth, int x, int y, int z, int pSize, int pHeight, Orientation direction);
@@ -185,7 +185,7 @@ protected:
     int dHeight = 0; ///< the destination wing's height
 };
 
-/// TowerOutbuildingComponent ("gloamingforest:TFLTOut"): a ground-level outbuilding wing.
+/// TowerOutbuildingComponent ("gloamingforest:GloamingLTOut"): a ground-level outbuilding wing.
 class TowerOutbuilding : public TowerWing {
 public:
     TowerOutbuilding(int genDepth, int x, int y, int z, int pSize, int pHeight, Orientation direction);
@@ -195,7 +195,7 @@ public:
     void postProcess(Region& region, RandomSource& random, BlockBox const& chunkBox, BlockPos const& pivot) override;
 };
 
-/// TowerBeardComponent ("gloamingforest:TFLTBea"): the stepped pyramid under a freestanding wing.
+/// TowerBeardComponent ("gloamingforest:GloamingLTBea"): the stepped pyramid under a freestanding wing.
 class TowerBeard : public ComponentOld {
 public:
     TowerBeard(std::string typeId, int genDepth, TowerWing const& wing, int x, int y, int z);
@@ -212,7 +212,7 @@ protected:
     int height = 0; ///< size / 2
 };
 
-/// TowerBeardAttachedComponent ("gloamingforest:TFLTBA"): the beard under a wing attached to a wall.
+/// TowerBeardAttachedComponent ("gloamingforest:GloamingLTBA"): the beard under a wing attached to a wall.
 class TowerBeardAttached : public TowerBeard {
 public:
     TowerBeardAttached(int genDepth, TowerWing const& wing, int x, int y, int z);
@@ -222,7 +222,7 @@ protected:
     virtual void makeAttachedBeard(Region& region, RandomSource& random, BlockBox const& sbb);
 };
 
-/// TowerRoofComponent ("gloamingforest:TFLTRoo"): the roof base (no blocks of its own).
+/// TowerRoofComponent ("gloamingforest:GloamingLTRoo"): the roof base (no blocks of its own).
 class TowerRoof : public ComponentOld {
 public:
     TowerRoof(std::string typeId, int genDepth, int x, int y, int z);
@@ -246,14 +246,14 @@ protected:
     int height = 0;
 };
 
-/// TowerRoofFenceComponent ("gloamingforest:TFLTRF"): a fence ring, the last-resort roof.
+/// TowerRoofFenceComponent ("gloamingforest:GloamingLTRF"): a fence ring, the last-resort roof.
 class TowerRoofFence : public TowerRoof {
 public:
     TowerRoofFence(int genDepth, TowerWing const& wing, int x, int y, int z);
     void postProcess(Region& region, RandomSource& random, BlockBox const& chunkBox, BlockPos const& pivot) override;
 };
 
-/// TowerRoofGableForwardsComponent ("gloamingforest:TFLTRGF").
+/// TowerRoofGableForwardsComponent ("gloamingforest:GloamingLTRGF").
 class TowerRoofGableForwards : public TowerRoof {
 public:
     TowerRoofGableForwards(int genDepth, TowerWing const& wing, int x, int y, int z);
@@ -261,7 +261,7 @@ public:
     [[nodiscard]] virtual int slopeChangeForSize() const;
 };
 
-/// TowerRoofPointyComponent ("gloamingforest:TFLTRP").
+/// TowerRoofPointyComponent ("gloamingforest:GloamingLTRP").
 class TowerRoofPointy : public TowerRoof {
 public:
     TowerRoofPointy(std::string typeId, int genDepth, TowerWing const& wing, int x, int y, int z);
@@ -269,13 +269,13 @@ public:
     [[nodiscard]] virtual int slopeChangeForSize() const;
 };
 
-/// TowerRoofPointyOverhangComponent ("gloamingforest:TFLTRPO").
+/// TowerRoofPointyOverhangComponent ("gloamingforest:GloamingLTRPO").
 class TowerRoofPointyOverhang : public TowerRoofPointy {
 public:
     TowerRoofPointyOverhang(int genDepth, TowerWing const& wing, int x, int y, int z);
 };
 
-/// TowerRoofSlabComponent ("gloamingforest:TFLTRS").
+/// TowerRoofSlabComponent ("gloamingforest:GloamingLTRS").
 class TowerRoofSlab : public TowerRoof {
 public:
     TowerRoofSlab(std::string typeId, int genDepth, TowerWing const& wing, int x, int y, int z);
@@ -286,28 +286,28 @@ protected:
     virtual void makeConnectedCap(Region& region, Block const& slabType, Block const& woodType, BlockBox const& sbb);
 };
 
-/// TowerRoofAttachedSlabComponent ("gloamingforest:TFLTRAS").
+/// TowerRoofAttachedSlabComponent ("gloamingforest:GloamingLTRAS").
 class TowerRoofAttachedSlab : public TowerRoofSlab {
 public:
     TowerRoofAttachedSlab(int genDepth, TowerWing const& wing, int x, int y, int z);
     void postProcess(Region& region, RandomSource& random, BlockBox const& chunkBox, BlockPos const& pivot) override;
 };
 
-/// TowerRoofSlabForwardsComponent ("gloamingforest:TFLTRSF").
+/// TowerRoofSlabForwardsComponent ("gloamingforest:GloamingLTRSF").
 class TowerRoofSlabForwards : public TowerRoofSlab {
 public:
     TowerRoofSlabForwards(int genDepth, TowerWing const& wing, int x, int y, int z);
     void postProcess(Region& region, RandomSource& random, BlockBox const& chunkBox, BlockPos const& pivot) override;
 };
 
-/// TowerRoofStairsComponent ("gloamingforest:TFLTRSt").
+/// TowerRoofStairsComponent ("gloamingforest:GloamingLTRSt").
 class TowerRoofStairs : public TowerRoof {
 public:
     TowerRoofStairs(int genDepth, TowerWing const& wing, int x, int y, int z);
     void postProcess(Region& region, RandomSource& random, BlockBox const& chunkBox, BlockPos const& pivot) override;
 };
 
-/// TowerRoofStairsOverhangComponent ("gloamingforest:TFLTRStO").
+/// TowerRoofStairsOverhangComponent ("gloamingforest:GloamingLTRStO").
 class TowerRoofStairsOverhang : public TowerRoof {
 public:
     TowerRoofStairsOverhang(int genDepth, TowerWing const& wing, int x, int y, int z);

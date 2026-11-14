@@ -3,8 +3,8 @@
   "source": "TrophyRenderer.render + SnowQueenModel.renderTrophy (wall, facing north)",
   "layer": {
     "name": "snow_queen_trophy",
-    "field": "TFModelLayers.SNOW_QUEEN_TROPHY",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.SNOW_QUEEN_TROPHY, SnowQueenModel::checkForPack);"
+    "field": "GloamingModelLayers.SNOW_QUEEN_TROPHY",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.SNOW_QUEEN_TROPHY, SnowQueenModel::checkForPack);"
   },
   "frame": "world",
   "geometries": [
@@ -12,7 +12,7 @@
       "identifier": "geometry.gloamingforest.snow_queen_wall_trophy",
       "texture": {
         "bedrock": "textures/gloamingforest/entity/snowqueen",
-        "tf": "src/main/resources/assets/gloamingforest/textures/entity/snowqueen.png"
+        "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/snowqueen.png"
       },
       "material": "entity_alphatest"
     }

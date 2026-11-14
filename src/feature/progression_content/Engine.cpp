@@ -1,7 +1,7 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/data/TFAdvancementGenerator.java
-//   src/main/java/gloamingforest/init/TFAdvancements.java
+//   src/main/java/gloamingforest/data/GloamingAdvancementGenerator.java
+//   src/main/java/gloamingforest/init/GloamingAdvancements.java
 //   src/main/java/gloamingforest/advancements/HurtBossTrigger.java
 //   src/main/java/gloamingforest/advancements/KillBugTrigger.java
 //   src/main/java/gloamingforest/advancements/DrinkFromFlaskTrigger.java
@@ -15,7 +15,7 @@
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // U14's criteria engine. upstream's 45 advancements (data/gloamingforest/advancement/*.json, the JSON
-// TFAdvancementGenerator wrote) are read here; every criterion is attached to its trigger:
+// GloamingAdvancementGenerator wrote) are read here; every criterion is attached to its trigger:
 //
 // - minecraft:inventory_changed  progression::events::onInventoryChanged (the whole inventory,
 //                                armor and offhand against every item predicate)
@@ -507,14 +507,14 @@ public:
             });
         });
 
-        // upstream's triggers (TFAdvancements): fired by their owners through progression::trigger
-        for (char const* t : {"gloamingforest:make_tf_portal", "gloamingforest:hurt_boss", "gloamingforest:kill_bug", "gloamingforest:broke_glass_sword",
+        // upstream's triggers (GloamingAdvancements): fired by their owners through progression::trigger
+        for (char const* t : {"gloamingforest:make_gf_portal", "gloamingforest:hurt_boss", "gloamingforest:kill_bug", "gloamingforest:broke_glass_sword",
                               "gloamingforest:drink_from_flask", "gloamingforest:consume_hydra_chop_on_low_hunger", "gloamingforest:add_modifier",
                               "gloamingforest:uncraft_item", "gloamingforest:complete_quest_ram", "gloamingforest:placed_on_trophy_pedestal",
                               "gloamingforest:kill_all_phantoms", "gloamingforest:activate_ghast_trap", "gloamingforest:structure_cleared"}) {
             std::string trigger = t;
             pr::onTrigger(trigger, [trigger](Player& p, Json const& data) {
-                awardWhere(p, trigger, [&](Advancement const&, Criterion const& c) { return cp::matchTfTrigger(trigger, c.conditions, data, env()); });
+                awardWhere(p, trigger, [&](Advancement const&, Criterion const& c) { return cp::matchGloamingTrigger(trigger, c.conditions, data, env()); });
             });
         }
 

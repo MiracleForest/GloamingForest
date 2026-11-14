@@ -5,7 +5,7 @@
 // player opens a chest (onOpen) and CHEST_CLOSE when the last one closes it (onClose), through
 // ChestBlockEntity#playSound: nothing for a LEFT half, a single chest at its centre, a RIGHT half
 // between the two halves, volume 0.5F, pitch random.nextFloat() * 0.1F + 0.9F. TrappedChestBlock
-// uses the same block entity logic. upstream's chests of every wood are those blocks (TFBlocks:
+// uses the same block entity logic. upstream's chests of every wood are those blocks (GloamingBlocks:
 // ChestBlock / TrappedChestBlock with BlockEntityType.CHEST).
 //
 // Here the inventory contract (F10) counts the openers and plays the sound through fx; these tests
@@ -349,7 +349,7 @@ bool javaValues(HeardSound const& h, Vec3 const& where) {
 constexpr char kFacing[] = "gloamingforest:facing";
 constexpr char kType[]   = "gloamingforest:type";
 
-/// upstream's chest woods (TFBlocks: GLOAMING_OAK_CHEST ... SORTING_TRAPPED_CHEST).
+/// upstream's chest woods (GloamingBlocks: GLOAMING_OAK_CHEST ... SORTING_TRAPPED_CHEST).
 constexpr char const* kWoods[] = {"gloaming_oak", "canopy", "mangrove", "dark", "time", "transformation", "mining", "sorting"};
 
 SimulatedPlayer* simPlayer(Context& ctx, std::int64_t uid) {

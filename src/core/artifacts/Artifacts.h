@@ -1,7 +1,7 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
 //   src/main/java/gloamingforest/events/CharmEvents.java
-//   src/main/java/gloamingforest/util/TFItemStackUtils.java
+//   src/main/java/gloamingforest/util/GloamingItemStackUtils.java
 //   src/main/java/gloamingforest/components/entity/FortificationShieldAttachment.java
 //   src/main/java/gloamingforest/components/item/PotionFlaskComponent.java
 //   src/main/java/gloamingforest/components/entity/PotionFlaskTrackingAttachment.java
@@ -55,7 +55,7 @@ struct Inventory {
     [[nodiscard]] bool   empty() const;
 };
 
-/// Where a stack sits (TFItemStackUtils#consumeInventoryItem searches armor, main, off-hand).
+/// Where a stack sits (GloamingItemStackUtils#consumeInventoryItem searches armor, main, off-hand).
 struct SlotRef {
     enum class Area { Main, Armor, Offhand } area = Area::Main;
     int  index = 0;
@@ -72,7 +72,7 @@ struct KeepingResult {
 };
 [[nodiscard]] KeepingResult applyKeeping(Inventory& inv);
 
-/// TFItemStackUtils#consumeInventoryItem: takes one `id` (armor, main, off-hand order); nullopt when
+/// GloamingItemStackUtils#consumeInventoryItem: takes one `id` (armor, main, off-hand order); nullopt when
 /// none.
 std::optional<SlotRef> consumeOne(Inventory& inv, std::string const& id);
 

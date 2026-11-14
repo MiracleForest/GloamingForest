@@ -83,7 +83,7 @@ struct WeaponsConfig {
 void                    setHandStack(Player& player, bool mainHand, ItemStack const& stack);
 /// ItemStack#hurtAndBreak for a player (creative: nothing): true when the stack broke.
 bool hurtAndBreak(ItemStack& stack, int amount, Player* player);
-/// TFItemStackUtils#hurtButDontBreak: damage, but never past max - 1.
+/// GloamingItemStackUtils#hurtButDontBreak: damage, but never past max - 1.
 void hurtButDontBreak(ItemStack& stack, int amount, Player* player);
 /// The item being used by the player (empty when none) and Java's getTicksUsingItem.
 [[nodiscard]] std::string usedItemId(Player const& player);

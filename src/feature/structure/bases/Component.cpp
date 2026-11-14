@@ -1,7 +1,7 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/world/components/structures/TFStructureComponent.java
-//   src/main/java/gloamingforest/world/components/structures/TFStructureDecorator.java
+//   src/main/java/gloamingforest/world/components/structures/GloamingStructureComponent.java
+//   src/main/java/gloamingforest/world/components/structures/GloamingStructureDecorator.java
 //   src/main/java/gloamingforest/world/components/structures/UtilityPiece.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
@@ -55,7 +55,7 @@ void registerDecorator(std::string const& decoString, std::function<std::unique_
     gDecorators[decoString] = std::move(factory);
 }
 
-// ---- TFStructureComponent ---------------------------------------------------------------------------
+// ---- GloamingStructureComponent ---------------------------------------------------------------------------
 
 Component::Component(std::string typeId, int depth, BlockBox const& box) : Piece(std::move(typeId)) {
     bbox        = box;
@@ -82,7 +82,7 @@ void Component::load(Json const& data) {
 }
 
 void Component::placeBlockScheduled(Region& region, Block const& block, int x, int y, int z, BlockBox const& sbb) {
-    // TFStructureComponent#placeBlock: mirror, rotate, set with UPDATE_CLIENTS. The post-processing
+    // GloamingStructureComponent#placeBlock: mirror, rotate, set with UPDATE_CLIENTS. The post-processing
     // upstream schedules (fence / stair shapes, liquids) is what Bedrock does on its own for placed blocks.
     BlockPos pos = getWorldPos(x, y, z);
     if (!sbb.contains(pos.x, pos.y, pos.z)) return;
@@ -90,12 +90,12 @@ void Component::placeBlockScheduled(Region& region, Block const& block, int x, i
 }
 
 void Component::setInvisibleTextEntity(Region&, int, int, int, BlockBox const&, std::string const&, bool, float) {
-    // debug text displays only (TFStructureComponent.shouldDebug() is false)
+    // debug text displays only (GloamingStructureComponent.shouldDebug() is false)
 }
 
 // ---- UtilityPiece -------------------------------------------------------------------------------------
 
-UtilityPiece::UtilityPiece(int depth, BlockBox const& box, bool allow) : Piece("gloamingforest:TFUtilityPiece"), allowFeatures(allow) {
+UtilityPiece::UtilityPiece(int depth, BlockBox const& box, bool allow) : Piece("gloamingforest:GloamingUtilityPiece"), allowFeatures(allow) {
     bbox        = box;
     genDepth    = depth;
     orientation = kNoOrientation;

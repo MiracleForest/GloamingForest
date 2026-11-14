@@ -1,7 +1,7 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/init/TFDimensionData.java
-//   src/main/java/gloamingforest/init/TFDensityFunctions.java
+//   src/main/java/gloamingforest/init/GloamingDimensionData.java
+//   src/main/java/gloamingforest/init/GloamingDensityFunctions.java
 //   src/main/java/gloamingforest/init/custom/ChunkBlanketProcessors.java
 //   src/main/java/gloamingforest/asmhooks/WorldgenHooks.java
 //   src/main/java/gloamingforest/world/components/placements/ChunkBlanketingModifier.java
@@ -151,10 +151,10 @@ Data const& data() {
             return out;
         }
         std::error_code ec;
-        auto tf          = root / "gloamingforest";
-        out.gloaming     = readJson(tf / "worldgen/noise_settings/gloaming_noise_gen.json");
-        out.skylight     = readJson(tf / "worldgen/noise_settings/skylight_noise_gen.json");
-        out.biomeGrid    = readJson(tf / "gloaming/biome_terrain_data/biome_grid.json");
+        auto upsrc          = root / "gloamingforest";
+        out.gloaming     = readJson(upsrc / "worldgen/noise_settings/gloaming_noise_gen.json");
+        out.skylight     = readJson(upsrc / "worldgen/noise_settings/skylight_noise_gen.json");
+        out.biomeGrid    = readJson(upsrc / "gloaming/biome_terrain_data/biome_grid.json");
         for (auto const& ns : fs::directory_iterator(root, ec)) {
             if (!ns.is_directory()) continue;
             auto nsName = ns.path().filename().string();
@@ -828,10 +828,10 @@ std::optional<SavedChunkProbe> findSavedChunks(int dim, bool fullScan, ChunkLook
     // the chunks a Gloaming Forest is entered by first: around its origin, and around where a portal
     // at the world spawn leads (F4: Gloaming Forest = overworld / coordinateScale), nearest first
     BlockPos const& spawn         = level->getDefaultSpawn();
-    double          toTf          = 1.0 / gf::world::coordinateScale();
+    double          toGloaming          = 1.0 / gf::world::coordinateScale();
     std::array<std::array<int, 2>, 3> const centres{{
         {0, 0},
-        {static_cast<int>(std::floor(spawn.x * toTf)) >> 4, static_cast<int>(std::floor(spawn.z * toTf)) >> 4},
+        {static_cast<int>(std::floor(spawn.x * toGloaming)) >> 4, static_cast<int>(std::floor(spawn.z * toGloaming)) >> 4},
         {spawn.x >> 4, spawn.z >> 4},
     }};
     // ring by ring around the three, each position once (they overlap near 0, 0 or at scale 1)
@@ -916,8 +916,8 @@ void registerDensityTypes() {
 
 std::optional<int> heightProvider(int dimension, int x, int z, worldgen::Heightmap type) {
     // upstream's heights only for the Gloaming Forest (no dimension registered: no Gloaming Forest)
-    int tf = gloamingDim();
-    if (tf < 0 || dimension != tf) return std::nullopt;
+    int upsrc = gloamingDim();
+    if (upsrc < 0 || dimension != upsrc) return std::nullopt;
     auto s = state();
     if (!s) return std::nullopt;
     // OCEAN_FLOOR(_WG): blocks motion; WORLD_SURFACE(_WG) and MOTION_BLOCKING(_NO_LEAVES) also
@@ -1070,7 +1070,7 @@ struct TerrainModule {
         worldgen::setSurface(surfaceProvider);
         worldgen::registerBlanket(kBlanketId, blanketProvider);
         gf::terrain::ext::installPassProbe(kBlanketId);
-        worldgen::registerCarver("gloamingforest:tf_caves", [](worldgen::Chunk& c, worldgen::Region& r, core::jrand::RandomSource& rnd) {
+        worldgen::registerCarver("gloamingforest:gf_caves", [](worldgen::Chunk& c, worldgen::Region& r, core::jrand::RandomSource& rnd) {
             carve(false, c, r, rnd);
         });
         worldgen::registerCarver("gloamingforest:highland_caves", [](worldgen::Chunk& c, worldgen::Region& r, core::jrand::RandomSource& rnd) {

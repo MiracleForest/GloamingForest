@@ -1,164 +1,164 @@
 {
-  "tf_block_infested_towerwood": {
+  "gf_block_infested_towerwood": {
     "textures": "textures/gloamingforest/block/infested_towerwood"
   },
-  "tf_block_slider_h_90": {
+  "gf_block_slider_h_90": {
     "textures": "textures/gloamingforest/block/slider_h_90"
   },
-  "tf_block_slider_top": {
+  "gf_block_slider_top": {
     "textures": "textures/gloamingforest/block/slider_top"
   },
-  "tf_block_slider_v": {
+  "gf_block_slider_v": {
     "textures": "textures/gloamingforest/block/slider_v"
   },
-  "tf_block_tower_device_level_1_towerdev_antibuilder_1": {
+  "gf_block_tower_device_level_1_towerdev_antibuilder_1": {
     "textures": "textures/gloamingforest/block/tower_device_level_1/towerdev_antibuilder_1"
   },
-  "tf_block_tower_device_level_1_towerdev_builder_off_1": {
+  "gf_block_tower_device_level_1_towerdev_builder_off_1": {
     "textures": "textures/gloamingforest/block/tower_device_level_1/towerdev_builder_off_1"
   },
-  "tf_block_tower_device_level_1_towerdev_builder_on_1": {
+  "gf_block_tower_device_level_1_towerdev_builder_on_1": {
     "textures": "textures/gloamingforest/block/tower_device_level_1/towerdev_builder_on_1"
   },
-  "tf_block_tower_device_level_1_towerdev_ghasttrap_off_1": {
+  "gf_block_tower_device_level_1_towerdev_ghasttrap_off_1": {
     "textures": "textures/gloamingforest/block/tower_device_level_1/towerdev_ghasttrap_off_1"
   },
-  "tf_block_tower_device_level_1_towerdev_ghasttrap_on_1": {
+  "gf_block_tower_device_level_1_towerdev_ghasttrap_on_1": {
     "textures": "textures/gloamingforest/block/tower_device_level_1/towerdev_ghasttrap_on_1"
   },
-  "tf_block_tower_device_level_1_towerdev_lock_off_1": {
+  "gf_block_tower_device_level_1_towerdev_lock_off_1": {
     "textures": "textures/gloamingforest/block/tower_device_level_1/towerdev_lock_off_1"
   },
-  "tf_block_tower_device_level_1_towerdev_lock_on_1": {
+  "gf_block_tower_device_level_1_towerdev_lock_on_1": {
     "textures": "textures/gloamingforest/block/tower_device_level_1/towerdev_lock_on_1"
   },
-  "tf_block_tower_device_level_1_towerdev_reactor_off_1": {
+  "gf_block_tower_device_level_1_towerdev_reactor_off_1": {
     "textures": "textures/gloamingforest/block/tower_device_level_1/towerdev_reactor_off_1"
   },
-  "tf_block_tower_device_level_1_towerdev_reactor_on_1": {
+  "gf_block_tower_device_level_1_towerdev_reactor_on_1": {
     "textures": "textures/gloamingforest/block/tower_device_level_1/towerdev_reactor_on_1"
   },
-  "tf_block_tower_device_level_1_towerdev_reappearing_off_1": {
+  "gf_block_tower_device_level_1_towerdev_reappearing_off_1": {
     "textures": "textures/gloamingforest/block/tower_device_level_1/towerdev_reappearing_off_1"
   },
-  "tf_block_tower_device_level_1_towerdev_reappearing_on_1": {
+  "gf_block_tower_device_level_1_towerdev_reappearing_on_1": {
     "textures": "textures/gloamingforest/block/tower_device_level_1/towerdev_reappearing_on_1"
   },
-  "tf_block_tower_device_level_1_towerdev_vanish_off_1": {
+  "gf_block_tower_device_level_1_towerdev_vanish_off_1": {
     "textures": "textures/gloamingforest/block/tower_device_level_1/towerdev_vanish_off_1"
   },
-  "tf_block_tower_device_level_1_towerdev_vanish_on_1": {
+  "gf_block_tower_device_level_1_towerdev_vanish_on_1": {
     "textures": "textures/gloamingforest/block/tower_device_level_1/towerdev_vanish_on_1"
   },
-  "tf_block_tower_device_level_2_towerdev_antibuilder_2": {
+  "gf_block_tower_device_level_2_towerdev_antibuilder_2": {
     "textures": "textures/gloamingforest/block/tower_device_level_2/towerdev_antibuilder_2"
   },
-  "tf_block_tower_device_level_2_towerdev_antibuilt_1": {
+  "gf_block_tower_device_level_2_towerdev_antibuilt_1": {
     "textures": "textures/gloamingforest/block/tower_device_level_2/towerdev_antibuilt_1"
   },
-  "tf_block_tower_device_level_2_towerdev_builder_off_2": {
+  "gf_block_tower_device_level_2_towerdev_builder_off_2": {
     "textures": "textures/gloamingforest/block/tower_device_level_2/towerdev_builder_off_2"
   },
-  "tf_block_tower_device_level_2_towerdev_builder_on_2": {
+  "gf_block_tower_device_level_2_towerdev_builder_on_2": {
     "textures": "textures/gloamingforest/block/tower_device_level_2/towerdev_builder_on_2"
   },
-  "tf_block_tower_device_level_2_towerdev_builder_timeout_1": {
+  "gf_block_tower_device_level_2_towerdev_builder_timeout_1": {
     "textures": "textures/gloamingforest/block/tower_device_level_2/towerdev_builder_timeout_1"
   },
-  "tf_block_tower_device_level_2_towerdev_ghasttrap_off_2": {
+  "gf_block_tower_device_level_2_towerdev_ghasttrap_off_2": {
     "textures": "textures/gloamingforest/block/tower_device_level_2/towerdev_ghasttrap_off_2"
   },
-  "tf_block_tower_device_level_2_towerdev_ghasttrap_on_2": {
+  "gf_block_tower_device_level_2_towerdev_ghasttrap_on_2": {
     "textures": "textures/gloamingforest/block/tower_device_level_2/towerdev_ghasttrap_on_2"
   },
-  "tf_block_tower_device_level_2_towerdev_lock_off_2": {
+  "gf_block_tower_device_level_2_towerdev_lock_off_2": {
     "textures": "textures/gloamingforest/block/tower_device_level_2/towerdev_lock_off_2"
   },
-  "tf_block_tower_device_level_2_towerdev_lock_on_2": {
+  "gf_block_tower_device_level_2_towerdev_lock_on_2": {
     "textures": "textures/gloamingforest/block/tower_device_level_2/towerdev_lock_on_2"
   },
-  "tf_block_tower_device_level_2_towerdev_reactor_off_2": {
+  "gf_block_tower_device_level_2_towerdev_reactor_off_2": {
     "textures": "textures/gloamingforest/block/tower_device_level_2/towerdev_reactor_off_2"
   },
-  "tf_block_tower_device_level_2_towerdev_reactor_on_2": {
+  "gf_block_tower_device_level_2_towerdev_reactor_on_2": {
     "textures": "textures/gloamingforest/block/tower_device_level_2/towerdev_reactor_on_2"
   },
-  "tf_block_tower_device_level_2_towerdev_reappearing_off_2": {
+  "gf_block_tower_device_level_2_towerdev_reappearing_off_2": {
     "textures": "textures/gloamingforest/block/tower_device_level_2/towerdev_reappearing_off_2"
   },
-  "tf_block_tower_device_level_2_towerdev_reappearing_on_2": {
+  "gf_block_tower_device_level_2_towerdev_reappearing_on_2": {
     "textures": "textures/gloamingforest/block/tower_device_level_2/towerdev_reappearing_on_2"
   },
-  "tf_block_tower_device_level_2_towerdev_vanish_off_2": {
+  "gf_block_tower_device_level_2_towerdev_vanish_off_2": {
     "textures": "textures/gloamingforest/block/tower_device_level_2/towerdev_vanish_off_2"
   },
-  "tf_block_tower_device_level_2_towerdev_vanish_on_2": {
+  "gf_block_tower_device_level_2_towerdev_vanish_on_2": {
     "textures": "textures/gloamingforest/block/tower_device_level_2/towerdev_vanish_on_2"
   },
-  "tf_block_tower_device_level_3_towerdev_builder_timeout_2": {
+  "gf_block_tower_device_level_3_towerdev_builder_timeout_2": {
     "textures": "textures/gloamingforest/block/tower_device_level_3/towerdev_builder_timeout_2"
   },
-  "tf_block_towerdev_antibuilder": {
+  "gf_block_towerdev_antibuilder": {
     "textures": "textures/gloamingforest/block/towerdev_antibuilder"
   },
-  "tf_block_towerdev_antibuilt": {
+  "gf_block_towerdev_antibuilt": {
     "textures": "textures/gloamingforest/block/towerdev_antibuilt"
   },
-  "tf_block_towerdev_builder_off": {
+  "gf_block_towerdev_builder_off": {
     "textures": "textures/gloamingforest/block/towerdev_builder_off"
   },
-  "tf_block_towerdev_builder_on": {
+  "gf_block_towerdev_builder_on": {
     "textures": "textures/gloamingforest/block/towerdev_builder_on"
   },
-  "tf_block_towerdev_builder_timeout": {
+  "gf_block_towerdev_builder_timeout": {
     "textures": "textures/gloamingforest/block/towerdev_builder_timeout"
   },
-  "tf_block_towerdev_built_off": {
+  "gf_block_towerdev_built_off": {
     "textures": "textures/gloamingforest/block/towerdev_built_off"
   },
-  "tf_block_towerdev_built_on": {
+  "gf_block_towerdev_built_on": {
     "textures": "textures/gloamingforest/block/towerdev_built_on"
   },
-  "tf_block_towerdev_ghasttrap_off": {
+  "gf_block_towerdev_ghasttrap_off": {
     "textures": "textures/gloamingforest/block/towerdev_ghasttrap_off"
   },
-  "tf_block_towerdev_ghasttrap_on": {
+  "gf_block_towerdev_ghasttrap_on": {
     "textures": "textures/gloamingforest/block/towerdev_ghasttrap_on"
   },
-  "tf_block_towerdev_lock_off": {
+  "gf_block_towerdev_lock_off": {
     "textures": "textures/gloamingforest/block/towerdev_lock_off"
   },
-  "tf_block_towerdev_lock_on": {
+  "gf_block_towerdev_lock_on": {
     "textures": "textures/gloamingforest/block/towerdev_lock_on"
   },
-  "tf_block_towerdev_reactor_off": {
+  "gf_block_towerdev_reactor_off": {
     "textures": "textures/gloamingforest/block/towerdev_reactor_off"
   },
-  "tf_block_towerdev_reactor_on": {
+  "gf_block_towerdev_reactor_on": {
     "textures": "textures/gloamingforest/block/towerdev_reactor_on"
   },
-  "tf_block_towerdev_reappearing_off": {
+  "gf_block_towerdev_reappearing_off": {
     "textures": "textures/gloamingforest/block/towerdev_reappearing_off"
   },
-  "tf_block_towerdev_reappearing_on": {
+  "gf_block_towerdev_reappearing_on": {
     "textures": "textures/gloamingforest/block/towerdev_reappearing_on"
   },
-  "tf_block_towerdev_reappearing_trace_off": {
+  "gf_block_towerdev_reappearing_trace_off": {
     "textures": "textures/gloamingforest/block/towerdev_reappearing_trace_off"
   },
-  "tf_block_towerdev_reappearing_trace_on": {
+  "gf_block_towerdev_reappearing_trace_on": {
     "textures": "textures/gloamingforest/block/towerdev_reappearing_trace_on"
   },
-  "tf_block_towerdev_vanish_off": {
+  "gf_block_towerdev_vanish_off": {
     "textures": "textures/gloamingforest/block/towerdev_vanish_off"
   },
-  "tf_block_towerdev_vanish_on": {
+  "gf_block_towerdev_vanish_on": {
     "textures": "textures/gloamingforest/block/towerdev_vanish_on"
   },
-  "tf_vanilla_block_diamond_block": {
+  "gf_vanilla_block_diamond_block": {
     "textures": "textures/blocks/diamond_block"
   },
-  "tf_vanilla_block_gold_block": {
+  "gf_vanilla_block_gold_block": {
     "textures": "textures/blocks/gold_block"
   }
 }

@@ -30,7 +30,7 @@
       "minecraft:geometry": "geometry.gloamingforest.lichdecor.brazier",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_lichdecor_brazier",
+          "texture": "gf_lichdecor_brazier",
           "render_method": "alpha_test"
         }
       },
@@ -96,7 +96,7 @@
         "components": {
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_lichdecor_brazier_lit",
+              "texture": "gf_lichdecor_brazier_lit",
               "render_method": "alpha_test"
             }
           }

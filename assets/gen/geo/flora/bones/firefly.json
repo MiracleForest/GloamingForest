@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.firefly",
   "layer": {
     "name": "firefly",
-    "field": "TFModelLayers.FIREFLY",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.FIREFLY, FireflyModel::create);"
+    "field": "GloamingModelLayers.FIREFLY",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.FIREFLY, FireflyModel::create);"
   },
   "texture_size": [64, 32],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/firefly-tiny",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/firefly-tiny.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/firefly-tiny.png"
     }
   ],
   "bones": [

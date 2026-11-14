@@ -93,19 +93,19 @@ struct HedgeKind {
 HedgeKind hedgeKind(cn::PieceKind kind) {
     switch (kind) {
     case cn::PieceKind::HedgeCap:
-        return {"gloamingforest:TFNCCp", "hedge_end", "hedge_end_big"};
+        return {"gloamingforest:GloamingNCCp", "hedge_end", "hedge_end_big"};
     case cn::PieceKind::HedgeCapPillar:
-        return {"gloamingforest:TFNCCpP", "hedge_end_pillar", "hedge_end_pillar_big"};
+        return {"gloamingforest:GloamingNCCpP", "hedge_end_pillar", "hedge_end_pillar_big"};
     case cn::PieceKind::HedgeCorner:
-        return {"gloamingforest:TFNCCr", "hedge_corner", "hedge_corner_big"};
+        return {"gloamingforest:GloamingNCCr", "hedge_corner", "hedge_corner_big"};
     case cn::PieceKind::HedgeT:
-        return {"gloamingforest:TFNCT", "hedge_t", "hedge_t_big"};
+        return {"gloamingforest:GloamingNCT", "hedge_t", "hedge_t_big"};
     case cn::PieceKind::HedgeIntersection:
-        return {"gloamingforest:TFNCIs", "hedge_intersection", "hedge_intersection_big"};
+        return {"gloamingforest:GloamingNCIs", "hedge_intersection", "hedge_intersection_big"};
     case cn::PieceKind::HedgePadder:
-        return {"gloamingforest:TFNCPd", "hedge_between", "hedge_between_big"};
+        return {"gloamingforest:GloamingNCPd", "hedge_between", "hedge_between_big"};
     default:
-        return {"gloamingforest:TFNCLn", "hedge_line", "hedge_line_big"};
+        return {"gloamingforest:GloamingNCLn", "hedge_line", "hedge_line_big"};
     }
 }
 
@@ -157,8 +157,8 @@ private:
 class PathPiece final : public sb::TemplatePiece {
 public:
     PathPiece(int depth, int x, int y, int z)
-    : TemplatePiece("gloamingforest:TFNCPa", depth, tpl("pathway"), withProcessors(sb::makeSettings(st::Rotation::None), {kNagastone}), BlockPos{x, y + 1, z}) {}
-    explicit PathPiece(Json const& saved) : TemplatePiece("gloamingforest:TFNCPa", 0, tpl("pathway"), sb::makeSettings(st::Rotation::None), BlockPos{0, 0, 0}) {
+    : TemplatePiece("gloamingforest:GloamingNCPa", depth, tpl("pathway"), withProcessors(sb::makeSettings(st::Rotation::None), {kNagastone}), BlockPos{x, y + 1, z}) {}
+    explicit PathPiece(Json const& saved) : TemplatePiece("gloamingforest:GloamingNCPa", 0, tpl("pathway"), sb::makeSettings(st::Rotation::None), BlockPos{0, 0, 0}) {
         load(saved);
         if (placeSettings.processors.empty()) placeSettings.processors = {kNagastone};
     }
@@ -195,10 +195,10 @@ sb::PlaceSettings terraceSettings() {
 class TerracePiece final : public sb::TemplatePiece {
 public:
     TerracePiece(bool hedge, int depth, int x, int y, int z, std::string const& templateId)
-    : TemplatePiece(hedge ? "gloamingforest:TFNCHe" : "gloamingforest:TFNCTe", depth, templateId, terraceSettings(), BlockPos{x, y, z}),
+    : TemplatePiece(hedge ? "gloamingforest:GloamingNCHe" : "gloamingforest:GloamingNCTe", depth, templateId, terraceSettings(), BlockPos{x, y, z}),
       mHedge(hedge) {}
     TerracePiece(bool hedge, Json const& saved)
-    : TemplatePiece(hedge ? "gloamingforest:TFNCHe" : "gloamingforest:TFNCTe", 0, tpl(hedge ? "terrace_hedge" : "terrace_fire"), terraceSettings(), BlockPos{0, 0, 0}),
+    : TemplatePiece(hedge ? "gloamingforest:GloamingNCHe" : "gloamingforest:GloamingNCTe", 0, tpl(hedge ? "terrace_hedge" : "terrace_fire"), terraceSettings(), BlockPos{0, 0, 0}),
       mHedge(hedge) {
         load(saved);
         if (placeSettings.processors.empty()) placeSettings.processors = terraceSettings().processors;
@@ -233,13 +233,13 @@ struct WallKind {
 WallKind wallKind(cn::PieceKind kind) {
     switch (kind) {
     case cn::PieceKind::WallPadder:
-        return {"gloamingforest:TFNCWP", "courtyard_wall_padding", "courtyard_wall_padding_decayed"};
+        return {"gloamingforest:GloamingNCWP", "courtyard_wall_padding", "courtyard_wall_padding_decayed"};
     case cn::PieceKind::WallCornerOuter:
-        return {"gloamingforest:TFNCWC", "courtyard_wall_corner", "courtyard_wall_corner_decayed"};
+        return {"gloamingforest:GloamingNCWC", "courtyard_wall_corner", "courtyard_wall_corner_decayed"};
     case cn::PieceKind::WallCornerInner:
-        return {"gloamingforest:TFNCWA", "courtyard_wall_corner_inner", "courtyard_wall_corner_inner_decayed"};
+        return {"gloamingforest:GloamingNCWA", "courtyard_wall_corner_inner", "courtyard_wall_corner_inner_decayed"};
     default:
-        return {"gloamingforest:TFNCWl", "courtyard_wall", "courtyard_wall_decayed"};
+        return {"gloamingforest:GloamingNCWl", "courtyard_wall", "courtyard_wall_decayed"};
     }
 }
 
@@ -274,7 +274,7 @@ class CourtyardMain final : public sb::Component {
 public:
     /// CourtyardMain(rand, i, x, y, z): the maze is generated from `random` (the start piece's
     /// random of LandmarkStructure#findGenerationPoint).
-    CourtyardMain(st::RandomSource& random, int depth, int x, int y, int z) : Component("gloamingforest:TFNCMn", depth, x, y, z) {
+    CourtyardMain(st::RandomSource& random, int depth, int x, int y, int z) : Component("gloamingforest:GloamingNCMn", depth, x, y, z) {
         for (auto& row : mMaze) row.fill(0);
         cn::generateMaze(mMaze, mClipping, random);
         orientation      = st::Orientation::North;
@@ -284,7 +284,7 @@ public:
         mSizeConstraints = cn::sizeConstraints(x, y, z);
         mPlaceSpawner    = false;
     }
-    explicit CourtyardMain(Json const& saved) : Component("gloamingforest:TFNCMn", 0, 0, 0, 0) {
+    explicit CourtyardMain(Json const& saved) : Component("gloamingforest:GloamingNCMn", 0, 0, 0, 0) {
         load(saved);
         for (auto& row : mMaze) row.fill(0);
         if (auto const& m = saved.value("maze", Json::array()); m.is_array())
@@ -371,9 +371,9 @@ std::vector<std::unique_ptr<st::Piece>> courtyardPieces(st::RandomSource& firstP
     auto* raw  = main.get();
     pieces.push_back(std::move(main));
     raw->addChildren(*raw, pieces, contextRandom);
-    // no courtyard piece is a SortablePiece; TFStructureComponentTemplate's LAZY_TEMPLATE_LOADER
-    static std::set<std::string> const hedges{"gloamingforest:TFNCCp", "gloamingforest:TFNCCpP", "gloamingforest:TFNCCr", "gloamingforest:TFNCT",
-                                              "gloamingforest:TFNCLn", "gloamingforest:TFNCIs", "gloamingforest:TFNCPd"};
+    // no courtyard piece is a SortablePiece; GloamingStructureComponentTemplate's LAZY_TEMPLATE_LOADER
+    static std::set<std::string> const hedges{"gloamingforest:GloamingNCCp", "gloamingforest:GloamingNCCpP", "gloamingforest:GloamingNCCr", "gloamingforest:GloamingNCT",
+                                              "gloamingforest:GloamingNCLn", "gloamingforest:GloamingNCIs", "gloamingforest:GloamingNCPd"};
     for (auto& p : pieces)
         if (hedges.contains(p->typeId)) static_cast<HedgePiece*>(p.get())->runLazyLoader();
     return pieces;
@@ -398,8 +398,8 @@ struct BeardCache {
 
 /// The beardifier kind of a piece type: 0 BEARD_THIN, 1 BEARD_BOX (delta 3), 2 none.
 int beardKind(std::string const& type) {
-    if (type == "gloamingforest:TFNCTe" || type == "gloamingforest:TFNCHe") return 1;
-    if (type == "gloamingforest:TFJigsawTemplate") return 2;
+    if (type == "gloamingforest:GloamingNCTe" || type == "gloamingforest:GloamingNCHe") return 1;
+    if (type == "gloamingforest:GloamingJigsawTemplate") return 2;
     return 0;
 }
 
@@ -439,7 +439,7 @@ double terraform(gf::landmark::Start const& start, int x, int y, int z) {
 } // namespace
 
 void installCourtyard() {
-    // the piece types (TFStructurePieceTypes), for persisted starts
+    // the piece types (GloamingStructurePieceTypes), for persisted starts
     using K = cn::PieceKind;
     for (K kind : {K::HedgeCap, K::HedgeCapPillar, K::HedgeCorner, K::HedgeT, K::HedgeLine, K::HedgeIntersection, K::HedgePadder}) {
         auto hk = hedgeKind(kind);
@@ -449,10 +449,10 @@ void installCourtyard() {
         auto wk = wallKind(kind);
         st::registerPieceType(wk.type, [wk](Json const& saved) -> std::unique_ptr<st::Piece> { return std::make_unique<WallPiece>(wk, saved); });
     }
-    st::registerPieceType("gloamingforest:TFNCTe", [](Json const& saved) -> std::unique_ptr<st::Piece> { return std::make_unique<TerracePiece>(false, saved); });
-    st::registerPieceType("gloamingforest:TFNCHe", [](Json const& saved) -> std::unique_ptr<st::Piece> { return std::make_unique<TerracePiece>(true, saved); });
-    st::registerPieceType("gloamingforest:TFNCPa", [](Json const& saved) -> std::unique_ptr<st::Piece> { return std::make_unique<PathPiece>(saved); });
-    st::registerPieceType("gloamingforest:TFNCMn", [](Json const& saved) -> std::unique_ptr<st::Piece> { return std::make_unique<CourtyardMain>(saved); });
+    st::registerPieceType("gloamingforest:GloamingNCTe", [](Json const& saved) -> std::unique_ptr<st::Piece> { return std::make_unique<TerracePiece>(false, saved); });
+    st::registerPieceType("gloamingforest:GloamingNCHe", [](Json const& saved) -> std::unique_ptr<st::Piece> { return std::make_unique<TerracePiece>(true, saved); });
+    st::registerPieceType("gloamingforest:GloamingNCPa", [](Json const& saved) -> std::unique_ptr<st::Piece> { return std::make_unique<PathPiece>(saved); });
+    st::registerPieceType("gloamingforest:GloamingNCMn", [](Json const& saved) -> std::unique_ptr<st::Piece> { return std::make_unique<CourtyardMain>(saved); });
 
     gf::landmark::registerGenerator(kKey, gf::landmark::Generator{
         .layout =

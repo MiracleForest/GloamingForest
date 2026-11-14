@@ -267,7 +267,7 @@ void installTroll() {
     gf::game::db::onWorldClosed([] { ripenings().clear(); });
     gf::spawn::registerPlacement(kTroll, gf::spawn::PlacementRule::OnGround);
 
-    // ThrownBlock (TFThrowable: gravity 0.03)
+    // ThrownBlock (GloamingThrowable: gravity 0.03)
     gf::projectile::Spec spec;
     spec.gravity     = 0.03f;
     spec.drag        = 0.99f;

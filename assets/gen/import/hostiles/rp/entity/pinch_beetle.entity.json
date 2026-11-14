@@ -10,7 +10,7 @@
         "default": "textures/gloamingforest/entity/pinchbeetle"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.pinch_beetle"
+        "default": "geometry.gf.skeleton.pinch_beetle"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

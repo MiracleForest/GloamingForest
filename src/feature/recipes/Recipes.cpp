@@ -1,6 +1,6 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/init/TFRecipes.java
+//   src/main/java/gloamingforest/init/GloamingRecipes.java
 //   src/main/java/gloamingforest/item/recipe/DryingRecipe.java
 //   src/main/java/gloamingforest/item/recipe/UncraftingRecipe.java
 //   src/main/java/gloamingforest/item/recipe/ScepterRepairRecipe.java
@@ -14,7 +14,7 @@
 // Contract "recipes" (F9). Three sources:
 // - the Java-format recipes of the data tree (data/<ns>/recipe/**.json, F1's import, plus unit
 //   bundles data/gf/recipes/<unit>.json), parsed by the loader of their type: the vanilla types and
-//   upstream's 13 serializers are built in (the codecs of TFRecipes), an owner's `registerType` replaces
+//   upstream's 13 serializers are built in (the codecs of GloamingRecipes), an owner's `registerType` replaces
 //   the built-in loader of its type (rule R4);
 // - the game's own crafting table recipes (Level::getRecipes(), the vanilla ones and the Bedrock
 //   recipes of the packs), converted once per world for `producing` (the uncrafting table
@@ -358,7 +358,7 @@ bool conditionHolds(Store& s, Json const& c) {
         if (!ll::service::getLevel()) s.levelConditions = true;
         return tags::members(tags::Registry::Item, data::withNamespace(c.value("tag", std::string()))).empty();
     }
-    // UncraftingTableCondition: !TFConfig.disableEntireTable, upstream's default until U13 registers it
+    // UncraftingTableCondition: !GloamingConfig.disableEntireTable, upstream's default until U13 registers it
     if (type == "gloamingforest:uncrafting_table_enabled") return true;
     static std::set<std::string> warned;
     if (warned.insert(type).second) log().warn("recipes: unknown recipe condition type {}: the recipe does not load", type);

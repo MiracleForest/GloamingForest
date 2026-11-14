@@ -10,7 +10,7 @@
         "default": "textures/gloamingforest/entity/penguin"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.penguin"
+        "default": "geometry.gf.skeleton.penguin"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

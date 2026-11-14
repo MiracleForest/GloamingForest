@@ -746,7 +746,7 @@ private:
         double hitDist = 0;
         for (auto* e : actorsIn(m.getDimensionBlockSource(), static_cast<int>(m.getDimensionId()), search)) {
             if (!e || e == &m || !e->isAlive() || !mobs::attackable(*e)) continue;
-            // EntitySelector.LIVING_ENTITY_STILL_ALIVE: living entities only, so no TFPart (a
+            // EntitySelector.LIVING_ENTITY_STILL_ALIVE: living entities only, so no GloamingPart (a
             // multipart mob is breathed on through its main box), ours or another mob's
             if (parentOfPart(*e) != 0) continue;
             if (!e->hasCategory(ActorCategory::Mob) && !e->isPlayer()) continue;

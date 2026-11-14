@@ -55,33 +55,33 @@ constexpr int kNone = 0, kCw90 = 1, kCw180 = 2, kCcw90 = 3;
 char const* pieceTypeId(PieceKind kind) {
     switch (kind) {
     case PieceKind::HedgeCap:
-        return "gloamingforest:TFNCCp";
+        return "gloamingforest:GloamingNCCp";
     case PieceKind::HedgeCapPillar:
-        return "gloamingforest:TFNCCpP";
+        return "gloamingforest:GloamingNCCpP";
     case PieceKind::HedgeCorner:
-        return "gloamingforest:TFNCCr";
+        return "gloamingforest:GloamingNCCr";
     case PieceKind::HedgeT:
-        return "gloamingforest:TFNCT";
+        return "gloamingforest:GloamingNCT";
     case PieceKind::HedgeLine:
-        return "gloamingforest:TFNCLn";
+        return "gloamingforest:GloamingNCLn";
     case PieceKind::HedgeIntersection:
-        return "gloamingforest:TFNCIs";
+        return "gloamingforest:GloamingNCIs";
     case PieceKind::HedgePadder:
-        return "gloamingforest:TFNCPd";
+        return "gloamingforest:GloamingNCPd";
     case PieceKind::Terrace:
-        return "gloamingforest:TFNCTe";
+        return "gloamingforest:GloamingNCTe";
     case PieceKind::TerraceHedge:
-        return "gloamingforest:TFNCHe";
+        return "gloamingforest:GloamingNCHe";
     case PieceKind::Path:
-        return "gloamingforest:TFNCPa";
+        return "gloamingforest:GloamingNCPa";
     case PieceKind::Wall:
-        return "gloamingforest:TFNCWl";
+        return "gloamingforest:GloamingNCWl";
     case PieceKind::WallPadder:
-        return "gloamingforest:TFNCWP";
+        return "gloamingforest:GloamingNCWP";
     case PieceKind::WallCornerOuter:
-        return "gloamingforest:TFNCWC";
+        return "gloamingforest:GloamingNCWC";
     case PieceKind::WallCornerInner:
-        return "gloamingforest:TFNCWA";
+        return "gloamingforest:GloamingNCWA";
     }
     return "";
 }

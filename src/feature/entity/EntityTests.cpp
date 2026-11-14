@@ -1133,7 +1133,7 @@ GF_REGISTER_SELFTEST("entity.block_breaking", [](Context& ctx) -> ll::coro::Coro
     auto chest   = place(1, "minecraft:chest");
     auto sign    = place(2, "minecraft:standing_sign");
     auto bedrock = place(3, "minecraft:bedrock");
-    auto tfChest = place(4, "gloamingforest:gloaming_oak_chest");
+    auto gloamingChest = place(4, "gloamingforest:gloaming_oak_chest");
     auto jar     = place(5, "gloamingforest:firefly_jar");
     BlockPos air{stone.x, stone.y + 1, stone.z};
     using R = ge::ext::BreakRule;
@@ -1143,7 +1143,7 @@ GF_REGISTER_SELFTEST("entity.block_breaking", [](Context& ctx) -> ll::coro::Coro
     ctx.check(!ge::ext::canDestroyBlock(*region, chest, R::SpareContainers), "a container is spared");
     ctx.check(ge::ext::canDestroyBlock(*region, sign, R::SpareContainers), "a sign breaks (not a Container)");
     ctx.check(!ge::ext::canDestroyBlock(*region, sign, R::SpareBlockEntities), "the charge spares a sign (a block entity)");
-    ctx.check(!ge::ext::canDestroyBlock(*region, tfChest, R::SpareContainers), "an upstream chest is spared (gf::inventory container)");
+    ctx.check(!ge::ext::canDestroyBlock(*region, gloamingChest, R::SpareContainers), "an upstream chest is spared (gf::inventory container)");
     ctx.check(ge::ext::canDestroyBlock(*region, jar, R::SpareContainers), "a firefly jar breaks for the hydra (no Container)");
     ctx.check(!ge::ext::canDestroyBlock(*region, jar, R::SpareBlockEntities), "the charge spares a firefly jar (Java block entity)");
     int broken = ge::ext::destroyBlocks(*region, stone, BlockPos{jar.x, jar.y, jar.z}, R::SpareBlockEntities, false);

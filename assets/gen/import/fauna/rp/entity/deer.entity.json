@@ -10,7 +10,7 @@
         "default": "textures/gloamingforest/entity/wilddeer"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.deer"
+        "default": "geometry.gf.skeleton.deer"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

@@ -1,9 +1,9 @@
-commands.tffeature.usage=/%s <info | reactivate | conquer | center>
+commands.gloamingfeature.usage=/%s <info | reactivate | conquer | center>
 gloamingforest.configuration.section.gloamingforest.client.toml=Налаштування клієнта
 gloamingforest.configuration.section.gloamingforest.client.toml.title=Налаштування клієнта
 gloamingforest.configuration.section.gloamingforest.common.toml=Звичайні налаштування
 gloamingforest.configuration.section.gloamingforest.common.toml.title=Звичайні налаштування
-gloamingforest.configuration.title=Налаштування Сутінкового Лісу
+gloamingforest.configuration.title=Налаштування Gloaming Forest
 misc.gloamingforest.advancement_hidden=<Приховане досягнення>
 misc.gloamingforest.advancement_required=Потрібне досягнення:
 misc.gloamingforest.core_disabled=%s вимкнено у налаштуваннях

@@ -1,5 +1,5 @@
 {
-  "comment": "Hand-written golden (F1): the Java block-state property names of every upstream block class, read by hand from the createBlockStateDefinition overrides along each class chain of upstream 4.8 (9e40a757) and Minecraft 1.21.1's vanilla block classes. tools/import checks the properties it parses from the Java code (JavaStates.cs) and the Bedrock states it emits against this table on every run (-Check included) and fails on a difference, so a parser gap cannot pass silently. Key: the block's own class (TFBlocks registration); value: the property names, waterlogged included (it is dropped on Bedrock).",
+  "comment": "Hand-written golden (F1): the Java block-state property names of every upstream block class, read by hand from the createBlockStateDefinition overrides along each class chain of upstream 4.8 (9e40a757) and Minecraft 1.21.1's vanilla block classes. tools/import checks the properties it parses from the Java code (JavaStates.cs) and the Bedrock states it emits against this table on every run (-Check included) and fails on a difference, so a parser gap cannot pass silently. Key: the block's own class (GloamingBlocks registration); value: the property names, waterlogged included (it is dropped on Bedrock).",
   "classes": {
     "AntibuilderBlock": [],
     "ArcticFurBlock": [],
@@ -98,9 +98,9 @@
     "StairBlock": ["facing", "half", "shape", "waterlogged"],
     "StandingSignBlock": ["rotation", "waterlogged"],
     "StrongholdShieldBlock": ["facing"],
-    "TFHorizontalBlock": ["facing"],
-    "TFPortalBlock": ["is_one_way"],
-    "TFSmokerBlock": [],
+    "GloamingHorizontalBlock": ["facing"],
+    "GloamingPortalBlock": ["is_one_way"],
+    "GloamingSmokerBlock": [],
     "ThornRoseBlock": ["facing"],
     "ThornsBlock": ["axis", "down", "east", "north", "south", "up", "waterlogged", "west"],
     "TimeLogCoreBlock": ["active", "axis"],

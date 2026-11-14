@@ -16,7 +16,7 @@
   "config.gloamingforest.uncrafting_mod_id_flip": "모드 ID 블랙리스트",
   "config.gloamingforest.uncrafting_mod_id_flip.tooltip": "값이 참이라면, 위의 옵션은 블랙리스트에서 화이트리스트로 변경됩니다.",
   "config.gloamingforest.uncrafting_mod_ids": "비활성화된 모드 ID",
-  "config.gloamingforest.uncrafting_mod_ids.tooltip": "여기에서 특정 모드의 모든 아이템이 역제작되지 않도록 비활성화할 수 있습니다.\n유효한 모드 ID를 입력하여 해당 모드의 모든 역제작 제작법을 비활성화합니다.\n예: \"gloamingforest\"는 황혼의 숲의 모든 역제작 제작법을 비활성화합니다.",
+  "config.gloamingforest.uncrafting_mod_ids.tooltip": "여기에서 특정 모드의 모든 아이템이 역제작되지 않도록 비활성화할 수 있습니다.\n유효한 모드 ID를 입력하여 해당 모드의 모든 역제작 제작법을 비활성화합니다.\n예: \"gloamingforest\"는 Gloaming Forest 모든 역제작 제작법을 비활성화합니다.",
   "config.gloamingforest.uncrafting_recipes": "제작법 사용 중지",
   "config.gloamingforest.uncrafting_recipes.tooltip": "역제작을 완전히 비활성화하고 싶지 않고 특정 역제작 제작법만 비활성화하고 싶다면 이 기능이 있습니다.\n레시피를 추가하려면 모드 ID가 옆에 있는 제작법 이름을 추가하세요. JEI와 같은 모드에서 확인할 수 있습니다.\n예: \"gloamingforest:firefly_particle_spawner\"는 반딧불이 생성기를 반딧불이가 든 병, 반딧불이, 양귀비로 역제작하는 것을 비활성화합니다.\n아이템에 여러 개의 제작법이 있고 모두 비활성화하려면 \"gloamingforest:banned_uncraftables\" 아이템 태그에 아이템을 추가하세요.\n예를 들어 감염된 탑나무와 같이 문제가 있는 재료가 있는 경우 \"gloamingforest:banned_uncrafting_ingredients\" 아이템 태그에 아이템을 추가하세요.",
   "config.gloamingforest.uncrafting_recipes_flip": "제작법 블랙리스트",

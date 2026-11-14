@@ -2,7 +2,7 @@
 
 // Contract "projectile" (header owned by F0, implemented by F8).
 //
-// upstream's throwables and arrows (TFThrowable / TFArrow bases): native flight with gravity and drag,
+// upstream's throwables and arrows (GloamingThrowable / GloamingArrow bases): native flight with gravity and drag,
 // hit callbacks, and steering (seeker arrow homing, moonworm shots).
 //
 //     gf::projectile::registerType("gloamingforest:ice_snowball", {

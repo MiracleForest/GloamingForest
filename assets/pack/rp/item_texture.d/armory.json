@@ -1,14 +1,14 @@
 {
-  "tf_item_arctic_helmet_dyed": {
+  "gf_item_arctic_helmet_dyed": {
     "textures": "textures/gloamingforest/item/arctic_helmet_0"
   },
-  "tf_item_arctic_chestplate_dyed": {
+  "gf_item_arctic_chestplate_dyed": {
     "textures": "textures/gloamingforest/item/arctic_chestplate_0"
   },
-  "tf_item_arctic_leggings_dyed": {
+  "gf_item_arctic_leggings_dyed": {
     "textures": "textures/gloamingforest/item/arctic_leggings_0"
   },
-  "tf_item_arctic_boots_dyed": {
+  "gf_item_arctic_boots_dyed": {
     "textures": "textures/gloamingforest/item/arctic_boots_0"
   }
 }

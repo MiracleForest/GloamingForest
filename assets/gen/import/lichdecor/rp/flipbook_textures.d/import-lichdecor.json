@@ -1,7 +1,7 @@
 [
   {
     "flipbook_texture": "textures/gloamingforest/block/ominous_fire_0",
-    "atlas_tile": "tf_block_ominous_fire_0",
+    "atlas_tile": "gf_block_ominous_fire_0",
     "ticks_per_frame": 1,
     "frames": [
       16,

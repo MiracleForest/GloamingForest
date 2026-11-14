@@ -35,31 +35,31 @@
       "minecraft:geometry": "minecraft:geometry.full_block",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_nagastone_long_side",
+          "texture": "gf_block_nagastone_long_side",
           "render_method": "opaque"
         },
         "up": {
-          "texture": "tf_block_nagastone_turn_top",
+          "texture": "gf_block_nagastone_turn_top",
           "render_method": "opaque"
         },
         "down": {
-          "texture": "tf_block_nagastone_bottom_long",
+          "texture": "gf_block_nagastone_bottom_long",
           "render_method": "opaque"
         },
         "north": {
-          "texture": "tf_block_nagastone_long_side",
+          "texture": "gf_block_nagastone_long_side",
           "render_method": "opaque"
         },
         "south": {
-          "texture": "tf_block_nagastone_long_side",
+          "texture": "gf_block_nagastone_long_side",
           "render_method": "opaque"
         },
         "east": {
-          "texture": "tf_block_nagastone_long_side",
+          "texture": "gf_block_nagastone_long_side",
           "render_method": "opaque"
         },
         "west": {
-          "texture": "tf_block_nagastone_long_side",
+          "texture": "gf_block_nagastone_long_side",
           "render_method": "opaque"
         }
       }
@@ -71,31 +71,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_nagastone_cross_section",
+              "texture": "gf_block_nagastone_cross_section",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_block_nagastone_tip_long",
+              "texture": "gf_block_nagastone_tip_long",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_block_nagastone_bottom_long",
+              "texture": "gf_block_nagastone_bottom_long",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_block_nagastone_long_side",
+              "texture": "gf_block_nagastone_long_side",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_block_nagastone_long_side",
+              "texture": "gf_block_nagastone_long_side",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_block_nagastone_cross_section",
+              "texture": "gf_block_nagastone_cross_section",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_block_nagastone_cross_section",
+              "texture": "gf_block_nagastone_cross_section",
               "render_method": "opaque"
             }
           },
@@ -112,31 +112,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_nagastone_cross_section",
+              "texture": "gf_block_nagastone_cross_section",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_block_nagastone_cross_section",
+              "texture": "gf_block_nagastone_cross_section",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_block_nagastone_cross_section",
+              "texture": "gf_block_nagastone_cross_section",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_block_nagastone_long_vertical",
+              "texture": "gf_block_nagastone_long_vertical",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_block_nagastone_long_vertical",
+              "texture": "gf_block_nagastone_long_vertical",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_block_nagastone_long_vertical",
+              "texture": "gf_block_nagastone_long_vertical",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_block_nagastone_long_vertical",
+              "texture": "gf_block_nagastone_long_vertical",
               "render_method": "opaque"
             }
           },
@@ -153,31 +153,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_nagastone_cross_section",
+              "texture": "gf_block_nagastone_cross_section",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_block_nagastone_tip_long",
+              "texture": "gf_block_nagastone_tip_long",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_block_nagastone_bottom_long",
+              "texture": "gf_block_nagastone_bottom_long",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_block_nagastone_long_side",
+              "texture": "gf_block_nagastone_long_side",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_block_nagastone_long_side",
+              "texture": "gf_block_nagastone_long_side",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_block_nagastone_cross_section",
+              "texture": "gf_block_nagastone_cross_section",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_block_nagastone_cross_section",
+              "texture": "gf_block_nagastone_cross_section",
               "render_method": "opaque"
             }
           },
@@ -194,31 +194,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_nagastone_cross_section",
+              "texture": "gf_block_nagastone_cross_section",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_block_nagastone_top_tip",
+              "texture": "gf_block_nagastone_top_tip",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_block_nagastone_cross_section",
+              "texture": "gf_block_nagastone_cross_section",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_block_nagastone_left_down",
+              "texture": "gf_block_nagastone_left_down",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_block_nagastone_right_down",
+              "texture": "gf_block_nagastone_right_down",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_block_nagastone_cross_section",
+              "texture": "gf_block_nagastone_cross_section",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_block_nagastone_tip_up",
+              "texture": "gf_block_nagastone_tip_up",
               "render_method": "opaque"
             }
           },
@@ -235,31 +235,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_nagastone_cross_section",
+              "texture": "gf_block_nagastone_cross_section",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_block_nagastone_cross_section",
+              "texture": "gf_block_nagastone_cross_section",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_block_nagastone_bottom_tip",
+              "texture": "gf_block_nagastone_bottom_tip",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_block_nagastone_left_up",
+              "texture": "gf_block_nagastone_left_up",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_block_nagastone_right_up",
+              "texture": "gf_block_nagastone_right_up",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_block_nagastone_cross_section",
+              "texture": "gf_block_nagastone_cross_section",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_block_nagastone_tip_down",
+              "texture": "gf_block_nagastone_tip_down",
               "render_method": "opaque"
             }
           },
@@ -276,31 +276,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_nagastone_cross_section",
+              "texture": "gf_block_nagastone_cross_section",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_block_nagastone_top_tip",
+              "texture": "gf_block_nagastone_top_tip",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_block_nagastone_cross_section",
+              "texture": "gf_block_nagastone_cross_section",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_block_nagastone_left_down",
+              "texture": "gf_block_nagastone_left_down",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_block_nagastone_right_down",
+              "texture": "gf_block_nagastone_right_down",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_block_nagastone_cross_section",
+              "texture": "gf_block_nagastone_cross_section",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_block_nagastone_tip_up",
+              "texture": "gf_block_nagastone_tip_up",
               "render_method": "opaque"
             }
           },
@@ -317,31 +317,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_nagastone_cross_section",
+              "texture": "gf_block_nagastone_cross_section",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_block_nagastone_cross_section",
+              "texture": "gf_block_nagastone_cross_section",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_block_nagastone_bottom_tip",
+              "texture": "gf_block_nagastone_bottom_tip",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_block_nagastone_left_up",
+              "texture": "gf_block_nagastone_left_up",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_block_nagastone_right_up",
+              "texture": "gf_block_nagastone_right_up",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_block_nagastone_cross_section",
+              "texture": "gf_block_nagastone_cross_section",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_block_nagastone_tip_down",
+              "texture": "gf_block_nagastone_tip_down",
               "render_method": "opaque"
             }
           },
@@ -358,31 +358,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_nagastone_long_side",
+              "texture": "gf_block_nagastone_long_side",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_block_nagastone_turn_top",
+              "texture": "gf_block_nagastone_turn_top",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_block_nagastone_bottom_long",
+              "texture": "gf_block_nagastone_bottom_long",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_block_nagastone_long_side",
+              "texture": "gf_block_nagastone_long_side",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_block_nagastone_long_side",
+              "texture": "gf_block_nagastone_long_side",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_block_nagastone_long_side",
+              "texture": "gf_block_nagastone_long_side",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_block_nagastone_long_side",
+              "texture": "gf_block_nagastone_long_side",
               "render_method": "opaque"
             }
           },
@@ -399,31 +399,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_nagastone_cross_section",
+              "texture": "gf_block_nagastone_cross_section",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_block_nagastone_top_tip",
+              "texture": "gf_block_nagastone_top_tip",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_block_nagastone_cross_section",
+              "texture": "gf_block_nagastone_cross_section",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_block_nagastone_left_down",
+              "texture": "gf_block_nagastone_left_down",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_block_nagastone_right_down",
+              "texture": "gf_block_nagastone_right_down",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_block_nagastone_cross_section",
+              "texture": "gf_block_nagastone_cross_section",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_block_nagastone_tip_up",
+              "texture": "gf_block_nagastone_tip_up",
               "render_method": "opaque"
             }
           },
@@ -440,31 +440,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_nagastone_cross_section",
+              "texture": "gf_block_nagastone_cross_section",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_block_nagastone_cross_section",
+              "texture": "gf_block_nagastone_cross_section",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_block_nagastone_bottom_tip",
+              "texture": "gf_block_nagastone_bottom_tip",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_block_nagastone_left_up",
+              "texture": "gf_block_nagastone_left_up",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_block_nagastone_right_up",
+              "texture": "gf_block_nagastone_right_up",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_block_nagastone_cross_section",
+              "texture": "gf_block_nagastone_cross_section",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_block_nagastone_tip_down",
+              "texture": "gf_block_nagastone_tip_down",
               "render_method": "opaque"
             }
           },
@@ -481,31 +481,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_nagastone_cross_section",
+              "texture": "gf_block_nagastone_cross_section",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_block_nagastone_top_tip",
+              "texture": "gf_block_nagastone_top_tip",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_block_nagastone_cross_section",
+              "texture": "gf_block_nagastone_cross_section",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_block_nagastone_left_down",
+              "texture": "gf_block_nagastone_left_down",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_block_nagastone_right_down",
+              "texture": "gf_block_nagastone_right_down",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_block_nagastone_cross_section",
+              "texture": "gf_block_nagastone_cross_section",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_block_nagastone_tip_up",
+              "texture": "gf_block_nagastone_tip_up",
               "render_method": "opaque"
             }
           },
@@ -522,31 +522,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_nagastone_cross_section",
+              "texture": "gf_block_nagastone_cross_section",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_block_nagastone_cross_section",
+              "texture": "gf_block_nagastone_cross_section",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_block_nagastone_bottom_tip",
+              "texture": "gf_block_nagastone_bottom_tip",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_block_nagastone_left_up",
+              "texture": "gf_block_nagastone_left_up",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_block_nagastone_right_up",
+              "texture": "gf_block_nagastone_right_up",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_block_nagastone_cross_section",
+              "texture": "gf_block_nagastone_cross_section",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_block_nagastone_tip_down",
+              "texture": "gf_block_nagastone_tip_down",
               "render_method": "opaque"
             }
           },

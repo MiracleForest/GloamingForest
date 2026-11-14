@@ -24,22 +24,22 @@
         "catch_chance_modifier": 5,
         "destroy_chance_modifier": 5
       },
-      "minecraft:geometry": "geometry.tf.gloamingforest.block.horizontal_hollow_log",
+      "minecraft:geometry": "geometry.gf.gloamingforest.block.horizontal_hollow_log",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_vanilla_block_crimson_stem",
+          "texture": "gf_vanilla_block_crimson_stem",
           "render_method": "alpha_test"
         },
         "inner": {
-          "texture": "tf_vanilla_block_stripped_crimson_stem",
+          "texture": "gf_vanilla_block_stripped_crimson_stem",
           "render_method": "alpha_test"
         },
         "side": {
-          "texture": "tf_vanilla_block_crimson_stem",
+          "texture": "gf_vanilla_block_crimson_stem",
           "render_method": "alpha_test"
         },
         "top": {
-          "texture": "tf_vanilla_block_crimson_stem_top",
+          "texture": "gf_vanilla_block_crimson_stem_top",
           "render_method": "alpha_test"
         }
       },
@@ -79,22 +79,22 @@
       {
         "condition": "q.block_state('gloamingforest:axis') == 'x' && q.block_state('gloamingforest:variant') == 'empty'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.horizontal_hollow_log",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.horizontal_hollow_log",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_crimson_stem",
+              "texture": "gf_vanilla_block_crimson_stem",
               "render_method": "alpha_test"
             },
             "inner": {
-              "texture": "tf_vanilla_block_stripped_crimson_stem",
+              "texture": "gf_vanilla_block_stripped_crimson_stem",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_vanilla_block_crimson_stem",
+              "texture": "gf_vanilla_block_crimson_stem",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_vanilla_block_crimson_stem_top",
+              "texture": "gf_vanilla_block_crimson_stem_top",
               "render_method": "alpha_test"
             }
           },
@@ -125,30 +125,30 @@
       {
         "condition": "q.block_state('gloamingforest:axis') == 'x' && q.block_state('gloamingforest:variant') == 'moss'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.horizontal_hollow_log_carpet",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.horizontal_hollow_log_carpet",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_crimson_stem",
+              "texture": "gf_vanilla_block_crimson_stem",
               "render_method": "alpha_test"
             },
             "carpet": {
-              "texture": "tf_block_mosspatch",
+              "texture": "gf_block_mosspatch",
               "render_method": "alpha_test"
             },
             "inner": {
-              "texture": "tf_vanilla_block_stripped_crimson_stem",
+              "texture": "gf_vanilla_block_stripped_crimson_stem",
               "render_method": "alpha_test"
             },
             "overhang": {
-              "texture": "tf_block_moss_overhang",
+              "texture": "gf_block_moss_overhang",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_vanilla_block_crimson_stem",
+              "texture": "gf_vanilla_block_crimson_stem",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_vanilla_block_crimson_stem_top",
+              "texture": "gf_vanilla_block_crimson_stem_top",
               "render_method": "alpha_test"
             }
           },
@@ -179,34 +179,34 @@
       {
         "condition": "q.block_state('gloamingforest:axis') == 'x' && q.block_state('gloamingforest:variant') == 'moss_and_grass'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.horizontal_hollow_log_plant",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.horizontal_hollow_log_plant",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_crimson_stem",
+              "texture": "gf_vanilla_block_crimson_stem",
               "render_method": "alpha_test"
             },
             "carpet": {
-              "texture": "tf_block_mosspatch",
+              "texture": "gf_block_mosspatch",
               "render_method": "alpha_test"
             },
             "inner": {
-              "texture": "tf_vanilla_block_stripped_crimson_stem",
+              "texture": "gf_vanilla_block_stripped_crimson_stem",
               "render_method": "alpha_test"
             },
             "overhang": {
-              "texture": "tf_block_moss_overhang",
+              "texture": "gf_block_moss_overhang",
               "render_method": "alpha_test"
             },
             "plant": {
-              "texture": "tf_vanilla_block_short_grass",
+              "texture": "gf_vanilla_block_short_grass",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_vanilla_block_crimson_stem",
+              "texture": "gf_vanilla_block_crimson_stem",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_vanilla_block_crimson_stem_top",
+              "texture": "gf_vanilla_block_crimson_stem_top",
               "render_method": "alpha_test"
             }
           },
@@ -237,30 +237,30 @@
       {
         "condition": "q.block_state('gloamingforest:axis') == 'x' && q.block_state('gloamingforest:variant') == 'snow'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.horizontal_hollow_log_carpet",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.horizontal_hollow_log_carpet",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_crimson_stem",
+              "texture": "gf_vanilla_block_crimson_stem",
               "render_method": "alpha_test"
             },
             "carpet": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             },
             "inner": {
-              "texture": "tf_vanilla_block_stripped_crimson_stem",
+              "texture": "gf_vanilla_block_stripped_crimson_stem",
               "render_method": "alpha_test"
             },
             "overhang": {
-              "texture": "tf_block_snow_overhang",
+              "texture": "gf_block_snow_overhang",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_vanilla_block_crimson_stem",
+              "texture": "gf_vanilla_block_crimson_stem",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_vanilla_block_crimson_stem_top",
+              "texture": "gf_vanilla_block_crimson_stem_top",
               "render_method": "alpha_test"
             }
           },
@@ -291,22 +291,22 @@
       {
         "condition": "q.block_state('gloamingforest:axis') == 'x' && q.block_state('gloamingforest:variant') == 'waterlogged'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.horizontal_hollow_log",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.horizontal_hollow_log",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_crimson_stem",
+              "texture": "gf_vanilla_block_crimson_stem",
               "render_method": "alpha_test"
             },
             "inner": {
-              "texture": "tf_vanilla_block_stripped_crimson_stem",
+              "texture": "gf_vanilla_block_stripped_crimson_stem",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_vanilla_block_crimson_stem",
+              "texture": "gf_vanilla_block_crimson_stem",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_vanilla_block_crimson_stem_top",
+              "texture": "gf_vanilla_block_crimson_stem_top",
               "render_method": "alpha_test"
             }
           },
@@ -337,22 +337,22 @@
       {
         "condition": "q.block_state('gloamingforest:axis') == 'z' && q.block_state('gloamingforest:variant') == 'empty'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.horizontal_hollow_log",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.horizontal_hollow_log",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_crimson_stem",
+              "texture": "gf_vanilla_block_crimson_stem",
               "render_method": "alpha_test"
             },
             "inner": {
-              "texture": "tf_vanilla_block_stripped_crimson_stem",
+              "texture": "gf_vanilla_block_stripped_crimson_stem",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_vanilla_block_crimson_stem",
+              "texture": "gf_vanilla_block_crimson_stem",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_vanilla_block_crimson_stem_top",
+              "texture": "gf_vanilla_block_crimson_stem_top",
               "render_method": "alpha_test"
             }
           },
@@ -383,30 +383,30 @@
       {
         "condition": "q.block_state('gloamingforest:axis') == 'z' && q.block_state('gloamingforest:variant') == 'moss'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.horizontal_hollow_log_carpet",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.horizontal_hollow_log_carpet",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_crimson_stem",
+              "texture": "gf_vanilla_block_crimson_stem",
               "render_method": "alpha_test"
             },
             "carpet": {
-              "texture": "tf_block_mosspatch",
+              "texture": "gf_block_mosspatch",
               "render_method": "alpha_test"
             },
             "inner": {
-              "texture": "tf_vanilla_block_stripped_crimson_stem",
+              "texture": "gf_vanilla_block_stripped_crimson_stem",
               "render_method": "alpha_test"
             },
             "overhang": {
-              "texture": "tf_block_moss_overhang",
+              "texture": "gf_block_moss_overhang",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_vanilla_block_crimson_stem",
+              "texture": "gf_vanilla_block_crimson_stem",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_vanilla_block_crimson_stem_top",
+              "texture": "gf_vanilla_block_crimson_stem_top",
               "render_method": "alpha_test"
             }
           },
@@ -437,34 +437,34 @@
       {
         "condition": "q.block_state('gloamingforest:axis') == 'z' && q.block_state('gloamingforest:variant') == 'moss_and_grass'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.horizontal_hollow_log_plant",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.horizontal_hollow_log_plant",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_crimson_stem",
+              "texture": "gf_vanilla_block_crimson_stem",
               "render_method": "alpha_test"
             },
             "carpet": {
-              "texture": "tf_block_mosspatch",
+              "texture": "gf_block_mosspatch",
               "render_method": "alpha_test"
             },
             "inner": {
-              "texture": "tf_vanilla_block_stripped_crimson_stem",
+              "texture": "gf_vanilla_block_stripped_crimson_stem",
               "render_method": "alpha_test"
             },
             "overhang": {
-              "texture": "tf_block_moss_overhang",
+              "texture": "gf_block_moss_overhang",
               "render_method": "alpha_test"
             },
             "plant": {
-              "texture": "tf_vanilla_block_short_grass",
+              "texture": "gf_vanilla_block_short_grass",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_vanilla_block_crimson_stem",
+              "texture": "gf_vanilla_block_crimson_stem",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_vanilla_block_crimson_stem_top",
+              "texture": "gf_vanilla_block_crimson_stem_top",
               "render_method": "alpha_test"
             }
           },
@@ -495,30 +495,30 @@
       {
         "condition": "q.block_state('gloamingforest:axis') == 'z' && q.block_state('gloamingforest:variant') == 'snow'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.horizontal_hollow_log_carpet",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.horizontal_hollow_log_carpet",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_crimson_stem",
+              "texture": "gf_vanilla_block_crimson_stem",
               "render_method": "alpha_test"
             },
             "carpet": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             },
             "inner": {
-              "texture": "tf_vanilla_block_stripped_crimson_stem",
+              "texture": "gf_vanilla_block_stripped_crimson_stem",
               "render_method": "alpha_test"
             },
             "overhang": {
-              "texture": "tf_block_snow_overhang",
+              "texture": "gf_block_snow_overhang",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_vanilla_block_crimson_stem",
+              "texture": "gf_vanilla_block_crimson_stem",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_vanilla_block_crimson_stem_top",
+              "texture": "gf_vanilla_block_crimson_stem_top",
               "render_method": "alpha_test"
             }
           },
@@ -549,22 +549,22 @@
       {
         "condition": "q.block_state('gloamingforest:axis') == 'z' && q.block_state('gloamingforest:variant') == 'waterlogged'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.horizontal_hollow_log",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.horizontal_hollow_log",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_crimson_stem",
+              "texture": "gf_vanilla_block_crimson_stem",
               "render_method": "alpha_test"
             },
             "inner": {
-              "texture": "tf_vanilla_block_stripped_crimson_stem",
+              "texture": "gf_vanilla_block_stripped_crimson_stem",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_vanilla_block_crimson_stem",
+              "texture": "gf_vanilla_block_crimson_stem",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_vanilla_block_crimson_stem_top",
+              "texture": "gf_vanilla_block_crimson_stem_top",
               "render_method": "alpha_test"
             }
           },

@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.tf.gloamingforest.block.spiral_bricks.x_spiral_top_right",
+        "identifier": "geometry.gf.gloamingforest.block.spiral_bricks.x_spiral_top_right",
         "texture_width": 16,
         "texture_height": 16,
         "visible_bounds_width": 3,

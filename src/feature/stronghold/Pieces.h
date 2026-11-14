@@ -31,7 +31,7 @@
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
 
-// U25 (stronghold): the knight stronghold's piece types on F7's TFStructureComponentOld base (rule
+// U25 (stronghold): the knight stronghold's piece types on F7's GloamingStructureComponentOld base (rule
 // R19: procedural pieces translated exactly). Unit-internal: the structure module and its
 // selftests use it.
 
@@ -60,27 +60,27 @@ using ::gf::structure::bases::PieceList;
 
 inline constexpr char kStructure[] = "gloamingforest:knight_stronghold";
 
-inline constexpr char kEntrance[]        = "gloamingforest:TFSEnter";
-inline constexpr char kAccessChamber[]   = "gloamingforest:TFSAC";
-inline constexpr char kSmallHallway[]    = "gloamingforest:TFSSH";
-inline constexpr char kLeftTurn[]        = "gloamingforest:TFSLT";
-inline constexpr char kRightTurn[]       = "gloamingforest:TFSRT";
-inline constexpr char kCrossing[]        = "gloamingforest:TFSCr";
-inline constexpr char kDeadEnd[]         = "gloamingforest:TFSDE";
-inline constexpr char kBalconyRoom[]     = "gloamingforest:TFSBalR";
-inline constexpr char kTrainingRoom[]    = "gloamingforest:TFSTR";
-inline constexpr char kSmallStairs[]     = "gloamingforest:TFSSS";
-inline constexpr char kTreasureCorridor[] = "gloamingforest:TFSTC";
-inline constexpr char kAtrium[]          = "gloamingforest:TFSAt";
-inline constexpr char kFoundry[]         = "gloamingforest:TFSFo";
-inline constexpr char kTreasureRoom[]    = "gloamingforest:TFTreaR";
-inline constexpr char kBossRoom[]        = "gloamingforest:TFSBR";
-inline constexpr char kUpperAscender[]   = "gloamingforest:TFSUA";
-inline constexpr char kUpperCorridor[]   = "gloamingforest:TFSUCo";
-inline constexpr char kUpperLeftTurn[]   = "gloamingforest:TFSULT";
-inline constexpr char kUpperRightTurn[]  = "gloamingforest:TFSURT";
-inline constexpr char kUpperTIntersection[] = "gloamingforest:TFSUTI";
-inline constexpr char kShield[]          = "gloamingforest:TFSShield";
+inline constexpr char kEntrance[]        = "gloamingforest:GloamingSEnter";
+inline constexpr char kAccessChamber[]   = "gloamingforest:GloamingSAC";
+inline constexpr char kSmallHallway[]    = "gloamingforest:GloamingSSH";
+inline constexpr char kLeftTurn[]        = "gloamingforest:GloamingSLT";
+inline constexpr char kRightTurn[]       = "gloamingforest:GloamingSRT";
+inline constexpr char kCrossing[]        = "gloamingforest:GloamingSCr";
+inline constexpr char kDeadEnd[]         = "gloamingforest:GloamingSDE";
+inline constexpr char kBalconyRoom[]     = "gloamingforest:GloamingSBalR";
+inline constexpr char kTrainingRoom[]    = "gloamingforest:GloamingSTR";
+inline constexpr char kSmallStairs[]     = "gloamingforest:GloamingSSS";
+inline constexpr char kTreasureCorridor[] = "gloamingforest:GloamingSTC";
+inline constexpr char kAtrium[]          = "gloamingforest:GloamingSAt";
+inline constexpr char kFoundry[]         = "gloamingforest:GloamingSFo";
+inline constexpr char kTreasureRoom[]    = "gloamingforest:GloamingTreaR";
+inline constexpr char kBossRoom[]        = "gloamingforest:GloamingSBR";
+inline constexpr char kUpperAscender[]   = "gloamingforest:GloamingSUA";
+inline constexpr char kUpperCorridor[]   = "gloamingforest:GloamingSUCo";
+inline constexpr char kUpperLeftTurn[]   = "gloamingforest:GloamingSULT";
+inline constexpr char kUpperRightTurn[]  = "gloamingforest:GloamingSURT";
+inline constexpr char kUpperTIntersection[] = "gloamingforest:GloamingSUTI";
+inline constexpr char kShield[]          = "gloamingforest:GloamingSShield";
 
 inline constexpr char kLootCache[] = "gloamingforest:stronghold_cache";
 inline constexpr char kLootRoom[]  = "gloamingforest:stronghold_room";

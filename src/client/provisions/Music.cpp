@@ -2,7 +2,7 @@
 // Translated from the upstream 4.8 source (commit 9e40a757):
 //   src/main/java/gloamingforest/client/event/ClientGameEvents.java (setMusicInDimension)
 //   src/main/java/gloamingforest/world/registration/biomes/BiomeHelper.java (backgroundMusic)
-//   src/main/java/gloamingforest/init/TFConfiguredFeatures.java (TFMUSICTYPE)
+//   src/main/java/gloamingforest/init/GloamingConfiguredFeatures.java (GloamingMUSICTYPE)
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -32,7 +32,7 @@ inline constexpr char kMusicDefinition[] = "gloamingforest:gloaming_forest";
 std::optional<std::string> pick(std::string const& biomeId, int dimension) {
     bool inGloaming = biomeId.starts_with("gloamingforest:");
     if (!inGloaming)
-        if (auto tf = ::gf::world::gloaming()) inGloaming = dimension == static_cast<int>(*tf);
+        if (auto upsrc = ::gf::world::gloaming()) inGloaming = dimension == static_cast<int>(*upsrc);
     if (!inGloaming) return std::nullopt;
     return std::string(kMusicDefinition);
 }

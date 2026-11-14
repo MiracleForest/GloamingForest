@@ -1,7 +1,7 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
 //   src/main/java/gloamingforest/world/components/layer/BiomeDensitySource.java
-//   src/main/java/gloamingforest/world/components/biomesources/TFBiomeProvider.java
+//   src/main/java/gloamingforest/world/components/biomesources/GloamingBiomeProvider.java
 //   src/main/java/gloamingforest/world/components/chunkgenerators/TerrainColumn.java
 //   src/main/java/gloamingforest/init/custom/BiomeLayerStack.java
 //   src/main/java/gloamingforest/init/custom/BiomeLayerTypes.java
@@ -14,7 +14,7 @@
 // upstream's biome layer stack (registry `gloamingforest:biome_layer_stack`, built from its JSON exactly
 // as upstream's codecs read it), the terrain grid (registry `gloamingforest:biome_terrain_data`:
 // TerrainColumn per key biome) and the biome source on top of them (BiomeDensitySource /
-// TFBiomeProvider): the main (key) biome of a quart column, the noise biome of a quart (the
+// GloamingBiomeProvider): the main (key) biome of a quart column, the noise biome of a quart (the
 // column's vertical layers), the terrain blend (sampleTerrain) and the possible biomes in Java's
 // order (FeatureSorter's feature indices depend on it).
 //
@@ -97,7 +97,7 @@ struct DensityData {
     double scale = 0;
 };
 
-/// BiomeDensitySource + TFBiomeProvider for one world seed.
+/// BiomeDensitySource + GloamingBiomeProvider for one world seed.
 class BiomeProvider {
 public:
     /// `terrainData`: the biome_terrain_data entry ({"biome_landscape": [...], "biome_layer_config": id}).
@@ -106,9 +106,9 @@ public:
     [[nodiscard]] std::int64_t seed() const { return mSeed; }
     /// The layer stack's biome at quart column (qx, qz) (the key of the terrain column).
     [[nodiscard]] std::string const& keyBiome(int quartX, int quartZ) const;
-    /// TFBiomeProvider#getMainBiome(qx, qz): the column's main biome.
+    /// GloamingBiomeProvider#getMainBiome(qx, qz): the column's main biome.
     [[nodiscard]] std::string const& mainBiome(int quartX, int quartZ) const;
-    /// TFBiomeProvider#getNoiseBiome(qx, qy, qz).
+    /// GloamingBiomeProvider#getNoiseBiome(qx, qy, qz).
     [[nodiscard]] std::string const& noiseBiome(int quartX, int quartY, int quartZ) const;
     /// BiomeDensitySource#getTerrainColumn(qx, qz) (nullptr: the stack's biome has no column).
     [[nodiscard]] TerrainColumn const* terrainColumn(int quartX, int quartZ) const;

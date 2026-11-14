@@ -3,22 +3,22 @@
   "geometry": "geometry.gloamingforest.naga",
   "layer": {
     "name": "naga",
-    "field": "TFModelLayers.NAGA",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.NAGA, NagaModel::checkForPack);"
+    "field": "GloamingModelLayers.NAGA",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.NAGA, NagaModel::checkForPack);"
   },
   "texture_size": [64, 32],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/nagahead",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/nagahead.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/nagahead.png"
     },
     {
       "bedrock": "textures/gloamingforest/entity/nagahead_charging",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/nagahead_charging.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/nagahead_charging.png"
     },
     {
       "bedrock": "textures/gloamingforest/entity/nagahead_dazed",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/nagahead_dazed.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/nagahead_dazed.png"
     }
   ],
   "bones": [

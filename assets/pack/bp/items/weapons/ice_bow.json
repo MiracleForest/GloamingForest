@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_item_ice_bow_solid"
+          "default": "gf_item_ice_bow_solid"
         }
       },
       "minecraft:display_name": {

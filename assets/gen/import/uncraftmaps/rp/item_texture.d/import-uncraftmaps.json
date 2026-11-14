@@ -1,26 +1,26 @@
 {
-  "tf_item_filled_magic_map": {
+  "gf_item_filled_magic_map": {
     "textures": "textures/gloamingforest/item/filled_magic_map"
   },
-  "tf_item_filled_maze_map": {
+  "gf_item_filled_maze_map": {
     "textures": "textures/gloamingforest/item/filled_maze_map"
   },
-  "tf_item_filled_ore_map": {
+  "gf_item_filled_ore_map": {
     "textures": "textures/gloamingforest/item/filled_ore_map"
   },
-  "tf_item_magic_map": {
+  "gf_item_magic_map": {
     "textures": "textures/gloamingforest/item/magic_map"
   },
-  "tf_item_magic_map_focus": {
+  "gf_item_magic_map_focus": {
     "textures": "textures/gloamingforest/item/magic_map_focus"
   },
-  "tf_item_maze_map": {
+  "gf_item_maze_map": {
     "textures": "textures/gloamingforest/item/maze_map"
   },
-  "tf_item_maze_map_focus": {
+  "gf_item_maze_map_focus": {
     "textures": "textures/gloamingforest/item/maze_map_focus"
   },
-  "tf_item_ore_map": {
+  "gf_item_ore_map": {
     "textures": "textures/gloamingforest/item/ore_map"
   }
 }

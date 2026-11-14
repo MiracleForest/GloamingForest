@@ -2,7 +2,7 @@
 // Translated from the upstream 4.8 source (commit 9e40a757):
 //   src/main/java/gloamingforest/entity/boss/UrGhast.java
 //   src/main/java/gloamingforest/client/particle/GhastTearParticle.java
-//   src/main/java/gloamingforest/client/renderer/TFWeatherRenderer.java
+//   src/main/java/gloamingforest/client/renderer/GloamingWeatherRenderer.java
 //   src/main/java/gloamingforest/block/entity/ReactorDebrisBlockEntity.java
 //   src/main/java/gloamingforest/client/renderer/block/ReactorDebrisRenderer.java
 // Copyright (c) the upstream authors (see NOTICE).
@@ -12,7 +12,7 @@
 // U26 (darktower), client mod only: what upstream draws on the client.
 // - The Ur-Ghast's client side of UrGhast#aiStep / #tick, from the "darktower.urghast" heartbeat
 //   (uid, tantrum; every 10 ticks for each Ur-Ghast within 160 blocks): redstone dust half the time,
-//   and while it is in a tantrum and not dying one boss tear a tick and TFWeatherRenderer's
+//   and while it is in a tantrum and not dying one boss tear a tick and GloamingWeatherRenderer's
 //   urGhastAlive (the rain fades in by 0.1 a tick up to 1 and out by 0.02: the client dimension's rain
 //   level is raised to at least that, which draws the game's own rain). F12's sky provider has no
 //   rain-level input (its weather hook only draws), so the level is written here (a deviation from
@@ -112,7 +112,7 @@ struct State {
     std::unordered_map<std::int64_t, Ghast> ghasts;
     std::vector<Tear>                       tears;
     std::uint64_t                           tick = 0;
-    float                                   urGhastRain = 0.0f; ///< TFWeatherRenderer.urGhastRain
+    float                                   urGhastRain = 0.0f; ///< GloamingWeatherRenderer.urGhastRain
     bool                                    controlling = false;
     float                                   vanillaRain = 0.0f; ///< the dimension's own level, followed while raised
     Weather const*                          raised      = nullptr; ///< the weather whose level is raised
@@ -183,7 +183,7 @@ Weather* weatherOf(Dimension& d) {
     return d.mWeather.get();
 }
 
-/// TFWeatherRenderer#tickRain's urGhastRain, applied to the client dimension's rain level.
+/// GloamingWeatherRenderer#tickRain's urGhastRain, applied to the client dimension's rain level.
 void tickRain(Dimension& dim, bool alive) {
     auto& s = st();
     s.urGhastRain = alive ? std::min(1.0f, s.urGhastRain + 0.1f) : std::max(0.0f, s.urGhastRain - 0.02f);
@@ -225,7 +225,7 @@ void onTick() {
     }
     auto& level  = player->getLevel();
     auto& region = player->getDimensionBlockSource();
-    bool  alive  = false; // TFWeatherRenderer.urGhastAlive
+    bool  alive  = false; // GloamingWeatherRenderer.urGhastAlive
     for (auto it = s.ghasts.begin(); it != s.ghasts.end();) {
         if (s.tick - it->second.lastSeen > 40) {
             it = s.ghasts.erase(it);

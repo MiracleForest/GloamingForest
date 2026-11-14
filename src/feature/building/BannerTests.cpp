@@ -88,10 +88,10 @@ bool realPlayerTagged(char const* tag) {
 }
 
 GF_REGISTER_SELFTEST("building.banner_loom", [](Context& ctx) -> ll::coro::CoroTask<> {
-    // TFBannerPatterns: nine patterns, each unlocked by its own pattern item in the loom
+    // GloamingBannerPatterns: nine patterns, each unlocked by its own pattern item in the loom
     for (auto const& s : b::bannerPatterns()) {
         auto const* p = b::findBannerPattern(s.nameId);
-        ctx.check(p != nullptr, "pattern " + s.tfId + " registered as " + s.nameId);
+        ctx.check(p != nullptr, "pattern " + s.gfId + " registered as " + s.nameId);
         if (!p) continue;
         auto own = gf::game::items::make("gloamingforest:" + s.boss + "_banner_pattern");
         ctx.require(own.has_value(), "the " + s.boss + " pattern item");
@@ -108,20 +108,20 @@ GF_REGISTER_SELFTEST("building.banner_loom", [](Context& ctx) -> ll::coro::CoroT
     // the loom's result: a white banner + the naga pattern + red dye (1)
     auto banner = gf::game::items::make("minecraft:banner", 1, 15);
     ctx.require(banner.has_value(), "a white banner");
-    auto result = b::loomResult(*banner, "tf_naga", 1);
+    auto result = b::loomResult(*banner, "gf_naga", 1);
     ctx.require(result.has_value(), "the loom makes a banner");
     auto layers = BannerItem::getPatternAndColorPairsFromItemStack(*result);
-    bool found  = std::any_of(layers.begin(), layers.end(), [](auto const& l) { return *l.first->mNameID == "tf_naga"; });
+    bool found  = std::any_of(layers.begin(), layers.end(), [](auto const& l) { return *l.first->mNameID == "gf_naga"; });
     ctx.check(found, "the result's layer is upstream's naga pattern (" + std::to_string(layers.size()) + " layer(s))");
     // a seventh layer is refused
     auto full = *result;
-    for (int i = 0; i < 5; ++i) full = *b::loomResult(full, "tf_lich", 4);
-    ctx.check(!b::loomResult(full, "tf_hydra", 2).has_value(), "six layers at most");
+    for (int i = 0; i < 5; ++i) full = *b::loomResult(full, "gf_lich", 4);
+    ctx.check(!b::loomResult(full, "gf_hydra", 2).has_value(), "six layers at most");
     // saved and loaded with the item
     auto save   = SaveContextFactory::createCloneSaveContext();
     auto saved  = result->save(*save);
     auto loaded = ItemStack::fromTag(*saved);
-    ctx.check(gf::game::items::userData(loaded) && gf::game::items::userData(loaded)->toSnbt().find("tf_naga") != std::string::npos, "the layer survives a save");
+    ctx.check(gf::game::items::userData(loaded) && gf::game::items::userData(loaded)->toSnbt().find("gf_naga") != std::string::npos, "the layer survives a save");
 
     // placed: the standing banner's block actor holds the pattern (BannerItem#useOn)
     auto p = ctx.testPos(570, 0);
@@ -172,11 +172,11 @@ GF_REGISTER_SELFTEST("building.banner_loom", [](Context& ctx) -> ll::coro::CoroT
 GF_REGISTER_SELFTEST("building.shield_pattern", [](Context& ctx) {
     auto shield = gf::game::items::make("minecraft:shield");
     ctx.require(shield.has_value(), "a shield");
-    auto tag = CompoundTag::fromSnbt("{Base:15,Patterns:[{Color:1,Pattern:\"tf_naga\"}]}");
+    auto tag = CompoundTag::fromSnbt("{Base:15,Patterns:[{Color:1,Pattern:\"gf_naga\"}]}");
     ctx.require(tag.has_value(), "the shield's pattern data");
     shield->setUserData(std::make_unique<CompoundTag>(std::move(*tag)));
     auto layers = BannerItem::getPatternAndColorPairsFromItemStack(*shield);
-    ctx.check(std::any_of(layers.begin(), layers.end(), [](auto const& l) { return l.first && *l.first->mNameID == "tf_naga"; }), "the shield carries upstream's naga pattern");
+    ctx.check(std::any_of(layers.begin(), layers.end(), [](auto const& l) { return l.first && *l.first->mNameID == "gf_naga"; }), "the shield carries upstream's naga pattern");
     if (!realPlayerTagged(kShield)) return;
     auto* level = ll::service::getLevel().as_ptr();
     ctx.require(level != nullptr, "level");

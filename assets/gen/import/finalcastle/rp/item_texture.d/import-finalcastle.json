@@ -1,8 +1,8 @@
 {
-  "tf_block_forcefield_white": {
+  "gf_block_forcefield_white": {
     "textures": "textures/gloamingforest/block/forcefield_white"
   },
-  "tf_block_thorn_rose": {
+  "gf_block_thorn_rose": {
     "textures": "textures/gloamingforest/block/thorn_rose"
   }
 }

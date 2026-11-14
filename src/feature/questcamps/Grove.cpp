@@ -7,7 +7,7 @@
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// The quest grove (docs/spec/questcamps.md 2): one template piece (TFQuest1) 12 blocks west and
+// The quest grove (docs/spec/questcamps.md 2): one template piece (GloamingQuest1) 12 blocks west and
 // north of the generation point, placed 2 below its stored position (placePieceAdjusted(-2)), with
 // the Questing Ram and the offering droppers at its data markers.
 

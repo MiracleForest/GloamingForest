@@ -413,7 +413,7 @@ GF_REGISTER_SELFTEST("entity.boss_portal", [](Context& ctx) -> ll::coro::CoroTas
     auto*           region = ctx.region();
     ctx.require(region != nullptr, "the test dimension");
     // a Gloaming portal first (its lightning must not strike the probes): a 2x2 pool in the grass
-    // layer, ringed by grass blocks with plants on the sides (TFPortalBlock#tryToCreatePortal)
+    // layer, ringed by grass blocks with plants on the sides (GloamingPortalBlock#tryToCreatePortal)
     int  y    = box.minY - 1;
     auto pool = core::GlobalPos{ctx.dimension(), box.minX + 4, y, box.minZ + 4};
     bool built = true;
@@ -510,7 +510,7 @@ GF_REGISTER_SELFTEST("entity.boss_portal", [](Context& ctx) -> ll::coro::CoroTas
 // upstream's bosses leave their loot in one of upstream's chests (getDeathContainer: canopy, gloaming oak,
 // mangrove, dark chest; the block families' chest blocks, containers of the inventory contract):
 // the chest takes the loot buffer through gf::inventory.
-GF_REGISTER_SELFTEST("entity.boss_tf_chest", [](Context& ctx) -> ll::coro::CoroTask<> {
+GF_REGISTER_SELFTEST("entity.boss_gf_chest", [](Context& ctx) -> ll::coro::CoroTask<> {
     FixtureScope    fixture;
     DifficultyScope easy(Difficulty::Easy);
     struct LifecycleScope {
@@ -1208,7 +1208,7 @@ GF_REGISTER_SELFTEST("entity.boss_dying_read", [](Context& ctx) -> ll::coro::Cor
 });
 
 GF_REGISTER_SELFTEST("entity.boss_tables", [](Context& ctx) {
-    // BossVariant: 10 rows, floor and wall trophies, the comparator strengths of TFBlocks
+    // BossVariant: 10 rows, floor and wall trophies, the comparator strengths of GloamingBlocks
     char const* variants[] = {"naga", "lich", "hydra", "ur_ghast", "knight_phantom", "snow_queen", "minoshroom", "alpha_yeti", "quest_ram", "final_boss"};
     int         rows       = 0;
     for (auto const* v : variants) rows += gf::boss::trophyVariant(v).has_value() ? 1 : 0;
@@ -1277,17 +1277,17 @@ GF_REGISTER_SELFTEST("entity.boss_tables", [](Context& ctx) {
     // ItemTagGenerator.KOBOLD_PACIFICATION_BREADS (the kobold's goal)
     using gf::tags::Registry;
     auto inclusive = gf::tags::members(Registry::EntityType, "gloamingforest:multiplayer_inclusive_entities");
-    std::vector<std::string> const tfInclusive{"gloamingforest:alpha_yeti", "gloamingforest:hydra",        "gloamingforest:lich",
+    std::vector<std::string> const gloamingInclusive{"gloamingforest:alpha_yeti", "gloamingforest:hydra",        "gloamingforest:lich",
                                                "gloamingforest:minoshroom", "gloamingforest:naga",         "gloamingforest:plateau_boss",
                                                "gloamingforest:snow_queen", "gloamingforest:ur_ghast"};
-    ctx.check(inclusive == tfInclusive, "multiplayer_inclusive_entities holds upstream's 8 bosses (" + nlohmann::json(inclusive).dump() + ")");
+    ctx.check(inclusive == gloamingInclusive, "multiplayer_inclusive_entities holds upstream's 8 bosses (" + nlohmann::json(inclusive).dump() + ")");
     ctx.check(!gf::tags::has(Registry::EntityType, "gloamingforest:multiplayer_inclusive_entities", "gloamingforest:knight_phantom"), "the knight phantoms are not in it");
     ctx.check(gf::tags::has(Registry::Item, "gloamingforest:kobold_pacification_breads", "minecraft:bread"), "kobold_pacification_breads holds bread");
     // the death chest's facing: Direction.Plane.HORIZONTAL.getRandomDirection, one draw over north,
     // east, south, west, in the chest's own facing state (the vanilla chest's
     // minecraft:cardinal_direction; gloamingforest:facing on upstream's chests, the bosses' containers)
     static char const* const horizontal[] = {"north", "east", "south", "west"};
-    std::set<std::string>    tfFacings;
+    std::set<std::string>    gloamingFacings;
     bool                     javaOrder = true;
     fe::JavaRandom seeds(42); // a death's seed is the boss random's nextLong (the first nextInt(4) of
                               // small consecutive seeds is the same)
@@ -1295,14 +1295,14 @@ GF_REGISTER_SELFTEST("entity.boss_tables", [](Context& ctx) {
         auto           seed = seeds.nextLong();
         fe::JavaRandom java(seed);
         auto           expected = horizontal[java.nextInt(4)];
-        auto [tfState, tfValue] = deathChestFacingForTest("gloamingforest:canopy_chest", seed);
+        auto [gloamingState, gloamingValue] = deathChestFacingForTest("gloamingforest:canopy_chest", seed);
         auto [vState, vValue]   = deathChestFacingForTest("minecraft:chest", seed);
-        javaOrder &= tfState == "gloamingforest:facing" && tfValue == expected && vState == "minecraft:cardinal_direction" && vValue == expected;
-        tfFacings.insert(tfValue);
+        javaOrder &= gloamingState == "gloamingforest:facing" && gloamingValue == expected && vState == "minecraft:cardinal_direction" && vValue == expected;
+        gloamingFacings.insert(gloamingValue);
     }
     ctx.check(javaOrder, "the death chests face the direction Java draws (gloamingforest:facing on upstream's chests)");
-    ctx.check(tfFacings.size() == 4, "an upstream death chest faces every horizontal direction (" + std::to_string(tfFacings.size()) + " seen)");
-    // config "bosses" defaults (TFConfig)
+    ctx.check(gloamingFacings.size() == 4, "an upstream death chest faces every horizontal direction (" + std::to_string(gloamingFacings.size()) + " seen)");
+    // config "bosses" defaults (GloamingConfig)
     ctx.check(gf::boss::ext::dropChests(), "bossesSpawnDropChests defaults to true");
     ctx.check(!gf::boss::ext::adjustsHealth() && !gf::boss::ext::adjustsLootRolls(), "multiplayerFightAdjuster defaults to NONE");
 });

@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.ice_crystal",
   "layer": {
     "name": "ice_crystal",
-    "field": "TFModelLayers.ICE_CRYSTAL",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.ICE_CRYSTAL, IceCrystalModel::create);"
+    "field": "GloamingModelLayers.ICE_CRYSTAL",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.ICE_CRYSTAL, IceCrystalModel::create);"
   },
   "texture_size": [32, 32],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/icecrystal",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/icecrystal.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/icecrystal.png"
     }
   ],
   "bones": [

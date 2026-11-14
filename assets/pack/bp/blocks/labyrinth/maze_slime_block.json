@@ -19,7 +19,7 @@
       "minecraft:geometry": "geometry.gloamingforest.maze_slime_block",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_maze_slime_block",
+          "texture": "gf_block_maze_slime_block",
           "render_method": "blend"
         }
       },

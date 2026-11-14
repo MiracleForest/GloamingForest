@@ -26,31 +26,31 @@
       "minecraft:geometry": "minecraft:geometry.full_block",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_stripped_mangrove_log",
+          "texture": "gf_block_stripped_mangrove_log",
           "render_method": "opaque"
         },
         "up": {
-          "texture": "tf_block_stripped_mangrove_log",
+          "texture": "gf_block_stripped_mangrove_log",
           "render_method": "opaque"
         },
         "down": {
-          "texture": "tf_block_stripped_mangrove_log",
+          "texture": "gf_block_stripped_mangrove_log",
           "render_method": "opaque"
         },
         "north": {
-          "texture": "tf_block_stripped_mangrove_log",
+          "texture": "gf_block_stripped_mangrove_log",
           "render_method": "opaque"
         },
         "south": {
-          "texture": "tf_block_stripped_mangrove_log",
+          "texture": "gf_block_stripped_mangrove_log",
           "render_method": "opaque"
         },
         "east": {
-          "texture": "tf_block_stripped_mangrove_log",
+          "texture": "gf_block_stripped_mangrove_log",
           "render_method": "opaque"
         },
         "west": {
-          "texture": "tf_block_stripped_mangrove_log",
+          "texture": "gf_block_stripped_mangrove_log",
           "render_method": "opaque"
         }
       }
@@ -59,18 +59,18 @@
       {
         "condition": "q.block_state('gloamingforest:axis') == 'x'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.cube_column_horizontal",
+          "minecraft:geometry": "geometry.gf.minecraft.block.cube_column_horizontal",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_stripped_mangrove_log",
+              "texture": "gf_block_stripped_mangrove_log",
               "render_method": "opaque"
             },
             "end": {
-              "texture": "tf_block_stripped_mangrove_log",
+              "texture": "gf_block_stripped_mangrove_log",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_stripped_mangrove_log",
+              "texture": "gf_block_stripped_mangrove_log",
               "render_method": "opaque"
             }
           },
@@ -87,31 +87,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_stripped_mangrove_log",
+              "texture": "gf_block_stripped_mangrove_log",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_block_stripped_mangrove_log",
+              "texture": "gf_block_stripped_mangrove_log",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_block_stripped_mangrove_log",
+              "texture": "gf_block_stripped_mangrove_log",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_block_stripped_mangrove_log",
+              "texture": "gf_block_stripped_mangrove_log",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_block_stripped_mangrove_log",
+              "texture": "gf_block_stripped_mangrove_log",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_block_stripped_mangrove_log",
+              "texture": "gf_block_stripped_mangrove_log",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_block_stripped_mangrove_log",
+              "texture": "gf_block_stripped_mangrove_log",
               "render_method": "opaque"
             }
           },
@@ -125,18 +125,18 @@
       {
         "condition": "q.block_state('gloamingforest:axis') == 'z'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.cube_column_horizontal",
+          "minecraft:geometry": "geometry.gf.minecraft.block.cube_column_horizontal",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_stripped_mangrove_log",
+              "texture": "gf_block_stripped_mangrove_log",
               "render_method": "opaque"
             },
             "end": {
-              "texture": "tf_block_stripped_mangrove_log",
+              "texture": "gf_block_stripped_mangrove_log",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_stripped_mangrove_log",
+              "texture": "gf_block_stripped_mangrove_log",
               "render_method": "opaque"
             }
           },

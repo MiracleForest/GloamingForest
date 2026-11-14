@@ -13,7 +13,7 @@
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
 
-// U23 (labyrinth): the 27 minotaur maze piece types on F7's TFStructureComponentOld and TFMaze
+// U23 (labyrinth): the 27 minotaur maze piece types on F7's GloamingStructureComponentOld and GloamingMaze
 // bases (rule R19: procedural pieces translated exactly). Unit-internal: the structure module and
 // its selftests use it.
 
@@ -38,33 +38,33 @@ using ::gf::structure::bases::PieceList;
 
 inline constexpr char kLabyrinth[] = "gloamingforest:labyrinth";
 
-inline constexpr char kRuins[]         = "gloamingforest:TFMMRuins";
-inline constexpr char kMound[]         = "gloamingforest:TFMMMound";
-inline constexpr char kUpperEntrance[] = "gloamingforest:TFMMUE";
-inline constexpr char kEntranceShaft[] = "gloamingforest:TFMMES";
-inline constexpr char kMaze[]          = "gloamingforest:TFMMaze";
-inline constexpr char kRoom[]          = "gloamingforest:TFMMR";
-inline constexpr char kRoomExit[]      = "gloamingforest:TFMMRE";
-inline constexpr char kRoomBoss[]      = "gloamingforest:TFMMRB";
-inline constexpr char kRoomCollapse[]  = "gloamingforest:TFMMRC";
-inline constexpr char kMushRoom[]      = "gloamingforest:TFMMMR";
-inline constexpr char kRoomFountain[]  = "gloamingforest:TFMMRF";
-inline constexpr char kRoomVault[]     = "gloamingforest:TFMMRV";
-inline constexpr char kRoomSpawner[]   = "gloamingforest:TFMMRSC";
-inline constexpr char kDeadEnd[]       = "gloamingforest:TFMMDE";
-inline constexpr char kDeadEndChest[]  = "gloamingforest:TFMMDEC";
-inline constexpr char kDeadEndTrap[]   = "gloamingforest:TFMMDETrC";
-inline constexpr char kDeadEndTrip[]   = "gloamingforest:TFMMDETC";
-inline constexpr char kDeadEndTorch[]  = "gloamingforest:TFMMDET";
-inline constexpr char kDeadEndWater[]  = "gloamingforest:TFMMDEF";
-inline constexpr char kDeadEndLava[]   = "gloamingforest:TFMMDEFL";
-inline constexpr char kDeadEndPaint[]  = "gloamingforest:TFMMDEP";
-inline constexpr char kDeadEndRoots[]  = "gloamingforest:TFMMDER";
-inline constexpr char kDeadEndShroom[] = "gloamingforest:TFMMDES";
-inline constexpr char kCorridor[]      = "gloamingforest:TFMMC";
-inline constexpr char kCorridorIron[]  = "gloamingforest:TFMMCIF";
-inline constexpr char kCorridorRoots[] = "gloamingforest:TFMMCR";
-inline constexpr char kCorridorShroom[] = "gloamingforest:TFMMCS";
+inline constexpr char kRuins[]         = "gloamingforest:GloamingMMRuins";
+inline constexpr char kMound[]         = "gloamingforest:GloamingMMMound";
+inline constexpr char kUpperEntrance[] = "gloamingforest:GloamingMMUE";
+inline constexpr char kEntranceShaft[] = "gloamingforest:GloamingMMES";
+inline constexpr char kMaze[]          = "gloamingforest:GloamingMMaze";
+inline constexpr char kRoom[]          = "gloamingforest:GloamingMMR";
+inline constexpr char kRoomExit[]      = "gloamingforest:GloamingMMRE";
+inline constexpr char kRoomBoss[]      = "gloamingforest:GloamingMMRB";
+inline constexpr char kRoomCollapse[]  = "gloamingforest:GloamingMMRC";
+inline constexpr char kMushRoom[]      = "gloamingforest:GloamingMMMR";
+inline constexpr char kRoomFountain[]  = "gloamingforest:GloamingMMRF";
+inline constexpr char kRoomVault[]     = "gloamingforest:GloamingMMRV";
+inline constexpr char kRoomSpawner[]   = "gloamingforest:GloamingMMRSC";
+inline constexpr char kDeadEnd[]       = "gloamingforest:GloamingMMDE";
+inline constexpr char kDeadEndChest[]  = "gloamingforest:GloamingMMDEC";
+inline constexpr char kDeadEndTrap[]   = "gloamingforest:GloamingMMDETrC";
+inline constexpr char kDeadEndTrip[]   = "gloamingforest:GloamingMMDETC";
+inline constexpr char kDeadEndTorch[]  = "gloamingforest:GloamingMMDET";
+inline constexpr char kDeadEndWater[]  = "gloamingforest:GloamingMMDEF";
+inline constexpr char kDeadEndLava[]   = "gloamingforest:GloamingMMDEFL";
+inline constexpr char kDeadEndPaint[]  = "gloamingforest:GloamingMMDEP";
+inline constexpr char kDeadEndRoots[]  = "gloamingforest:GloamingMMDER";
+inline constexpr char kDeadEndShroom[] = "gloamingforest:GloamingMMDES";
+inline constexpr char kCorridor[]      = "gloamingforest:GloamingMMC";
+inline constexpr char kCorridorIron[]  = "gloamingforest:GloamingMMCIF";
+inline constexpr char kCorridorRoots[] = "gloamingforest:GloamingMMCR";
+inline constexpr char kCorridorShroom[] = "gloamingforest:GloamingMMCS";
 
 inline constexpr char kLootDeadEnd[]  = "gloamingforest:labyrinth_dead_end";
 inline constexpr char kLootRoom[]     = "gloamingforest:labyrinth_room";
@@ -73,10 +73,10 @@ inline constexpr char kLootJackpot[]  = "gloamingforest:labyrinth_vault_jackpot"
 inline constexpr char kBossSpawner[]  = "gloamingforest:minoshroom_boss_spawner";
 inline constexpr char kMinotaur[]     = "gloamingforest:minotaur";
 
-/// TFDimensionData.SEALEVEL / the Gloaming Forest generator's sea level.
+/// GloamingDimensionData.SEALEVEL / the Gloaming Forest generator's sea level.
 inline constexpr int kSeaLevel = 0;
 
-/// MazeRuinsComponent ("TFMMRuins"): the empty root piece; its children are the two maze levels,
+/// MazeRuinsComponent ("GloamingMMRuins"): the empty root piece; its children are the two maze levels,
 /// the entrance shaft and the mound with the ruin on top.
 class Ruins final : public ComponentOld {
 public:
@@ -85,7 +85,7 @@ public:
     void postProcess(Region& region, RandomSource& random, BlockBox const& sbb, BlockPos const& pivot) override;
 };
 
-/// MazeMoundComponent ("TFMMMound"): 35 x 12 x 35; the mound is the structure's terraformer.
+/// MazeMoundComponent ("GloamingMMMound"): 35 x 12 x 35; the mound is the structure's terraformer.
 class Mound final : public ComponentOld {
 public:
     static constexpr int DIAMETER = 35;
@@ -94,21 +94,21 @@ public:
     void postProcess(Region& region, RandomSource& random, BlockBox const& sbb, BlockPos const& pivot) override;
 };
 
-/// MazeUpperEntranceComponent ("TFMMUE"): the ruin on the mound.
+/// MazeUpperEntranceComponent ("GloamingMMUE"): the ruin on the mound.
 class UpperEntrance final : public ComponentOld {
 public:
     UpperEntrance(int i, RandomSource& rand, int x, int y, int z);
     void postProcess(Region& region, RandomSource& random, BlockBox const& sbb, BlockPos const& pivot) override;
 };
 
-/// MazeEntranceShaftComponent ("TFMMES"): the brick shaft from the ruin down to the maze.
+/// MazeEntranceShaftComponent ("GloamingMMES"): the brick shaft from the ruin down to the maze.
 class EntranceShaft final : public ComponentOld {
 public:
     EntranceShaft(int i, RandomSource& rand, int x, int y, int z);
     void postProcess(Region& region, RandomSource& random, BlockBox const& sbb, BlockPos const& pivot) override;
 };
 
-/// MinotaurMazeComponent ("TFMMaze"): one maze level of 22 x 22 cells.
+/// MinotaurMazeComponent ("GloamingMMaze"): one maze level of 22 x 22 cells.
 class MinotaurMaze final : public ComponentOld {
 public:
     MinotaurMaze(int index, int x, int y, int z, int entranceX, int entranceZ, int level, RandomSource& random);
@@ -142,7 +142,7 @@ private:
     int                                          mLevel = 1;
 };
 
-/// MazeRoomComponent ("TFMMR") and its subclasses (the room kind is the type id).
+/// MazeRoomComponent ("GloamingMMR") and its subclasses (the room kind is the type id).
 class Room final : public ComponentOld {
 public:
     Room(std::string typeId, int i, RandomSource& rand, int x, int y, int z);
@@ -163,7 +163,7 @@ private:
     void placePillarEnclosure(Region& region, BlockBox const& sbb, int dx, int dz);
 };
 
-/// MazeDeadEndComponent ("TFMMDE") and MazeCorridorComponent ("TFMMC") with their subclasses: the
+/// MazeDeadEndComponent ("GloamingMMDE") and MazeCorridorComponent ("GloamingMMC") with their subclasses: the
 /// 5 x 5 cell decorations (the kind is the type id).
 class Cell final : public ComponentOld {
 public:

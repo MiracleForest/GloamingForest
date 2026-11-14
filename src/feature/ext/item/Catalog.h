@@ -3,7 +3,7 @@
 // Extension of contract "data" (creative catalog) by F9 (rule R18; to be folded into
 // feature/catalog/Catalog.h by A8).
 //
-// upstream's tabs list some items with data (TFCreativeTabs: the keepsake casket at damage 0..2, the
+// upstream's tabs list some items with data (GloamingCreativeTabs: the keepsake casket at damage 0..2, the
 // skull candles with one plain candle, the glass sword's lore version, ...). The behavior pack's
 // item_catalog lists items by id only, so the owner of the item gives the data of its catalog
 // entries here; the server writes it into its CreativeItemRegistry when a world is ready (the

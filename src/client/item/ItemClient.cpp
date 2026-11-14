@@ -16,7 +16,7 @@
 //   data included), not the renderer's copy (built from #item_id_aux without data). The batch hook
 //   runs at High priority, so the bars go on top of the GUI item renderers drawn after the same
 //   batch (F12's client/render: Java draws the decorations last);
-// - name colours of upstream's rarities (ext/item/Item.h, TFRarityEnumExtension's GLOAMING dark green,
+// - name colours of upstream's rarities (ext/item/Item.h, GloamingRarityEnumExtension's GLOAMING dark green,
 //   with ItemStack#getRarity's bump for enchanted stacks): the hover text's formatting prefix;
 // - the custom effects (upstream's frosted) on the HUD exactly where Java's Gui#renderEffects puts them
 //   (24 px backgrounds from the right edge, 25 px apart, beneficial on the top row, the others

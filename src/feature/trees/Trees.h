@@ -28,7 +28,7 @@ class Player;
 
 namespace gf::feature::trees {
 
-/// Config section "trees" (docs/spec/config.md): TFConfig's Magic Trees ranges (0..128, default 16;
+/// Config section "trees" (docs/spec/config.md): GloamingConfig's Magic Trees ranges (0..128, default 16;
 /// a value <= 0 disables that core).
 struct TreesConfig {
     int version                 = 1;

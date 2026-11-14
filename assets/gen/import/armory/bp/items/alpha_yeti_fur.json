@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_item_alpha_yeti_fur"
+          "default": "gf_item_alpha_yeti_fur"
         }
       },
       "minecraft:display_name": {

@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.knightmetal_shield",
   "layer": {
     "name": "knightmetal_shield",
-    "field": "TFModelLayers.KNIGHTMETAL_SHIELD",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.KNIGHTMETAL_SHIELD, KnightmetalShieldModel::create);"
+    "field": "GloamingModelLayers.KNIGHTMETAL_SHIELD",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.KNIGHTMETAL_SHIELD, KnightmetalShieldModel::create);"
   },
   "texture_size": [64, 32],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/knightmetal_shield",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/knightmetal_shield.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/knightmetal_shield.png"
     }
   ],
   "bones": [

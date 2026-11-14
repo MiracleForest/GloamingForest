@@ -1,17 +1,17 @@
 {
-  "tf_block_aurora_block_0": {
+  "gf_block_aurora_block_0": {
     "textures": "textures/gloamingforest/block/aurora_block_0"
   },
-  "tf_block_aurora_pillar": {
+  "gf_block_aurora_pillar": {
     "textures": "textures/gloamingforest/block/aurora_pillar"
   },
-  "tf_block_aurora_pillar_top": {
+  "gf_block_aurora_pillar_top": {
     "textures": "textures/gloamingforest/block/aurora_pillar_top"
   },
-  "tf_block_aurora_slab_side": {
+  "gf_block_aurora_slab_side": {
     "textures": "textures/gloamingforest/block/aurora_slab_side"
   },
-  "tf_block_auroralized_glass_ct": {
+  "gf_block_auroralized_glass_ct": {
     "textures": "textures/gloamingforest/block/auroralized_glass_ct"
   }
 }

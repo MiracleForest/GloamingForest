@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_item_crown_splinter"
+          "default": "gf_item_crown_splinter"
         }
       },
       "minecraft:display_name": {

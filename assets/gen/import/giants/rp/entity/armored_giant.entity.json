@@ -10,7 +10,7 @@
         "default": "textures/misc/missing_texture"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.armored_giant"
+        "default": "geometry.gf.skeleton.armored_giant"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

@@ -1,6 +1,6 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/block/TFPlantBlock.java
+//   src/main/java/gloamingforest/block/GloamingPlantBlock.java
 //   src/main/java/gloamingforest/block/PatchBlock.java
 //   src/main/java/gloamingforest/block/MossPatchBlock.java
 //   src/main/java/gloamingforest/block/MayappleBlock.java
@@ -16,7 +16,7 @@
 //   src/main/java/gloamingforest/item/HugeLilyPadItem.java
 //   src/main/java/gloamingforest/item/EssenceBerryItem.java
 //   src/main/java/gloamingforest/item/StackableEffectItem.java
-//   src/main/java/gloamingforest/init/TFItems.java (fallen leaves item, torchberries)
+//   src/main/java/gloamingforest/init/GloamingItems.java (fallen leaves item, torchberries)
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -157,10 +157,10 @@ std::optional<bool> survives(BlockSource& region, BlockPos const& pos, Block con
 std::optional<bool> survivesIn(worldgen::Region& region, BlockPos const& pos, Block const& block) {
     auto const& id = block.getTypeName();
     if (bushes::isBush(id)) {
-        // TFBushBlock#canSurvive without the light (the bush features place grown bushes by tag)
+        // GloamingBushBlock#canSurvive without the light (the bush features place grown bushes by tag)
         auto const& below = region.getBlock(relative(pos, Down));
         auto        kind  = bushes::kindOf(id);
-        char const* tag   = kind == bushes::Kind::Overworld ? "gloamingforest:tf_berry_bushes_survive"
+        char const* tag   = kind == bushes::Kind::Overworld ? "gloamingforest:gf_berry_bushes_survive"
                           : kind == bushes::Kind::DarkTower ? "gloamingforest:dark_tower_berry_bushes_survive"
                                                             : "gloamingforest:oreberry_bushes_survive";
         return features::kit::hasTag(below, tag) || (below.getTypeName() == id && intState(below, st::Age, 0) >= 2);
@@ -354,7 +354,7 @@ void installPlants() {
         blockevents::onPlaced(id, [](BlockSource& region, BlockPos const& pos, Block const&, Actor*) { updatePatch(region, pos); });
     }
 
-    // ---- fallen leaves: the item (TFItems FALLEN_LEAVES BlockItem#useOn / #use)
+    // ---- fallen leaves: the item (GloamingItems FALLEN_LEAVES BlockItem#useOn / #use)
     // the item places nothing itself (no block placer): blocks that take the click keep it
     ia::onUnusedUseOn({.item = ids::FallenLeaves}, useFallenLeavesOn);
     ia::onUse({.item = ids::FallenLeaves}, [](ia::UseContext const& c) {

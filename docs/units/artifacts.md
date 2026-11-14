@@ -5,7 +5,7 @@ What U9 does differently from upstream 4.8 on Bedrock, and why (docs/spec/artifa
 ## Death keeping
 
 - The charm of life is a `death::onLethal` handler at `combat::priority::Highest` (upstream's LivingDeathEvent
-  at HIGHEST). Charms are found in armour, main inventory, then off-hand (TFItemStackUtils).
+  at HIGHEST). Charms are found in armour, main inventory, then off-hand (GloamingItemStackUtils).
 - The charms of keeping run as the first `death::registerKeeper`: the first stack the keepers see
   plans the whole inventory with `core::artifacts::applyKeeping` (upstream's tiers, scopes, the charm I
   `NonNullList.of` quirk, the one-casket-left rule), takes the kept stacks out of their slots and stores
@@ -62,7 +62,7 @@ stack nonce so it never stacks (Java's stack size 1). The dose bar is F9's item 
 lore (the potion name and a dose meter) instead of upstream's tooltip image. With the client mod the icon
 follows upstream's item models (doses 1..3, splintered / damaged glass) with the liquid in the potion's colour
 (ColorHandler): 264 prebuilt composites (22 potion colours x 12 dose / breakage looks, upstream-derived, under
-`assets/pack/rp/textures/items/artifacts/tf-derived/`) picked through U11's icon layers; vanilla clients
+`assets/pack/rp/textures/items/artifacts/upstream-derived/`) picked through U11's icon layers; vanilla clients
 see the empty flask.
 
 ## Ore meter

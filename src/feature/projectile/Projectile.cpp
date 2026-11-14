@@ -1,7 +1,7 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/entity/projectile/TFThrowable.java
-//   src/main/java/gloamingforest/entity/projectile/TFArrow.java
+//   src/main/java/gloamingforest/entity/projectile/GloamingThrowable.java
+//   src/main/java/gloamingforest/entity/projectile/GloamingArrow.java
 //   src/main/java/gloamingforest/entity/projectile/ITFProjectile.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
@@ -9,13 +9,13 @@
 //
 // Contract "projectile" (F8): upstream's throwables and arrows are BP entities without engine physics
 // (`minecraft:physics` without gravity / collision); the server simulates them the way
-// ThrowableProjectile#tick (TFThrowable) and AbstractArrow#tick (TFArrow) do:
+// ThrowableProjectile#tick (GloamingThrowable) and AbstractArrow#tick (GloamingArrow) do:
 //   - the hit test runs first, along this tick's motion (ProjectileUtil#getHitResultOnMoveVector:
 //     blocks by their collision shape, entities with a 0.3 margin, the owner only after the
 //     projectile left it), then the move, then drag (0.99; in water 0.8, arrows 0.6) and gravity;
 //   - throwables: Spec::onHitEntity / onHitBlock decide whether the projectile is gone (no
 //     callback: gone); a block hit that keeps the projectile sticks it in the ground;
-//   - arrows (ext::registerArrow, TFArrow over AbstractArrow): an entity hit deals
+//   - arrows (ext::registerArrow, GloamingArrow over AbstractArrow): an entity hit deals
 //     ceil(speed * baseDamage) (+ the crit bonus) of minecraft:arrow by the owner and removes the
 //     arrow, or deflects it when the hit did not land; a landed hit on a living target knocks it
 //     back and runs #doPostHurtEffects (the fired stack's: a tipped arrow's potion; then
@@ -331,7 +331,7 @@ void markRemoved(Actor& projectile) {
 /// The arrow's hit sound pitch: 1.2 / (nextFloat() * 0.2 + 0.9).
 float hitPitch(Actor& p) { return 1.2F / (fe::randomOf(p).nextFloat() * 0.2F + 0.9F); }
 
-/// Arrow#doPostHurtEffects of the fired stack (TFArrow#doPostHurtEffects runs the parent arrow's):
+/// Arrow#doPostHurtEffects of the fired stack (GloamingArrow#doPostHurtEffects runs the parent arrow's):
 /// a tipped arrow (Bedrock: minecraft:arrow whose aux value is its potion id + 1) gives its
 /// potion's effects at 1/8 of their duration, at least 1 tick, with their amplifier, ambience and
 /// visibility. Bedrock has no spectral arrow (SpectralArrow#doPostHurtEffects' glowing) and no
@@ -376,7 +376,7 @@ bool arrowHitEntity(Actor& p, Sim& s, pe::ArrowSpec const& arrow, Actor& target)
     }
     Actor* owner     = fe::actorById(s.owner);
     bool   enderman  = target.getTypeName() == "minecraft:enderman";
-    // a TFPart is no LivingEntity (its hurt goes to the parent through gf::combat), nor are the
+    // a GloamingPart is no LivingEntity (its hurt goes to the parent through gf::combat), nor are the
     // vanilla objects (their own Entity#hurt)
     bool   part      = fe::parentOfPart(target) != 0;
     bool   living    = !part && (target.isPlayer() || target.hasCategory(ActorCategory::Mob));
@@ -385,7 +385,7 @@ bool arrowHitEntity(Actor& p, Sim& s, pe::ArrowSpec const& arrow, Actor& target)
     if (p.isOnFire() && !enderman) target.setOnFire(5, true);
     bool   landed    = living || part ? gf::combat::hurt(target, static_cast<float>(dmg), "minecraft:arrow", owner ? owner : &p, &p)
                                       : hurtObject(target, p, owner, static_cast<float>(dmg));
-    // TFPart#hurt answers with its parent's hurt (the part's own damage is always refused)
+    // GloamingPart#hurt answers with its parent's hurt (the part's own damage is always refused)
     if (part)
         if (auto forwarded = fe::takePartForward(fe::uidOf(target))) landed = *forwarded;
     // a cancelled impact (a parry, a perfect dodge: ProjectileImpactEvent) never hit: the arrow flies
@@ -411,7 +411,7 @@ bool arrowHitEntity(Actor& p, Sim& s, pe::ArrowSpec const& arrow, Actor& target)
                 fe::push(target, Vec3{float(s.vel.x * f), 0.1f, float(s.vel.z * f)});
             }
         }
-        // #doPostHurtEffects: the fired stack's (TFArrow: the parent arrow's), then the type's own
+        // #doPostHurtEffects: the fired stack's (GloamingArrow: the parent arrow's), then the type's own
         if (target.isAlive()) applyFiredStackEffects(s, target);
         if (arrow.postHurt) arrow.postHurt(p, target);
         ++gPostHurts;

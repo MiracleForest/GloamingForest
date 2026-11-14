@@ -322,22 +322,22 @@ TEST(TgMove, UnrestrainedFriction) {
     // velocities follow Java's 0.6 sequence
     double const f = 0.98, speed = 0.1;
     Velocity     acc = inputAcceleration(0, 1, 0, speed);
-    Velocity     tf{0, 0, 0.3}, engine{0, 0, 0.3};
-    double       rescale = 1.0, tfPos = 0, enginePos = 0;
+    Velocity     upsrc{0, 0, 0.3}, engine{0, 0, 0.3};
+    double       rescale = 1.0, gloamingPos = 0, enginePos = 0;
     for (int i = 0; i < 20; ++i) {
         if (i == 10) acc = {}; // the key released: upstream stops within a block
         // upstream
-        double move = tf.z + acc.z * groundAccelFactor(0.6);
-        tfPos += move;
-        tf.z = move * 0.6 * 0.91;
+        double move = upsrc.z + acc.z * groundAccelFactor(0.6);
+        gloamingPos += move;
+        upsrc.z = move * 0.6 * 0.91;
         // the engine behind unrestrainedStep
         auto step = unrestrainedStep(engine, rescale, acc, f, 1.0, true, true);
         rescale   = step.nextRescale;
         double m  = step.velocity.z + acc.z * groundAccelFactor(f);
         enginePos += m;
         engine.z = m * f * 0.91;
-        EXPECT_NEAR(enginePos, tfPos, 1e-9) << "tick " << i;
-        EXPECT_NEAR(engine.z * rescale, tf.z, 1e-9) << "tick " << i;
+        EXPECT_NEAR(enginePos, gloamingPos, 1e-9) << "tick " << i;
+        EXPECT_NEAR(engine.z * rescale, upsrc.z, 1e-9) << "tick " << i;
     }
     // off the ground: only the previous step's drag is restored
     auto air = unrestrainedStep({0.2, 0.1, 0.2}, 0.5, {0.05, 0, 0}, f, 1.0, false, true);
@@ -365,9 +365,9 @@ TEST(TgMove, UnrestrainedSoulSandAndHoneyJump) {
     ASSERT_TRUE(j.has_value());
     EXPECT_NEAR(j->lost, 0.42 * 0.4, 1e-9);
     // the step moves upstream's jump step plus the lost height; the velocity after it, less lost x 0.98, is upstream's
-    double tfVy = (0.42 - kGravity) * 0.98;
-    EXPECT_NEAR(j->vy, tfVy + j->lost, 1e-9);
-    EXPECT_NEAR((j->vy - kGravity) * 0.98 - j->lost * 0.98, (tfVy - kGravity) * 0.98, 1e-9);
+    double gloamingVy = (0.42 - kGravity) * 0.98;
+    EXPECT_NEAR(j->vy, gloamingVy + j->lost, 1e-9);
+    EXPECT_NEAR((j->vy - kGravity) * 0.98 - j->lost * 0.98, (gloamingVy - kGravity) * 0.98, 1e-9);
     EXPECT_FALSE(unrestrainedJump((0.42 - kGravity) * 0.98, 0.42).has_value()); // a full jump
 }
 

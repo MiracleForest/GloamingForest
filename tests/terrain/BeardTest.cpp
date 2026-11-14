@@ -67,12 +67,12 @@ TEST(TerrainBeard, IsCloseToChunk) {
     EXPECT_FALSE(beard::isCloseToChunk({28, 0, 0, 40, 5, 0}, 0, 0));
 }
 
-TEST(TerrainBeard, TfPieceTypes) {
+TEST(TerrainBeard, GloamingPieceTypes) {
     BlockBox box{0, 0, 0, 10, 10, 10};
-    auto     pb = [&](char const* id, json tag = json::object()) { return beard::tfPieceBeard(id, box, tag); };
-    // TFStructureComponentOld: NONE (the labyrinth's maze, the dark tower's wings, hollow hills)
-    for (char const* id : {"gloamingforest:TFMMaze", "gloamingforest:TFMMR", "gloamingforest:TFDTWin", "gloamingforest:TFDTMai", "gloamingforest:TFHill", "gloamingforest:TFITMai",
-                           "gloamingforest:TFFCMain", "gloamingforest:TFSAC", "gloamingforest:TFSUCo"}) {
+    auto     pb = [&](char const* id, json tag = json::object()) { return beard::gloamingPieceBeard(id, box, tag); };
+    // GloamingStructureComponentOld: NONE (the labyrinth's maze, the dark tower's wings, hollow hills)
+    for (char const* id : {"gloamingforest:GloamingMMaze", "gloamingforest:GloamingMMR", "gloamingforest:GloamingDTWin", "gloamingforest:GloamingDTMai", "gloamingforest:GloamingHill", "gloamingforest:GloamingITMai",
+                           "gloamingforest:GloamingFCMain", "gloamingforest:GloamingSAC", "gloamingforest:GloamingSUCo"}) {
         auto p = pb(id);
         ASSERT_TRUE(p) << id;
         EXPECT_TRUE(p->modifier) << id;
@@ -86,28 +86,28 @@ TEST(TerrainBeard, TfPieceTypes) {
         EXPECT_EQ(p->groundLevelDelta, delta) << id;
         EXPECT_EQ(p->box, box) << id;
     };
-    check("gloamingforest:TFHedge", TerrainAdjustment::BeardBox, 0);
-    check("gloamingforest:TFDTEnt", TerrainAdjustment::BeardBox, 1); // a TowerWingComponent: delta 1
-    check("gloamingforest:TFLTMai", TerrainAdjustment::BeardBox, 1);
-    check("gloamingforest:TFNCTe", TerrainAdjustment::BeardBox, 3);
-    check("gloamingforest:TFNCHe", TerrainAdjustment::BeardBox, 3);
-    check("gloamingforest:TFSSH", TerrainAdjustment::Bury, 0);
-    check("gloamingforest:TFSShield", TerrainAdjustment::Bury, 0);
-    check("gloamingforest:TFTCMai", TerrainAdjustment::Bury, 0);
-    check("gloamingforest:TFTCGard", TerrainAdjustment::Bury, 0);
-    check("gloamingforest:TFFCDunR31", TerrainAdjustment::Bury, 0);
-    check("gloamingforest:TFFCDunEx", TerrainAdjustment::Bury, 0);
-    check("gloamingforest:TFLTCTBase", TerrainAdjustment::BeardBox, 1);
-    check("gloamingforest:TFLTFence", TerrainAdjustment::BeardBox, 2);
-    check("gloamingforest:TFLTCTSeg", TerrainAdjustment::None, 0);
-    check("gloamingforest:TFLTTBeard", TerrainAdjustment::BeardBox, 4, {{"gen_ground", 1}});
-    check("gloamingforest:TFLTTBeard", TerrainAdjustment::None, 4, {{"gen_ground", false}});
-    check("gloamingforest:TFLTPath", TerrainAdjustment::BeardBox, 0, {{"dirt_mix", true}});
-    check("gloamingforest:TFLTPath", TerrainAdjustment::None, 0);
-    check("gloamingforest:TFJigsawTemplate", TerrainAdjustment::BeardBox, 1, {{"terrain_adaptation", "BEARD_BOX"}, {"ground_offset", 1}});
-    check("gloamingforest:tfjigsawtemplate", TerrainAdjustment::None, 0);
+    check("gloamingforest:GloamingHedge", TerrainAdjustment::BeardBox, 0);
+    check("gloamingforest:GloamingDTEnt", TerrainAdjustment::BeardBox, 1); // a TowerWingComponent: delta 1
+    check("gloamingforest:GloamingLTMai", TerrainAdjustment::BeardBox, 1);
+    check("gloamingforest:GloamingNCTe", TerrainAdjustment::BeardBox, 3);
+    check("gloamingforest:GloamingNCHe", TerrainAdjustment::BeardBox, 3);
+    check("gloamingforest:GloamingSSH", TerrainAdjustment::Bury, 0);
+    check("gloamingforest:GloamingSShield", TerrainAdjustment::Bury, 0);
+    check("gloamingforest:GloamingTCMai", TerrainAdjustment::Bury, 0);
+    check("gloamingforest:GloamingTCGard", TerrainAdjustment::Bury, 0);
+    check("gloamingforest:GloamingFCDunR31", TerrainAdjustment::Bury, 0);
+    check("gloamingforest:GloamingFCDunEx", TerrainAdjustment::Bury, 0);
+    check("gloamingforest:GloamingLTCTBase", TerrainAdjustment::BeardBox, 1);
+    check("gloamingforest:GloamingLTFence", TerrainAdjustment::BeardBox, 2);
+    check("gloamingforest:GloamingLTCTSeg", TerrainAdjustment::None, 0);
+    check("gloamingforest:GloamingLTTBeard", TerrainAdjustment::BeardBox, 4, {{"gen_ground", 1}});
+    check("gloamingforest:GloamingLTTBeard", TerrainAdjustment::None, 4, {{"gen_ground", false}});
+    check("gloamingforest:GloamingLTPath", TerrainAdjustment::BeardBox, 0, {{"dirt_mix", true}});
+    check("gloamingforest:GloamingLTPath", TerrainAdjustment::None, 0);
+    check("gloamingforest:GloamingJigsawTemplate", TerrainAdjustment::BeardBox, 1, {{"terrain_adaptation", "BEARD_BOX"}, {"ground_offset", 1}});
+    check("gloamingforest:gloamingjigsawtemplate", TerrainAdjustment::None, 0);
     // plain pieces take the structure's adaptation
-    for (char const* id : {"gloamingforest:TFQuest1", "gloamingforest:TFFallenTrunk", "gloamingforest:TFHTTr", "gloamingforest:TFNCMn", "gloamingforest:TFNCWl", "gloamingforest:TFCloud"}) {
+    for (char const* id : {"gloamingforest:GloamingQuest1", "gloamingforest:GloamingFallenTrunk", "gloamingforest:GloamingHTTr", "gloamingforest:GloamingNCMn", "gloamingforest:GloamingNCWl", "gloamingforest:GloamingCloud"}) {
         auto p = pb(id);
         ASSERT_TRUE(p) << id;
         EXPECT_FALSE(p->modifier) << id;

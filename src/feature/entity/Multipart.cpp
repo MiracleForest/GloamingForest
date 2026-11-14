@@ -1,12 +1,12 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/entity/TFPart.java
+//   src/main/java/gloamingforest/entity/GloamingPart.java
 //   src/main/java/gloamingforest/network/UpdateTFMultipartPacket.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// TFPart multipart as linked actors (spike S4). Java's PartEntity is no real entity: the client
+// GloamingPart multipart as linked actors (spike S4). Java's PartEntity is no real entity: the client
 // resolves its hitbox and renderer through three ASM patches (ResolveEntitiesForRendering,
 // ResolveEntityRenderer, SendDirtyEntityData). On Bedrock every part is a real actor:
 //   - its type is `<parent id>_part` when the parent's unit declares one (with an integer
@@ -14,10 +14,10 @@
 //     F8's invisible hitbox `gloamingforest:part`; so picking, rendering and data sync are the
 //     engine's own (the three ASM patches have nothing left to do);
 //   - the parent moves it to `offset(parent)` every tick (the engine interpolates on clients);
-//   - its size is the actor's collision box (TFPart#setSize -> Actor::synchronousSetSize);
-//   - a player's hit on it becomes the player's hit on the parent (TFPart#hurt ->
+//   - its size is the actor's collision box (GloamingPart#setSize -> Actor::synchronousSetSize);
+//   - a player's hit on it becomes the player's hit on the parent (GloamingPart#hurt ->
 //     attackEntityFromPart), other damage is forwarded through gf::combat; right-clicks go to the
-//     parent's interact (TFPart#interact);
+//     parent's interact (GloamingPart#interact);
 //   - it is never saved (Java's parts are not either): the parent's onSpawn adds them again.
 // Companion clients get the part list on "entity.multipart" (UpdateTFMultipartPacket).
 
@@ -203,18 +203,18 @@ void followParts(Mob& parent, ActorState& s) {
     for (auto& rec : s.parts) {
         auto* a = actorById(rec.actorId);
         if (!a || !a->isAlive()) {
-            // a part removed by something else (a command): TFPart lives as long as its parent
+            // a part removed by something else (a command): GloamingPart lives as long as its parent
             a         = spawnPart(parent, rec);
             respawned = a != nullptr;
             if (!a) continue;
         }
         auto p   = parent.getFeetPos();
         Vec3 off = rec.offset ? rec.offset(parent) : Vec3{0, 0, 0};
-        // Actor rotation is (pitch, yaw): TFPart's xRot / yRot as the parent set them
+        // Actor rotation is (pitch, yaw): GloamingPart's xRot / yRot as the parent set them
         Vec2 rot = rec.rotation ? Vec2{rec.rotation->second, rec.rotation->first} : a->getRotation();
         a->moveTo(Vec3{p.x + off.x, p.y + off.y, p.z + off.z}, rot);
-        // TFPart#isInvisible: the parent's (an invisible Naga's segments do not render). Glowing
-        // (TFPart#isCurrentlyGlowing) has no Bedrock counterpart: nothing glows on Bedrock.
+        // GloamingPart#isInvisible: the parent's (an invisible Naga's segments do not render). Glowing
+        // (GloamingPart#isCurrentlyGlowing) has no Bedrock counterpart: nothing glows on Bedrock.
         if (bool hidden = parent.isInvisible(); a->isInvisible() != hidden) a->setInvisible(hidden);
     }
     if (respawned) syncParts(parent, s);
@@ -222,7 +222,7 @@ void followParts(Mob& parent, ActorState& s) {
 
 void installMultipart() {
     auto& m = M();
-    // TFPart#hurt from a player: the player's hit lands on the parent (attackEntityFromPart)
+    // GloamingPart#hurt from a player: the player's hit lands on the parent (attackEntityFromPart)
     m.handlers.push_back(ia::onAttack(
         {},
         [](ia::EntityContext const& c) {
@@ -264,7 +264,7 @@ void installMultipart() {
                 PartHitScope scope(ps ? ps->partId : std::string());
                 landed = gf::combat::hurt(*parent, d.amount, d.type, d.attacker, d.direct);
             }
-            // TFPart#hurt returns the parent's answer (the projectile kit reads it: a hit the parent
+            // GloamingPart#hurt returns the parent's answer (the projectile kit reads it: a hit the parent
             // took removes the arrow, a refused one deflects it)
             tPartForward = {uidOf(d.victim), landed};
             return gf::combat::Verdict::Cancel;
@@ -275,7 +275,7 @@ void installMultipart() {
         .tick =
             [](Actor& actor, ActorState& s) {
                 if (!s.parentId) return;
-                // TFPart lives as long as its parent entity: a dying boss keeps its parts through
+                // GloamingPart lives as long as its parent entity: a dying boss keeps its parts through
                 // its death animation (the Hydra's heads die one by one)
                 auto*             parent = actorById(s.parentId);
                 bool              keep   = parent != nullptr;
@@ -289,7 +289,7 @@ void installMultipart() {
                     return;
                 }
                 // the part's own engine tick (body control) ran just before: the parent's rotation
-                // goes back on (TFPart's yRot / xRot are the parent's to set); the engine's look
+                // goes back on (GloamingPart's yRot / xRot are the parent's to set); the engine's look
                 // control turns a mob's pitch towards its look target, so it is aimed along the
                 // part's own direction
                 if (rec->rotation) {

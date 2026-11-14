@@ -122,7 +122,7 @@ enum class RainScan { Raining, Opaque, Other };
 /// BlockHooks#isRainingAt's scan above `y` (y .. y + distance - 1): true when a raining cloud is
 /// met before an opaque block.
 [[nodiscard]] bool rainingAbove(int y, int distance, std::function<RainScan(int y)> const& at);
-/// The client distance: -1 = the common value, 0 = off (TFConfig#getClientCloudBlockPrecipitationDistance).
+/// The client distance: -1 = the common value, 0 = off (GloamingConfig#getClientCloudBlockPrecipitationDistance).
 [[nodiscard]] inline int clientPrecipitationDistance(int client, int common) { return client < 0 ? common : client; }
 
 // ---- giant pickaxe ---------------------------------------------------------------------------------

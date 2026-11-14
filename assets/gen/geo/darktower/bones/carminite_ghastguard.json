@@ -3,22 +3,22 @@
   "geometry": "geometry.gloamingforest.carminite_ghastguard",
   "layer": {
     "name": "carminite_ghastguard",
-    "field": "TFModelLayers.CARMINITE_GHASTGUARD",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.CARMINITE_GHASTGUARD, TFGhastModel::create);"
+    "field": "GloamingModelLayers.CARMINITE_GHASTGUARD",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.CARMINITE_GHASTGUARD, GloamingGhastModel::create);"
   },
   "texture_size": [64, 32],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/towerghast",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/towerghast.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/towerghast.png"
     },
     {
       "bedrock": "textures/gloamingforest/entity/towerghast_openeyes",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/towerghast_openeyes.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/towerghast_openeyes.png"
     },
     {
       "bedrock": "textures/gloamingforest/entity/towerghast_fire",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/towerghast_fire.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/towerghast_fire.png"
     }
   ],
   "bones": [
@@ -123,7 +123,7 @@
     }
   ],
   "setupAnim": {
-    "class": "TFGhastModel",
+    "class": "GloamingGhastModel",
     "identifier": "animation.gloamingforest.carminite_ghastguard.base",
     "notes": ["vanilla base HierarchicalModel: nothing (HierarchicalModel has no default animation)"],
     "translated": ["this.body.xRot = headPitch * Mth.DEG_TO_RAD;", "this.body.yRot = netHeadYaw * Mth.DEG_TO_RAD;"],

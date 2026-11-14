@@ -41,7 +41,7 @@
       "minecraft:geometry": "geometry.gloamingforest.flora.cicada",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_flora_cicada_model",
+          "texture": "gf_flora_cicada_model",
           "render_method": "alpha_test"
         }
       }

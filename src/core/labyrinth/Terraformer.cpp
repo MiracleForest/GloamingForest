@@ -114,31 +114,31 @@ bool isNearRoom(int dx, int dz, int const* rcoords, int count, int range) {
 }
 
 char const* roomType(int i, int level) {
-    if (i == 0) return "gloamingforest:TFMMR";
-    if (i == 1) return level == 1 ? "gloamingforest:TFMMRE" : "gloamingforest:TFMMRB";
-    if (i == 2 || i == 3) return level == 1 ? "gloamingforest:TFMMRC" : "gloamingforest:TFMMMR";
-    if (i == 4) return level == 1 ? "gloamingforest:TFMMRF" : "gloamingforest:TFMMRV";
-    return "gloamingforest:TFMMRSC";
+    if (i == 0) return "gloamingforest:GloamingMMR";
+    if (i == 1) return level == 1 ? "gloamingforest:GloamingMMRE" : "gloamingforest:GloamingMMRB";
+    if (i == 2 || i == 3) return level == 1 ? "gloamingforest:GloamingMMRC" : "gloamingforest:GloamingMMMR";
+    if (i == 4) return level == 1 ? "gloamingforest:GloamingMMRF" : "gloamingforest:GloamingMMRV";
+    return "gloamingforest:GloamingMMRSC";
 }
 
 char const* deadEndType(int t, bool tripwire, int level) {
     switch (t) {
-    case 1: return "gloamingforest:TFMMDEC";
-    case 2: return tripwire ? "gloamingforest:TFMMDETC" : "gloamingforest:TFMMDETrC";
-    case 3: return "gloamingforest:TFMMDET";
-    case 4: return "gloamingforest:TFMMDEF";
-    case 5: return "gloamingforest:TFMMDEFL";
-    case 6: return "gloamingforest:TFMMDEP";
-    case 7: return level == 1 ? "gloamingforest:TFMMDER" : "gloamingforest:TFMMDES";
-    default: return "gloamingforest:TFMMDE"; // blank with fence doorway
+    case 1: return "gloamingforest:GloamingMMDEC";
+    case 2: return tripwire ? "gloamingforest:GloamingMMDETC" : "gloamingforest:GloamingMMDETrC";
+    case 3: return "gloamingforest:GloamingMMDET";
+    case 4: return "gloamingforest:GloamingMMDEF";
+    case 5: return "gloamingforest:GloamingMMDEFL";
+    case 6: return "gloamingforest:GloamingMMDEP";
+    case 7: return level == 1 ? "gloamingforest:GloamingMMDER" : "gloamingforest:GloamingMMDES";
+    default: return "gloamingforest:GloamingMMDE"; // blank with fence doorway
     }
 }
 
 char const* corridorType(int t, int level) {
     switch (t) {
-    case 1: return "gloamingforest:TFMMC";
-    case 2: return "gloamingforest:TFMMCIF";
-    case 4: return level == 1 ? "gloamingforest:TFMMCR" : "gloamingforest:TFMMCS";
+    case 1: return "gloamingforest:GloamingMMC";
+    case 2: return "gloamingforest:GloamingMMCIF";
+    case 4: return level == 1 ? "gloamingforest:GloamingMMCR" : "gloamingforest:GloamingMMCS";
     default: return nullptr; // 3: painting (none), 0: nothing
     }
 }

@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_item_travellers_belt"
+          "default": "gf_item_travellers_belt"
         }
       },
       "minecraft:display_name": {

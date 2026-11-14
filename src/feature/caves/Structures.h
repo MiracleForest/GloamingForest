@@ -14,9 +14,9 @@
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
 
-// U27's structure pieces: the troll caves ("gloamingforest:TFTC*"), the cloud castle pieces the
-// giant house (U29) starts by string ("gloamingforest:TFClCa", "TFCloud", "TFClTr", the legacy
-// "TFTCloud") and the yeti cave ("gloamingforest:TFYeti", on F7's HollowHillComponent base).
+// U27's structure pieces: the troll caves ("gloamingforest:GloamingTC*"), the cloud castle pieces the
+// giant house (U29) starts by string ("gloamingforest:GloamingClCa", "GloamingCloud", "GloamingClTr", the legacy
+// "GloamingTCloud") and the yeti cave ("gloamingforest:GloamingYeti", on F7's HollowHillComponent base).
 
 #include <array>
 #include <cstdint>
@@ -42,7 +42,7 @@ using structure::Region;
 using structure::Rotation;
 using structure::bases::PieceList;
 
-/// TrollCaveMainComponent ("gloamingforest:TFTCMai").
+/// TrollCaveMainComponent ("gloamingforest:GloamingTCMai").
 class TrollCaveMain : public structure::bases::ComponentOld {
 public:
     /// TrollCaveMainComponent(type, i, x, y, z, config): size 30, height 20, box from (-15, -20, -15), SOUTH.
@@ -74,7 +74,7 @@ protected:
     [[nodiscard]] std::int64_t decoSeed(Region& region) const;
 };
 
-/// TrollCaveConnectComponent ("gloamingforest:TFTCCon").
+/// TrollCaveConnectComponent ("gloamingforest:GloamingTCCon").
 class TrollCaveConnect : public TrollCaveMain {
 public:
     TrollCaveConnect(int index, int x, int y, int z, int caveSize, int caveHeight, Orientation direction, std::string configId = kTrollSpeleothem);
@@ -100,7 +100,7 @@ private:
     bool makeGardenCave(PieceList& list, RandomSource& rand, int index, int x, int y, int z, int caveSize, int caveHeight, Rotation rotation);
 };
 
-/// TrollCaveGardenComponent ("gloamingforest:TFTCGard").
+/// TrollCaveGardenComponent ("gloamingforest:GloamingTCGard").
 class TrollCaveGarden : public TrollCaveMain {
 public:
     TrollCaveGarden(int index, int x, int y, int z, int caveSize, int caveHeight, Orientation direction, std::string configId = kTrollSpeleothem);
@@ -113,14 +113,14 @@ protected:
     void generate(Region& region, std::string const& feature, RandomSource& rand, int x, int y, int z, BlockBox const& sbb);
 };
 
-/// TrollVaultComponent ("gloamingforest:TFTCVa").
+/// TrollVaultComponent ("gloamingforest:GloamingTCVa").
 class TrollVault : public structure::bases::ComponentOld {
 public:
     TrollVault(int index, int x, int y, int z);
     void postProcess(Region& region, RandomSource& rand, BlockBox const& sbb, BlockPos const& pivot) override;
 };
 
-/// CloudCastleComponent ("gloamingforest:TFClCa").
+/// CloudCastleComponent ("gloamingforest:GloamingClCa").
 class CloudCastle : public structure::bases::ComponentOld {
 public:
     CloudCastle(int index, int x, int y, int z);
@@ -131,7 +131,7 @@ private:
     void placeGiant(Region& region, BlockBox const& sbb, int x, int z, char const* entityId);
 };
 
-/// CloudComponent ("gloamingforest:TFCloud"): a vanilla StructurePiece.
+/// CloudComponent ("gloamingforest:GloamingCloud"): a vanilla StructurePiece.
 class Cloud : public structure::Piece {
 public:
     Cloud(int genDepth, int centerX, int yHeight, int centerZ);
@@ -140,14 +140,14 @@ public:
     void postProcess(Region& region, RandomSource& rand, BlockBox const& chunkBox, BlockPos const& pivot) override;
 };
 
-/// CloudTreeComponent ("gloamingforest:TFClTr").
+/// CloudTreeComponent ("gloamingforest:GloamingClTr").
 class CloudTree : public structure::bases::ComponentOld {
 public:
     CloudTree(int index, int x, int y, int z);
     void postProcess(Region& region, RandomSource& rand, BlockBox const& sbb, BlockPos const& pivot) override;
 };
 
-/// TrollCloudComponent ("gloamingforest:TFTCloud"): legacy, only ever loaded.
+/// TrollCloudComponent ("gloamingforest:GloamingTCloud"): legacy, only ever loaded.
 class TrollCloud : public structure::bases::ComponentOld {
 public:
     TrollCloud();
@@ -159,7 +159,7 @@ public:
     int height = 0;
 };
 
-/// YetiCaveComponent ("gloamingforest:TFYeti").
+/// YetiCaveComponent ("gloamingforest:GloamingYeti").
 class YetiCave : public structure::bases::HollowHill {
 public:
     YetiCave(int index, int x, int y, int z, std::string configId = kYetiSpeleothem);

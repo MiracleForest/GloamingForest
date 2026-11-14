@@ -1,10 +1,10 @@
 {
-  "commands.tffeature.structure.boundaries": "Confini della struttura: %s",
-  "commands.tffeature.structure.conquer.status": "Bandiera di conquista della struttura: %s",
-  "commands.tffeature.structure.conquer.update": "La bandiera di conquista della struttura era %s, cambiata a %s",
-  "commands.tffeature.structure.inside": "Sei in una struttura di riferimento",
-  "commands.tffeature.structure.outside": "Non sei in una struttura di riferimento",
-  "commands.tffeature.structure.required": "Non sei in una struttura",
-  "commands.tffeature.structure.spawn_info": "%s, Peso %s",
-  "commands.tffeature.structure.spawn_list": "La lista di generazione per questa area è:"
+  "commands.gloamingfeature.structure.boundaries": "Confini della struttura: %s",
+  "commands.gloamingfeature.structure.conquer.status": "Bandiera di conquista della struttura: %s",
+  "commands.gloamingfeature.structure.conquer.update": "La bandiera di conquista della struttura era %s, cambiata a %s",
+  "commands.gloamingfeature.structure.inside": "Sei in una struttura di riferimento",
+  "commands.gloamingfeature.structure.outside": "Non sei in una struttura di riferimento",
+  "commands.gloamingfeature.structure.required": "Non sei in una struttura",
+  "commands.gloamingfeature.structure.spawn_info": "%s, Peso %s",
+  "commands.gloamingfeature.structure.spawn_list": "La lista di generazione per questa area è:"
 }

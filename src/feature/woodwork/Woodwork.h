@@ -36,9 +36,9 @@ using core::GlobalPos;
 
 inline constexpr char kNs[] = "gloamingforest:";
 
-/// upstream's eight woods (TFWoodTypes), in TFBlocks order.
-inline constexpr std::array<std::string_view, 8> kTfWoods{"gloaming_oak", "canopy", "mangrove", "dark", "time", "transformation", "mining", "sorting"};
-/// The vanilla woods of the banisters and drying racks (TFBlocks: "vangrove" is vanilla mangrove).
+/// upstream's eight woods (GloamingWoodTypes), in GloamingBlocks order.
+inline constexpr std::array<std::string_view, 8> kGloamingWoods{"gloaming_oak", "canopy", "mangrove", "dark", "time", "transformation", "mining", "sorting"};
+/// The vanilla woods of the banisters and drying racks (GloamingBlocks: "vangrove" is vanilla mangrove).
 inline constexpr std::array<std::string_view, 11> kVanillaFurnitureWoods{"oak", "spruce", "birch", "jungle", "acacia", "dark_oak", "crimson", "warped", "vangrove", "bamboo", "cherry"};
 /// The vanilla woods of the hollow logs (no bamboo); crimson / warped are stems.
 inline constexpr std::array<std::string_view, 10> kVanillaHollowWoods{"oak", "spruce", "birch", "jungle", "acacia", "dark_oak", "crimson", "warped", "vangrove", "cherry"};
@@ -133,6 +133,6 @@ void uninstallFuel();
 void uninstallBookshelves();
 
 /// The upstream bookshelves (#minecraft:enchantment_power_provider) an enchanting table at `table` counts.
-[[nodiscard]] std::vector<BlockPos> tfBookshelvesAround(BlockSource& region, BlockPos const& table);
+[[nodiscard]] std::vector<BlockPos> gloamingBookshelvesAround(BlockSource& region, BlockPos const& table);
 
 } // namespace gf::feature::woodwork

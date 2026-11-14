@@ -1055,142 +1055,142 @@
       {
         "op": "replace",
         "path": "/minecraft:block/components/minecraft:material_instances/*/texture",
-        "value": "tf_aurora_baked_aurora_pillar"
+        "value": "gf_aurora_baked_aurora_pillar"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/components/minecraft:material_instances/up/texture",
-        "value": "tf_aurora_baked_aurora_pillar_top"
+        "value": "gf_aurora_baked_aurora_pillar_top"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/components/minecraft:material_instances/down/texture",
-        "value": "tf_aurora_baked_aurora_pillar_top"
+        "value": "gf_aurora_baked_aurora_pillar_top"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/components/minecraft:material_instances/north/texture",
-        "value": "tf_aurora_baked_aurora_pillar"
+        "value": "gf_aurora_baked_aurora_pillar"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/components/minecraft:material_instances/south/texture",
-        "value": "tf_aurora_baked_aurora_pillar"
+        "value": "gf_aurora_baked_aurora_pillar"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/components/minecraft:material_instances/east/texture",
-        "value": "tf_aurora_baked_aurora_pillar"
+        "value": "gf_aurora_baked_aurora_pillar"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/components/minecraft:material_instances/west/texture",
-        "value": "tf_aurora_baked_aurora_pillar"
+        "value": "gf_aurora_baked_aurora_pillar"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/permutations/0/components/minecraft:material_instances/*/texture",
-        "value": "tf_aurora_baked_aurora_pillar"
+        "value": "gf_aurora_baked_aurora_pillar"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/permutations/0/components/minecraft:material_instances/up/texture",
-        "value": "tf_aurora_baked_aurora_pillar_top"
+        "value": "gf_aurora_baked_aurora_pillar_top"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/permutations/0/components/minecraft:material_instances/down/texture",
-        "value": "tf_aurora_baked_aurora_pillar_top"
+        "value": "gf_aurora_baked_aurora_pillar_top"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/permutations/0/components/minecraft:material_instances/north/texture",
-        "value": "tf_aurora_baked_aurora_pillar"
+        "value": "gf_aurora_baked_aurora_pillar"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/permutations/0/components/minecraft:material_instances/south/texture",
-        "value": "tf_aurora_baked_aurora_pillar"
+        "value": "gf_aurora_baked_aurora_pillar"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/permutations/0/components/minecraft:material_instances/east/texture",
-        "value": "tf_aurora_baked_aurora_pillar"
+        "value": "gf_aurora_baked_aurora_pillar"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/permutations/0/components/minecraft:material_instances/west/texture",
-        "value": "tf_aurora_baked_aurora_pillar"
+        "value": "gf_aurora_baked_aurora_pillar"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/permutations/1/components/minecraft:material_instances/*/texture",
-        "value": "tf_aurora_baked_aurora_pillar"
+        "value": "gf_aurora_baked_aurora_pillar"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/permutations/1/components/minecraft:material_instances/up/texture",
-        "value": "tf_aurora_baked_aurora_pillar_top"
+        "value": "gf_aurora_baked_aurora_pillar_top"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/permutations/1/components/minecraft:material_instances/down/texture",
-        "value": "tf_aurora_baked_aurora_pillar_top"
+        "value": "gf_aurora_baked_aurora_pillar_top"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/permutations/1/components/minecraft:material_instances/north/texture",
-        "value": "tf_aurora_baked_aurora_pillar"
+        "value": "gf_aurora_baked_aurora_pillar"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/permutations/1/components/minecraft:material_instances/south/texture",
-        "value": "tf_aurora_baked_aurora_pillar"
+        "value": "gf_aurora_baked_aurora_pillar"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/permutations/1/components/minecraft:material_instances/east/texture",
-        "value": "tf_aurora_baked_aurora_pillar"
+        "value": "gf_aurora_baked_aurora_pillar"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/permutations/1/components/minecraft:material_instances/west/texture",
-        "value": "tf_aurora_baked_aurora_pillar"
+        "value": "gf_aurora_baked_aurora_pillar"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/permutations/2/components/minecraft:material_instances/*/texture",
-        "value": "tf_aurora_baked_aurora_pillar"
+        "value": "gf_aurora_baked_aurora_pillar"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/permutations/2/components/minecraft:material_instances/up/texture",
-        "value": "tf_aurora_baked_aurora_pillar_top"
+        "value": "gf_aurora_baked_aurora_pillar_top"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/permutations/2/components/minecraft:material_instances/down/texture",
-        "value": "tf_aurora_baked_aurora_pillar_top"
+        "value": "gf_aurora_baked_aurora_pillar_top"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/permutations/2/components/minecraft:material_instances/north/texture",
-        "value": "tf_aurora_baked_aurora_pillar"
+        "value": "gf_aurora_baked_aurora_pillar"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/permutations/2/components/minecraft:material_instances/south/texture",
-        "value": "tf_aurora_baked_aurora_pillar"
+        "value": "gf_aurora_baked_aurora_pillar"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/permutations/2/components/minecraft:material_instances/east/texture",
-        "value": "tf_aurora_baked_aurora_pillar"
+        "value": "gf_aurora_baked_aurora_pillar"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/permutations/2/components/minecraft:material_instances/west/texture",
-        "value": "tf_aurora_baked_aurora_pillar"
+        "value": "gf_aurora_baked_aurora_pillar"
       },
       {
         "op": "add",
@@ -1199,15 +1199,15 @@
           "geometry": "minecraft:geometry.full_block",
           "material_instances": {
             "*": {
-              "texture": "tf_aurora_item_aurora_pillar",
+              "texture": "gf_aurora_item_aurora_pillar",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_aurora_item_aurora_pillar_top",
+              "texture": "gf_aurora_item_aurora_pillar_top",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_aurora_item_aurora_pillar_top",
+              "texture": "gf_aurora_item_aurora_pillar_top",
               "render_method": "opaque"
             }
           }
@@ -1218,118 +1218,118 @@
       {
         "op": "replace",
         "path": "/minecraft:block/components/minecraft:material_instances/*/texture",
-        "value": "tf_aurora_baked_aurora_slab_side"
+        "value": "gf_aurora_baked_aurora_slab_side"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/components/minecraft:material_instances/bottom/texture",
-        "value": "tf_aurora_baked_aurora_pillar_top"
+        "value": "gf_aurora_baked_aurora_pillar_top"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/components/minecraft:material_instances/side/texture",
-        "value": "tf_aurora_baked_aurora_slab_side"
+        "value": "gf_aurora_baked_aurora_slab_side"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/components/minecraft:material_instances/top/texture",
-        "value": "tf_aurora_baked_aurora_pillar_top"
+        "value": "gf_aurora_baked_aurora_pillar_top"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/permutations/0/components/minecraft:material_instances/*/texture",
-        "value": "tf_aurora_baked_aurora_slab_side"
+        "value": "gf_aurora_baked_aurora_slab_side"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/permutations/0/components/minecraft:material_instances/bottom/texture",
-        "value": "tf_aurora_baked_aurora_pillar_top"
+        "value": "gf_aurora_baked_aurora_pillar_top"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/permutations/0/components/minecraft:material_instances/side/texture",
-        "value": "tf_aurora_baked_aurora_slab_side"
+        "value": "gf_aurora_baked_aurora_slab_side"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/permutations/0/components/minecraft:material_instances/top/texture",
-        "value": "tf_aurora_baked_aurora_pillar_top"
+        "value": "gf_aurora_baked_aurora_pillar_top"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/permutations/1/components/minecraft:material_instances/*/texture",
-        "value": "tf_aurora_baked_aurora_slab_side"
+        "value": "gf_aurora_baked_aurora_slab_side"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/permutations/1/components/minecraft:material_instances/up/texture",
-        "value": "tf_aurora_baked_aurora_pillar_top"
+        "value": "gf_aurora_baked_aurora_pillar_top"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/permutations/1/components/minecraft:material_instances/down/texture",
-        "value": "tf_aurora_baked_aurora_pillar_top"
+        "value": "gf_aurora_baked_aurora_pillar_top"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/permutations/1/components/minecraft:material_instances/north/texture",
-        "value": "tf_aurora_baked_aurora_slab_side"
+        "value": "gf_aurora_baked_aurora_slab_side"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/permutations/1/components/minecraft:material_instances/south/texture",
-        "value": "tf_aurora_baked_aurora_slab_side"
+        "value": "gf_aurora_baked_aurora_slab_side"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/permutations/1/components/minecraft:material_instances/east/texture",
-        "value": "tf_aurora_baked_aurora_slab_side"
+        "value": "gf_aurora_baked_aurora_slab_side"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/permutations/1/components/minecraft:material_instances/west/texture",
-        "value": "tf_aurora_baked_aurora_slab_side"
+        "value": "gf_aurora_baked_aurora_slab_side"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/permutations/2/components/minecraft:material_instances/*/texture",
-        "value": "tf_aurora_baked_aurora_slab_side"
+        "value": "gf_aurora_baked_aurora_slab_side"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/permutations/2/components/minecraft:material_instances/bottom/texture",
-        "value": "tf_aurora_baked_aurora_pillar_top"
+        "value": "gf_aurora_baked_aurora_pillar_top"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/permutations/2/components/minecraft:material_instances/side/texture",
-        "value": "tf_aurora_baked_aurora_slab_side"
+        "value": "gf_aurora_baked_aurora_slab_side"
       },
       {
         "op": "replace",
         "path": "/minecraft:block/permutations/2/components/minecraft:material_instances/top/texture",
-        "value": "tf_aurora_baked_aurora_pillar_top"
+        "value": "gf_aurora_baked_aurora_pillar_top"
       },
       {
         "op": "add",
         "path": "/minecraft:block/components/minecraft:item_visual",
         "value": {
-          "geometry": "geometry.tf.gloamingforest.block.aurora_slab",
+          "geometry": "geometry.gf.gloamingforest.block.aurora_slab",
           "material_instances": {
             "*": {
-              "texture": "tf_aurora_item_aurora_slab_side",
+              "texture": "gf_aurora_item_aurora_slab_side",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_aurora_item_aurora_slab_side",
+              "texture": "gf_aurora_item_aurora_slab_side",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_aurora_item_aurora_pillar_top",
+              "texture": "gf_aurora_item_aurora_pillar_top",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_aurora_item_aurora_pillar_top",
+              "texture": "gf_aurora_item_aurora_pillar_top",
               "render_method": "opaque"
             }
           }
@@ -1346,9 +1346,9 @@
         "op": "add",
         "path": "/2/params/textures",
         "value": {
-          "*": "tf_aurora_ct_base",
-          "overlay": "tf_block_auroralized_glass",
-          "connected": "tf_block_auroralized_glass_ct"
+          "*": "gf_aurora_ct_base",
+          "overlay": "gf_block_auroralized_glass",
+          "connected": "gf_block_auroralized_glass_ct"
         }
       },
       {
@@ -1357,16 +1357,16 @@
         "value": {
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_aurora_ct_base",
+              "texture": "gf_aurora_ct_base",
               "render_method": "blend"
             },
             "overlay": {
-              "texture": "tf_block_auroralized_glass",
+              "texture": "gf_block_auroralized_glass",
               "render_method": "blend",
               "tint_method": "water"
             },
             "connected": {
-              "texture": "tf_block_auroralized_glass_ct",
+              "texture": "gf_block_auroralized_glass_ct",
               "render_method": "blend",
               "tint_method": "water"
             }
@@ -1376,7 +1376,7 @@
             "geometry": "minecraft:geometry.full_block",
             "material_instances": {
               "*": {
-                "texture": "tf_aurora_item_auroralized_glass",
+                "texture": "gf_aurora_item_auroralized_glass",
                 "render_method": "blend"
               }
             }

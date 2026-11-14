@@ -1,6 +1,6 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/init/TFDimension.java
+//   src/main/java/gloamingforest/init/GloamingDimension.java
 //   src/main/java/gloamingforest/events/EntityEvents.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
@@ -15,7 +15,7 @@
 //   - fixed_time 13000: Dimension::getTimeOfDay of the dimension always reads time 13000 (server and
 //     client mod); vanilla clients get a per-player clock (Clock.cpp);
 //   - has_raids false: villages in the dimension never start a raid;
-//   - EntityEvents#stopEndermenFromGrabbingBlocksInTF: the take_block goal never starts there.
+//   - EntityEvents#stopEndermenFromGrabbingBlocksInGloaming: the take_block goal never starts there.
 //   - ambient_light 0.01: the dimension's brightness ramp is DimensionType#brightness with upstream's
 //     ambient light (the engine's light levels here, the client mod's light texture there).
 // The other values need no code: coordinate_scale 0.125 (World.cpp, the teleporter), bed_works
@@ -254,13 +254,13 @@ LL_TYPE_INSTANCE_HOOK(
 
 // ---- endermen ----------------------------------------------------------------------------------------------------
 
-/// EntityEvents#stopEndermenFromGrabbingBlocksInTF (ExtendedEndermanTakeBlockGoal#canUse).
+/// EntityEvents#stopEndermenFromGrabbingBlocksInGloaming (ExtendedEndermanTakeBlockGoal#canUse).
 LL_TYPE_INSTANCE_HOOK(GloamingTakeBlockGoalHook, ll::memory::HookPriority::Normal, TakeBlockGoal, &TakeBlockGoal::$canUse, bool) {
     if (!origin()) return false;
     Mob& mob = mMob;
     if (mob.getTypeName() != "minecraft:enderman") return true;
-    int tf = gGloamingId.load(std::memory_order_relaxed);
-    return tf < 0 || static_cast<int>(mob.getDimensionId()) != tf;
+    int upsrc = gGloamingId.load(std::memory_order_relaxed);
+    return upsrc < 0 || static_cast<int>(mob.getDimensionId()) != upsrc;
 }
 
 // ---- raids --------------------------------------------------------------------------------------------------------

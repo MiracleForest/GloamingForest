@@ -26,7 +26,7 @@ Open:
 
 - Bow pull icons (`pulling_0..2` item predicates): Bedrock item icons are static for data-driven items;
   needs the client mod's item renderer (F12 `registerItemRenderer`).
-- The creative-only infinite glass sword entry (`TFCreativeTabs#createGlassSwordAndLoreVer`: lore,
+- The creative-only infinite glass sword entry (`GloamingCreativeTabs#createGlassSwordAndLoreVer`: lore,
   Unbreakable, `infinite_glass_sword`): Bedrock's creative list holds item ids, not stacks with data;
   needs a creative item hook with a user-data stack (F9's catalog). The tooltip and the no-break rule for a
   stack carrying `infinite_glass_sword` already work.
@@ -34,7 +34,7 @@ Open:
 ## Audit round 2
 
 Checked: the round-1 F8 / F10 entry points (S3 / S4 "Open"), upstream's `ItemModelGenerator#bowTex` / `iceBowTex`,
-`TFCreativeTabs#createGlassSwordAndLoreVer` against F9's catalog extension.
+`GloamingCreativeTabs#createGlassSwordAndLoreVer` against F9's catalog extension.
 
 Fixed:
 

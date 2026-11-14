@@ -2,17 +2,17 @@
 // Translated from the upstream 4.8 source (commit 9e40a757):
 //   src/main/java/gloamingforest/block/FireJetBlock.java
 //   src/main/java/gloamingforest/block/EncasedFireJetBlock.java
-//   src/main/java/gloamingforest/block/TFSmokerBlock.java
+//   src/main/java/gloamingforest/block/GloamingSmokerBlock.java
 //   src/main/java/gloamingforest/block/EncasedSmokerBlock.java
 //   src/main/java/gloamingforest/block/entity/FireJetBlockEntity.java
-//   src/main/java/gloamingforest/block/entity/TFSmokerBlockEntity.java
+//   src/main/java/gloamingforest/block/entity/GloamingSmokerBlockEntity.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // Fire jets and smokers. Custom blocks have no block entities (S3): the jets' FireJetBlockEntity
 // (gloamingforest:flame_jet) ticks every popping / flaming jet from a registry of positions, the
-// smokers' TFSmokerBlockEntity (gloamingforest:smoker) every smoker near a player. The registry is
+// smokers' GloamingSmokerBlockEntity (gloamingforest:smoker) every smoker near a player. The registry is
 // filled when a jet starts (random tick, redstone) and by a palette scan around the players (a jet
 // still popping or flaming after a reload, the jets and smokers the fire_jet feature generates);
 // every other placed one (a player's, /setblock's, a structure's) is remembered in the world DB
@@ -310,7 +310,7 @@ bool tickJet(GlobalPos const& gp, Jet& jet) {
     return false;
 }
 
-/// TFSmokerBlockEntity#tick: false when the block is no smoker any more.
+/// GloamingSmokerBlockEntity#tick: false when the block is no smoker any more.
 bool tickSmoker(GlobalPos const& gp, Smoker& s) {
     auto* region = game::regionOf(gp.dim);
     if (!region) return false;

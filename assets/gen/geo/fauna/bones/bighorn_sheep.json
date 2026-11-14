@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.bighorn_sheep",
   "layer": {
     "name": "bighorn_sheep",
-    "field": "TFModelLayers.BIGHORN_SHEEP",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.BIGHORN_SHEEP, BighornModel::checkForPack);"
+    "field": "GloamingModelLayers.BIGHORN_SHEEP",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.BIGHORN_SHEEP, BighornModel::checkForPack);"
   },
   "texture_size": [64, 32],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/bighorn",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/bighorn.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/bighorn.png"
     }
   ],
   "bones": [

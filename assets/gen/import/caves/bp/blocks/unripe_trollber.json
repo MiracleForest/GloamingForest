@@ -16,14 +16,14 @@
       },
       "minecraft:map_color": "#007c00",
       "minecraft:collision_box": false,
-      "minecraft:geometry": "geometry.tf.minecraft.block.cross",
+      "minecraft:geometry": "geometry.gf.minecraft.block.cross",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_unripe_trollber",
+          "texture": "gf_block_unripe_trollber",
           "render_method": "alpha_test"
         },
         "cross": {
-          "texture": "tf_block_unripe_trollber",
+          "texture": "gf_block_unripe_trollber",
           "render_method": "alpha_test"
         }
       },

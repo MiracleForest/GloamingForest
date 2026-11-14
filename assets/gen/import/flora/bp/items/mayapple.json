@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_block_mayapple"
+          "default": "gf_block_mayapple"
         }
       },
       "minecraft:display_name": {

@@ -6,7 +6,7 @@ namespace gf::feature::progression_content {
 
 struct ProgressionConfig {
     int version = 1;
-    /// TFClientConfig "disableLockedBiomeToasts" (config.gloamingforest.locked_toasts, default
+    /// GloamingClientConfig "disableLockedBiomeToasts" (config.gloamingforest.locked_toasts, default
     /// false): no toast when entering a locked biome.
     bool disableLockedBiomeToasts = false;
 };

@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.fire_beetle",
   "layer": {
     "name": "fire_beetle",
-    "field": "TFModelLayers.FIRE_BEETLE",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.FIRE_BEETLE, FireBeetleModel::checkForPack);"
+    "field": "GloamingModelLayers.FIRE_BEETLE",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.FIRE_BEETLE, FireBeetleModel::checkForPack);"
   },
   "texture_size": [64, 32],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/firebeetle",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/firebeetle.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/firebeetle.png"
     }
   ],
   "bones": [

@@ -19,31 +19,31 @@
       "minecraft:geometry": "minecraft:geometry.full_block",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_underbrick",
+          "texture": "gf_block_underbrick",
           "render_method": "opaque"
         },
         "up": {
-          "texture": "tf_block_underbrick",
+          "texture": "gf_block_underbrick",
           "render_method": "opaque"
         },
         "down": {
-          "texture": "tf_block_underbrick",
+          "texture": "gf_block_underbrick",
           "render_method": "opaque"
         },
         "north": {
-          "texture": "tf_block_underbrick",
+          "texture": "gf_block_underbrick",
           "render_method": "opaque"
         },
         "south": {
-          "texture": "tf_block_underbrick",
+          "texture": "gf_block_underbrick",
           "render_method": "opaque"
         },
         "east": {
-          "texture": "tf_block_underbrick",
+          "texture": "gf_block_underbrick",
           "render_method": "opaque"
         },
         "west": {
-          "texture": "tf_block_underbrick",
+          "texture": "gf_block_underbrick",
           "render_method": "opaque"
         }
       }

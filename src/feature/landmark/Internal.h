@@ -3,7 +3,7 @@
 //   src/main/java/gloamingforest/world/components/structures/util/LandmarkStructure.java
 //   src/main/java/gloamingforest/world/components/structures/util/ProgressionStructure.java
 //   src/main/java/gloamingforest/world/components/structures/util/ConquerableStructure.java
-//   src/main/java/gloamingforest/world/components/structures/start/TFStructureStart.java
+//   src/main/java/gloamingforest/world/components/structures/start/GloamingStructureStart.java
 //   src/main/java/gloamingforest/util/landmarks/LandmarkUtil.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
@@ -81,7 +81,7 @@ struct LandmarkConfig {
     /// Emit upstream's 20 protection particles around the refused block.
     bool protectionParticles = true;
 };
-/// upstream's sea level of the Gloaming Forest (TFDimensionData.SEALEVEL).
+/// upstream's sea level of the Gloaming Forest (GloamingDimensionData.SEALEVEL).
 inline constexpr int kGloamingSeaLevel = 0;
 /// Bedrock's overworld sea level (other dimensions).
 inline constexpr int kDefaultSeaLevel = 62;
@@ -94,7 +94,7 @@ inline constexpr int kReferenceRange = 8;
 struct Traits {
     bool landmark          = false; ///< LandmarkStructure (decoration clearance, grid center)
     bool landmarkTag       = false; ///< #gloamingforest:landmark (LandmarkUtil#locateNearestLandmarkStart)
-    bool conquerable       = false; ///< ConquerableStructure (TFStructureStart with the conquered flag)
+    bool conquerable       = false; ///< ConquerableStructure (GloamingStructureStart with the conquered flag)
     bool progression       = false; ///< ProgressionStructure (advancement lock + hints)
     bool controlledSpawns  = false; ///< ControlledSpawns (controlled_spawns lists)
     bool customDensity     = false; ///< CustomDensitySource (terraformer)
@@ -377,7 +377,7 @@ inline constexpr char kHollowHillType[] = "gloamingforest:hollow_hill";
 
 // ---- protection (Protection.cpp) ---------------------------------------------------------------------
 
-/// The tfEnforcedProgression gamerule (upstream's default, true, while no gamerule store is available).
+/// The gloamingEnforcedProgression gamerule (upstream's default, true, while no gamerule store is available).
 [[nodiscard]] bool enforced();
 /// PlayerHelper#playerHasRequiredAdvancements for a descriptor's lock.
 [[nodiscard]] bool hasRequiredAdvancements(Player const& player, Info const& info);

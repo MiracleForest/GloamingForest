@@ -94,13 +94,13 @@ def ladder():
 
 def rune_brick(color):
     """castle_rune_brick_0: the castle brick with the rune layer (castleblock_magic_0) over it, tinted
-    with the block's constant colour (ColorHandler; the atlas entry tf_building_rune_<color> of
+    with the block's constant colour (ColorHandler; the atlas entry gf_building_rune_<color> of
     trophies.py). upstream picks one of eight rune layers per position (blockstate variants): the atlas
     entry's eight variations, picked per position by Bedrock."""
     doc = skeleton(color + "_castle_rune_brick")
     comps = doc["minecraft:block"]["components"]
-    brick = {"texture": "tf_block_castle_brick", "render_method": "alpha_test"}
-    runes = {"texture": "tf_building_rune_" + color, "render_method": "alpha_test"}
+    brick = {"texture": "gf_block_castle_brick", "render_method": "alpha_test"}
+    runes = {"texture": "gf_building_rune_" + color, "render_method": "alpha_test"}
     comps["minecraft:material_instances"] = {"*": brick, "t_gloamingforest_block_castle_brick": brick,
                                               **{f: runes for f in ("north", "south", "east", "west", "up", "down")}}
     # Properties.ofFullCopy(CASTLE_BRICK): a full opaque block (the skeleton's 0 let light through)

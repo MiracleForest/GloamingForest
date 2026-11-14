@@ -2,7 +2,7 @@
 // Translated from the upstream 4.8 source (commit 9e40a757):
 //   src/main/java/gloamingforest/world/components/BiomeColorAlgorithms.java
 //   src/main/java/gloamingforest/client/FoliageColorHandler.java
-//   src/main/java/gloamingforest/TFEnumExtensions.java
+//   src/main/java/gloamingforest/GloamingEnumExtensions.java
 //   src/main/java/gloamingforest/util/ColorUtil.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
@@ -10,8 +10,8 @@
 #pragma once
 
 // U1 `biomes`, pure part: upstream's biome colours (BiomeColorAlgorithms) as the grass colour modifiers
-// (TFGrassColorModifierEnumExtension, TFEnumExtensions#GrassColorModifier_*) and the foliage
-// handler (FoliageColorHandler, applied to every foliage colour lookup by tf-asm's
+// (GloamingGrassColorModifierEnumExtension, GloamingEnumExtensions#GrassColorModifier_*) and the foliage
+// handler (FoliageColorHandler, applied to every foliage colour lookup by upsrc-asm's
 // FoliageColorResolverTransformer) use them, and Java's per-position biome blend
 // (ClientLevel#calculateBlockTint). Colours are 0xRRGGBB.
 

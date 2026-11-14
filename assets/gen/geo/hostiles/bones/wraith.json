@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.wraith",
   "layer": {
     "name": "wraith",
-    "field": "TFModelLayers.WRAITH",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.WRAITH, WraithModel::create);"
+    "field": "GloamingModelLayers.WRAITH",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.WRAITH, WraithModel::create);"
   },
   "texture_size": [64, 32],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/ghost",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/ghost.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/ghost.png"
     }
   ],
   "bones": [

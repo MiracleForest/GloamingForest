@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.tf.gloamingforest.block.trophy_pedestal",
+        "identifier": "geometry.gf.gloamingforest.block.trophy_pedestal",
         "texture_width": 16,
         "texture_height": 16,
         "visible_bounds_width": 3,

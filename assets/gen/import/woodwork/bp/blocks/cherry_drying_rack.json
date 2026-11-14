@@ -20,14 +20,14 @@
       },
       "minecraft:tags": ["minecraft:is_axe_item_destructible"],
       "minecraft:map_color": "#d1b1a1",
-      "minecraft:geometry": "geometry.tf.gloamingforest.block.template_drying_rack",
+      "minecraft:geometry": "geometry.gf.gloamingforest.block.template_drying_rack",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_vanilla_block_cherry_planks",
+          "texture": "gf_vanilla_block_cherry_planks",
           "render_method": "opaque"
         },
         "texture": {
-          "texture": "tf_vanilla_block_cherry_planks",
+          "texture": "gf_vanilla_block_cherry_planks",
           "render_method": "opaque"
         }
       },
@@ -48,14 +48,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.template_drying_rack",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.template_drying_rack",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_cherry_planks",
+              "texture": "gf_vanilla_block_cherry_planks",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_vanilla_block_cherry_planks",
+              "texture": "gf_vanilla_block_cherry_planks",
               "render_method": "opaque"
             }
           },
@@ -75,14 +75,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.template_drying_rack",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.template_drying_rack",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_cherry_planks",
+              "texture": "gf_vanilla_block_cherry_planks",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_vanilla_block_cherry_planks",
+              "texture": "gf_vanilla_block_cherry_planks",
               "render_method": "opaque"
             }
           },
@@ -102,14 +102,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.template_drying_rack",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.template_drying_rack",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_cherry_planks",
+              "texture": "gf_vanilla_block_cherry_planks",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_vanilla_block_cherry_planks",
+              "texture": "gf_vanilla_block_cherry_planks",
               "render_method": "opaque"
             }
           },
@@ -129,14 +129,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.template_drying_rack",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.template_drying_rack",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_cherry_planks",
+              "texture": "gf_vanilla_block_cherry_planks",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_vanilla_block_cherry_planks",
+              "texture": "gf_vanilla_block_cherry_planks",
               "render_method": "opaque"
             }
           },

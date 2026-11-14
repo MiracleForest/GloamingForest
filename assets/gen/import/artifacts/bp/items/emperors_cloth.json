@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_item_emperors_cloth"
+          "default": "gf_item_emperors_cloth"
         }
       },
       "minecraft:display_name": {

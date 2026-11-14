@@ -4,8 +4,8 @@
 //   src/main/java/gloamingforest/item/EmptyMazeMapItem.java
 //   src/main/java/gloamingforest/item/MagicMapItem.java
 //   src/main/java/gloamingforest/item/MazeMapItem.java
-//   src/main/java/gloamingforest/item/mapdata/TFMagicMapData.java
-//   src/main/java/gloamingforest/item/mapdata/TFMazeMapData.java
+//   src/main/java/gloamingforest/item/mapdata/GloamingMagicMapData.java
+//   src/main/java/gloamingforest/item/mapdata/GloamingMazeMapData.java
 //   src/main/java/gloamingforest/item/recipe/MagicMapCloningRecipe.java
 //   src/main/java/gloamingforest/item/recipe/MazeMapCloningRecipe.java
 //   src/main/java/gloamingforest/network/MagicMapPacket.java
@@ -97,7 +97,7 @@ constexpr char kFilledMap[] = "minecraft:filled_map";
 struct MapRecord {
     MapKind                              kind    = MapKind::Magic;
     int                                  yCenter = 0;
-    std::map<std::string, TfDecoration>  decorations; ///< by MagicMapItem#makeName
+    std::map<std::string, GloamingDecoration>  decorations; ///< by MagicMapItem#makeName
     std::unordered_map<std::int64_t, int> steps;      ///< HoldingPlayer#step per holder
     bool                                 dirty = false; ///< to save
     /// Changes are counted; each holder remembers what it was sent (a map can have several holders:
@@ -143,7 +143,7 @@ MapRecord* recordOf(std::int64_t id) {
     r.kind    = *kind;
     r.yCenter = doc->value("y", 0);
     for (auto const& d : doc->value("decorations", Json::array())) {
-        TfDecoration t{d.value("type", std::string()), d.value("x", 0), d.value("z", 0), d.value("rotation", 0), d.value("conquered", false)};
+        GloamingDecoration t{d.value("type", std::string()), d.value("x", 0), d.value("z", 0), d.value("rotation", 0), d.value("conquered", false)};
         r.decorations[d.value("name", std::string())] = t;
     }
     return &(rs[id] = std::move(r));
@@ -316,7 +316,7 @@ void updateMagic(Player& player, std::int64_t id, MapRecord& r, MapItemSavedData
         if (!at) return;
         bool conquered = conqueredAt(dim, worldX, worldZ, key);
         auto name      = cu::decorationName(desc->icon, worldX, worldZ);
-        TfDecoration d{desc->icon, at->x, at->z, at->rotation, conquered};
+        GloamingDecoration d{desc->icon, at->x, at->z, at->rotation, conquered};
         auto it = r.decorations.find(name);
         if (it == r.decorations.end() || it->second.x != d.x || it->second.z != d.z || it->second.conquered != d.conquered || it->second.rotation != d.rotation) {
             r.decorations[name] = d;
@@ -522,8 +522,8 @@ std::uint32_t mapPixel(MapItemSavedData const& data, int x, int z) {
     return cu::argbToAbgr(p[i]);
 }
 
-std::vector<TfDecoration> decorationsOf(std::int64_t mapId) {
-    std::vector<TfDecoration> out;
+std::vector<GloamingDecoration> decorationsOf(std::int64_t mapId) {
+    std::vector<GloamingDecoration> out;
     if (auto* r = recordOf(mapId))
         for (auto const& [n, d] : r->decorations) out.push_back(d);
     return out;
@@ -551,10 +551,10 @@ ItemStack setupMagicMap(Player& player) {
 
 std::pair<int, int> mazeCenterFor(int dim, int x, int z) {
     auto center = cu::mazeMapCenter(x, z, 0);
-    // TFMazeMapData#calculateMapCenter: inside a labyrinth chunk the map snaps to its centre
+    // GloamingMazeMapData#calculateMapCenter: inside a labyrinth chunk the map snaps to its centre
     // (LegacyLandmarkPlacements#pickLandmarkForChunk of the level the map is made in)
-    auto tf = gf::world::gloaming();
-    if (tf && dim == static_cast<int>(*tf)) {
+    auto upsrc = gf::world::gloaming();
+    if (upsrc && dim == static_cast<int>(*upsrc)) {
         auto key = cl::pickForChunk(worldgen::seed(), x >> 4, z >> 4, [](int bx, int bz) { return worldgen::biomeAt(BlockPos{bx, 0, bz}); });
         if (key == "gloamingforest:labyrinth") {
             auto c = cl::nearestCenter(x >> 4, z >> 4);
@@ -612,7 +612,7 @@ void updateHeldMap(Player& player, ItemStack const& stack) {
     }
 }
 
-int vanillaDecorationFor(std::string const& tfType) {
+int vanillaDecorationFor(std::string const& gfType) {
     using T = MapDecoration::Type;
     static std::unordered_map<std::string, T> const types{
         {"gloamingforest:hedge_maze", T::TriangleGreen},          {"gloamingforest:small_hollow_hill", T::BuriedMineshaft},
@@ -624,7 +624,7 @@ int vanillaDecorationFor(std::string const& tfType) {
         {"gloamingforest:aurora_palace", T::MarkerBlue},          {"gloamingforest:troll_caves", T::MarkerOrange},
         {"gloamingforest:final_castle", T::MarkerYellow},
     };
-    auto it = types.find(tfType);
+    auto it = types.find(gfType);
     return static_cast<int>(it == types.end() ? T::TriangleRed : it->second);
 }
 

@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_building_item_trophy_quest"
+          "default": "gf_building_item_trophy_quest"
         }
       },
       "minecraft:display_name": {

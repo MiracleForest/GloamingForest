@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_item_cooked_venison"
+          "default": "gf_item_cooked_venison"
         }
       },
       "minecraft:display_name": {

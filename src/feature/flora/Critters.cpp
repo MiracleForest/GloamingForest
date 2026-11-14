@@ -5,7 +5,7 @@
 //   src/main/java/gloamingforest/block/FireflyBlock.java
 //   src/main/java/gloamingforest/block/MoonwormBlock.java
 //   src/main/java/gloamingforest/events/MiscEvents.java (updateCicadaSoundsOnHead)
-//   src/main/java/gloamingforest/dispenser/TFDispenserBehaviors.java (critters on heads)
+//   src/main/java/gloamingforest/dispenser/GloamingDispenserBehaviors.java (critters on heads)
 //   src/main/java/gloamingforest/advancements/KillBugTrigger.java (fired with the bug's block)
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part

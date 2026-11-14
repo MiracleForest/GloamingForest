@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.skeleton_druid",
   "layer": {
     "name": "skeleton_druid",
-    "field": "TFModelLayers.SKELETON_DRUID",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.SKELETON_DRUID, SkeletonDruidModel::create);"
+    "field": "GloamingModelLayers.SKELETON_DRUID",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.SKELETON_DRUID, SkeletonDruidModel::create);"
   },
   "texture_size": [64, 32],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/skeletondruid",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/skeletondruid.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/skeletondruid.png"
     }
   ],
   "bones": [

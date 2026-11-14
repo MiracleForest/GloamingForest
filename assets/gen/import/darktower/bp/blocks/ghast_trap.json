@@ -19,38 +19,38 @@
       },
       "minecraft:tags": ["minecraft:is_axe_item_destructible"],
       "minecraft:map_color": "#f7e9a3",
-      "minecraft:geometry": "geometry.tf.gloamingforest.block.ghast_trap",
+      "minecraft:geometry": "geometry.gf.gloamingforest.block.ghast_trap",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_encased_towerwood",
+          "texture": "gf_block_encased_towerwood",
           "render_method": "alpha_test"
         },
         "bottom": {
-          "texture": "tf_block_encased_towerwood",
+          "texture": "gf_block_encased_towerwood",
           "render_method": "alpha_test"
         },
         "side": {
-          "texture": "tf_block_towerdev_ghasttrap_off",
+          "texture": "gf_block_towerdev_ghasttrap_off",
           "render_method": "alpha_test"
         },
         "side2": {
-          "texture": "tf_block_tower_device_level_1_towerdev_ghasttrap_off_1",
+          "texture": "gf_block_tower_device_level_1_towerdev_ghasttrap_off_1",
           "render_method": "alpha_test"
         },
         "side3": {
-          "texture": "tf_block_tower_device_level_2_towerdev_ghasttrap_off_2",
+          "texture": "gf_block_tower_device_level_2_towerdev_ghasttrap_off_2",
           "render_method": "alpha_test"
         },
         "top": {
-          "texture": "tf_block_towerdev_ghasttraplid_off",
+          "texture": "gf_block_towerdev_ghasttraplid_off",
           "render_method": "alpha_test"
         },
         "top2": {
-          "texture": "tf_block_tower_device_level_2_towerdev_ghasttraplid_off_1",
+          "texture": "gf_block_tower_device_level_2_towerdev_ghasttraplid_off_1",
           "render_method": "alpha_test"
         },
         "top3": {
-          "texture": "tf_block_tower_device_level_2_towerdev_ghasttraplid_off_1",
+          "texture": "gf_block_tower_device_level_2_towerdev_ghasttraplid_off_1",
           "render_method": "alpha_test"
         }
       },
@@ -60,38 +60,38 @@
       {
         "condition": "!q.block_state('gloamingforest:active')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.ghast_trap",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.ghast_trap",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_encased_towerwood",
+              "texture": "gf_block_encased_towerwood",
               "render_method": "alpha_test"
             },
             "bottom": {
-              "texture": "tf_block_encased_towerwood",
+              "texture": "gf_block_encased_towerwood",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_towerdev_ghasttrap_off",
+              "texture": "gf_block_towerdev_ghasttrap_off",
               "render_method": "alpha_test"
             },
             "side2": {
-              "texture": "tf_block_tower_device_level_1_towerdev_ghasttrap_off_1",
+              "texture": "gf_block_tower_device_level_1_towerdev_ghasttrap_off_1",
               "render_method": "alpha_test"
             },
             "side3": {
-              "texture": "tf_block_tower_device_level_2_towerdev_ghasttrap_off_2",
+              "texture": "gf_block_tower_device_level_2_towerdev_ghasttrap_off_2",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_block_towerdev_ghasttraplid_off",
+              "texture": "gf_block_towerdev_ghasttraplid_off",
               "render_method": "alpha_test"
             },
             "top2": {
-              "texture": "tf_block_tower_device_level_2_towerdev_ghasttraplid_off_1",
+              "texture": "gf_block_tower_device_level_2_towerdev_ghasttraplid_off_1",
               "render_method": "alpha_test"
             },
             "top3": {
-              "texture": "tf_block_tower_device_level_2_towerdev_ghasttraplid_off_1",
+              "texture": "gf_block_tower_device_level_2_towerdev_ghasttraplid_off_1",
               "render_method": "alpha_test"
             }
           },
@@ -102,38 +102,38 @@
       {
         "condition": "q.block_state('gloamingforest:active')",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.ghast_trap_active",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.ghast_trap_active",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_encased_towerwood",
+              "texture": "gf_block_encased_towerwood",
               "render_method": "alpha_test"
             },
             "bottom": {
-              "texture": "tf_block_encased_towerwood",
+              "texture": "gf_block_encased_towerwood",
               "render_method": "alpha_test"
             },
             "side": {
-              "texture": "tf_block_towerdev_ghasttrap_on",
+              "texture": "gf_block_towerdev_ghasttrap_on",
               "render_method": "alpha_test"
             },
             "side2": {
-              "texture": "tf_block_tower_device_level_1_towerdev_ghasttrap_on_1",
+              "texture": "gf_block_tower_device_level_1_towerdev_ghasttrap_on_1",
               "render_method": "alpha_test"
             },
             "side3": {
-              "texture": "tf_block_tower_device_level_2_towerdev_ghasttrap_on_2",
+              "texture": "gf_block_tower_device_level_2_towerdev_ghasttrap_on_2",
               "render_method": "alpha_test"
             },
             "top": {
-              "texture": "tf_block_towerdev_ghasttraplid_on",
+              "texture": "gf_block_towerdev_ghasttraplid_on",
               "render_method": "alpha_test"
             },
             "top2": {
-              "texture": "tf_block_tower_device_level_2_towerdev_ghasttraplid_on_1",
+              "texture": "gf_block_tower_device_level_2_towerdev_ghasttraplid_on_1",
               "render_method": "alpha_test"
             },
             "top3": {
-              "texture": "tf_block_tower_device_level_3_towerdev_ghasttraplid_on_2",
+              "texture": "gf_block_tower_device_level_3_towerdev_ghasttraplid_on_2",
               "render_method": "alpha_test"
             }
           },

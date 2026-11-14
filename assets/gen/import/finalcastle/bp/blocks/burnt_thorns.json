@@ -25,7 +25,7 @@
       },
       "minecraft:map_color": "#707070",
       "minecraft:geometry": {
-        "identifier": "geometry.tf.gloamingforest.block.burnt_thorns.multipart",
+        "identifier": "geometry.gf.gloamingforest.block.burnt_thorns.multipart",
         "bone_visibility": {
           "part0": "q.block_state('gloamingforest:axis') == 'y'",
           "part1": "q.block_state('gloamingforest:axis') == 'z'",
@@ -52,15 +52,15 @@
       },
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_burnt_thorns_side",
+          "texture": "gf_block_burnt_thorns_side",
           "render_method": "alpha_test"
         },
         "t_gloamingforest_block_burnt_thorns_side": {
-          "texture": "tf_block_burnt_thorns_side",
+          "texture": "gf_block_burnt_thorns_side",
           "render_method": "alpha_test"
         },
         "t_gloamingforest_block_burnt_thorns_top": {
-          "texture": "tf_block_burnt_thorns_top",
+          "texture": "gf_block_burnt_thorns_top",
           "render_method": "alpha_test"
         }
       },

@@ -1,11 +1,11 @@
 {
-  "tf_block_trollber": {
+  "gf_block_trollber": {
     "textures": "textures/gloamingforest/block/trollber"
   },
-  "tf_block_trollvidr": {
+  "gf_block_trollvidr": {
     "textures": "textures/gloamingforest/block/trollvidr"
   },
-  "tf_block_unripe_trollber": {
+  "gf_block_unripe_trollber": {
     "textures": "textures/gloamingforest/block/unripe_trollber"
   }
 }

@@ -45,7 +45,7 @@ class Vec3;
 
 namespace gf::feature::tgmove {
 
-/// The client config section `tgmove` (TFClientConfig.travellersWingsGradualGlide, R13).
+/// The client config section `tgmove` (GloamingClientConfig.travellersWingsGradualGlide, R13).
 struct Config {
     int  version                     = 1;
     bool travellersWingsGradualGlide = true;
@@ -200,12 +200,12 @@ bool applyAgileRanger(Player& player, std::optional<float>& base, float& set, bo
 [[nodiscard]] Vec3 applyUnrestrained(Actor& a, PlayerState& st, bool active, Vec3 v, bool onGround, bool steppingCarefully, Vec2 const* move);
 /// The velocity an input change makes in one engine step (Entity#moveRelative): upstream changes the
 /// input (straight ahead's strafe / 1.4, the glide's unsneaked input) where Bedrock reads it after
-/// any hook, so both simulations add the difference of the accelerations of `tfMove` and
+/// any hook, so both simulations add the difference of the accelerations of `gloamingMove` and
 /// `engineMove` (x strafe, y forward) instead: on the ground speed x the block's friction factor,
 /// in the air the flying speed (0.02, 0.026 sprinting).
 /// `unrestrained`: the ground step's friction is upstream's 0.6 (applyUnrestrained puts the engine's right),
 /// so the input change accelerates as on a block of friction 0.6.
-[[nodiscard]] Vec3 inputDelta(Actor& a, Vec2 const& engineMove, Vec2 const& tfMove, bool onGround, bool sprinting, bool unrestrained = false);
+[[nodiscard]] Vec3 inputDelta(Actor& a, Vec2 const& engineMove, Vec2 const& gloamingMove, bool onGround, bool sprinting, bool unrestrained = false);
 /// Bedrock's item use slowdown of the input (measured: a held key's input is 0.122 long while a bow
 /// is drawn; Java's is 0.2, which agile ranger's x5 cancels).
 inline constexpr double kBedrockItemUseSlowdown = 0.122;

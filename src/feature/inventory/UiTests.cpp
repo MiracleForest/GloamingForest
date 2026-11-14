@@ -10,19 +10,19 @@
 //                               through the chest minecart proxy (27 slots)
 //   combat.ui_chest_screen      a BlockData container: the client mod's chest screen (companions)
 //                               or, on vanilla clients, the game's chest screen through the proxy
-//   combat.ui_tf_double_chest   upstream's gloaming oak double chest (F11's families declare it a container
+//   combat.ui_gf_double_chest   upstream's gloaming oak double chest (F11's families declare it a container
 //                               of this contract) opened as a right click opens it: the client mod's
 //                               54-slot "Large Chest" (the right half first); on vanilla clients the
 //                               game's large chest screen (the minecart proxy behind a chest pair of
 //                               the client)
-//   combat.ui_tf_trapped_chest  upstream's trapped chest, a right click: the client mod's chest screen, the
+//   combat.ui_gf_trapped_chest  upstream's trapped chest, a right click: the client mod's chest screen, the
 //                               game's chest screen through the proxy on vanilla clients
 //   combat.ui_missing_toast     upstream's MissingAdvancementToast for progress_lich (F12's toast on the
 //                               client mod, the game's toast on vanilla clients)
 //   combat.ui_fx_particles      upstream's large_flame through gf::fx in front of the player for 5 s (the
 //                               client mod: fx.particle, its native factory or resource pack effect;
 //                               vanilla clients: the game's particle packets)
-//   combat.ui_fx_portal         upstream's portal particles (TFPortalBlock#animateTick: minecraft:portal) of a
+//   combat.ui_fx_portal         upstream's portal particles (GloamingPortalBlock#animateTick: minecraft:portal) of a
 //                               3-block row in front of the player for 5 s: they rise from the row and
 //                               fall back onto it as Java's PortalParticle (F10's gf:portal: Java's
 //                               blue-violet)
@@ -338,7 +338,7 @@ bool useOn(Player& p, BlockPos const& bp) {
 
 // upstream's double chest, the halves placed north of the player facing it (south): a left half's partner
 // is west of it (ChestBlock#getConnectedDirection).
-GF_REGISTER_SELFTEST("combat.ui_tf_double_chest", [](Context& ctx) -> ll::coro::CoroTask<> {
+GF_REGISTER_SELFTEST("combat.ui_gf_double_chest", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto* p = realPlayer();
     if (!p) {
         ctx.info("no real player: nothing to show");
@@ -361,14 +361,14 @@ GF_REGISTER_SELFTEST("combat.ui_tf_double_chest", [](Context& ctx) -> ll::coro::
     p = ll::service::getLevel()->getPlayer(id);
     ctx.require(p != nullptr, "the player is still there");
     bool used = useOn(*p, lbp);
-    gf::log().info("combat ui: tf double chest opened for {} (use-on {})", p->getRealName(), used ? "succeeded" : "refused");
+    gf::log().info("combat ui: upsrc double chest opened for {} (use-on {})", p->getRealName(), used ? "succeeded" : "refused");
     ctx.check(gf::inventory::viewerCount(lpos) == 1 && gf::inventory::viewerCount(rpos) == 1, "the right click opened both halves");
 });
 
 // After the client e2e moved the right half's first stack (7 naga scales, screen slot 0) into the
 // first hotbar slot with two clicks in the game's large chest screen (remote-vanilla): the item
 // request reached the right half's storage through the 54-slot proxy.
-GF_REGISTER_SELFTEST("combat.ui_tf_double_chest_taken", [](Context& ctx) {
+GF_REGISTER_SELFTEST("combat.ui_gf_double_chest_taken", [](Context& ctx) {
     auto* p = realPlayer();
     if (!p) {
         ctx.info("no real player: nothing to check");
@@ -380,7 +380,7 @@ GF_REGISTER_SELFTEST("combat.ui_tf_double_chest_taken", [](Context& ctx) {
             region && gf::game::blockIdAt(*region, gf::game::blockPos(placed.pos)) == "gloamingforest:gloaming_oak_chest"
             && gf::inventory::partsOf(placed.pos).size() == 2 && gf::inventory::partsOf(placed.pos).front() == placed.pos)
             right = placed.pos; // the right half: first of its double chest's parts
-    ctx.require(right.has_value(), "the double chest of combat.ui_tf_double_chest is still there");
+    ctx.require(right.has_value(), "the double chest of combat.ui_gf_double_chest is still there");
     auto* region = gf::game::regionOf(right->dim);
     auto  h      = gf::inventory::find(*region, gf::game::blockPos(*right));
     ctx.require(h.has_value(), "the right half is a container");
@@ -393,10 +393,10 @@ GF_REGISTER_SELFTEST("combat.ui_tf_double_chest_taken", [](Context& ctx) {
     for (int i = 0; i < inv.getContainerSize(); ++i)
         if (gf::game::items::idOf(inv.getItem(i)) == "gloamingforest:naga_scale") inv.setItem(i, ItemStack{});
     p->sendInventory(false);
-    gf::log().info("combat ui: tf double chest item request checked");
+    gf::log().info("combat ui: upsrc double chest item request checked");
 });
 
-GF_REGISTER_SELFTEST("combat.ui_tf_trapped_chest", [](Context& ctx) -> ll::coro::CoroTask<> {
+GF_REGISTER_SELFTEST("combat.ui_gf_trapped_chest", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto* p = realPlayer();
     if (!p) {
         ctx.info("no real player: nothing to show");
@@ -415,7 +415,7 @@ GF_REGISTER_SELFTEST("combat.ui_tf_trapped_chest", [](Context& ctx) -> ll::coro:
     p = ll::service::getLevel()->getPlayer(id);
     ctx.require(p != nullptr, "the player is still there");
     bool used = useOn(*p, bp);
-    gf::log().info("combat ui: tf trapped chest opened for {} (use-on {})", p->getRealName(), used ? "succeeded" : "refused");
+    gf::log().info("combat ui: upsrc trapped chest opened for {} (use-on {})", p->getRealName(), used ? "succeeded" : "refused");
     ctx.check(gf::inventory::viewerCount(pos) == 1, "the right click opened it");
 });
 
@@ -486,7 +486,7 @@ GF_REGISTER_SELFTEST("combat.ui_fx_portal", [](Context& ctx) -> ll::coro::CoroTa
         co_return;
     }
     beginUiTest(*p);
-    // TFPortalBlock#animateTick for three portal blocks 4 blocks ahead at the feet, every tick (Java
+    // GloamingPortalBlock#animateTick for three portal blocks 4 blocks ahead at the feet, every tick (Java
     // picks a block now and then; every tick shows the path densely): 4 particles at the top of the
     // block, speed ((r - 0.5) / 2, r, (r - 0.5) / 2)
     auto rng = std::make_shared<std::mt19937>(std::random_device{}());

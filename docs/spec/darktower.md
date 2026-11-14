@@ -30,7 +30,7 @@ no row for them; F1 imports their members with the vanilla tags upstream referen
 
 Sources: `world/components/structures/type/DarkTowerStructure.java`, `world/components/structures/darktower/*.java`
 (15 piece classes + `EnumDarkTowerDoor`, `StructureDecoratorDarkTower`), F7 tower bases (`bases/Tower.h`:
-`TowerWingComponent`, `TowerRoof*`), `world/components/structures/TFMaze.java` (F7 `bases/Maze.h`).
+`TowerWingComponent`, `TowerRoof*`), `world/components/structures/GloamingMaze.java` (F7 `bases/Maze.h`).
 
 | Field | Value |
 |---|---|
@@ -56,25 +56,25 @@ Structure strings: `structure.gloamingforest.dark_tower` "Dark Tower".
 
 | Id | Class | Summary |
 |---|---|---|
-| `gloamingforest:TFDTMai` | DarkTowerMainComponent | Main tower, size 19, height `56 + (rand(32) / 5) x 5` (56..86), placed at (x + 10, y, z + 10) facing NORTH; lowered in steps of 5 until max y <= 245 (logs "Lowering Dark Tower max height by N"). Depth 0: two entrance towers (NONE and CW180 sides, size 9, height `validate(10 + rand(5))`) via entrance bridges, base filled with accent blocks below y 0 of the piece. Depth < 2: one random side gets the next main tower through a main bridge with a **LOCKED** door; the other three sides get wings (size 11, height `validate(21 + rand(10))`). Depth 2: four boss-trap wings instead. Depth > 0: three more base wings (all but CW180) and a beard. Roof only below depth 2. Key towers: after building children at depth < 2, up to 4 random size-9 wings of the same depth are flagged `keyTower` (warns "Dark forest tower could not find four small towers to place keys in." if fewer). `validateChildHeight(h) = (h / 4) x 4 + 1`. postProcess: encased walls, hollow inside, `decoRNG = seed + minX x 321534781 ^ minZ x 756839`; floors of 5: beam maze (50 %, 4 centre floors) or builder platforms (centre = half the floors); three-quarter floors on the bottom and top portions decorated per floor; depth 2: boss floors, five `destroyTower` netherrack blobs at the top, `gloamingforest:ur_ghast_boss_spawner` at (9, height - 2, 9); openings last |
-| `gloamingforest:TFDTWin` | DarkTowerWingComponent | Wing tower (sizes 9 / 11 / 15). Children: roof (rand(5): 2 cactus, 3 rings, 4 four-post, else antenna), beard; size > 10: per side a wing of `size - 2` with height `validate(height - 4 + rand(10) - rand(10))` (needs height >= 8, top <= 250, no collision), else a balcony (always on CW180, else 50 %); small wings: 1/4 chance one balcony (not entrance towers). Floors every 4 blocks (rotation alternating 180 degrees, starting rotation `(minY + bottom) % 3`): half floors decorated by rand(8): 0 reappearing floor (size < 11, else falls through to 1), 1 spawner (`minecraft:spawner` at (x + 1, y + 2, z + 1) with x, z = 4, 5 for size > 9 else 3, 4: carminite golem or carminite broodling 50/50 when size > 9, else broodling), 2 lounge, 3 library (bookshelves), 4 experiment pulser, 5 experiment lamp (redstone lamps, repeaters, sticky pistons), 6 puzzle chest (`darktower_cache` behind levers / pressure plates), 7 nothing; the top floor is a full floor and, when the wing is a dead end (at most one non-balcony opening), a treasure room chest at the centre (`gloamingforest:darktower_key` in key towers, else `gloamingforest:darktower_cache`); stairs down per floor (double width when size > 9) and stairs to the roof. Doors: `VANISHING` (default) = 3 x 3 `unbreakable_vanishing_block` in a 5 x 5 encased frame; `REAPPEARING` (balconies) = 3 x 3 `reappearing_block`; `LOCKED` = unbreakable vanishing 3 x 3 with four `locked_vanishing_block` corners. Destroyed tops use `netherTransformBlob` (netherrack, fire). Saved: `keyTower`, door coordinates and types |
-| `gloamingforest:TFDTBri` | DarkTowerBridgeComponent | 5-long bridge leading to a wing; checks the bridge and the wing box for collisions |
-| `gloamingforest:TFDTEB` | DarkTowerEntranceBridgeComponent | bridge to an entrance tower |
-| `gloamingforest:TFDTEnt` | DarkTowerEntranceComponent | small entrance tower at ground level (no balconies) |
-| `gloamingforest:TFDTMB` | DarkTowerMainBridgeComponent | bridge to the next main tower (size 15, height 56) |
-| `gloamingforest:TFDTBB` | DarkTowerBossBridgeComponent | bridge to a boss trap tower (size 11, height 9) |
-| `gloamingforest:TFDTBT` | DarkTowerBossTrapComponent | open-topped trap tower: destroyed rim, half floor, **`gloamingforest:ghast_trap` at (5,1,5)** wired by redstone wire (5,1,6)-(5,1,8)-(3,1,8) to an oak pressure plate at (2,1,8); stairs down |
-| `gloamingforest:TFDTBal` | DarkTowerBalconyComponent | balcony on a wing, reached through a reappearing door |
-| `gloamingforest:TFDTBea` | DarkTowerBeardComponent | stepped encased-towerwood underside of a wing |
-| `gloamingforest:TFDTRooS` | DarkTowerRoofComponent | base roof slab |
-| `gloamingforest:TFDTRA` | DarkTowerRoofAntennaComponent | antenna roof |
-| `gloamingforest:TFDTRC` | DarkTowerRoofCactusComponent | "cactus" roof |
-| `gloamingforest:TFDTRFP` | DarkTowerRoofFourPostComponent | four-post roof |
-| `gloamingforest:TFDTRR` | DarkTowerRoofRingsComponent | rings roof |
+| `gloamingforest:GloamingDTMai` | DarkTowerMainComponent | Main tower, size 19, height `56 + (rand(32) / 5) x 5` (56..86), placed at (x + 10, y, z + 10) facing NORTH; lowered in steps of 5 until max y <= 245 (logs "Lowering Dark Tower max height by N"). Depth 0: two entrance towers (NONE and CW180 sides, size 9, height `validate(10 + rand(5))`) via entrance bridges, base filled with accent blocks below y 0 of the piece. Depth < 2: one random side gets the next main tower through a main bridge with a **LOCKED** door; the other three sides get wings (size 11, height `validate(21 + rand(10))`). Depth 2: four boss-trap wings instead. Depth > 0: three more base wings (all but CW180) and a beard. Roof only below depth 2. Key towers: after building children at depth < 2, up to 4 random size-9 wings of the same depth are flagged `keyTower` (warns "Dark forest tower could not find four small towers to place keys in." if fewer). `validateChildHeight(h) = (h / 4) x 4 + 1`. postProcess: encased walls, hollow inside, `decoRNG = seed + minX x 321534781 ^ minZ x 756839`; floors of 5: beam maze (50 %, 4 centre floors) or builder platforms (centre = half the floors); three-quarter floors on the bottom and top portions decorated per floor; depth 2: boss floors, five `destroyTower` netherrack blobs at the top, `gloamingforest:ur_ghast_boss_spawner` at (9, height - 2, 9); openings last |
+| `gloamingforest:GloamingDTWin` | DarkTowerWingComponent | Wing tower (sizes 9 / 11 / 15). Children: roof (rand(5): 2 cactus, 3 rings, 4 four-post, else antenna), beard; size > 10: per side a wing of `size - 2` with height `validate(height - 4 + rand(10) - rand(10))` (needs height >= 8, top <= 250, no collision), else a balcony (always on CW180, else 50 %); small wings: 1/4 chance one balcony (not entrance towers). Floors every 4 blocks (rotation alternating 180 degrees, starting rotation `(minY + bottom) % 3`): half floors decorated by rand(8): 0 reappearing floor (size < 11, else falls through to 1), 1 spawner (`minecraft:spawner` at (x + 1, y + 2, z + 1) with x, z = 4, 5 for size > 9 else 3, 4: carminite golem or carminite broodling 50/50 when size > 9, else broodling), 2 lounge, 3 library (bookshelves), 4 experiment pulser, 5 experiment lamp (redstone lamps, repeaters, sticky pistons), 6 puzzle chest (`darktower_cache` behind levers / pressure plates), 7 nothing; the top floor is a full floor and, when the wing is a dead end (at most one non-balcony opening), a treasure room chest at the centre (`gloamingforest:darktower_key` in key towers, else `gloamingforest:darktower_cache`); stairs down per floor (double width when size > 9) and stairs to the roof. Doors: `VANISHING` (default) = 3 x 3 `unbreakable_vanishing_block` in a 5 x 5 encased frame; `REAPPEARING` (balconies) = 3 x 3 `reappearing_block`; `LOCKED` = unbreakable vanishing 3 x 3 with four `locked_vanishing_block` corners. Destroyed tops use `netherTransformBlob` (netherrack, fire). Saved: `keyTower`, door coordinates and types |
+| `gloamingforest:GloamingDTBri` | DarkTowerBridgeComponent | 5-long bridge leading to a wing; checks the bridge and the wing box for collisions |
+| `gloamingforest:GloamingDTEB` | DarkTowerEntranceBridgeComponent | bridge to an entrance tower |
+| `gloamingforest:GloamingDTEnt` | DarkTowerEntranceComponent | small entrance tower at ground level (no balconies) |
+| `gloamingforest:GloamingDTMB` | DarkTowerMainBridgeComponent | bridge to the next main tower (size 15, height 56) |
+| `gloamingforest:GloamingDTBB` | DarkTowerBossBridgeComponent | bridge to a boss trap tower (size 11, height 9) |
+| `gloamingforest:GloamingDTBT` | DarkTowerBossTrapComponent | open-topped trap tower: destroyed rim, half floor, **`gloamingforest:ghast_trap` at (5,1,5)** wired by redstone wire (5,1,6)-(5,1,8)-(3,1,8) to an oak pressure plate at (2,1,8); stairs down |
+| `gloamingforest:GloamingDTBal` | DarkTowerBalconyComponent | balcony on a wing, reached through a reappearing door |
+| `gloamingforest:GloamingDTBea` | DarkTowerBeardComponent | stepped encased-towerwood underside of a wing |
+| `gloamingforest:GloamingDTRooS` | DarkTowerRoofComponent | base roof slab |
+| `gloamingforest:GloamingDTRA` | DarkTowerRoofAntennaComponent | antenna roof |
+| `gloamingforest:GloamingDTRC` | DarkTowerRoofCactusComponent | "cactus" roof |
+| `gloamingforest:GloamingDTRFP` | DarkTowerRoofFourPostComponent | four-post roof |
+| `gloamingforest:GloamingDTRR` | DarkTowerRoofRingsComponent | rings roof |
 
 Main-tower floor decorations (`decorateFloor`): top floors rand(3): botanical / netherwart / aquarium; bottom floors
 rand(4): aquarium, botanical, netherwart (only when the floor's world y > 64, else falls through to forge), forge;
-middle floors rand(8): 0-1 reappearing-block maze (TFMaze with reappearing walls and dead-end decorations), 2 unbuilder
+middle floors rand(8): 0-1 reappearing-block maze (GloamingMaze with reappearing walls and dead-end decorations), 2 unbuilder
 (antibuilder) maze, 3 aquarium (water, squid spawns), 4 botanical (tree planters, berry bushes: blightberry, duskberry,
 skyberry, stingberry; potted plants from `#gloamingforest:dark_tower_allowed_pots`; the planter at (6, y + 1, 12) is a
 dirt block ringed by pillars and stairs with a tree on top: configured feature by `decoRNG.nextInt(5)` -> 1
@@ -96,7 +96,7 @@ the WorldGenRegion random from the world seed and the centre chunk) or masks the
 
 Sources: `block/{VanishingBlock,ReappearingBlock,LockedVanishingBlock,BuilderBlock,TranslucentBuiltBlock,AntibuilderBlock,CarminiteReactorBlock,ReactorDebrisBlock,SliderBlock,GhastTrapBlock,InfestedTowerwoodBlock}.java`,
 `block/entity/{CarminiteBuilderBlockEntity,AntibuilderBlockEntity,CarminiteReactorBlockEntity,ReactorDebrisBlockEntity,GhastTrapBlockEntity}.java`,
-`enums/TowerDeviceVariant.java`, `init/TFBlocks.java`.
+`enums/TowerDeviceVariant.java`, `init/GloamingBlocks.java`.
 
 | Block | Properties | States | Light | Tool / tags | Loot |
 |---|---|---|---|---|---|
@@ -320,7 +320,7 @@ and `gloamingforest:recipes/redstone/vanishing_block` (has `gloamingforest:reapp
 
 Sources: `entity/boss/UrGhast.java`, `entity/ai/goal/UrGhast{Attack,Flight,Look}Goal.java`, `entity/projectile/UrGhastFireball.java`,
 `block/entity/spawner/UrGhastSpawnerBlockEntity.java`, `client/renderer/entity/UrGhastRenderer.java`, `client/model/entity/UrGhastModel.java`,
-`client/particle/GhastTearParticle.java`, `client/renderer/TFWeatherRenderer.java`.
+`client/particle/GhastTearParticle.java`, `client/renderer/GloamingWeatherRenderer.java`.
 
 | Field | Value |
 |---|---|
@@ -420,7 +420,7 @@ target centre, then 1/6 chance to drop the target; timer -40. Charging (vanilla 
 redstone dust particle 1/2 per tick. Vanilla ghast traits kept: reflected player fireballs kill it (vanilla
 `Ghast.hurt` deals 1000), flying mob.
 
-Render: `CarminiteGhastRenderer` (TFGhastModel, 9 tentacles), scale 8 with the attack squash (as the Ur-Ghast with 8),
+Render: `CarminiteGhastRenderer` (GloamingGhastModel, 9 tentacles), scale 8 with the attack squash (as the Ur-Ghast with 8),
 shadow 3.0; textures `towerghast.png`, `towerghast_openeyes.png`, `towerghast_fire.png`.
 
 Loot `gloamingforest:entities/carminite_ghastguard`: references `minecraft:entities/ghast`.
@@ -440,7 +440,7 @@ Loot `gloamingforest:entities/carminite_ghastguard`: references `minecraft:entit
 | Spawn | `canSpawnHere`: not Peaceful, (MOB_SUMMONED or dark enough), `checkMobSpawnRules` |
 | Spawn egg | `gloamingforest:carminite_ghastling_spawn_egg` 0xbcbcbc / 0xa74343 |
 
-Render `TFGhastRenderer` (no scale), shadow 0.625. Loot `gloamingforest:entities/carminite_ghastling`: 1 pool with
+Render `GloamingGhastRenderer` (no scale), shadow 0.625. Loot `gloamingforest:entities/carminite_ghastling`: 1 pool with
 condition `gloamingforest:is_minion` inverted (F10 loot condition) referencing `minecraft:entities/ghast` (boss
 minions drop nothing).
 
@@ -472,7 +472,7 @@ Size 0.7 x 0.5; attributes: swarm spider + max_health 7, attack_damage 4 (speed 
 **no skeleton-druid jockey** (`summonJockey` empty); inherits the swarm spider's 1/4 hit chance, light-independent
 melee/targeting, cluster size 6. Sounds: `entity.gloamingforest.carminite_broodling.ambient`,
 `entity.gloamingforest.carminite_broodling.hurt`, `entity.gloamingforest.carminite_broodling.death`,
-`entity.gloamingforest.carminite_broodling.step` (vol 0.15). Render `TFSpiderRenderer` `towerbroodling.png`, shadow 0.6,
+`entity.gloamingforest.carminite_broodling.step` (vol 0.15). Render `GloamingSpiderRenderer` `towerbroodling.png`, shadow 0.6,
 scale 0.7. Spawn: monster rules. Egg `gloamingforest:carminite_broodling_spawn_egg` 0x343c14 / 0xbaee02. Loot
 `gloamingforest:entities/carminite_broodling`: references `minecraft:entities/spider`.
 

@@ -47,7 +47,7 @@ using core::BlockBox;
 
 namespace {
 
-constexpr char kPieceType[]  = "gloamingforest:TFHydra";
+constexpr char kPieceType[]  = "gloamingforest:GloamingHydra";
 constexpr char kSpeleothem[] = "gloamingforest:hydra_lair";
 constexpr int  kGloamingSeaLevel = 0; ///< ChunkGenerator#getSeaLevel of the Gloaming Forest
 

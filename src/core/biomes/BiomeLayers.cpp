@@ -16,7 +16,7 @@
 //   src/main/java/gloamingforest/world/components/layer/vanillalegacy/context/LazyAreaContext.java
 //   src/main/java/gloamingforest/world/components/layer/vanillalegacy/context/RandomContext.java
 //   src/main/java/gloamingforest/world/components/layer/vanillalegacy/traits/CastleTransformer.java
-//   src/main/java/gloamingforest/world/components/biomesources/TFBiomeProvider.java
+//   src/main/java/gloamingforest/world/components/biomesources/GloamingBiomeProvider.java
 //   src/main/java/gloamingforest/world/components/chunkgenerators/TerrainColumn.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part

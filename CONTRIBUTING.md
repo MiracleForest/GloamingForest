@@ -24,7 +24,7 @@ measured against upstream's behaviour, textures and screens.
   (`tools/structures`). `tools/ci/arr-guard.ps1` rejects any matching file, in any commit of a pull request
   (a file added and deleted again would still reach the public history).
 - A hand-edited file derived from an upstream texture, model, blockstate or text stays CC BY-NC-SA 4.0: keep it under a
-  `tf-derived/` directory with a `tf-derived/SOURCES.json` naming its upstream source (AGENTS.md, assets/LICENSE).
+  `upstream-derived/` directory with a `upstream-derived/SOURCES.json` naming its upstream source (AGENTS.md, assets/LICENSE).
 - Do not add AI attribution (for example `Co-Authored-By` lines naming an AI) to commits, pull requests or code.
 
 ## Workflow

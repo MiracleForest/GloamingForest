@@ -1,10 +1,10 @@
 {
-  "commands.tffeature.usage": "/%s <info | reactivate | conquer | center>",
+  "commands.gloamingfeature.usage": "/%s <info | reactivate | conquer | center>",
   "gloamingforest.configuration.section.gloamingforest.client.toml": "クライアントの設定",
   "gloamingforest.configuration.section.gloamingforest.client.toml.title": "クライアントの設定",
   "gloamingforest.configuration.section.gloamingforest.common.toml": "共通設定",
   "gloamingforest.configuration.section.gloamingforest.common.toml.title": "共通設定",
-  "gloamingforest.configuration.title": "黄昏の森の設定",
+  "gloamingforest.configuration.title": "薄暮の森の設定",
   "misc.gloamingforest.advancement_hidden": "＜隠された進捗＞",
   "misc.gloamingforest.advancement_required": "前提進捗：",
   "misc.gloamingforest.core_disabled": "設定により%sは無効化されています",

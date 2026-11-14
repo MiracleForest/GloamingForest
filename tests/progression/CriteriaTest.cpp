@@ -142,29 +142,29 @@ TEST(ProgressionCriteria, ItemUsedOnBlock) {
     EXPECT_FALSE(matchConditions(cond, Context{nullptr, &cake, &beans}, env));
 }
 
-TEST(ProgressionCriteria, TfTriggers) {
+TEST(ProgressionCriteria, GloamingTriggers) {
     auto env = testEnv();
     auto fight = json::parse(R"({"hurt_entity":[{"condition":"minecraft:entity_properties","entity":"this","predicate":{"type":"gloamingforest:naga"}}]})");
-    EXPECT_TRUE(matchTfTrigger("gloamingforest:hurt_boss", fight, json{{"entity", "gloamingforest:naga"}}, env));
-    EXPECT_FALSE(matchTfTrigger("gloamingforest:hurt_boss", fight, json{{"entity", "gloamingforest:lich"}}, env));
+    EXPECT_TRUE(matchGloamingTrigger("gloamingforest:hurt_boss", fight, json{{"entity", "gloamingforest:naga"}}, env));
+    EXPECT_FALSE(matchGloamingTrigger("gloamingforest:hurt_boss", fight, json{{"entity", "gloamingforest:lich"}}, env));
 
     auto bug = json{{"bug", "gloamingforest:cicada"}};
-    EXPECT_TRUE(matchTfTrigger("gloamingforest:kill_bug", bug, json{{"bug", "gloamingforest:cicada"}}, env));
-    EXPECT_TRUE(matchTfTrigger("gloamingforest:kill_bug", bug, json{{"block", "gloamingforest:cicada[facing=up]"}}, env));
-    EXPECT_FALSE(matchTfTrigger("gloamingforest:kill_bug", bug, json{{"block", "gloamingforest:firefly"}}, env));
+    EXPECT_TRUE(matchGloamingTrigger("gloamingforest:kill_bug", bug, json{{"bug", "gloamingforest:cicada"}}, env));
+    EXPECT_TRUE(matchGloamingTrigger("gloamingforest:kill_bug", bug, json{{"block", "gloamingforest:cicada[facing=up]"}}, env));
+    EXPECT_FALSE(matchGloamingTrigger("gloamingforest:kill_bug", bug, json{{"block", "gloamingforest:firefly"}}, env));
 
     auto flask = json::parse(R"({"doses":3,"potion":"minecraft:strong_harming","seconds":{"max":6}})");
-    EXPECT_TRUE(matchTfTrigger("gloamingforest:drink_from_flask", flask, json{{"doses", 3}, {"seconds", 6}, {"potion", "minecraft:strong_harming"}}, env));
-    EXPECT_FALSE(matchTfTrigger("gloamingforest:drink_from_flask", flask, json{{"doses", 3}, {"seconds", 7}, {"potion", "minecraft:strong_harming"}}, env));
-    EXPECT_FALSE(matchTfTrigger("gloamingforest:drink_from_flask", flask, json{{"doses", 2}, {"seconds", 1}, {"potion", "minecraft:strong_harming"}}, env));
-    EXPECT_FALSE(matchTfTrigger("gloamingforest:drink_from_flask", flask, json{{"doses", 3}, {"seconds", 1}, {"potion", "minecraft:harming"}}, env));
+    EXPECT_TRUE(matchGloamingTrigger("gloamingforest:drink_from_flask", flask, json{{"doses", 3}, {"seconds", 6}, {"potion", "minecraft:strong_harming"}}, env));
+    EXPECT_FALSE(matchGloamingTrigger("gloamingforest:drink_from_flask", flask, json{{"doses", 3}, {"seconds", 7}, {"potion", "minecraft:strong_harming"}}, env));
+    EXPECT_FALSE(matchGloamingTrigger("gloamingforest:drink_from_flask", flask, json{{"doses", 2}, {"seconds", 1}, {"potion", "minecraft:strong_harming"}}, env));
+    EXPECT_FALSE(matchGloamingTrigger("gloamingforest:drink_from_flask", flask, json{{"doses", 3}, {"seconds", 1}, {"potion", "minecraft:harming"}}, env));
 
     auto uncraft = json::parse(R"({"item":{"items":"gloamingforest:uncrafting_table"}})");
-    EXPECT_TRUE(matchTfTrigger("gloamingforest:uncraft_item", uncraft, json{{"item", "gloamingforest:uncrafting_table"}}, env));
-    EXPECT_TRUE(matchTfTrigger("gloamingforest:uncraft_item", uncraft, json{{"item", {{"id", "gloamingforest:uncrafting_table"}, {"count", 1}}}}, env));
-    EXPECT_FALSE(matchTfTrigger("gloamingforest:uncraft_item", uncraft, json{{"item", "minecraft:stick"}}, env));
+    EXPECT_TRUE(matchGloamingTrigger("gloamingforest:uncraft_item", uncraft, json{{"item", "gloamingforest:uncrafting_table"}}, env));
+    EXPECT_TRUE(matchGloamingTrigger("gloamingforest:uncraft_item", uncraft, json{{"item", {{"id", "gloamingforest:uncrafting_table"}, {"count", 1}}}}, env));
+    EXPECT_FALSE(matchGloamingTrigger("gloamingforest:uncraft_item", uncraft, json{{"item", "minecraft:stick"}}, env));
 
-    EXPECT_TRUE(matchTfTrigger("gloamingforest:activate_ghast_trap", json::object(), json::object(), env));
+    EXPECT_TRUE(matchGloamingTrigger("gloamingforest:activate_ghast_trap", json::object(), json::object(), env));
 }
 
 TEST(ProgressionCriteria, RecipeLayouts) {
@@ -196,12 +196,12 @@ TEST(ProgressionCriteria, RecipeLayouts) {
 TEST(ProgressionCriteria, ModifierAndStructureConditions) {
     Env env;
     // AddModifierTrigger: no modifier condition accepts any; a named one only itself
-    EXPECT_TRUE(matchTfTrigger("gloamingforest:add_modifier", json::object(), json{{"modifier", "gloamingforest:water_walk"}}, env));
-    EXPECT_TRUE(matchTfTrigger("gloamingforest:add_modifier", json{{"modifier", "gloamingforest:water_walk"}}, json{{"modifier", "gloamingforest:water_walk"}}, env));
-    EXPECT_FALSE(matchTfTrigger("gloamingforest:add_modifier", json{{"modifier", "gloamingforest:water_walk"}}, json{{"modifier", "gloamingforest:step_up"}}, env));
-    EXPECT_FALSE(matchTfTrigger("gloamingforest:add_modifier", json{{"modifier", "gloamingforest:water_walk"}}, json::object(), env));
+    EXPECT_TRUE(matchGloamingTrigger("gloamingforest:add_modifier", json::object(), json{{"modifier", "gloamingforest:water_walk"}}, env));
+    EXPECT_TRUE(matchGloamingTrigger("gloamingforest:add_modifier", json{{"modifier", "gloamingforest:water_walk"}}, json{{"modifier", "gloamingforest:water_walk"}}, env));
+    EXPECT_FALSE(matchGloamingTrigger("gloamingforest:add_modifier", json{{"modifier", "gloamingforest:water_walk"}}, json{{"modifier", "gloamingforest:step_up"}}, env));
+    EXPECT_FALSE(matchGloamingTrigger("gloamingforest:add_modifier", json{{"modifier", "gloamingforest:water_walk"}}, json::object(), env));
     // StructureClearedTrigger: the structure is required and compared
-    EXPECT_TRUE(matchTfTrigger("gloamingforest:structure_cleared", json{{"structure", "gloamingforest:lich_tower"}}, json{{"structure", "gloamingforest:lich_tower"}}, env));
-    EXPECT_FALSE(matchTfTrigger("gloamingforest:structure_cleared", json{{"structure", "gloamingforest:lich_tower"}}, json{{"structure", "gloamingforest:labyrinth"}}, env));
-    EXPECT_FALSE(matchTfTrigger("gloamingforest:structure_cleared", json::object(), json{{"structure", "gloamingforest:lich_tower"}}, env));
+    EXPECT_TRUE(matchGloamingTrigger("gloamingforest:structure_cleared", json{{"structure", "gloamingforest:lich_tower"}}, json{{"structure", "gloamingforest:lich_tower"}}, env));
+    EXPECT_FALSE(matchGloamingTrigger("gloamingforest:structure_cleared", json{{"structure", "gloamingforest:lich_tower"}}, json{{"structure", "gloamingforest:labyrinth"}}, env));
+    EXPECT_FALSE(matchGloamingTrigger("gloamingforest:structure_cleared", json::object(), json{{"structure", "gloamingforest:lich_tower"}}, env));
 }

@@ -5,7 +5,7 @@
 //               step's placed features (ChunkGenerator#applyBiomeDecoration); then Features ->
 //               LargeWriter -> Spawns
 // The Blanket stage runs at surface time because upstream injects ChunkBlanketProcessors#chunkBlanketing
-// right after ChunkGenerator#buildSurface in ChunkStatusTasks#generateSurface (tf-asm
+// right after ChunkGenerator#buildSurface in ChunkStatusTasks#generateSurface (upsrc-asm
 // ChunkStatusTaskTransformer). Deterministic for a seed: every placed feature is seeded with
 // WorldgenRandom#setFeatureSeed(decorationSeed, featureIndex, step) over FeatureSorter's order, and
 // every structure step gets the same seeding through ext::decorationContext().

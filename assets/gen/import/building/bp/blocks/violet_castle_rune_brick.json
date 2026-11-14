@@ -16,38 +16,38 @@
       },
       "minecraft:tags": ["minecraft:is_pickaxe_item_destructible", "minecraft:diamond_tier_destructible"],
       "minecraft:map_color": "#7f3fb2",
-      "minecraft:geometry": "geometry.tf.gloamingforest.block.castle_rune_brick_0",
+      "minecraft:geometry": "geometry.gf.gloamingforest.block.castle_rune_brick_0",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_castle_brick",
+          "texture": "gf_block_castle_brick",
           "render_method": "opaque"
         },
         "down": {
-          "texture": "tf_block_castle_brick",
+          "texture": "gf_block_castle_brick",
           "render_method": "opaque"
         },
         "east": {
-          "texture": "tf_block_castle_brick",
+          "texture": "gf_block_castle_brick",
           "render_method": "opaque"
         },
         "north": {
-          "texture": "tf_block_castle_brick",
+          "texture": "gf_block_castle_brick",
           "render_method": "opaque"
         },
         "south": {
-          "texture": "tf_block_castle_brick",
+          "texture": "gf_block_castle_brick",
           "render_method": "opaque"
         },
         "t_gloamingforest_block_castle_brick": {
-          "texture": "tf_block_castle_brick",
+          "texture": "gf_block_castle_brick",
           "render_method": "opaque"
         },
         "up": {
-          "texture": "tf_block_castle_brick",
+          "texture": "gf_block_castle_brick",
           "render_method": "opaque"
         },
         "west": {
-          "texture": "tf_block_castle_brick",
+          "texture": "gf_block_castle_brick",
           "render_method": "opaque"
         }
       },

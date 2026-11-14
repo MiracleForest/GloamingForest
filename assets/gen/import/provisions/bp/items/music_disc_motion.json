@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_item_music_disc_motion"
+          "default": "gf_item_music_disc_motion"
         }
       },
       "minecraft:display_name": {

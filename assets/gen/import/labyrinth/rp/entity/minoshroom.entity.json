@@ -10,7 +10,7 @@
         "default": "textures/gloamingforest/entity/minoshroomtaur"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.minoshroom"
+        "default": "geometry.gf.skeleton.minoshroom"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

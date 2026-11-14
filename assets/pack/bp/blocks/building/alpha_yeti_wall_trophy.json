@@ -30,7 +30,7 @@
       "minecraft:geometry": "geometry.gloamingforest.building.alpha_yeti_wall_trophy",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_building_yetialpha",
+          "texture": "gf_building_yetialpha",
           "render_method": "alpha_test"
         }
       }

@@ -10,7 +10,7 @@
         "default": "textures/gloamingforest/entity/adherent"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.adherent"
+        "default": "geometry.gf.skeleton.adherent"
       },
       "render_controllers": ["controller.render.default"]
     }

@@ -6,7 +6,7 @@
   upstream's QuestRamModel renders each of the 16 wool segments tinted with Sheep#getColor of its dye and
   shows only the colours the ram collected, then a glowing-lines layer scaled 1.025. Bedrock has no
   per-bone tint, so this script writes:
-    - assets/pack/rp/textures/entity/questcamps/tf-derived/questram_tinted.png: upstream's questram.png
+    - assets/pack/rp/textures/entity/questcamps/upstream-derived/questram_tinted.png: upstream's questram.png
       (CC BY-NC-SA 4.0, R3) with 16 tinted copies of the wool segment's UV box appended below it
       (128 x 256), and its SOURCES.json entry;
     - assets/pack/rp/models/entity/questcamps/quest_ram_tinted.geo.json: F2's geometry with each
@@ -51,7 +51,7 @@ for ($i = 0; $i -lt 16; $i++) {
         }
     }
 }
-$texDir = Join-Path $root 'assets/pack/rp/textures/entity/questcamps/tf-derived'
+$texDir = Join-Path $root 'assets/pack/rp/textures/entity/questcamps/upstream-derived'
 New-Item -ItemType Directory -Force $texDir | Out-Null
 $out.Save((Join-Path $texDir 'questram_tinted.png'), [System.Drawing.Imaging.ImageFormat]::Png)
 $src.Dispose(); $out.Dispose()
@@ -128,7 +128,7 @@ $entity = [ordered]@{
         description = [ordered]@{
             identifier         = 'gloamingforest:quest_ram'
             materials          = [ordered]@{ default = 'entity_alphatest'; lines = 'entity_alphablend' }
-            textures           = [ordered]@{ default = 'textures/entity/questcamps/tf-derived/questram_tinted'; lines = 'textures/gloamingforest/entity/questram_lines' }
+            textures           = [ordered]@{ default = 'textures/entity/questcamps/upstream-derived/questram_tinted'; lines = 'textures/gloamingforest/entity/questram_lines' }
             geometry           = [ordered]@{ default = 'geometry.gloamingforest.quest_ram_tinted'; lines = 'geometry.gloamingforest.quest_ram_lines' }
             render_controllers = @('controller.render.gloamingforest.quest_ram', 'controller.render.gloamingforest.quest_ram_lines')
             animations         = [ordered]@{ base = 'animation.gloamingforest.quest_ram.base'; pose = 'animation.gloamingforest.quest_ram.pose' }

@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_item_ironwood_helmet"
+          "default": "gf_item_ironwood_helmet"
         }
       },
       "minecraft:display_name": {

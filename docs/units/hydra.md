@@ -19,7 +19,7 @@ Open: none found in this round.
 
 ## Audit round 2
 
-Checked against upstream 4.8 (`Hydra#knockback`, `Hydra#checkDespawn`, `TFEntities.HYDRA_MORTAR`) and the round-1 F10
+Checked against upstream 4.8 (`Hydra#knockback`, `Hydra#checkDespawn`, `GloamingEntities.HYDRA_MORTAR`) and the round-1 F10
 damage pair (S3 / S4 "Open").
 
 Fixed:

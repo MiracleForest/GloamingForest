@@ -1,6 +1,6 @@
 {
   "config.gloamingforest.boss_drop_chests": "ボスのドロップをチェストに入れる",
-  "config.gloamingforest.boss_drop_chests.tooltip": "trueにすると、黄昏の森のボスはアイテムを直接ドロップするのではなく、スポーンした地点に設置されたチェストの中にアイテムが入るようになります。\nナイトファントムはドロップの仕組みが異なるため、影響を受けません。",
+  "config.gloamingforest.boss_drop_chests.tooltip": "trueにすると、薄暮の森のボスはアイテムを直接ドロップするのではなく、スポーンした地点に設置されたチェストの中にアイテムが入るようになります。\nナイトファントムはドロップの仕組みが異なるため、影響を受けません。",
   "config.gloamingforest.multiplayer_fight_adjuster": "マルチプレイ時の戦闘の調整",
   "config.gloamingforest.multiplayer_fight_adjuster.more_health": "体力の増加",
   "config.gloamingforest.multiplayer_fight_adjuster.more_loot": "ドロップアイテムの増加",

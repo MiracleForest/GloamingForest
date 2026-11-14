@@ -17,7 +17,7 @@ Spec: [docs/spec/giants.md](../spec/giants.md). Code: `src/core/giants` (gtested
 | Cloud weather | F11 random ticks (cauldrons, snow layers; farmland moisture and fire out under rainy clouds); `rainingFromCloudAt` = BlockHooks#isRainingAt's scan |
 | CloudEvents rendering | client mod: drops (`gf:giants_cloud_rain` / `_snow`) and rain splashes from the clouds near the camera; vanilla clients: the same drops sent by the server |
 | Giants | BP goals / attributes; native gear, `gloamingforest:ant` melee, spawn rule |
-| `giant_house` | F6 generator creating U27's `gloamingforest:TFClCa` from its saved form (R2), registered once the piece type exists |
+| `giant_house` | F6 generator creating U27's `gloamingforest:GloamingClCa` from its saved form (R2), registered once the piece type exists |
 
 ## Deviations
 
@@ -52,7 +52,7 @@ Open (round 2, all Bedrock limits; not-ported candidates):
 ## Audit round 2
 
 Checked against upstream 4.8 (`GiantMiner#doHurtTarget`, `GiantMiner` / `ArmoredGiant` sounds, `BlockHooks#isRainingAt`,
-`Entity#move` / `LivingEntity#aiStep` under rain, `TFGiantRenderer`).
+`Entity#move` / `LivingEntity#aiStep` under rain, `GloamingGiantRenderer`).
 
 Fixed:
 
@@ -72,7 +72,7 @@ Fixed:
 
 Open (Bedrock limits; not-ported candidates):
 
-- Giant skins (`TFGiantRenderer` binds the viewer's own skin, or `giantSkinUUIDs` profiles): a Bedrock mob's
+- Giant skins (`GloamingGiantRenderer` binds the viewer's own skin, or `giantSkinUUIDs` profiles): a Bedrock mob's
   texture comes from the resource pack; binding a player's skin texture would need an F12 entity texture hook.
 - The giant pickaxe / sword's +2.5 block and entity interaction range: Bedrock has no reach attribute and the
   client limits its pick range; needs an F12 client pick-range extension.

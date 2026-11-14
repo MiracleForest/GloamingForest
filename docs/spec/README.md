@@ -103,14 +103,14 @@ their tool unit (F1 import, F2 geo, F3 audio) may also write them: the tools gen
 | `worlddb` | 54 |
 
 Counts against the plan: upstream 4.8 registers **523** blocks (the plan's 533 counted ten `*_miniature_structure` blocks
-that are commented out in `TFBlocks.java`), 254 items plus 357 block items and 51 spawn eggs, 80 entity types,
+that are commented out in `GloamingBlocks.java`), 254 items plus 357 block items and 51 spawn eggs, 80 entity types,
 22 biomes, 25 structure keys, 129 configured and 107 placed features, 634 loot tables, 553 recipes (gloamingforest and
-minecraft namespaces, generated and hand-written), 545 advancements (45 plus the recipe unlocks), 328 sound events (`GHAST_TRAP_ACTIVE` is commented out in `TFSounds.java`; `sounds.json` has 328),
+minecraft namespaces, generated and hand-written), 545 advancements (45 plus the recipe unlocks), 328 sound events (`GHAST_TRAP_ACTIVE` is commented out in `GloamingSounds.java`; `sounds.json` has 328),
 29 particles, 40 damage types, 1 effect, 4 enchantments, 393 tags (154 in the gloamingforest namespace), 8 data maps,
-2061 en_us keys, 53 upstream config keys, 10 stats (`TFStats` registers 10; the plan says 9), 41 subcommand rows (upstream's 11
+2061 en_us keys, 53 upstream config keys, 10 stats (`GloamingStats` registers 10; the plan says 9), 41 subcommand rows (upstream's 11
 subcommands with their literal children, 25 literal paths, plus 16 GloamingForest additions; see below; the plan says 15),
-175 structure piece types (`TFStructurePieceTypes`, including the 18 `"TFLT" + "<suffix>"` pieces of the revamped Lich
-Tower and `TFJigsawTemplate`), 14 custom registries (every directory of upstream's `data/gloamingforest/gloaming/`; the plan says 9).
+175 structure piece types (`GloamingStructurePieceTypes`, including the 18 `"GloamingLT" + "<suffix>"` pieces of the revamped Lich
+Tower and `GloamingJigsawTemplate`), 14 custom registries (every directory of upstream's `data/gloamingforest/gloaming/`; the plan says 9).
 
 Ids no unit record claims: none.
 
@@ -150,7 +150,7 @@ holds the CI ownership gate to the same expectations.
 
 A `subcommand` row's id is the literal path below `/gloamingforest` without its
 arguments: `shield set` is `/gloamingforest shield <target> set <amount> [temp]`. Upstream's literals are read from
-`command/TFCommand.java` and the command classes it chains, and partitioned by `ids.subcommand`; a unit registers them
+`command/GloamingCommand.java` and the command classes it chains, and partitioned by `ids.subcommand`; a unit registers them
 exactly as upstream spells them (`GF_REGISTER_SUBCOMMAND`).
 
 | Owner | upstream 4.8 literals |
@@ -198,7 +198,7 @@ the `tag` of a recipe (Java data or Bedrock BP recipe) is an item tag, `generate
 `minecraft:matching_block_tag` predicate or `minecraft:tag_match` rule test a block tag, any other a tag of any
 registry. Two `tags` lists are not references: an item's `minecraft:tags` component declares Bedrock item tags (they
 count as known item tags, so a unit may give an item a Bedrock-only tag and use it in a BP recipe) and a Bedrock
-recipe's `tags` name its crafting stations. A `tfDangling` reference of `known-ids.json` (dangling in upstream itself, kept
+recipe's `tags` name its crafting stations. A `gloamingDangling` reference of `known-ids.json` (dangling in upstream itself, kept
 for parity) is a warning when its kind matches the reference (a `tag:<registry>` entry covers only a tag reference);
 every other unresolved reference fails.
 

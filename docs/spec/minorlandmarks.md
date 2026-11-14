@@ -12,9 +12,9 @@ every owned configured feature, placed feature and loot table in compact form.
 | Net channels | `minorlandmarks.*` |
 | Config | none |
 | Contracts | landmark (F6), structure + bases HollowHill / Maze (F7), features (F5), loot (F10), spawn (F5) |
-| Java sources | `block/HedgeBlock.java`, `world/components/structures/{HollowHillComponent,HedgeMazeComponent,TFMaze}.java`, `world/components/structures/type/{HollowHillStructure,HedgeMazeStructure,HollowTreeStructure,FallenTrunkStructure}.java`, `world/components/structures/hollowtree/*.java`, `world/components/structures/fallentrunk/*.java`, `world/components/feature/{BlockSpikeFeature,DarkForestFeature,FallenHollowLogFeature,SmallFallenLogFeature,FoundationFeature,LampostFeature,MonolithFeature,CheckAbovePatchFeature,TFSmallLakeFeature,WebFeature,WoodRootFeature}.java`, `world/components/feature/trees/HollowStumpFeature.java`, `init/{TFConfiguredFeatures,TFPlacedFeatures,TFStructures,TFStructureSets,TFMapDecorations}.java` |
+| Java sources | `block/HedgeBlock.java`, `world/components/structures/{HollowHillComponent,HedgeMazeComponent,GloamingMaze}.java`, `world/components/structures/type/{HollowHillStructure,HedgeMazeStructure,HollowTreeStructure,FallenTrunkStructure}.java`, `world/components/structures/hollowtree/*.java`, `world/components/structures/fallentrunk/*.java`, `world/components/feature/{BlockSpikeFeature,DarkForestFeature,FallenHollowLogFeature,SmallFallenLogFeature,FoundationFeature,LampostFeature,MonolithFeature,CheckAbovePatchFeature,GloamingSmallLakeFeature,WebFeature,WoodRootFeature}.java`, `world/components/feature/trees/HollowStumpFeature.java`, `init/{GloamingConfiguredFeatures,GloamingPlacedFeatures,GloamingStructures,GloamingStructureSets,GloamingMapDecorations}.java` |
 
-Not owned here: the landmark grid placement types and `avoid_landmark_grid` (F6), the TFMaze / HollowHill base
+Not owned here: the landmark grid placement types and `avoid_landmark_grid` (F6), the GloamingMaze / HollowHill base
 classes and the speleothem registry (F7), the trunk logs, hollow logs, moss patch, fireflies, cicadas, roots, liveroot,
 canopy fence, jack-o'-lanterns usage (blocks of U4/U6), hedge spiders, swarm spiders, hostile wolves, redcaps, kobolds,
 wraiths, beetles (U16/U17), ravens (U16).
@@ -37,7 +37,7 @@ Bedrock: entity-inside / step-on through `blockevents::onEntityInside` / `onStep
 ## 2. Hollow hills (`gloamingforest:small_hollow_hill`, `gloamingforest:medium_hollow_hill`, `gloamingforest:large_hollow_hill`)
 
 Structure type `gloamingforest:hollow_hill` (`HollowHillStructure`, codec field `hill_size` 1..3, controlled spawns,
-speleothem config), piece `gloamingforest:TFHill` (`HollowHillComponent`, F7 base `bases/HollowHill.h`). Structure sets
+speleothem config), piece `gloamingforest:GloamingHill` (`HollowHillComponent`, F7 base `bases/HollowHill.h`). Structure sets
 `gloamingforest:small_hollow_hill`, `gloamingforest:medium_hollow_hill`, `gloamingforest:large_hollow_hill`: landmark grid
 with their own grid lock. Biomes `#gloamingforest:valid_hollow_hill_biomes`; step `surface_structures`; terrain
 adaptation none; centre in chunk.
@@ -91,14 +91,14 @@ Loot (appendix): `gloamingforest:hill_1`, `gloamingforest:hill_2`, `gloamingfore
 
 ## 3. Hedge maze `gloamingforest:hedge_maze`
 
-Structure type `gloamingforest:hedge_maze` (`HedgeMazeStructure`), piece `gloamingforest:TFHedge`
+Structure type `gloamingforest:hedge_maze` (`HedgeMazeStructure`), piece `gloamingforest:GloamingHedge`
 (`HedgeMazeComponent`). Structure set `gloamingforest:hedge_maze` (landmark grid). Biomes
 `#gloamingforest:valid_hedge_maze_biomes`; step surface; terrain BEARD_BOX; decoration clearance radius 2, no
 surface decorations, underground and vegetation allowed, elevation adjusted; map icon `gloamingforest:hedge_maze`.
 First piece at `(x + 1, y + 4, z + 1)`; height `adjustForTerrain(24, 4)`; terraformer inverted pyramid (0, 4).
 
 Component: `MSIZE` 16 cells of 3 blocks, `RADIUS = 16/2*3 + 1 = 25`, diameter 50; box `(-25, -3, -25, 50, 10, 50)`.
-`postProcess`: seed `worldSeed + minX * minZ`; TFMaze 16x16 with odd bias 2, torch block `gloamingforest:firefly`,
+`postProcess`: seed `worldSeed + minX * minZ`; GloamingMaze 16x16 with odd bias 2, torch block `gloamingforest:firefly`,
 wall `gloamingforest:hedge`, type 4, tall 3, roots 3; grass floor at y -1 over 0..50; 8 jack-o'-lanterns at the four
 entrances (x 0/50 at z 24, 29; z 0/50 at x 24, 29) facing inward; until every cell is non-zero: reset, carve
 `16/3 = 5` 1-cell rooms (not at (1,1), at least 3 cells apart), recursive backtracker from (0,0); add 4 exits; copy to
@@ -131,23 +131,23 @@ limit and at least 16; refuses water (sea floor below the surface) unless allowe
 x/z +-3, y -3..+128 (except the sapling) to be tree-replaceable.
 
 Pieces (translate exactly; `HollowTreePiece` base):
-- `gloamingforest:TFHTTr` (HollowTreeTrunk): hollow trunk of the radius; `nextInt(3) + 3` with an inclusive loop =
+- `gloamingforest:GloamingHTTr` (HollowTreeTrunk): hollow trunk of the radius; `nextInt(3) + 3` with an inclusive loop =
   4..6 **small** branches (length 4, angle 0.35, leafy) at `height * rand * 0.9 + height / 10`; then `buildFullCrown`
   adds the large, medium and small crown branches and roots (counts from its min/max branch arguments, inclusive
   loops); vines and bugs on the trunk.
-- `gloamingforest:TFHTLB` (HollowTreeLargeBranch): 1/8 (`LEAF_DUNGEON_CHANCE` 8) a leaf dungeon at the tip;
+- `gloamingforest:GloamingHTLB` (HollowTreeLargeBranch): 1/8 (`LEAF_DUNGEON_CHANCE` 8) a leaf dungeon at the tip;
   `nextInt(length/6) + length/8 + 1` medium branches (inclusive loop); 5 reinforcement logs (`i <= 4`).
-- `gloamingforest:TFHTMB` (HollowTreeMedBranch): `min(nextInt(3) + 1, length / 5)` shoots and leaf balls radius 2 or 3.
-- `gloamingforest:TFHTSB` (HollowTreeSmallBranch): leaf ball radius 1-2 at the tip.
-- `gloamingforest:TFHTRo` (HollowTreeRoot): root strands into the ground.
-- `gloamingforest:TFHTLD` (HollowTreeLeafDungeon): radius 4 sphere of wood + leaves, hollow, chest with the dungeon loot
+- `gloamingforest:GloamingHTMB` (HollowTreeMedBranch): `min(nextInt(3) + 1, length / 5)` shoots and leaf balls radius 2 or 3.
+- `gloamingforest:GloamingHTSB` (HollowTreeSmallBranch): leaf ball radius 1-2 at the tip.
+- `gloamingforest:GloamingHTRo` (HollowTreeRoot): root strands into the ground.
+- `gloamingforest:GloamingHTLD` (HollowTreeLeafDungeon): radius 4 sphere of wood + leaves, hollow, chest with the dungeon loot
   table (random facing) and a spawner of the dungeon monster at the centre.
 
 Loot: `gloamingforest:tree_cache` (appendix).
 
 ## 5. Fallen trunks `gloamingforest:fallen_trunk`
 
-Structure type `gloamingforest:fallen_trunk` (`FallenTrunkStructure`), piece `gloamingforest:TFFallenTrunk`
+Structure type `gloamingforest:fallen_trunk` (`FallenTrunkStructure`), piece `gloamingforest:GloamingFallenTrunk`
 (`FallenTrunkPiece`, with `Hole` and `TrunkUnderDensityFunction`). Structure set `gloamingforest:fallen_trunk`:
 `gloamingforest:avoid_landmark_grid` frequency 0.8, salt 1275623845, spacing 7, separation 5, triangular, exclusion zone
 1 chunk around `gloamingforest:hollow_tree`. Biomes `#gloamingforest:valid_hollow_tree_biomes`; step surface; no terrain
@@ -160,7 +160,7 @@ adaptation (custom terraformer).
   random horizontal orientation; box `xySize = radius > 1 ? 2r + 1 : 4`, z length - 1; radius > 1 trunks adjust their
   height to the terrain (`adjustForTerrain(box, 4, WORLD_SURFACE_WG)`).
 - Children: two `UtilityPiece`s (box inflated 10 for terraforming, inflated 3 for feature clearance; F7
-  `gloamingforest:TFUtilityPiece`).
+  `gloamingforest:GloamingUtilityPiece`).
 - `postProcess` (RNG from the position): radius 1 -> small trunk (50 % hole); radius 2 -> trunk (50 % hole); radius 4
   -> trunk without hole, 50 % with a spawner at (r, 2, (length-1)/2) (swarm spider, hostile wolf or cave spider) and one
   `gloamingforest:gloaming_oak_chest` with `gloamingforest:fallen_trunk_loot` at a random offset beside it. Logs are
@@ -177,18 +177,18 @@ adaptation (custom terraformer).
 | `gloamingforest:fallen_hollow_log` | FallenHollowLogFeature | 4x4 hollow gloaming oak log along X or Z (50/50) with jagged ends (`nextInt(3)`), moss patches, persistent leaves, grass and fireflies; needs flat ground. |
 | `gloamingforest:fallen_small_log` | SmallFallenLogFeature (HollowLogConfig `normal`, `hollow`) | length 3-6 along X or Z; 50 % all hollow; 1/5 refuses / sinks in liquid; 2/3 of positions get mushrooms or moss; one branch 2/3. |
 | `gloamingforest:foundation` | FoundationFeature (RuinedFoundationConfig) | ruined stone foundation: walls of sampled width/height with decay (`nextInt(decayRarity + 1) >= 1 ? main : decay`), optional basement of sampled depth with a floor (`placeFloorTest`), posts (oak fence) and a loot container (chest) at a random edge coordinate with `gloamingforest:foundation_basement` (seed `worldSeed * x + y ^ z`); basement depth 3 or none (50/50). |
-| `gloamingforest:hollow_stump` | HollowStumpFeature (TFTreeFeatureConfig) | stump radius 2-3, hollow `diameter >> 1`, roots 4 deep, column heights `2 + nextInt(3) + nextInt(2)`. |
+| `gloamingforest:hollow_stump` | HollowStumpFeature (GloamingTreeFeatureConfig) | stump radius 2-3, hollow `diameter >> 1`, roots 4 deep, column heights `2 + nextInt(3) + nextInt(2)`. |
 | `gloamingforest:lampposts` | LampostFeature (BlockStateConfiguration) | on grass only: `gloamingforest:canopy_fence` post 1-4 high topped by the configured state with a random rotation (`pumpkin_lamppost`: jack-o'-lantern; `lamppost_placer` picks firefly lampposts, 10 % cicada lampposts, both configured by U6). |
 | `gloamingforest:monolith` | MonolithFeature | 2x2 obsidian pillar of height 10-19 with uneven corners (`dir` picks the tall corner), a lapis block at the top of the tallest column; spawns 2 ravens within 8 blocks. |
 | `gloamingforest:mycelium_blob` | CheckAbovePatchFeature (DiskConfiguration) | disk replacement like vanilla `disk` but only where the block above is not solid (mycelium patches). |
-| `gloamingforest:small_lake` | TFSmallLakeFeature | vanilla-style lake (4-7 ellipsoids in a 16x8x16 box) with the configured fluid / barrier, cave air above, freezes / surfaces as configured (water, lava, frozen lakes). |
+| `gloamingforest:small_lake` | GloamingSmallLakeFeature | vanilla-style lake (4-7 ellipsoids in a 16x8x16 box) with the configured fluid / barrier, cave air above, freezes / surfaces as configured (water, lava, frozen lakes). |
 | `gloamingforest:webs` | WebFeature | picks a random y above the origin; under leaves or a log places a cobweb (50 % in the leaves themselves). |
 | `gloamingforest:wood_roots` | WoodRootFeature (RootConfig) | in stone: root strand of length `rand*6 + rand*6 + 4`, tilt 0.6-0.9, branching 2/3 with new angle `+0.25..0.75`, 1/4 ore-root (liveroot) blocks. |
 
 ## 7. Configured / placed features (overview)
 
 Configured (31): `gloamingforest:birch_fallen_log`, `default_fallen_logs`, `oak_fallen_log`, `spruce_fallen_log`,
-`tf_oak_fallen_log`, `mangrove_fallen_log` (fallen small logs), `hollow_log`, `hollow_stump`, `foundation`,
+`gf_oak_fallen_log`, `mangrove_fallen_log` (fallen small logs), `hollow_log`, `hollow_stump`, `foundation`,
 `lamppost_placer`, `pumpkin_lamppost`, `monolith`, `mycelium_blob`, `outside_stalagmite`, `lava_lake`, `water_lake`,
 `water_frozen`, `torch_berries`, `uberous_soil_patch_big`, `uberous_soil_patch_small`, `small_andesite`,
 `small_diorite`, `small_granite`, `vanilla_roots`, `webs`, `dark_dead_bushes`, `dark_ferns`, `dark_grass`,
@@ -206,9 +206,9 @@ Configured (31): `gloamingforest:birch_fallen_log`, `default_fallen_logs`, `oak_
 
 - Map decorations: `gloamingforest:hedge_maze`, `gloamingforest:small_hollow_hill`, `gloamingforest:medium_hollow_hill`,
   `gloamingforest:large_hollow_hill` (magic map icons; vanilla fallback via F12 / F6 mapping).
-- Piece types: `gloamingforest:TFHill`, `gloamingforest:TFHedge`, `gloamingforest:TFFallenTrunk`,
-  `gloamingforest:TFHTTr`, `gloamingforest:TFHTLB`, `gloamingforest:TFHTMB`, `gloamingforest:TFHTSB`,
-  `gloamingforest:TFHTRo`, `gloamingforest:TFHTLD`.
+- Piece types: `gloamingforest:GloamingHill`, `gloamingforest:GloamingHedge`, `gloamingforest:GloamingFallenTrunk`,
+  `gloamingforest:GloamingHTTr`, `gloamingforest:GloamingHTLB`, `gloamingforest:GloamingHTMB`, `gloamingforest:GloamingHTSB`,
+  `gloamingforest:GloamingHTRo`, `gloamingforest:GloamingHTLD`.
 - Structure types: `gloamingforest:hollow_hill`, `gloamingforest:hedge_maze`, `gloamingforest:hollow_tree`,
   `gloamingforest:fallen_trunk`.
 - Lang: `block.gloamingforest.hedge`.
@@ -230,7 +230,7 @@ Notation: `block[state=value]`; `weighted{a:w}`; loot `xN` count, `wN` weight, `
 - `gloamingforest:dark_ferns`: type `gloamingforest:dark_forest_placer` {feature={feature=simple_block{config={to_place=fern}}, placement=[block_predicate_filter{predicate=all_of{predicates=[matching_blocks{blocks=air}, matching_block_tag{offset=[0, -1, 0], tag=dirt}]}}]}, tries=64, xz_spread=7, y_spread=3}
 - `gloamingforest:dark_grass`: type `gloamingforest:dark_forest_placer` {feature={feature=simple_block{config={to_place=short_grass}}, placement=[block_predicate_filter{predicate=all_of{predicates=[matching_blocks{blocks=air}, matching_block_tag{offset=[0, -1, 0], tag=dirt}]}}]}, tries=64, xz_spread=7, y_spread=3}
 - `gloamingforest:dark_pumpkins`: type `gloamingforest:dark_forest_placer` {feature={feature=simple_block{config={to_place=pumpkin}}, placement=[block_predicate_filter{predicate=all_of{predicates=[replaceable, matching_block_tag{offset=[0, -1, 0], tag=dirt}]}}]}, tries=50, xz_spread=7, y_spread=3}
-- `gloamingforest:default_fallen_logs`: type `minecraft:random_selector` {default={feature=gloamingforest:tf_oak_fallen_log, placement=[]}, features=[{chance=0.1, feature={feature=gloamingforest:birch_fallen_log, placement=[]}}, {chance=0.2, feature={feature=gloamingforest:oak_fallen_log, placement=[]}}, {chance=0.4, feature={feature=gloamingforest:canopy_fallen_log, placement=[]}}]}
+- `gloamingforest:default_fallen_logs`: type `minecraft:random_selector` {default={feature=gloamingforest:gf_oak_fallen_log, placement=[]}, features=[{chance=0.1, feature={feature=gloamingforest:birch_fallen_log, placement=[]}}, {chance=0.2, feature={feature=gloamingforest:oak_fallen_log, placement=[]}}, {chance=0.4, feature={feature=gloamingforest:canopy_fallen_log, placement=[]}}]}
 - `gloamingforest:dense_ferns`: type `minecraft:random_patch` {feature={feature=simple_block{config={to_place=fern}}, placement=[block_predicate_filter{predicate=all_of{predicates=[matching_blocks{blocks=air}, matching_block_tag{offset=[0, -1, 0], tag=dirt}]}}]}, tries=64, xz_spread=7, y_spread=3}
 - `gloamingforest:dense_large_ferns`: type `minecraft:random_patch` {feature={feature=simple_block{config={to_place=large_fern[half=lower]}}, placement=[block_predicate_filter{predicate=all_of{predicates=[matching_blocks{blocks=air}, matching_block_tag{offset=[0, -1, 0], tag=dirt}]}}]}, tries=64, xz_spread=7, y_spread=3}
 - `gloamingforest:foundation`: type `gloamingforest:foundation` {basement_height=weighted_list{distribution=[{data=3, weight=1}, {data=0, weight=1}]}, basement_posts=oak_fence[east=false,north=false,south=false,waterlogged=false,west=false], decayed_wall_block=mossy_cobblestone, decayed_wall_top_block=weighted{mossy_cobblestone:5, mossy_cobblestone_slab[type=bottom,waterlogged=false]:1, mossy_cobblestone_stairs[facing=east,half=bottom,shape=straight,waterlogged=false]:2, mossy_cobblestone_stairs[facing=west,half=bottom,shape=straight,waterlogged=false]:2}, floor=weighted{oak_planks:39, oak_slab[type=bottom,waterlogged=false]:1, oak_stairs[facing=north,half=bottom,shape=straight,waterlogged=false]:6, oak_stairs[facing=east,half=bottom,shape=straight,waterlogged=false]:2, oak_stairs[facing=south,half=bottom,shape=straight,waterlogged=false]:6, oak_stairs[facing=west,half=bottom,shape=straight,waterlogged=false]:2}, loot_container=chest[type=single,facing=north,waterlogged=false], loot_table=gloamingforest:foundation_basement, random_floor_chance=uniform{max_exclusive=1, min_inclusive=-2}, wall_block=cobblestone, wall_heights=uniform(1..5), wall_top_block=weighted{cobblestone:5, cobblestone_slab[type=bottom,waterlogged=false]:1, cobblestone_stairs[facing=east,half=bottom,shape=straight,waterlogged=false]:2, cobblestone_stairs[facing=west,half=bottom,shape=straight,waterlogged=false]:2}, wall_width=uniform(5..9)}
@@ -248,7 +248,7 @@ Notation: `block[state=value]`; `weighted{a:w}`; loot `xN` count, `wN` weight, `
 - `gloamingforest:small_diorite`: type `minecraft:ore` {discard_chance_on_air_exposure=0, size=16, targets=[{state=diorite, target={predicate_type=tag_match, tag=stone_ore_replaceables}}]}
 - `gloamingforest:small_granite`: type `minecraft:ore` {discard_chance_on_air_exposure=0, size=16, targets=[{state=granite, target={predicate_type=tag_match, tag=stone_ore_replaceables}}]}
 - `gloamingforest:spruce_fallen_log`: type `gloamingforest:fallen_small_log` {hollow=gloamingforest:hollow_spruce_log_horizontal[axis=x,variant=empty], normal=spruce_log[axis=y]}
-- `gloamingforest:tf_oak_fallen_log`: type `gloamingforest:fallen_small_log` {hollow=gloamingforest:hollow_gloaming_oak_log_horizontal[axis=x,variant=empty], normal=gloamingforest:gloaming_oak_log[axis=y]}
+- `gloamingforest:gf_oak_fallen_log`: type `gloamingforest:fallen_small_log` {hollow=gloamingforest:hollow_gloaming_oak_log_horizontal[axis=x,variant=empty], normal=gloamingforest:gloaming_oak_log[axis=y]}
 - `gloamingforest:torch_berries`: type `gloamingforest:underground_plants` {state=gloamingforest:torchberry_plant[has_torchberries=true]}
 - `gloamingforest:uberous_soil_patch_big`: type `gloamingforest:mycelium_blob` {half_height=1, radius=uniform(4..8), state_provider={fallback=gloamingforest:uberous_soil, rules=[]}, target=matching_blocks{blocks=[podzol, coarse_dirt, dirt]}}
 - `gloamingforest:uberous_soil_patch_small`: type `gloamingforest:mycelium_blob` {half_height=0, radius=uniform(2..3), state_provider={fallback=gloamingforest:uberous_soil, rules=[]}, target=matching_blocks{blocks=[podzol, coarse_dirt, dirt]}}
@@ -288,7 +288,7 @@ Notation: `block[state=value]`; `weighted{a:w}`; loot `xN` count, `wN` weight, `
 - `gloamingforest:small_diorite`: feature `gloamingforest:small_diorite`; placement: height trapezoid{max_inclusive=y=64, min_inclusive=y=-64} > rarity 1/10 > in_square > count 5 > biome
 - `gloamingforest:small_granite`: feature `gloamingforest:small_granite`; placement: height trapezoid{max_inclusive=y=64, min_inclusive=y=-64} > rarity 1/10 > in_square > count 5 > biome
 - `gloamingforest:spruce_fallen_log`: feature `gloamingforest:spruce_fallen_log`; placement: rarity 1/40 > in_square > heightmap OCEAN_FLOOR > gloamingforest:no_structure{additional_clearance=0, occupies_surface=True, occupies_underground=False, occupies_vegetation=False, structures_allowed=[]} > biome
-- `gloamingforest:tf_oak_fallen_log`: feature `gloamingforest:tf_oak_fallen_log`; placement: rarity 1/40 > in_square > heightmap OCEAN_FLOOR > gloamingforest:no_structure{additional_clearance=0, occupies_surface=True, occupies_underground=False, occupies_vegetation=False, structures_allowed=[]} > biome
+- `gloamingforest:gf_oak_fallen_log`: feature `gloamingforest:gf_oak_fallen_log`; placement: rarity 1/40 > in_square > heightmap OCEAN_FLOOR > gloamingforest:no_structure{additional_clearance=0, occupies_surface=True, occupies_underground=False, occupies_vegetation=False, structures_allowed=[]} > biome
 - `gloamingforest:torch_berries`: feature `gloamingforest:torch_berries`; placement: heightmap WORLD_SURFACE_WG > height uniform bottom+0..y=60 > count 8 > in_square > gloamingforest:no_structure{additional_clearance=0, occupies_surface=False, occupies_underground=True, occupies_vegetation=False, structures_allowed=[]} > biome
 - `gloamingforest:vanilla_roots`: feature `gloamingforest:vanilla_roots`; placement: count 16 > height uniform bottom+0..y=0 > block_predicate_filter{predicate=would_survive{state=gloamingforest:torchberry_plant[has_torchberries=false]}} > rarity 1/1 > in_square > heightmap MOTION_BLOCKING > gloamingforest:no_structure{additional_clearance=0, occupies_surface=False, occupies_underground=True, occupies_vegetation=False, structures_allowed=[]} > biome
 - `gloamingforest:water_lake`: feature `gloamingforest:water_lake`; placement: rarity 1/32 > in_square > heightmap OCEAN_FLOOR > gloamingforest:no_structure{additional_clearance=0, occupies_surface=True, occupies_underground=True, occupies_vegetation=False, structures_allowed=[]} > biome

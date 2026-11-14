@@ -1,6 +1,6 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/init/TFDamageTypes.java
+//   src/main/java/gloamingforest/init/GloamingDamageTypes.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -18,7 +18,7 @@
 //   of the hurt sound (Player#getHurtSound: burning, freezing, upstream's pinch): the game's hurt sound
 //   for that hurt (Player::getCustomHurtSound) becomes Bedrock's matching player hurt sound, or
 //   silence for upstream's pinch, which gf::fx plays.
-// - Damage types: upstream's 40 (TFDamageTypes#bootstrap: message id, exhaustion, effects) and
+// - Damage types: upstream's 40 (GloamingDamageTypes#bootstrap: message id, exhaustion, effects) and
 //   Minecraft 1.21.1's 47 (data/minecraft/damage_type, with NeoForge's neoforge:poison) are built
 //   in; <mod>/data/<ns>/damage_type/*.json (F1's import) override and add. Bedrock's own damage is
 //   named by Java's ids ("minecraft:player_attack", "minecraft:arrow", ...) from its cause (and the
@@ -84,7 +84,7 @@ namespace {
 
 // ---- damage types --------------------------------------------------------------------------------
 
-/// TFDamageTypes#bootstrap.
+/// GloamingDamageTypes#bootstrap.
 std::map<std::string, DamageTypeSpec> builtinTypes() {
     struct Row {
         char const* path;
@@ -720,7 +720,7 @@ void playDamageEffect(Actor& victim, std::string const& typeId, Cause cause, boo
     } else if (effects == "poking") {
         event = "minecraft:entity.player.hurt_sweet_berry_bush";
     } else if (effects == "gloamingforest:pinch") {
-        event = "gloamingforest:entity.gloamingforest.pinch_beetle.attack"; // TFSounds.PINCH_BEETLE_ATTACK
+        event = "gloamingforest:entity.gloamingforest.pinch_beetle.attack"; // GloamingSounds.PINCH_BEETLE_ATTACK
     } else {
         return;
     }
@@ -1072,8 +1072,8 @@ LL_TYPE_INSTANCE_HOOK(
     Actor*             dead
 ) {
     if (dead) {
-        auto tf = gf::combat::deathMessageFor(*dead, deadName, mCause);
-        if (!tf.first.empty()) return tf;
+        auto upsrc = gf::combat::deathMessageFor(*dead, deadName, mCause);
+        if (!upsrc.first.empty()) return upsrc;
     }
     return origin(deadName, dead);
 }

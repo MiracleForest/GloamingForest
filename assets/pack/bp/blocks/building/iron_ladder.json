@@ -35,7 +35,7 @@
         "minecraft:stone_tier_destructible"
       ],
       "minecraft:geometry": {
-        "identifier": "geometry.tf.gloamingforest.block.iron_ladder.multipart",
+        "identifier": "geometry.gf.gloamingforest.block.iron_ladder.multipart",
         "bone_visibility": {
           "part0": "q.block_state('gloamingforest:facing') == 'north' && !q.block_state('gloamingforest:left')",
           "part1": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:left')",
@@ -57,11 +57,11 @@
       },
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_ladder_iron",
+          "texture": "gf_block_ladder_iron",
           "render_method": "opaque"
         },
         "t_gloamingforest_block_ladder_iron": {
-          "texture": "tf_block_ladder_iron",
+          "texture": "gf_block_ladder_iron",
           "render_method": "opaque"
         }
       },

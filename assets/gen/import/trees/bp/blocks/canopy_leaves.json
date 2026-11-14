@@ -62,31 +62,31 @@
       "minecraft:geometry": "minecraft:geometry.full_block",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_vanilla_block_spruce_leaves",
+          "texture": "gf_vanilla_block_spruce_leaves",
           "render_method": "alpha_test"
         },
         "up": {
-          "texture": "tf_vanilla_block_spruce_leaves",
+          "texture": "gf_vanilla_block_spruce_leaves",
           "render_method": "alpha_test"
         },
         "down": {
-          "texture": "tf_vanilla_block_spruce_leaves",
+          "texture": "gf_vanilla_block_spruce_leaves",
           "render_method": "alpha_test"
         },
         "north": {
-          "texture": "tf_vanilla_block_spruce_leaves",
+          "texture": "gf_vanilla_block_spruce_leaves",
           "render_method": "alpha_test"
         },
         "south": {
-          "texture": "tf_vanilla_block_spruce_leaves",
+          "texture": "gf_vanilla_block_spruce_leaves",
           "render_method": "alpha_test"
         },
         "east": {
-          "texture": "tf_vanilla_block_spruce_leaves",
+          "texture": "gf_vanilla_block_spruce_leaves",
           "render_method": "alpha_test"
         },
         "west": {
-          "texture": "tf_vanilla_block_spruce_leaves",
+          "texture": "gf_vanilla_block_spruce_leaves",
           "render_method": "alpha_test"
         }
       },
@@ -95,7 +95,7 @@
         "geometry": "minecraft:geometry.full_block",
         "material_instances": {
           "*": {
-            "texture": "tf_trees_canopy_leaves_item",
+            "texture": "gf_trees_canopy_leaves_item",
             "render_method": "alpha_test"
           }
         }

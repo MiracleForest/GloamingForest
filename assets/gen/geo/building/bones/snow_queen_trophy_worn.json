@@ -3,8 +3,8 @@
   "source": "CustomHeadLayer.translateToHead + the item model's 'head' display + ItemRenderer (builtin/entity) + ISTER + TrophyRenderer.render(null, 180, ItemDisplayContext.HEAD) + SnowQueenModel.renderTrophy (item form)",
   "layer": {
     "name": "snow_queen_trophy",
-    "field": "TFModelLayers.SNOW_QUEEN_TROPHY",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.SNOW_QUEEN_TROPHY, SnowQueenModel::checkForPack);"
+    "field": "GloamingModelLayers.SNOW_QUEEN_TROPHY",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.SNOW_QUEEN_TROPHY, SnowQueenModel::checkForPack);"
   },
   "frame": "head",
   "slot": "head",
@@ -24,7 +24,7 @@
       "identifier": "geometry.gloamingforest.snow_queen_trophy_worn",
       "texture": {
         "bedrock": "textures/gloamingforest/entity/snowqueen",
-        "tf": "src/main/resources/assets/gloamingforest/textures/entity/snowqueen.png"
+        "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/snowqueen.png"
       },
       "material": "entity_alphatest"
     }

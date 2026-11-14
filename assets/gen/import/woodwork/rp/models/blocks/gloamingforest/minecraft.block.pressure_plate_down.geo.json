@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.tf.minecraft.block.pressure_plate_down",
+        "identifier": "geometry.gf.minecraft.block.pressure_plate_down",
         "texture_width": 16,
         "texture_height": 16,
         "visible_bounds_width": 3,

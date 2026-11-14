@@ -3,17 +3,17 @@
   "geometry": "geometry.wolf",
   "layer": {
     "name": "hostile_wolf",
-    "field": "TFModelLayers.HOSTILE_WOLF",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.HOSTILE_WOLF, () -> LayerDefinition.create(WolfModel.createMeshDefinition(CubeDeformation.NONE), 64, 32));"
+    "field": "GloamingModelLayers.HOSTILE_WOLF",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.HOSTILE_WOLF, () -> LayerDefinition.create(WolfModel.createMeshDefinition(CubeDeformation.NONE), 64, 32));"
   },
   "textures": [
     {
       "bedrock": "textures/entity/wolf/wolf_angry",
-      "tf": "(vanilla) minecraft:entity/wolf/wolf_angry.png"
+      "upsrc": "(vanilla) minecraft:entity/wolf/wolf_angry.png"
     },
     {
       "bedrock": "textures/gloamingforest/entity/mistwolf",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/mistwolf.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/mistwolf.png"
     }
   ],
   "notes": ["WolfModel.createMeshDefinition; HostileWolfRenderer and MistWolfRenderer bake this layer."]

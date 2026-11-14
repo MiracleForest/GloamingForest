@@ -3,8 +3,8 @@
   "source": "CustomHeadLayer.translateToHead + the item model's 'head' display + ItemRenderer (builtin/entity) + ISTER + TrophyRenderer.render(null, 180, ItemDisplayContext.HEAD) + AlphaYetiModel.renderTrophy (item form)",
   "layer": {
     "name": "alpha_yeti_trophy",
-    "field": "TFModelLayers.ALPHA_YETI_TROPHY",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.ALPHA_YETI_TROPHY, AlphaYetiModel::createTrophy);"
+    "field": "GloamingModelLayers.ALPHA_YETI_TROPHY",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.ALPHA_YETI_TROPHY, AlphaYetiModel::createTrophy);"
   },
   "frame": "head",
   "slot": "head",
@@ -24,7 +24,7 @@
       "identifier": "geometry.gloamingforest.alpha_yeti_trophy_worn",
       "texture": {
         "bedrock": "textures/gloamingforest/entity/yetialpha",
-        "tf": "src/main/resources/assets/gloamingforest/textures/entity/yetialpha.png"
+        "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/yetialpha.png"
       },
       "material": "entity_alphatest"
     }

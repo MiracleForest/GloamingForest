@@ -10,7 +10,7 @@
         "default": "textures/gloamingforest/entity/mistwolf"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.mist_wolf"
+        "default": "geometry.gf.skeleton.mist_wolf"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

@@ -275,7 +275,7 @@
     "id": "gloamingforest:nagastone_head",
     "family": "horizontal",
     "params": {
-      "class": "TFHorizontalBlock",
+      "class": "GloamingHorizontalBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
       "states": ["facing"],
       "tags": ["minecraft:is_pickaxe_item_destructible"]

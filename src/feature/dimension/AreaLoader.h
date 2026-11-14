@@ -1,7 +1,7 @@
 #pragma once
 
 // Internal to unit F4. Loads an area of a dimension without a player in it, as Java's chunk
-// tickets do for the teleporter (TFTeleporter loads the destination synchronously and keeps it with
+// tickets do for the teleporter (GloamingTeleporter loads the destination synchronously and keeps it with
 // a PORTAL ticket for 300 ticks): a transient ticking area of the engine (not saved with the world,
 // not counted against the 10 ticking areas of /tickingarea) around the area, removed again when the
 // last handle to it is released and its own loading is over (an area removed while its chunks are

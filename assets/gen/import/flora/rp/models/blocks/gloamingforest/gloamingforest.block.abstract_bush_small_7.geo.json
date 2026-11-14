@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.tf.gloamingforest.block.abstract_bush_small_7",
+        "identifier": "geometry.gf.gloamingforest.block.abstract_bush_small_7",
         "texture_width": 16,
         "texture_height": 16,
         "visible_bounds_width": 3,

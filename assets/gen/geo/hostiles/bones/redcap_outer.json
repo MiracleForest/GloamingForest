@@ -3,8 +3,8 @@
   "geometry": "geometry.gloamingforest.redcap_outer",
   "layer": {
     "name": "redcap_outer",
-    "field": "TFModelLayers.REDCAP_ARMOR_OUTER",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.REDCAP_ARMOR_OUTER, () -> LayerDefinition.create(HumanoidModel.createMesh(new CubeDeformation(0.65F), 0.7F), 64, 32));"
+    "field": "GloamingModelLayers.REDCAP_ARMOR_OUTER",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.REDCAP_ARMOR_OUTER, () -> LayerDefinition.create(HumanoidModel.createMesh(new CubeDeformation(0.65F), 0.7F), 64, 32));"
   },
   "texture_size": [64, 32],
   "bones": [

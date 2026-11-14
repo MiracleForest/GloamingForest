@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_vanilla_block_soul_sand"
+          "default": "gf_vanilla_block_soul_sand"
         }
       },
       "minecraft:display_name": {

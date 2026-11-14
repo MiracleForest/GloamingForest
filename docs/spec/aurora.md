@@ -32,7 +32,7 @@ row in the section 1.2 table: `FloorFarWallSteps`, `FloorPillarParkour`, `FloorP
 `FloorPillarPlatformsOutside`, `FloorPlatform`, `FloorQuadPillarStairs`, `FloorTop`, `FloorWraparoundWallSteps`,
 `FloorWraparoundWallStepsPillars`),
 `world/components/structures/selectors/IceTowerRandomBlockSelectorFactory.java`, F7 tower base (`bases/Tower.h`:
-`TowerWingComponent`, `TowerRoofComponent`), `world/components/structures/UtilityPiece.java` (F7 `TFUtilityPiece`).
+`TowerWingComponent`, `TowerRoofComponent`), `world/components/structures/UtilityPiece.java` (F7 `GloamingUtilityPiece`).
 
 | Field | Value |
 |---|---|
@@ -66,14 +66,14 @@ consumes the same random calls).
 
 | Id | Class | Summary |
 |---|---|---|
-| `gloamingforest:TFITMai` | IceTowerMainComponent | Main tower, `SIZE` 11, height `31 + rand(3) x 10` (31/41/51), at (x + 11, y + 40, z + 11), NORTH. `addChildren` **loops until the boss wing exists**: `rand.setSeed(rand.nextLong())`, clear openings, add opening (0, 1, 5) CW180, reset the piece list to the main tower alone; entrance: when the door x is 0 (always), bridge length `30 + rand(20)` built with `makeEntranceBridge` (bridge piece at `offsetTowerCCoords(x, y, z, 5, dir)`, extra z 4) and the door moved `length` blocks west; then `makeEntranceTower` (size 11, height 11, the main rotation); then the regular wing logic (`super.addChildren`). Saves `hasBossWing` |
-| `gloamingforest:TFITWin` | IceTowerWingComponent | Wing tower (size 11). `addChildren`: door opening (0, 1, 5) CW180; `hasBase` = no other piece overlaps the wing's x/z rectangle and (depth 0 or `rand.nextBoolean()`); roof always (`IceTowerRoofComponent` through `tryToFitRoof`); no base -> beard, base -> a `gloamingforest:TFUtilityPiece` box from the lowest piece minY up to the wing minY (keeps features out). Depth < 5: start rotation `ROTATIONS[rand(4)]`, for each of the 4 rotations a valid opening; at depth 4 when the main tower has no boss wing yet -> `makeBossTowerWing` (size 15, height 41), else a child wing of height `(rand(2) + rand(2) + 2) x 10 + 1` (21/31/41). Child wings are refused when out of `RANGE` = 27 (x or z) of the first piece's centre, when the wing box extended by 16 (= round(11 x 1.414)) up and down collides with another piece, or when an entrance tower / bridge piece intersects the x/z rectangle of the **parent** wing (upstream tests `this.getBoundingBox()`, not the new wing; keep it). Treasure floor: `floors = height / 10`; if floors > 1, `treasureFloor = rand(floors - 1)`. Door height `getYByStairs = 11 + rand(floors - 1) x 10`. Door opening: F7 door + birch planks accent above when not air. Saves `hasBase`, `treasureFloor` |
-| `gloamingforest:TFITBoss` | IceTowerBossWingComponent | Snow Queen tower: size 15, height 41, no controlled spawns (`spawnListIndex = -1`), never a base (always a beard). Floors: thick ice slabs per floor (each column `1 + rand(2) + rand(2) + rand(2)` thick, `minecraft:ice` 1/4 else `minecraft:packed_ice`) instead of planks; floors 0..2 decorated with packed-ice stairs: three levels (y = bottom, +3, +6) of two opposite stair sets each, rotating 90 degrees per level (`placeIceStairs`: solid 3 x 3 at (8..10, y + 1, 1..3), (11..13, y + 2, 1..3), (11..13, y + 3, 4..6) with 50 % random packed ice under each step); top floor (bottom 30, top 40): ceiling of glowstone (1/10) or packed ice, `rand(2) + rand(2)` thick, `gloamingforest:snow_queen_boss_spawner` at (7, top - 6, 7) = (7, 34, 7), air box (5..9, top - 3..top - 1, 5..9) |
-| `gloamingforest:TFITEnt` | IceTowerEntranceComponent | Entrance tower: size 11, height 11, always a base, door (10, 1, 5) facing the bridge, three `TFITSt` stair pieces on the CW180, CCW90 and CW90 sides (each adds an opening), roof, no wings (`makeTowerWing` returns false); single floor = `decoratePillarsCornersHigh` (cross beams of x / z aurora pillars at y 5, the centre 3..7 cleared, four corner pillars (3/7, 5..10, 3/7) hanging from the ceiling) |
-| `gloamingforest:TFITBri` | IceTowerBridgeComponent | Entrance bridge, length L (30..49); box = `getComponentToAddBoundingBox(x, y, z, 0, 0, -4, L, 6, 9, dir)`, i.e. world z - 4 .. z + 5 (local 0..L, 0..6, 0..9) in the bridge direction; contents in local coordinates: air (0..L, 1..5, 0..4), aurora-block floor (y 0) and ceiling (y 6) over z 4..8 (`extraZlength` = 4), aurora pillars on both sides every 3 blocks from x 2 (y 1..5 at z 4 and z 8). Saves `bridgeLength`, `extraZlength` |
-| `gloamingforest:TFITSt` | IceTowerStairsComponent | Outside stairs of the entrance tower: `stairsLength` 5, box starts 4 below the door; stepped pyramid of aurora block (two blocks per step, only into replaceable blocks) widening with distance, plus one block at (0, 4, 5) |
-| `gloamingforest:TFITRoof` | IceTowerRoofComponent | "Swoopy" roof cap on top of a wing: same size and orientation, height `round(sqrt(size^2 + size^2))` (16 for 11, 21 for 15); each column (x, z) is filled with aurora block from y 0 up to `round(sqrt(x^2 + z^2))` |
-| `gloamingforest:TFITBea` | IceTowerBeardComponent | Hanging "beard" under a wing without base: same footprint, height `round(size x 1.414)` (16 / 21), box from wing minY - height to minY; each column hangs `round(sqrt(x^2 + z^2))` aurora blocks down from the top. Saves `beardSize`, `beardHeight` |
+| `gloamingforest:GloamingITMai` | IceTowerMainComponent | Main tower, `SIZE` 11, height `31 + rand(3) x 10` (31/41/51), at (x + 11, y + 40, z + 11), NORTH. `addChildren` **loops until the boss wing exists**: `rand.setSeed(rand.nextLong())`, clear openings, add opening (0, 1, 5) CW180, reset the piece list to the main tower alone; entrance: when the door x is 0 (always), bridge length `30 + rand(20)` built with `makeEntranceBridge` (bridge piece at `offsetTowerCCoords(x, y, z, 5, dir)`, extra z 4) and the door moved `length` blocks west; then `makeEntranceTower` (size 11, height 11, the main rotation); then the regular wing logic (`super.addChildren`). Saves `hasBossWing` |
+| `gloamingforest:GloamingITWin` | IceTowerWingComponent | Wing tower (size 11). `addChildren`: door opening (0, 1, 5) CW180; `hasBase` = no other piece overlaps the wing's x/z rectangle and (depth 0 or `rand.nextBoolean()`); roof always (`IceTowerRoofComponent` through `tryToFitRoof`); no base -> beard, base -> a `gloamingforest:GloamingUtilityPiece` box from the lowest piece minY up to the wing minY (keeps features out). Depth < 5: start rotation `ROTATIONS[rand(4)]`, for each of the 4 rotations a valid opening; at depth 4 when the main tower has no boss wing yet -> `makeBossTowerWing` (size 15, height 41), else a child wing of height `(rand(2) + rand(2) + 2) x 10 + 1` (21/31/41). Child wings are refused when out of `RANGE` = 27 (x or z) of the first piece's centre, when the wing box extended by 16 (= round(11 x 1.414)) up and down collides with another piece, or when an entrance tower / bridge piece intersects the x/z rectangle of the **parent** wing (upstream tests `this.getBoundingBox()`, not the new wing; keep it). Treasure floor: `floors = height / 10`; if floors > 1, `treasureFloor = rand(floors - 1)`. Door height `getYByStairs = 11 + rand(floors - 1) x 10`. Door opening: F7 door + birch planks accent above when not air. Saves `hasBase`, `treasureFloor` |
+| `gloamingforest:GloamingITBoss` | IceTowerBossWingComponent | Snow Queen tower: size 15, height 41, no controlled spawns (`spawnListIndex = -1`), never a base (always a beard). Floors: thick ice slabs per floor (each column `1 + rand(2) + rand(2) + rand(2)` thick, `minecraft:ice` 1/4 else `minecraft:packed_ice`) instead of planks; floors 0..2 decorated with packed-ice stairs: three levels (y = bottom, +3, +6) of two opposite stair sets each, rotating 90 degrees per level (`placeIceStairs`: solid 3 x 3 at (8..10, y + 1, 1..3), (11..13, y + 2, 1..3), (11..13, y + 3, 4..6) with 50 % random packed ice under each step); top floor (bottom 30, top 40): ceiling of glowstone (1/10) or packed ice, `rand(2) + rand(2)` thick, `gloamingforest:snow_queen_boss_spawner` at (7, top - 6, 7) = (7, 34, 7), air box (5..9, top - 3..top - 1, 5..9) |
+| `gloamingforest:GloamingITEnt` | IceTowerEntranceComponent | Entrance tower: size 11, height 11, always a base, door (10, 1, 5) facing the bridge, three `GloamingITSt` stair pieces on the CW180, CCW90 and CW90 sides (each adds an opening), roof, no wings (`makeTowerWing` returns false); single floor = `decoratePillarsCornersHigh` (cross beams of x / z aurora pillars at y 5, the centre 3..7 cleared, four corner pillars (3/7, 5..10, 3/7) hanging from the ceiling) |
+| `gloamingforest:GloamingITBri` | IceTowerBridgeComponent | Entrance bridge, length L (30..49); box = `getComponentToAddBoundingBox(x, y, z, 0, 0, -4, L, 6, 9, dir)`, i.e. world z - 4 .. z + 5 (local 0..L, 0..6, 0..9) in the bridge direction; contents in local coordinates: air (0..L, 1..5, 0..4), aurora-block floor (y 0) and ceiling (y 6) over z 4..8 (`extraZlength` = 4), aurora pillars on both sides every 3 blocks from x 2 (y 1..5 at z 4 and z 8). Saves `bridgeLength`, `extraZlength` |
+| `gloamingforest:GloamingITSt` | IceTowerStairsComponent | Outside stairs of the entrance tower: `stairsLength` 5, box starts 4 below the door; stepped pyramid of aurora block (two blocks per step, only into replaceable blocks) widening with distance, plus one block at (0, 4, 5) |
+| `gloamingforest:GloamingITRoof` | IceTowerRoofComponent | "Swoopy" roof cap on top of a wing: same size and orientation, height `round(sqrt(size^2 + size^2))` (16 for 11, 21 for 15); each column (x, z) is filled with aurora block from y 0 up to `round(sqrt(x^2 + z^2))` |
+| `gloamingforest:GloamingITBea` | IceTowerBeardComponent | Hanging "beard" under a wing without base: same footprint, height `round(size x 1.414)` (16 / 21), box from wing minY - height to minY; each column hangs `round(sqrt(x^2 + z^2))` aurora blocks down from the top. Saves `beardSize`, `beardHeight` |
 
 Wing `postProcess` (all wing types): `decoRNG = RandomSource.create(seed + minX x 321534781 ^ minZ x 756839)` (Java
 precedence: `(seed + minX x 321534781) ^ (minZ x 756839)`); walls `generateBox(0, 0, 0, size - 1, height - 1, size - 1,
@@ -129,7 +129,7 @@ order above). The total is `(float)` of the double sum of the candidates' float 
 The rotation is then `Util.getRandom(allowed, decoRNG)` over the allowed rotations in ascending order
 (`IntStream.range(0, 4).filter(...)`), which is deterministic in upstream too.
 
-Chests: `TFStructureComponentOld.placeTreasureRotated` places a vanilla `minecraft:chest` (not trapped) facing the
+Chests: `GloamingStructureComponentOld.placeTreasureRotated` places a vanilla `minecraft:chest` (not trapped) facing the
 given direction with the loot table (F10 `loot::placeContainer`), skipped when a chest is already there.
 
 ### 1.3 Golden hash
@@ -147,7 +147,7 @@ Sources: `world/components/structures/type/MushroomTowerStructure.java`, `world/
 | Field | Value |
 |---|---|
 | Structure type | `gloamingforest:mushroom_tower` (`MushroomTowerStructure extends LandmarkStructure`, no controlled spawns, no lock, no hint) |
-| Structure set | **none**: upstream's `TFStructureSets` registration is commented out and the legacy placement entry for `dense_mushroom_forest` too; the structure never generates naturally and is reachable only with `/place structure gloamingforest:mushroom_tower` (F6 `/gloamingforest place`) |
+| Structure set | **none**: upstream's `GloamingStructureSets` registration is commented out and the legacy placement entry for `dense_mushroom_forest` too; the structure never generates naturally and is reachable only with `/place structure gloamingforest:mushroom_tower` (F6 `/gloamingforest place`) |
 | Biomes | `#gloamingforest:valid_mushroom_tower_biomes` = `gloamingforest:dense_mushroom_forest` (U1 tag) |
 | Step | `surface_structures`, terrain adjustment `none` |
 | Decoration clearance | radius 2, surface true, underground true, vegetation true, adjust elevation true: start y = `clamp(firstOccupiedHeight(WORLD_SURFACE_WG), seaLevel + 1, seaLevel + 7)` |
@@ -164,18 +164,18 @@ floor `minecraft:oak_planks`. Ascender floors and bridges use `minecraft:jungle_
 
 | Id | Class | Summary |
 |---|---|---|
-| `gloamingforest:TFMTMai` | MushroomTowerMainComponent | Main tower, `MAIN_SIZE` 15, height `8 + rand(3) x 4` (8/12/16), at (x + 15, y + 4, z + 15), NORTH; always a base. Depth < 3: up to 6 tries of `makeAscenderTower` (random side, child height `(height - doorY) + (rand(2) + rand(2) + 3) x 4 + 1`, an ascender bridge; logs "Main tower made a bridge to another tower" / "Main tower failed to branch off at index {}"), then a bridge (size `size - 4` = 11, height `(rand(2) + rand(2) + 2) x 4 + 1`) on every other side. Depth >= 3: a mushroom roof (hang 1.6). Door opening also clears the two blocks inside the door |
-| `gloamingforest:TFMTWin` | MushroomTowerWingComponent | Round tower (sizes 11, 7, 3): trunk where `dist = (int)(max(|dx|, |dz|) + min(|dx|, |dz|) x 0.4) <= size / 2`, walls `dist > (int)(diameter x 0.8)`, planks floor and ceiling discs, floors every `FLOOR_HEIGHT` 4 (jungle planks when ascender), base columns down when `size > 3`. Children: an ascender wing adds a main bridge from (door at `height - 3`, CW180 side) with child height `(rand(3) + rand(3) + 2) x 4 + 1`; depth < 5 and size > 6: bridges of `size - 4` on each side except CW180 for non-main sizes; roof when it is the highest same-size tower in its column or has no base. Wings out of `RANGE` 200 or colliding (except with a mushroom roof) are refused; `adjustCoordinates` snaps a wing onto an existing same-size tower within 3 blocks. Door height `FLOOR_HEIGHT + 1 + rand(floors - 1) x 4`; openings at `offset + rand(wLength)` with `wLength = min(size / 3, 3)`. Saves `hasBase`, `isAscender` |
-| `gloamingforest:TFMTBri` | MushroomTowerBridgeComponent | Bridge of `dSize` length, 3 wide: oak fences at z 0 and 2, floor at z 1 (jungle planks when ascender), walkway cleared; then builds the destination wing at (dSize - 1, 1, 1) (logs "Making tower wing failed when bridge was already made..." on failure). Saves `destSize`, `destHeight` |
-| `gloamingforest:TFMTMB` | MushroomTowerMainBridgeComponent | 11-long bridge that ends in a new main tower (size 15, snapped with `adjustCoordinates`) |
-| `gloamingforest:TFMTRoofMush` | TowerRoofMushroomComponent | Mushroom cap: height = wing size, overhang `(int)(height x hang)`, size `height + 2 x overhang`, box from wing maxY + 2 to maxY + height + 1; per layer y radius `(int)(sin((y + height / 1.2) / (height x 2.05) x 3.14) x size / 2)`, hollow `floor(radius x 0.9)` (solid in the top 3 layers), shell and inside both red mushroom block. Hang choice in `makeARoof` (wings): 1.6; if the 1.6 box does **not** collide with another mushroom roof try 1.0, and again 0.6 (Java logic kept: an isolated wing ends with 0.6) |
+| `gloamingforest:GloamingMTMai` | MushroomTowerMainComponent | Main tower, `MAIN_SIZE` 15, height `8 + rand(3) x 4` (8/12/16), at (x + 15, y + 4, z + 15), NORTH; always a base. Depth < 3: up to 6 tries of `makeAscenderTower` (random side, child height `(height - doorY) + (rand(2) + rand(2) + 3) x 4 + 1`, an ascender bridge; logs "Main tower made a bridge to another tower" / "Main tower failed to branch off at index {}"), then a bridge (size `size - 4` = 11, height `(rand(2) + rand(2) + 2) x 4 + 1`) on every other side. Depth >= 3: a mushroom roof (hang 1.6). Door opening also clears the two blocks inside the door |
+| `gloamingforest:GloamingMTWin` | MushroomTowerWingComponent | Round tower (sizes 11, 7, 3): trunk where `dist = (int)(max(|dx|, |dz|) + min(|dx|, |dz|) x 0.4) <= size / 2`, walls `dist > (int)(diameter x 0.8)`, planks floor and ceiling discs, floors every `FLOOR_HEIGHT` 4 (jungle planks when ascender), base columns down when `size > 3`. Children: an ascender wing adds a main bridge from (door at `height - 3`, CW180 side) with child height `(rand(3) + rand(3) + 2) x 4 + 1`; depth < 5 and size > 6: bridges of `size - 4` on each side except CW180 for non-main sizes; roof when it is the highest same-size tower in its column or has no base. Wings out of `RANGE` 200 or colliding (except with a mushroom roof) are refused; `adjustCoordinates` snaps a wing onto an existing same-size tower within 3 blocks. Door height `FLOOR_HEIGHT + 1 + rand(floors - 1) x 4`; openings at `offset + rand(wLength)` with `wLength = min(size / 3, 3)`. Saves `hasBase`, `isAscender` |
+| `gloamingforest:GloamingMTBri` | MushroomTowerBridgeComponent | Bridge of `dSize` length, 3 wide: oak fences at z 0 and 2, floor at z 1 (jungle planks when ascender), walkway cleared; then builds the destination wing at (dSize - 1, 1, 1) (logs "Making tower wing failed when bridge was already made..." on failure). Saves `destSize`, `destHeight` |
+| `gloamingforest:GloamingMTMB` | MushroomTowerMainBridgeComponent | 11-long bridge that ends in a new main tower (size 15, snapped with `adjustCoordinates`) |
+| `gloamingforest:GloamingMTRoofMush` | TowerRoofMushroomComponent | Mushroom cap: height = wing size, overhang `(int)(height x hang)`, size `height + 2 x overhang`, box from wing maxY + 2 to maxY + height + 1; per layer y radius `(int)(sin((y + height / 1.2) / (height x 2.05) x 3.14) x size / 2)`, hollow `floor(radius x 0.9)` (solid in the top 3 layers), shell and inside both red mushroom block. Hang choice in `makeARoof` (wings): 1.6; if the 1.6 box does **not** collide with another mushroom roof try 1.0, and again 0.6 (Java logic kept: an isolated wing ends with 0.6) |
 
 Golden hash `aurora.mushroom_tower_hash` (R19) from `/gloamingforest place gloamingforest:mushroom_tower` at a fixed
 seed.
 
 ## 3. Blocks
 
-Sources: `block/AuroraBrickBlock.java`, `block/AuroralizedGlassBlock.java`, `init/TFBlocks.java`,
+Sources: `block/AuroraBrickBlock.java`, `block/AuroralizedGlassBlock.java`, `init/GloamingBlocks.java`,
 `client/event/ColorHandler.java`, `client/model/block/aurorablock/NoiseVaryingModel*.java`, `util/SimplexNoiseHelper.java`,
 `util/ColorUtil.java`.
 
@@ -211,7 +211,7 @@ R4: both are vanilla crafting recipes of U28's own outputs; the recipe-unlock ad
 
 ## 5. Mobs
 
-Entity sizes and spawn eggs (`init/TFEntities.java`): all MONSTER category.
+Entity sizes and spawn eggs (`init/GloamingEntities.java`): all MONSTER category.
 
 | Entity | Width x height (eye) | Egg colours |
 |---|---|---|
@@ -290,7 +290,7 @@ Base of stable / unstable ice core and snow guardian (`IceCrystal` extends it to
 | Render | `IceCrystalModel` (16 spikes), `icecrystal.png`, shadow 0.25, bobbing |
 | Loot | `gloamingforest:entities/ice_crystal`: 0-2 snowballs, looting +0-1 |
 
-### 5.6 Projectile `gloamingforest:ice_snowball` (`entity/projectile/IceSnowball.java`, TFThrowable)
+### 5.6 Projectile `gloamingforest:ice_snowball` (`entity/projectile/IceSnowball.java`, GloamingThrowable)
 
 Gravity 0.006; trail 2 `minecraft:item_snowball` (F8 `makeTrail`) per tick; on hitting a living entity 2 damage of
 `gloamingforest:snowball_fight` (indirect: the snowball, owner = shooter); any hit or any damage taken kills it:
@@ -338,7 +338,7 @@ event ENTITY_PLACE; the crystal targets the queen's target and dies in 30 second
 else the mob attack (7); applied with `EntityUtil.properlyApplyCustomDamageSource` (F10 `combat::hurt` with the
 attacker's damage and enchantments).
 
-**Ice shields** (`SnowQueenIceShield extends TFPart`, 7 parts, 0.75 x 0.75): parts 0..5 orbit at angle
+**Ice shields** (`SnowQueenIceShield extends GloamingPart`, 7 parts, 0.75 x 0.75): parts 0..5 orbit at angle
 `60 x i + tickCount x 5` degrees, distance 1, y + 0.1 (`getShieldYOffset`); part 6 sits under the queen at y - 1; yaw =
 the angle. Server: each tick every part collides with pushable entities in its box deflated by 0.2: `push(part)`; a
 living entity that `doHurtTarget` hurts is lifted `+0.4` y and the queen plays `entity.gloamingforest.snow_queen.attack`
@@ -394,7 +394,7 @@ lifetime / drag approximations (`assets/pack/rp/particles/aurora/`).
 
 ## 9. Map decoration
 
-`gloamingforest:aurora_palace` (manual): the structure icon of the palace on upstream maps (`TFMapDecorations`), drawn by the
+`gloamingforest:aurora_palace` (manual): the structure icon of the palace on upstream maps (`GloamingMapDecorations`), drawn by the
 conquered-aware renderer (`ConqueredMapIconRenderer`: crossed out once conquered); U13 draws it through F12
 `maps::setIcon` with U28's texture id.
 
@@ -403,7 +403,7 @@ conquered-aware renderer (`ConqueredMapIconRenderer`: crossed out once conquered
 | Tag | Members | Consumer |
 |---|---|---|
 | `block/#gloamingforest:ice_bomb_replaceables` | `gloamingforest:mayapple`, `gloamingforest:fiddlehead`, `minecraft:short_grass`, `minecraft:tall_grass`, `minecraft:fern`, `minecraft:large_fern`, `#minecraft:flowers` | ice bomb freezing (`IceBomb`, U8): a member in the freeze area becomes a snow layer when snow can survive there, else air |
-| `block/#gloamingforest:incorrect_for_ice_tool` | `#minecraft:incorrect_for_wooden_tool` | `TFToolMaterials.ICE` tier (ice sword, U8): the ice tier mines like wood |
+| `block/#gloamingforest:incorrect_for_ice_tool` | `#minecraft:incorrect_for_wooden_tool` | `GloamingToolMaterials.ICE` tier (ice sword, U8): the ice tier mines like wood |
 
 ## 11. Sound events (owned by U28)
 
@@ -439,7 +439,7 @@ controlled spawns (section 1).
 - Aurora tint: client mod = F12 `tint::registerBlock` for the four blocks with the exact noise; the 16 noise variants
   of `aurora_block` are material-instance swaps chosen by the same `calcVariant` in the block renderer. Vanilla
   clients: no per-position tint for custom blocks; they see the untinted variant 0 texture multiplied by the item tint
-  (hue 0.45) baked into a `tf-derived` texture (listed in the README deviations).
+  (hue 0.45) baked into a `upstream-derived` texture (listed in the README deviations).
 - `aurora_block` break speed: Bedrock computes destroy time client side; with the client mod the companion applies the
   0.1 per tick progress for players with `progress_glacier` (`progression::client::has`); for vanilla players the
   server uses `interactions::onStartDestroy` + a mining-speed effect equivalent (F9 helper) so the 10-tick break holds.

@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.tf.gloamingforest.block.vertical_hollow_log_ladder",
+        "identifier": "geometry.gf.gloamingforest.block.vertical_hollow_log_ladder",
         "texture_width": 16,
         "texture_height": 16,
         "visible_bounds_width": 3,

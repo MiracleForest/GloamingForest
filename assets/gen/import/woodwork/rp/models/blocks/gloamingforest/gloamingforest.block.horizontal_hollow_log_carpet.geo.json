@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.tf.gloamingforest.block.horizontal_hollow_log_carpet",
+        "identifier": "geometry.gf.gloamingforest.block.horizontal_hollow_log_carpet",
         "texture_width": 16,
         "texture_height": 16,
         "visible_bounds_width": 3,

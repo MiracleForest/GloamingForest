@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.tf.gloamingforest.block.horizontal_hollow_log_plant",
+        "identifier": "geometry.gf.gloamingforest.block.horizontal_hollow_log_plant",
         "texture_width": 16,
         "texture_height": 16,
         "visible_bounds_width": 3,

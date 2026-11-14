@@ -3,8 +3,8 @@
   "source": "ItemInHandLayer (left arm) + the item model's 'thirdperson_lefthand' display (leftHand) + ItemRenderer (builtin/entity) + ISTER + ISTER (MysticCrownItem, not GUI: the Lich trophy model's hat, yRot 0, scale(1, -1, -1), translate(0.5, 0, -0.5), scale 1.05)",
   "layer": {
     "name": "lich_trophy",
-    "field": "TFModelLayers.LICH_TROPHY",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.LICH_TROPHY, LichModel::create);"
+    "field": "GloamingModelLayers.LICH_TROPHY",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.LICH_TROPHY, LichModel::create);"
   },
   "frame": "leftArm",
   "slot": "off_hand",
@@ -24,7 +24,7 @@
       "identifier": "geometry.gloamingforest.mystic_crown_held_left",
       "texture": {
         "bedrock": "textures/gloamingforest/entity/gloaminglich64",
-        "tf": "src/main/resources/assets/gloamingforest/textures/entity/gloaminglich64.png"
+        "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/gloaminglich64.png"
       },
       "material": "entity_alphatest"
     }

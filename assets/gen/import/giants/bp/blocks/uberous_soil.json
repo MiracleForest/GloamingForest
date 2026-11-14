@@ -16,18 +16,18 @@
       },
       "minecraft:tags": ["minecraft:is_shovel_item_destructible"],
       "minecraft:map_color": "#976d4d",
-      "minecraft:geometry": "geometry.tf.minecraft.block.template_farmland",
+      "minecraft:geometry": "geometry.gf.minecraft.block.template_farmland",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_uberous_soil",
+          "texture": "gf_block_uberous_soil",
           "render_method": "opaque"
         },
         "dirt": {
-          "texture": "tf_block_uberous_soil",
+          "texture": "gf_block_uberous_soil",
           "render_method": "opaque"
         },
         "top": {
-          "texture": "tf_block_uberous_soil",
+          "texture": "gf_block_uberous_soil",
           "render_method": "opaque"
         }
       },

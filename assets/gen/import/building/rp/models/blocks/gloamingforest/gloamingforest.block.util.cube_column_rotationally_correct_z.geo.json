@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.tf.gloamingforest.block.util.cube_column_rotationally_correct_z",
+        "identifier": "geometry.gf.gloamingforest.block.util.cube_column_rotationally_correct_z",
         "texture_width": 16,
         "texture_height": 16,
         "visible_bounds_width": 3,

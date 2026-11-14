@@ -20,7 +20,7 @@
     sounds        no sound_definitions (F3 writes them): checks that every event of sounds.json has an
                   owner, data listing data/gf/sound_events/<unit>.json (never the .ogg files)
     skeleton      items, flat block items, entities (+ placeholder visuals, spawn eggs), id index
-    catalog       TFCreativeTabs -> bp/item_catalog.d/import.json + data/gf/catalog
+    catalog       GloamingCreativeTabs -> bp/item_catalog.d/import.json + data/gf/catalog
     families      block families and traits from the upstream block classes -> data/gf/families/<unit>.json
   Every gloamingforest: reference of the output must resolve (data, BP, owners.tsv, tools/import/known-ids.json).
 
@@ -43,14 +43,14 @@ param(
         'registries', 'particles', 'sounds', 'skeleton', 'catalog', 'families'),
     [string]$Unit,
     [switch]$Check,
-    [string]$TfDir
+    [string]$GloamingDir
 )
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path "$PSScriptRoot/../..").Path
 
-if (-not $TfDir) { $TfDir = if ($env:GF_UPSTREAM_HOME) { $env:GF_UPSTREAM_HOME } else { Join-Path $env:LOCALAPPDATA 'gf-upstream/view' } }
-if (-not (Test-Path (Join-Path $TfDir 'src/main/java/gloamingforest'))) {
-    Write-Host "[import] upstream checkout not found at ${TfDir}: fetching it (tools/upstream/fetch.ps1)"
+if (-not $GloamingDir) { $GloamingDir = if ($env:GF_UPSTREAM_HOME) { $env:GF_UPSTREAM_HOME } else { Join-Path $env:LOCALAPPDATA 'gf-upstream/view' } }
+if (-not (Test-Path (Join-Path $GloamingDir 'src/main/java/gloamingforest'))) {
+    Write-Host "[import] upstream checkout not found at ${GloamingDir}: fetching it (tools/upstream/fetch.ps1)"
     & pwsh -NoProfile -File (Join-Path $root 'tools/upstream/fetch.ps1') -Quiet | Out-Null
     if ($LASTEXITCODE -ne 0) { Write-Host '[import] tools/upstream/fetch.ps1 failed' -ForegroundColor Red; exit 1 }
 }
@@ -88,7 +88,7 @@ if (-not ('GfImport.Program' -as [type])) {
 $kindList = @($Kinds | ForEach-Object { $_ -split ',' } | Where-Object { $_ } | ForEach-Object { $_.Trim() })
 $logger = [Action[string]] { param($m) Write-Host "[import] $m" }
 try {
-    $code = [GfImport.Program]::Run($root, (Resolve-Path $TfDir).Path, [string[]]$kindList, $(if ($Unit) { $Unit } else { $null }), [bool]$Check, $logger)
+    $code = [GfImport.Program]::Run($root, (Resolve-Path $GloamingDir).Path, [string[]]$kindList, $(if ($Unit) { $Unit } else { $null }), [bool]$Check, $logger)
 } catch {
     $e = $_.Exception
     while ($e.InnerException) { $e = $e.InnerException }

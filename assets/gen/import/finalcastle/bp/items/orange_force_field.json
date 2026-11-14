@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_block_forcefield_white"
+          "default": "gf_block_forcefield_white"
         }
       },
       "minecraft:display_name": {

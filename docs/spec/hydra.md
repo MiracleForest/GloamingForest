@@ -43,7 +43,7 @@ Sources: `world/components/structures/type/HydraLairStructure.java`, `world/comp
 | Map icon | `gloamingforest:hydra_lair` (map decoration, below) |
 | Speleothems | `speleothem_config: gloamingforest:hydra_lair` (F7 data: triangular lattice spacing 4.5, x_offset 3.897186, x_spacing 7.794372, z_offset 2.2498753, z_spacing 4.5; stalactites: ore list iron, coal, copper, glowstone, gold, redstone with ore_chance 1.0, stalactite_chance 1.0, stalagmite_chance 0.0625 using `hill_stone_stalactite`) |
 
-Pieces: one piece of type `gloamingforest:TFHydra` (`HydraLairComponent extends HollowHillComponent`), created by
+Pieces: one piece of type `gloamingforest:GloamingHydra` (`HydraLairComponent extends HollowHillComponent`), created by
 `getFirstPiece` at (x - 7, y, z - 7) with hill size 2 and y + 2:
 
 - `radius = (2 x 2 + 1) x 8 - 6 = 34`, `hdiam = (2 x 2 + 1) x 16 = 80`; bounding box from (-34, -(3 + 2), -34)
@@ -78,7 +78,7 @@ Strings: `structure.gloamingforest.hydra_lair` "Hydra's Lair" (lang owned by U24
 ## 2. Boss `gloamingforest:hydra` (Hydra extends BaseTFBoss)
 
 Sources: `entity/boss/Hydra.java`, `HydraHeadContainer.java`, `HydraHead.java`, `HydraNeck.java`, `HydraPart.java`,
-`HydraSmallPart.java`, `entity/TFPart.java`, `entity/boss/BaseTFBoss.java` (F8 boss kit),
+`HydraSmallPart.java`, `entity/GloamingPart.java`, `entity/boss/BaseTFBoss.java` (F8 boss kit),
 `client/renderer/entity/Hydra{,Head,Neck}Renderer.java`, `client/model/entity/Hydra{,Head,Neck}Model.java`.
 
 | Field | Value |
@@ -104,7 +104,7 @@ gloamingforest:entities/hydra, deathChestBlock: gloamingforest:mangrove_chest, b
 7 head containers (`hc[0..6]`), each with a `HydraHead` (4 x 4) and five `HydraNeck` parts (2 x 2) a..e; plus body
 (`HydraSmallPart` 6 x 6), left leg and right leg (2 x 3 each, registered but never positioned by upstream) and tail (6 x 2).
 Part order: body, leftLeg, rightLeg, tail, then per head: head, necka..necke (39 parts). Part ids are the parent id +
-1 + index (`TFPart.setId(id + 1)`, `assignPartIDs`).
+1 + index (`GloamingPart.setId(id + 1)`, `assignPartIDs`).
 
 - Heads 0, 1, 2 start active (IDLE, 60 of 60 ticks); heads 3..6 start DEAD (20 of 20).
 - `HydraPart`: synced `DATA_SIZEACTIVE`; deactivated parts have size 0 x 0; when `markedDead` the part counts
@@ -289,9 +289,9 @@ on success destroy the spawner (no drops) and mark spawned.
 
 ## 5. Blocks
 
-Sources: `block/FireJetBlock.java`, `block/EncasedFireJetBlock.java`, `block/TFSmokerBlock.java`,
-`block/EncasedSmokerBlock.java`, `block/entity/FireJetBlockEntity.java`, `block/entity/TFSmokerBlockEntity.java`,
-`enums/FireJetVariant.java`, `init/TFBlocks.java`, `init/TFBlockEntities.java`.
+Sources: `block/FireJetBlock.java`, `block/EncasedFireJetBlock.java`, `block/GloamingSmokerBlock.java`,
+`block/EncasedSmokerBlock.java`, `block/entity/FireJetBlockEntity.java`, `block/entity/GloamingSmokerBlockEntity.java`,
+`enums/FireJetVariant.java`, `init/GloamingBlocks.java`, `init/GloamingBlockEntities.java`.
 
 | Block | Properties | States | Tool | Light |
 |---|---|---|---|---|
@@ -374,7 +374,7 @@ is no lava, and stone under the whole 5 x 5 at y - 3. Returns true.
 | `gloamingforest:hydra_mortar` | `onFire` (vanilla "%1$s burned to death") | burning | 0.0 | `#minecraft:is_fire`, `#minecraft:ignites_armor_stands`, `#minecraft:avoids_guardian_thorns` |
 
 All scale `when_caused_by_living_non_player`. Hydra bite/fire sources name the hydra entity type as attacker even
-without an attacker entity (`getEntityDamageSource(..., TFEntities.HYDRA)`), so death messages say "the Hydra".
+without an attacker entity (`getEntityDamageSource(..., GloamingEntities.HYDRA)`), so death messages say "the Hydra".
 
 ## 9. Particles (owned by U24)
 

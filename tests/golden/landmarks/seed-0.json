@@ -3,7 +3,7 @@
   "kind": "landmarks",
   "source": {"gloamingforest": "4.8.3802", "commit": "9e40a75721c716b2fdf80c16d1058fe718825e9f", "minecraft": "1.21.1", "neoforge": "21.1.209"},
   "seed": 0,
-  "note": "centers: one per region (regionX/Z = (chunk + 8) >> 4) from getNearestCenterXZ; variety = pickVarietyLandmark, pick = pickLandmarkForChunk (biome read at pickBiomeX/Z, y 0, through Level#getBiome), mainBiome = TFBiomeProvider#getMainBiome at the center, starts = the valid structure starts of the center chunk (minecraft:structure_starts). chunks: sampled chunks with their nearest center (x, z), chunkHasLandmarkCenter, manhattanDistanceFromLandmarkCenter and pickVarietyLandmark.",
+  "note": "centers: one per region (regionX/Z = (chunk + 8) >> 4) from getNearestCenterXZ; variety = pickVarietyLandmark, pick = pickLandmarkForChunk (biome read at pickBiomeX/Z, y 0, through Level#getBiome), mainBiome = GloamingBiomeProvider#getMainBiome at the center, starts = the valid structure starts of the center chunk (minecraft:structure_starts). chunks: sampled chunks with their nearest center (x, z), chunkHasLandmarkCenter, manhattanDistanceFromLandmarkCenter and pickVarietyLandmark.",
   "varietyWeights": [
     ["gloamingforest:small_hollow_hill", 6],
     ["gloamingforest:medium_hollow_hill", 3],

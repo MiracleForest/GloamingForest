@@ -26,14 +26,14 @@
         "catch_chance_modifier": 5,
         "destroy_chance_modifier": 20
       },
-      "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_tall",
+      "minecraft:geometry": "geometry.gf.gloamingforest.block.banister_tall",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_vanilla_block_spruce_planks",
+          "texture": "gf_vanilla_block_spruce_planks",
           "render_method": "opaque"
         },
         "texture": {
-          "texture": "tf_vanilla_block_spruce_planks",
+          "texture": "gf_vanilla_block_spruce_planks",
           "render_method": "opaque"
         }
       },
@@ -64,14 +64,14 @@
       {
         "condition": "!q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:shape') == 'connected'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_connected",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.banister_connected",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             }
           },
@@ -97,14 +97,14 @@
       {
         "condition": "!q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:shape') == 'short'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_short",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.banister_short",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             }
           },
@@ -134,14 +134,14 @@
       {
         "condition": "!q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:shape') == 'tall'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_tall",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.banister_tall",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             }
           },
@@ -171,14 +171,14 @@
       {
         "condition": "!q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:shape') == 'connected'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_connected",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.banister_connected",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             }
           },
@@ -204,14 +204,14 @@
       {
         "condition": "!q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:shape') == 'short'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_short",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.banister_short",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             }
           },
@@ -241,14 +241,14 @@
       {
         "condition": "!q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:shape') == 'tall'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_tall",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.banister_tall",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             }
           },
@@ -278,14 +278,14 @@
       {
         "condition": "!q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:shape') == 'connected'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_connected",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.banister_connected",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             }
           },
@@ -311,14 +311,14 @@
       {
         "condition": "!q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:shape') == 'short'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_short",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.banister_short",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             }
           },
@@ -348,14 +348,14 @@
       {
         "condition": "!q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:shape') == 'tall'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_tall",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.banister_tall",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             }
           },
@@ -385,14 +385,14 @@
       {
         "condition": "!q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:shape') == 'connected'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_connected",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.banister_connected",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             }
           },
@@ -418,14 +418,14 @@
       {
         "condition": "!q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:shape') == 'short'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_short",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.banister_short",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             }
           },
@@ -455,14 +455,14 @@
       {
         "condition": "!q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:shape') == 'tall'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_tall",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.banister_tall",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             }
           },
@@ -492,14 +492,14 @@
       {
         "condition": "q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:shape') == 'connected'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_connected_extended",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.banister_connected_extended",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             }
           },
@@ -525,14 +525,14 @@
       {
         "condition": "q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:shape') == 'short'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_short_extended",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.banister_short_extended",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             }
           },
@@ -562,14 +562,14 @@
       {
         "condition": "q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:shape') == 'tall'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_tall_extended",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.banister_tall_extended",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             }
           },
@@ -599,14 +599,14 @@
       {
         "condition": "q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:shape') == 'connected'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_connected_extended",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.banister_connected_extended",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             }
           },
@@ -632,14 +632,14 @@
       {
         "condition": "q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:shape') == 'short'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_short_extended",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.banister_short_extended",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             }
           },
@@ -669,14 +669,14 @@
       {
         "condition": "q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:shape') == 'tall'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_tall_extended",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.banister_tall_extended",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             }
           },
@@ -706,14 +706,14 @@
       {
         "condition": "q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:shape') == 'connected'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_connected_extended",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.banister_connected_extended",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             }
           },
@@ -739,14 +739,14 @@
       {
         "condition": "q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:shape') == 'short'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_short_extended",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.banister_short_extended",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             }
           },
@@ -776,14 +776,14 @@
       {
         "condition": "q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:shape') == 'tall'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_tall_extended",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.banister_tall_extended",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             }
           },
@@ -813,14 +813,14 @@
       {
         "condition": "q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:shape') == 'connected'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_connected_extended",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.banister_connected_extended",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             }
           },
@@ -846,14 +846,14 @@
       {
         "condition": "q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:shape') == 'short'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_short_extended",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.banister_short_extended",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             }
           },
@@ -883,14 +883,14 @@
       {
         "condition": "q.block_state('gloamingforest:extended') && q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:shape') == 'tall'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.banister_tall_extended",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.banister_tall_extended",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_vanilla_block_spruce_planks",
+              "texture": "gf_vanilla_block_spruce_planks",
               "render_method": "opaque"
             }
           },

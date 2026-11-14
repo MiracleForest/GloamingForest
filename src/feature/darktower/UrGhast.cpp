@@ -99,10 +99,10 @@ struct UrState {
 };
 
 /// DATA_TANTRUM for the companions' client effects (UrGhast#aiStep's dust and boss tears,
-/// TFWeatherRenderer.urGhastAlive): "darktower.urghast" {uid, on}, a heartbeat every 10 ticks for each
+/// GloamingWeatherRenderer.urGhastAlive): "darktower.urghast" {uid, on}, a heartbeat every 10 ticks for each
 /// Ur-Ghast to the companions tracking it (one that comes near later learns it; the client forgets an
 /// Ur-Ghast not repeated for 40 ticks), and at once when the flag changes. Java tracks the Ur-Ghast
-/// for TFEntities#make's 80 chunks, capped by the view distance (ChunkMap.TrackedEntity
+/// for GloamingEntities#make's 80 chunks, capped by the view distance (ChunkMap.TrackedEntity
 /// #getEffectiveRange): here the companion's own chunk radius, capped at 80 chunks.
 constexpr char kTantrumChannel[] = "darktower.urghast";
 constexpr double kTantrumTrackingRange = 80.0 * 16.0;

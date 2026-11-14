@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.hydra",
   "layer": {
     "name": "hydra",
-    "field": "TFModelLayers.HYDRA",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.HYDRA, HydraModel::checkForPack);"
+    "field": "GloamingModelLayers.HYDRA",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.HYDRA, HydraModel::checkForPack);"
   },
   "texture_size": [512, 256],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/hydra4",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/hydra4.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/hydra4.png"
     }
   ],
   "bones": [

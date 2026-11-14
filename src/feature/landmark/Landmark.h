@@ -113,7 +113,7 @@ bool trySpawnHint(Player& player, Start const& start, BlockPos const& pos);
 bool generateAt(std::string const& key, BlockSource& region, BlockPos const& pos);
 /// Creates (and generates) a start of `key` at `pos` without the grid (selftests, /gloamingforest place).
 [[nodiscard]] std::optional<Start> forceStart(std::string const& key, GlobalPos const& pos);
-/// The tfEnforcedProgression gamerule (locked landmarks and biomes enforced).
+/// The gloamingEnforcedProgression gamerule (locked landmarks and biomes enforced).
 [[nodiscard]] bool enforcedProgression();
 /// Adds a terrain shaper for `key` (TrunkUnderDensityFunction, hollow hill hollows, ...).
 void addTerraformer(std::string const& key, std::function<double(Start const& start, int x, int y, int z)> fn);

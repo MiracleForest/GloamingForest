@@ -3,13 +3,13 @@
   "geometry": "geometry.slime",
   "layer": {
     "name": "maze_slime",
-    "field": "TFModelLayers.MAZE_SLIME",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.MAZE_SLIME, SlimeModel::createInnerBodyLayer);"
+    "field": "GloamingModelLayers.MAZE_SLIME",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.MAZE_SLIME, SlimeModel::createInnerBodyLayer);"
   },
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/mazeslime",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/mazeslime.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/mazeslime.png"
     }
   ],
   "notes": ["SlimeModel.createInnerBodyLayer."]

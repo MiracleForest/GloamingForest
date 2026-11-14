@@ -35,7 +35,7 @@ of the table below and the legacy `StrongholdShieldStructure.java`; plus
 | Biomes | `#gloamingforest:valid_knight_stronghold_biomes` (dark forest) |
 | Step | `underground_structures`, terrain adaptation `bury` (per piece: protected pieces bury, upper pieces none) |
 | Progression lock | `gloamingforest:progress_trophy_pedestal` |
-| Hint | kobold + book `gloamingforest.book.tfstronghold` ("Notes on a Stronghold", 4 pages) |
+| Hint | kobold + book `gloamingforest.book.gloamingstronghold` ("Notes on a Stronghold", 4 pages) |
 | Decoration clearance | radius 3, surface decorations true, underground false, vegetation true, adjust elevation false |
 | Controlled spawns (label 0, monsters) | `gloamingforest:blockchain_goblin` 10 1-2, `gloamingforest:lower_goblin_knight` 5 1-2, `gloamingforest:helmet_crab` 10 2-4, `gloamingforest:slime_beetle` 10 2-3, `gloamingforest:redcap_sapper` 2 1-2, `gloamingforest:kobold` 10 2-4, `minecraft:creeper` 5 1-2, `minecraft:slime` 5 4-4 |
 | Spawn overrides | all categories empty over the structure box |
@@ -51,27 +51,27 @@ adjust elevation; piece random `RandomSource.create(seed + chunkX x 25117 + chun
 
 | Id | Class | Box (orientBox x, y, z offsets; sizes) | Contents / children |
 |---|---|---|---|
-| `gloamingforest:TFSEnter` | StrongholdEntranceComponent | (-1, -1, 0; 18 x 7 x 18) | decorator StrongholdDecorator; four exits (NONE (4,1,18), CW90 (-1,1,13), CW180 (13,1,-1), CCW90 (18,1,4)) each from a fresh piece list, marking the boss room used once present; logs fatal "Did not find boss room from exit 3 - EPIC FAIL" if none; then adds the access chamber at (minX + 8, minY + 7, minZ + 4) depth 2; 4 corner + 4 wall statues |
-| `gloamingforest:TFSAC` | StrongholdAccessChamberComponent | (-4, 1, 0; 9 x 5 x 9) | not protected (no controlled spawns, no bury); 4 small doorways; mossy stone brick shaft (2,-2,2)-(6,0,6) with air core (3,-2,3)-(5,2,5); stairs around the shaft; pillar at (2,0,2); **`gloamingforest:trophy_pedestal` at (2,1,2)**; **`gloamingforest:stronghold_shield` layer (2,-1,2)-(6,-1,6)** (default facing DOWN); upper children in 4 directions (NONE (4,1,9), CW90 (-1,1,4), CW180 (4,1,-1), CCW90 (9,1,4)) |
-| `gloamingforest:TFSSH` | StrongholdSmallHallwayComponent | (-4, -1, 0; 9 x 7 x 18) | child NONE (4,1,18) |
-| `gloamingforest:TFSLT` | StrongholdLeftTurnComponent | (-4, -1, 0; 9 x 7 x 9) | child CCW90 (9,1,4) |
-| `gloamingforest:TFSRT` | StrongholdRightTurnComponent | (-4, -1, 0; 9 x 7 x 9) | child CW90 (-1,1,4) |
-| `gloamingforest:TFSCr` | StrongholdCrossingComponent | (-13, -1, 0; 18 x 7 x 18) | children NONE (4,1,18), CW90 (-1,1,13), CCW90 (18,1,4); 2 corner + 4 wall statues, oak/spruce stair furniture |
-| `gloamingforest:TFSDE` | StrongholdDeadEndComponent | (-4, -1, 0; 9 x 7 x 9) | chest at (4,1,3) facing SOUTH with `gloamingforest:stronghold_cache`; trapped (1/3, saved `chestTrapped`): trapped chest + `minecraft:tnt` under it at (4,0,3); 3 wall statues |
-| `gloamingforest:TFSBalR` | StrongholdBalconyRoomComponent | (-4, -1, 0; 18 x 14 x 27) or (-13, -8, 0; ...) by entry side | 6-8 exits on two levels |
-| `gloamingforest:TFSTR` | StrongholdTrainingRoomComponent | (-13, -1, 0; 18 x 7 x 18) | sand pits, anvil, carved pumpkin + oak fence dummies, birch planks; 2 corner statues; child NONE (4,1,18) |
-| `gloamingforest:TFSSS` | StrongholdSmallStairsComponent | (-4, -1, 0; 9 x 14 x 9) entering bottom, or (-4, -8, 0; ...) entering top | enter bottom when y < -21, top when y > -15, else `(z & 1) == 0`; treasure 1/2 (`hasTreasure`): chest at (4,1,6) with `gloamingforest:stronghold_cache`, trapped 1/3 with TNT under it; wall statue |
-| `gloamingforest:TFSTC` | StrongholdTreasureCorridorComponent | (-4, -1, 0; 9 x 7 x 27) | chest at (8,2,13) in the side wall with `gloamingforest:stronghold_cache`; 4 wall statues; child NONE (4,1,27) |
-| `gloamingforest:TFSAt` | StrongholdAtriumComponent | (-4, -1, 0; 18 x 14 x 18) or (-13, -8, 0; ...) | grass centre and a tree at (8,1,8): configured feature by piece-random rand(5) -> 1 `minecraft:jungle_tree`, 2 `minecraft:birch`, 3 `gloamingforest:tree/gloaming_oak_tree`, 4 `gloamingforest:tree/rainbow_oak`, else `minecraft:oak` (`spawnATree`); only when (8,1,8) is inside the chunk box `sbb`; placement retried up to 100 times with the level random (`world.getRandom()`, the WorldGenRegion random, not the piece random), stopping at the first success; 4 corner statues; 4 exits |
-| `gloamingforest:TFSFo` | StrongholdFoundryComponent | (-4, -20 / -6 / -13, 0; 18 x 26 x 18) by entry level | lava, ore column (coal/iron/gold/redstone/copper/diamond/emerald ores, glowstone) with rand(9)/rand(13) choices; 3 exits |
-| `gloamingforest:TFTreaR` | StrongholdTreasureRoomComponent | (-4, -1, 0; 9 x 7 x 18) | `minecraft:spawner` of `gloamingforest:helmet_crab` at (4,1,4) and (4,4,15); chests at (2,4,13) WEST and (6,4,13) EAST with `gloamingforest:stronghold_room`; iron bars; 5 wall statues |
-| `gloamingforest:TFSBR` | StrongholdBossRoomComponent | (-13, -1, 0; 27 x 7 x 27) | `spawnListIndex = Integer.MAX_VALUE` (no controlled spawns); corner pillars with stair decorations, 6 sarcophagi (torches or fence posts, rand(7)), iron-bar doorway (12,1,3)-(14,4,3); **`gloamingforest:knight_phantom_boss_spawner` at (13,2,13)** |
-| `gloamingforest:TFSUA` | StrongholdUpperAscenderComponent | (-2, -1, 0; 5 x 10 x 10) exiting top when y < sea level + 5, else (-2, -6, 0; ...) | stone brick stairs; upper child at (2, exitTop ? 6 : 1, 10) |
-| `gloamingforest:TFSUCo` | StrongholdUpperCorridorComponent | (-2, -1, 0; 5 x 5 x 9) | upper child NONE (2,1,9) |
-| `gloamingforest:TFSULT` | StrongholdUpperLeftTurnComponent | (-2, -1, 0; 5 x 5 x 5) | upper child CCW90 (5,1,2) |
-| `gloamingforest:TFSURT` | StrongholdUpperRightTurnComponent | (-2, -1, 0; 5 x 5 x 5) | upper child CW90 (-1,1,2) |
-| `gloamingforest:TFSUTI` | StrongholdUpperTIntersectionComponent | (-2, -1, 0; 5 x 5 x 5) | upper children CCW90 (5,1,2) and CW90 (-1,1,2) |
-| `gloamingforest:TFSShield` | StrongholdShieldStructure | none (`generateBoundingBox` returns null) | legacy piece type only deserialised from old saves (never generated in 4.8): shells its box with `stronghold_shield` facing inward; register it so old chunks load |
+| `gloamingforest:GloamingSEnter` | StrongholdEntranceComponent | (-1, -1, 0; 18 x 7 x 18) | decorator StrongholdDecorator; four exits (NONE (4,1,18), CW90 (-1,1,13), CW180 (13,1,-1), CCW90 (18,1,4)) each from a fresh piece list, marking the boss room used once present; logs fatal "Did not find boss room from exit 3 - EPIC FAIL" if none; then adds the access chamber at (minX + 8, minY + 7, minZ + 4) depth 2; 4 corner + 4 wall statues |
+| `gloamingforest:GloamingSAC` | StrongholdAccessChamberComponent | (-4, 1, 0; 9 x 5 x 9) | not protected (no controlled spawns, no bury); 4 small doorways; mossy stone brick shaft (2,-2,2)-(6,0,6) with air core (3,-2,3)-(5,2,5); stairs around the shaft; pillar at (2,0,2); **`gloamingforest:trophy_pedestal` at (2,1,2)**; **`gloamingforest:stronghold_shield` layer (2,-1,2)-(6,-1,6)** (default facing DOWN); upper children in 4 directions (NONE (4,1,9), CW90 (-1,1,4), CW180 (4,1,-1), CCW90 (9,1,4)) |
+| `gloamingforest:GloamingSSH` | StrongholdSmallHallwayComponent | (-4, -1, 0; 9 x 7 x 18) | child NONE (4,1,18) |
+| `gloamingforest:GloamingSLT` | StrongholdLeftTurnComponent | (-4, -1, 0; 9 x 7 x 9) | child CCW90 (9,1,4) |
+| `gloamingforest:GloamingSRT` | StrongholdRightTurnComponent | (-4, -1, 0; 9 x 7 x 9) | child CW90 (-1,1,4) |
+| `gloamingforest:GloamingSCr` | StrongholdCrossingComponent | (-13, -1, 0; 18 x 7 x 18) | children NONE (4,1,18), CW90 (-1,1,13), CCW90 (18,1,4); 2 corner + 4 wall statues, oak/spruce stair furniture |
+| `gloamingforest:GloamingSDE` | StrongholdDeadEndComponent | (-4, -1, 0; 9 x 7 x 9) | chest at (4,1,3) facing SOUTH with `gloamingforest:stronghold_cache`; trapped (1/3, saved `chestTrapped`): trapped chest + `minecraft:tnt` under it at (4,0,3); 3 wall statues |
+| `gloamingforest:GloamingSBalR` | StrongholdBalconyRoomComponent | (-4, -1, 0; 18 x 14 x 27) or (-13, -8, 0; ...) by entry side | 6-8 exits on two levels |
+| `gloamingforest:GloamingSTR` | StrongholdTrainingRoomComponent | (-13, -1, 0; 18 x 7 x 18) | sand pits, anvil, carved pumpkin + oak fence dummies, birch planks; 2 corner statues; child NONE (4,1,18) |
+| `gloamingforest:GloamingSSS` | StrongholdSmallStairsComponent | (-4, -1, 0; 9 x 14 x 9) entering bottom, or (-4, -8, 0; ...) entering top | enter bottom when y < -21, top when y > -15, else `(z & 1) == 0`; treasure 1/2 (`hasTreasure`): chest at (4,1,6) with `gloamingforest:stronghold_cache`, trapped 1/3 with TNT under it; wall statue |
+| `gloamingforest:GloamingSTC` | StrongholdTreasureCorridorComponent | (-4, -1, 0; 9 x 7 x 27) | chest at (8,2,13) in the side wall with `gloamingforest:stronghold_cache`; 4 wall statues; child NONE (4,1,27) |
+| `gloamingforest:GloamingSAt` | StrongholdAtriumComponent | (-4, -1, 0; 18 x 14 x 18) or (-13, -8, 0; ...) | grass centre and a tree at (8,1,8): configured feature by piece-random rand(5) -> 1 `minecraft:jungle_tree`, 2 `minecraft:birch`, 3 `gloamingforest:tree/gloaming_oak_tree`, 4 `gloamingforest:tree/rainbow_oak`, else `minecraft:oak` (`spawnATree`); only when (8,1,8) is inside the chunk box `sbb`; placement retried up to 100 times with the level random (`world.getRandom()`, the WorldGenRegion random, not the piece random), stopping at the first success; 4 corner statues; 4 exits |
+| `gloamingforest:GloamingSFo` | StrongholdFoundryComponent | (-4, -20 / -6 / -13, 0; 18 x 26 x 18) by entry level | lava, ore column (coal/iron/gold/redstone/copper/diamond/emerald ores, glowstone) with rand(9)/rand(13) choices; 3 exits |
+| `gloamingforest:GloamingTreaR` | StrongholdTreasureRoomComponent | (-4, -1, 0; 9 x 7 x 18) | `minecraft:spawner` of `gloamingforest:helmet_crab` at (4,1,4) and (4,4,15); chests at (2,4,13) WEST and (6,4,13) EAST with `gloamingforest:stronghold_room`; iron bars; 5 wall statues |
+| `gloamingforest:GloamingSBR` | StrongholdBossRoomComponent | (-13, -1, 0; 27 x 7 x 27) | `spawnListIndex = Integer.MAX_VALUE` (no controlled spawns); corner pillars with stair decorations, 6 sarcophagi (torches or fence posts, rand(7)), iron-bar doorway (12,1,3)-(14,4,3); **`gloamingforest:knight_phantom_boss_spawner` at (13,2,13)** |
+| `gloamingforest:GloamingSUA` | StrongholdUpperAscenderComponent | (-2, -1, 0; 5 x 10 x 10) exiting top when y < sea level + 5, else (-2, -6, 0; ...) | stone brick stairs; upper child at (2, exitTop ? 6 : 1, 10) |
+| `gloamingforest:GloamingSUCo` | StrongholdUpperCorridorComponent | (-2, -1, 0; 5 x 5 x 9) | upper child NONE (2,1,9) |
+| `gloamingforest:GloamingSULT` | StrongholdUpperLeftTurnComponent | (-2, -1, 0; 5 x 5 x 5) | upper child CCW90 (5,1,2) |
+| `gloamingforest:GloamingSURT` | StrongholdUpperRightTurnComponent | (-2, -1, 0; 5 x 5 x 5) | upper child CW90 (-1,1,2) |
+| `gloamingforest:GloamingSUTI` | StrongholdUpperTIntersectionComponent | (-2, -1, 0; 5 x 5 x 5) | upper children CCW90 (5,1,2) and CW90 (-1,1,2) |
+| `gloamingforest:GloamingSShield` | StrongholdShieldStructure | none (`generateBoundingBox` returns null) | legacy piece type only deserialised from old saves (never generated in 4.8): shells its box with `stronghold_shield` facing inward; register it so old chunks load |
 
 Lower piece selection (`StrongholdPieces`, weights / instance limit / minimum depth): small hallway 40/0, left turn 20/0,
 crossing 10/4, right turn 20/0, dead end 5/0, balcony room 10/3 (depth 2), training room 10/2, small stairs 10/0,
@@ -116,7 +116,7 @@ Strings: `structure.gloamingforest.knight_stronghold` "Knight Stronghold".
 
 Activation (`neighborChanged`, server): first update comparator neighbours; if not active and the block above is in
 `#gloamingforest:trophy_pedestal_activation_blocks` (U5's tag: naga, lich, minoshroom, hydra, knight phantom, ur-ghast,
-alpha yeti, snow queen trophies): when progression is enforced (F10 gamerule `tfEnforcedProgression`), activate only if
+alpha yeti, snow queen trophies): when progression is enforced (F10 gamerule `gloamingEnforcedProgression`), activate only if
 some player within 16 blocks has `gloamingforest:progress_lich` or is in creative (instabuild), and show every
 ineligible player within 16 the action-bar message `misc.gloamingforest.pedestal_ineligible` ("You are unworthy.");
 when not enforced, always activate. Activation: set `active=true`, destroy (no drops) every
@@ -253,7 +253,7 @@ Source: `entity/projectile/ThrownWep.java`, `client/renderer/entity/ThrownWepRen
 
 ### 5.1 `gloamingforest:lower_goblin_knight` (LowerGoblinKnight)
 
-Source: `entity/monster/LowerGoblinKnight.java`, `entity/ai/goal/RiderSpearAttackGoal.java`, model `LowerGoblinKnightModel`, renderer `TFBipedRenderer` (`doublegoblin.png`, shadow 0.625).
+Source: `entity/monster/LowerGoblinKnight.java`, `entity/ai/goal/RiderSpearAttackGoal.java`, model `LowerGoblinKnightModel`, renderer `GloamingBipedRenderer` (`doublegoblin.png`, shadow 0.625).
 
 | Field | Value |
 |---|---|
@@ -416,7 +416,7 @@ All: effects hurt, scaling `when_caused_by_living_non_player`. Death messages ar
 
 ## 9. Progression, stat and triggers
 
-- Trigger `gloamingforest:placed_on_trophy_pedestal` (SimpleAdvancementTrigger, upstream `TFAdvancements`): fired by the
+- Trigger `gloamingforest:placed_on_trophy_pedestal` (SimpleAdvancementTrigger, upstream `GloamingAdvancements`): fired by the
   pedestal; consumed by U14's `gloamingforest:progress_trophy_pedestal` (with `progress_lich` already done).
 - Trigger `gloamingforest:kill_all_phantoms`: fired when the last phantom dies; consumed by
   `gloamingforest:progress_knights` (with the knight phantom trophy and `progress_trophy_pedestal`).

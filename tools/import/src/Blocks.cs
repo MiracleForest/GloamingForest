@@ -1,6 +1,6 @@
 // GloamingForest import tool (contract "import", unit F1): the 523 upstream blocks as Bedrock behaviour-pack
 // blocks (frozen states, permutations from the Java blockstates, geometry and material instances from
-// the Java models, hardness / light / map colour from TFBlocks), RP block sounds, the block geometry
+// the Java models, hardness / light / map colour from GloamingBlocks), RP block sounds, the block geometry
 // files and docs/spec/blockstates.md.
 using System;
 using System.Collections.Generic;
@@ -80,7 +80,7 @@ namespace GfImport
                 string id = full.Substring("gloamingforest:".Length);
                 var bi = new BlockInfo { Id = id, Owner = OwnerOf("block", full) };
                 JBlock jb;
-                if (!JBlocks.TryGetValue(id, out jb)) { Warn("block " + id + " not found in TFBlocks.java"); jb = new JBlock { Id = id, Cls = "Block" }; }
+                if (!JBlocks.TryGetValue(id, out jb)) { Warn("block " + id + " not found in GloamingBlocks.java"); jb = new JBlock { Id = id, Cls = "Block" }; }
                 bi.J = jb;
                 bi.Chain = Java.ClassChain(this, jb.Cls, extendsCache);
                 bi.InCatalog = inTabs.Contains(full);
@@ -240,7 +240,7 @@ namespace GfImport
                 // no shape in the model (block entity renderers, custom loaders): a cube with the particle texture
                 string tex = m.Particle;
                 string key = UseTexture(tex, ownerId, "terrain");
-                var inst = J.Obj().Set("texture", key ?? "tf_missing").Set("render_method", RenderMethod(m, new[] { tex }));
+                var inst = J.Obj().Set("texture", key ?? "gf_missing").Set("render_method", RenderMethod(m, new[] { tex }));
                 mats.Set("*", inst);
                 v.Geometry = J.Str("minecraft:geometry.full_block");
                 v.Materials = mats;
@@ -255,10 +255,10 @@ namespace GfImport
                 var texs = faces.Select(f => m.Resolve(f.Tex)).ToList();
                 string rm = RenderMethod(m, texs);
                 string particle = m.Particle ?? texs.FirstOrDefault(t => t != null);
-                mats.Set("*", J.Obj().Set("texture", UseTexture(particle, ownerId, "terrain") ?? "tf_missing").Set("render_method", rm));
+                mats.Set("*", J.Obj().Set("texture", UseTexture(particle, ownerId, "terrain") ?? "gf_missing").Set("render_method", rm));
                 foreach (var f in faces.OrderBy(f => Array.IndexOf(new[] { "up", "down", "north", "south", "east", "west" }, f.Dir)))
                 {
-                    var key = UseTexture(m.Resolve(f.Tex), ownerId, "terrain") ?? "tf_missing";
+                    var key = UseTexture(m.Resolve(f.Tex), ownerId, "terrain") ?? "gf_missing";
                     mats.Set(f.Dir, J.Obj().Set("texture", key).Set("render_method", rm));
                 }
                 v.Geometry = J.Str("minecraft:geometry.full_block");
@@ -267,7 +267,7 @@ namespace GfImport
                 return v;
             }
             // custom geometry shared by every model with the same elements
-            string geoId = "geometry.tf." + m.ElementsFrom.Replace(':', '.').Replace('/', '.');
+            string geoId = "geometry.gf." + m.ElementsFrom.Replace(':', '.').Replace('/', '.');
             if (!geometries.ContainsKey(geoId))
             {
                 var bone = J.Obj().Set("name", "root").Set("pivot", J.Arr(new[] { J.Num(0), J.Num(0), J.Num(0) })).Set("cubes", J.Arr(Models.Cubes(m.Elements, "")));
@@ -279,9 +279,9 @@ namespace GfImport
             foreach (var f in m.Elements.SelectMany(e => e.Faces)) instances[Models.InstanceName(f.Tex, "")] = f.Tex.StartsWith("#", StringComparison.Ordinal) ? m.Resolve(f.Tex) : f.Tex;
             string rmode = RenderMethod(m, instances.Values);
             string part = m.Particle ?? instances.Values.FirstOrDefault(t => t != null);
-            mats.Set("*", J.Obj().Set("texture", UseTexture(part, ownerId, "terrain") ?? "tf_missing").Set("render_method", rmode));
+            mats.Set("*", J.Obj().Set("texture", UseTexture(part, ownerId, "terrain") ?? "gf_missing").Set("render_method", rmode));
             foreach (var kv in instances)
-                mats.Set(kv.Key, J.Obj().Set("texture", UseTexture(kv.Value, ownerId, "terrain") ?? "tf_missing").Set("render_method", rmode));
+                mats.Set(kv.Key, J.Obj().Set("texture", UseTexture(kv.Value, ownerId, "terrain") ?? "gf_missing").Set("render_method", rmode));
             v.Geometry = J.Str(geoId);
             v.Materials = mats;
             v.Bounds = Models.Bounds(m.Elements);
@@ -485,13 +485,13 @@ namespace GfImport
                         i++;
                     }
                     bi.Particle = particle;
-                    string geoId = "geometry.tf.gloamingforest.block." + bi.Id + ".multipart";
+                    string geoId = "geometry.gf.gloamingforest.block." + bi.Id + ".multipart";
                     geometries[geoId] = Models.GeometryFile(geoId, bones);
                     geometryUsers[geoId] = new SortedSet<string>(StringComparer.Ordinal) { bi.Owner };
                     string rm = firstModel != null ? RenderMethod(firstModel, allTex.Distinct()) : "opaque";
-                    mats.Set("*", J.Obj().Set("texture", UseTexture(particle, bi.Owner, "terrain") ?? "tf_missing").Set("render_method", rm));
+                    mats.Set("*", J.Obj().Set("texture", UseTexture(particle, bi.Owner, "terrain") ?? "gf_missing").Set("render_method", rm));
                     foreach (var t in allTex.Distinct().OrderBy(x => x, StringComparer.Ordinal))
-                        mats.Set(Models.InstanceName(t, ""), J.Obj().Set("texture", UseTexture(t, bi.Owner, "terrain") ?? "tf_missing").Set("render_method", rm));
+                        mats.Set(Models.InstanceName(t, ""), J.Obj().Set("texture", UseTexture(t, bi.Owner, "terrain") ?? "gf_missing").Set("render_method", rm));
                     var geometry = J.Obj().Set("identifier", geoId);
                     if (vis.Keys.Any()) geometry.Set("bone_visibility", vis);
                     comps.Set("minecraft:geometry", geometry);
@@ -524,18 +524,18 @@ namespace GfImport
                 EmitJson("blockstates", bi.Owner, "bp/blocks/" + bi.Id + ".json", doc);
                 string sound = BedrockSound(jb.Sound);
                 Fragment("blockstates", bi.Owner, "rp/blocks.d/import-" + NameOf(bi.Owner) + ".json", full, J.Obj().Set("sound", sound));
-                Java.SoundTypeInfo tfType;
-                if (TfSoundType(jb.Sound, out tfType))
+                Java.SoundTypeInfo gfType;
+                if (GloamingSoundType(jb.Sound, out gfType))
                 {
                     SortedSet<string> users;
-                    if (!soundTypeUsers.TryGetValue(tfType.Name, out users)) soundTypeUsers[tfType.Name] = users = new SortedSet<string>(StringComparer.Ordinal);
+                    if (!soundTypeUsers.TryGetValue(gfType.Name, out users)) soundTypeUsers[gfType.Name] = users = new SortedSet<string>(StringComparer.Ordinal);
                     users.Add(bi.Owner);
                 }
             }
             foreach (var kv in geometries)
             {
                 string owner = SharedOwner(geometryUsers[kv.Key]);
-                string file = kv.Key.Substring("geometry.tf.".Length);
+                string file = kv.Key.Substring("geometry.gf.".Length);
                 EmitJson("models", owner, "rp/models/blocks/gloamingforest/" + file + ".geo.json", kv.Value);
             }
             ImportSoundTypes();
@@ -708,31 +708,31 @@ namespace GfImport
         // ---- tables -------------------------------------------------------------------------------------
 
         /// <summary>The Bedrock block sound of a Java sound type: a vanilla SoundType's closest engine type (SoundMap), or
-        /// for one of upstream's own ("TFSoundTypes.JAR") the pack's sound type gloamingforest.jar (ImportSoundTypes).</summary>
+        /// for one of upstream's own ("GloamingSoundTypes.JAR") the pack's sound type gloamingforest.jar (ImportSoundTypes).</summary>
         string BedrockSound(string javaSound)
         {
             string s;
-            Java.SoundTypeInfo tf;
-            if (TfSoundType(javaSound, out tf)) return "gloamingforest." + tf.Name.ToLowerInvariant();
-            if (javaSound != null && javaSound.StartsWith("TFSoundTypes.", StringComparison.Ordinal))
-                Warn("Java sound type " + javaSound + " is not a sound type of TFSoundTypes.java: stone used");
+            Java.SoundTypeInfo upsrc;
+            if (GloamingSoundType(javaSound, out upsrc)) return "gloamingforest." + upsrc.Name.ToLowerInvariant();
+            if (javaSound != null && javaSound.StartsWith("GloamingSoundTypes.", StringComparison.Ordinal))
+                Warn("Java sound type " + javaSound + " is not a sound type of GloamingSoundTypes.java: stone used");
             else if (SoundMap.TryGetValue(javaSound ?? "STONE", out s)) return s;
             else Warn("Java sound type " + javaSound + " has no Bedrock block sound (Blocks.SoundMap): stone used");
             return "stone";
         }
 
-        Dictionary<string, Java.SoundTypeInfo> tfSoundTypes;
+        Dictionary<string, Java.SoundTypeInfo> gloamingSoundTypes;
         readonly SortedDictionary<string, SortedSet<string>> soundTypeUsers = new SortedDictionary<string, SortedSet<string>>(StringComparer.Ordinal);
 
-        bool TfSoundType(string javaSound, out Java.SoundTypeInfo type)
+        bool GloamingSoundType(string javaSound, out Java.SoundTypeInfo type)
         {
             type = null;
-            if (javaSound == null || !javaSound.StartsWith("TFSoundTypes.", StringComparison.Ordinal)) return false;
-            if (tfSoundTypes == null) tfSoundTypes = Java.SoundTypes(this);
-            return tfSoundTypes.TryGetValue(javaSound.Substring("TFSoundTypes.".Length), out type);
+            if (javaSound == null || !javaSound.StartsWith("GloamingSoundTypes.", StringComparison.Ordinal)) return false;
+            if (gloamingSoundTypes == null) gloamingSoundTypes = Java.SoundTypes(this);
+            return gloamingSoundTypes.TryGetValue(javaSound.Substring("GloamingSoundTypes.".Length), out type);
         }
 
-        /// <summary>upstream's own sound types (TFSoundTypes.java) as Bedrock block sound types of the pack's sounds.json
+        /// <summary>upstream's own sound types (GloamingSoundTypes.java) as Bedrock block sound types of the pack's sounds.json
         /// (rp/sounds.json.d/import-<unit>.json, merged by assemble per id): block_sounds (break, place, hit) and
         /// interactive_sounds (step, fall), each with F3's sound event and the volume and pitch Java plays it at for a
         /// SoundType of volume v and pitch p (break and place: (v + 1) / 2 at p * 0.8, LevelRenderer / BlockItem.place;
@@ -747,7 +747,7 @@ namespace GfImport
             var perOwner = new SortedDictionary<string, J>(StringComparer.Ordinal);
             foreach (var kv in soundTypeUsers)
             {
-                var t = tfSoundTypes[kv.Key];
+                var t = gloamingSoundTypes[kv.Key];
                 string id = "gloamingforest." + t.Name.ToLowerInvariant();
                 string owner = SharedOwner(kv.Value);
                 J doc;
@@ -766,7 +766,7 @@ namespace GfImport
                     .Set("fall", ev(t.Fall, v * 0.5, p * 0.75))
                     .Set("jump", "")
                     .Set("land", "")));
-                Log.Add("upstream sound type TFSoundTypes." + t.Name + " -> block sound " + id + " (" + string.Join(", ", kv.Value.Select(NameOf)) + ")");
+                Log.Add("upstream sound type GloamingSoundTypes." + t.Name + " -> block sound " + id + " (" + string.Join(", ", kv.Value.Select(NameOf)) + ")");
             }
             foreach (var kv in perOwner)
                 EmitJson("blockstates", kv.Key, "rp/sounds.json.d/import-" + NameOf(kv.Key) + ".json", kv.Value);

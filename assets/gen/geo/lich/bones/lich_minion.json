@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.lich_minion",
   "layer": {
     "name": "lich_minion",
-    "field": "TFModelLayers.LICH_MINION",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.LICH_MINION, () -> LayerDefinition.create(HumanoidModel.createMesh(CubeDeformation.NONE, 0.0F), 64, 64));"
+    "field": "GloamingModelLayers.LICH_MINION",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.LICH_MINION, () -> LayerDefinition.create(HumanoidModel.createMesh(CubeDeformation.NONE, 0.0F), 64, 64));"
   },
   "texture_size": [64, 32],
   "textures": [
     {
       "bedrock": "textures/entity/zombie/zombie",
-      "tf": "(vanilla) minecraft:entity/zombie/zombie.png"
+      "upsrc": "(vanilla) minecraft:entity/zombie/zombie.png"
     }
   ],
   "bones": [

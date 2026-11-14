@@ -3,8 +3,8 @@
   "geometry": "geometry.gloamingforest.travellers_armor.boots",
   "layer": {
     "name": "travellers_armor_boots",
-    "field": "TFModelLayers.TRAVELLERS_ARMOR_BOOTS",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.TRAVELLERS_ARMOR_BOOTS, () -> LayerDefinition.create(TravellersGearModels.addBootPieces(new CubeDeformation(0.5F)), 64, 32));"
+    "field": "GloamingModelLayers.TRAVELLERS_ARMOR_BOOTS",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.TRAVELLERS_ARMOR_BOOTS, () -> LayerDefinition.create(TravellersGearModels.addBootPieces(new CubeDeformation(0.5F)), 64, 32));"
   },
   "slot": "boots",
   "parts": ["right_leg", "left_leg"],

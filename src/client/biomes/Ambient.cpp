@@ -62,7 +62,7 @@ void tick() {
     if (!player) return;
     auto& region = player->getDimensionBlockSource();
     auto  at     = game::blockPosOf(player->getFeetPos());
-    if (!feature::biomes::isTfBiome(feature::biomes::biomeIdOf(region.getBiome(at)))) return;
+    if (!feature::biomes::isGloamingBiome(feature::biomes::biomeIdOf(region.getBiome(at)))) return;
     thread_local std::mt19937 random{std::random_device{}()};
     feature::biomes::ambientParticles(region, at, random, [&](std::string const& particle, Vec3 const& pos) {
         bool native = gf::client::particles::spawn(particle, pos, Vec3{0, 0, 0});

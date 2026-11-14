@@ -409,9 +409,9 @@ GF_REGISTER_SELFTEST("terrain.carvers", [](Context& ctx) {
     ctx.require(s != nullptr, "generator");
     auto const* cfgJson = [] {
         // the configured carvers live in F5's data (configured_carver); upstream's values as a fallback
-        static Json const tf = Json::parse(R"({"floor_level": -0.7, "horizontal_radius_multiplier": 1.05, "probability": 0.1, "vertical_radius_multiplier": 1.05,
+        static Json const upsrc = Json::parse(R"({"floor_level": -0.7, "horizontal_radius_multiplier": 1.05, "probability": 0.1, "vertical_radius_multiplier": 1.05,
             "y": {"type": "minecraft:uniform", "max_inclusive": {"absolute": -8}, "min_inclusive": {"above_bottom": 16}}, "yScale": 0.6})");
-        return &tf;
+        return &upsrc;
     }();
     int carvedTotal = 0, exposed = 0, roofs = 0;
     for (int attempt = 0; attempt < 24 && carvedTotal < 50; ++attempt) {
@@ -420,7 +420,7 @@ GF_REGISTER_SELFTEST("terrain.carvers", [](Context& ctx) {
         terrainProvider(*c);
         surfaceProvider(*c, w);
         worldgen::ext::CarvingMask   mask(-32, 256);
-        worldgen::ext::CarverContext cc{attempt, 7, 0, "gloamingforest:tf_caves", cfgJson, &mask};
+        worldgen::ext::CarverContext cc{attempt, 7, 0, "gloamingforest:gf_caves", cfgJson, &mask};
         for (int k = 0; k < 40; ++k) {
             jr::WorldgenRandom r(std::make_unique<jr::LegacyRandom>(0));
             r.setLargeFeatureSeed(s->seed + k, attempt, 7);
@@ -438,7 +438,7 @@ GF_REGISTER_SELFTEST("terrain.carvers", [](Context& ctx) {
             }
         });
     }
-    ctx.info("tf_caves carved " + std::to_string(carvedTotal) + " blocks, dirt roof blocks " + std::to_string(roofs));
+    ctx.info("gf_caves carved " + std::to_string(carvedTotal) + " blocks, dirt roof blocks " + std::to_string(roofs));
     ctx.check(carvedTotal > 0, "upstream caves carve");
     ctx.check(exposed == 0, "carved air never touches water inside the chunk");
     ctx.check(roofs > 0, "dirt roofs over the caves");
@@ -609,7 +609,7 @@ gf::landmark::ext::StartPiece testPiece(std::string const& type, BlockBox const&
 }
 
 // NeoForge's Beardifier#forStructuresInChunk per piece: a fake start whose pieces are a
-// TFStructureComponentOld (NONE), a CourtyardTerrace (BEARD_BOX, ground delta 3), a protected
+// GloamingStructureComponentOld (NONE), a CourtyardTerrace (BEARD_BOX, ground delta 3), a protected
 // stronghold piece (BURY), a plain template piece (the structure's beard_thin), a GloamingJigsawPiece
 // (its tag's ENCAPSULATE, delta 2) and a type registered through ext::registerPieceBeard; the
 // densities against Beardifier's arithmetic; the labyrinth (bury, every maze piece NONE) and the
@@ -625,11 +625,11 @@ GF_REGISTER_SELFTEST("terrain.beardifier", [](Context& ctx) {
         Unregister& operator=(Unregister const&) = delete;
         ~Unregister() { te::registerPieceBeard("gf_test:beard_piece", {}); }
     } unregister;
-    std::vector<gf::landmark::ext::StartPiece> pieces{testPiece("gloamingforest:TFMMC", a),
-                                                  testPiece("gloamingforest:TFNCTe", b),
-                                                  testPiece("gloamingforest:TFSSH", c),
-                                                  testPiece("gloamingforest:TFQuest1", d),
-                                                  testPiece("gloamingforest:TFJigsawTemplate", e, {{"terrain_adaptation", "ENCAPSULATE"}, {"ground_offset", 2}}),
+    std::vector<gf::landmark::ext::StartPiece> pieces{testPiece("gloamingforest:GloamingMMC", a),
+                                                  testPiece("gloamingforest:GloamingNCTe", b),
+                                                  testPiece("gloamingforest:GloamingSSH", c),
+                                                  testPiece("gloamingforest:GloamingQuest1", d),
+                                                  testPiece("gloamingforest:GloamingJigsawTemplate", e, {{"terrain_adaptation", "ENCAPSULATE"}, {"ground_offset", 2}}),
                                                   testPiece("gf_test:beard_piece", f)};
     auto rigids = rigidsOfPieces(pieces, A::BeardThin);
     ctx.require(rigids.size() == 5, "five Rigids: the NONE piece adds none (" + std::to_string(rigids.size()) + ")");
@@ -658,9 +658,9 @@ GF_REGISTER_SELFTEST("terrain.beardifier", [](Context& ctx) {
     ctx.check(bad == 0, "the beardifier density equals Beardifier#compute at " + std::to_string(points) + " points (" + std::to_string(bad) + " differ)");
     // a piece 12 blocks from a chunk still counts (StructurePiece#isCloseToChunk), 13 does not
     ctx.check(beard::isCloseToChunk({-12, 0, 0, -12, 4, 4}, 0, 0) && !beard::isCloseToChunk({-13, 0, 0, -13, 4, 4}, 0, 0), "isCloseToChunk(12)");
-    auto maze = rigidsOfPieces({testPiece("gloamingforest:TFMMaze", a), testPiece("gloamingforest:TFMMC", b), testPiece("gloamingforest:TFMMRB", c)}, A::Bury);
-    ctx.check(maze.empty(), "the labyrinth (structure bury): its TFStructureComponentOld pieces add no beard");
-    auto tower = rigidsOfPieces({testPiece("gloamingforest:TFDTMai", a), testPiece("gloamingforest:TFDTEnt", b), testPiece("gloamingforest:TFDTWin", c)}, A::BeardThin);
+    auto maze = rigidsOfPieces({testPiece("gloamingforest:GloamingMMaze", a), testPiece("gloamingforest:GloamingMMC", b), testPiece("gloamingforest:GloamingMMRB", c)}, A::Bury);
+    ctx.check(maze.empty(), "the labyrinth (structure bury): its GloamingStructureComponentOld pieces add no beard");
+    auto tower = rigidsOfPieces({testPiece("gloamingforest:GloamingDTMai", a), testPiece("gloamingforest:GloamingDTEnt", b), testPiece("gloamingforest:GloamingDTWin", c)}, A::BeardThin);
     ctx.check(tower.size() == 1 && tower[0].rigid.adjustment == A::BeardBox && tower[0].rigid.groundLevelDelta == 1 && tower[0].rigid.box == b,
               "the dark tower (structure beard_thin): one BEARD_BOX at its entrance, ground delta 1");
     // a piece of no known type (a start the store does not hold): the structure's adaptation
@@ -955,7 +955,7 @@ GF_REGISTER_SELFTEST("terrain.handoff_pass", [](Context& ctx) {
 
 // ---- Bedrock's liquid layer -----------------------------------------------------------------------------------
 
-// TFCavesCarver asks BlockState#getFluidState: a waterlogged neighbour (Bedrock: water in the liquid
+// GloamingCavesCarver asks BlockState#getFluidState: a waterlogged neighbour (Bedrock: water in the liquid
 // layer of a real game chunk) stops a carve, and a waterlogged block is no replaceable block. Runs
 // the carver's carveBlock on a loaded Gloaming Forest chunk; the water goes in with the game's own
 // BlockSource::setExtraBlock and the layer read (LiquidLayer::at) must agree with getExtraBlock.
@@ -997,7 +997,7 @@ GF_REGISTER_SELFTEST("terrain.liquid_layer", [](Context& ctx) -> ll::coro::CoroT
     };
     auto                       stoneAt = [&](int x) { return ctx.blockAt({P.dim, x, P.y, P.z}) == "minecraft:stone"; };
     worldgen::ext::CarvingMask mask(chunk->minY(), chunk->maxY());
-    worldgen::ext::CarverContext cc{P.x >> 4, P.z >> 4, 0, "gloamingforest:tf_caves", nullptr, &mask};
+    worldgen::ext::CarverContext cc{P.x >> 4, P.z >> 4, 0, "gloamingforest:gf_caves", nullptr, &mask};
     ctx.check(agrees(P.x) && agrees(P.x + 1), "an empty layer reads empty");
     // 1. a waterlogged neighbour stops the carve
     region->setExtraBlock(BlockPos{P.x + 1, P.y, P.z}, *water, 3);
@@ -1071,8 +1071,8 @@ GF_REGISTER_SELFTEST("terrain.saved_chunks", [](Context& ctx) -> ll::coro::CoroT
         "found by lookup, without a scan (" + std::to_string(hit ? hit->probed : 0) + " positions)"
     );
     if (int dim = gf::world::gloaming() ? static_cast<int>(*gf::world::gloaming()) : -1; dim >= 0) {
-        auto tf = findSavedChunks(dim, false);
-        ctx.info(std::string("Gloaming Forest chunks saved near its entrances: ") + (tf && tf->found ? "yes" : "no"));
+        auto upsrc = findSavedChunks(dim, false);
+        ctx.info(std::string("Gloaming Forest chunks saved near its entrances: ") + (upsrc && upsrc->found ? "yes" : "no"));
     }
     auto stored = game::db::get("gf:terrain:skylight");
     ctx.check(stored && stored->is_boolean(), "the world keeps its preset");

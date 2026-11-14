@@ -241,7 +241,7 @@ std::string idIn(Json const& data, std::initializer_list<char const*> keys) {
     return {};
 }
 
-bool matchTfTrigger(std::string const& trigger, Json const& conditions, Json const& data, Env const& env) {
+bool matchGloamingTrigger(std::string const& trigger, Json const& conditions, Json const& data, Env const& env) {
     Json const& c = conditions.is_object() ? conditions : Json::object();
     if (trigger == "gloamingforest:hurt_boss") {
         // HurtBossTrigger(player, boss): hurt_entity tested against the boss
@@ -286,7 +286,7 @@ bool matchTfTrigger(std::string const& trigger, Json const& conditions, Json con
         if (want == c.end() || !want->is_string()) return false;
         return withNamespace(want->get<std::string>()) == idIn(data, {"structure", "key"});
     }
-    // make_tf_portal, broke_glass_sword, consume_hydra_chop_on_low_hunger, complete_quest_ram,
+    // make_gf_portal, broke_glass_sword, consume_hydra_chop_on_low_hunger, complete_quest_ram,
     // placed_on_trophy_pedestal, kill_all_phantoms, activate_ghast_trap: only the player
     // predicate (checked by the caller)
     return true;

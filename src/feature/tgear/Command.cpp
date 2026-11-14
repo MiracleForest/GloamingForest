@@ -10,7 +10,7 @@
 // hand, not an ability; then the add / remove checks). The modifier name is rendered once on the
 // server in the server's language with upstream's default key names (docs/units/tgear.md: upstream's dedicated
 // server fails with NoClassDefFoundError for the three names with a key placeholder; GloamingForest
-// puts in the default binding). The ten commands.tffeature.* keys are F6's: tr with upstream's English.
+// puts in the default binding). The ten commands.gloamingfeature.* keys are F6's: tr with upstream's English.
 #include "feature/tgear/Command.h"
 
 #include "ll/api/command/CommandHandle.h"
@@ -37,30 +37,30 @@ namespace items = game::items;
 CommandOutcome runCommand(Player* player, bool add, std::string const& typed) {
     // ResourceKeyArgument: a location without a namespace is minecraft's
     std::string id = typed.find(':') == std::string::npos ? "minecraft:" + typed : typed;
-    if (!modifierExists(id)) return {false, tr("commands.tffeature.invalid_modifier", "%s is not a valid Traveller's Gear Modifier", id)};
-    if (!player) return {false, tr("commands.tffeature.not_player", "This command must be run by a valid player!")};
+    if (!modifierExists(id)) return {false, tr("commands.gloamingfeature.invalid_modifier", "%s is not a valid Traveller's Gear Modifier", id)};
+    if (!player) return {false, tr("commands.gloamingfeature.not_player", "This command must be run by a valid player!")};
     ItemStack stack = player->getSelectedItem();
     if (items::isEmpty(stack) || !isGear(items::idOf(stack)))
-        return {false, tr("commands.tffeature.not_travellers_gear", "You are not holding a piece of Traveller's Gear")};
+        return {false, tr("commands.gloamingfeature.not_travellers_gear", "You are not holding a piece of Traveller's Gear")};
     auto m = modifier(id);
-    if (!m || m->ability) return {false, tr("commands.tffeature.ability_modifier", "Abilities cannot be added or removed from Traveller's Gear")};
+    if (!m || m->ability) return {false, tr("commands.gloamingfeature.ability_modifier", "Abilities cannot be added or removed from Traveller's Gear")};
     auto name = modifierName(id);
     if (add) {
         if (static_cast<int>(insertableModifiers(stack).size()) >= modifierSlots(items::idOf(stack)))
-            return {false, tr("commands.tffeature.too_many_modifiers", "This piece of Traveller's Gear already has the maximum amount of modifiers")};
-        if (hasModifier(stack, id)) return {false, tr("commands.tffeature.has_modifier", "This piece of Traveller's Gear already has %s", name)};
+            return {false, tr("commands.gloamingfeature.too_many_modifiers", "This piece of Traveller's Gear already has the maximum amount of modifiers")};
+        if (hasModifier(stack, id)) return {false, tr("commands.gloamingfeature.has_modifier", "This piece of Traveller's Gear already has %s", name)};
         if (!groupCovers(m->group, armorSlotOf(items::idOf(stack))))
-            return {false, tr("commands.tffeature.wrong_modifier_slot", "%s is not allowed on this piece of Traveller's Gear", name)};
-        if (!addModifier(stack, id)) return {false, tr("commands.tffeature.wrong_modifier_slot", "%s is not allowed on this piece of Traveller's Gear", name)};
+            return {false, tr("commands.gloamingfeature.wrong_modifier_slot", "%s is not allowed on this piece of Traveller's Gear", name)};
+        if (!addModifier(stack, id)) return {false, tr("commands.gloamingfeature.wrong_modifier_slot", "%s is not allowed on this piece of Traveller's Gear", name)};
     } else {
-        if (!hasModifier(stack, id)) return {false, tr("commands.tffeature.no_modifier", "%s is not applied to this piece of Traveller's Gear", name)};
+        if (!hasModifier(stack, id)) return {false, tr("commands.gloamingfeature.no_modifier", "%s is not applied to this piece of Traveller's Gear", name)};
         removeModifier(stack, id, nullptr); // the stored items are deleted
     }
     player->setSelectedItem(stack);
     player->sendInventory(false);
     auto stackName = items::displayName(stack);
-    auto text      = add ? tr("commands.tffeature.added_modifier", "Added %s to %s!", name, stackName)
-                         : tr("commands.tffeature.removed_modifier", "Removed %s from %s!", name, stackName);
+    auto text      = add ? tr("commands.gloamingfeature.added_modifier", "Added %s to %s!", name, stackName)
+                         : tr("commands.gloamingfeature.removed_modifier", "Removed %s from %s!", name, stackName);
     log().info("tgear: {} {} {}", player->getRealName(), add ? "added" : "removed", id);
     return {true, text};
 }

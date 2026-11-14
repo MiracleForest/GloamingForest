@@ -12,7 +12,7 @@ checklist the U23 worker implements and the W2 audit (A3) compares against. The 
 | Net channels | `labyrinth.*` |
 | Config | none |
 | Contracts | landmark (F6), structure + Maze base (F7), boss + entity (F8), loot (F10), interactions |
-| Java sources | `entity/boss/Minoshroom.java`, `entity/monster/{Minotaur,MazeSlime}.java`, `entity/ai/goal/{GroundAttackGoal,ChargeAttackGoal}.java`, `block/MazeSlimeBlock.java`, `block/entity/spawner/MinoshroomSpawnerBlockEntity.java`, `world/components/structures/type/LabyrinthStructure.java`, `world/components/structures/minotaurmaze/*.java` (27 files), `world/components/structures/TFMaze.java` (F7 base), `events/ToolEvents.java` (`damageNonMazebreakerToolsMore`), `client/renderer/entity/{MinoshroomRenderer,MazeSlimeRenderer}.java` |
+| Java sources | `entity/boss/Minoshroom.java`, `entity/monster/{Minotaur,MazeSlime}.java`, `entity/ai/goal/{GroundAttackGoal,ChargeAttackGoal}.java`, `block/MazeSlimeBlock.java`, `block/entity/spawner/MinoshroomSpawnerBlockEntity.java`, `world/components/structures/type/LabyrinthStructure.java`, `world/components/structures/minotaurmaze/*.java` (27 files), `world/components/structures/GloamingMaze.java` (F7 base), `events/ToolEvents.java` (`damageNonMazebreakerToolsMore`), `client/renderer/entity/{MinoshroomRenderer,MazeSlimeRenderer}.java` |
 | Data | `loot_table/entities/{minoshroom,minotaur,maze_slime}.json`, `loot_table/blocks/maze_slime_block.json`, `loot_table/labyrinth_*.json`, `recipe/{compressed_blocks/maze_slime,compressed_blocks/reversed/maze_slime_block,lead_maze_ver,magma_cream_maze_ver,sticky_piston_maze_ver}.json`, `worldgen/structure/labyrinth.json`, `worldgen/structure_set/labyrinth.json`, `damage_type/slam.json`, `tags/block/mazebreaker_accelerated_mining.json` |
 
 Not owned here: the mazestone family, `gloamingforest:minoshroom_boss_spawner`, `gloamingforest:minoshroom_trophy`
@@ -106,7 +106,7 @@ lootTable "gloamingforest:entities/minoshroom", deathChestBlock "gloamingforest:
 MONSTER 0.6 x 2.1; egg `gloamingforest:minotaur_spawn_egg` (`0x3f3024` / `0xaa7d66`). Attributes: monster defaults, max
 health 30, speed 0.25. Goals: Float 0; Charge(1.5, canBreak false) 2; Melee(1.0) 3; Stroll 6; LookAtPlayer 7; RandomLook
 7; targets HurtBy 1, NearestAttackable(Player) 2. Synced `CHARGING`. Equipment: `random = nextInt(10)`;
-`(int)(random / (effectiveDifficulty + 1)) == 0` -> `gloamingforest:gold_minotaur_axe` (TFItems `GOLDEN_MINOTAUR_AXE`)
+`(int)(random / (effectiveDifficulty + 1)) == 0` -> `gloamingforest:gold_minotaur_axe` (GloamingItems `GOLDEN_MINOTAUR_AXE`)
 else `minecraft:golden_axe` (default drop chance), then difficulty enchantments. Melee as 1.3 with the minotaur attack
 sound; voice pitch as the Minoshroom.
 
@@ -211,43 +211,43 @@ The mound centre is `(float)(cx + 1), (float)(cy + 7), cz + 2f`, not `fromPos`, 
 (terrain.md section 3 gives the exact definitions). The volume-hash golden depends on reproducing that float
 arithmetic.
 
-### 7.1 Pieces (all `TFStructureComponentOld`, translate exactly)
+### 7.1 Pieces (all `GloamingStructureComponentOld`, translate exactly)
 
 | Piece type id | Class | Content |
 |---|---|---|
-| `gloamingforest:TFMMRuins` | MazeRuinsComponent | root, empty box at the start; children: level-1 maze at y - 14, entrance shaft at (+1, 0, +1), mound at (-14, maxY, -14) |
-| `gloamingforest:TFMMMound` | MazeMoundComponent | 35 x 12 x 35 box (mound shape comes from the terraformer); child: upper entrance at (+10, 0, +10) |
-| `gloamingforest:TFMMUE` | MazeUpperEntranceComponent | 16 x 5 x 16 ruin: dirt dome (radius 16, 0.8) replacing stone; mazestone ceiling 70 %; mosaic floor; decorative / brick / decorative walls; 20 % gravel; oak fence doorways (6-9) on all four sides; centre pit with decorative rims and 70 % iron bars |
-| `gloamingforest:TFMMES` | MazeEntranceShaftComponent | 6 x 6 mazestone brick shaft from sea level - 9 up to the surface, hollow 4 x 4 up to sea level + 11 |
-| `gloamingforest:TFMMaze` | MinotaurMazeComponent | the maze level (7.2) |
-| `gloamingforest:TFMMR` | MazeRoomComponent | 16 x 5 x 16 room, random orientation: border + mosaic floor, oak fence doorways where the maze opens |
-| `gloamingforest:TFMMRE` | MazeRoomExitComponent | level 1 room #1: mazestone brick well down 5 blocks, decorative rim, iron bars, open to level 2 |
-| `gloamingforest:TFMMRB` | MazeRoomBossComponent | level 2 room #1: mycelium / mushrooms by distance, four huge-mushroom corners each hiding a `gloamingforest:labyrinth_room` chest, two mushroom caps, `gloamingforest:minoshroom_boss_spawner` at (7, 2, 7); no spawns |
-| `gloamingforest:TFMMRC` | MazeRoomCollapseComponent | level 1 rooms #2-3: gravel piles and dirt / root strand ceilings by distance from centre |
-| `gloamingforest:TFMMMR` | MazeMushRoomComponent | level 2 rooms #2-3: mycelium, mushrooms, 5 medium mushrooms and 4 corner huge-mushroom caps |
-| `gloamingforest:TFMMRF` | MazeRoomFountainComponent | level 1 room #4: decorative 6 x 6 basin with water |
-| `gloamingforest:TFMMRV` | MazeRoomVaultComponent | level 2 room #4: sealed decorative/brick vault, pressure plates over TNT, sand above, four double chests (`gloamingforest:labyrinth_vault`, one random jackpot `gloamingforest:labyrinth_vault_jackpot`); no spawns |
-| `gloamingforest:TFMMRSC` | MazeRoomSpawnerChestsComponent | rooms #5-6: four cut-mazestone pillar cages (oak plank/stair floor and roof, iron bars), a `gloamingforest:minotaur` spawner at (4, 2, 4), two `gloamingforest:labyrinth_room` chests at (4, 2, 11) and (11, 2, 4), pressure plate over 4 TNT at (11, 1, 11) |
-| `gloamingforest:TFMMDE` | MazeDeadEndComponent | oak fence doorway (default dead end, case 0: 1/8) |
-| `gloamingforest:TFMMDEC` | MazeDeadEndChestComponent | double chest `gloamingforest:labyrinth_dead_end` on oak plank + stairs behind cut mazestone and iron bars; no spawns (1/8) |
-| `gloamingforest:TFMMDETrC` | MazeDeadEndTrappedChestComponent | as above with a **trapped** double chest over 4 TNT; no spawns (1/16) |
-| `gloamingforest:TFMMDETC` | MazeDeadEndTripwireChestComponent | chest dead end plus tripwire across (1, 1, 2)-(3) and unstable TNT under the hook and chest (1/16) |
-| `gloamingforest:TFMMDET` | MazeDeadEndTorchesComponent | wall torches on three walls (1/8) |
-| `gloamingforest:TFMMDEF` | MazeDeadEndFountainComponent | mazestone brick back wall with a water source (1/8) |
-| `gloamingforest:TFMMDEFL` | MazeDeadEndFountainLavaComponent | the fountain with lava (1/8) |
-| `gloamingforest:TFMMDEP` | MazeDeadEndPaintingComponent | doorway and two wall torches (upstream's painting is commented out) (1/8) |
-| `gloamingforest:TFMMDER` | MazeDeadEndRootsComponent | level 1 (1/8): dirt ceiling with root strands and gravel |
-| `gloamingforest:TFMMDES` | MazeDeadEndShroomsComponent | level 2 (1/8): mycelium, mushrooms, two small huge mushrooms |
-| `gloamingforest:TFMMC` | MazeCorridorComponent | oak fence across a straight corridor (1/5) |
-| `gloamingforest:TFMMCIF` | MazeCorridorIronFenceComponent | cut mazestone + iron bars gate (1/5) |
-| `gloamingforest:TFMMCR` | MazeCorridorRootsComponent | level 1 (1/5): roots and gravel |
-| `gloamingforest:TFMMCS` | MazeCorridorShroomsComponent | level 2 (1/5): mycelium and small huge mushrooms |
+| `gloamingforest:GloamingMMRuins` | MazeRuinsComponent | root, empty box at the start; children: level-1 maze at y - 14, entrance shaft at (+1, 0, +1), mound at (-14, maxY, -14) |
+| `gloamingforest:GloamingMMMound` | MazeMoundComponent | 35 x 12 x 35 box (mound shape comes from the terraformer); child: upper entrance at (+10, 0, +10) |
+| `gloamingforest:GloamingMMUE` | MazeUpperEntranceComponent | 16 x 5 x 16 ruin: dirt dome (radius 16, 0.8) replacing stone; mazestone ceiling 70 %; mosaic floor; decorative / brick / decorative walls; 20 % gravel; oak fence doorways (6-9) on all four sides; centre pit with decorative rims and 70 % iron bars |
+| `gloamingforest:GloamingMMES` | MazeEntranceShaftComponent | 6 x 6 mazestone brick shaft from sea level - 9 up to the surface, hollow 4 x 4 up to sea level + 11 |
+| `gloamingforest:GloamingMMaze` | MinotaurMazeComponent | the maze level (7.2) |
+| `gloamingforest:GloamingMMR` | MazeRoomComponent | 16 x 5 x 16 room, random orientation: border + mosaic floor, oak fence doorways where the maze opens |
+| `gloamingforest:GloamingMMRE` | MazeRoomExitComponent | level 1 room #1: mazestone brick well down 5 blocks, decorative rim, iron bars, open to level 2 |
+| `gloamingforest:GloamingMMRB` | MazeRoomBossComponent | level 2 room #1: mycelium / mushrooms by distance, four huge-mushroom corners each hiding a `gloamingforest:labyrinth_room` chest, two mushroom caps, `gloamingforest:minoshroom_boss_spawner` at (7, 2, 7); no spawns |
+| `gloamingforest:GloamingMMRC` | MazeRoomCollapseComponent | level 1 rooms #2-3: gravel piles and dirt / root strand ceilings by distance from centre |
+| `gloamingforest:GloamingMMMR` | MazeMushRoomComponent | level 2 rooms #2-3: mycelium, mushrooms, 5 medium mushrooms and 4 corner huge-mushroom caps |
+| `gloamingforest:GloamingMMRF` | MazeRoomFountainComponent | level 1 room #4: decorative 6 x 6 basin with water |
+| `gloamingforest:GloamingMMRV` | MazeRoomVaultComponent | level 2 room #4: sealed decorative/brick vault, pressure plates over TNT, sand above, four double chests (`gloamingforest:labyrinth_vault`, one random jackpot `gloamingforest:labyrinth_vault_jackpot`); no spawns |
+| `gloamingforest:GloamingMMRSC` | MazeRoomSpawnerChestsComponent | rooms #5-6: four cut-mazestone pillar cages (oak plank/stair floor and roof, iron bars), a `gloamingforest:minotaur` spawner at (4, 2, 4), two `gloamingforest:labyrinth_room` chests at (4, 2, 11) and (11, 2, 4), pressure plate over 4 TNT at (11, 1, 11) |
+| `gloamingforest:GloamingMMDE` | MazeDeadEndComponent | oak fence doorway (default dead end, case 0: 1/8) |
+| `gloamingforest:GloamingMMDEC` | MazeDeadEndChestComponent | double chest `gloamingforest:labyrinth_dead_end` on oak plank + stairs behind cut mazestone and iron bars; no spawns (1/8) |
+| `gloamingforest:GloamingMMDETrC` | MazeDeadEndTrappedChestComponent | as above with a **trapped** double chest over 4 TNT; no spawns (1/16) |
+| `gloamingforest:GloamingMMDETC` | MazeDeadEndTripwireChestComponent | chest dead end plus tripwire across (1, 1, 2)-(3) and unstable TNT under the hook and chest (1/16) |
+| `gloamingforest:GloamingMMDET` | MazeDeadEndTorchesComponent | wall torches on three walls (1/8) |
+| `gloamingforest:GloamingMMDEF` | MazeDeadEndFountainComponent | mazestone brick back wall with a water source (1/8) |
+| `gloamingforest:GloamingMMDEFL` | MazeDeadEndFountainLavaComponent | the fountain with lava (1/8) |
+| `gloamingforest:GloamingMMDEP` | MazeDeadEndPaintingComponent | doorway and two wall torches (upstream's painting is commented out) (1/8) |
+| `gloamingforest:GloamingMMDER` | MazeDeadEndRootsComponent | level 1 (1/8): dirt ceiling with root strands and gravel |
+| `gloamingforest:GloamingMMDES` | MazeDeadEndShroomsComponent | level 2 (1/8): mycelium, mushrooms, two small huge mushrooms |
+| `gloamingforest:GloamingMMC` | MazeCorridorComponent | oak fence across a straight corridor (1/5) |
+| `gloamingforest:GloamingMMCIF` | MazeCorridorIronFenceComponent | cut mazestone + iron bars gate (1/5) |
+| `gloamingforest:GloamingMMCR` | MazeCorridorRootsComponent | level 1 (1/5): roots and gravel |
+| `gloamingforest:GloamingMMCS` | MazeCorridorShroomsComponent | level 2 (1/5): mycelium and small huge mushrooms |
 
 Corridor case 3 (painting) and case 0 place nothing.
 
 ### 7.2 Maze level (`MinotaurMazeComponent`)
 
-- Maze 22 x 22 cells (`TFMaze`, F7), cell 5 blocks, radius 55, box `(-55, 0, -55, 112, 5, 112)`, orientation SOUTH.
+- Maze 22 x 22 cells (`GloamingMaze`, F7), cell 5 blocks, radius 55, box `(-55, 0, -55, 112, 5, 112)`, orientation SOUTH.
 - Per-level seed `minX * 90342903 + minY * 90342903 ^ minZ`.
 - Maze configuration: head `gloamingforest:decorative_mazestone`, wall `gloamingforest:mazestone_brick`, root
   `decorative_mazestone`, pillar `gloamingforest:cut_mazestone`, wall selector = mazestone random block selector

@@ -3,8 +3,8 @@
   "source": "ItemInHandLayer (right arm) + the item model's 'thirdperson_righthand' display + ItemRenderer (builtin/entity) + ISTER + TrophyRenderer.render(null, 180, THIRD_PERSON_RIGHT_HAND) + NagaModel.renderTrophy (item form)",
   "layer": {
     "name": "naga_trophy",
-    "field": "TFModelLayers.NAGA_TROPHY",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.NAGA_TROPHY, NagaModel::checkForPack);"
+    "field": "GloamingModelLayers.NAGA_TROPHY",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.NAGA_TROPHY, NagaModel::checkForPack);"
   },
   "frame": "rightArm",
   "slot": "main_hand",
@@ -24,7 +24,7 @@
       "identifier": "geometry.gloamingforest.naga_trophy_held",
       "texture": {
         "bedrock": "textures/gloamingforest/entity/nagahead",
-        "tf": "src/main/resources/assets/gloamingforest/textures/entity/nagahead.png"
+        "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/nagahead.png"
       },
       "material": "entity_alphatest"
     }

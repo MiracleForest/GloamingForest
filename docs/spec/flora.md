@@ -32,16 +32,16 @@ Contracts: families+blockevents, features, inventory, progression, data, client.
 
 ## 2. Upstream sources
 
-`init/TFBlocks.java`, `init/TFItems.java`, `init/TFBlockEntities.java`, `init/TFFeatures.java`,
-`init/TFConfiguredFeatures.java`, `init/TFPlacedFeatures.java`, `init/TFParticleType.java`, `init/TFSounds.java`,
-`init/TFSoundTypes.java` (JAR sound type), `init/TFStats.java`, `init/TFAdvancements.java`, `init/TFDamageTypes.java`,
-`init/TFDataComponents.java`, `block/TFBushBlock.java`, `block/SnowLoggable.java`, `block/BerryBushBlock.java`,
+`init/GloamingBlocks.java`, `init/GloamingItems.java`, `init/GloamingBlockEntities.java`, `init/GloamingFeatures.java`,
+`init/GloamingConfiguredFeatures.java`, `init/GloamingPlacedFeatures.java`, `init/GloamingParticleType.java`, `init/GloamingSounds.java`,
+`init/GloamingSoundTypes.java` (JAR sound type), `init/GloamingStats.java`, `init/GloamingAdvancements.java`, `init/GloamingDamageTypes.java`,
+`init/GloamingDataComponents.java`, `block/GloamingBushBlock.java`, `block/SnowLoggable.java`, `block/BerryBushBlock.java`,
 `block/DarkTowerBerryBushBlock.java`, `block/OreBerryBlock.java`, `block/CritterBlock.java`, `block/CicadaBlock.java`,
 `block/FireflyBlock.java`, `block/MoonwormBlock.java`, `block/entity/{Cicada,Firefly,Moonworm}BlockEntity.java`,
 `block/JarBlock.java`, `block/CicadaJarBlock.java`, `block/FireflyJarBlock.java`, `block/MasonJarBlock.java`,
 `block/entity/JarBlockEntity.java`, `block/entity/MasonJarBlockEntity.java`, `item/JarItem.java`,
 `block/AbstractParticleSpawnerBlock.java`, `block/FireflySpawnerBlock.java`, `block/FallenLeavesBlock.java`,
-`block/TFPlantBlock.java`, `block/PatchBlock.java`, `block/MossPatchBlock.java`, `block/MayappleBlock.java`,
+`block/GloamingPlantBlock.java`, `block/PatchBlock.java`, `block/MossPatchBlock.java`, `block/MayappleBlock.java`,
 `block/FiddleheadBlock.java`, `block/MushgloomBlock.java`, `block/HugeLilyPadBlock.java`, `item/HugeLilyPadItem.java`,
 `block/HugeWaterLilyBlock.java`, `block/LiverootBlock.java`, `block/RootStrandBlock.java`,
 `block/TorchberryPlantBlock.java`, `item/EssenceBerryItem.java`, `world/components/feature/{BerryBush,
@@ -50,11 +50,11 @@ EnchantedForestVines,FallenLeaves,HugeLilypad,HugeWaterLily,UndergroundPlant}Fea
 `client/model/entity/{Firefly,Cicada,Moonworm}Model.java`, `client/particle/FireflyParticle.java`,
 `client/particle/LeafParticle.java`, `client/MovingCicadaSoundInstance.java`, `client/event/ColorHandler.java`,
 `events/MiscEvents.java` (cicada on head), `network/{CreateMovingCicadaSound,SpawnFallenLeafFrom,SetMasonJarItem}Packet.java`,
-`advancements/KillBugTrigger.java`, `dispenser/TFDispenserBehaviors.java`, `events/RegistrationEvents.java`.
+`advancements/KillBugTrigger.java`, `dispenser/GloamingDispenserBehaviors.java`, `events/RegistrationEvents.java`.
 
 ## 3. Behaviour
 
-### 3.1 Berry bushes (`TFBushBlock` base, snow-loggable)
+### 3.1 Berry bushes (`GloamingBushBlock` base, snow-loggable)
 
 States: `age` 0..3 (`AGE_3`, default 0) and `layers` 0..8 (`SnowLoggable.SNOW_LAYERS`, default 0). Properties
 (Appendix A): sound GRASS (oreberries METAL), `destroyTime(0.4)`, random ticks, dynamic shape, `noOcclusion`; shade
@@ -63,7 +63,7 @@ brightness 1.0. Shapes: age 0 box(4,0,4, 12,8,12) without snow, box(4,0,4, 12,10
 layer box with snow; age 2-3 full block (`SMALL_BUSH_SHAPES` / `MEDIUM_BUSH_SHAPES`). Push reaction DESTROY while age < 2.
 
 - Survival: the block below must match the bush's "placed on" tag, or be the same bush at age >= 2 (bushes stack).
-  Tags: overworld bushes `#gloamingforest:tf_berry_bushes_survive`; dark tower bushes
+  Tags: overworld bushes `#gloamingforest:gf_berry_bushes_survive`; dark tower bushes
   `#gloamingforest:dark_tower_berry_bushes_survive`; oreberries `#gloamingforest:oreberry_bushes_survive`.
 - Growth (random tick): if age < 3, with chance **1/20** and `canGrowAt` -> age + 1 (when reaching age 2 while
   snow-logged, the snow moves up: the block above becomes snow, or a snow-loggable above gets 1 layer). Then
@@ -92,7 +92,7 @@ layer box with snow; age 2-3 full block (`SMALL_BUSH_SHAPES` / `MEDIUM_BUSH_SHAP
   consumes one and spawns an XP orb worth **6..19** at the player's feet + 1.
 - Worldgen (`BerryBushFeature`, config `{bush, generates_on, can_generate_snowy}`): needs `generates_on` below the
   origin; picks LARGE (weight 1), MEDIUM (2), SMALL (4), TINY (3). Each placed bush: age 3 with chance **0.2** else 2
-  (TINY: age rand(4); SMALL ring: rand(4)); a target is skipped unless it is in `#tf_berry_bushes_replace`, not in
+  (TINY: age rand(4); SMALL ring: rand(4)); a target is skipped unless it is in `#gf_berry_bushes_replace`, not in
   `#minecraft:features_cannot_replace`, has no fluid, and (for age < 2) stands on `generates_on`. In snowy biomes
   (if allowed) bushes not on another bush get 1 snow layer and grown bushes get a snow block above. LARGE = 3x3 at
   y-2, taxicab < 4 in y-1..0 within +-2, 3x3 at y+1; MEDIUM = layers y-1..2 with radius min(2-dy, 2), corners
@@ -164,7 +164,7 @@ layer box with snow; age 2-3 full block (`SMALL_BUSH_SHAPES` / `MEDIUM_BUSH_SHAP
 - Moonworm: light **14**, `forceSolidOff`, waterloggable by sources only; flowing water destroys it (with drops),
   lava fizzes it away. Client: yaw starts at rand(4)*90 and slowly turns 1 degree per tick towards a new rand(4)*90
   target every 200 + rand(200) ticks.
-- Renderers: upstream models (`TFModelLayers.FIREFLY/CICADA/MOONWORM`, textures `model/firefly-tiny.png`,
+- Renderers: upstream models (`GloamingModelLayers.FIREFLY/CICADA/MOONWORM`, textures `model/firefly-tiny.png`,
   `cicada-model.png`, `moonworm.png`) rotated to `facing`, plus a per-block random 0/90/180/270 rotation; the
   firefly renders a translucent glow layer with the glow intensity. Items render the same models
   (`BugModelAnimationHelper` animation).
@@ -305,68 +305,68 @@ Every id this unit owns in `docs/spec/owners.tsv`, with the upstream 4.8 data th
 
 ### Blocks (34)
 
-Item column: `BlockItem` = upstream registers a plain block item with the block (`TFBlocks.register`), the id is also a `block_item` row; `-` = no item of the same id (the block is placed by another item, or has none).
+Item column: `BlockItem` = upstream registers a plain block item with the block (`GloamingBlocks.register`), the id is also a `block_item` row; `-` = no item of the same id (the block is placed by another item, or has none).
 
 Block states come from upstream's blockstate JSON (`multipart:` lists only the property values the model parts test). Notes collect `RegistrationEvents` (fire, axe stripping, flower pots, jar lids), dispenser behaviours and the `neoforge:compostables` / `neoforge:furnace_fuels` data maps.
 
-| Block | English name | upstream registration (`TFBlocks`) | Block states | Item | Loot (`blocks/<id>`) | Notes |
+| Block | English name | upstream registration (`GloamingBlocks`) | Block states | Item | Loot (`blocks/<id>`) | Notes |
 |---|---|---|---|---|---|---|
-| `gloamingforest:blackberry_bush` | Blackberry Bush | `register("blackberry_bush", new BerryBushBlock(TFLootTables.BLACKBERRY_BUSH_DROPS, Properties.of().sound(GRASS).destroyTime(0.4F).randomTicks().dynamicShape().noOcclusion()));` | age: 0/1/2/3; layers: 0/1/2/3/4/5/6/7/8 | BlockItem | rolls 1: table blocks/blackberry_bush_berries [pool if state age=3] ;; rolls 1: blackberry_bush | flammable (encouragement 4, flammability 25); compost chance 0.5; block tags: #mc:replaceable_by_trees, #druid_projectile_replaceable, #worldgen_replaceables |
-| `gloamingforest:blightberry_bush` | Blightberry Bush | `register("blightberry_bush", new DarkTowerBerryBushBlock(TFLootTables.BLIGHTBERRY_BUSH_DROPS, Properties.of().sound(GRASS).destroyTime(0.4F).randomTicks().dynamicShape().noOcclusion()));` | age: 0/1/2/3; layers: 0/1/2/3/4/5/6/7/8 | BlockItem | rolls 1: table blocks/blightberry_bush_berries [pool if state age=3] ;; rolls 1: blightberry_bush | compost chance 0.5 |
-| `gloamingforest:blueberry_bush` | Blueberry Bush | `register("blueberry_bush", new BerryBushBlock(TFLootTables.BLUEBERRY_BUSH_DROPS, Properties.of().sound(GRASS).destroyTime(0.4F).randomTicks().dynamicShape().noOcclusion()));` | age: 0/1/2/3; layers: 0/1/2/3/4/5/6/7/8 | BlockItem | rolls 1: table blocks/blueberry_bush_berries [pool if state age=3] ;; rolls 1: blueberry_bush | flammable (encouragement 4, flammability 25); compost chance 0.5; block tags: #mc:replaceable_by_trees, #druid_projectile_replaceable, #worldgen_replaceables |
-| `gloamingforest:cicada` | Cicada | `register("cicada", new CicadaBlock(Properties.of().instabreak().noCollission().noTerrainParticles().pushReaction(DESTROY).sound(SLIME_BLOCK)));` |  | BlockItem | self | dispenser: equips it on an entity in front, like armor (ArmorItem.dispenseArmor) (TFDispenserBehaviors); block tags: #create:tree_attachments; item tags: #curios:head |
-| `gloamingforest:cicada_jar` | Cicada Jar | `BLOCKS.register("cicada_jar", new CicadaJarBlock(Properties.of().noOcclusion().noTerrainParticles().randomTicks().sound(TFSoundTypes.JAR).strength(0.3F, 3.0F)));` |  | - | rolls 1: cicada_jar {copy_components jar_lid} [pool if survives_explosion] |  |
+| `gloamingforest:blackberry_bush` | Blackberry Bush | `register("blackberry_bush", new BerryBushBlock(GloamingLootTables.BLACKBERRY_BUSH_DROPS, Properties.of().sound(GRASS).destroyTime(0.4F).randomTicks().dynamicShape().noOcclusion()));` | age: 0/1/2/3; layers: 0/1/2/3/4/5/6/7/8 | BlockItem | rolls 1: table blocks/blackberry_bush_berries [pool if state age=3] ;; rolls 1: blackberry_bush | flammable (encouragement 4, flammability 25); compost chance 0.5; block tags: #mc:replaceable_by_trees, #druid_projectile_replaceable, #worldgen_replaceables |
+| `gloamingforest:blightberry_bush` | Blightberry Bush | `register("blightberry_bush", new DarkTowerBerryBushBlock(GloamingLootTables.BLIGHTBERRY_BUSH_DROPS, Properties.of().sound(GRASS).destroyTime(0.4F).randomTicks().dynamicShape().noOcclusion()));` | age: 0/1/2/3; layers: 0/1/2/3/4/5/6/7/8 | BlockItem | rolls 1: table blocks/blightberry_bush_berries [pool if state age=3] ;; rolls 1: blightberry_bush | compost chance 0.5 |
+| `gloamingforest:blueberry_bush` | Blueberry Bush | `register("blueberry_bush", new BerryBushBlock(GloamingLootTables.BLUEBERRY_BUSH_DROPS, Properties.of().sound(GRASS).destroyTime(0.4F).randomTicks().dynamicShape().noOcclusion()));` | age: 0/1/2/3; layers: 0/1/2/3/4/5/6/7/8 | BlockItem | rolls 1: table blocks/blueberry_bush_berries [pool if state age=3] ;; rolls 1: blueberry_bush | flammable (encouragement 4, flammability 25); compost chance 0.5; block tags: #mc:replaceable_by_trees, #druid_projectile_replaceable, #worldgen_replaceables |
+| `gloamingforest:cicada` | Cicada | `register("cicada", new CicadaBlock(Properties.of().instabreak().noCollission().noTerrainParticles().pushReaction(DESTROY).sound(SLIME_BLOCK)));` |  | BlockItem | self | dispenser: equips it on an entity in front, like armor (ArmorItem.dispenseArmor) (GloamingDispenserBehaviors); block tags: #create:tree_attachments; item tags: #curios:head |
+| `gloamingforest:cicada_jar` | Cicada Jar | `BLOCKS.register("cicada_jar", new CicadaJarBlock(Properties.of().noOcclusion().noTerrainParticles().randomTicks().sound(GloamingSoundTypes.JAR).strength(0.3F, 3.0F)));` |  | - | rolls 1: cicada_jar {copy_components jar_lid} [pool if survives_explosion] |  |
 | `gloamingforest:clover_patch` | Clover Patch | `register("clover_patch", new PatchBlock(Properties.of().ignitedByLava().noCollission().noOcclusion().instabreak().mapColor(PLANT).pushReaction(DESTROY).sound(GRASS)));` |  | BlockItem | rolls 1: clover_patch [pool if neoforge:can_item_perform_ability{"ability":"shears_dig"}] | flammable (encouragement 60, flammability 100); compost chance 0.3; block tags: #mc:replaceable_by_trees, #druid_projectile_replaceable, #portal/decoration, #worldgen_replaceables; item tags: #createaddition:plants |
-| `gloamingforest:copper_oreberry` | Copper Oreberry Bush | `register("copper_oreberry", new OreBerryBlock(false, TFLootTables.COPPER_OREBERRY_BUSH_DROPS, Properties.of().sound(METAL).destroyTime(0.4F).randomTicks().dynamicShape().noOcclusion()));` | age: 0/1/2/3; layers: 0/1/2/3/4/5/6/7/8 | BlockItem | rolls 1: table blocks/copper_oreberry_bush_berries [pool if state age=3] ;; rolls 1: copper_oreberry |  |
-| `gloamingforest:duskberry_bush` | Duskberry Bush | `register("duskberry_bush", new DarkTowerBerryBushBlock(TFLootTables.DUSKBERRY_BUSH_DROPS, Properties.of().sound(GRASS).destroyTime(0.4F).randomTicks().dynamicShape().noOcclusion()));` | age: 0/1/2/3; layers: 0/1/2/3/4/5/6/7/8 | BlockItem | rolls 1: table blocks/duskberry_bush_berries [pool if state age=3] ;; rolls 1: duskberry_bush | compost chance 0.5 |
-| `gloamingforest:essence_oreberry` | Essence Berry Bush | `register("essence_oreberry", new OreBerryBlock(true, TFLootTables.ESSENCE_BERRY_BUSH_DROPS, Properties.of().sound(METAL).destroyTime(0.4F).randomTicks().dynamicShape().noOcclusion()));` | age: 0/1/2/3; layers: 0/1/2/3/4/5/6/7/8 | BlockItem | rolls 1: table blocks/essence_berry_bush_berries [pool if state age=3] ;; rolls 1: essence_oreberry |  |
+| `gloamingforest:copper_oreberry` | Copper Oreberry Bush | `register("copper_oreberry", new OreBerryBlock(false, GloamingLootTables.COPPER_OREBERRY_BUSH_DROPS, Properties.of().sound(METAL).destroyTime(0.4F).randomTicks().dynamicShape().noOcclusion()));` | age: 0/1/2/3; layers: 0/1/2/3/4/5/6/7/8 | BlockItem | rolls 1: table blocks/copper_oreberry_bush_berries [pool if state age=3] ;; rolls 1: copper_oreberry |  |
+| `gloamingforest:duskberry_bush` | Duskberry Bush | `register("duskberry_bush", new DarkTowerBerryBushBlock(GloamingLootTables.DUSKBERRY_BUSH_DROPS, Properties.of().sound(GRASS).destroyTime(0.4F).randomTicks().dynamicShape().noOcclusion()));` | age: 0/1/2/3; layers: 0/1/2/3/4/5/6/7/8 | BlockItem | rolls 1: table blocks/duskberry_bush_berries [pool if state age=3] ;; rolls 1: duskberry_bush | compost chance 0.5 |
+| `gloamingforest:essence_oreberry` | Essence Berry Bush | `register("essence_oreberry", new OreBerryBlock(true, GloamingLootTables.ESSENCE_BERRY_BUSH_DROPS, Properties.of().sound(METAL).destroyTime(0.4F).randomTicks().dynamicShape().noOcclusion()));` | age: 0/1/2/3; layers: 0/1/2/3/4/5/6/7/8 | BlockItem | rolls 1: table blocks/essence_berry_bush_berries [pool if state age=3] ;; rolls 1: essence_oreberry |  |
 | `gloamingforest:fallen_leaves` | Fallen Leaves | `BLOCKS.register("fallen_leaves", new FallenLeavesBlock(Properties.of().ignitedByLava().instabreak().mapColor(PLANT).noCollission().noOcclusion().replaceable().pushReaction(DESTROY).sound(AZALEA_LEAVES)));` | layers: 1/2/3/4/5/6/7/8 | - | rolls 1: alternatives(alternatives(fallen_leaves {count 1} [if state layers=1] → fallen_leaves {count 2} [if state layers=2] → fallen_leaves {count 3} [if state layers=3] → fallen_leaves {count 4} [if state layers=4] → fallen_leaves {count 5} [if state layers=5] → fallen_leaves {count 6} [if state layers=6] → fallen_leaves {count 7} [if state layers=7] → fallen_leaves {count 8} [if state layers=8]) [if neoforge:can_item_perform_ability{"ability":"shears_dig"}]) | flammable (encouragement 60, flammability 100); compost chance 0.1; block tags: #mc:replaceable_by_trees, #druid_projectile_replaceable, #portal/decoration, #worldgen_replaceables; item tags: #createaddition:plants |
 | `gloamingforest:fiddlehead` | Fiddlehead Fern | `register("fiddlehead", new FiddleheadBlock(Properties.of().ignitedByLava().instabreak().mapColor(PLANT).noCollission().noOcclusion().pushReaction(DESTROY).replaceable().sound(GRASS)));` |  | BlockItem | rolls 1: fiddlehead [pool if neoforge:can_item_perform_ability{"ability":"shears_dig"}] | flammable (encouragement 60, flammability 100); pottable as `gloamingforest:potted_fiddlehead`; compost chance 0.3; block tags: #mc:replaceable_by_trees, #druid_projectile_replaceable, #ice_bomb_replaceables, #portal/decoration, #portal/generated_decoration, #worldgen_replaceables; item tags: #alexscaves:ferns, #createaddition:plants |
-| `gloamingforest:firefly` | Firefly | `register("firefly", new FireflyBlock(Properties.of().instabreak().lightLevel((state) -> 15).noCollission().noTerrainParticles().pushReaction(DESTROY).sound(SLIME_BLOCK)));` |  | BlockItem | self | dispenser: equips it on an entity in front, like armor (ArmorItem.dispenseArmor) (TFDispenserBehaviors); block tags: #alexscaves:underzealot_light_sources, #create:tree_attachments, #mc:replaceable_by_trees, #druid_projectile_replaceable, #worldgen_replaceables; item tags: #curios:head |
-| `gloamingforest:firefly_jar` | Firefly Jar | `BLOCKS.register("firefly_jar", new FireflyJarBlock(Properties.of().lightLevel((state) -> 15).noOcclusion().noTerrainParticles().sound(TFSoundTypes.JAR).strength(0.3F, 3.0F)));` |  | - | rolls 1: firefly_jar {copy_components jar_lid} [pool if survives_explosion] | block tags: #alexscaves:gloomoth_light_sources |
-| `gloamingforest:firefly_particle_spawner` | Firefly Particle Spawner | `register("firefly_particle_spawner", new FireflySpawnerBlock(Properties.of().lightLevel((state) -> 15).noOcclusion().noTerrainParticles().sound(TFSoundTypes.JAR).strength(0.3F, 3.0F)));` |  | BlockItem | rolls 1: firefly_particle_spawner {explosion_decay} ;; rolls 1: alternatives(alternatives(firefly {count 0} [if state particle_radius=1] → firefly {count 1} [if state particle_radius=2] → firefly {count 2} [if state particle_radius=3] → firefly {count 3} [if state particle_radius=4] → firefly {count 4} [if state particle_radius=5] → firefly {count 5} [if state particle_radius=6] → firefly {count 6} [if state particle_radius=7] → firefly {count 7} [if state particle_radius=8] → firefly {count 8} [if state particle_radius=9] → firefly {count 9} [if state particle_radius=10])) | block tags: #alexscaves:gloomoth_light_sources |
-| `gloamingforest:gold_oreberry` | Gold Oreberry Bush | `register("gold_oreberry", new OreBerryBlock(false, TFLootTables.GOLD_OREBERRY_BUSH_DROPS, Properties.of().sound(METAL).destroyTime(0.4F).randomTicks().dynamicShape().noOcclusion()));` | age: 0/1/2/3; layers: 0/1/2/3/4/5/6/7/8 | BlockItem | rolls 1: table blocks/gold_oreberry_bush_berries [pool if state age=3] ;; rolls 1: gold_oreberry |  |
+| `gloamingforest:firefly` | Firefly | `register("firefly", new FireflyBlock(Properties.of().instabreak().lightLevel((state) -> 15).noCollission().noTerrainParticles().pushReaction(DESTROY).sound(SLIME_BLOCK)));` |  | BlockItem | self | dispenser: equips it on an entity in front, like armor (ArmorItem.dispenseArmor) (GloamingDispenserBehaviors); block tags: #alexscaves:underzealot_light_sources, #create:tree_attachments, #mc:replaceable_by_trees, #druid_projectile_replaceable, #worldgen_replaceables; item tags: #curios:head |
+| `gloamingforest:firefly_jar` | Firefly Jar | `BLOCKS.register("firefly_jar", new FireflyJarBlock(Properties.of().lightLevel((state) -> 15).noOcclusion().noTerrainParticles().sound(GloamingSoundTypes.JAR).strength(0.3F, 3.0F)));` |  | - | rolls 1: firefly_jar {copy_components jar_lid} [pool if survives_explosion] | block tags: #alexscaves:gloomoth_light_sources |
+| `gloamingforest:firefly_particle_spawner` | Firefly Particle Spawner | `register("firefly_particle_spawner", new FireflySpawnerBlock(Properties.of().lightLevel((state) -> 15).noOcclusion().noTerrainParticles().sound(GloamingSoundTypes.JAR).strength(0.3F, 3.0F)));` |  | BlockItem | rolls 1: firefly_particle_spawner {explosion_decay} ;; rolls 1: alternatives(alternatives(firefly {count 0} [if state particle_radius=1] → firefly {count 1} [if state particle_radius=2] → firefly {count 2} [if state particle_radius=3] → firefly {count 3} [if state particle_radius=4] → firefly {count 4} [if state particle_radius=5] → firefly {count 5} [if state particle_radius=6] → firefly {count 6} [if state particle_radius=7] → firefly {count 7} [if state particle_radius=8] → firefly {count 8} [if state particle_radius=9] → firefly {count 9} [if state particle_radius=10])) | block tags: #alexscaves:gloomoth_light_sources |
+| `gloamingforest:gold_oreberry` | Gold Oreberry Bush | `register("gold_oreberry", new OreBerryBlock(false, GloamingLootTables.GOLD_OREBERRY_BUSH_DROPS, Properties.of().sound(METAL).destroyTime(0.4F).randomTicks().dynamicShape().noOcclusion()));` | age: 0/1/2/3; layers: 0/1/2/3/4/5/6/7/8 | BlockItem | rolls 1: table blocks/gold_oreberry_bush_berries [pool if state age=3] ;; rolls 1: gold_oreberry |  |
 | `gloamingforest:huge_lily_pad` | Huge Lily Pad | `BLOCKS.register("huge_lily_pad", new HugeLilyPadBlock(Properties.of().instabreak().mapColor(PLANT).pushReaction(DESTROY).sound(LILY_PAD)));` | facing: east/north/south/west; piece: ne/nw/se/sw | - | self | compost chance 0.85; block tags: #mc:frog_prefer_jump_to, #mc:inside_step_sound_blocks, #mc:mineable/axe, #mc:sword_efficient, #mineable_with_block_and_chain; item tags: #createaddition:plants |
 | `gloamingforest:huge_water_lily` | Huge Water Lily | `BLOCKS.register("huge_water_lily", new HugeWaterLilyBlock(Properties.of().instabreak().mapColor(PLANT).noCollission().pushReaction(DESTROY).sound(LILY_PAD)));` |  | - | self | compost chance 0.65; item tags: #createaddition:plants |
-| `gloamingforest:iron_oreberry` | Iron Oreberry Bush | `register("iron_oreberry", new OreBerryBlock(false, TFLootTables.IRON_OREBERRY_BUSH_DROPS, Properties.of().sound(METAL).destroyTime(0.4F).randomTicks().dynamicShape().noOcclusion()));` | age: 0/1/2/3; layers: 0/1/2/3/4/5/6/7/8 | BlockItem | rolls 1: table blocks/iron_oreberry_bush_berries [pool if state age=3] ;; rolls 1: iron_oreberry |  |
+| `gloamingforest:iron_oreberry` | Iron Oreberry Bush | `register("iron_oreberry", new OreBerryBlock(false, GloamingLootTables.IRON_OREBERRY_BUSH_DROPS, Properties.of().sound(METAL).destroyTime(0.4F).randomTicks().dynamicShape().noOcclusion()));` | age: 0/1/2/3; layers: 0/1/2/3/4/5/6/7/8 | BlockItem | rolls 1: table blocks/iron_oreberry_bush_berries [pool if state age=3] ;; rolls 1: iron_oreberry |  |
 | `gloamingforest:liveroot_block` | Liveroots | `register("liveroot_block", new LiverootBlock(Properties.of().ignitedByLava().mapColor(COLOR_LIGHT_GREEN).sound(WOOD).strength(2.0F, 3.0F)));` |  | BlockItem | rolls 1: alternatives(liveroot_block [if match_tool(mc:silk_touch>=1)] → liveroot {bonus mc:fortune mc:ore_drops {}} [if survives_explosion]) | flammable (encouragement 5, flammability 20); compost chance 0.65; block tags: #c:ores_in_ground/root, #create:tree_attachments, #mc:features_cannot_replace, #mc:mineable/axe, #mc:moss_replaceable, #mineable_with_block_and_chain, #ore_meter_targetable, #plants_hang_on, #small_lakes_dont_replace, #tree_roots_skip; item tags: #createaddition:plants |
-| `gloamingforest:maloberry_bush` | Maloberry Bush | `register("maloberry_bush", new BerryBushBlock(TFLootTables.MALOBERRY_BUSH_DROPS, Properties.of().sound(GRASS).destroyTime(0.4F).randomTicks().dynamicShape().noOcclusion()));` | age: 0/1/2/3; layers: 0/1/2/3/4/5/6/7/8 | BlockItem | rolls 1: table blocks/maloberry_bush_berries [pool if state age=3] ;; rolls 1: maloberry_bush | flammable (encouragement 4, flammability 25); compost chance 0.5; block tags: #mc:replaceable_by_trees, #druid_projectile_replaceable, #worldgen_replaceables |
-| `gloamingforest:mason_jar` | Mason Jar | `BLOCKS.register("mason_jar", new MasonJarBlock(Properties.of().noOcclusion().noTerrainParticles().randomTicks().sound(TFSoundTypes.JAR).strength(0.3F, 3.0F)));` |  | - | rolls 1: mason_jar {copy_components mc:custom_name,mc:container,mc:lock,mc:container_loot,jar_lid} [pool if survives_explosion] |  |
-| `gloamingforest:mayapple` | Mayapple | `register("mayapple", new MayappleBlock(Properties.of().ignitedByLava().instabreak().mapColor(PLANT).noCollission().noOcclusion().pushReaction(DESTROY).sound(GRASS)));` |  | BlockItem | rolls 1: mayapple [pool if neoforge:can_item_perform_ability{"ability":"shears_dig"}] | flammable (encouragement 60, flammability 100); pottable as `gloamingforest:potted_mayapple`; compost chance 0.3; block tags: #mc:replaceable_by_trees, #druid_projectile_replaceable, #ice_bomb_replaceables, #portal/decoration, #portal/generated_decoration, #tf_berry_bushes_replace, #worldgen_replaceables; item tags: #createaddition:plants |
-| `gloamingforest:moonworm` | Moonworm | `register("moonworm", new MoonwormBlock(Properties.of().forceSolidOff().instabreak().lightLevel((state) -> 14).noCollission().noTerrainParticles().pushReaction(DESTROY).sound(SLIME_BLOCK)));` |  | BlockItem | self | dispenser: equips it on an entity in front, like armor (ArmorItem.dispenseArmor) (TFDispenserBehaviors); block tags: #alexscaves:underzealot_light_sources; item tags: #curios:head |
+| `gloamingforest:maloberry_bush` | Maloberry Bush | `register("maloberry_bush", new BerryBushBlock(GloamingLootTables.MALOBERRY_BUSH_DROPS, Properties.of().sound(GRASS).destroyTime(0.4F).randomTicks().dynamicShape().noOcclusion()));` | age: 0/1/2/3; layers: 0/1/2/3/4/5/6/7/8 | BlockItem | rolls 1: table blocks/maloberry_bush_berries [pool if state age=3] ;; rolls 1: maloberry_bush | flammable (encouragement 4, flammability 25); compost chance 0.5; block tags: #mc:replaceable_by_trees, #druid_projectile_replaceable, #worldgen_replaceables |
+| `gloamingforest:mason_jar` | Mason Jar | `BLOCKS.register("mason_jar", new MasonJarBlock(Properties.of().noOcclusion().noTerrainParticles().randomTicks().sound(GloamingSoundTypes.JAR).strength(0.3F, 3.0F)));` |  | - | rolls 1: mason_jar {copy_components mc:custom_name,mc:container,mc:lock,mc:container_loot,jar_lid} [pool if survives_explosion] |  |
+| `gloamingforest:mayapple` | Mayapple | `register("mayapple", new MayappleBlock(Properties.of().ignitedByLava().instabreak().mapColor(PLANT).noCollission().noOcclusion().pushReaction(DESTROY).sound(GRASS)));` |  | BlockItem | rolls 1: mayapple [pool if neoforge:can_item_perform_ability{"ability":"shears_dig"}] | flammable (encouragement 60, flammability 100); pottable as `gloamingforest:potted_mayapple`; compost chance 0.3; block tags: #mc:replaceable_by_trees, #druid_projectile_replaceable, #ice_bomb_replaceables, #portal/decoration, #portal/generated_decoration, #gf_berry_bushes_replace, #worldgen_replaceables; item tags: #createaddition:plants |
+| `gloamingforest:moonworm` | Moonworm | `register("moonworm", new MoonwormBlock(Properties.of().forceSolidOff().instabreak().lightLevel((state) -> 14).noCollission().noTerrainParticles().pushReaction(DESTROY).sound(SLIME_BLOCK)));` |  | BlockItem | self | dispenser: equips it on an entity in front, like armor (ArmorItem.dispenseArmor) (GloamingDispenserBehaviors); block tags: #alexscaves:underzealot_light_sources; item tags: #curios:head |
 | `gloamingforest:moss_patch` | Moss Patch | `register("moss_patch", new MossPatchBlock(Properties.of().ignitedByLava().instabreak().mapColor(PLANT).noCollission().noOcclusion().pushReaction(DESTROY).sound(MOSS)));` |  | BlockItem | rolls 1: moss_patch [pool if neoforge:can_item_perform_ability{"ability":"shears_dig"}] | flammable (encouragement 60, flammability 100); compost chance 0.5; block tags: #mc:replaceable_by_trees, #druid_projectile_replaceable, #portal/decoration, #worldgen_replaceables |
 | `gloamingforest:mushgloom` | Mushgloom | `register("mushgloom", new MushgloomBlock(Properties.of().instabreak().lightLevel((state) -> 3).noCollission().noOcclusion().mapColor(PLANT).pushReaction(DESTROY).sound(FUNGUS)));` |  | BlockItem | self | pottable as `gloamingforest:potted_mushgloom`; compost chance 0.65; block tags: #farmersdelight:compost_activators, #mc:replaceable_by_trees, #druid_projectile_replaceable, #portal/decoration, #portal/generated_decoration, #worldgen_replaceables; item tags: #c:mushrooms, #createaddition:plants |
 | `gloamingforest:potted_fiddlehead` | Potted Fiddlehead | `BLOCKS.register("potted_fiddlehead", new FlowerPotBlock(() -> (FlowerPotBlock) Blocks.FLOWER_POT, FIDDLEHEAD, Properties.ofFullCopy(Blocks.FLOWER_POT)));` |  | - | rolls 1: mc:flower_pot [pool if survives_explosion] ;; rolls 1: fiddlehead [pool if survives_explosion] | flower pot holding `gloamingforest:fiddlehead`; block tags: #mc:flower_pots, #dark_tower_allowed_pots |
 | `gloamingforest:potted_mayapple` | Potted Mayapple | `BLOCKS.register("potted_mayapple", new FlowerPotBlock(() -> (FlowerPotBlock) Blocks.FLOWER_POT, MAYAPPLE, Properties.ofFullCopy(Blocks.FLOWER_POT)));` |  | - | rolls 1: mc:flower_pot [pool if survives_explosion] ;; rolls 1: mayapple [pool if survives_explosion] | flower pot holding `gloamingforest:mayapple`; block tags: #mc:flower_pots, #dark_tower_allowed_pots |
 | `gloamingforest:potted_mushgloom` | Potted Mushgloom | `BLOCKS.register("potted_mushgloom", new FlowerPotBlock(() -> (FlowerPotBlock) Blocks.FLOWER_POT, MUSHGLOOM, Properties.ofFullCopy(Blocks.FLOWER_POT)));` |  | - | rolls 1: mc:flower_pot [pool if survives_explosion] ;; rolls 1: mushgloom [pool if survives_explosion] | flower pot holding `gloamingforest:mushgloom`; block tags: #mc:flower_pots, #dark_tower_allowed_pots |
-| `gloamingforest:raspberry_bush` | Raspberry Bush | `register("raspberry_bush", new BerryBushBlock(TFLootTables.RASPBERRY_BUSH_DROPS, Properties.of().sound(GRASS).destroyTime(0.4F).randomTicks().dynamicShape().noOcclusion()));` | age: 0/1/2/3; layers: 0/1/2/3/4/5/6/7/8 | BlockItem | rolls 1: table blocks/raspberry_bush_berries [pool if state age=3] ;; rolls 1: raspberry_bush | flammable (encouragement 4, flammability 25); compost chance 0.5; block tags: #mc:replaceable_by_trees, #druid_projectile_replaceable, #worldgen_replaceables |
+| `gloamingforest:raspberry_bush` | Raspberry Bush | `register("raspberry_bush", new BerryBushBlock(GloamingLootTables.RASPBERRY_BUSH_DROPS, Properties.of().sound(GRASS).destroyTime(0.4F).randomTicks().dynamicShape().noOcclusion()));` | age: 0/1/2/3; layers: 0/1/2/3/4/5/6/7/8 | BlockItem | rolls 1: table blocks/raspberry_bush_berries [pool if state age=3] ;; rolls 1: raspberry_bush | flammable (encouragement 4, flammability 25); compost chance 0.5; block tags: #mc:replaceable_by_trees, #druid_projectile_replaceable, #worldgen_replaceables |
 | `gloamingforest:root` | Roots | `register("root", new Block(Properties.of().ignitedByLava().mapColor(WOOD).sound(WOOD).strength(2.0F, 3.0F)));` |  | BlockItem | rolls 1: alternatives(root [if match_tool(mc:silk_touch>=1)] → mc:stick {count uniform(3-5); explosion_decay}) | flammable (encouragement 5, flammability 20); compost chance 0.5; block tags: #c:ore_bearing_ground/root, #create:tree_attachments, #mc:mineable/axe, #mc:moss_replaceable, #mc:replaceable_by_trees, #druid_projectile_replaceable, #mineable_with_block_and_chain, #ore_magnet/ore_safe_replace_block, #plants_hang_on, #small_lakes_dont_replace, #tree_roots_skip, #worldgen_replaceables; item tags: #createaddition:plants |
 | `gloamingforest:root_strand` | Root Strands | `register("root_strand", new RootStrandBlock(Properties.of().ignitedByLava().instabreak().mapColor(PLANT).noCollission().noOcclusion().pushReaction(DESTROY).sound(HANGING_ROOTS)));` |  | BlockItem | rolls 1: alternatives(root_strand [if neoforge:can_item_perform_ability{"ability":"shears_dig"}] → mc:stick {count uniform(1-3); explosion_decay}) | flammable (encouragement 60, flammability 100); compost chance 0.3; block tags: #mc:climbable, #mc:replaceable_by_trees, #druid_projectile_replaceable, #worldgen_replaceables; item tags: #createaddition:plants |
-| `gloamingforest:skyberry_bush` | Skyberry Bush | `register("skyberry_bush", new DarkTowerBerryBushBlock(TFLootTables.SKYBERRY_BUSH_DROPS, Properties.of().sound(GRASS).destroyTime(0.4F).randomTicks().dynamicShape().noOcclusion()));` | age: 0/1/2/3; layers: 0/1/2/3/4/5/6/7/8 | BlockItem | rolls 1: table blocks/skyberry_bush_berries [pool if state age=3] ;; rolls 1: skyberry_bush | compost chance 0.5 |
-| `gloamingforest:stingberry_bush` | Stingberry Bush | `register("stingberry_bush", new DarkTowerBerryBushBlock(TFLootTables.STINGBERRY_BUSH_DROPS, Properties.of().sound(GRASS).destroyTime(0.4F).randomTicks().dynamicShape().noOcclusion()));` | age: 0/1/2/3; layers: 0/1/2/3/4/5/6/7/8 | BlockItem | rolls 1: table blocks/stingberry_bush_berries [pool if state age=3] ;; rolls 1: stingberry_bush | compost chance 0.5 |
+| `gloamingforest:skyberry_bush` | Skyberry Bush | `register("skyberry_bush", new DarkTowerBerryBushBlock(GloamingLootTables.SKYBERRY_BUSH_DROPS, Properties.of().sound(GRASS).destroyTime(0.4F).randomTicks().dynamicShape().noOcclusion()));` | age: 0/1/2/3; layers: 0/1/2/3/4/5/6/7/8 | BlockItem | rolls 1: table blocks/skyberry_bush_berries [pool if state age=3] ;; rolls 1: skyberry_bush | compost chance 0.5 |
+| `gloamingforest:stingberry_bush` | Stingberry Bush | `register("stingberry_bush", new DarkTowerBerryBushBlock(GloamingLootTables.STINGBERRY_BUSH_DROPS, Properties.of().sound(GRASS).destroyTime(0.4F).randomTicks().dynamicShape().noOcclusion()));` | age: 0/1/2/3; layers: 0/1/2/3/4/5/6/7/8 | BlockItem | rolls 1: table blocks/stingberry_bush_berries [pool if state age=3] ;; rolls 1: stingberry_bush | compost chance 0.5 |
 | `gloamingforest:torchberry_plant` | Torchberry Plant | `register("torchberry_plant", new TorchberryPlantBlock(Properties.of().ignitedByLava().instabreak().lightLevel(value -> value.getValue(TorchberryPlantBlock.HAS_BERRIES) ? 7 : 1).noCollission().mapColor(PLANT).pushReaction(DESTROY).sound(HANGING_ROOTS)));` | has_torchberries: false/true | BlockItem | rolls 1: torchberry_plant [if neoforge:can_item_perform_ability{"ability":"shears_dig"}] ;; rolls 1: torchberries [if state has_torchberries=true] | flammable (encouragement 60, flammability 100); compost chance 0.5; block tags: #mc:replaceable_by_trees, #druid_projectile_replaceable, #worldgen_replaceables; item tags: #createaddition:plants |
 
 ### Items (21)
 
-| Item | English name | upstream registration (`TFItems`) | Notes |
+| Item | English name | upstream registration (`GloamingItems`) | Notes |
 |---|---|---|---|
 | `gloamingforest:blackberry` | Blackberry | `ITEMS.register("blackberry", new StackableEffectItem());` | compost chance 0.3; item tags: #c:foods/berry |
 | `gloamingforest:blightberry` | Blightberry | `ITEMS.register("blightberry", new StackableEffectItem( new StackableEffectInstance(MobEffects.REGENERATION, 8), new StackableEffectInstance(MobEffects.POISON, 5, 0.75F), new StackableEffectInstance(MobEffects.WITHER, 5, 0.15F) ));` | compost chance 0.3; item tags: #c:foods/berry |
 | `gloamingforest:blueberry` | Blueberry | `ITEMS.register("blueberry", new StackableEffectItem());` | compost chance 0.3; item tags: #c:foods/berry |
-| `gloamingforest:cicada_jar` | Cicada Jar | `ITEMS.register("cicada_jar", new JarItem(TFBlocks.CICADA_JAR.get(), new Item.Properties()));` |  |
+| `gloamingforest:cicada_jar` | Cicada Jar | `ITEMS.register("cicada_jar", new JarItem(GloamingBlocks.CICADA_JAR.get(), new Item.Properties()));` |  |
 | `gloamingforest:copper_berry` | Copper Oreberry | `ITEMS.register("copper_berry", new Item(new Item.Properties()));` |  |
 | `gloamingforest:copper_nugget` | Copper Nugget | `ITEMS.register("copper_nugget", new Item(new Item.Properties()));` | item tags: #c:nuggets, #c:nuggets/copper |
 | `gloamingforest:duskberry` | Duskberry | `ITEMS.register("duskberry", new StackableEffectItem( new StackableEffectInstance(MobEffects.NIGHT_VISION, 15), new StackableEffectInstance(MobEffects.BLINDNESS, 3, 0.75F) ));` | compost chance 0.3; item tags: #c:foods/berry |
 | `gloamingforest:essence_berry` | Concentrated Essence Berry | `ITEMS.register("essence_berry", new EssenceBerryItem(new Item.Properties()));` |  |
-| `gloamingforest:fallen_leaves` | Fallen Leaves | `ITEMS.register("fallen_leaves", new BlockItem(TFBlocks.FALLEN_LEAVES.get(), new Item.Properties()) { @Override public InteractionResult useOn(UseOnContext context) { return context.getLevel().getBlockState(context.getClickedPos()).is(this.getBlock()) ? super.useOn(context) : InteractionResult.PASS; } @Override public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) { BlockHitResult fluidHitResult = getPlayerPOVHitResult(level, player, ClipContext.Fluid.SOURCE_ONLY); BlockHitResult placeBlockResult = fluidHitResult.withPosition(fluidHitResult.getBlockPos().above()); InteractionResult result = super.useOn(new UseOnContext(player, hand, placeBlockResult)); return new InteractionResultHolder<>(result, player.getItemInHand(hand)); } });` | flammable (encouragement 60, flammability 100); compost chance 0.1; item tags: #createaddition:plants |
-| `gloamingforest:firefly_jar` | Firefly Jar | `ITEMS.register("firefly_jar", new JarItem(TFBlocks.FIREFLY_JAR.get(), new Item.Properties()));` |  |
+| `gloamingforest:fallen_leaves` | Fallen Leaves | `ITEMS.register("fallen_leaves", new BlockItem(GloamingBlocks.FALLEN_LEAVES.get(), new Item.Properties()) { @Override public InteractionResult useOn(UseOnContext context) { return context.getLevel().getBlockState(context.getClickedPos()).is(this.getBlock()) ? super.useOn(context) : InteractionResult.PASS; } @Override public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) { BlockHitResult fluidHitResult = getPlayerPOVHitResult(level, player, ClipContext.Fluid.SOURCE_ONLY); BlockHitResult placeBlockResult = fluidHitResult.withPosition(fluidHitResult.getBlockPos().above()); InteractionResult result = super.useOn(new UseOnContext(player, hand, placeBlockResult)); return new InteractionResultHolder<>(result, player.getItemInHand(hand)); } });` | flammable (encouragement 60, flammability 100); compost chance 0.1; item tags: #createaddition:plants |
+| `gloamingforest:firefly_jar` | Firefly Jar | `ITEMS.register("firefly_jar", new JarItem(GloamingBlocks.FIREFLY_JAR.get(), new Item.Properties()));` |  |
 | `gloamingforest:gold_berry` | Gold Oreberry | `ITEMS.register("gold_berry", new Item(new Item.Properties()));` |  |
-| `gloamingforest:huge_lily_pad` | Huge Lily Pad | `ITEMS.register("huge_lily_pad", new HugeLilyPadItem(TFBlocks.HUGE_LILY_PAD.get(), new Item.Properties()));` | compost chance 0.85; item tags: #createaddition:plants |
-| `gloamingforest:huge_water_lily` | Huge Water Lily | `ITEMS.register("huge_water_lily", new PlaceOnWaterBlockItem(TFBlocks.HUGE_WATER_LILY.get(), new Item.Properties()));` | compost chance 0.65; item tags: #createaddition:plants |
+| `gloamingforest:huge_lily_pad` | Huge Lily Pad | `ITEMS.register("huge_lily_pad", new HugeLilyPadItem(GloamingBlocks.HUGE_LILY_PAD.get(), new Item.Properties()));` | compost chance 0.85; item tags: #createaddition:plants |
+| `gloamingforest:huge_water_lily` | Huge Water Lily | `ITEMS.register("huge_water_lily", new PlaceOnWaterBlockItem(GloamingBlocks.HUGE_WATER_LILY.get(), new Item.Properties()));` | compost chance 0.65; item tags: #createaddition:plants |
 | `gloamingforest:iron_berry` | Iron Oreberry | `ITEMS.register("iron_berry", new Item(new Item.Properties()));` |  |
 | `gloamingforest:liveroot` | Liveroot | `ITEMS.register("liveroot", new Item(new Item.Properties()));` | compost chance 0.5; item tags: #createaddition:plants |
 | `gloamingforest:maloberry` | Maloberry | `ITEMS.register("maloberry", new StackableEffectItem());` | compost chance 0.3; item tags: #c:foods/berry |
-| `gloamingforest:mason_jar` | Mason Jar | `ITEMS.register("mason_jar", new JarItem.MasonJarItem(TFBlocks.MASON_JAR.get(), new Item.Properties()));` |  |
+| `gloamingforest:mason_jar` | Mason Jar | `ITEMS.register("mason_jar", new JarItem.MasonJarItem(GloamingBlocks.MASON_JAR.get(), new Item.Properties()));` |  |
 | `gloamingforest:raspberry` | Raspberry | `ITEMS.register("raspberry", new StackableEffectItem());` | compost chance 0.3; item tags: #c:foods/berry |
 | `gloamingforest:skyberry` | Skyberry | `ITEMS.register("skyberry", new StackableEffectItem( new StackableEffectInstance(MobEffects.JUMP, 8), new StackableEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 3, 0.75F) ));` | compost chance 0.3; item tags: #c:foods/berry |
 | `gloamingforest:stingberry` | Stingberry | `ITEMS.register("stingberry", new StackableEffectItem( new StackableEffectInstance(MobEffects.DAMAGE_BOOST, 10), new StackableEffectInstance(MobEffects.DIG_SLOWDOWN, 10, 0.75F) ));` | compost chance 0.3; item tags: #c:foods/berry |
@@ -374,17 +374,17 @@ Block states come from upstream's blockstate JSON (`multipart:` lists only the p
 
 ### Block entity types (5)
 
-| Id | upstream registration (`TFBlockEntities.java`) |
+| Id | upstream registration (`GloamingBlockEntities.java`) |
 |---|---|
-| `gloamingforest:cicada` | `BLOCK_ENTITIES.register("cicada", () -> BlockEntityType.Builder.of(CicadaBlockEntity::new, TFBlocks.CICADA.get()).build(null));` |
-| `gloamingforest:firefly` | `BLOCK_ENTITIES.register("firefly", () -> BlockEntityType.Builder.of(FireflyBlockEntity::new, TFBlocks.FIREFLY.get()).build(null));` |
-| `gloamingforest:jar` | `BLOCK_ENTITIES.register("jar", () -> BlockEntityType.Builder.of(JarBlockEntity::new, TFBlocks.FIREFLY_JAR.get(), TFBlocks.CICADA_JAR.get()).build(null));` |
-| `gloamingforest:mason_jar` | `BLOCK_ENTITIES.register("mason_jar", () -> BlockEntityType.Builder.of(MasonJarBlockEntity::new, TFBlocks.MASON_JAR.get()).build(null));` |
-| `gloamingforest:moonworm` | `BLOCK_ENTITIES.register("moonworm", () -> BlockEntityType.Builder.of(MoonwormBlockEntity::new, TFBlocks.MOONWORM.get()).build(null));` |
+| `gloamingforest:cicada` | `BLOCK_ENTITIES.register("cicada", () -> BlockEntityType.Builder.of(CicadaBlockEntity::new, GloamingBlocks.CICADA.get()).build(null));` |
+| `gloamingforest:firefly` | `BLOCK_ENTITIES.register("firefly", () -> BlockEntityType.Builder.of(FireflyBlockEntity::new, GloamingBlocks.FIREFLY.get()).build(null));` |
+| `gloamingforest:jar` | `BLOCK_ENTITIES.register("jar", () -> BlockEntityType.Builder.of(JarBlockEntity::new, GloamingBlocks.FIREFLY_JAR.get(), GloamingBlocks.CICADA_JAR.get()).build(null));` |
+| `gloamingforest:mason_jar` | `BLOCK_ENTITIES.register("mason_jar", () -> BlockEntityType.Builder.of(MasonJarBlockEntity::new, GloamingBlocks.MASON_JAR.get()).build(null));` |
+| `gloamingforest:moonworm` | `BLOCK_ENTITIES.register("moonworm", () -> BlockEntityType.Builder.of(MoonwormBlockEntity::new, GloamingBlocks.MOONWORM.get()).build(null));` |
 
 ### Particle types (4)
 
-| Id | upstream registration (`TFParticleType.java`) |
+| Id | upstream registration (`GloamingParticleType.java`) |
 |---|---|
 | `gloamingforest:fallen_leaf` | `PARTICLE_TYPES.register("fallen_leaf", new ParticleType<>(false) { @Override public MapCodec<LeafParticleData> codec() { return LeafParticleData.CODEC; } @Override public StreamCodec<? super RegistryFriendlyByteBuf, LeafParticleData> streamCodec() { return LeafParticleData.STREAM_CODEC; } });` |
 | `gloamingforest:firefly` | `PARTICLE_TYPES.register("firefly", new SimpleParticleType(false));` |
@@ -393,13 +393,13 @@ Block states come from upstream's blockstate JSON (`multipart:` lists only the p
 
 ### Data components (1)
 
-| Id | upstream registration (`TFDataComponents.java`) |
+| Id | upstream registration (`GloamingDataComponents.java`) |
 |---|---|
 | `gloamingforest:jar_lid` | `register("jar_lid", JarLid.CODEC);` |
 
 ### Feature types (8)
 
-| Id | upstream registration (`TFFeatures.java`) |
+| Id | upstream registration (`GloamingFeatures.java`) |
 |---|---|
 | `gloamingforest:berry_bush` | `FEATURES.register("berry_bush", new BerryBushFeature(BerryBushConfig.CODEC));` |
 | `gloamingforest:enchanted_forest_vines` | `FEATURES.register("enchanted_forest_vines", new EnchantedForestVinesFeature(NoneFeatureConfiguration.CODEC));` |
@@ -412,14 +412,14 @@ Block states come from upstream's blockstate JSON (`multipart:` lists only the p
 
 ### Stats (2)
 
-| Id | upstream registration (`TFStats.java`) |
+| Id | upstream registration (`GloamingStats.java`) |
 |---|---|
 | `gloamingforest:bugs_squished` (Bugs Squashed) | `makeTFStat("bugs_squished");` |
 | `gloamingforest:torchberries_harvested` (Torchberries Harvested) | `makeTFStat("torchberries_harvested");` |
 
 ### Advancement triggers (1)
 
-| Id | upstream registration (`TFAdvancements.java`) |
+| Id | upstream registration (`GloamingAdvancements.java`) |
 |---|---|
 | `gloamingforest:kill_bug` | `TRIGGERS.register("kill_bug", KillBugTrigger::new);` |
 
@@ -430,8 +430,8 @@ Block states come from upstream's blockstate JSON (`multipart:` lists only the p
 
 ### Configured features (16)
 
-- `gloamingforest:blackberry_bushes`: `{"type":"gloamingforest:berry_bush","config":{"bush":{"Name":"gloamingforest:blackberry_bush","Properties":{"age":"0","layers":"0"}},"can_generate_snowy":true,"generates_on":"gloamingforest:tf_berry_bushes_survive"}}`
-- `gloamingforest:blueberry_bushes`: `{"type":"gloamingforest:berry_bush","config":{"bush":{"Name":"gloamingforest:blueberry_bush","Properties":{"age":"0","layers":"0"}},"can_generate_snowy":true,"generates_on":"gloamingforest:tf_berry_bushes_survive"}}`
+- `gloamingforest:blackberry_bushes`: `{"type":"gloamingforest:berry_bush","config":{"bush":{"Name":"gloamingforest:blackberry_bush","Properties":{"age":"0","layers":"0"}},"can_generate_snowy":true,"generates_on":"gloamingforest:gf_berry_bushes_survive"}}`
+- `gloamingforest:blueberry_bushes`: `{"type":"gloamingforest:berry_bush","config":{"bush":{"Name":"gloamingforest:blueberry_bush","Properties":{"age":"0","layers":"0"}},"can_generate_snowy":true,"generates_on":"gloamingforest:gf_berry_bushes_survive"}}`
 - `gloamingforest:cicada_lamppost`: `{"type":"gloamingforest:lampposts","config":{"state":{"Name":"gloamingforest:cicada_jar","Properties":{"waterlogged":"false"}}}}`
 - `gloamingforest:enchanted_forest_vines`: `{"type":"gloamingforest:enchanted_forest_vines","config":{}}`
 - `gloamingforest:fallen_leaves`: `{"type":"gloamingforest:fallen_leaves","config":{}}`
@@ -441,11 +441,11 @@ Block states come from upstream's blockstate JSON (`multipart:` lists only the p
 - `gloamingforest:flower_placer_alt`: `{"type":"minecraft:flower","config":{"feature":{"feature":{"type":"minecraft:simple_block","config":{"to_place":{"type":"minecraft:noise_provider","noise":{"amplitudes":[1.0],"firstOctave":0},"scale":0.020833334,"seed":2345,"states":[{"Name":"minecraft:white_tulip"},{"Name":"minecraft:pink_tulip"},{"Name":"minecraft:orange_tulip"},{"Name":"minecraft:red_tulip"},{"Name":"minecraft:dandelion"},{"Name":"minecraft:poppy"},{"Name":"minecraft:oxeye_daisy"},{"Name":"minecraft:azure_bluet"},{"Name":"minecraft:allium"},{"Name":"minecraft:blue_orchid"},{"Name":"minecraft:lily_of_the_valley"},{"Name":"minecraft:cornflower"}]}}},"placement":[{"type":"minecraft:block_predicate_filter","predicate":{"type":"minecraft:matching_blocks","blocks":"minecraft:air"}}]},"tries":32,"xz_spread":7,"y_spread":7}}`
 - `gloamingforest:huge_lily_pad`: `{"type":"gloamingforest:huge_lily_pad","config":{}}`
 - `gloamingforest:huge_water_lily`: `{"type":"gloamingforest:huge_water_lily","config":{}}`
-- `gloamingforest:maloberry_bushes`: `{"type":"gloamingforest:berry_bush","config":{"bush":{"Name":"gloamingforest:maloberry_bush","Properties":{"age":"0","layers":"0"}},"can_generate_snowy":true,"generates_on":"gloamingforest:tf_berry_bushes_survive"}}`
+- `gloamingforest:maloberry_bushes`: `{"type":"gloamingforest:berry_bush","config":{"bush":{"Name":"gloamingforest:maloberry_bush","Properties":{"age":"0","layers":"0"}},"can_generate_snowy":true,"generates_on":"gloamingforest:gf_berry_bushes_survive"}}`
 - `gloamingforest:mayapple`: `{"type":"minecraft:random_patch","config":{"feature":{"feature":{"type":"minecraft:simple_block","config":{"to_place":{"type":"minecraft:simple_state_provider","state":{"Name":"gloamingforest:mayapple"}}}},"placement":[{"type":"minecraft:block_predicate_filter","predicate":{"type":"minecraft:matching_blocks","blocks":"minecraft:air"}}]},"tries":96,"xz_spread":7,"y_spread":3}}`
 - `gloamingforest:mushgloom_cluster`: `{"type":"minecraft:random_patch","config":{"feature":{"feature":{"type":"minecraft:simple_block","config":{"to_place":{"type":"minecraft:simple_state_provider","state":{"Name":"gloamingforest:mushgloom"}}}},"placement":[{"type":"minecraft:block_predicate_filter","predicate":{"type":"minecraft:matching_blocks","blocks":"minecraft:air"}}]},"tries":96,"xz_spread":7,"y_spread":3}}`
 - `gloamingforest:plant_roots`: `{"type":"gloamingforest:underground_plants","config":{"state":{"Name":"gloamingforest:root_strand"}}}`
-- `gloamingforest:raspberry_bushes`: `{"type":"gloamingforest:berry_bush","config":{"bush":{"Name":"gloamingforest:raspberry_bush","Properties":{"age":"0","layers":"0"}},"can_generate_snowy":true,"generates_on":"gloamingforest:tf_berry_bushes_survive"}}`
+- `gloamingforest:raspberry_bushes`: `{"type":"gloamingforest:berry_bush","config":{"bush":{"Name":"gloamingforest:raspberry_bush","Properties":{"age":"0","layers":"0"}},"can_generate_snowy":true,"generates_on":"gloamingforest:gf_berry_bushes_survive"}}`
 
 ### Placed features (17)
 
@@ -494,8 +494,8 @@ Block states come from upstream's blockstate JSON (`multipart:` lists only the p
 | `block/#gloamingforest:dark_tower_berry_bushes_survive` | #c:netherracks, #c:ores_in_ground/netherrack, mc:blackstone, mc:soul_sand, mc:soul_soil |
 | `block/#gloamingforest:oreberry_bushes_survive` | #c:stones, #mc:stone_bricks, #c:ores_in_ground/stone, #c:ores_in_ground/deepslate, #c:ores_in_ground/netherrack, #c:cobblestones, #c:netherracks, giant_cobblestone, mc:polished_andesite, mc:polished_diorite, mc:polished_granite, mc:smooth_stone, mc:infested_chiseled_stone_bricks, mc:infested_cracked_stone_bricks, mc:infested_mossy_stone_bricks, mc:infested_stone_bricks |
 | `block/#gloamingforest:plants_hang_on` | #mc:dirt, mc:moss_block, mangrove_root, root, liveroot_block |
-| `block/#gloamingforest:tf_berry_bushes_replace` | #mc:replaceable, #mc:flowers, mayapple |
-| `block/#gloamingforest:tf_berry_bushes_survive` | #mc:dirt, mc:snow_block |
+| `block/#gloamingforest:gf_berry_bushes_replace` | #mc:replaceable, #mc:flowers, mayapple |
+| `block/#gloamingforest:gf_berry_bushes_survive` | #mc:dirt, mc:snow_block |
 | `entity_type/#gloamingforest:dont_kill_bugs` | moonworm_shot |
 
 ### Loot tables (50)
@@ -538,7 +538,7 @@ Recipe-unlock advancements (generated by F1 into the recipe JSON, R21) are liste
 | `gloamingforest:jeed/night_vision` | jeed:effect_provider | {"effect":"minecraft:wither","providers":[{"item":"gloamingforest:duskberry"}]} [conditions [{"type":"neoforge:mod_loaded","modid":"jeed"}]] | - | - |
 | `gloamingforest:jeed/strength` | jeed:effect_provider | {"effect":"minecraft:strength","providers":[{"item":"gloamingforest:stingberry"}]} [conditions [{"type":"neoforge:mod_loaded","modid":"jeed"}]] | - | - |
 | `gloamingforest:jeed/wither` | jeed:effect_provider | {"effect":"minecraft:wither","providers":[{"item":"gloamingforest:blightberry"}]} [conditions [{"type":"neoforge:mod_loaded","modid":"jeed"}]] | - | - |
-| `gloamingforest:mason_jar` | mc:crafting_shaped | 'GLG' / 'G G' / 'GGG' ; G=mc:glass, L=gloaming_oak_log | mason_jar x4 | `gloamingforest:recipes/decorations/mason_jar` (has_tf_oak: has gloaming_oak_log) |
+| `gloamingforest:mason_jar` | mc:crafting_shaped | 'GLG' / 'G G' / 'GGG' ; G=mc:glass, L=gloaming_oak_log | mason_jar x4 | `gloamingforest:recipes/decorations/mason_jar` (has_gf_oak: has gloaming_oak_log) |
 | `gloamingforest:material/blasted_copper_nugget` | mc:blasting | copper_berry (xp 1.0, 100 t) | copper_nugget | `gloamingforest:recipes/misc/material/blasted_copper_nugget` (has_item: has copper_berry) |
 | `gloamingforest:material/blasted_gold_nugget` | mc:blasting | gold_berry (xp 1.0, 100 t) | mc:gold_nugget | `gloamingforest:recipes/misc/material/blasted_gold_nugget` (has_item: has gold_berry) |
 | `gloamingforest:material/blasted_iron_nugget` | mc:blasting | iron_berry (xp 1.0, 100 t) | mc:iron_nugget | `gloamingforest:recipes/misc/material/blasted_iron_nugget` (has_item: has iron_berry) |

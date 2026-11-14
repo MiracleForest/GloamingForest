@@ -284,7 +284,7 @@ GF_REGISTER_SELFTEST("entity.projectile", [](Context& ctx) -> ll::coro::CoroTask
     (void)liveCount();
 });
 
-// TFArrow (AbstractArrow): the default entity hit (ceil(speed * 2) arrow damage, or a deflection
+// GloamingArrow (AbstractArrow): the default entity hit (ceil(speed * 2) arrow damage, or a deflection
 // when it does not land), gravity 0.05, sticking in a block and the pickup by a player
 GF_REGISTER_SELFTEST("entity.arrow", [](Context& ctx) -> ll::coro::CoroTask<> {
     EasyScope easy;
@@ -448,7 +448,7 @@ GF_REGISTER_SELFTEST("entity.arrow", [](Context& ctx) -> ll::coro::CoroTask<> {
     ctx.info(std::string("the boat's hurt ") + (fe::actorById(pid) ? "did not land (the arrow bounced)" : "landed (the arrow is gone)"));
     if (auto* a = fe::actorById(pid)) a->remove();
     if (auto* a = fe::actorById(boatId)) a->remove();
-    // Arrow#doPostHurtEffects of the fired stack (TFArrow: the parent arrow's): a tipped arrow of
+    // Arrow#doPostHurtEffects of the fired stack (GloamingArrow: the parent arrow's): a tipped arrow of
     // poison gives poison for 1/8 of the potion's duration
     auto* pig = spawnMob(at.offset(3, 0, 2), "minecraft:pig");
     ctx.require(pig != nullptr, "a pig spawns");

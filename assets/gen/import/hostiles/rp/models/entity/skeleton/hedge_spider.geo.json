@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.tf.skeleton.hedge_spider",
+        "identifier": "geometry.gf.skeleton.hedge_spider",
         "texture_width": 64,
         "texture_height": 32,
         "visible_bounds_width": 3,

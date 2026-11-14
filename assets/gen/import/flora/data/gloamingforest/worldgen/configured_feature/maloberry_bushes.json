@@ -9,6 +9,6 @@
       }
     },
     "can_generate_snowy": true,
-    "generates_on": "gloamingforest:tf_berry_bushes_survive"
+    "generates_on": "gloamingforest:gf_berry_bushes_survive"
   }
 }

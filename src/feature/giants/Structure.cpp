@@ -8,9 +8,9 @@
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
 // gloamingforest:giant_house: the cloud castle above every highlands landmark centre. Its pieces
-// (TFClCa, TFCloud, TFClTr) are U27's piece types (docs/spec/caves.md 1.1); this unit creates the
+// (GloamingClCa, GloamingCloud, GloamingClTr) are U27's piece types (docs/spec/caves.md 1.1); this unit creates the
 // first piece by its type id (rule R2) from the saved form a CloudCastleComponent(1, x, y + 168, z)
-// has (Java's NBT constructor: StructurePiece(type, tag) + TFStructureComponentOld#setOrientation),
+// has (Java's NBT constructor: StructurePiece(type, tag) + GloamingStructureComponentOld#setOrientation),
 // and the piece adds its cloud and trees. The generator is registered once the piece type exists
 // (F6 keeps the sites reserved until then).
 #include "feature/giants/Structure.h"
@@ -43,7 +43,7 @@ structure::Json cloudCastleTag(int x, int y, int z) {
         {"BB", structure::boxToJson(box)},
         {"O", 0},        // Direction.SOUTH (2D data value 0)
         {"GD", 1},       // index 1
-        {"rotation", 2}, // TFStructureComponentOld#setOrientation(SOUTH): CLOCKWISE_180, no mirror
+        {"rotation", 2}, // GloamingStructureComponentOld#setOrientation(SOUTH): CLOCKWISE_180, no mirror
         {"mirror", 0},
         {"rot", 2},
         {"si", 0},

@@ -73,8 +73,8 @@ try {
     # 2. upstream jar (loaded by the server; never extracted)
     $upUrl = if ($env:GF_ORACLE_UPSTREAM_URL) { $env:GF_ORACLE_UPSTREAM_URL } else { $pins.upstream.url }
     if (-not $upUrl) { throw 'set GF_ORACLE_UPSTREAM_URL to the download URL of the pinned upstream jar (tools/oracle/oracle.json, upstream.provenance)' }
-    $tfJar = Get-OracleDownload $upUrl (Get-OracleTfJar) $pins.upstream.sha256 { param($m) Say $m }
-    Say "upstream $($pins.upstream.version): $tfJar"
+    $gloamingJar = Get-OracleDownload $upUrl (Get-OracleGloamingJar) $pins.upstream.sha256 { param($m) Say $m }
+    Say "upstream $($pins.upstream.version): $gloamingJar"
 
     # 3. NeoForge server
     $installed = (Test-Path $stamp) -and ((Get-Content $stamp -Raw).Trim() -eq $wantStamp) -and (Test-Path (Get-OracleServerArgsFile))

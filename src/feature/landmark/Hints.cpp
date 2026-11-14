@@ -139,7 +139,7 @@ void writeBookText(ItemStack& stack, std::unique_ptr<CompoundTag> tag, std::stri
     auto titleKey = std::string(kBookPrefix) + key;
     tag->putString("title", text(player, titleKey, titleKey));
     stack.setUserData(std::move(tag));
-    // TFDataComponents.TRANSLATABLE_BOOK, with the language the text is written in
+    // GloamingDataComponents.TRANSLATABLE_BOOK, with the language the text is written in
     game::items::setData(stack, kTranslatable, Json{{"name", key}, {"pages", pageCount}, {"locale", player ? localeOf(*player) : std::string{}}});
 }
 

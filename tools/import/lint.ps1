@@ -34,7 +34,7 @@
   it (vanilla, vanilla_1.20.0, ...: Bedrock layers them all) are the vanilla files. Default: the
   LeviLauncher instance %APPDATA%\levilauncher.exe\versions\1.26.51.01\data\resource_packs when it
   exists; without it, paths outside the pack are reported as unverified (not failures).
-.PARAMETER TfDir
+.PARAMETER GloamingDir
   The upstream checkout (default %LOCALAPPDATA%\gf-upstream\view, tools/upstream/fetch.ps1).
 .PARAMETER Json
   Also writes the report (coverage, counts, problems) to this JSON file.
@@ -46,7 +46,7 @@
 param(
     [string]$Out,
     [string]$Vanilla,
-    [string]$TfDir,
+    [string]$GloamingDir,
     [string]$Json
 )
 $ErrorActionPreference = 'Stop'
@@ -65,7 +65,7 @@ if (-not $Out -or -not (Test-Path (Join-Path $Out 'resource_packs/GloamingForest
 $Out = (Resolve-Path $Out).Path
 $rp = Join-Path $Out 'resource_packs/GloamingForest_RP'
 $bp = Join-Path $Out 'behavior_packs/GloamingForest_BP'
-if (-not $TfDir) { $TfDir = if ($env:GF_UPSTREAM_HOME) { $env:GF_UPSTREAM_HOME } else { Join-Path $env:LOCALAPPDATA 'gf-upstream/view' } }
+if (-not $GloamingDir) { $GloamingDir = if ($env:GF_UPSTREAM_HOME) { $env:GF_UPSTREAM_HOME } else { Join-Path $env:LOCALAPPDATA 'gf-upstream/view' } }
 if (-not $Vanilla) {
     $v = Join-Path $env:APPDATA 'levilauncher.exe/versions/1.26.51.01/data/resource_packs'
     if (Test-Path $v) { $Vanilla = $v }
@@ -116,7 +116,7 @@ function Test-TexturePath([string]$area, [string]$path, [string]$where) {
     if ($vanillaFiles.Count) {
         foreach ($ext in '', '.png', '.tga', '.jpg') { if ($vanillaFiles.Contains("$p$ext")) { return } }
         Problem $area "$where names $p, which is neither in the pack nor in Bedrock's vanilla resource pack"
-    } elseif ($p -match 'gloamingforest|/tf-derived/' -or $p -like 'textures/blocks/*/*' ) {
+    } elseif ($p -match 'gloamingforest|/upstream-derived/' -or $p -like 'textures/blocks/*/*' ) {
         Problem $area "$where names $p, which is not in the pack"
     } else {
         [void]$unverified.Add($p)
@@ -144,32 +144,32 @@ function Read-LangFile([string]$path) {
 }
 
 $coverage = [ordered]@{}
-$tfEnPath = Join-Path $TfDir 'src/generated/resources/assets/gloamingforest/lang/en_us.json'
-$tfLangDir = Join-Path $TfDir 'src/main/resources/assets/gloamingforest/lang'
-if (-not (Test-Path $tfEnPath)) {
-    $notes.Add("upstream checkout not found at $TfDir (pwsh tools/upstream/fetch.ps1): lang coverage skipped")
+$gloamingEnPath = Join-Path $GloamingDir 'src/generated/resources/assets/gloamingforest/lang/en_us.json'
+$gloamingLangDir = Join-Path $GloamingDir 'src/main/resources/assets/gloamingforest/lang'
+if (-not (Test-Path $gloamingEnPath)) {
+    $notes.Add("upstream checkout not found at $GloamingDir (pwsh tools/upstream/fetch.ps1): lang coverage skipped")
 } else {
-    $tfEn = Read-Json $tfEnPath
+    $gloamingEn = Read-Json $gloamingEnPath
     # upstream's translations per Bedrock locale (an exact file name beats an alias, as in Lang.cs)
-    $tfByLocale = @{ 'en_US' = $tfEn }
-    foreach ($f in Get-ChildItem $tfLangDir -Filter *.json | Sort-Object Name) {
+    $gloamingByLocale = @{ 'en_US' = $gloamingEn }
+    foreach ($f in Get-ChildItem $gloamingLangDir -Filter *.json | Sort-Object Name) {
         $p = $f.BaseName.Split('_')
         if ($p.Count -ne 2) { continue }
         $loc = $p[0].ToLowerInvariant() + '_' + $p[1].ToUpperInvariant()
         if ($aliases.Contains($loc)) { $loc = $aliases[$loc] }
         if ($locales -notcontains $loc -or $loc -eq 'en_US') { continue }
         $exact = $f.BaseName.ToLowerInvariant() -eq $loc.ToLowerInvariant()
-        if ($tfByLocale.ContainsKey($loc) -and -not $exact) { continue }
+        if ($gloamingByLocale.ContainsKey($loc) -and -not $exact) { continue }
         $j = Read-Json $f.FullName
         $m = @{}
-        foreach ($k in $j.Keys) { if ($tfEn.Contains($k) -and $j[$k] -is [string] -and $j[$k].Length -gt 0) { $m[$k] = $j[$k] } }
-        $tfByLocale[$loc] = $m
+        foreach ($k in $j.Keys) { if ($gloamingEn.Contains($k) -and $j[$k] -is [string] -and $j[$k].Length -gt 0) { $m[$k] = $j[$k] } }
+        $gloamingByLocale[$loc] = $m
     }
     foreach ($loc in $locales) {
         $langPath = Join-Path $Out "lang/$loc.json"
         $mod = if (Test-Path $langPath) { Read-Json $langPath } else { @{} }
         $texts = Read-LangFile (Join-Path $rp "texts/$loc.lang")
-        $want = if ($tfByLocale.ContainsKey($loc)) { $tfByLocale[$loc] } else { @{} }
+        $want = if ($gloamingByLocale.ContainsKey($loc)) { $gloamingByLocale[$loc] } else { @{} }
         $missingMod = 0; $missingTexts = 0; $differs = 0; $first = @()
         foreach ($k in $want.Keys) {
             if (-not $mod.Contains($k)) { $missingMod++; if ($first.Count -lt 3) { $first += "$k (lang/$loc.json)" } }
@@ -179,9 +179,9 @@ if (-not (Test-Path $tfEnPath)) {
         if ($missingMod + $missingTexts + $differs) {
             Problem 'lang' "${loc}: $missingMod of upstream's $($want.Count) keys missing from lang/$loc.json, $missingTexts from texts/$loc.lang, $differs with another text (e.g. $($first -join '; '))"
         }
-        $coverage[$loc] = [ordered]@{ tf = $want.Count; percent = [math]::Round(100.0 * $want.Count / $tfEn.Count, 1); modKeys = $mod.Count; texts = $texts.Count }
+        $coverage[$loc] = [ordered]@{ upsrc = $want.Count; percent = [math]::Round(100.0 * $want.Count / $gloamingEn.Count, 1); modKeys = $mod.Count; texts = $texts.Count }
     }
-    if ($tfEn.Count -ne 2061) { $notes.Add("upstream's en_us has $($tfEn.Count) keys (2061 expected for upstream 4.8)") }
+    if ($gloamingEn.Count -ne 2061) { $notes.Add("upstream's en_us has $($gloamingEn.Count) keys (2061 expected for upstream 4.8)") }
 }
 
 # name keys of every BP block / item / entity in en_US (Bedrock shows the raw key otherwise)
@@ -217,8 +217,8 @@ foreach ($id in $bpIds.item.Keys) {
 # upstream's entities (the skeleton's 80; the multipart helpers such as naga_part are GloamingForest's own and unnamed)
 $skelPath = Join-Path $Out 'data/gf/import/skeleton.json'
 $skel = if (Test-Path $skelPath) { Read-Json $skelPath } else { $null }
-$tfEntities = if ($skel) { @($skel['entities']) } else { @($bpIds.entity.Keys | Where-Object { $_ -like 'gloamingforest:*' }) }
-foreach ($id in $tfEntities) {
+$gloamingEntities = if ($skel) { @($skel['entities']) } else { @($bpIds.entity.Keys | Where-Object { $_ -like 'gloamingforest:*' }) }
+foreach ($id in $gloamingEntities) {
     if (-not $enTexts.ContainsKey("entity.$id.name")) { $nameMissing += "entity.$id.name" }
 }
 if ($nameMissing.Count) { Problem 'lang' "$($nameMissing.Count) BP name keys missing from texts/en_US.lang: $(($nameMissing | Sort-Object | Select-Object -First 12) -join ', ')$(if ($nameMissing.Count -gt 12) { ', ...' })" }
@@ -262,7 +262,7 @@ if (Test-Path $fb) { foreach ($e in @(Read-Json $fb)) { Test-TexturePath 'textur
 $externalKeys = [Collections.Generic.SortedSet[string]]::new([StringComparer]::Ordinal)
 function Test-TerrainKey([string]$key, [string]$where) {
     if ([string]::IsNullOrEmpty($key) -or $terrain.ContainsKey($key)) { return }
-    if ($key -match '^tf_|gloamingforest') { Problem 'textures' "$where names terrain texture '$key', which terrain_texture.json does not define" }
+    if ($key -match '^gf_|gloamingforest') { Problem 'textures' "$where names terrain texture '$key', which terrain_texture.json does not define" }
     else { [void]$externalKeys.Add($key) }
 }
 $blocksJson = if (Test-Path (Join-Path $rp 'blocks.json')) { Read-Json (Join-Path $rp 'blocks.json') } else { @{} }
@@ -297,7 +297,7 @@ foreach ($id in $bpIds.item.Keys) {
     $keys = if ($icon -is [string]) { @($icon) } elseif ($icon.Contains('textures')) { Values $icon['textures'] } else { @($icon['texture']) }
     foreach ($k in $keys) {
         if ($k -and -not $itemTex.ContainsKey($k)) {
-            if ($k -match '^tf_|gloamingforest') { Problem 'textures' "BP item $id names icon '$k', which item_texture.json does not define" } else { [void]$externalKeys.Add($k) }
+            if ($k -match '^gf_|gloamingforest') { Problem 'textures' "BP item $id names icon '$k', which item_texture.json does not define" } else { [void]$externalKeys.Add($k) }
         }
     }
 }
@@ -324,11 +324,11 @@ foreach ($f in Get-ChildItem (Join-Path $rp 'render_controllers') -Recurse -Filt
 $externalGeo = [Collections.Generic.SortedSet[string]]::new([StringComparer]::Ordinal)
 function Test-Geometry([string]$id, [string]$where) {
     if ([string]::IsNullOrEmpty($id) -or $geometries.ContainsKey($id) -or $id -like 'minecraft:geometry.*') { return }
-    if ($id -match 'gloamingforest|\.tf\.') { Problem 'models' "$where names geometry $id, which no model file of the pack defines" } else { [void]$externalGeo.Add($id) }
+    if ($id -match 'gloamingforest|\.upsrc\.') { Problem 'models' "$where names geometry $id, which no model file of the pack defines" } else { [void]$externalGeo.Add($id) }
 }
 function Test-Named($set, [string]$kind, [string]$id, [string]$where) {
     if ([string]::IsNullOrEmpty($id) -or $set.ContainsKey($id)) { return }
-    if ($id -match 'gloamingforest|gloamingforest|\.tf\.') { Problem 'models' "$where names $kind $id, which the pack does not define" }
+    if ($id -match 'gloamingforest|gloamingforest|\.upsrc\.') { Problem 'models' "$where names $kind $id, which the pack does not define" }
 }
 foreach ($id in $bpIds.block.Keys) {
     $b = $bpIds.block[$id]['minecraft:block']
@@ -351,7 +351,7 @@ foreach ($pair in @(@('entity', 'minecraft:client_entity'), @('attachables', 'mi
             $clientEntities[[string]$d['identifier']] = $where
             if ($d.Contains('spawn_egg')) {
                 $spawnEggs[[string]$d['identifier'] + '_spawn_egg'] = $true
-                if ($d['spawn_egg'].Contains('texture') -and -not $itemTex.ContainsKey($d['spawn_egg']['texture']) -and $d['spawn_egg']['texture'] -match '^tf_|gloamingforest') {
+                if ($d['spawn_egg'].Contains('texture') -and -not $itemTex.ContainsKey($d['spawn_egg']['texture']) -and $d['spawn_egg']['texture'] -match '^gf_|gloamingforest') {
                     Problem 'textures' "$where names spawn egg texture '$($d['spawn_egg']['texture'])', which item_texture.json does not define"
                 }
             }

@@ -41,16 +41,16 @@ namespace gf::feature::families::leafcolors {
     return c(16) | c(8) | c(0);
 }
 
-/// TFBlocks.TIME_LEAVES: (106, 156, 23) to (251, 108, 27), fade x*16 + y*16 + z*16.
+/// GloamingBlocks.TIME_LEAVES: (106, 156, 23) to (251, 108, 27), fade x*16 + y*16 + z*16.
 [[nodiscard]] constexpr unsigned time(int x, int y, int z) { return fadeColor(wrap(x, y, z, 16, 16, 16), 0x6A9C17, 0xFB6C1B); }
-/// TFBlocks.TRANSFORMATION_LEAVES: (108, 204, 234) to (96, 107, 121), fade x*27 + y*63 + z*39.
+/// GloamingBlocks.TRANSFORMATION_LEAVES: (108, 204, 234) to (96, 107, 121), fade x*27 + y*63 + z*39.
 [[nodiscard]] constexpr unsigned transformation(int x, int y, int z) { return fadeColor(wrap(x, y, z, 27, 63, 39), 0x6CCCEA, 0x606B79); }
-/// TFBlocks.MINING_LEAVES: (252, 241, 68) to (237, 172, 9), fade x*31 + y*33 + z*32.
+/// GloamingBlocks.MINING_LEAVES: (252, 241, 68) to (237, 172, 9), fade x*31 + y*33 + z*32.
 [[nodiscard]] constexpr unsigned mining(int x, int y, int z) { return fadeColor(wrap(x, y, z, 31, 33, 32), 0xFCF144, 0xEDAC09); }
-/// TFBlocks.SORTING_LEAVES: (54, 76, 3) to (168, 199, 43), fade x*63 + y*63 + z*63.
+/// GloamingBlocks.SORTING_LEAVES: (54, 76, 3) to (168, 199, 43), fade x*63 + y*63 + z*63.
 [[nodiscard]] constexpr unsigned sorting(int x, int y, int z) { return fadeColor(wrap(x, y, z, 63, 63, 63), 0x364C03, 0xA8C72B); }
 
-/// TFBlocks.RAINBOW_OAK_LEAVES ("RAINBOW!"): red from x and y, green from y and z (inverted), blue
+/// GloamingBlocks.RAINBOW_OAK_LEAVES ("RAINBOW!"): red from x and y, green from y and z (inverted), blue
 /// from x and z, with Java's int bits (green ^ 255 is not masked: its high bits reach the red
 /// channel as they do in Java).
 [[nodiscard]] constexpr unsigned rainbow(int x, int y, int z) {
@@ -66,10 +66,10 @@ namespace gf::feature::families::leafcolors {
     return ((red << 16) | (green << 8) | blue) & 0xFFFFFFu;
 }
 
-/// ColorHandler.CANOPY_COLORIZER: TFBlocks.CANOPY_LEAVES blend the biome foliage colour
+/// ColorHandler.CANOPY_COLORIZER: GloamingBlocks.CANOPY_LEAVES blend the biome foliage colour
 /// (BiomeColors.getAverageFoliageColor) with 0x469A66, ((foliage & 0xFEFEFE) + 0x469A66) / 2.
 [[nodiscard]] constexpr unsigned canopy(unsigned foliage) { return (((foliage & 0xFEFEFEu) + 0x469A66u) / 2u) & 0xFFFFFFu; }
-/// ColorHandler.MANGROVE_COLORIZER: TFBlocks.MANGROVE_LEAVES, ((foliage & 0xFEFEFE) + 0xC0E694) / 2.
+/// ColorHandler.MANGROVE_COLORIZER: GloamingBlocks.MANGROVE_LEAVES, ((foliage & 0xFEFEFE) + 0xC0E694) / 2.
 [[nodiscard]] constexpr unsigned mangrove(unsigned foliage) { return (((foliage & 0xFEFEFEu) + 0xC0E694u) / 2u) & 0xFFFFFFu; }
 
 /// FoliageColor.getEvergreenColor (-10380959): canopy leaves without a world.

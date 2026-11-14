@@ -9,7 +9,7 @@ the unit reproduces in a different way than upstream, with the reason and the wo
 | File | What |
 |---|---|
 | `src/core/labyrinth/Terraformer.{h,cpp}` | `LabyrinthStructure#getStructureTerraformer` (HollowHill, Focused, AbsoluteDifference, yClampedGradient in upstream's float maths), the maze helpers of `MinotaurMazeComponent` and the mob rules; gtested in `tests/labyrinth` |
-| `src/feature/labyrinth/Pieces.{h,cpp}` | the 27 `minotaurmaze` piece types on F7's `TFStructureComponentOld` / `TFMaze` (exact translations; the room and cell subclasses are one class each, the kind is the piece type id) |
+| `src/feature/labyrinth/Pieces.{h,cpp}` | the 27 `minotaurmaze` piece types on F7's `GloamingStructureComponentOld` / `GloamingMaze` (exact translations; the room and cell subclasses are one class each, the kind is the piece type id) |
 | `src/feature/labyrinth/Structure.cpp` | the F6 landmark generator (`MazeRuinsComponent` at `(x + 5, y, z + 5)`, children from `Structure.GenerationContext#random()`) and the terraformer |
 | `src/feature/labyrinth/Mobs.cpp` | Minotaur, Minoshroom (boss kit, spawner), Maze Slime |
 | `src/feature/labyrinth/Blocks.cpp` | the mazebreaker rule (`interactions::onDestroy` on `#gloamingforest:mazebreaker_accelerated_mining`) and the maze slime block |

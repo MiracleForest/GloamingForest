@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_item_time_boat"
+          "default": "gf_item_time_boat"
         }
       },
       "minecraft:display_name": {

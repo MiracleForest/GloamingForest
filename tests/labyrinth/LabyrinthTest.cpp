@@ -96,27 +96,27 @@ TEST(Labyrinth, IsNearRoom) {
 }
 
 TEST(Labyrinth, PieceKinds) {
-    EXPECT_STREQ(roomType(0, 1), "gloamingforest:TFMMR");
-    EXPECT_STREQ(roomType(1, 1), "gloamingforest:TFMMRE");
-    EXPECT_STREQ(roomType(1, 2), "gloamingforest:TFMMRB");
-    EXPECT_STREQ(roomType(2, 1), "gloamingforest:TFMMRC");
-    EXPECT_STREQ(roomType(3, 2), "gloamingforest:TFMMMR");
-    EXPECT_STREQ(roomType(4, 1), "gloamingforest:TFMMRF");
-    EXPECT_STREQ(roomType(4, 2), "gloamingforest:TFMMRV");
-    EXPECT_STREQ(roomType(5, 1), "gloamingforest:TFMMRSC");
-    EXPECT_STREQ(roomType(6, 2), "gloamingforest:TFMMRSC");
-    EXPECT_STREQ(deadEndType(0, false, 1), "gloamingforest:TFMMDE");
-    EXPECT_STREQ(deadEndType(1, false, 1), "gloamingforest:TFMMDEC");
-    EXPECT_STREQ(deadEndType(2, true, 1), "gloamingforest:TFMMDETC");
-    EXPECT_STREQ(deadEndType(2, false, 1), "gloamingforest:TFMMDETrC");
-    EXPECT_STREQ(deadEndType(5, false, 2), "gloamingforest:TFMMDEFL");
-    EXPECT_STREQ(deadEndType(7, false, 1), "gloamingforest:TFMMDER");
-    EXPECT_STREQ(deadEndType(7, false, 2), "gloamingforest:TFMMDES");
+    EXPECT_STREQ(roomType(0, 1), "gloamingforest:GloamingMMR");
+    EXPECT_STREQ(roomType(1, 1), "gloamingforest:GloamingMMRE");
+    EXPECT_STREQ(roomType(1, 2), "gloamingforest:GloamingMMRB");
+    EXPECT_STREQ(roomType(2, 1), "gloamingforest:GloamingMMRC");
+    EXPECT_STREQ(roomType(3, 2), "gloamingforest:GloamingMMMR");
+    EXPECT_STREQ(roomType(4, 1), "gloamingforest:GloamingMMRF");
+    EXPECT_STREQ(roomType(4, 2), "gloamingforest:GloamingMMRV");
+    EXPECT_STREQ(roomType(5, 1), "gloamingforest:GloamingMMRSC");
+    EXPECT_STREQ(roomType(6, 2), "gloamingforest:GloamingMMRSC");
+    EXPECT_STREQ(deadEndType(0, false, 1), "gloamingforest:GloamingMMDE");
+    EXPECT_STREQ(deadEndType(1, false, 1), "gloamingforest:GloamingMMDEC");
+    EXPECT_STREQ(deadEndType(2, true, 1), "gloamingforest:GloamingMMDETC");
+    EXPECT_STREQ(deadEndType(2, false, 1), "gloamingforest:GloamingMMDETrC");
+    EXPECT_STREQ(deadEndType(5, false, 2), "gloamingforest:GloamingMMDEFL");
+    EXPECT_STREQ(deadEndType(7, false, 1), "gloamingforest:GloamingMMDER");
+    EXPECT_STREQ(deadEndType(7, false, 2), "gloamingforest:GloamingMMDES");
     EXPECT_EQ(corridorType(0, 1), nullptr);
     EXPECT_EQ(corridorType(3, 1), nullptr); // painting
-    EXPECT_STREQ(corridorType(2, 2), "gloamingforest:TFMMCIF");
-    EXPECT_STREQ(corridorType(4, 1), "gloamingforest:TFMMCR");
-    EXPECT_STREQ(corridorType(4, 2), "gloamingforest:TFMMCS");
+    EXPECT_STREQ(corridorType(2, 2), "gloamingforest:GloamingMMCIF");
+    EXPECT_STREQ(corridorType(4, 1), "gloamingforest:GloamingMMCR");
+    EXPECT_STREQ(corridorType(4, 2), "gloamingforest:GloamingMMCS");
     EXPECT_EQ(kMazeRadius, 55);
     EXPECT_EQ(kMazeDiameter, 110);
 }

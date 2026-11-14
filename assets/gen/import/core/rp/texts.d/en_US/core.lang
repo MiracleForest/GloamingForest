@@ -1,4 +1,4 @@
-commands.tffeature.usage=/%s <info | reactivate | conquer | center>
+commands.gloamingfeature.usage=/%s <info | reactivate | conquer | center>
 gloamingforest.configuration.section.gloamingforest.client.toml=Client Settings
 gloamingforest.configuration.section.gloamingforest.client.toml.title=Client Settings
 gloamingforest.configuration.section.gloamingforest.common.toml=Common Settings

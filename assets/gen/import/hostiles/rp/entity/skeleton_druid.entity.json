@@ -10,7 +10,7 @@
         "default": "textures/gloamingforest/entity/skeletondruid"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.skeleton_druid"
+        "default": "geometry.gf.skeleton.skeleton_druid"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

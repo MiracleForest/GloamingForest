@@ -7,7 +7,7 @@
 #pragma once
 
 // Contract "structure", shared bases (header owned by F0, implemented by F7; rule R18).
-// HollowHillComponent ("gloamingforest:TFHill"): the hollow hill interior (water drained, a
+// HollowHillComponent ("gloamingforest:GloamingHill"): the hollow hill interior (water drained, a
 // hexagonal lattice of stalactites, stalagmites, chests and spawners from a
 // structure_speleothem_settings config). The hollow hill landmark and the yeti cave (U27) build on it.
 

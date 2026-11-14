@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_flora_item_firefly"
+          "default": "gf_flora_item_firefly"
         }
       },
       "minecraft:display_name": {

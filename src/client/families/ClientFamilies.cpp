@@ -1,6 +1,6 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/block/TFBushBlock.java
+//   src/main/java/gloamingforest/block/GloamingBushBlock.java
 //   src/main/java/gloamingforest/client/event/ColorHandler.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
@@ -19,7 +19,7 @@
 //   foliage colour. Canopy and mangrove leaves blend the biome foliage colour there
 //   (CANOPY_COLORIZER / MANGROVE_COLORIZER of the game's foliage colour at the position, F12's
 //   a vanilla client keeps their evergreen / birch tint methods.
-// - Snowy grass under snowloggables: TFBushBlock.updateSnowBeneath sets the grass below a bush
+// - Snowy grass under snowloggables: GloamingBushBlock.updateSnowBeneath sets the grass below a bush
 //   with snow in it SNOWY. Bedrock's grass has no such state: it draws its snowed side when the
 //   client's grass variant (GrassBlock::calcVariant, client only) finds snow above, so the variant
 //   of grass under a snowloggable family block with layers is the snowed one.
@@ -53,7 +53,7 @@ namespace gf::client::families {
 
 namespace fam = gf::feature::families;
 
-/// The grass at `pos` is under a snowloggable family block with snow in it (TFBushBlock's SNOWY).
+/// The grass at `pos` is under a snowloggable family block with snow in it (GloamingBushBlock's SNOWY).
 bool snowyUnder(BlockSource& region, BlockPos const& pos) {
     Block const& above = region.getBlock(BlockPos{pos.x, pos.y + 1, pos.z});
     auto const*  e     = fam::entryOf(above);

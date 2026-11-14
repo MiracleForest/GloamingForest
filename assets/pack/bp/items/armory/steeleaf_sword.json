@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_item_steeleaf_sword"
+          "default": "gf_item_steeleaf_sword"
         }
       },
       "minecraft:display_name": {

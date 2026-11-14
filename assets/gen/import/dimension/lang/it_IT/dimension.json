@@ -1,7 +1,7 @@
 {
-  "block.gloamingforest.gloaming_portal": "Portale per la Foresta del Crepuscolo",
-  "dimension.gloamingforest.gloaming_forest": "Foresta del Crepuscolo",
+  "block.gloamingforest.gloaming_portal": "Portale per la Gloaming Forest",
+  "dimension.gloamingforest.gloaming_forest": "Gloaming Forest",
   "misc.gloamingforest.portal_unsafe": "Questo posto non sembra affatto sicuro...",
   "misc.gloamingforest.portal_unworthy": "Il portale non funziona. Forse qualcosa è stato ignorato?",
-  "subtitles.gloamingforest.block.portal.whoosh": "Portale della Foresta del Crepuscolo richiama"
+  "subtitles.gloamingforest.block.portal.whoosh": "Portale della Gloaming Forest richiama"
 }

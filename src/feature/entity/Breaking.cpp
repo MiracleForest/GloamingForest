@@ -2,7 +2,7 @@
 // Translated from the upstream 4.8 source (commit 9e40a757):
 //   src/main/java/gloamingforest/util/entities/EntityUtil.java
 //   src/main/java/gloamingforest/entity/ai/goal/ChargeAttackGoal.java
-//   src/main/java/gloamingforest/init/TFBlockEntities.java
+//   src/main/java/gloamingforest/init/GloamingBlockEntities.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -78,7 +78,7 @@ bool javaHasBlockEntity(BlockActor const& be) {
 
 namespace {
 
-/// The upstream blocks of TFBlockEntities' valid block lists (custom blocks have no block actor on
+/// The upstream blocks of GloamingBlockEntities' valid block lists (custom blocks have no block actor on
 /// Bedrock). upstream's chests, trapped chests and signs (vanilla block entity types) are matched by
 /// their suffix.
 std::unordered_set<std::string_view> const& javaBlockEntityBlocks() {

@@ -15,14 +15,14 @@
         "explosion_resistance": 0.5
       },
       "minecraft:map_color": "#993333",
-      "minecraft:geometry": "geometry.tf.minecraft.block.carpet",
+      "minecraft:geometry": "geometry.gf.minecraft.block.carpet",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_coronation_carpet",
+          "texture": "gf_block_coronation_carpet",
           "render_method": "opaque"
         },
         "wool": {
-          "texture": "tf_block_coronation_carpet",
+          "texture": "gf_block_coronation_carpet",
           "render_method": "opaque"
         }
       },

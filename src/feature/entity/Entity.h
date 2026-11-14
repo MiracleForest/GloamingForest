@@ -122,7 +122,7 @@ struct Home {
 };
 [[nodiscard]] std::optional<Home> home(Mob const& mob);
 
-/// A linked multipart part (TFPart): its own hitbox actor that follows the parent; damage to it
+/// A linked multipart part (GloamingPart): its own hitbox actor that follows the parent; damage to it
 /// goes to the parent with the part id.
 struct PartSize {
     float width  = 1.0f;

@@ -79,6 +79,29 @@ function Get-UpstreamRebrand([string]$Clone = (Get-UpstreamClone)) {
         $p = Get-StemPair $old $names.names[$loc]
         if ($p[0] -and $p[1] -and $p[0] -ne $p[1]) { $locales[$loc] = [string[][]]@(, [string[]]@($p[0], $p[1])) }
     }
+    # The other locales: the upstream's localized names of the mod and its dimension (root advancement,
+    # dimension title) read as this project's English name (names.json en_us) in that locale's texts.
+    $localeNames = [ordered]@{}
+    $dimKey = "dimension.$mod.$($stem[0])_$($mod.Substring($stem[0].Length))"
+    foreach ($file in @(Get-ChildItem $langDir -Filter '*.json' | Sort-Object Name)) {
+        $loc = $file.BaseName.ToLowerInvariant()
+        if ($names.names.Contains($loc) -or $loc -eq 'en_us') { continue }
+        $lang = try { Get-Content $file.FullName -Raw | ConvertFrom-Json -AsHashtable } catch { $null }
+        if (-not $lang) { continue }
+        $found = @(foreach ($k in @("advancement.$mod.root", $dimKey)) {
+                $v = $lang[$k]
+                if ($v -and $v -notmatch [regex]::Escape($stem[0])) { $v.Trim() }
+            }) | Sort-Object -Unique
+        if ($found) { $localeNames[$loc] = [string[]]@($found) }
+    }
+    # a locale of the same language uses those names too (es_mx: es_es's)
+    foreach ($file in @(Get-ChildItem $langDir -Filter '*.json' | Sort-Object Name)) {
+        $loc = $file.BaseName.ToLowerInvariant()
+        if ($names.names.Contains($loc) -or $loc -eq 'en_us') { continue }
+        $lng = $loc.Split('_')[0]
+        $same = @($localeNames.Keys | Where-Object { $_.Split('_')[0] -eq $lng } | ForEach-Object { $localeNames[$_] }) | Sort-Object -Unique
+        if ($same) { $localeNames[$loc] = [string[]]@($same) }
+    }
     # the upstream's abbreviation of its English name (its initials) reads as this project's name in lang texts
     $abbrev = $null
     $en = Join-Path $Clone "src/generated/resources/assets/$mod/lang/en_us.json"
@@ -89,7 +112,8 @@ function Get-UpstreamRebrand([string]$Clone = (Get-UpstreamClone)) {
             if ($initials.Length -ge 2) { $abbrev = [string[]]@($initials, $names.names['en_us']) }
         }
     }
-    return [pscustomobject]@{ Mod = $mod; Namespace = $own; Pairs = $pairs; Locales = $locales; Abbrev = $abbrev }
+    return [pscustomobject]@{ Mod = $mod; Namespace = $own; Pairs = $pairs; Locales = $locales; Abbrev = $abbrev; Prefix = $names.prefix
+        LocaleNames = $localeNames; EnglishName = $names.names['en_us'] }
 }
 
 function ConvertTo-OwnNames([string]$Text, $Rebrand) {
@@ -110,7 +134,43 @@ namespace GfUpstream {
             ".png", ".jpg", ".gif", ".ico", ".jar", ".zip", ".class", ".ogg", ".nbt", ".ttf", ".otf", ".bin" };
         static readonly Regex Link = new Regex(@"\s*https?://(?!minecraft\.wiki/)[^\s""\\~]+", RegexOptions.Compiled);
         static string Apply(string s, string[][] pairs) { foreach (var p in pairs) s = s.Replace(p[0], p[1]); return s; }
-        public static int Build(string clone, string dest, string[][] pairs, Dictionary<string, string[][]> locales, string[] abbrev, string stamp) {
+        static string ApplyRx(string s, List<KeyValuePair<Regex, string>> rules) { foreach (var r in rules) s = r.Key.Replace(s, r.Value); return s; }
+        // The upstream abbreviation (abbrev[0], its initials, e.g. in class names, ids and camelCase names) in
+        // this project's spelling: the stem (stem[1]) in names, the project's own prefix (own) in ids.
+        // A localized name in any inflection: each word by its stem (a single word or a short one whole),
+        // the words in order, ignoring case ("Foo Bar" -> foo\w*\s+bar\w*).
+        public static Regex NameRegex(string name) {
+            var words = name.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            var parts = words.Select(w => words.Length == 1 || w.Length <= 4 ? Regex.Escape(w) : Regex.Escape(w.Substring(0, Math.Max(4, w.Length - 3))));
+            return new Regex(string.Join(@"\s+", parts.Select(p => p + @"\w*")), RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        }
+        static List<KeyValuePair<Regex, string>> AbbrevRules(string up, string stem, string own) {
+            string U = Regex.Escape(up), L = Regex.Escape(up.ToLowerInvariant()), T = Regex.Escape(up.Substring(0, 1) + up.Substring(1).ToLowerInvariant());
+            string S = stem.Substring(0, 1).ToUpperInvariant() + stem.Substring(1), s = stem.ToLowerInvariant(), a = own.ToLowerInvariant(), A = own.ToUpperInvariant();
+            var r = new List<KeyValuePair<Regex, string>>();
+            Action<string, string> add = (rx, to) => r.Add(new KeyValuePair<Regex, string>(new Regex(rx, RegexOptions.Compiled | RegexOptions.CultureInvariant), to));
+            add(L + "feature", s + "feature");
+            add(@"\b" + U + "_(?=[A-Z])", A + "_");
+            add(@"\b" + L + @"(?=(?:Dim|Id|Structures|Type)\b)", a);
+            add(@"\b" + U + "(?=[A-Z])", S);
+            add(@"(?<=[a-z])" + U + @"\b", S);
+            add(@"\b" + T + "(?=[A-Z])", S);
+            add(@"(?<=[a-z])" + T + "(?=[A-Z])", S);
+            add(@"(?<=[a-z])" + T + @"\b", S);
+            add(@"\b" + L + "(?=[A-Z])", s);
+            add(@"\b" + L + "(?=[a-z])", s);
+            add(@"\b" + L + "_", a + "_");
+            add("_" + L + "_", "_" + a + "_");
+            add("_" + L + @"\b", "_" + a);
+            add(@"\." + L + @"\.", "." + a + ".");
+            add("_" + U + "_", "_" + A + "_");
+            add("_" + U + @"\b", "_" + A);
+            add(@"\b" + L + @"\b", "upsrc");
+            add(@"\b" + T + @"\b", "Upsrc");
+            return r;
+        }
+        public static int Build(string clone, string dest, string[][] pairs, Dictionary<string, string[][]> locales, string[] abbrev, string stem, string own, Dictionary<string, string[]> localeNames, string english, string stamp) {
+            var rules = abbrev == null ? new List<KeyValuePair<Regex, string>>() : AbbrevRules(abbrev[0], stem, own);
             Regex abbr = abbrev == null ? null : new Regex(@"\b" + Regex.Escape(abbrev[0]) + @"\b", RegexOptions.Compiled);
             var utf8 = new UTF8Encoding(false);
             int n = 0;
@@ -119,7 +179,7 @@ namespace GfUpstream {
                 .OrderBy(f => f, StringComparer.Ordinal);
             foreach (var f in files) {
                 string rel = f.Substring(clone.Length).TrimStart('\\', '/').Replace('\\', '/');
-                string outRel = Apply(rel, pairs);
+                string outRel = ApplyRx(Apply(rel, pairs), rules);
                 string target = Path.Combine(dest, outRel);
                 Directory.CreateDirectory(Path.GetDirectoryName(target));
                 string ext = Path.GetExtension(f);
@@ -135,9 +195,12 @@ namespace GfUpstream {
                     string loc = Path.GetFileNameWithoutExtension(f).ToLowerInvariant();
                     string[][] lp;
                     if (locales.TryGetValue(loc, out lp)) text = Apply(text, lp);
+                    string[] ln;
+                    if (english != null && localeNames.TryGetValue(loc, out ln)) foreach (var nm in ln) text = NameRegex(nm).Replace(text, english);
                     text = Link.Replace(text, "");
                     if (abbr != null) text = abbr.Replace(text, abbrev[1]);
                 }
+                text = ApplyRx(text, rules);
                 if (File.Exists(target)) File.SetAttributes(target, FileAttributes.Normal);
                 File.WriteAllText(target, text, utf8);
                 n++;
@@ -172,8 +235,10 @@ function Update-UpstreamView([string]$Clone = (Get-UpstreamClone), [string]$Comm
     $pairs = $r.Pairs.ToArray()
     $loc = [Collections.Generic.Dictionary[string, string[][]]]::new()
     foreach ($k in $r.Locales.Keys) { $loc[$k] = $r.Locales[$k] }
+    $ln = [Collections.Generic.Dictionary[string, string[]]]::new()
+    foreach ($k in $r.LocaleNames.Keys) { $ln[$k] = $r.LocaleNames[$k] }
     $clonePath = (Resolve-Path $Clone).Path.TrimEnd('\', '/')
-    [void][GfUpstream.View]::Build($clonePath, $view, $pairs, $loc, $r.Abbrev, $stamp)
+    [void][GfUpstream.View]::Build($clonePath, $view, $pairs, $loc, $r.Abbrev, $r.Pairs[0][1], $r.Prefix, $ln, $r.EnglishName, $stamp)
     return $view
 }
 

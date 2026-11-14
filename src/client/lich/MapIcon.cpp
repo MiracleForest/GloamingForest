@@ -1,11 +1,11 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/init/TFMapDecorations.java
+//   src/main/java/gloamingforest/init/GloamingMapDecorations.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// U21 (lich), client mod: the lich tower's magic map icon (TFMapDecorations.LICH_TOWER, the
+// U21 (lich), client mod: the lich tower's magic map icon (GloamingMapDecorations.LICH_TOWER, the
 // sprite gloamingforest:map/decorations/lich_tower). The magic map (U13) draws the decoration
 // type gloamingforest:lich_tower with this texture.
 

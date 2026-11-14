@@ -1,6 +1,6 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/world/components/feature/trees/TFTreeFeature.java
+//   src/main/java/gloamingforest/world/components/feature/trees/GloamingTreeFeature.java
 //   src/main/java/gloamingforest/world/components/feature/trees/CanopyTreeFeature.java
 //   src/main/java/gloamingforest/world/components/feature/trees/MegaOakTreeFeature.java
 //   src/main/java/gloamingforest/world/components/feature/trees/MegaCanopyTreeFeature.java
@@ -11,12 +11,12 @@
 //   src/main/java/gloamingforest/world/components/feature/trees/DarkCanopyTreeFeature.java
 //   src/main/java/gloamingforest/world/components/feature/trees/SnowTreeFeature.java
 //   src/main/java/gloamingforest/world/components/feature/trees/SnowUnderTreeFeature.java
-//   src/main/java/gloamingforest/world/components/feature/config/TFTreeFeatureConfig.java
+//   src/main/java/gloamingforest/world/components/feature/config/GloamingTreeFeatureConfig.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// U3 trees: upstream's own tree feature types. TFTreeFeature subclasses read TFTreeFeatureConfig and
+// U3 trees: upstream's own tree feature types. GloamingTreeFeature subclasses read GloamingTreeFeatureConfig and
 // generate through a trunk, a leaves and a decoration (root) setter; the dark canopy tree and the
 // snow tree are TreeFeature copies that delegate the tree itself to the minecraft:tree interpreter
 // after their own checks and then run their own (older) updateLeaves through a decorator appended
@@ -65,8 +65,8 @@ Json const& member(Json const& j, char const* key) {
 /// 0 is answered without a draw here).
 int nextIntSafe(RandomSource& random, int bound) { return bound > 0 ? random.nextInt(bound) : 0; }
 
-/// TFTreeFeatureConfig.
-struct TFConfig {
+/// GloamingTreeFeatureConfig.
+struct GloamingConfig {
     Json const& trunk;
     Json const& leaves;
     Json const& branch;
@@ -77,7 +77,7 @@ struct TFConfig {
     bool        hasLeaves;
     Json const& decorators;
 
-    explicit TFConfig(Json const& c)
+    explicit GloamingConfig(Json const& c)
     : trunk(member(c, "trunk_provider")),
       leaves(member(c, "leaves_provider")),
       branch(member(c, "branch_provider")),
@@ -89,7 +89,7 @@ struct TFConfig {
       decorators(member(c, "decorators")) {}
 };
 
-/// What TFTreeFeature#generate gets.
+/// What GloamingTreeFeature#generate gets.
 struct Gen {
     Region&       region;
     RandomSource& random;
@@ -97,7 +97,7 @@ struct Gen {
     Placer        trunk;  ///< biconsumer (set)
     Placer        leaves; ///< biconsumer1 (set1)
     RootPlacer    deco;   ///< RootPlacer(biconsumer2 (set2), 1)
-    TFConfig      config;
+    GloamingConfig      config;
 };
 using GenerateFn = bool (*)(Gen& g);
 
@@ -140,7 +140,7 @@ std::optional<int> optionalDistanceAt(Block const& b) {
     return std::nullopt;
 }
 
-/// TreeFeature.updateLeaves (Minecraft 1.21.1) as TFTreeFeature#place calls it: `sources` start at
+/// TreeFeature.updateLeaves (Minecraft 1.21.1) as GloamingTreeFeature#place calls it: `sources` start at
 /// distance 0 (upstream hands its leaf set here), the trunk is marked done first (and the decorators'
 /// set, empty in upstream's data); leaves reached from them get distance k (setBlockKnownShape) while
 /// k < 7. The seven work sets are HashSets: their iteration order (core::trees::JavaHashSet)
@@ -349,8 +349,8 @@ Json withKnownShapeLeaves(Json config) {
     return config;
 }
 
-/// TFTreeFeature#place: the setters, generate, then the config's decorators.
-bool tfTree(FeatureContext const& c, GenerateFn generate) {
+/// GloamingTreeFeature#place: the setters, generate, then the config's decorators.
+bool gloamingTree(FeatureContext const& c, GenerateFn generate) {
     PosSet trunkSet, leafSet, rootSet;
     Region& region = c.region;
     Gen     g{
@@ -370,7 +370,7 @@ bool tfTree(FeatureContext const& c, GenerateFn generate) {
                        setBlock(region, p, b);
                    },
                    1},
-        TFConfig(c.config),
+        GloamingConfig(c.config),
     };
     if (!generate(g)) return false;
     if (leafSet.list.empty() && rootSet.list.empty()) return false;
@@ -896,11 +896,11 @@ Block const& leafWithDistance(Block const& block, int distance) { return withDis
 
 void registerTreeFeatures() {
     using gf::features::registerType;
-    registerType("gloamingforest:mega_oak", [](FeatureContext const& c) { return tfTree(c, megaOak); });
-    registerType("gloamingforest:mega_canopy", [](FeatureContext const& c) { return tfTree(c, megaCanopy); });
-    registerType("gloamingforest:large_winter_tree", [](FeatureContext const& c) { return tfTree(c, largeWinter); });
-    registerType("gloamingforest:miners_tree", [](FeatureContext const& c) { return tfTree(c, miningTree); });
-    registerType("gloamingforest:tree_of_time", [](FeatureContext const& c) { return tfTree(c, timeTree); });
+    registerType("gloamingforest:mega_oak", [](FeatureContext const& c) { return gloamingTree(c, megaOak); });
+    registerType("gloamingforest:mega_canopy", [](FeatureContext const& c) { return gloamingTree(c, megaCanopy); });
+    registerType("gloamingforest:large_winter_tree", [](FeatureContext const& c) { return gloamingTree(c, largeWinter); });
+    registerType("gloamingforest:miners_tree", [](FeatureContext const& c) { return gloamingTree(c, miningTree); });
+    registerType("gloamingforest:tree_of_time", [](FeatureContext const& c) { return gloamingTree(c, timeTree); });
     registerType("gloamingforest:dark_canopy_tree", darkCanopy);
     // SnowTreeFeature: a copy of TreeFeature (trees on any sturdy ground: the placement checks it)
     registerType("gloamingforest:anywhere_tree", [](FeatureContext const& c) { return placeVanillaTree(c, c.origin); });

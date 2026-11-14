@@ -42,7 +42,7 @@
       "minecraft:geometry": "geometry.gloamingforest.building.snow_queen_trophy_r0",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_building_snowqueen",
+          "texture": "gf_building_snowqueen",
           "render_method": "alpha_test"
         }
       }

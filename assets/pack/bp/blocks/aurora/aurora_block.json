@@ -38,31 +38,31 @@
       "minecraft:geometry": "minecraft:geometry.full_block",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_aurora_baked_aurora_block_0",
+          "texture": "gf_aurora_baked_aurora_block_0",
           "render_method": "opaque"
         },
         "up": {
-          "texture": "tf_aurora_baked_aurora_block_0",
+          "texture": "gf_aurora_baked_aurora_block_0",
           "render_method": "opaque"
         },
         "down": {
-          "texture": "tf_aurora_baked_aurora_block_0",
+          "texture": "gf_aurora_baked_aurora_block_0",
           "render_method": "opaque"
         },
         "north": {
-          "texture": "tf_aurora_baked_aurora_block_0",
+          "texture": "gf_aurora_baked_aurora_block_0",
           "render_method": "opaque"
         },
         "south": {
-          "texture": "tf_aurora_baked_aurora_block_0",
+          "texture": "gf_aurora_baked_aurora_block_0",
           "render_method": "opaque"
         },
         "east": {
-          "texture": "tf_aurora_baked_aurora_block_0",
+          "texture": "gf_aurora_baked_aurora_block_0",
           "render_method": "opaque"
         },
         "west": {
-          "texture": "tf_aurora_baked_aurora_block_0",
+          "texture": "gf_aurora_baked_aurora_block_0",
           "render_method": "opaque"
         }
       },
@@ -70,7 +70,7 @@
         "geometry": "minecraft:geometry.full_block",
         "material_instances": {
           "*": {
-            "texture": "tf_aurora_item_block",
+            "texture": "gf_aurora_item_block",
             "render_method": "opaque"
           }
         }
@@ -82,31 +82,31 @@
         "components": {
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_aurora_baked_aurora_block_1",
+              "texture": "gf_aurora_baked_aurora_block_1",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_aurora_baked_aurora_block_1",
+              "texture": "gf_aurora_baked_aurora_block_1",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_aurora_baked_aurora_block_1",
+              "texture": "gf_aurora_baked_aurora_block_1",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_aurora_baked_aurora_block_1",
+              "texture": "gf_aurora_baked_aurora_block_1",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_aurora_baked_aurora_block_1",
+              "texture": "gf_aurora_baked_aurora_block_1",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_aurora_baked_aurora_block_1",
+              "texture": "gf_aurora_baked_aurora_block_1",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_aurora_baked_aurora_block_1",
+              "texture": "gf_aurora_baked_aurora_block_1",
               "render_method": "opaque"
             }
           }
@@ -117,31 +117,31 @@
         "components": {
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_aurora_baked_aurora_block_2",
+              "texture": "gf_aurora_baked_aurora_block_2",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_aurora_baked_aurora_block_2",
+              "texture": "gf_aurora_baked_aurora_block_2",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_aurora_baked_aurora_block_2",
+              "texture": "gf_aurora_baked_aurora_block_2",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_aurora_baked_aurora_block_2",
+              "texture": "gf_aurora_baked_aurora_block_2",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_aurora_baked_aurora_block_2",
+              "texture": "gf_aurora_baked_aurora_block_2",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_aurora_baked_aurora_block_2",
+              "texture": "gf_aurora_baked_aurora_block_2",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_aurora_baked_aurora_block_2",
+              "texture": "gf_aurora_baked_aurora_block_2",
               "render_method": "opaque"
             }
           }
@@ -152,31 +152,31 @@
         "components": {
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_aurora_baked_aurora_block_3",
+              "texture": "gf_aurora_baked_aurora_block_3",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_aurora_baked_aurora_block_3",
+              "texture": "gf_aurora_baked_aurora_block_3",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_aurora_baked_aurora_block_3",
+              "texture": "gf_aurora_baked_aurora_block_3",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_aurora_baked_aurora_block_3",
+              "texture": "gf_aurora_baked_aurora_block_3",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_aurora_baked_aurora_block_3",
+              "texture": "gf_aurora_baked_aurora_block_3",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_aurora_baked_aurora_block_3",
+              "texture": "gf_aurora_baked_aurora_block_3",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_aurora_baked_aurora_block_3",
+              "texture": "gf_aurora_baked_aurora_block_3",
               "render_method": "opaque"
             }
           }
@@ -187,31 +187,31 @@
         "components": {
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_aurora_baked_aurora_block_4",
+              "texture": "gf_aurora_baked_aurora_block_4",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_aurora_baked_aurora_block_4",
+              "texture": "gf_aurora_baked_aurora_block_4",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_aurora_baked_aurora_block_4",
+              "texture": "gf_aurora_baked_aurora_block_4",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_aurora_baked_aurora_block_4",
+              "texture": "gf_aurora_baked_aurora_block_4",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_aurora_baked_aurora_block_4",
+              "texture": "gf_aurora_baked_aurora_block_4",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_aurora_baked_aurora_block_4",
+              "texture": "gf_aurora_baked_aurora_block_4",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_aurora_baked_aurora_block_4",
+              "texture": "gf_aurora_baked_aurora_block_4",
               "render_method": "opaque"
             }
           }
@@ -222,31 +222,31 @@
         "components": {
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_aurora_baked_aurora_block_5",
+              "texture": "gf_aurora_baked_aurora_block_5",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_aurora_baked_aurora_block_5",
+              "texture": "gf_aurora_baked_aurora_block_5",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_aurora_baked_aurora_block_5",
+              "texture": "gf_aurora_baked_aurora_block_5",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_aurora_baked_aurora_block_5",
+              "texture": "gf_aurora_baked_aurora_block_5",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_aurora_baked_aurora_block_5",
+              "texture": "gf_aurora_baked_aurora_block_5",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_aurora_baked_aurora_block_5",
+              "texture": "gf_aurora_baked_aurora_block_5",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_aurora_baked_aurora_block_5",
+              "texture": "gf_aurora_baked_aurora_block_5",
               "render_method": "opaque"
             }
           }
@@ -257,31 +257,31 @@
         "components": {
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_aurora_baked_aurora_block_6",
+              "texture": "gf_aurora_baked_aurora_block_6",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_aurora_baked_aurora_block_6",
+              "texture": "gf_aurora_baked_aurora_block_6",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_aurora_baked_aurora_block_6",
+              "texture": "gf_aurora_baked_aurora_block_6",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_aurora_baked_aurora_block_6",
+              "texture": "gf_aurora_baked_aurora_block_6",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_aurora_baked_aurora_block_6",
+              "texture": "gf_aurora_baked_aurora_block_6",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_aurora_baked_aurora_block_6",
+              "texture": "gf_aurora_baked_aurora_block_6",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_aurora_baked_aurora_block_6",
+              "texture": "gf_aurora_baked_aurora_block_6",
               "render_method": "opaque"
             }
           }
@@ -292,31 +292,31 @@
         "components": {
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_aurora_baked_aurora_block_7",
+              "texture": "gf_aurora_baked_aurora_block_7",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_aurora_baked_aurora_block_7",
+              "texture": "gf_aurora_baked_aurora_block_7",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_aurora_baked_aurora_block_7",
+              "texture": "gf_aurora_baked_aurora_block_7",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_aurora_baked_aurora_block_7",
+              "texture": "gf_aurora_baked_aurora_block_7",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_aurora_baked_aurora_block_7",
+              "texture": "gf_aurora_baked_aurora_block_7",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_aurora_baked_aurora_block_7",
+              "texture": "gf_aurora_baked_aurora_block_7",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_aurora_baked_aurora_block_7",
+              "texture": "gf_aurora_baked_aurora_block_7",
               "render_method": "opaque"
             }
           }
@@ -327,31 +327,31 @@
         "components": {
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_aurora_baked_aurora_block_8",
+              "texture": "gf_aurora_baked_aurora_block_8",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_aurora_baked_aurora_block_8",
+              "texture": "gf_aurora_baked_aurora_block_8",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_aurora_baked_aurora_block_8",
+              "texture": "gf_aurora_baked_aurora_block_8",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_aurora_baked_aurora_block_8",
+              "texture": "gf_aurora_baked_aurora_block_8",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_aurora_baked_aurora_block_8",
+              "texture": "gf_aurora_baked_aurora_block_8",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_aurora_baked_aurora_block_8",
+              "texture": "gf_aurora_baked_aurora_block_8",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_aurora_baked_aurora_block_8",
+              "texture": "gf_aurora_baked_aurora_block_8",
               "render_method": "opaque"
             }
           }
@@ -362,31 +362,31 @@
         "components": {
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_aurora_baked_aurora_block_9",
+              "texture": "gf_aurora_baked_aurora_block_9",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_aurora_baked_aurora_block_9",
+              "texture": "gf_aurora_baked_aurora_block_9",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_aurora_baked_aurora_block_9",
+              "texture": "gf_aurora_baked_aurora_block_9",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_aurora_baked_aurora_block_9",
+              "texture": "gf_aurora_baked_aurora_block_9",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_aurora_baked_aurora_block_9",
+              "texture": "gf_aurora_baked_aurora_block_9",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_aurora_baked_aurora_block_9",
+              "texture": "gf_aurora_baked_aurora_block_9",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_aurora_baked_aurora_block_9",
+              "texture": "gf_aurora_baked_aurora_block_9",
               "render_method": "opaque"
             }
           }
@@ -397,31 +397,31 @@
         "components": {
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_aurora_baked_aurora_block_10",
+              "texture": "gf_aurora_baked_aurora_block_10",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_aurora_baked_aurora_block_10",
+              "texture": "gf_aurora_baked_aurora_block_10",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_aurora_baked_aurora_block_10",
+              "texture": "gf_aurora_baked_aurora_block_10",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_aurora_baked_aurora_block_10",
+              "texture": "gf_aurora_baked_aurora_block_10",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_aurora_baked_aurora_block_10",
+              "texture": "gf_aurora_baked_aurora_block_10",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_aurora_baked_aurora_block_10",
+              "texture": "gf_aurora_baked_aurora_block_10",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_aurora_baked_aurora_block_10",
+              "texture": "gf_aurora_baked_aurora_block_10",
               "render_method": "opaque"
             }
           }
@@ -432,31 +432,31 @@
         "components": {
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_aurora_baked_aurora_block_11",
+              "texture": "gf_aurora_baked_aurora_block_11",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_aurora_baked_aurora_block_11",
+              "texture": "gf_aurora_baked_aurora_block_11",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_aurora_baked_aurora_block_11",
+              "texture": "gf_aurora_baked_aurora_block_11",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_aurora_baked_aurora_block_11",
+              "texture": "gf_aurora_baked_aurora_block_11",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_aurora_baked_aurora_block_11",
+              "texture": "gf_aurora_baked_aurora_block_11",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_aurora_baked_aurora_block_11",
+              "texture": "gf_aurora_baked_aurora_block_11",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_aurora_baked_aurora_block_11",
+              "texture": "gf_aurora_baked_aurora_block_11",
               "render_method": "opaque"
             }
           }
@@ -467,31 +467,31 @@
         "components": {
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_aurora_baked_aurora_block_12",
+              "texture": "gf_aurora_baked_aurora_block_12",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_aurora_baked_aurora_block_12",
+              "texture": "gf_aurora_baked_aurora_block_12",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_aurora_baked_aurora_block_12",
+              "texture": "gf_aurora_baked_aurora_block_12",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_aurora_baked_aurora_block_12",
+              "texture": "gf_aurora_baked_aurora_block_12",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_aurora_baked_aurora_block_12",
+              "texture": "gf_aurora_baked_aurora_block_12",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_aurora_baked_aurora_block_12",
+              "texture": "gf_aurora_baked_aurora_block_12",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_aurora_baked_aurora_block_12",
+              "texture": "gf_aurora_baked_aurora_block_12",
               "render_method": "opaque"
             }
           }
@@ -502,31 +502,31 @@
         "components": {
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_aurora_baked_aurora_block_13",
+              "texture": "gf_aurora_baked_aurora_block_13",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_aurora_baked_aurora_block_13",
+              "texture": "gf_aurora_baked_aurora_block_13",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_aurora_baked_aurora_block_13",
+              "texture": "gf_aurora_baked_aurora_block_13",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_aurora_baked_aurora_block_13",
+              "texture": "gf_aurora_baked_aurora_block_13",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_aurora_baked_aurora_block_13",
+              "texture": "gf_aurora_baked_aurora_block_13",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_aurora_baked_aurora_block_13",
+              "texture": "gf_aurora_baked_aurora_block_13",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_aurora_baked_aurora_block_13",
+              "texture": "gf_aurora_baked_aurora_block_13",
               "render_method": "opaque"
             }
           }
@@ -537,31 +537,31 @@
         "components": {
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_aurora_baked_aurora_block_14",
+              "texture": "gf_aurora_baked_aurora_block_14",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_aurora_baked_aurora_block_14",
+              "texture": "gf_aurora_baked_aurora_block_14",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_aurora_baked_aurora_block_14",
+              "texture": "gf_aurora_baked_aurora_block_14",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_aurora_baked_aurora_block_14",
+              "texture": "gf_aurora_baked_aurora_block_14",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_aurora_baked_aurora_block_14",
+              "texture": "gf_aurora_baked_aurora_block_14",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_aurora_baked_aurora_block_14",
+              "texture": "gf_aurora_baked_aurora_block_14",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_aurora_baked_aurora_block_14",
+              "texture": "gf_aurora_baked_aurora_block_14",
               "render_method": "opaque"
             }
           }
@@ -572,31 +572,31 @@
         "components": {
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_aurora_baked_aurora_block_15",
+              "texture": "gf_aurora_baked_aurora_block_15",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_aurora_baked_aurora_block_15",
+              "texture": "gf_aurora_baked_aurora_block_15",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_aurora_baked_aurora_block_15",
+              "texture": "gf_aurora_baked_aurora_block_15",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_aurora_baked_aurora_block_15",
+              "texture": "gf_aurora_baked_aurora_block_15",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_aurora_baked_aurora_block_15",
+              "texture": "gf_aurora_baked_aurora_block_15",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_aurora_baked_aurora_block_15",
+              "texture": "gf_aurora_baked_aurora_block_15",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_aurora_baked_aurora_block_15",
+              "texture": "gf_aurora_baked_aurora_block_15",
               "render_method": "opaque"
             }
           }

@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_item_magic_painting"
+          "default": "gf_item_magic_painting"
         }
       },
       "minecraft:display_name": {

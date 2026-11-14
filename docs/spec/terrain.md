@@ -12,7 +12,7 @@ every owned configured/placed feature in compact form.
 | Net channels | `terrain.*` |
 | Config | section `terrain` (config_section `terrain`): no upstream key; adds the GloamingForest option `skylight` (bool, default false) replacing upstream's "Skylight" world preset (config.md / not-ported.md) |
 | Contracts | worldgen (F5: `setTerrain`, `setSurface`, `registerCarver`, `registerBlanket`, `addStage`), features (F5), landmark (F6: terraformers, `decorationAllowed`) |
-| Java sources | `init/{TFDensityFunctions,TFDimensionData,TFCaveCarvers}.java`, `init/custom/ChunkBlanketProcessors.java`, `world/components/chunkgenerators/{TerrainDensityRouter,NoiseDensityRouter,FocusedDensityFunction,HollowHillFunction,AbsoluteDifferenceFunction,SqrtDensityFunction,BoxDensityFunction,TanhHillFunction,TerrainColumn}.java`, `world/components/TFCavesCarver.java`, `world/components/chunkblanketing/*.java`, `world/components/placements/ChunkBlanketingModifier.java`, `world/registration/surface_rules/TFSurfaceRules.java`, `asmhooks/WorldgenHooks.java` (beardifier custom density, blanket hook), `world/components/feature/UndergroundPlantFeature.java` (oreberries) |
+| Java sources | `init/{GloamingDensityFunctions,GloamingDimensionData,GloamingCaveCarvers}.java`, `init/custom/ChunkBlanketProcessors.java`, `world/components/chunkgenerators/{TerrainDensityRouter,NoiseDensityRouter,FocusedDensityFunction,HollowHillFunction,AbsoluteDifferenceFunction,SqrtDensityFunction,BoxDensityFunction,TanhHillFunction,TerrainColumn}.java`, `world/components/GloamingCavesCarver.java`, `world/components/chunkblanketing/*.java`, `world/components/placements/ChunkBlanketingModifier.java`, `world/registration/surface_rules/GloamingSurfaceRules.java`, `asmhooks/WorldgenHooks.java` (beardifier custom density, blanket hook), `world/components/feature/UndergroundPlantFeature.java` (oreberries) |
 | Data | `worldgen/noise_settings/{gloaming_noise_gen,skylight_noise_gen}.json`, `worldgen/density_function/*.json`, `worldgen/configured_carver/*.json`, `gloaming/chunk_blanket_processors/*.json`, owned configured/placed features, tags below |
 
 Not owned here: the biome source and `biome_grid` (U1), the dimension type and dimension JSON (F4: height -32..256,
@@ -30,7 +30,7 @@ oreberry plants (U6/U5), the `#gloamingforest:antibuilder_ignores` consumers (U2
 | aquifers, ore veins | disabled | disabled |
 | final density (and initial density without jaggedness) | `gloamingforest:forested_terrain` | `gloamingforest:skylight_terrain` |
 | other router fields | 0 | 0 |
-| surface rule | `TFSurfaceRules.tfSurface()` (2) | same |
+| surface rule | `GloamingSurfaceRules.gloamingSurface()` (2) | same |
 | spawn target | none | none |
 
 Bedrock: F5's `TerrainProvider` evaluates the density graph (F5 `noise` density evaluator) per 8 x 8 cell:
@@ -105,7 +105,7 @@ Structure terraforming hook (`WorldgenHooks.getCustomDensity`): the Beardifier's
 intersecting structure's custom density function (F6 `landmark::addTerraformer`); U2's terrain provider must add it
 exactly where Java's `Beardifier.compute` is evaluated.
 
-## 4. Surface rules (`TFSurfaceRules.tfSurface`)
+## 4. Surface rules (`GloamingSurfaceRules.gloamingSurface`)
 
 Sequence (first match wins):
 1. Bedrock floor: `vertical_gradient("bedrock_floor", bottom -> bottom + 5)` -> bedrock.
@@ -125,8 +125,8 @@ Bedrock: F5 `setSurface(SurfaceProvider)` with the same evaluation order and the
 
 | Carver | Type | Config (configured carver of the same id) |
 |---|---|---|
-| `gloamingforest:tf_caves` | TFCavesCarver(highlands false, walls = noise provider seed 6972119253061020355, NormalNoise(0, 1.0), scale 0.5, states dirt, dirt, rooted dirt, dirt, dirt, coarse dirt, dirt, dirt) | probability 0.1, y uniform bottom + 16 .. -8, yScale 0.6, horizontal radius x1.05, vertical x1.05, floor level -0.7, lava level bottom, replaceable `#gloamingforest:carver_replaceables` |
-| `gloamingforest:highland_caves` | TFCavesCarver(highlands true, walls weighted trollsteinn 1 / stone 3) | probability 1, y biased-to-bottom 8 .. 32 (inner 16), yScale 0.6, horizontal x1.1..1.3, vertical x1.1, floor level -0.9..-0.65, lava level bottom, same replaceable tag |
+| `gloamingforest:gf_caves` | GloamingCavesCarver(highlands false, walls = noise provider seed 6972119253061020355, NormalNoise(0, 1.0), scale 0.5, states dirt, dirt, rooted dirt, dirt, dirt, coarse dirt, dirt, dirt) | probability 0.1, y uniform bottom + 16 .. -8, yScale 0.6, horizontal radius x1.05, vertical x1.05, floor level -0.7, lava level bottom, replaceable `#gloamingforest:carver_replaceables` |
+| `gloamingforest:highland_caves` | GloamingCavesCarver(highlands true, walls weighted trollsteinn 1 / stone 3) | probability 1, y biased-to-bottom 8 .. 32 (inner 16), yScale 0.6, horizontal x1.1..1.3, vertical x1.1, floor level -0.9..-0.65, lava level bottom, same replaceable tag |
 
 Carver logic (translate exactly):
 - `isStartChunk`: highlands always, else `rand <= probability`.
@@ -187,8 +187,8 @@ position per column of the chunk with probability `integrity`, at `heightmap + 1
 ## 9. Registries owned
 
 `registry chunk_blanket_processors` (types `canopy`, `glacier`) with its two entries; the density function types
-above; `carver` ids `gloamingforest:tf_caves`, `gloamingforest:highland_caves`; configured carvers
-`gloamingforest:tf_caves`, `gloamingforest:highland_caves`; noise settings `gloamingforest:gloaming_noise_gen`,
+above; `carver` ids `gloamingforest:gf_caves`, `gloamingforest:highland_caves`; configured carvers
+`gloamingforest:gf_caves`, `gloamingforest:highland_caves`; noise settings `gloamingforest:gloaming_noise_gen`,
 `gloamingforest:skylight_noise_gen`; density functions `gloamingforest:forested_terrain`,
 `gloamingforest:raw_biome_noise`, `gloamingforest:raw_biome_terrain`, `gloamingforest:skylight_terrain`.
 

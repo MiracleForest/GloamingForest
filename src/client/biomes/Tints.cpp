@@ -1,7 +1,7 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
 //   src/main/java/gloamingforest/client/FoliageColorHandler.java
-//   src/main/java/gloamingforest/TFEnumExtensions.java
+//   src/main/java/gloamingforest/GloamingEnumExtensions.java
 //   src/main/java/gloamingforest/asmhooks/BlockHooks.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
@@ -9,9 +9,9 @@
 //
 // U1 `biomes`, client build: upstream's position-dependent biome colours on grass, plants and leaves.
 //
-// Java: an upstream biome's grass colour goes through its GrassColorModifier (TFGrassColorModifier-
+// Java: an upstream biome's grass colour goes through its GrassColorModifier (GloamingGrassColorModifier-
 // EnumExtension: spooky forest, dark forest centre, enchanted forest, swamp, dark forest) and every
-// foliage colour lookup through FoliageColorHandler (tf-asm's FoliageColorResolverTransformer), at
+// foliage colour lookup through FoliageColorHandler (upsrc-asm's FoliageColorResolverTransformer), at
 // each column of the client's biome blend (ClientLevel#calculateBlockTint, 5x5 by default).
 //
 // Bedrock: the client biome files give every upstream biome its static colours (vanilla clients). With
@@ -57,7 +57,7 @@ using feature::biomes::BiomesConfig;
 
 std::string const& biomeIdOf(Biome const& b) { return feature::biomes::biomeIdOf(b); }
 
-bool isTfBiome(std::string_view id) { return feature::biomes::isTfBiome(id); }
+bool isGloamingBiome(std::string_view id) { return feature::biomes::isGloamingBiome(id); }
 
 namespace {
 
@@ -99,12 +99,12 @@ void noteDrawn(std::string_view biome, bool foliage) {
 
 /// upstream's colour of `biome` at (x, z) before the blend: every upstream biome has one (its modifier, the
 /// foliage handler, its JSON colour or the colour map at its climate); nullopt: not an upstream biome.
-std::optional<int> tfColourOf(std::string const& biome, int x, int z, bool foliage) {
+std::optional<int> gloamingColourOf(std::string const& biome, int x, int z, bool foliage) {
     return foliage ? colors::foliageAt(biome, x, z) : colors::grassAt(biome, x, z);
 }
 
-int tfColour(std::string const& biome, int x, int z, bool foliage, unsigned game) {
-    return tfColourOf(biome, x, z, foliage).value_or(static_cast<int>(game));
+int gloamingColour(std::string const& biome, int x, int z, bool foliage, unsigned game) {
+    return gloamingColourOf(biome, x, z, foliage).value_or(static_cast<int>(game));
 }
 
 /// upstream's colour at `pos` with the biomes read from `region`: Java's blend of every column's own
@@ -112,13 +112,13 @@ int tfColour(std::string const& biome, int x, int z, bool foliage, unsigned game
 /// colour stays). Only the Gloaming Forest has upstream biomes, so the centre column decides; a column of
 /// another biome inside a blend (never in a generated world) counts with the game's colour.
 std::optional<unsigned> fromRegion(BlockSource& region, BlockPos const& pos, unsigned game, bool foliage) {
-    if (!isTfBiome(biomeIdOf(region.getBiome(pos)))) return std::nullopt;
+    if (!isGloamingBiome(biomeIdOf(region.getBiome(pos)))) return std::nullopt;
     int c = colors::blend(pos.x, pos.z, radius(), [&](int x, int z) {
         std::string const& biome = biomeIdOf(region.getBiome(BlockPos{x, pos.y, z}));
-        auto               tf    = tfColourOf(biome, x, z, foliage);
-        if (!tf) return static_cast<int>(game);
+        auto               upsrc    = gloamingColourOf(biome, x, z, foliage);
+        if (!upsrc) return static_cast<int>(game);
         if (colors::isPositional(biome)) noteDrawn(biome, foliage);
-        return *tf;
+        return *upsrc;
     });
     return static_cast<unsigned>(c);
 }
@@ -133,7 +133,7 @@ std::optional<unsigned> fromMarker(BlockPos const& pos, unsigned game, bool foli
     if (!biome) return std::nullopt;
     noteDrawn(biome, foliage);
     std::string const id = biome;
-    return static_cast<unsigned>(colors::blend(pos.x, pos.z, radius(), [&](int x, int z) { return tfColour(id, x, z, foliage, game); }));
+    return static_cast<unsigned>(colors::blend(pos.x, pos.z, radius(), [&](int x, int z) { return gloamingColour(id, x, z, foliage, game); }));
 }
 
 unsigned colourAt(BlockSource* region, BlockPos const& pos, std::optional<unsigned> game, bool foliage) {
@@ -152,8 +152,8 @@ unsigned colourAt(BlockSource* region, BlockPos const& pos, std::optional<unsign
     std::uint64_t     world = feature::biomes::worldGeneration();
     if (last.valid && last.region == region && last.pos == pos && last.game == *game && last.foliage == foliage && last.world == world)
         return last.result;
-    auto     tf     = region ? fromRegion(*region, pos, *game, foliage) : fromMarker(pos, *game, foliage);
-    unsigned result = tf.value_or(*game);
+    auto     upsrc     = region ? fromRegion(*region, pos, *game, foliage) : fromMarker(pos, *game, foliage);
+    unsigned result = upsrc.value_or(*game);
     last            = Last{region, pos, *game, result, foliage, true, world};
     return result;
 }
@@ -180,13 +180,13 @@ constexpr char const* kFoliageBlocks[] = {
 // upstream's blocks of other units that ColorHandler draws with BiomeColors.getAverageGrassColor (U6's
 // fiddlehead and potted fiddlehead), and the textures of their tinted faces (the cross of the
 // fiddlehead, the plant of the pot: Java's tintindex faces; the pot and its dirt stay untinted).
-constexpr char const* kTfGrassBlocks[] = {
+constexpr char const* kGloamingGrassBlocks[] = {
     "gloamingforest:fiddlehead",
     "gloamingforest:potted_fiddlehead",
 };
-constexpr char const* kTfGrassTextures[] = {
-    "tf_block_fiddlehead",
-    "tf_block_potted_fiddlehead",
+constexpr char const* kGloamingGrassTextures[] = {
+    "gf_block_fiddlehead",
+    "gf_block_potted_fiddlehead",
 };
 
 } // namespace
@@ -210,7 +210,7 @@ std::optional<unsigned> waterAt(BlockSource& region, BlockPos const& pos, unsign
     std::uint64_t     world = feature::biomes::worldGeneration();
     if (last.valid && last.region == &region && last.pos == pos && last.game == game && last.world == world) return last.result;
     std::optional<unsigned> result;
-    if (isTfBiome(biomeIdOf(region.getBiome(pos)))) {
+    if (isGloamingBiome(biomeIdOf(region.getBiome(pos)))) {
         result = static_cast<unsigned>(colors::blend(pos.x, pos.z, radius(), [&](int x, int z) {
             auto w = colors::water(biomeIdOf(region.getBiome(BlockPos{x, pos.y, z})));
             return w ? *w : static_cast<int>(game);
@@ -222,26 +222,26 @@ std::optional<unsigned> waterAt(BlockSource& region, BlockPos const& pos, unsign
 
 std::span<char const* const> grassBlocks() { return kGrassBlocks; }
 std::span<char const* const> foliageBlocks() { return kFoliageBlocks; }
-std::span<char const* const> tfGrassBlocks() { return kTfGrassBlocks; }
-std::span<char const* const> tfGrassTextures() { return kTfGrassTextures; }
+std::span<char const* const> gloamingGrassBlocks() { return kGloamingGrassBlocks; }
+std::span<char const* const> gloamingGrassTextures() { return kGloamingGrassTextures; }
 
 struct BiomeTintsModule {
     void install() {
         auto grass = tint::GameTintFn{[](BlockPos const& p, tint::GameColors const& g) { return grassAt(gf::biomes::ext::tintRegion(), p, g); }};
         for (char const* id : kGrassBlocks) tint::registerBlock(id, grass);
-        for (char const* id : kTfGrassBlocks) tint::registerBlock(id, grass);
+        for (char const* id : kGloamingGrassBlocks) tint::registerBlock(id, grass);
         for (char const* id : kFoliageBlocks)
             tint::registerBlock(id, tint::GameTintFn{[](BlockPos const& p, tint::GameColors const& g) { return foliageAt(gf::biomes::ext::tintRegion(), p, g); }});
         log().info(
             "biomes: upstream biome colours on {} grass and {} foliage blocks, and {} upstream grass-tinted blocks",
             std::size(kGrassBlocks),
             std::size(kFoliageBlocks),
-            std::size(kTfGrassBlocks)
+            std::size(kGloamingGrassBlocks)
         );
     }
     void uninstall() {
         for (char const* id : kGrassBlocks) tint::unregisterBlock(id);
-        for (char const* id : kTfGrassBlocks) tint::unregisterBlock(id);
+        for (char const* id : kGloamingGrassBlocks) tint::unregisterBlock(id);
         for (char const* id : kFoliageBlocks) tint::unregisterBlock(id);
     }
 };

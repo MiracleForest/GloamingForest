@@ -9,11 +9,11 @@ flags, criteria, requirements, rewards); Appendix B the strings.
 
 - The 45 upstream advancements (`gloamingforest:<id>`, R21: U14 owns every advancement JSON and its criteria; other units
   fire their triggers by string through `progression::trigger`, recipe-unlock advancements belong to their recipe's
-  unit) and their presentation: the advancement tab (root `gloamingforest:root`, earned by `in_tf` or `make_portal`; the parent chain
+  unit) and their presentation: the advancement tab (root `gloamingforest:root`, earned by `in_gf` or `make_portal`; the parent chain
   of the other 44 is in Appendix A),
   advancement toasts, the "advancement required" toast and the locked-biome toast.
 - **Biome progression enforcement**: registry `gloamingforest:restrictions` (9 entries `restrictions/<biome>`), the
-  enforcement types (darkness, hunger, fire, frost, acid_rain), the gamerule `tfEnforcedProgression` and its client
+  enforcement types (darkness, hunger, fire, frost, acid_rain), the gamerule `gloamingEnforcedProgression` and its client
   sync, client config `client.disableLockedBiomeToasts` (section `progression`), net channels
   `progression.enforce_status`, `progression.missing_advancement_toast`.
 - Item sub-predicate `gloamingforest:color` (used by `arctic_armor_dyed`).
@@ -29,15 +29,15 @@ Contracts: progression, rules+fx, client.ui, landmark, data.
 
 ## 2. Upstream sources
 
-Generated advancement JSON `data/gloamingforest/advancement/*.json` (from `data/TFAdvancementGenerator.java`),
-`init/TFAdvancements.java` (trigger registry), `advancements/*Trigger.java`, `advancements/predicate/ItemColorPredicate.java`,
-`init/TFItemSubPredicates.java`, `init/custom/Restrictions.java`, `util/Restriction.java`, `init/custom/Enforcements.java`,
+Generated advancement JSON `data/gloamingforest/advancement/*.json` (from `data/GloamingAdvancementGenerator.java`),
+`init/GloamingAdvancements.java` (trigger registry), `advancements/*Trigger.java`, `advancements/predicate/ItemColorPredicate.java`,
+`init/GloamingItemSubPredicates.java`, `init/custom/Restrictions.java`, `util/Restriction.java`, `init/custom/Enforcements.java`,
 `util/Enforcement.java`, `util/PlayerHelper.java`, `events/ProgressionEvents.java` (`performProtectionAndPortalChecks`:
-enforcement every 20 ticks), `init/TFGameRules.java`, `network/EnforceProgressionStatusPacket.java`,
+enforcement every 20 ticks), `init/GloamingGameRules.java`, `network/EnforceProgressionStatusPacket.java`,
 `network/MissingAdvancementToastPacket.java`, `client/LockedBiomeToast.java`, `client/event/LockedBiomeToastHandler.java`,
 `client/MissingAdvancementToast.java`, `events/EntityEvents.java` (`alertPlayerCastleIsWIP`, group advancements,
 `resetFlaskLogic`), `util/StructureHints.java`, `world/components/structures/util/AdvancementLockedStructure.java`,
-`config/TFClientConfig.java`.
+`config/GloamingClientConfig.java`.
 
 ## 3. Behaviour
 
@@ -47,7 +47,7 @@ enforcement every 20 ticks), `init/TFGameRules.java`, `network/EnforceProgressio
   `c` are children of `a`; `a` -> `b` -> `c`: `c` is a child of `b`; a parenthesised group right after a node holds
   that node's children): `root` (tab root, no parent; background
   `gloamingforest:textures/block/mazestone_large_brick.png`; criteria: location in the Gloaming Forest or
-  `gloamingforest:make_tf_portal`) -> `progress_naga`, `hill1` (-> `hill2` -> `hill3`), `hedge`, `gloaming_hunter`
+  `gloamingforest:make_gf_portal`) -> `progress_naga`, `hill1` (-> `hill2` -> `hill3`), `hedge`, `gloaming_hunter`
   (-> `magic_map_focus` -> `magic_map` -> `maze_map` -> `ore_map`), `gloaming_dinner`, `kill_cicada`, `quest_ram`,
   `arborist`, `chicken_jerky`, `craft_travellers_gear` (-> `modify_travellers_gear`), `uncraft_uncrafting_table`;
   `progress_naga` -> `progress_lich`, `naga_armors`; `progress_lich` -> `progress_labyrinth` (-> `progress_hydra`
@@ -64,7 +64,7 @@ enforcement every 20 ticks), `init/TFGameRules.java`, `network/EnforceProgressio
 - Triggers referenced by criteria: vanilla `inventory_changed`, `player_killed_entity`, `consume_item`,
   `item_used_on_block`, `recipe_crafted`, `location`, `tick` (the `tick` criteria with player predicates are the
   "has the previous advancement / conquered" checks), plus upstream triggers owned by other units and fired through
-  `progression::trigger` by string: `gloamingforest:make_tf_portal` (F4), `hurt_boss` (F8), `kill_bug` (U6),
+  `progression::trigger` by string: `gloamingforest:make_gf_portal` (F4), `hurt_boss` (F8), `kill_bug` (U6),
   `broke_glass_sword` (U8), `drink_from_flask` (U9), `consume_hydra_chop_on_low_hunger` (U10), `add_modifier`
   (U11), `uncraft_item` (U13), `complete_quest_ram` (U19), `placed_on_trophy_pedestal` (U25), `kill_all_phantoms`
   (U25), `activate_ghast_trap` (U26); `structure_cleared` (F6) is fired on conquest and read by other units. Criteria use the `gloamingforest:color` item sub-predicate (`{color: int}`,
@@ -94,7 +94,7 @@ applies to a player in that biome until they have **all** listed advancements.
 | `swamp` | labyrinth | hunger | 1 | lich tower miniature | `progress_lich` |
 | `thornlands` | final castle | acid_rain | 1 | lamp of cinders | `progress_troll` |
 
-- Server, every **20** ticks per player when `tfEnforcedProgression` is true and the player is not creative /
+- Server, every **20** ticks per player when `gloamingEnforcedProgression` is true and the player is not creative /
   spectator: if the biome at the player has an unmet restriction, run its enforcement and try a structure hint for
   the hint structure (F6's `StructureHints.tryHintForStructure`, by string).
 - Enforcements (each checks the player's own tick counter again and that the tick rate runs normally). The two gates
@@ -110,7 +110,7 @@ applies to a player in that biome until they have **all** listed advancements.
     `environment.gloamingforest.acid_rain` (U15's event, by id) at the player (1, 1).
   - For all five, the Bedrock implementation mirrors both nested gates (outer 20-tick check in the dispatcher, inner
     check in each enforcement) rather than hard-coding the effective periods.
-- Gamerule `tfEnforcedProgression` (boolean, default **true**, category UPDATES): on change the server sends
+- Gamerule `gloamingEnforcedProgression` (boolean, default **true**, category UPDATES): on change the server sends
   `EnforceProgressionStatusPacket(value)` to all players, which sets the client copy of the rule (used by client
   checks: locked toasts, sky/fog effects of other units through `progression::client::enforced()`).
 
@@ -146,10 +146,10 @@ applies to a player in that biome until they have **all** listed advancements.
 - Recipe-unlock advancements are generated into recipe JSON by F1 (R21); U14 does not handle them.
 - Enforcement every 20 ticks with the per-player tick counters (`progression::events::onTick`); effects through
   `effects::apply` (frosted is U10's custom effect) and `combat::hurt` for acid rain.
-- Gamerule via `gamerules::registerBool("tfEnforcedProgression", true)` (F10's store already knows it with upstream's
-  default). Upstream's `/gamerule tfEnforcedProgression <value>` is `/gloamingforest gamerule tfEnforcedProgression
+- Gamerule via `gamerules::registerBool("gloamingEnforcedProgression", true)` (F10's store already knows it with upstream's
+  default). Upstream's `/gamerule gloamingEnforcedProgression <value>` is `/gloamingforest gamerule gloamingEnforcedProgression
   <true|false>` on Bedrock (F10's `gamerule` subcommand: Bedrock's `/gamerule` cannot hold custom rules). Upstream's
-  `gloamingforest:dev_new_world` function sets it with `/gamerule tfEnforcedProgression false`; F5's Bedrock port of
+  `gloamingforest:dev_new_world` function sets it with `/gamerule gloamingEnforcedProgression false`; F5's Bedrock port of
   that function cannot, so it ends with `scriptevent gloamingforest:dev_new_world teleport`, whose handler sets the rule
   through `gf::gamerules::set` (`src/feature/worldgen/Functions.cpp`). F10 already sends every rule value to
   companions over `gamerules.sync` on join and on each change (upstream's `EnforceProgressionStatusPacket`), and
@@ -202,13 +202,13 @@ Every id this unit owns in `docs/spec/owners.tsv`, with the upstream 4.8 data th
 
 ### Game rules (1)
 
-| Id | upstream registration (`TFGameRules.java`) |
+| Id | upstream registration (`GloamingGameRules.java`) |
 |---|---|
-| `tfEnforcedProgression` | `register("tfEnforcedProgression", GameRules.Category.UPDATES, GameRules.BooleanValue.create(true, (server, value) -> PacketDistributor.sendToAllPlayers(new EnforceProgressionStatusPacket(value.get())) ) );` |
+| `gloamingEnforcedProgression` | `register("gloamingEnforcedProgression", GameRules.Category.UPDATES, GameRules.BooleanValue.create(true, (server, value) -> PacketDistributor.sendToAllPlayers(new EnforceProgressionStatusPacket(value.get())) ) );` |
 
 ### Item sub-predicates (1)
 
-| Id | upstream registration (`TFItemSubPredicates.java`) |
+| Id | upstream registration (`GloamingItemSubPredicates.java`) |
 |---|---|
 | `gloamingforest:color` | `TYPES.register("color", new ItemSubPredicate.Type<>(ItemColorPredicate.CODEC));` |
 
@@ -832,9 +832,9 @@ Upstream's generated advancement JSON (`data/gloamingforest/advancement/`), ever
 
 - Title: `advancement.gloamingforest.root` = "Gloaming Forest"; description: `advancement.gloamingforest.root.desc` = "Enter the mysterious, magical woodlands: the Gloaming Forest"
 - Parent: `(root)`; icon: `gloaming_portal_miniature_structure`; announce_to_chat=False; background `gloamingforest:textures/block/mazestone_large_brick.png`
-- Criterion `in_tf`: `minecraft:location` `{"player":[{"condition":"minecraft:entity_properties","entity":"this","predicate":{"location":{"dimension":"gloamingforest:gloaming_forest"}}}]}`
-- Criterion `make_portal`: `gloamingforest:make_tf_portal` `{}`
-- Requirements: `[["in_tf","make_portal"]]`
+- Criterion `in_gf`: `minecraft:location` `{"player":[{"condition":"minecraft:entity_properties","entity":"this","predicate":{"location":{"dimension":"gloamingforest:gloaming_forest"}}}]}`
+- Criterion `make_portal`: `gloamingforest:make_gf_portal` `{}`
+- Requirements: `[["in_gf","make_portal"]]`
 - sends_telemetry_event: True
 
 #### `gloamingforest:troll`
@@ -942,8 +942,8 @@ Keys already shown above (block/item/entity names, subtitles) are not repeated. 
 |---|---|
 | `config.gloamingforest.locked_toasts` | Disable Locked Biome Toasts |
 | `config.gloamingforest.locked_toasts.tooltip` | Disables the toasts that appear when entering a locked biome. Not recommended if you're unfamiliar with progression. |
-| `gamerule.tfEnforcedProgression` | Gloaming Forest: Enforced Progression |
-| `gamerule.tfEnforcedProgression.description` | Some Gloaming Forest biomes are locked until you defeat certain bosses in the dimension. Check your advancements for the progression order. |
+| `gamerule.gloamingEnforcedProgression` | Gloaming Forest: Enforced Progression |
+| `gamerule.gloamingEnforcedProgression.description` | Some Gloaming Forest biomes are locked until you defeat certain bosses in the dimension. Check your advancements for the progression order. |
 | `misc.gloamingforest.biome_locked` | Biome Locked! |
 | `misc.gloamingforest.biome_locked_2` | Check your advancements |
 

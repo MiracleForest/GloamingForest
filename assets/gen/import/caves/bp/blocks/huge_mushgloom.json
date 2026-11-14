@@ -26,7 +26,7 @@
       "minecraft:light_emission": 5,
       "minecraft:map_color": "#d87f33",
       "minecraft:geometry": {
-        "identifier": "geometry.tf.gloamingforest.block.huge_mushgloom.multipart",
+        "identifier": "geometry.gf.gloamingforest.block.huge_mushgloom.multipart",
         "bone_visibility": {
           "part0": "!q.block_state('gloamingforest:north')",
           "part1": "q.block_state('gloamingforest:north')",
@@ -44,15 +44,15 @@
       },
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_huge_gloom_inside",
+          "texture": "gf_block_huge_gloom_inside",
           "render_method": "opaque"
         },
         "t_gloamingforest_block_huge_gloom_cap": {
-          "texture": "tf_block_huge_gloom_cap",
+          "texture": "gf_block_huge_gloom_cap",
           "render_method": "opaque"
         },
         "t_gloamingforest_block_huge_gloom_inside": {
-          "texture": "tf_block_huge_gloom_inside",
+          "texture": "gf_block_huge_gloom_inside",
           "render_method": "opaque"
         }
       },

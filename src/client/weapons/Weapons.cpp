@@ -36,7 +36,7 @@ namespace gf::client::weapons {
 
 namespace {
 
-bool isTfBow(std::string const& id) {
+bool isGloamingBow(std::string const& id) {
     return id == "gloamingforest:triple_bow" || id == "gloamingforest:ender_bow" || id == "gloamingforest:ice_bow" || id == "gloamingforest:seeker_bow";
 }
 
@@ -44,7 +44,7 @@ float bowFov(float fov) {
     auto* p = reinterpret_cast<Player*>(gf::client::currentPlayer());
     if (!p) return fov;
     auto& inUse = p->mItemInUse.get();
-    if (inUse.mItem->isNull() || !isTfBow(game::items::idOf(inUse.mItem.get()))) return fov;
+    if (inUse.mItem->isNull() || !isGloamingBow(game::items::idOf(inUse.mItem.get()))) return fov;
     int   max  = inUse.mItem->mItem ? inUse.mItem->mItem->getMaxUseDuration(&inUse.mItem.get()) : 0;
     int   used = std::max(0, max - p->getItemUseDuration());
     float f    = static_cast<float>(used) / 20.0F;

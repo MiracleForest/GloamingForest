@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_item_exanimate_powder"
+          "default": "gf_item_exanimate_powder"
         }
       },
       "minecraft:display_name": {

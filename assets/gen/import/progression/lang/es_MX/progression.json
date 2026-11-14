@@ -74,5 +74,5 @@
   "advancement.gloamingforest.root.desc": "Entra en el misterioso bosque mágico: the Gloaming Forest.",
   "advancement.gloamingforest.troll": "Trolleamos un Poco",
   "advancement.gloamingforest.troll.desc": "Encuentra y mata a un %s.",
-  "gamerule.tfEnforcedProgression": "Progresión de Gloaming Forest"
+  "gamerule.gloamingEnforcedProgression": "Progresión de Gloaming Forest"
 }

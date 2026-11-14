@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_flora_item_cicada"
+          "default": "gf_flora_item_cicada"
         }
       },
       "minecraft:display_name": {

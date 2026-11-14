@@ -6,7 +6,7 @@
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 #pragma once
 
-// HydraLairComponent ("gloamingforest:TFHydra", U24): a HollowHillComponent of size 2 with the
+// HydraLairComponent ("gloamingforest:GloamingHydra", U24): a HollowHillComponent of size 2 with the
 // hydra lair's own postProcess (domes of stone and grass, the speleothem lattice, the boss
 // spawner at local (27, 3, 27)).
 
@@ -27,7 +27,7 @@ public:
     using Piece        = structure::Piece;
     using Json         = structure::Json;
 
-    /// HydraLairComponent(i, x, y, z, config): HollowHillComponent(TFHydra, i, 2, x, y + 2, z).
+    /// HydraLairComponent(i, x, y, z, config): HollowHillComponent(GloamingHydra, i, 2, x, y + 2, z).
     HydraLair(int genDepth, int x, int y, int z);
 
     void addChildren(Piece& start, std::vector<std::unique_ptr<Piece>>& pieces, RandomSource& random) override;

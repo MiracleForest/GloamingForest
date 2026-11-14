@@ -197,7 +197,7 @@ GF_REGISTER_SELFTEST("flora.bush_growth", [](Context& ctx) -> ll::coro::CoroTask
     ctx.check(ctx.blockAt(p.offset(0, 1, 0)) == "gloamingforest:raspberry_bush", "a grown bush puts a new bush above it");
     ctx.check(stateAt(ctx, p.offset(0, 1, 0), st::Age) == 0, "the new bush is young");
     ctx.cleanupBlock(p.offset(0, 1, 0));
-    // a bush on a mature bush survives (TFBushBlock#canSurvive), not on stone
+    // a bush on a mature bush survives (GloamingBushBlock#canSurvive), not on stone
     ctx.check(bushes::canSurvive(*region, bp(p.offset(0, 1, 0)), *game::blockWith("gloamingforest:raspberry_bush")), "a bush stacks on a grown bush");
     ctx.setBlock(p.offset(1, -1, 0), "minecraft:stone");
     ctx.check(!bushes::canSurvive(*region, bp(p.offset(1, 0, 0)), *game::blockWith("gloamingforest:raspberry_bush")), "a berry bush does not survive on stone");
@@ -488,7 +488,7 @@ GF_REGISTER_SELFTEST("flora.features", [](Context& ctx) -> ll::coro::CoroTask<> 
         core::jrand::LegacyRandom random(12345);
         Json feature{{"type", "gloamingforest:berry_bush"},
                      {"config", {{"bush", {{"Name", "gloamingforest:blueberry_bush"}, {"Properties", {{"age", "0"}, {"layers", "0"}}}}},
-                                 {"can_generate_snowy", true}, {"generates_on", "gloamingforest:tf_berry_bushes_survive"}}}};
+                                 {"can_generate_snowy", true}, {"generates_on", "gloamingforest:gf_berry_bushes_survive"}}}};
         bool placed = features::placeJson(feature, live, bp(o), random);
         int  bushes = countBlocks(*region, bp(o.offset(-2, -2, -2)), bp(o.offset(2, 2, 2)), "gloamingforest:blueberry_bush");
         ctx.check(placed && bushes > 0, "berry_bush placed " + std::to_string(bushes) + " blueberry bushes");

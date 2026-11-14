@@ -3,7 +3,7 @@
 //   src/main/java/gloamingforest/entity/boss/BaseTFBoss.java
 //   src/main/java/gloamingforest/entity/boss/IBossLootBuffer.java
 //   src/main/java/gloamingforest/entity/boss/bar/ServerTFBossBar.java
-//   src/main/java/gloamingforest/network/TFBossBarPacket.java
+//   src/main/java/gloamingforest/network/GloamingBossBarPacket.java
 //   src/main/java/gloamingforest/network/UpdateDeathTimePacket.java
 //   src/main/java/gloamingforest/block/entity/spawner/BossSpawnerBlockEntity.java
 //   src/main/java/gloamingforest/block/entity/spawner/NagaSpawnerBlockEntity.java
@@ -23,7 +23,7 @@
 //   src/main/java/gloamingforest/events/EntityEvents.java
 //   src/main/java/gloamingforest/util/entities/EntityUtil.java
 //   src/main/java/gloamingforest/util/landmarks/LandmarkUtil.java
-//   src/main/java/gloamingforest/config/TFConfig.java
+//   src/main/java/gloamingforest/config/GloamingConfig.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -31,7 +31,7 @@
 // Contract "boss" (F8, rule R20): BaseTFBoss's lifecycle on top of F8's entity hooks.
 //   - Boss bar: a vanilla BossEventPacket bar per boss for the players that see it (Java's
 //     tracking: 160 blocks), coloured with the nearest of Bedrock's 8 BossBarColor values; the
-//     companion protocol carries TFBossBarPacket's exact RGB, overlay, darken and fog plus the
+//     companion protocol carries GloamingBossBarPacket's exact RGB, overlay, darken and fog plus the
 //     viewer's title and the progress ("boss.bar"; the client mod paints the bar with the RGB) and
 //     UpdateDeathTimePacket ("boss.death_time", when a player starts seeing a dying boss).
 //   - Death: "hurt_boss" fires for every qualified player first (LivingDeathEvent; for any mob of
@@ -138,11 +138,11 @@
 
 namespace gf::feature::boss {
 
-/// TFConfig.MultiplayerFightAdjuster (its names are the config values; the config screen refuses
+/// GloamingConfig.MultiplayerFightAdjuster (its names are the config values; the config screen refuses
 /// anything else, a config file with another value fails to load and keeps the previous value).
 enum class MultiplayerFightAdjuster { NONE, MORE_LOOT, MORE_HEALTH, MORE_LOOT_AND_HEALTH };
 
-/// Config section "bosses" (docs/spec/config.md): TFConfig.bossDropChests and
+/// Config section "bosses" (docs/spec/config.md): GloamingConfig.bossDropChests and
 /// multiplayerFightAdjuster.
 struct BossesConfig {
     int                      version                  = 1;
@@ -469,7 +469,7 @@ void sendBossEvent(Player& player, std::int64_t bossId, BossEventUpdateType type
     packet->sendTo(player);
 }
 
-/// TFBossBarPacket for companions (with the title the viewer's vanilla bar shows: the client mod
+/// GloamingBossBarPacket for companions (with the title the viewer's vanilla bar shows: the client mod
 /// finds that bar by it).
 void sendCompanionBar(Player& player, Mob& boss, Bar const& bar, char const* op, bool allowLerp = true) {
     if (!gf::net::isCompanion(player)) return;
@@ -639,7 +639,7 @@ void shuffleAndSplit(std::vector<ItemStack>& stacks, int emptySlots, RandomSourc
     shuffle(stacks, random);
 }
 
-/// TFLootTables#createLootParams(boss, true, cause): the boss's death context.
+/// GloamingLootTables#createLootParams(boss, true, cause): the boss's death context.
 std::vector<ItemStack> rollLoot(Mob& boss, std::string const& tableId, std::string const& damageType, Actor* killer) {
     gf::loot::LootContext ctx;
     ctx.region     = &boss.getDimensionBlockSource();
@@ -734,7 +734,7 @@ bool fillContainer(core::GlobalPos const& gpos, std::vector<ItemStack> const& it
 /// BlockBehaviour#getPistonPushReaction() != PushReaction.BLOCK: a piston may push or break the
 /// block. Bedrock has no push reaction to read (its movable component's type ids are the game's),
 /// so the BLOCK blocks are: unbreakable ones (destroy speed < 0: bedrock, barrier, portals,
-/// end portal frame, force fields, ...), vanilla's BLOCK list and upstream's (TFBlocks).
+/// end portal frame, force fields, ...), vanilla's BLOCK list and upstream's (GloamingBlocks).
 bool pistonMovable(BlockSource& region, BlockPos const& pos) {
     Block const& block = region.getBlock(pos);
     if (block.isAir()) return true;
@@ -745,7 +745,7 @@ bool pistonMovable(BlockSource& region, BlockPos const& pos) {
         "minecraft:portal", "minecraft:end_portal", "minecraft:end_gateway", "minecraft:end_portal_frame",
         "minecraft:moving_block", "minecraft:piston_arm_collision", "minecraft:sticky_piston_arm_collision",
         "minecraft:barrier", "minecraft:bedrock", "minecraft:border_block", "minecraft:allow", "minecraft:deny",
-        // upstream (TFBlocks: .pushReaction(PushReaction.BLOCK))
+        // upstream (GloamingBlocks: .pushReaction(PushReaction.BLOCK))
         "gloamingforest:gloaming_portal", "gloamingforest:skull_chest", "gloamingforest:keepsake_casket",
         "gloamingforest:stronghold_shield", "gloamingforest:reappearing_block", "gloamingforest:vanishing_block",
         "gloamingforest:locked_vanishing_block", "gloamingforest:carminite_builder", "gloamingforest:built_block",
@@ -1075,7 +1075,7 @@ void sendDeathTime(Mob& boss, int deathTime) {
 }
 
 /// Whether LandmarkUtil#markStructureConquered at the home point `pos` had a start of `key` to
-/// conquer (setConquered returns nothing): `key` is a conquerable landmark (a TFStructureStart)
+/// conquer (setConquered returns nothing): `key` is a conquerable landmark (a GloamingStructureStart)
 /// and one of its starts that the contract looks up from `pos` is conquered now (the one
 /// referencing the nearest landmark grid center's chunk, or a forced one covering the column).
 bool conqueredAt(int dim, BlockPos const& pos, std::string const& key) {
@@ -1097,7 +1097,7 @@ void defaultPostmortem(Mob& boss, BossSpec const& spec, std::string const& damag
     // LandmarkUtil#markStructureConquered(level, getRestrictionPoint(), getHomeStructure(), true):
     // nothing without a home point or with one in another dimension; else the landmark contract
     // finds the start of the home structure from the home point (LandmarkUtil
-    // #locateNearestLandmarkStart), conquers it when it is a TFStructureStart (ConquerableStructure)
+    // #locateNearestLandmarkStart), conquers it when it is a GloamingStructureStart (ConquerableStructure)
     // and fires "structure_cleared" for the players within 32 blocks of the home point
     auto home = gf::entity::home(boss);
     if (home && home->pos.dim == static_cast<int>(boss.getDimensionId()) && !spec.homeStructure.empty()) {
@@ -1846,7 +1846,7 @@ struct VariantRow {
     gf::boss::TrophyVariant     floor;
 };
 std::vector<VariantRow> const& variants() {
-    // AbstractTrophyBlock#playSound / #createParticle and TFBlocks' pedestal comparator strengths;
+    // AbstractTrophyBlock#playSound / #createParticle and GloamingBlocks' pedestal comparator strengths;
     // the pitch is the base (upstream adds nextFloat() * 0.1), wall trophies give no comparator signal
     static std::vector<VariantRow> const rows{
         {"naga",           {"entity.gloamingforest.naga.rattle", 1.25F, 1.2F, "minecraft:crit", 5}                       },

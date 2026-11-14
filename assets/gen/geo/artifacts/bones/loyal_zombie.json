@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.loyal_zombie",
   "layer": {
     "name": "loyal_zombie",
-    "field": "TFModelLayers.LOYAL_ZOMBIE",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.LOYAL_ZOMBIE, () -> LayerDefinition.create(HumanoidModel.createMesh(CubeDeformation.NONE, 0.0F), 64, 64));"
+    "field": "GloamingModelLayers.LOYAL_ZOMBIE",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.LOYAL_ZOMBIE, () -> LayerDefinition.create(HumanoidModel.createMesh(CubeDeformation.NONE, 0.0F), 64, 64));"
   },
   "texture_size": [64, 32],
   "textures": [
     {
       "bedrock": "textures/entity/zombie/zombie",
-      "tf": "(vanilla) minecraft:entity/zombie/zombie.png"
+      "upsrc": "(vanilla) minecraft:entity/zombie/zombie.png"
     }
   ],
   "bones": [

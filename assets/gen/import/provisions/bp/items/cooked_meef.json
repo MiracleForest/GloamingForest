@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_item_cooked_meef"
+          "default": "gf_item_cooked_meef"
         }
       },
       "minecraft:display_name": {

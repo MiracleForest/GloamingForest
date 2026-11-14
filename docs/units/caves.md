@@ -7,7 +7,7 @@ Implementation notes of U27 (spec: [docs/spec/caves.md](../spec/caves.md)).
 | Path | What |
 |---|---|
 | `src/core/caves/` | Pure maths (gtested in `tests/caves/`): the yeti cave terraformer, the troll cave hollowing distance, the cloud castle's procedural cloud, the falling ice damage, the raw brightness. |
-| `src/feature/caves/Structures.*` | The pieces `TFTCMai`, `TFTCCon`, `TFTCGard`, `TFTCVa`, `TFClCa`, `TFCloud`, `TFClTr`, `TFTCloud`, `TFYeti` (exact translations, no templates) and the two landmark generators (the yeti cave with its terraformer). |
+| `src/feature/caves/Structures.*` | The pieces `GloamingTCMai`, `GloamingTCCon`, `GloamingTCGard`, `GloamingTCVa`, `GloamingClCa`, `GloamingCloud`, `GloamingClTr`, `GloamingTCloud`, `GloamingYeti` (exact translations, no templates) and the two landmark generators (the yeti cave with its terraformer). |
 | `src/feature/caves/Features.cpp` | `big_mushgloom`, `troll_cave_big_mushgloom`, `troll_cave_huge_brown_mushroom`, `troll_cave_huge_red_mushroom`, `troll_vines`. |
 | `src/feature/caves/Blocks.cpp` | Trollsteinn (faces by light on placement and random ticks, comparator output), troll roots (harvest, ripening, support). |
 | `src/feature/caves/Troll.cpp`, `Yeti.cpp`, `AlphaYeti.cpp`, `FallingIce.cpp`, `Goals.h` | The mobs (vanilla goals as BP behaviours, upstream's own goals native). |
@@ -73,7 +73,7 @@ Mobs and visuals (A5 findings, client shots).
 Fixed:
 - `gloamingforest:alpha_yeti` was fire immune (A5's sweep): the BP declared `"minecraft:fire_immune": false`, and
   Bedrock treats the component's presence as immunity. Removed: AlphaYeti is not `fireImmune()` in upstream
-  (TFEntities.ALPHA_YETI; BaseTFBoss#lavaHurt burns it).
+  (GloamingEntities.ALPHA_YETI; BaseTFBoss#lavaHurt burns it).
 - Client shots of the held rock and the alpha yeti's poses: the scenario named `troll-rock`,
   `alpha-yeti-rampage` and `alpha-yeti-tired` but never took them (the selftests it ran have no camera). The BPs
   now have `gf:show_rock` (troll: granite, property `gloamingforest:rock` 2) and `gf:show_rampage` /

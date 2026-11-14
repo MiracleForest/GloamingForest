@@ -3,8 +3,8 @@
   "source": "ItemInHandLayer (left arm) + the item model's 'thirdperson_lefthand' display (leftHand: x, y and z rotation mirrored) + ItemRenderer (builtin/entity) + ISTER + TrophyRenderer.render(null, 180, THIRD_PERSON_LEFT_HAND) + KnightPhantomModel.renderTrophy (item form, not GUI)",
   "layer": {
     "name": "knight_phantom_trophy",
-    "field": "TFModelLayers.KNIGHT_PHANTOM_TROPHY",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.KNIGHT_PHANTOM_TROPHY, KnightPhantomModel::createTrophy);"
+    "field": "GloamingModelLayers.KNIGHT_PHANTOM_TROPHY",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.KNIGHT_PHANTOM_TROPHY, KnightPhantomModel::createTrophy);"
   },
   "frame": "leftArm",
   "slot": "off_hand",
@@ -24,7 +24,7 @@
       "identifier": "geometry.gloamingforest.knight_phantom_trophy_held_left",
       "texture": {
         "bedrock": "textures/gloamingforest/entity/phantomskeleton",
-        "tf": "src/main/resources/assets/gloamingforest/textures/entity/phantomskeleton.png"
+        "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/phantomskeleton.png"
       },
       "material": "entity_alphatest"
     },
@@ -32,7 +32,7 @@
       "identifier": "geometry.gloamingforest.knight_phantom_trophy_held_left_armor",
       "texture": {
         "bedrock": "textures/gloamingforest/models/armor/phantom_layer_1",
-        "tf": "src/main/resources/assets/gloamingforest/textures/models/armor/phantom_layer_1.png"
+        "upsrc": "src/main/resources/assets/gloamingforest/textures/models/armor/phantom_layer_1.png"
       },
       "material": "entity_alphatest"
     }

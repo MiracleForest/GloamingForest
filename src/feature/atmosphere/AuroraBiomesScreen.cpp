@@ -1,11 +1,11 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/config/TFClientConfig.java
+//   src/main/java/gloamingforest/config/GloamingClientConfig.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// U15 (atmosphere), server side of the aurora biome list editor: TFClientConfig's auroraBiomes entry
+// U15 (atmosphere), server side of the aurora biome list editor: GloamingClientConfig's auroraBiomes entry
 // ("Aurora Shader Biomes", config.gloamingforest.aurora_biomes) is a list edited with an "Edit
 // Biomes" button (.button) and explained by its tooltip (.tooltip). The setting belongs to the
 // client: a companion gets the native editor (client/atmosphere/AuroraBiomesScreen.cpp), which edits

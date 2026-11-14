@@ -10,7 +10,7 @@
         "default": "textures/gloamingforest/entity/redcapsapper"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.redcap_sapper"
+        "default": "geometry.gf.skeleton.redcap_sapper"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

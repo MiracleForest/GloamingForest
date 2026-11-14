@@ -20,15 +20,15 @@
       },
       "minecraft:tags": ["minecraft:is_axe_item_destructible", "minecraft:is_sword_item_destructible"],
       "minecraft:map_color": "#007c00",
-      "minecraft:geometry": "geometry.tf.gloamingforest.block.huge_lily_pad",
+      "minecraft:geometry": "geometry.gf.gloamingforest.block.huge_lily_pad",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_huge_lily_pad_1",
+          "texture": "gf_block_huge_lily_pad_1",
           "render_method": "alpha_test",
           "tint_method": "default_foliage"
         },
         "texture": {
-          "texture": "tf_block_huge_lily_pad_1",
+          "texture": "gf_block_huge_lily_pad_1",
           "render_method": "alpha_test",
           "tint_method": "default_foliage"
         }
@@ -44,15 +44,15 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:piece') == 'ne'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.huge_lily_pad",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.huge_lily_pad",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_huge_lily_pad_1",
+              "texture": "gf_block_huge_lily_pad_1",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             },
             "texture": {
-              "texture": "tf_block_huge_lily_pad_1",
+              "texture": "gf_block_huge_lily_pad_1",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             }
@@ -70,15 +70,15 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:piece') == 'nw'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.huge_lily_pad",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.huge_lily_pad",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_huge_lily_pad_2",
+              "texture": "gf_block_huge_lily_pad_2",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             },
             "texture": {
-              "texture": "tf_block_huge_lily_pad_2",
+              "texture": "gf_block_huge_lily_pad_2",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             }
@@ -96,15 +96,15 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:piece') == 'se'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.huge_lily_pad",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.huge_lily_pad",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_huge_lily_pad_0",
+              "texture": "gf_block_huge_lily_pad_0",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             },
             "texture": {
-              "texture": "tf_block_huge_lily_pad_0",
+              "texture": "gf_block_huge_lily_pad_0",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             }
@@ -122,15 +122,15 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:piece') == 'sw'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.huge_lily_pad",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.huge_lily_pad",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_huge_lily_pad_3",
+              "texture": "gf_block_huge_lily_pad_3",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             },
             "texture": {
-              "texture": "tf_block_huge_lily_pad_3",
+              "texture": "gf_block_huge_lily_pad_3",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             }
@@ -148,15 +148,15 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:piece') == 'ne'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.huge_lily_pad",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.huge_lily_pad",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_huge_lily_pad_0",
+              "texture": "gf_block_huge_lily_pad_0",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             },
             "texture": {
-              "texture": "tf_block_huge_lily_pad_0",
+              "texture": "gf_block_huge_lily_pad_0",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             }
@@ -174,15 +174,15 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:piece') == 'nw'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.huge_lily_pad",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.huge_lily_pad",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_huge_lily_pad_1",
+              "texture": "gf_block_huge_lily_pad_1",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             },
             "texture": {
-              "texture": "tf_block_huge_lily_pad_1",
+              "texture": "gf_block_huge_lily_pad_1",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             }
@@ -200,15 +200,15 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:piece') == 'se'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.huge_lily_pad",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.huge_lily_pad",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_huge_lily_pad_3",
+              "texture": "gf_block_huge_lily_pad_3",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             },
             "texture": {
-              "texture": "tf_block_huge_lily_pad_3",
+              "texture": "gf_block_huge_lily_pad_3",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             }
@@ -226,15 +226,15 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:piece') == 'sw'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.huge_lily_pad",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.huge_lily_pad",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_huge_lily_pad_2",
+              "texture": "gf_block_huge_lily_pad_2",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             },
             "texture": {
-              "texture": "tf_block_huge_lily_pad_2",
+              "texture": "gf_block_huge_lily_pad_2",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             }
@@ -252,15 +252,15 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:piece') == 'ne'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.huge_lily_pad",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.huge_lily_pad",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_huge_lily_pad_2",
+              "texture": "gf_block_huge_lily_pad_2",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             },
             "texture": {
-              "texture": "tf_block_huge_lily_pad_2",
+              "texture": "gf_block_huge_lily_pad_2",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             }
@@ -278,15 +278,15 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:piece') == 'nw'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.huge_lily_pad",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.huge_lily_pad",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_huge_lily_pad_3",
+              "texture": "gf_block_huge_lily_pad_3",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             },
             "texture": {
-              "texture": "tf_block_huge_lily_pad_3",
+              "texture": "gf_block_huge_lily_pad_3",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             }
@@ -304,15 +304,15 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:piece') == 'se'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.huge_lily_pad",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.huge_lily_pad",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_huge_lily_pad_1",
+              "texture": "gf_block_huge_lily_pad_1",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             },
             "texture": {
-              "texture": "tf_block_huge_lily_pad_1",
+              "texture": "gf_block_huge_lily_pad_1",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             }
@@ -330,15 +330,15 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:piece') == 'sw'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.huge_lily_pad",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.huge_lily_pad",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_huge_lily_pad_0",
+              "texture": "gf_block_huge_lily_pad_0",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             },
             "texture": {
-              "texture": "tf_block_huge_lily_pad_0",
+              "texture": "gf_block_huge_lily_pad_0",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             }
@@ -356,15 +356,15 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:piece') == 'ne'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.huge_lily_pad",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.huge_lily_pad",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_huge_lily_pad_3",
+              "texture": "gf_block_huge_lily_pad_3",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             },
             "texture": {
-              "texture": "tf_block_huge_lily_pad_3",
+              "texture": "gf_block_huge_lily_pad_3",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             }
@@ -382,15 +382,15 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:piece') == 'nw'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.huge_lily_pad",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.huge_lily_pad",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_huge_lily_pad_0",
+              "texture": "gf_block_huge_lily_pad_0",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             },
             "texture": {
-              "texture": "tf_block_huge_lily_pad_0",
+              "texture": "gf_block_huge_lily_pad_0",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             }
@@ -408,15 +408,15 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:piece') == 'se'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.huge_lily_pad",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.huge_lily_pad",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_huge_lily_pad_2",
+              "texture": "gf_block_huge_lily_pad_2",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             },
             "texture": {
-              "texture": "tf_block_huge_lily_pad_2",
+              "texture": "gf_block_huge_lily_pad_2",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             }
@@ -434,15 +434,15 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:piece') == 'sw'",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.huge_lily_pad",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.huge_lily_pad",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_huge_lily_pad_1",
+              "texture": "gf_block_huge_lily_pad_1",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             },
             "texture": {
-              "texture": "tf_block_huge_lily_pad_1",
+              "texture": "gf_block_huge_lily_pad_1",
               "render_method": "alpha_test",
               "tint_method": "default_foliage"
             }

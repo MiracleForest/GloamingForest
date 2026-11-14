@@ -697,7 +697,7 @@ GF_REGISTER_SELFTEST("trees.mega_2x2_java", [](Context& ctx) -> ll::coro::CoroTa
     if (auto* region = ctx.region()) resetGround(*region, box.minX, box.minZ, box.maxX, box.maxZ, box.minY - 1);
 });
 GF_REGISTER_SELFTEST("trees.leaf_distance_after_growth", [](Context& ctx) -> ll::coro::CoroTask<> {
-    // TFTreeFeature#place runs TreeFeature.updateLeaves with the leaves as sources and writes with
+    // GloamingTreeFeature#place runs TreeFeature.updateLeaves with the leaves as sources and writes with
     // UPDATE_KNOWN_SHAPE: every leaf with a leaf beside it gets distance 1 and keeps it (no shape
     // update recomputes it), so a grown upstream tree's outer leaves never decay in upstream. F11's leaves
     // recompute the true distance after a placement (onPlaced / onNeighborChanged); this test grows
@@ -939,7 +939,7 @@ GF_REGISTER_SELFTEST("trees.core_range_clamp", [](Context& ctx) -> ll::coro::Cor
     RangeGuard guard;
     gf::config::mut<TreesConfig>().sortingCoreRange = 1000;
     gf::config::mut<TreesConfig>().timeCoreRange    = -5;
-    ctx.check(coreRange(Core::Sorting) == 128, "a range above 128 is clamped to 128 (TFConfig defineInRange)");
+    ctx.check(coreRange(Core::Sorting) == 128, "a range above 128 is clamped to 128 (GloamingConfig defineInRange)");
     ctx.check(coreRange(Core::Time) == 0, "a negative range is clamped to 0 (disabled)");
     co_return;
 });
@@ -1253,7 +1253,7 @@ GF_REGISTER_SELFTEST("trees.hardened_dark_leaves", [](Context& ctx) -> ll::coro:
     ctx.require(ctx.setBlock(dirt, "minecraft:dirt"), "dirt");
     auto* region = ctx.region();
     ctx.require(region != nullptr, "a region");
-    // TFBlocks.noSpawning: no spawn list above them
+    // GloamingBlocks.noSpawning: no spawn list above them
     for (char const* category : {"monster", "creature", "ambient"}) {
         auto list = gf::spawn::detail::spawnListAt(*region, bp(leaves.offset(0, 1, 0)), category, "minecraft:forest");
         ctx.check(list.empty(), std::string("no ") + category + " spawns on hardened dark leaves");

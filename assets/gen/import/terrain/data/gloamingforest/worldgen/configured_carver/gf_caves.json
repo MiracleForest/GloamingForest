@@ -1,5 +1,5 @@
 {
-  "type": "gloamingforest:tf_caves",
+  "type": "gloamingforest:gf_caves",
   "config": {
     "floor_level": -0.7,
     "horizontal_radius_multiplier": 1.05,

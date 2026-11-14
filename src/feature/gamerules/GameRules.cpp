@@ -1,6 +1,6 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/init/TFGameRules.java
+//   src/main/java/gloamingforest/init/GloamingGameRules.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -8,10 +8,10 @@
 // The gamerule store of "rules+fx" (F10). Bedrock's /gamerule only knows vanilla rules, so upstream's
 // rules are per-world values in the world DB ("gf:gamerules:values") with
 // `/gloamingforest gamerule [<rule> [<value>]]`. upstream's three rules are known from the start with
-// upstream's defaults (tfEnforcedProgression true, playersTfPortalDefaultDelay 60,
-// playersTfPortalCreativeDelay 1); their owners (U14, F4) register them again at install.
+// upstream's defaults (gloamingEnforcedProgression true, playersGloamingPortalDefaultDelay 60,
+// playersGloamingPortalCreativeDelay 1); their owners (U14, F4) register them again at install.
 // Companions get every value over "gamerules.sync" on join and on each change (upstream sends
-// EnforceProgressionStatusPacket to every player when tfEnforcedProgression changes).
+// EnforceProgressionStatusPacket to every player when gloamingEnforcedProgression changes).
 
 #include "feature/gamerules/GameRules.h"
 
@@ -60,13 +60,13 @@ Store& store() {
     return s;
 }
 
-/// upstream's rules (TFGameRules) with upstream's defaults, known before their owners register them.
+/// upstream's rules (GloamingGameRules) with upstream's defaults, known before their owners register them.
 struct Defaults {
     Defaults() {
         auto& s                                  = store();
-        s.rules["tfEnforcedProgression"]         = Rule{true, true};
-        s.rules["playersTfPortalDefaultDelay"]   = Rule{false, 60};
-        s.rules["playersTfPortalCreativeDelay"]  = Rule{false, 1};
+        s.rules["gloamingEnforcedProgression"]         = Rule{true, true};
+        s.rules["playersGloamingPortalDefaultDelay"]   = Rule{false, 60};
+        s.rules["playersGloamingPortalCreativeDelay"]  = Rule{false, 1};
     }
 } const gDefaults;
 

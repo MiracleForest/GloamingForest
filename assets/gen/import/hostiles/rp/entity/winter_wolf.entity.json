@@ -10,7 +10,7 @@
         "default": "textures/gloamingforest/entity/winterwolf"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.winter_wolf"
+        "default": "geometry.gf.skeleton.winter_wolf"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

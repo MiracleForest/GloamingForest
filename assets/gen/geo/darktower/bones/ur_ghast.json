@@ -3,22 +3,22 @@
   "geometry": "geometry.gloamingforest.ur_ghast",
   "layer": {
     "name": "ur_ghast",
-    "field": "TFModelLayers.UR_GHAST",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.UR_GHAST, UrGhastModel::create);"
+    "field": "GloamingModelLayers.UR_GHAST",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.UR_GHAST, UrGhastModel::create);"
   },
   "texture_size": [64, 32],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/towerboss",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/towerboss.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/towerboss.png"
     },
     {
       "bedrock": "textures/gloamingforest/entity/towerboss_openeyes",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/towerboss_openeyes.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/towerboss_openeyes.png"
     },
     {
       "bedrock": "textures/gloamingforest/entity/towerboss_fire",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/towerboss_fire.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/towerboss_fire.png"
     }
   ],
   "bones": [
@@ -396,11 +396,11 @@
     "class": "UrGhastModel",
     "identifier": "animation.gloamingforest.ur_ghast.base",
     "notes": ["vanilla base HierarchicalModel: nothing (HierarchicalModel has no default animation)"],
-    "translated": ["super.setupAnim(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);", "TFGhastModel: this.body.xRot = headPitch * Mth.DEG_TO_RAD;", "TFGhastModel: this.body.yRot = netHeadYaw * Mth.DEG_TO_RAD;", "this.waveTentacles(limbSwingAmount, ageInTicks);"],
+    "translated": ["super.setupAnim(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch);", "GloamingGhastModel: this.body.xRot = headPitch * Mth.DEG_TO_RAD;", "GloamingGhastModel: this.body.yRot = netHeadYaw * Mth.DEG_TO_RAD;", "this.waveTentacles(limbSwingAmount, ageInTicks);"],
     "todo": [
       {
         "line": 68,
-        "class": "TFGhastModel",
+        "class": "GloamingGhastModel",
         "java": "for (int i = 0; i < this.tentacles.length; ++i) {",
         "why": "inside a loop (not translated)"
       },

@@ -3,14 +3,14 @@
   "geometry": "geometry.spider.v1.8",
   "layer": {
     "name": "swarm_spider",
-    "field": "TFModelLayers.SWARM_SPIDER",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.SWARM_SPIDER, SpiderModel::createSpiderBodyLayer);"
+    "field": "GloamingModelLayers.SWARM_SPIDER",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.SWARM_SPIDER, SpiderModel::createSpiderBodyLayer);"
   },
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/swarmspider",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/swarmspider.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/swarmspider.png"
     }
   ],
-  "notes": ["TFSpiderRenderer scales it by 0.5."]
+  "notes": ["GloamingSpiderRenderer scales it by 0.5."]
 }

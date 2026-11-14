@@ -246,7 +246,7 @@ std::string ownerOf(std::string const& id) {
 }
 
 /// Every registered block type of the gloamingforest namespace, sorted.
-std::vector<std::string> tfBlocks() {
+std::vector<std::string> gloamingBlocks() {
     std::vector<std::string> out;
     auto                     level = ll::service::getLevel();
     if (!level) return out;
@@ -293,7 +293,7 @@ struct Reporter {
 // Every registered gloamingforest block, placed and broken with an empty hand, shears and a silk touch pickaxe:
 // its drops against upstream's loot table (F13's oracle).
 GF_REGISTER_SELFTEST("item.sweep_block_drops", [](Context& ctx) -> ll::coro::CoroTask<> {
-    auto blocks = tfBlocks();
+    auto blocks = gloamingBlocks();
     ctx.require(blocks.size() >= 500, "the gloamingforest blocks are registered (got " + std::to_string(blocks.size()) + ")");
     auto pos = ctx.testPos(kDx, 2);
     ctx.require(co_await ctx.ensureLoaded(pos), "test position loaded");
@@ -475,7 +475,7 @@ GF_REGISTER_SELFTEST("item.sweep_recipes", [](Context& ctx) {
 });
 
 // gf::catalog::addVariant: a second creative entry of an item, with data, right after the item's entry
-// (TFCreativeTabs#createGlassSwordAndLoreVer); added once however often it is applied, removed again here.
+// (GloamingCreativeTabs#createGlassSwordAndLoreVer); added once however often it is applied, removed again here.
 GF_REGISTER_SELFTEST("item.catalog_variant", [](Context& ctx) {
     namespace cat              = gf::catalog;
     constexpr char kItem[]     = "gloamingforest:naga_scale";

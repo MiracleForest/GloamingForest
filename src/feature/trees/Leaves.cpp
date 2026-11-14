@@ -13,7 +13,7 @@
 // - the runes under the leaves of transformation (animateTick). The client mod draws them itself
 //   (src/client/trees/LeafRunes.cpp); for a player without it the server samples the blocks that
 //   player's client would pick and sends the runes to that player only;
-// - hardened dark leaves: no mob spawns on them (isValidSpawn = TFBlocks::noSpawning, through the
+// - hardened dark leaves: no mob spawns on them (isValidSpawn = GloamingBlocks::noSpawning, through the
 //   spawn contract's position override) and pick block gives dark leaves (getCloneItemStack,
 //   src/feature/ext/trees/PickBlock);
 // - the robust gloaming oak sapling, whose grower starts the hollow tree landmark

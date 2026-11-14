@@ -10,7 +10,7 @@
         "default": "textures/gloamingforest/entity/carminitegolem"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.carminite_golem"
+        "default": "geometry.gf.skeleton.carminite_golem"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

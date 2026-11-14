@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_item_knightmetal_boots"
+          "default": "gf_item_knightmetal_boots"
         }
       },
       "minecraft:display_name": {

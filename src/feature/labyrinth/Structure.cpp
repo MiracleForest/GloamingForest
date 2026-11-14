@@ -13,7 +13,7 @@
 //
 // Terrain: the mound and its entrance trenches are LabyrinthStructure#getStructureTerraformer
 // (core/labyrinth/Terraformer.h) over the start's box. The structure's BURY adaptation applies to
-// no piece: every TFStructureComponentOld is a PieceBeardifierModifier of adjustment NONE.
+// no piece: every GloamingStructureComponentOld is a PieceBeardifierModifier of adjustment NONE.
 #include "feature/labyrinth/Structure.h"
 
 #include "core/labyrinth/Terraformer.h"

@@ -32,7 +32,7 @@ if ($r.Errors.Count) { throw "converter errors: $($r.Errors -join '; ')" }
 
 # ---- the preview packs ---------------------------------------------------------------------------
 $index = $r.Files['assets/gen/geo/models/data/gf/models/index.json'] | ConvertFrom-Json
-$tfTextures = Join-Path (Split-Path -Parent (Get-GfTfJavaRoot)) 'resources/assets/gloamingforest/textures'
+$gloamingTextures = Join-Path (Split-Path -Parent (Get-GfGloamingJavaRoot)) 'resources/assets/gloamingforest/textures'
 $bp = Join-Path $ModDir 'behavior_packs/GloamingForest_ModelPreview_BP'
 $prp = Join-Path $ModDir 'resource_packs/GloamingForest_ModelPreview_RP'
 foreach ($d in $bp, $prp) { if (Test-Path $d) { Remove-Item -Recurse -Force $d } }
@@ -49,11 +49,11 @@ Write-J (Join-Path $prp 'manifest.json') ([ordered]@{ format_version = 2; header
 
 $copiedTex = @{}
 function Copy-Texture([string]$bedrockPath) {
-    # textures/gloamingforest/<tf path> -> the upstream checkout; vanilla textures are the game's own
+    # textures/gloamingforest/<upsrc path> -> the upstream checkout; vanilla textures are the game's own
     if ($bedrockPath -notlike "$($index.texture_prefix)*") { return }
     if ($copiedTex.ContainsKey($bedrockPath)) { return }
     $rel = $bedrockPath.Substring($index.texture_prefix.Length)
-    $src = Join-Path $tfTextures "$rel.png"
+    $src = Join-Path $gloamingTextures "$rel.png"
     if (-not (Test-Path $src)) { throw "upstream texture not found: $src" }
     $dst = Join-Path $prp "$bedrockPath.png"
     New-Item -ItemType Directory -Force (Split-Path -Parent $dst) | Out-Null
@@ -112,7 +112,7 @@ foreach ($g in $index.geometries) {
 # A test-only model (written here, LGPL-free): a white cube at the origin, a red one at x 8..12 and a
 # blue one above the origin that setupAnim moves by moved.x = 10. Blue lands on red when the
 # animation's position x runs along the geometry's x (docs/spec/models.md, setupAnim -> Molang).
-$cp = [Gf.Models.ClassPath]::new((Get-GfTfJavaRoot)); $interp = [Gf.Models.Interp]::new($cp)
+$cp = [Gf.Models.ClassPath]::new((Get-GfGloamingJavaRoot)); $interp = [Gf.Models.Interp]::new($cp)
 $xsignSrc = @'
 package gfpreview; public class XSign {
     private final ModelPart moved;

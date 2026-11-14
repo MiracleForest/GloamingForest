@@ -1,56 +1,56 @@
 {
-  "tf_block_candelabra": {
+  "gf_block_candelabra": {
     "textures": "textures/gloamingforest/block/candelabra"
   },
-  "tf_block_coronation_carpet": {
+  "gf_block_coronation_carpet": {
     "textures": "textures/gloamingforest/block/coronation_carpet"
   },
-  "tf_block_ominous_fire_0": {
+  "gf_block_ominous_fire_0": {
     "textures": "textures/gloamingforest/block/ominous_fire_0"
   },
-  "tf_block_sinister_spawner": {
+  "gf_block_sinister_spawner": {
     "textures": "textures/gloamingforest/block/sinister_spawner"
   },
-  "tf_block_terrorcotta_arcs_end": {
+  "gf_block_terrorcotta_arcs_end": {
     "textures": "textures/gloamingforest/block/terrorcotta_arcs_end"
   },
-  "tf_block_terrorcotta_arcs_side_a": {
+  "gf_block_terrorcotta_arcs_side_a": {
     "textures": "textures/gloamingforest/block/terrorcotta_arcs_side_a"
   },
-  "tf_block_terrorcotta_arcs_side_b": {
+  "gf_block_terrorcotta_arcs_side_b": {
     "textures": "textures/gloamingforest/block/terrorcotta_arcs_side_b"
   },
-  "tf_block_terrorcotta_curves_a": {
+  "gf_block_terrorcotta_curves_a": {
     "textures": "textures/gloamingforest/block/terrorcotta_curves_a"
   },
-  "tf_block_terrorcotta_curves_b": {
+  "gf_block_terrorcotta_curves_b": {
     "textures": "textures/gloamingforest/block/terrorcotta_curves_b"
   },
-  "tf_block_terrorcotta_curves_c": {
+  "gf_block_terrorcotta_curves_c": {
     "textures": "textures/gloamingforest/block/terrorcotta_curves_c"
   },
-  "tf_block_terrorcotta_curves_d": {
+  "gf_block_terrorcotta_curves_d": {
     "textures": "textures/gloamingforest/block/terrorcotta_curves_d"
   },
-  "tf_block_terrorcotta_lines_a": {
+  "gf_block_terrorcotta_lines_a": {
     "textures": "textures/gloamingforest/block/terrorcotta_lines_a"
   },
-  "tf_block_terrorcotta_lines_b": {
+  "gf_block_terrorcotta_lines_b": {
     "textures": "textures/gloamingforest/block/terrorcotta_lines_b"
   },
-  "tf_block_wood_chiseled_canopy_bookshelf_side": {
+  "gf_block_wood_chiseled_canopy_bookshelf_side": {
     "textures": "textures/gloamingforest/block/wood/chiseled_canopy_bookshelf_side"
   },
-  "tf_block_wood_chiseled_canopy_bookshelf_top": {
+  "gf_block_wood_chiseled_canopy_bookshelf_top": {
     "textures": "textures/gloamingforest/block/wood/chiseled_canopy_bookshelf_top"
   },
-  "tf_block_wrought_iron": {
+  "gf_block_wrought_iron": {
     "textures": "textures/gloamingforest/block/wrought_iron"
   },
-  "tf_vanilla_block_candle_lit": {
+  "gf_vanilla_block_candle_lit": {
     "textures": "textures/blocks/candles/candle_lit"
   },
-  "tf_vanilla_block_chiseled_bookshelf_empty": {
+  "gf_vanilla_block_chiseled_bookshelf_empty": {
     "textures": "textures/blocks/chiseled_bookshelf_empty"
   }
 }

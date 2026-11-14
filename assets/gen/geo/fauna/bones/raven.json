@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.raven",
   "layer": {
     "name": "raven",
-    "field": "TFModelLayers.RAVEN",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.RAVEN, RavenModel::checkForPack);"
+    "field": "GloamingModelLayers.RAVEN",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.RAVEN, RavenModel::checkForPack);"
   },
   "texture_size": [32, 32],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/raven",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/raven.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/raven.png"
     }
   ],
   "bones": [

@@ -23,20 +23,20 @@ Contracts: item, projectile, combat, effects, data, client.world, fx.
 
 ## 2. Upstream sources
 
-`init/TFItems.java`, `init/TFEntities.java`, `init/TFDataMaps.java`, `init/TFDataComponents.java`,
-`init/TFDataAttachments.java`, `item/ChainBlockItem.java`, `entity/projectile/ChainBlock.java`,
+`init/GloamingItems.java`, `init/GloamingEntities.java`, `init/GloamingDataMaps.java`, `init/GloamingDataComponents.java`,
+`init/GloamingDataAttachments.java`, `item/ChainBlockItem.java`, `entity/projectile/ChainBlock.java`,
 `item/CrumbleHornItem.java`, `item/CubeOfAnnihilationItem.java`, `entity/projectile/CubeOfAnnihilation.java`,
 `item/EnderBowItem.java`, `item/GlassSwordItem.java`, `item/IceBombItem.java`, `entity/projectile/IceBomb.java`,
 `item/IceBowItem.java`, `entity/projectile/IceArrow.java`, `item/IceSwordItem.java`, `item/KnightmetalShieldItem.java`,
 `item/LampOfCindersItem.java`, `item/MoonwormQueenItem.java`, `entity/projectile/MoonwormShot.java`,
 `item/OreMagnetItem.java`, `item/PeacockFanItem.java`, `item/SeekerBowItem.java`, `entity/projectile/SeekerArrow.java`,
-`entity/projectile/TFArrow.java`, `entity/projectile/TFThrowable.java`, `item/TransformPowderItem.java`,
+`entity/projectile/GloamingArrow.java`, `entity/projectile/GloamingThrowable.java`, `item/TransformPowderItem.java`,
 `item/TripleBowItem.java`, `item/recipe/MoonwormQueenRepairRecipe.java`, `events/ToolEvents.java` (ender bow swap,
 ore magnet cache), `events/EntityEvents.java` (triple bow, parrying), `events/CapabilityEvents.java` (feather fan
-fall), `dispenser/{TFDispenserBehaviors,FeatherFanDispenseBehavior,CrumbleDispenseBehavior,TransformationDispenseBehavior,DamageableStackDispenseBehavior}.java`,
+fall), `dispenser/{GloamingDispenserBehaviors,FeatherFanDispenseBehavior,CrumbleDispenseBehavior,TransformationDispenseBehavior,DamageableStackDispenseBehavior}.java`,
 `client/renderer/entity/{BlockChainRenderer,CubeOfAnnihilationRenderer,MoonwormShotRenderer,DefaultArrowRenderer}.java`,
 `client/model/entity/{Chain,CubeOfAnnihilation,KnightmetalShield}Model.java`, `client/particle/AnnihilateParticle.java`,
-`init/TFCreativeTabs.java` (infinite glass sword).
+`init/GloamingCreativeTabs.java` (infinite glass sword).
 
 ## 3. Behaviour
 
@@ -110,7 +110,7 @@ All four: durability 384, UNCOMMON, vanilla bow draw.
   (`#c:bosses` excluded) entity that is not the shooter, the shooter and the target swap positions and rotations
   (vehicles swapped too), the shooter gets 40 invulnerability ticks, entity event 46 (teleport particles) and
   `item.chorus_fruit.teleport` at both.
-- Upstream arrows (`TFArrow`) pick up as a normal `minecraft:arrow` and apply the parent arrow's post-hurt effects (tipped
+- Upstream arrows (`GloamingArrow`) pick up as a normal `minecraft:arrow` and apply the parent arrow's post-hurt effects (tipped
   arrows keep their effects).
 
 ### 3.5 Swords
@@ -128,7 +128,7 @@ All four: durability 384, UNCOMMON, vanilla bow draw.
 Durability 1024, vanilla shield behaviour and `blocking` model predicate, no tooltip; repairs with
 `#c:ingots/knightmetal` or the vanilla shield repair items except planks; custom model (`KnightmetalShieldModel`,
 item rendered by ISTER). `item.gloamingforest.knightmetal_shield.shatter` is the "metal shield shatters" sound played
-by U24's hydra when it breaks a non-wood shield (`TFSounds.METAL_SHIELD_SHATTERS`).
+by U24's hydra when it breaks a non-wood shield (`GloamingSounds.METAL_SHIELD_SHATTERS`).
 
 ### 3.7 Lamp of cinders, moonworm queen, ore magnet, peacock fan, transformation powder, ice bomb
 
@@ -145,7 +145,7 @@ by U24's hydra when it breaks a non-wood shield (`TFSounds.METAL_SHIELD_SHATTERS
   any grid of >= 2 slots: exactly one **damaged** moonworm queen + one or more `gloamingforest:torchberries` and
   nothing else; result = a fresh queen with damage = old damage - 64 per berry; JSON has only `category: misc`).
   Dispenser: shoots a moonworm shot, 2 durability, squish sound.
-  - `moonworm_shot` (TFThrowable, gravity 0.03, pickable radius 1.0): on block hit places a moonworm facing the hit
+  - `moonworm_shot` (GloamingThrowable, gravity 0.03, pickable radius 1.0): on block hit places a moonworm facing the hit
     face where it can survive (not fire/lava), `projectile_land` + squish sound; else rolls
     `gloamingforest:blocks/moonworm_failed_to_place` drops (U6's table) and `bug.squish`. On entity hit: a player without a helmet
     gets a moonworm block on the head; others take 1 (1/3) or 0 damage of type `gloamingforest:moonworm` + failed
@@ -266,71 +266,71 @@ Every id this unit owns in `docs/spec/owners.tsv`, with the upstream 4.8 data th
 
 ### Items (17)
 
-| Item | English name | upstream registration (`TFItems`) | Notes |
+| Item | English name | upstream registration (`GloamingItems`) | Notes |
 |---|---|---|---|
 | `gloamingforest:block_and_chain` | Block and Chain | `ITEMS.register("block_and_chain", new ChainBlockItem(new Item.Properties().durability(99)));` | item tags: #alexscaves:ferromagnetic_items, #mc:breaks_decorated_pots, #mc:enchantable/durability, #mc:enchantable/mining, #mc:enchantable/mining_loot, #enchantable/block_and_chain |
-| `gloamingforest:crumble_horn` | Crumble Horn | `ITEMS.register("crumble_horn", new CrumbleHornItem(new Item.Properties().durability(1024).rarity(RARE)));` | dispenser: CrumbleDispenseBehavior (TFDispenserBehaviors); item tags: #mc:enchantable/durability |
+| `gloamingforest:crumble_horn` | Crumble Horn | `ITEMS.register("crumble_horn", new CrumbleHornItem(new Item.Properties().durability(1024).rarity(RARE)));` | dispenser: CrumbleDispenseBehavior (GloamingDispenserBehaviors); item tags: #mc:enchantable/durability |
 | `gloamingforest:cube_of_annihilation` | Cube of Annihilation | `ITEMS.register("cube_of_annihilation", new CubeOfAnnihilationItem(new Item.Properties().stacksTo(1).fireResistant().rarity(UNCOMMON)));` | item tags: #randomium:blacklist, #wip |
 | `gloamingforest:cube_talisman` | Talisman of the Cube | `ITEMS.register("cube_talisman", new Item(new Item.Properties().fireResistant().rarity(UNCOMMON)));` | item tags: #randomium:blacklist, #wip |
 | `gloamingforest:ender_bow` | Ender Bow | `ITEMS.register("ender_bow", new EnderBowItem(new Item.Properties().rarity(UNCOMMON).durability(384)));` | item tags: #c:tools/bow, #mc:enchantable/bow, #mc:enchantable/durability |
-| `gloamingforest:glass_sword` | Glass Sword | `ITEMS.register("glass_sword", new GlassSwordItem(TFToolMaterials.GLASS, new Item.Properties().setNoRepair().rarity(UNCOMMON).attributes(SwordItem.createAttributes(TFToolMaterials.GLASS, 3, -2.4F))));` | item tags: #forbidden_arcanus:modifier/eternal_incompatible, #mc:swords, #randomium:blacklist |
-| `gloamingforest:ice_bomb` | Ice Bomb | `ITEMS.register("ice_bomb", new IceBombItem(new Item.Properties().stacksTo(16)));` | dispenser shoots it as a projectile (TFDispenserBehaviors) |
+| `gloamingforest:glass_sword` | Glass Sword | `ITEMS.register("glass_sword", new GlassSwordItem(GloamingToolMaterials.GLASS, new Item.Properties().setNoRepair().rarity(UNCOMMON).attributes(SwordItem.createAttributes(GloamingToolMaterials.GLASS, 3, -2.4F))));` | item tags: #forbidden_arcanus:modifier/eternal_incompatible, #mc:swords, #randomium:blacklist |
+| `gloamingforest:ice_bomb` | Ice Bomb | `ITEMS.register("ice_bomb", new IceBombItem(new Item.Properties().stacksTo(16)));` | dispenser shoots it as a projectile (GloamingDispenserBehaviors) |
 | `gloamingforest:ice_bow` | Ice Bow | `ITEMS.register("ice_bow", new IceBowItem(new Item.Properties().rarity(UNCOMMON).durability(384)));` | item tags: #c:tools/bow, #mc:enchantable/bow, #mc:enchantable/durability |
-| `gloamingforest:ice_sword` | Ice Sword | `ITEMS.register("ice_sword", new IceSwordItem(TFToolMaterials.ICE, new Item.Properties().attributes(SwordItem.createAttributes(TFToolMaterials.ICE, 3, -2.4F))));` | item tags: #mc:swords |
+| `gloamingforest:ice_sword` | Ice Sword | `ITEMS.register("ice_sword", new IceSwordItem(GloamingToolMaterials.ICE, new Item.Properties().attributes(SwordItem.createAttributes(GloamingToolMaterials.ICE, 3, -2.4F))));` | item tags: #mc:swords |
 | `gloamingforest:knightmetal_shield` | Knightmetal Shield | `ITEMS.register("knightmetal_shield", new KnightmetalShieldItem(new Item.Properties().durability(1024)));` | item tags: #alexscaves:ferromagnetic_items, #c:tools/shield, #mc:enchantable/durability |
 | `gloamingforest:lamp_of_cinders` | Lamp of Cinders | `ITEMS.register("lamp_of_cinders", new LampOfCindersItem(new Item.Properties().fireResistant().durability(1024).rarity(UNCOMMON)));` | item tags: #mc:piglin_loved |
-| `gloamingforest:moonworm_queen` | Moonworm Queen | `ITEMS.register("moonworm_queen", new MoonwormQueenItem(new Item.Properties().setNoRepair().durability(256).rarity(RARE)));` | dispenser: fires its projectile and damages the stack (TFDispenserBehaviors); item tags: #travellers_agile_ranger_whitelisted |
+| `gloamingforest:moonworm_queen` | Moonworm Queen | `ITEMS.register("moonworm_queen", new MoonwormQueenItem(new Item.Properties().setNoRepair().durability(256).rarity(RARE)));` | dispenser: fires its projectile and damages the stack (GloamingDispenserBehaviors); item tags: #travellers_agile_ranger_whitelisted |
 | `gloamingforest:ore_magnet` | Ore Magnet | `ITEMS.register("ore_magnet", new OreMagnetItem(new Item.Properties().durability(64)));` | item tags: #alexscaves:ferromagnetic_items, #mc:enchantable/durability |
-| `gloamingforest:peacock_feather_fan` | Peacock Feather Fan | `ITEMS.register("peacock_feather_fan", new PeacockFanItem(new Item.Properties().durability(1024).rarity(RARE)));` | dispenser: FeatherFanDispenseBehavior (TFDispenserBehaviors); item tags: #mc:enchantable/durability |
+| `gloamingforest:peacock_feather_fan` | Peacock Feather Fan | `ITEMS.register("peacock_feather_fan", new PeacockFanItem(new Item.Properties().durability(1024).rarity(RARE)));` | dispenser: FeatherFanDispenseBehavior (GloamingDispenserBehaviors); item tags: #mc:enchantable/durability |
 | `gloamingforest:seeker_bow` | Seeker Bow | `ITEMS.register("seeker_bow", new SeekerBowItem(new Item.Properties().rarity(UNCOMMON).durability(384)));` | item tags: #c:tools/bow, #mc:enchantable/bow, #mc:enchantable/durability |
-| `gloamingforest:transformation_powder` | Transformation Powder | `ITEMS.register("transformation_powder", new TransformPowderItem(new Item.Properties()));` | dispenser: TransformationDispenseBehavior (TFDispenserBehaviors); item tags: #banned_uncrafting_ingredients |
+| `gloamingforest:transformation_powder` | Transformation Powder | `ITEMS.register("transformation_powder", new TransformPowderItem(new Item.Properties()));` | dispenser: TransformationDispenseBehavior (GloamingDispenserBehaviors); item tags: #banned_uncrafting_ingredients |
 | `gloamingforest:triple_bow` | Tri-Bow | `ITEMS.register("triple_bow", new TripleBowItem(new Item.Properties().rarity(UNCOMMON).durability(384)));` | item tags: #c:tools/bow, #mc:enchantable/bow, #mc:enchantable/durability |
 
 ### Entity types (6)
 
-| Id | upstream registration (`TFEntities.java`) |
+| Id | upstream registration (`GloamingEntities.java`) |
 |---|---|
-| `gloamingforest:chain_block` (Block and Chain) | `buildNoEgg(TFEntityNames.CHAIN_BLOCK, makeCastedBuilder(ChainBlock.class, ChainBlock::new, 0.6F, 0.6F, 80, 1), true);` |
-| `gloamingforest:cube_of_annihilation` (Cube of Annihilation) | `buildNoEgg(TFEntityNames.CUBE_OF_ANNIHILATION, makeCastedBuilder(CubeOfAnnihilation.class, CubeOfAnnihilation::new, 1.0F, 1.0F, 80, 1), true);` |
-| `gloamingforest:ice_arrow` (Ice Arrow) | `buildNoEgg(TFEntityNames.ICE_ARROW, makeCastedBuilder(IceArrow.class, IceArrow::new, 0.5F, 0.5F, 150, 1), false);` |
-| `gloamingforest:moonworm_shot` (Moonworm) | `buildNoEgg(TFEntityNames.MOONWORM_SHOT, makeCastedBuilder(MoonwormShot.class, MoonwormShot::new, 0.25F, 0.25F, 150, 3), false);` |
-| `gloamingforest:seeker_arrow` (Seeker Arrow) | `buildNoEgg(TFEntityNames.SEEKER_ARROW, makeCastedBuilder(SeekerArrow.class, SeekerArrow::new, 0.5F, 0.5F, 150, 1), false);` |
-| `gloamingforest:thrown_ice` (Ice Bomb) | `buildNoEgg(TFEntityNames.THROWN_ICE, makeCastedBuilder(IceBomb.class, IceBomb::new, 1.0F, 1.0F, 80, 2), true);` |
+| `gloamingforest:chain_block` (Block and Chain) | `buildNoEgg(GloamingEntityNames.CHAIN_BLOCK, makeCastedBuilder(ChainBlock.class, ChainBlock::new, 0.6F, 0.6F, 80, 1), true);` |
+| `gloamingforest:cube_of_annihilation` (Cube of Annihilation) | `buildNoEgg(GloamingEntityNames.CUBE_OF_ANNIHILATION, makeCastedBuilder(CubeOfAnnihilation.class, CubeOfAnnihilation::new, 1.0F, 1.0F, 80, 1), true);` |
+| `gloamingforest:ice_arrow` (Ice Arrow) | `buildNoEgg(GloamingEntityNames.ICE_ARROW, makeCastedBuilder(IceArrow.class, IceArrow::new, 0.5F, 0.5F, 150, 1), false);` |
+| `gloamingforest:moonworm_shot` (Moonworm) | `buildNoEgg(GloamingEntityNames.MOONWORM_SHOT, makeCastedBuilder(MoonwormShot.class, MoonwormShot::new, 0.25F, 0.25F, 150, 3), false);` |
+| `gloamingforest:seeker_arrow` (Seeker Arrow) | `buildNoEgg(GloamingEntityNames.SEEKER_ARROW, makeCastedBuilder(SeekerArrow.class, SeekerArrow::new, 0.5F, 0.5F, 150, 1), false);` |
+| `gloamingforest:thrown_ice` (Ice Bomb) | `buildNoEgg(GloamingEntityNames.THROWN_ICE, makeCastedBuilder(IceBomb.class, IceBomb::new, 1.0F, 1.0F, 80, 2), true);` |
 
 ### Particle types (1)
 
-| Id | upstream registration (`TFParticleType.java`) |
+| Id | upstream registration (`GloamingParticleType.java`) |
 |---|---|
 | `gloamingforest:annihilate` | `PARTICLE_TYPES.register("annihilate", new SimpleParticleType(false));` |
 
 ### Data components (2)
 
-| Id | upstream registration (`TFDataComponents.java`) |
+| Id | upstream registration (`GloamingDataComponents.java`) |
 |---|---|
 | `gloamingforest:infinite_glass_sword` | `COMPONENTS.register("infinite_glass_sword", () -> DataComponentType.<Unit>builder().persistent(Codec.unit(Unit.INSTANCE)).networkSynchronized(StreamCodec.unit(Unit.INSTANCE)).build());` |
 | `gloamingforest:thrown_projectile` | `COMPONENTS.register("thrown_projectile", () -> DataComponentType.<UUID>builder().persistent(UUIDUtil.CODEC).networkSynchronized(UUIDUtil.STREAM_CODEC).build());` |
 
 ### Data attachments (1)
 
-| Id | upstream registration (`TFDataAttachments.java`) |
+| Id | upstream registration (`GloamingDataAttachments.java`) |
 |---|---|
 | `gloamingforest:feather_fan_falling` | `ATTACHMENT_TYPES.register("feather_fan_falling", () -> AttachmentType.builder(() -> false).serialize(Codec.BOOL).sync(ByteBufCodecs.BOOL).build());` |
 
 ### Recipe serializers / types (1)
 
-| Id | upstream registration (`TFRecipes.java`) |
+| Id | upstream registration (`GloamingRecipes.java`) |
 |---|---|
 | `gloamingforest:moonworm_queen_repair_recipe` | `RECIPE_SERIALIZERS.register("moonworm_queen_repair_recipe", new SimpleCraftingRecipeSerializer<>(MoonwormQueenRepairRecipe::new));` |
 
 ### Stats (1)
 
-| Id | upstream registration (`TFStats.java`) |
+| Id | upstream registration (`GloamingStats.java`) |
 |---|---|
 | `gloamingforest:blocks_crumbled` (Blocks Crumbled) | `makeTFStat("blocks_crumbled");` |
 
 ### Advancement triggers (1)
 
-| Id | upstream registration (`TFAdvancements.java`) |
+| Id | upstream registration (`GloamingAdvancements.java`) |
 |---|---|
 | `gloamingforest:broke_glass_sword` | `TRIGGERS.register("broke_glass_sword", SimpleAdvancementTrigger::new);` |
 

@@ -24,31 +24,31 @@
       "minecraft:geometry": "minecraft:geometry.full_block",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_vanilla_block_furnace_front",
+          "texture": "gf_vanilla_block_furnace_front",
           "render_method": "opaque"
         },
         "up": {
-          "texture": "tf_vanilla_block_furnace_top",
+          "texture": "gf_vanilla_block_furnace_top",
           "render_method": "opaque"
         },
         "down": {
-          "texture": "tf_vanilla_block_furnace_top",
+          "texture": "gf_vanilla_block_furnace_top",
           "render_method": "opaque"
         },
         "north": {
-          "texture": "tf_vanilla_block_furnace_front",
+          "texture": "gf_vanilla_block_furnace_front",
           "render_method": "opaque"
         },
         "south": {
-          "texture": "tf_vanilla_block_furnace_side",
+          "texture": "gf_vanilla_block_furnace_side",
           "render_method": "opaque"
         },
         "east": {
-          "texture": "tf_vanilla_block_furnace_side",
+          "texture": "gf_vanilla_block_furnace_side",
           "render_method": "opaque"
         },
         "west": {
-          "texture": "tf_vanilla_block_furnace_side",
+          "texture": "gf_vanilla_block_furnace_side",
           "render_method": "opaque"
         }
       }
@@ -60,31 +60,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_furnace_front",
+              "texture": "gf_vanilla_block_furnace_front",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_vanilla_block_furnace_top",
+              "texture": "gf_vanilla_block_furnace_top",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_vanilla_block_furnace_top",
+              "texture": "gf_vanilla_block_furnace_top",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_vanilla_block_furnace_front",
+              "texture": "gf_vanilla_block_furnace_front",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_vanilla_block_furnace_side",
+              "texture": "gf_vanilla_block_furnace_side",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_vanilla_block_furnace_side",
+              "texture": "gf_vanilla_block_furnace_side",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_vanilla_block_furnace_side",
+              "texture": "gf_vanilla_block_furnace_side",
               "render_method": "opaque"
             }
           },
@@ -101,31 +101,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_furnace_front_on",
+              "texture": "gf_vanilla_block_furnace_front_on",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_vanilla_block_furnace_top",
+              "texture": "gf_vanilla_block_furnace_top",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_vanilla_block_furnace_top",
+              "texture": "gf_vanilla_block_furnace_top",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_vanilla_block_furnace_front_on",
+              "texture": "gf_vanilla_block_furnace_front_on",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_vanilla_block_furnace_side",
+              "texture": "gf_vanilla_block_furnace_side",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_vanilla_block_furnace_side",
+              "texture": "gf_vanilla_block_furnace_side",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_vanilla_block_furnace_side",
+              "texture": "gf_vanilla_block_furnace_side",
               "render_method": "opaque"
             }
           },
@@ -142,31 +142,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_furnace_front",
+              "texture": "gf_vanilla_block_furnace_front",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_vanilla_block_furnace_top",
+              "texture": "gf_vanilla_block_furnace_top",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_vanilla_block_furnace_top",
+              "texture": "gf_vanilla_block_furnace_top",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_vanilla_block_furnace_front",
+              "texture": "gf_vanilla_block_furnace_front",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_vanilla_block_furnace_side",
+              "texture": "gf_vanilla_block_furnace_side",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_vanilla_block_furnace_side",
+              "texture": "gf_vanilla_block_furnace_side",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_vanilla_block_furnace_side",
+              "texture": "gf_vanilla_block_furnace_side",
               "render_method": "opaque"
             }
           },
@@ -183,31 +183,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_furnace_front_on",
+              "texture": "gf_vanilla_block_furnace_front_on",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_vanilla_block_furnace_top",
+              "texture": "gf_vanilla_block_furnace_top",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_vanilla_block_furnace_top",
+              "texture": "gf_vanilla_block_furnace_top",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_vanilla_block_furnace_front_on",
+              "texture": "gf_vanilla_block_furnace_front_on",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_vanilla_block_furnace_side",
+              "texture": "gf_vanilla_block_furnace_side",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_vanilla_block_furnace_side",
+              "texture": "gf_vanilla_block_furnace_side",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_vanilla_block_furnace_side",
+              "texture": "gf_vanilla_block_furnace_side",
               "render_method": "opaque"
             }
           },
@@ -224,31 +224,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_furnace_front",
+              "texture": "gf_vanilla_block_furnace_front",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_vanilla_block_furnace_top",
+              "texture": "gf_vanilla_block_furnace_top",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_vanilla_block_furnace_top",
+              "texture": "gf_vanilla_block_furnace_top",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_vanilla_block_furnace_front",
+              "texture": "gf_vanilla_block_furnace_front",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_vanilla_block_furnace_side",
+              "texture": "gf_vanilla_block_furnace_side",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_vanilla_block_furnace_side",
+              "texture": "gf_vanilla_block_furnace_side",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_vanilla_block_furnace_side",
+              "texture": "gf_vanilla_block_furnace_side",
               "render_method": "opaque"
             }
           },
@@ -265,31 +265,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_furnace_front_on",
+              "texture": "gf_vanilla_block_furnace_front_on",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_vanilla_block_furnace_top",
+              "texture": "gf_vanilla_block_furnace_top",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_vanilla_block_furnace_top",
+              "texture": "gf_vanilla_block_furnace_top",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_vanilla_block_furnace_front_on",
+              "texture": "gf_vanilla_block_furnace_front_on",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_vanilla_block_furnace_side",
+              "texture": "gf_vanilla_block_furnace_side",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_vanilla_block_furnace_side",
+              "texture": "gf_vanilla_block_furnace_side",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_vanilla_block_furnace_side",
+              "texture": "gf_vanilla_block_furnace_side",
               "render_method": "opaque"
             }
           },
@@ -306,31 +306,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_furnace_front",
+              "texture": "gf_vanilla_block_furnace_front",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_vanilla_block_furnace_top",
+              "texture": "gf_vanilla_block_furnace_top",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_vanilla_block_furnace_top",
+              "texture": "gf_vanilla_block_furnace_top",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_vanilla_block_furnace_front",
+              "texture": "gf_vanilla_block_furnace_front",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_vanilla_block_furnace_side",
+              "texture": "gf_vanilla_block_furnace_side",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_vanilla_block_furnace_side",
+              "texture": "gf_vanilla_block_furnace_side",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_vanilla_block_furnace_side",
+              "texture": "gf_vanilla_block_furnace_side",
               "render_method": "opaque"
             }
           },
@@ -347,31 +347,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_vanilla_block_furnace_front_on",
+              "texture": "gf_vanilla_block_furnace_front_on",
               "render_method": "opaque"
             },
             "up": {
-              "texture": "tf_vanilla_block_furnace_top",
+              "texture": "gf_vanilla_block_furnace_top",
               "render_method": "opaque"
             },
             "down": {
-              "texture": "tf_vanilla_block_furnace_top",
+              "texture": "gf_vanilla_block_furnace_top",
               "render_method": "opaque"
             },
             "north": {
-              "texture": "tf_vanilla_block_furnace_front_on",
+              "texture": "gf_vanilla_block_furnace_front_on",
               "render_method": "opaque"
             },
             "south": {
-              "texture": "tf_vanilla_block_furnace_side",
+              "texture": "gf_vanilla_block_furnace_side",
               "render_method": "opaque"
             },
             "east": {
-              "texture": "tf_vanilla_block_furnace_side",
+              "texture": "gf_vanilla_block_furnace_side",
               "render_method": "opaque"
             },
             "west": {
-              "texture": "tf_vanilla_block_furnace_side",
+              "texture": "gf_vanilla_block_furnace_side",
               "render_method": "opaque"
             }
           },

@@ -10,7 +10,7 @@
         "default": "textures/gloamingforest/entity/wraith"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.wraith"
+        "default": "geometry.gf.skeleton.wraith"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

@@ -20,18 +20,18 @@
         "destroy_chance_modifier": 100
       },
       "minecraft:collision_box": false,
-      "minecraft:geometry": "geometry.tf.gloamingforest.block.mayapple",
+      "minecraft:geometry": "geometry.gf.gloamingforest.block.mayapple",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_cloverpatch",
+          "texture": "gf_block_cloverpatch",
           "render_method": "alpha_test"
         },
         "leaf": {
-          "texture": "tf_block_mayapple",
+          "texture": "gf_block_mayapple",
           "render_method": "alpha_test"
         },
         "stem": {
-          "texture": "tf_block_mayapple_side",
+          "texture": "gf_block_mayapple_side",
           "render_method": "alpha_test"
         }
       },

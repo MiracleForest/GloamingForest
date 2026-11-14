@@ -1,4 +1,4 @@
-commands.tffeature.usage=/%s <info | reactivate | conquer | center>
+commands.gloamingfeature.usage=/%s <info | reactivate | conquer | center>
 misc.gloamingforest.advancement_hidden=<Скрытое достижение>
 misc.gloamingforest.advancement_required=Требуется достижение:
 misc.gloamingforest.core_disabled=%s отключен через конфигурацию

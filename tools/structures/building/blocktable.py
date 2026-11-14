@@ -1,6 +1,6 @@
 # GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 # Translated from the upstream 4.8 source (commit 9e40a757):
-#   src/main/java/gloamingforest/init/TFBlocks.java (the unit's block properties)
+#   src/main/java/gloamingforest/init/GloamingBlocks.java (the unit's block properties)
 #   src/generated/resources/data/minecraft/tags/block/mineable/*.json, needs_*_tool.json (as listed
 #   in docs/spec/building.md, Appendix A)
 # Copyright (c) the upstream authors (see NOTICE).
@@ -10,7 +10,7 @@
 # U5 (building): the table of building.blocks (src/feature/building/BlockTable.inc): every block of
 # the unit with upstream's hardness and explosion resistance (strength(h[, r]), instabreak(),
 # ofFullCopy(X) chains resolved) and its mining tool and tier tags, from Appendix A of
-# docs/spec/building.md (TFBlocks' registration statements and the block tags).
+# docs/spec/building.md (GloamingBlocks' registration statements and the block tags).
 #
 #   python tools/structures/building/blocktable.py           # writes the table
 #   python tools/structures/building/blocktable.py --check   # fails when it is stale

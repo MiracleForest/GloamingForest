@@ -16,14 +16,14 @@
       },
       "minecraft:tags": ["minecraft:is_pickaxe_item_destructible", "minecraft:iron_tier_destructible"],
       "minecraft:map_color": "#a7a7a7",
-      "minecraft:geometry": "geometry.tf.gloamingforest.block.knightmetal_block",
+      "minecraft:geometry": "geometry.gf.gloamingforest.block.knightmetal_block",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_knightmetal_block",
+          "texture": "gf_block_knightmetal_block",
           "render_method": "alpha_test"
         },
         "all": {
-          "texture": "tf_block_knightmetal_block",
+          "texture": "gf_block_knightmetal_block",
           "render_method": "alpha_test"
         }
       },

@@ -1,7 +1,7 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Selftests of U18 (minorlandmarks), testPos dx 1800..1899 (rule R12):
 //   minorlandmarks.hedge_damage          the hedge's contact and punch damage, spiders spared
-//   minorlandmarks.hollow_hill_layout    the three hills in memory (golden hashes), the TFHill tag
+//   minorlandmarks.hollow_hill_layout    the three hills in memory (golden hashes), the GloamingHill tag
 //   minorlandmarks.hedge_maze_layout     the hedge maze in memory (golden hash)
 //   minorlandmarks.hedge_maze_world      a forced hedge maze start in the world: rooms, spawners, chests
 //   minorlandmarks.hollow_tree_layout    a hollow tree in memory (golden hash), its piece tags
@@ -378,7 +378,7 @@ GF_REGISTER_SELFTEST("minorlandmarks.hollow_hill_layout", [](Context& ctx) {
         int chests   = mem.count(vol, "minecraft:chest");
         ctx.info("hill " + std::to_string(size) + ": " + std::to_string(spawners) + " spawners, " + std::to_string(chests) + " chests, " + std::to_string(mem.size()) + " blocks");
         checkGolden(ctx, "hollow_hill_" + std::to_string(size), mem.hash(vol));
-        ctx.check(roundTrips(*pieces.front()), "hill " + std::to_string(size) + ": the TFHill tag reads back");
+        ctx.check(roundTrips(*pieces.front()), "hill " + std::to_string(size) + ": the GloamingHill tag reads back");
         // the dome: inside the box half-dome the hill's monster list applies (F6 asks canSpawnMob)
         auto c = cml::boxCenter(box);
         ctx.check(cml::hollowHillTerraformer(size, box, c.x, box.minY + 2, c.z) < 0, "hill " + std::to_string(size) + ": the terraformer carves the inside");
@@ -408,7 +408,7 @@ GF_REGISTER_SELFTEST("minorlandmarks.hedge_maze_layout", [](Context& ctx) {
     ctx.check(chests >= 5 && chests <= 10, "1-2 chests per room");
     ctx.info("hedge maze blocks: " + mem.histogram(box));
     checkGolden(ctx, "hedge_maze", mem.hash(box));
-    ctx.check(roundTrips(*pieces.front()), "the TFHedge tag reads back");
+    ctx.check(roundTrips(*pieces.front()), "the GloamingHedge tag reads back");
 });
 
 GF_REGISTER_SELFTEST("minorlandmarks.hedge_maze_world", [](Context& ctx) -> ll::coro::CoroTask<> {
@@ -419,7 +419,7 @@ GF_REGISTER_SELFTEST("minorlandmarks.hedge_maze_world", [](Context& ctx) -> ll::
     core::GlobalPos center{ctx.testPos(1810).dim, area.minX + 31, area.minY - 1, area.minZ + 31};
     gf::landmark::ext::ScopedStart forced(kHedgeMaze, center);
     ctx.require(forced && forced->generated, "forced the hedge maze start");
-    ctx.check(forced->pieceBoxes.size() == 1, "one TFHedge piece");
+    ctx.check(forced->pieceBoxes.size() == 1, "one GloamingHedge piece");
     auto box = forced->pieceBoxes.front();
     int  spawners = 0, chests = 0, hedges = 0;
     for (int x = box.minX; x <= box.maxX; x++)
@@ -510,7 +510,7 @@ GF_REGISTER_SELFTEST("minorlandmarks.fallen_trunk", [](Context& ctx) {
         ctx.check(logs > c.length, "radius " + std::to_string(c.radius) + ": the trunk's logs");
         ctx.info("fallen trunk blocks: " + mem.histogram(grow(box, 1)));
         checkGolden(ctx, "fallen_trunk_r" + std::to_string(c.radius), mem.hash(grow(box, 4)));
-        ctx.check(roundTrips(*pieces.front()), "radius " + std::to_string(c.radius) + ": the TFFallenTrunk tag reads back");
+        ctx.check(roundTrips(*pieces.front()), "radius " + std::to_string(c.radius) + ": the GloamingFallenTrunk tag reads back");
         // the terraformer: flat inside the trunk, filled under it, nothing far away
         auto mid = cml::boxCenter(box);
         ctx.check(fallenTrunkTerraform(box, c.dir, c.length, c.radius, 1357 + c.radius, mid.x, box.minY + 2, mid.z) < 0, "the terraformer clears the trunk");
@@ -535,7 +535,7 @@ GF_REGISTER_SELFTEST("minorlandmarks.features", [](Context& ctx) {
         {"block_spike", "gloamingforest:outside_stalagmite", 0, false, false, "gloamingforest:deadrock"}, // only #supports_stalagmites holds one
         {"dark_forest_placer", "gloamingforest:dark_grass", 0},
         {"fallen_hollow_log", "gloamingforest:hollow_log", 0},
-        {"fallen_small_log", "gloamingforest:tf_oak_fallen_log", 0},
+        {"fallen_small_log", "gloamingforest:gf_oak_fallen_log", 0},
         {"foundation", "gloamingforest:foundation", 0},
         {"hollow_stump", "gloamingforest:hollow_stump", 0},
         {"lampposts", "gloamingforest:pumpkin_lamppost", 0},

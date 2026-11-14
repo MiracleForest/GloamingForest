@@ -10,7 +10,7 @@
         "default": "textures/gloamingforest/entity/slimebeetle"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.slime_beetle"
+        "default": "geometry.gf.skeleton.slime_beetle"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

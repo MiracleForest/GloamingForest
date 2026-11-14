@@ -1,50 +1,50 @@
 {
-  "tf_block_pedestal_hydra": {
+  "gf_block_pedestal_hydra": {
     "textures": "textures/gloamingforest/block/pedestal/hydra"
   },
-  "tf_block_pedestal_hydra_glow": {
+  "gf_block_pedestal_hydra_glow": {
     "textures": "textures/gloamingforest/block/pedestal/hydra_glow"
   },
-  "tf_block_pedestal_hydra_latent": {
+  "gf_block_pedestal_hydra_latent": {
     "textures": "textures/gloamingforest/block/pedestal/hydra_latent"
   },
-  "tf_block_pedestal_lich": {
+  "gf_block_pedestal_lich": {
     "textures": "textures/gloamingforest/block/pedestal/lich"
   },
-  "tf_block_pedestal_lich_glow": {
+  "gf_block_pedestal_lich_glow": {
     "textures": "textures/gloamingforest/block/pedestal/lich_glow"
   },
-  "tf_block_pedestal_lich_latent": {
+  "gf_block_pedestal_lich_latent": {
     "textures": "textures/gloamingforest/block/pedestal/lich_latent"
   },
-  "tf_block_pedestal_naga": {
+  "gf_block_pedestal_naga": {
     "textures": "textures/gloamingforest/block/pedestal/naga"
   },
-  "tf_block_pedestal_naga_glow": {
+  "gf_block_pedestal_naga_glow": {
     "textures": "textures/gloamingforest/block/pedestal/naga_glow"
   },
-  "tf_block_pedestal_naga_latent": {
+  "gf_block_pedestal_naga_latent": {
     "textures": "textures/gloamingforest/block/pedestal/naga_latent"
   },
-  "tf_block_pedestal_top": {
+  "gf_block_pedestal_top": {
     "textures": "textures/gloamingforest/block/pedestal/top"
   },
-  "tf_block_pedestal_top_glow": {
+  "gf_block_pedestal_top_glow": {
     "textures": "textures/gloamingforest/block/pedestal/top_glow"
   },
-  "tf_block_pedestal_ur-ghast": {
+  "gf_block_pedestal_ur-ghast": {
     "textures": "textures/gloamingforest/block/pedestal/ur-ghast"
   },
-  "tf_block_pedestal_ur-ghast_glow": {
+  "gf_block_pedestal_ur-ghast_glow": {
     "textures": "textures/gloamingforest/block/pedestal/ur-ghast_glow"
   },
-  "tf_block_pedestal_ur-ghast_latent": {
+  "gf_block_pedestal_ur-ghast_latent": {
     "textures": "textures/gloamingforest/block/pedestal/ur-ghast_latent"
   },
-  "tf_block_shield_inside": {
+  "gf_block_shield_inside": {
     "textures": "textures/gloamingforest/block/shield_inside"
   },
-  "tf_block_shield_outside": {
+  "gf_block_shield_outside": {
     "textures": "textures/gloamingforest/block/shield_outside"
   }
 }

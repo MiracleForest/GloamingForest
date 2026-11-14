@@ -22,8 +22,8 @@
 //   - the potion flasks' icons (ColorHandler, ClientRegistrationEvents' breakage / potion_level
 //     properties): Java's item model overrides with layer0 (the liquid) tinted by
 //     PotionContents#getColor under layer1 (the glass), as prebuilt composites per doses, breakage and
-//     colour (assets/pack/rp/textures/items/artifacts/tf-derived, item atlas keys
-//     tf_artifacts_<brittle|greater>_flask_*), chosen through U11's icon layers (feature/ext/tgear);
+//     colour (assets/pack/rp/textures/items/artifacts/upstream-derived, item atlas keys
+//     gf_artifacts_<brittle|greater>_flask_*), chosen through U11's icon layers (feature/ext/tgear);
 //   - worn armour with the emperor's cloth is not drawn (ArmorHooks#cancelArmorRendering, F12's hideArmor).
 #ifdef GF_CLIENT
 
@@ -207,12 +207,12 @@ std::optional<icons::IconLayers> flaskIcon(ItemStack const& stack) {
     int  breakage = brittle ? std::clamp(f.breakage, 0, 2) : 0;
     if (doses == 0 || f.empty()) {
         if (breakage == 0) return std::nullopt; // the item's own icon (layer0 blank)
-        return icons::IconLayers{.base = "tf_artifacts_brittle_flask_0_" + std::to_string(breakage)};
+        return icons::IconLayers{.base = "gf_artifacts_brittle_flask_0_" + std::to_string(breakage)};
     }
     char hex[8];
     std::snprintf(hex, sizeof hex, "%06x", core::artifacts::potionColor(f.potion) & 0xFFFFFFu);
-    std::string key = brittle ? "tf_artifacts_brittle_flask_" + std::to_string(doses) + "_" + std::to_string(breakage) + "_" + hex
-                              : "tf_artifacts_greater_flask_" + std::to_string(doses) + "_" + hex;
+    std::string key = brittle ? "gf_artifacts_brittle_flask_" + std::to_string(doses) + "_" + std::to_string(breakage) + "_" + hex
+                              : "gf_artifacts_greater_flask_" + std::to_string(doses) + "_" + hex;
     return icons::IconLayers{.base = std::move(key)};
 }
 

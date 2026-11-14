@@ -21,7 +21,7 @@ namespace gf::client::entity {
 /// data(actor, key) as gf::entity::sync last sent it ("entity.data"); null when never synced.
 /// `uid` is the actor's ActorUniqueID (Actor::getOrCreateUniqueID on the client).
 [[nodiscard]] nlohmann::json data(std::int64_t uid, std::string const& key);
-/// A TFDataSerializers.STRING_LIST value (gf::entity::ext::setStringList).
+/// A GloamingDataSerializers.STRING_LIST value (gf::entity::ext::setStringList).
 [[nodiscard]] std::vector<std::string> stringList(std::int64_t uid, std::string const& key);
 
 /// One part of a multipart mob (UpdateTFMultipartPacket, "entity.multipart").
@@ -52,7 +52,7 @@ struct Thrown {
 /// The local player rides a hostile mount (ClientGameEvents#removeHostileMountHealth).
 [[nodiscard]] bool ridingUnfriendly();
 
-/// The TFBossBarPacket state of a boss's bar ("boss.bar"; ClientTFBossBar).
+/// The GloamingBossBarPacket state of a boss's bar ("boss.bar"; ClientTFBossBar).
 struct BossBar {
     unsigned    rgb      = 0xFFFFFF;
     int         overlay  = 0;

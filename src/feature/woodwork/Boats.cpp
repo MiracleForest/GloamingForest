@@ -1,7 +1,7 @@
 // GloamingForest - The Gloaming Forest for Minecraft: Bedrock Edition.
 // Translated from the upstream 4.8 source (commit 9e40a757):
-//   src/main/java/gloamingforest/enums/extensions/TFBoatTypeEnumExtension.java
-//   src/main/java/gloamingforest/init/TFItems.java
+//   src/main/java/gloamingforest/enums/extensions/GloamingBoatTypeEnumExtension.java
+//   src/main/java/gloamingforest/init/GloamingItems.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -10,7 +10,7 @@
 // Boat / ChestBoat entities with upstream's textures. Bedrock has no boat types to add: the boats are
 // the entities gloamingforest:boat and gloamingforest:chest_boat (BP runtime identifiers
 // minecraft:boat / minecraft:chest_boat: the game's own boat physics, seats, paddling and chest)
-// with the wood as the entity property gloamingforest:wood (0..7, kTfWoods order), which picks the
+// with the wood as the entity property gloamingforest:wood (0..7, kGloamingWoods order), which picks the
 // texture. The items place them as Java's BoatItem#use does, a destroyed upstream boat drops its upstream item
 // instead of the game's boat item (src/feature/ext/woodwork/BoatDrops.h), and an upstream boat breaks on a
 // fall as Java's Boat#checkFallDamage (the entity contract's tick).
@@ -84,7 +84,7 @@ int woodOf(Actor& boat) {
             if (auto const* i = std::get_if<int>(&*v)) wood = *i;
         }
     }
-    return std::clamp(wood, 0, static_cast<int>(kTfWoods.size()) - 1);
+    return std::clamp(wood, 0, static_cast<int>(kGloamingWoods.size()) - 1);
 }
 
 /// Boat#getStatus == ON_LAND as checkFallDamage asks it: not UNDER_WATER (Boat#isUnderwater: water in
@@ -133,7 +133,7 @@ std::optional<std::string> dropItemOf(Actor& boat) {
     bool        chest = type == kChestBoat;
     if (!chest && type != kBoat) return std::nullopt;
     int wood = woodOf(boat);
-    return std::string(kNs) + std::string(kTfWoods[static_cast<std::size_t>(wood)]) + (chest ? "_chest_boat" : "_boat");
+    return std::string(kNs) + std::string(kGloamingWoods[static_cast<std::size_t>(wood)]) + (chest ? "_chest_boat" : "_boat");
 }
 
 /// Entity#isPickable of Java (living entities, boats, minecarts, hanging entities, end crystals,
@@ -195,7 +195,7 @@ ia::Result useBoatItem(ia::UseContext const& c, int wood, bool chest) {
         auto const& b = e->getAABB();
         if (b.min.x < box.max.x && b.max.x > box.min.x && b.min.y < box.max.y && b.max.y > box.min.y && b.min.z < box.max.z && b.max.z > box.min.z) return ia::Result::Deny;
     }
-    std::string event = std::string(kNs) + std::string(kTfWoods[static_cast<std::size_t>(wood)]);
+    std::string event = std::string(kNs) + std::string(kGloamingWoods[static_cast<std::size_t>(wood)]);
     ActorUniqueID id{};
     auto*         boat = CommandUtils::spawnEntityAt(region, at, ActorDefinitionIdentifier("gloamingforest", chest ? "chest_boat" : "boat", event), id, nullptr);
     if (!boat) {
@@ -207,7 +207,7 @@ ia::Result useBoatItem(ia::UseContext const& c, int wood, bool chest) {
     // the rider by -90 degrees, so the body faces the player's yaw + 90
     boat->teleport(at, player.getDimensionId(), Vec2{0.0f, player.getRotation().y + 90.0f});
     consumeOne(player, c.item);
-    log().info("woodwork: {} placed a {} {}", player.getRealName(), std::string(kTfWoods[static_cast<std::size_t>(wood)]), chest ? "chest boat" : "boat");
+    log().info("woodwork: {} placed a {} {}", player.getRealName(), std::string(kGloamingWoods[static_cast<std::size_t>(wood)]), chest ? "chest boat" : "boat");
     return ia::Result::Consume;
 }
 
@@ -246,13 +246,13 @@ void checkFallDamage(Actor& boat) {
                 drops       = level->getGameRules().getBool(rule, true);
             }
             if (drops) {
-                std::string planks = std::string(kNs) + std::string(kTfWoods[static_cast<std::size_t>(wood)]) + "_planks";
+                std::string planks = std::string(kNs) + std::string(kGloamingWoods[static_cast<std::size_t>(wood)]) + "_planks";
                 for (int i = 0; i < 3; ++i)
                     if (auto s = game::items::make(planks)) boat.spawnAtLocation(*s, 0.0f);
                 for (int i = 0; i < 2; ++i)
                     if (auto s = game::items::make("minecraft:stick")) boat.spawnAtLocation(*s, 0.0f);
             }
-            log().info("woodwork: a {} boat broke on landing after a {:.1f} block fall", kTfWoods[static_cast<std::size_t>(wood)], dist);
+            log().info("woodwork: a {} boat broke on landing after a {:.1f} block fall", kGloamingWoods[static_cast<std::size_t>(wood)], dist);
             // kill(): gone without the boat item (the game's destroy would drop it); the riders
             // dismount as the boat is removed
             // removed on the next tick: not inside the actor's own tick (Actor::tick)
@@ -284,10 +284,10 @@ void checkFallDamage(Actor& boat) {
 } // namespace
 
 void installBoats() {
-    for (std::size_t i = 0; i < kTfWoods.size(); ++i) {
+    for (std::size_t i = 0; i < kGloamingWoods.size(); ++i) {
         int wood = static_cast<int>(i);
         for (bool chest : {false, true}) {
-            std::string item = std::string(kNs) + std::string(kTfWoods[i]) + (chest ? "_chest_boat" : "_boat");
+            std::string item = std::string(kNs) + std::string(kGloamingWoods[i]) + (chest ? "_chest_boat" : "_boat");
             handlerIds().push_back(ia::onUse(item, [wood, chest](ia::UseContext const& c) { return useBoatItem(c, wood, chest); }));
         }
     }

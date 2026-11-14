@@ -22,14 +22,14 @@
       "minecraft:tags": ["minecraft:is_axe_item_destructible"],
       "minecraft:map_color": "#8f7748",
       "minecraft:collision_box": false,
-      "minecraft:geometry": "geometry.tf.minecraft.block.button",
+      "minecraft:geometry": "geometry.gf.minecraft.block.button",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_wood_planks_gloaming_oak_0",
+          "texture": "gf_block_wood_planks_gloaming_oak_0",
           "render_method": "opaque"
         },
         "texture": {
-          "texture": "tf_block_wood_planks_gloaming_oak_0",
+          "texture": "gf_block_wood_planks_gloaming_oak_0",
           "render_method": "opaque"
         }
       },
@@ -46,14 +46,14 @@
       {
         "condition": "q.block_state('gloamingforest:face') == 'ceiling' && q.block_state('gloamingforest:facing') == 'east' && !q.block_state('gloamingforest:powered')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.button",
+          "minecraft:geometry": "geometry.gf.minecraft.block.button",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             }
           },
@@ -69,14 +69,14 @@
       {
         "condition": "q.block_state('gloamingforest:face') == 'ceiling' && q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:powered')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.button_pressed",
+          "minecraft:geometry": "geometry.gf.minecraft.block.button_pressed",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             }
           },
@@ -92,14 +92,14 @@
       {
         "condition": "q.block_state('gloamingforest:face') == 'ceiling' && q.block_state('gloamingforest:facing') == 'north' && !q.block_state('gloamingforest:powered')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.button",
+          "minecraft:geometry": "geometry.gf.minecraft.block.button",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             }
           },
@@ -115,14 +115,14 @@
       {
         "condition": "q.block_state('gloamingforest:face') == 'ceiling' && q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:powered')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.button_pressed",
+          "minecraft:geometry": "geometry.gf.minecraft.block.button_pressed",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             }
           },
@@ -138,14 +138,14 @@
       {
         "condition": "q.block_state('gloamingforest:face') == 'ceiling' && q.block_state('gloamingforest:facing') == 'south' && !q.block_state('gloamingforest:powered')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.button",
+          "minecraft:geometry": "geometry.gf.minecraft.block.button",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             }
           },
@@ -161,14 +161,14 @@
       {
         "condition": "q.block_state('gloamingforest:face') == 'ceiling' && q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:powered')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.button_pressed",
+          "minecraft:geometry": "geometry.gf.minecraft.block.button_pressed",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             }
           },
@@ -184,14 +184,14 @@
       {
         "condition": "q.block_state('gloamingforest:face') == 'ceiling' && q.block_state('gloamingforest:facing') == 'west' && !q.block_state('gloamingforest:powered')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.button",
+          "minecraft:geometry": "geometry.gf.minecraft.block.button",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             }
           },
@@ -207,14 +207,14 @@
       {
         "condition": "q.block_state('gloamingforest:face') == 'ceiling' && q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:powered')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.button_pressed",
+          "minecraft:geometry": "geometry.gf.minecraft.block.button_pressed",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             }
           },
@@ -230,14 +230,14 @@
       {
         "condition": "q.block_state('gloamingforest:face') == 'floor' && q.block_state('gloamingforest:facing') == 'east' && !q.block_state('gloamingforest:powered')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.button",
+          "minecraft:geometry": "geometry.gf.minecraft.block.button",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             }
           },
@@ -253,14 +253,14 @@
       {
         "condition": "q.block_state('gloamingforest:face') == 'floor' && q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:powered')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.button_pressed",
+          "minecraft:geometry": "geometry.gf.minecraft.block.button_pressed",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             }
           },
@@ -276,14 +276,14 @@
       {
         "condition": "q.block_state('gloamingforest:face') == 'floor' && q.block_state('gloamingforest:facing') == 'north' && !q.block_state('gloamingforest:powered')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.button",
+          "minecraft:geometry": "geometry.gf.minecraft.block.button",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             }
           },
@@ -299,14 +299,14 @@
       {
         "condition": "q.block_state('gloamingforest:face') == 'floor' && q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:powered')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.button_pressed",
+          "minecraft:geometry": "geometry.gf.minecraft.block.button_pressed",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             }
           },
@@ -322,14 +322,14 @@
       {
         "condition": "q.block_state('gloamingforest:face') == 'floor' && q.block_state('gloamingforest:facing') == 'south' && !q.block_state('gloamingforest:powered')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.button",
+          "minecraft:geometry": "geometry.gf.minecraft.block.button",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             }
           },
@@ -345,14 +345,14 @@
       {
         "condition": "q.block_state('gloamingforest:face') == 'floor' && q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:powered')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.button_pressed",
+          "minecraft:geometry": "geometry.gf.minecraft.block.button_pressed",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             }
           },
@@ -368,14 +368,14 @@
       {
         "condition": "q.block_state('gloamingforest:face') == 'floor' && q.block_state('gloamingforest:facing') == 'west' && !q.block_state('gloamingforest:powered')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.button",
+          "minecraft:geometry": "geometry.gf.minecraft.block.button",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             }
           },
@@ -391,14 +391,14 @@
       {
         "condition": "q.block_state('gloamingforest:face') == 'floor' && q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:powered')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.button_pressed",
+          "minecraft:geometry": "geometry.gf.minecraft.block.button_pressed",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             }
           },
@@ -414,14 +414,14 @@
       {
         "condition": "q.block_state('gloamingforest:face') == 'wall' && q.block_state('gloamingforest:facing') == 'east' && !q.block_state('gloamingforest:powered')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.button",
+          "minecraft:geometry": "geometry.gf.minecraft.block.button",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             }
           },
@@ -437,14 +437,14 @@
       {
         "condition": "q.block_state('gloamingforest:face') == 'wall' && q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:powered')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.button_pressed",
+          "minecraft:geometry": "geometry.gf.minecraft.block.button_pressed",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             }
           },
@@ -460,14 +460,14 @@
       {
         "condition": "q.block_state('gloamingforest:face') == 'wall' && q.block_state('gloamingforest:facing') == 'north' && !q.block_state('gloamingforest:powered')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.button",
+          "minecraft:geometry": "geometry.gf.minecraft.block.button",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             }
           },
@@ -483,14 +483,14 @@
       {
         "condition": "q.block_state('gloamingforest:face') == 'wall' && q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:powered')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.button_pressed",
+          "minecraft:geometry": "geometry.gf.minecraft.block.button_pressed",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             }
           },
@@ -506,14 +506,14 @@
       {
         "condition": "q.block_state('gloamingforest:face') == 'wall' && q.block_state('gloamingforest:facing') == 'south' && !q.block_state('gloamingforest:powered')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.button",
+          "minecraft:geometry": "geometry.gf.minecraft.block.button",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             }
           },
@@ -529,14 +529,14 @@
       {
         "condition": "q.block_state('gloamingforest:face') == 'wall' && q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:powered')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.button_pressed",
+          "minecraft:geometry": "geometry.gf.minecraft.block.button_pressed",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             }
           },
@@ -552,14 +552,14 @@
       {
         "condition": "q.block_state('gloamingforest:face') == 'wall' && q.block_state('gloamingforest:facing') == 'west' && !q.block_state('gloamingforest:powered')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.button",
+          "minecraft:geometry": "geometry.gf.minecraft.block.button",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             }
           },
@@ -575,14 +575,14 @@
       {
         "condition": "q.block_state('gloamingforest:face') == 'wall' && q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:powered')",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.button_pressed",
+          "minecraft:geometry": "geometry.gf.minecraft.block.button_pressed",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             },
             "texture": {
-              "texture": "tf_block_wood_planks_gloaming_oak_0",
+              "texture": "gf_block_wood_planks_gloaming_oak_0",
               "render_method": "opaque"
             }
           },

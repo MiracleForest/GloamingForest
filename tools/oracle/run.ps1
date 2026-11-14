@@ -210,7 +210,7 @@ try {
             if (Test-Path $p) { Remove-Item -Recurse -Force $p }
         }
         New-Item -ItemType Directory -Force (Join-Path $server 'mods') | Out-Null
-        Copy-Item -LiteralPath (Get-OracleTfJar) -Destination (Join-Path $server 'mods')
+        Copy-Item -LiteralPath (Get-OracleGloamingJar) -Destination (Join-Path $server 'mods')
         Copy-Item -LiteralPath $dumper -Destination (Join-Path $server 'mods')
         $runSpec = [ordered]@{}
         foreach ($k in $spec.Keys) { $runSpec[$k] = $spec[$k] }

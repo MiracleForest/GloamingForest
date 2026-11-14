@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_block_torchberry_plant"
+          "default": "gf_block_torchberry_plant"
         }
       },
       "minecraft:display_name": {

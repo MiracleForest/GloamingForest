@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.tf.skeleton.mist_wolf",
+        "identifier": "geometry.gf.skeleton.mist_wolf",
         "texture_width": 64,
         "texture_height": 32,
         "visible_bounds_width": 3,

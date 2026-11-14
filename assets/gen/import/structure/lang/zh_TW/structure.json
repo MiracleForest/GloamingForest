@@ -1,10 +1,10 @@
 {
-  "commands.tffeature.structure.boundaries": "結構邊界：%s",
-  "commands.tffeature.structure.conquer.status": "當前結構征服標記：%s",
-  "commands.tffeature.structure.conquer.update": "當前結構征服標記現已從%s更改為%s",
-  "commands.tffeature.structure.inside": "你在一個地標結構中",
-  "commands.tffeature.structure.outside": "你不在一個地標結構中",
-  "commands.tffeature.structure.required": "你現在不在某個結構中",
-  "commands.tffeature.structure.spawn_info": "%s，權重%s",
-  "commands.tffeature.structure.spawn_list": "此區域的生成列表為："
+  "commands.gloamingfeature.structure.boundaries": "結構邊界：%s",
+  "commands.gloamingfeature.structure.conquer.status": "當前結構征服標記：%s",
+  "commands.gloamingfeature.structure.conquer.update": "當前結構征服標記現已從%s更改為%s",
+  "commands.gloamingfeature.structure.inside": "你在一個地標結構中",
+  "commands.gloamingfeature.structure.outside": "你不在一個地標結構中",
+  "commands.gloamingfeature.structure.required": "你現在不在某個結構中",
+  "commands.gloamingfeature.structure.spawn_info": "%s，權重%s",
+  "commands.gloamingfeature.structure.spawn_list": "此區域的生成列表為："
 }

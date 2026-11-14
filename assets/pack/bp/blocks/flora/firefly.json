@@ -41,7 +41,7 @@
       "minecraft:geometry": "geometry.gloamingforest.flora.firefly",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_flora_firefly_model",
+          "texture": "gf_flora_firefly_model",
           "render_method": "blend"
         }
       },

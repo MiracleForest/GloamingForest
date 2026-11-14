@@ -10,7 +10,7 @@
         "default": "textures/gloamingforest/entity/cubeofannihilation"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.cube_of_annihilation"
+        "default": "geometry.gf.skeleton.cube_of_annihilation"
       },
       "render_controllers": ["controller.render.default"]
     }

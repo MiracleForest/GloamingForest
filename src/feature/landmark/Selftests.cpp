@@ -521,7 +521,7 @@ GF_REGISTER_SELFTEST("landmark.decoration", [](Context& ctx) {
 // Structure#isValidBiome, WorldUtil#findNearestMapLandmark) against upstream 4.8's biome tags
 // (src/generated/resources/data/gloamingforest/tags/worldgen/biome) through the tags contract
 GF_REGISTER_SELFTEST("landmark.biomes", [](Context& ctx) {
-    static char const* const tfBiomes[] = {"clearing",         "dark_forest", "dark_forest_center", "dense_forest", "dense_mushroom_forest", "enchanted_forest",
+    static char const* const gloamingBiomes[] = {"clearing",         "dark_forest", "dark_forest_center", "dense_forest", "dense_mushroom_forest", "enchanted_forest",
                                            "final_plateau",    "fire_swamp",  "firefly_forest",     "forest",       "glacier",               "highlands",
                                            "highlands_underground", "lake",   "mushroom_forest",    "oak_savannah", "snowy_forest",          "spooky_forest",
                                            "stream",           "swamp",       "thornlands",         "underground"};
@@ -563,7 +563,7 @@ GF_REGISTER_SELFTEST("landmark.biomes", [](Context& ctx) {
         ctx.check(inf->biomes == w.biomes, key + "'s biomes are " + w.biomes + " (got " + inf->biomes + ")");
         std::set<std::string> expected, got;
         for (auto const& m : w.members) expected.insert("gloamingforest:" + m);
-        for (auto const* b : tfBiomes)
+        for (auto const* b : gloamingBiomes)
             if (fl::biomeMatches(inf->biomes, std::string("gloamingforest:") + b)) got.insert(std::string("gloamingforest:") + b);
         std::string list;
         for (auto const& g : got) list += (list.empty() ? "" : " ") + g;
@@ -572,7 +572,7 @@ GF_REGISTER_SELFTEST("landmark.biomes", [](Context& ctx) {
     }
 });
 
-// upstream's subcommands as upstream registers them (TFCommand): literals, argument shapes and texts, from the
+// upstream's subcommands as upstream registers them (GloamingCommand): literals, argument shapes and texts, from the
 // console (no player: genbook's not_player, as Java's CommandSourceStack without an entity)
 GF_REGISTER_SELFTEST("landmark.commands", [](Context& ctx) {
     // ResourceLocation#read of genbook's ResourceKeyArgument
@@ -716,7 +716,7 @@ GF_REGISTER_SELFTEST("landmark.protection", [](Context& ctx) -> ll::coro::CoroTa
     ctx.check(!lm::isProtectedFor(p, gf::game::blockPos(wall)), "creative players are not refused");
     p.setPlayerGameType(GameType::Survival);
     fl::setEnforcedOverride(false);
-    ctx.check(!lm::isProtectedFor(p, gf::game::blockPos(wall)), "nothing is protected without tfEnforcedProgression");
+    ctx.check(!lm::isProtectedFor(p, gf::game::blockPos(wall)), "nothing is protected without gloamingEnforcedProgression");
     fl::setEnforcedOverride(true);
 
     // allowed after the grant: PlayerHelper#playerHasRequiredAdvancements answers from the
@@ -1166,7 +1166,7 @@ GF_REGISTER_SELFTEST("landmark.spawns", [](Context& ctx) {
         ctx.check(special(center, 6, 0, 0, "monster") == "none", "beside the start: none " + special(center, 6, 0, 0, "monster"));
         ctx.check(special(center, 0, 1, 0, "ambient") == "[]" && special(center, 0, 1, 0, "water_creature") == "[]", "the empty ambient and water lists");
         ctx.check(special(center, -8, 0, -6, "creature") == "[]", "no creatures anywhere in a chunk the start reaches (ConfigurableSpawns)");
-        // TFStructureStart#isConquered: no monster list once conquered (a conquered copy of the stored
+        // GloamingStructureStart#isConquered: no monster list once conquered (a conquered copy of the stored
         // start in its place while the guard lives: the shared record is never written)
         auto rec = fl::findRecord(center.dim, center.x >> 4, center.z >> 4, kFixture);
         ctx.require(rec != nullptr, "the stored start");

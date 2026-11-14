@@ -1,4 +1,4 @@
-commands.tffeature.usage=/%s <信息 | 重新激活 | 征服 | 中心>
+commands.gloamingfeature.usage=/%s <信息 | 重新激活 | 征服 | 中心>
 misc.gloamingforest.advancement_hidden=<隱藏進度>
 misc.gloamingforest.advancement_required=前置進度：
 misc.gloamingforest.core_disabled=%s已被配置禁用

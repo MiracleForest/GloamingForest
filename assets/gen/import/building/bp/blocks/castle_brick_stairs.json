@@ -21,22 +21,22 @@
       },
       "minecraft:tags": ["minecraft:is_pickaxe_item_destructible", "minecraft:diamond_tier_destructible"],
       "minecraft:map_color": "#fffcf5",
-      "minecraft:geometry": "geometry.tf.minecraft.block.stairs",
+      "minecraft:geometry": "geometry.gf.minecraft.block.stairs",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_castle_brick_stairs",
+          "texture": "gf_block_castle_brick_stairs",
           "render_method": "opaque"
         },
         "bottom": {
-          "texture": "tf_block_castle_brick_stairs",
+          "texture": "gf_block_castle_brick_stairs",
           "render_method": "opaque"
         },
         "side": {
-          "texture": "tf_block_castle_brick_stairs",
+          "texture": "gf_block_castle_brick_stairs",
           "render_method": "opaque"
         },
         "top": {
-          "texture": "tf_block_castle_brick_stairs",
+          "texture": "gf_block_castle_brick_stairs",
           "render_method": "opaque"
         }
       },
@@ -49,22 +49,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'inner_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.inner_stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.inner_stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -78,22 +78,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'inner_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.inner_stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.inner_stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -107,22 +107,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'outer_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.outer_stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.outer_stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -136,22 +136,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'outer_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.outer_stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.outer_stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -165,22 +165,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'straight'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -194,22 +194,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'inner_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.inner_stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.inner_stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -223,22 +223,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'inner_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.inner_stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.inner_stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -252,22 +252,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'outer_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.outer_stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.outer_stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -281,22 +281,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'outer_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.outer_stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.outer_stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -310,22 +310,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'straight'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -339,22 +339,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'inner_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.inner_stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.inner_stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -368,22 +368,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'inner_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.inner_stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.inner_stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -397,22 +397,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'outer_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.outer_stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.outer_stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -426,22 +426,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'outer_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.outer_stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.outer_stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -455,22 +455,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'straight'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -484,22 +484,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'inner_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.inner_stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.inner_stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -513,22 +513,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'inner_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.inner_stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.inner_stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -542,22 +542,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'outer_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.outer_stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.outer_stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -571,22 +571,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'outer_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.outer_stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.outer_stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -600,22 +600,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'straight'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -629,22 +629,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'inner_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.inner_stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.inner_stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -658,22 +658,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'inner_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.inner_stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.inner_stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -687,22 +687,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'outer_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.outer_stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.outer_stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -716,22 +716,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'outer_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.outer_stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.outer_stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -745,22 +745,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'straight'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -774,22 +774,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'inner_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.inner_stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.inner_stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -803,22 +803,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'inner_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.inner_stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.inner_stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -832,22 +832,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'outer_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.outer_stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.outer_stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -861,22 +861,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'outer_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.outer_stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.outer_stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -890,22 +890,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'straight'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -919,22 +919,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'inner_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.inner_stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.inner_stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -948,22 +948,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'inner_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.inner_stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.inner_stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -977,22 +977,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'outer_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.outer_stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.outer_stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -1006,22 +1006,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'outer_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.outer_stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.outer_stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -1035,22 +1035,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'bottom' && q.block_state('gloamingforest:shape') == 'straight'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -1064,22 +1064,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'inner_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.inner_stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.inner_stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -1093,22 +1093,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'inner_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.inner_stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.inner_stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -1122,22 +1122,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'outer_left'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.outer_stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.outer_stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -1151,22 +1151,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'outer_right'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.outer_stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.outer_stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },
@@ -1180,22 +1180,22 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west' && q.block_state('gloamingforest:half') == 'top' && q.block_state('gloamingforest:shape') == 'straight'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.stairs",
+          "minecraft:geometry": "geometry.gf.minecraft.block.stairs",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "bottom": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "side": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             },
             "top": {
-              "texture": "tf_block_castle_brick_stairs",
+              "texture": "gf_block_castle_brick_stairs",
               "render_method": "opaque"
             }
           },

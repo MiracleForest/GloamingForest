@@ -9,5 +9,5 @@ gamerule doTraderSpawning false
 gamerule doWeatherCycle false
 gamerule keepInventory true
 gamerule randomTickSpeed -1
-gamerule tfEnforcedProgression false
+gamerule gloamingEnforcedProgression false
 execute in gloamingforest:gloaming_forest run teleport ~ 128 ~

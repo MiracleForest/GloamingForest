@@ -10,7 +10,7 @@
         "default": "textures/misc/missing_texture"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.thrown_block"
+        "default": "geometry.gf.skeleton.thrown_block"
       },
       "render_controllers": ["controller.render.default"]
     }

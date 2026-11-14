@@ -303,8 +303,8 @@ namespace GfImport
             {
                 var p = imp.Split('.');
                 if (p[1] != name && p[1] != "*") continue;
-                var tf = Info(s.Ctx, p[0]);
-                if (tf != null) { var r = ResolveName(s, tf, name, seen); if (r != null) return r; }
+                var upsrc = Info(s.Ctx, p[0]);
+                if (upsrc != null) { var r = ResolveName(s, upsrc, name, seen); if (r != null) return r; }
                 var v = Vanilla(p[0] + "." + name);
                 if (v != null) return v;
             }
@@ -364,10 +364,10 @@ namespace GfImport
             }
             if ((m = Regex.Match(expr, @"^([A-Z]\w*)\.([A-Z_][A-Z0-9_]*)$")).Success)
             {
-                var tf = Info(s.Ctx, m.Groups[1].Value);
-                if (tf != null)
+                var upsrc = Info(s.Ctx, m.Groups[1].Value);
+                if (upsrc != null)
                 {
-                    var r = ResolveName(s, tf, m.Groups[2].Value, new HashSet<string>(StringComparer.Ordinal));
+                    var r = ResolveName(s, upsrc, m.Groups[2].Value, new HashSet<string>(StringComparer.Ordinal));
                     if (r != null) return r;
                 }
                 var v = Vanilla(expr);

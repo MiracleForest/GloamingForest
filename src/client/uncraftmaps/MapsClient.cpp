@@ -4,12 +4,12 @@
 //   src/main/java/gloamingforest/network/MazeMapPacket.java (client handler)
 //   src/main/java/gloamingforest/client/renderer/map/ConqueredMapIconRenderer.java
 //   src/main/java/gloamingforest/client/renderer/map/MagicMapPlayerIconRenderer.java
-//   src/main/java/gloamingforest/init/TFMapDecorations.java (the icons)
+//   src/main/java/gloamingforest/init/GloamingMapDecorations.java (the icons)
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
 //
-// upstream's map icons with the client mod: the 15 TFMapDecorations textures, the magic map's landmark
+// upstream's map icons with the client mod: the 15 GloamingMapDecorations textures, the magic map's landmark
 // icons from "uncraftmaps.magic_map" drawn over the map by F12 with upstream's two decoration renderers
 // (a conquered landmark gets the red X; the player icons lie on top), and the vanilla stand-ins the
 // server adds for vanilla clients removed from this client's copy of the map (they would double the

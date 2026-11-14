@@ -1,7 +1,7 @@
 # Structure kit (F7): the structure selftests (piece framework, templates, the 17 upstream processors on
 # blocks they act on, update_marking shape updates, waterlogging, flower pots, paintings, upstream's
 # marker handlers, jigsaw assembly with terrain height adjustment, the template definitions API,
-# wood palettes, block selectors, speleothems, TFMaze, HollowHill, the old lich tower bases, spawner
+# wood palettes, block selectors, speleothems, GloamingMaze, HollowHill, the old lich tower bases, spawner
 # mob scaling and custom spawn rules) pass with their golden volume hashes, the kit loaded its data,
 # /gloamingforest structure_util answers, an outline expires without harm, and across a restart
 # work queued for an unloaded chunk runs once the chunk is loaded, a forced landmark start reloads

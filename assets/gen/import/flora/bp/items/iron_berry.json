@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_item_iron_berry"
+          "default": "gf_item_iron_berry"
         }
       },
       "minecraft:display_name": {

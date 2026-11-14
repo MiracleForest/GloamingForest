@@ -420,7 +420,7 @@
     "id": "gloamingforest:nagastone_head",
     "family": "horizontal",
     "params": {
-      "class": "TFHorizontalBlock",
+      "class": "GloamingHorizontalBlock",
       "vanillaClass": "HorizontalDirectionalBlock",
       "states": [
         "facing"

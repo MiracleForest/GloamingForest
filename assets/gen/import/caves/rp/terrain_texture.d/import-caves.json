@@ -1,29 +1,29 @@
 {
-  "tf_block_huge_gloom_cap": {
+  "gf_block_huge_gloom_cap": {
     "textures": "textures/gloamingforest/block/huge_gloom_cap"
   },
-  "tf_block_huge_gloom_inside": {
+  "gf_block_huge_gloom_inside": {
     "textures": "textures/gloamingforest/block/huge_gloom_inside"
   },
-  "tf_block_huge_mushgloom_stem": {
+  "gf_block_huge_mushgloom_stem": {
     "textures": "textures/gloamingforest/block/huge_mushgloom_stem"
   },
-  "tf_block_trollber": {
+  "gf_block_trollber": {
     "textures": "textures/gloamingforest/block/trollber"
   },
-  "tf_block_trollber_glow": {
+  "gf_block_trollber_glow": {
     "textures": "textures/gloamingforest/block/trollber_glow"
   },
-  "tf_block_trollsteinn": {
+  "gf_block_trollsteinn": {
     "textures": "textures/gloamingforest/block/trollsteinn"
   },
-  "tf_block_trollsteinn_light": {
+  "gf_block_trollsteinn_light": {
     "textures": "textures/gloamingforest/block/trollsteinn_light"
   },
-  "tf_block_trollvidr": {
+  "gf_block_trollvidr": {
     "textures": "textures/gloamingforest/block/trollvidr"
   },
-  "tf_block_unripe_trollber": {
+  "gf_block_unripe_trollber": {
     "textures": "textures/gloamingforest/block/unripe_trollber"
   }
 }

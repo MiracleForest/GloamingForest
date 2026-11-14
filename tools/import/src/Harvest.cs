@@ -90,17 +90,17 @@ namespace GfImport
         public void ComputeHarvest()
         {
             foreach (var id in BlockInfos.Keys) Harvests[id] = new Harvest { RequiresTool = BlockInfos[id].J.RequiresTool };
-            Func<string, IEnumerable<string>> tfMembers = tag => TagMembers(tag, null, "block")
+            Func<string, IEnumerable<string>> gloamingMembers = tag => TagMembers(tag, null, "block")
                 .Where(m => m.StartsWith("gloamingforest:", StringComparison.Ordinal)).Select(m => m.Substring("gloamingforest:".Length));
             foreach (var t in ToolTags)
-                foreach (var id in tfMembers(t[0]))
+                foreach (var id in gloamingMembers(t[0]))
                 {
                     Harvest h;
                     if (Harvests.TryGetValue(id, out h)) h.Tools.Add(t[1]);
                     else Warn("tag #" + t[0] + " names gloamingforest:" + id + ", which is not an upstream block");
                 }
             foreach (var t in NeedsTags)
-                foreach (var id in tfMembers(t[0]))
+                foreach (var id in gloamingMembers(t[0]))
                 {
                     Harvest h;
                     if (Harvests.TryGetValue(id, out h) && h.Tier == null) h.Tier = t[1];

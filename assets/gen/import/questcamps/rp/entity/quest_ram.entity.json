@@ -10,7 +10,7 @@
         "default": "textures/gloamingforest/entity/questram"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.quest_ram"
+        "default": "geometry.gf.skeleton.quest_ram"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

@@ -38,7 +38,7 @@ Per unit `<u>` (the owner of the entity / block / item the layer serves, from `t
 
 | File | Content |
 |---|---|
-| `assets/gen/geo/<u>/rp/models/entity/<name>.geo.json` | `geometry.gloamingforest.<name>`, format 1.12.0. `<name>` is the upstream model layer (`TFModelLayers`, `<path>` or `<path>_<layer>` when the layer is not `main`), an armor piece (`<material>.<slot>`) or an extract. |
+| `assets/gen/geo/<u>/rp/models/entity/<name>.geo.json` | `geometry.gloamingforest.<name>`, format 1.12.0. `<name>` is the upstream model layer (`GloamingModelLayers`, `<path>` or `<path>_<layer>` when the layer is not `main`), an armor piece (`<material>.<slot>`) or an extract. |
 | `assets/gen/geo/<u>/rp/animations/<name>.base.json` | `animation.gloamingforest.<name>.base` (format 1.8.0): one per entity layer, with the setupAnim statements translated to Molang (a stub with a zero rotation on the first bone when none translates: the owning unit adds the rest by hand); also the Ur-Ghast trophy extracts' tentacle wave. |
 | `assets/gen/geo/<u>/bones/<name>.json` | The bone map: Java part path -> bone, parent, Bedrock pivot / rotation, Java offset / rotation, cube count, mirror; the layer and its supplier; the textures (Bedrock path and upstream source); the setupAnim report (`translated`: what the base animation does; `todo`: line (`end_line` for a branch), `class` when another class's source holds it, Java source, reason, and for a case entry `affects`, the channels that differ when it holds; `overrides_vanilla`: bone axes Java sets with `=` after the vanilla `super.setupAnim`); notes. Not part of the pack. |
 | `assets/gen/geo/<u>/rp/attachables/<item>.json` | Attachables of armor and Travellers' Gear; of the trophies and the mystic crown (worn on the head, held in the right and left hand) and of the knightmetal shield (right and left hand): one geometry per slot, drawn only in that slot. |
@@ -111,8 +111,8 @@ the roving cube), `chain` / `chain_block` (BlockChainRenderer: yaw − 90, pitch
 (facing, a random spin), `brazier`, `red_thread` (per face), `skull_chest` / `keepsake_casket` (facing), the
 `knightmetal_shield` item (ISTER `scale(1, -1, -1)`; see the held extracts), `naga` (NagaRenderer.scale: after
 the living-entity transforms `scale(2.01)` and `translate(0, 0.75, 0)`, dazed `translate(0, 1.075, 0.175)`; the
-body does not keel over while alive) and `naga_body` (NagaSegmentRenderer, a TFPartRenderer: the segment's
-interpolated yaw and pitch, `scale(2)`, `translate(0, -1.25, 0)`, then TFPartRenderer's `scale(-1, -1, 1)`,
+body does not keel over while alive) and `naga_body` (NagaSegmentRenderer, a GloamingPartRenderer: the segment's
+interpolated yaw and pitch, `scale(2)`, `translate(0, -1.25, 0)`, then GloamingPartRenderer's `scale(-1, -1, 1)`,
 `translate(0, -1.501, 0)`; no body yaw). In the e2e preview these models float or sit upside down, as expected
 (the naga head and segment float well above the ground). `lich_minion`, `loyal_zombie` and `rising_zombie` declare a 64×32 texture
 because Bedrock's vanilla zombie texture is 64×32; upstream draws Java's 64×64 one with the same UVs.
@@ -326,7 +326,7 @@ Every converted entity layer has a base animation; `+ base animation` marks the 
 | `alpha_yeti` | caves | gloamingforest:alpha_yeti | `geometry.gloamingforest.alpha_yeti` (22 bones, 22 cubes) + base animation |
 | `alpha_yeti_trophy` | building |  | trophy extracts (floor, wall, worn, held) |
 | `arctic_armor_inner` / `_outer` | armory |  | per-slot armor geometry |
-| `armored_giant` | giants | gloamingforest:armored_giant | vanilla `geometry.humanoid.custom` (TFGiantRenderer draws the player model with the viewer's skin) |
+| `armored_giant` | giants | gloamingforest:armored_giant | vanilla `geometry.humanoid.custom` (GloamingGiantRenderer draws the player model with the viewer's skin) |
 | `bighorn_sheep` | fauna | gloamingforest:bighorn_sheep | `geometry.gloamingforest.bighorn_sheep` (8 bones, 16 cubes) |
 | `blockchain_goblin` | stronghold | gloamingforest:blockchain_goblin | `geometry.gloamingforest.blockchain_goblin` (8 bones, 7 cubes) + base animation |
 | `boar` | fauna | gloamingforest:boar | `geometry.gloamingforest.boar` (6 bones, 9 cubes) |

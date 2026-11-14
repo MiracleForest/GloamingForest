@@ -22,7 +22,7 @@ namespace Gf.Models
     public sealed class LayerInfo
     {
         public string Name;          // upstream model layer name (ModelLayerLocation path + "_" + layer unless "main")
-        public string Field;         // TFModelLayers field
+        public string Field;         // GloamingModelLayers field
         public string Supplier;      // Java source of the supplier
         public string SupplierClass; // the upstream class of a Cls::method supplier
         public LayerDef Def;
@@ -43,26 +43,26 @@ namespace Gf.Models
         readonly List<object> indexAttachables = new List<object>();
         readonly List<object> indexAnimations = new List<object>();
         readonly SortedDictionary<string, JObj> renderControllers = new SortedDictionary<string, JObj>(StringComparer.Ordinal);
-        readonly string texPrefix, geoPrefix, animPrefix, tfPrefix;
+        readonly string texPrefix, geoPrefix, animPrefix, gloamingPrefix;
         // upstream's item models (display transforms): the datagen output first, then the hand-written ones
         readonly string[] itemModelDirs;
-        public string TfRevision = "9e40a757";
+        public string GloamingRevision = "9e40a757";
 
         // What a file was written for (the -Java / -Item selection of a full run, Select).
         sealed class Origin { public LayerInfo Info; public string Unit, AnimClass, Item; }
         Origin cur;
         readonly Dictionary<string, Origin> origins = new Dictionary<string, Origin>(StringComparer.Ordinal);
 
-        public Generator(string tfJavaRoot, string catalogJson)
+        public Generator(string gloamingJavaRoot, string catalogJson)
         {
-            ClassPath = new ClassPath(tfJavaRoot);
+            ClassPath = new ClassPath(gloamingJavaRoot);
             Interp = new Interp(ClassPath);
             cat = JsonDocument.Parse(catalogJson, new JsonDocumentOptions { CommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true }).RootElement;
             texPrefix = Str(cat, "texturePrefix", "textures/gloamingforest/");
             geoPrefix = Str(cat, "geometryPrefix", "geometry.gloamingforest.");
             animPrefix = Str(cat, "animationPrefix", "animation.gloamingforest.");
-            tfPrefix = "src/main/resources/assets/gloamingforest/textures/";
-            string src = Path.GetFullPath(Path.Combine(tfJavaRoot, "..", ".."));
+            gloamingPrefix = "src/main/resources/assets/gloamingforest/textures/";
+            string src = Path.GetFullPath(Path.Combine(gloamingJavaRoot, "..", ".."));
             itemModelDirs = new[] {
                 Path.Combine(src, "generated", "resources", "assets", "gloamingforest", "models", "item"),
                 Path.Combine(src, "main", "resources", "assets", "gloamingforest", "models", "item"),
@@ -184,7 +184,7 @@ namespace Gf.Models
             foreach (var l in Layers.Values)
             {
                 if (layersCat.ValueKind != JsonValueKind.Object || !layersCat.TryGetProperty(l.Name, out _))
-                    Errors.Add("layer '" + l.Name + "' (TFModelLayers." + l.Field + ") is not in tools/models/catalog.json");
+                    Errors.Add("layer '" + l.Name + "' (GloamingModelLayers." + l.Field + ") is not in tools/models/catalog.json");
             }
             foreach (var p in layersCat.EnumerateObject())
             {
@@ -249,7 +249,7 @@ namespace Gf.Models
         }
 
         // The supplier names the class as a whole identifier ("YetiModel::create", "() -> YetiModel.x(...)"),
-        // not as the end of a longer one ("AlphaYetiModel::create", "TFGhastModel::create" for GhastModel).
+        // not as the end of a longer one ("AlphaYetiModel::create", "GloamingGhastModel::create" for GhastModel).
         public static bool SupplierNames(string supplier, string cls)
         {
             if (supplier == null || string.IsNullOrEmpty(cls)) return false;
@@ -257,13 +257,13 @@ namespace Gf.Models
         }
 
         // An upstream texture (path below assets/gloamingforest/textures/) as a Bedrock texture path; "minecraft:<path>" names a vanilla one.
-        string Tex(string tfPath)
+        string Tex(string gloamingPath)
         {
-            if (tfPath == null) return null;
-            if (tfPath.StartsWith("minecraft:", StringComparison.Ordinal)) return "textures/" + Path.ChangeExtension(tfPath.Substring(10), null).Replace('\\', '/');
-            return texPrefix + Path.ChangeExtension(tfPath, null).Replace('\\', '/');
+            if (gloamingPath == null) return null;
+            if (gloamingPath.StartsWith("minecraft:", StringComparison.Ordinal)) return "textures/" + Path.ChangeExtension(gloamingPath.Substring(10), null).Replace('\\', '/');
+            return texPrefix + Path.ChangeExtension(gloamingPath, null).Replace('\\', '/');
         }
-        string TfTex(string tfPath) { return tfPath != null && tfPath.StartsWith("minecraft:", StringComparison.Ordinal) ? "(vanilla) " + tfPath : tfPrefix + tfPath; }
+        string GloamingTex(string gloamingPath) { return gloamingPath != null && gloamingPath.StartsWith("minecraft:", StringComparison.Ordinal) ? "(vanilla) " + gloamingPath : gloamingPrefix + gloamingPath; }
 
         static string UnitDir(string unit) { return "assets/gen/geo/" + unit + "/"; }
 
@@ -366,13 +366,13 @@ namespace Gf.Models
         JObj BoneMap(string name, JsonElement spec, LayerInfo info, GeometryOut geo, AnimResult anim, string animId, string animClass)
         {
             var o = new JObj()
-                .Add("comment", "Generated by tools/models/convert.ps1 (F2) from the upstream 4.8 @ " + TfRevision + " (LGPL-2.1-or-later code). Never edit: regenerate.")
+                .Add("comment", "Generated by tools/models/convert.ps1 (F2) from the upstream 4.8 @ " + GloamingRevision + " (LGPL-2.1-or-later code). Never edit: regenerate.")
                 .Add("geometry", geo.Identifier)
-                .Add("layer", new JObj().Add("name", name).Add("field", "TFModelLayers." + info.Field).Add("supplier", info.Supplier))
+                .Add("layer", new JObj().Add("name", name).Add("field", "GloamingModelLayers." + info.Field).Add("supplier", info.Supplier))
                 .Add("texture_size", Json.Arr(geo.TexWidth, geo.TexHeight));
             var textures = StrList(spec, "textures");
             if (textures.Count > 0)
-                o.Add("textures", textures.Select(t => (object)new JObj().Add("bedrock", Tex(t)).Add("tf", TfTex(t))).ToList());
+                o.Add("textures", textures.Select(t => (object)new JObj().Add("bedrock", Tex(t)).Add("upsrc", GloamingTex(t))).ToList());
             var bones = new List<object>();
             foreach (var b in geo.Bones)
             {
@@ -423,9 +423,9 @@ namespace Gf.Models
             var o = new JObj()
                 .Add("comment", "Generated by tools/models/convert.ps1 (F2). This upstream layer uses a vanilla Minecraft model: use the vanilla Bedrock geometry.")
                 .Add("geometry", Str(spec, "vanilla"))
-                .Add("layer", new JObj().Add("name", name).Add("field", "TFModelLayers." + info.Field).Add("supplier", info.Supplier));
+                .Add("layer", new JObj().Add("name", name).Add("field", "GloamingModelLayers." + info.Field).Add("supplier", info.Supplier));
             var textures = StrList(spec, "textures");
-            if (textures.Count > 0) o.Add("textures", textures.Select(t => (object)new JObj().Add("bedrock", Tex(t)).Add("tf", TfTex(t))).ToList());
+            if (textures.Count > 0) o.Add("textures", textures.Select(t => (object)new JObj().Add("bedrock", Tex(t)).Add("upsrc", GloamingTex(t))).ToList());
             var notes = StrList(spec, "notes");
             if (notes.Count > 0) o.Add("notes", notes.Cast<object>().ToList());
             Put(UnitDir(unit) + "bones/" + name + ".json", o);
@@ -494,9 +494,9 @@ namespace Gf.Models
                     string file = "models/entity/" + geoName + ".geo.json";
                     Put(UnitDir(unit) + "rp/" + file, geo.ToJson());
                     var bm = new JObj()
-                        .Add("comment", "Generated by tools/models/convert.ps1 (F2) from the upstream 4.8 @ " + TfRevision + " (LGPL-2.1-or-later code). Armor bones carry the player's bone names, so the attachable follows the wearer.")
+                        .Add("comment", "Generated by tools/models/convert.ps1 (F2) from the upstream 4.8 @ " + GloamingRevision + " (LGPL-2.1-or-later code). Armor bones carry the player's bone names, so the attachable follows the wearer.")
                         .Add("geometry", geoId)
-                        .Add("layer", new JObj().Add("name", layerName).Add("field", "TFModelLayers." + info.Field).Add("supplier", info.Supplier))
+                        .Add("layer", new JObj().Add("name", layerName).Add("field", "GloamingModelLayers." + info.Field).Add("supplier", info.Supplier))
                         .Add("slot", slot).Add("parts", parts.Cast<object>().ToList())
                         .Add("bones", geo.Bones.Select(b => (object)new JObj().Add("java", b.JavaPath).Add("bone", b.Name).Add("parent", b.Parent).Add("cubes", b.Cubes.Count)).ToList());
                     var gnotes = StrList(piece, "notes").Concat(StrList(a, "notes")).ToList();
@@ -969,9 +969,9 @@ namespace Gf.Models
             }
 
             var bm = new JObj()
-                .Add("comment", "Generated by tools/models/convert.ps1 (F2) from the upstream 4.8 @ " + TfRevision + " (LGPL-2.1-or-later code): parts of an upstream model drawn with the PoseStack transforms of its renderer.")
+                .Add("comment", "Generated by tools/models/convert.ps1 (F2) from the upstream 4.8 @ " + GloamingRevision + " (LGPL-2.1-or-later code): parts of an upstream model drawn with the PoseStack transforms of its renderer.")
                 .Add("source", spec.Source)
-                .Add("layer", new JObj().Add("name", layerName).Add("field", "TFModelLayers." + info.Field).Add("supplier", info.Supplier))
+                .Add("layer", new JObj().Add("name", layerName).Add("field", "GloamingModelLayers." + info.Field).Add("supplier", info.Supplier))
                 .Add("frame", frameName);
             if (spec.Slot != null) bm.Add("slot", spec.Slot);
             if (displays.Count > 0)
@@ -981,7 +981,7 @@ namespace Gf.Models
                         .Add("rotation", Json.Vec(dd.Rotation.X, dd.Rotation.Y, dd.Rotation.Z))
                         .Add("translation", Json.Vec(dd.Translation.X * 16, dd.Translation.Y * 16, dd.Translation.Z * 16))
                         .Add("scale", Json.Vec(dd.Scale.X, dd.Scale.Y, dd.Scale.Z)))).ToList());
-            bm.Add("geometries", order.Select(gn => (object)new JObj().Add("identifier", geoPrefix + gn).Add("texture", new JObj().Add("bedrock", Tex(geoTex[gn])).Add("tf", TfTex(geoTex[gn]))).Add("material", geoMaterial[gn])).ToList())
+            bm.Add("geometries", order.Select(gn => (object)new JObj().Add("identifier", geoPrefix + gn).Add("texture", new JObj().Add("bedrock", Tex(geoTex[gn])).Add("upsrc", GloamingTex(geoTex[gn]))).Add("material", geoMaterial[gn])).ToList())
               .Add("bones", boneMaps);
             if (anim != null && animId != null)
                 bm.Add("animation", new JObj().Add("identifier", animId).Add("notes", anim.Notes.Cast<object>().ToList())
@@ -1084,7 +1084,7 @@ namespace Gf.Models
             var index = new JObj()
                 .Add("comment", "Generated by tools/models/convert.ps1 (F2): every geometry, base animation and attachable of assets/gen/geo, for the models.* selftests and the e2e preview. Never edit.")
                 .Add("format", 1)
-                .Add("tf", TfRevision)
+                .Add("upsrc", GloamingRevision)
                 .Add("texture_prefix", texPrefix)
                 .Add("geometries", indexGeometries)
                 .Add("animations", indexAnimations)

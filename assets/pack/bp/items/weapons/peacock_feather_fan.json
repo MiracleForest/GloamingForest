@@ -10,7 +10,7 @@
     "components": {
       "minecraft:icon": {
         "textures": {
-          "default": "tf_item_peacock_feather_fan"
+          "default": "gf_item_peacock_feather_fan"
         }
       },
       "minecraft:display_name": {

@@ -56,7 +56,7 @@ struct DVec {
 // ---- adherent --------------------------------------------------------------------------------------
 
 /// Adherent#performRangedAttack's shot: the direction passed to NatureBolt#shoot, its velocity and
-/// inaccuracy. `boltY` is the bolt's start height (the owner's eyes - 0.1, TFThrowable), `targetY`
+/// inaccuracy. `boltY` is the bolt's start height (the owner's eyes - 0.1, GloamingThrowable), `targetY`
 /// the target's feet, `targetEye` its eye height (getEyeHeight), `difficultyId` Difficulty#getId
 /// (0 peaceful .. 3 hard).
 struct Shot {

@@ -2,20 +2,20 @@
 
 // Contract "structure" (header owned by F0, implemented by F7).
 //
-// The piece framework of upstream's structures (StructurePiece / TFStructureComponent with per-chunk
+// The piece framework of upstream's structures (StructurePiece / GloamingStructureComponent with per-chunk
 // clipping), GloamingForest templates (rule R19: procedural pieces are exact translations,
 // template-backed pieces use original .gft templates validated against upstream's LGPL template
 // definitions), processors, marker handlers, wood palettes, random block selectors, jigsaw
 // assembly and speleothems.
 //
 //     class NagaCourtyardMain : public gf::structure::Piece { ... void postProcess(...) override; };
-//     gf::structure::registerPieceType("gloamingforest:TFNCMn", [](nlohmann::json const& saved) { ... });
+//     gf::structure::registerPieceType("gloamingforest:GloamingNCMn", [](nlohmann::json const& saved) { ... });
 //
 // The shared bases are part of this contract, declared by F0 in feature/structure/bases/ and
 // implemented by F7 (neutral stubs in bases/Bases.cpp until then): Component.h
-// (TFStructureComponent, TFStructureDecorator, UtilityPiece, SortablePiece), ComponentOld.h
-// (TFStructureComponentOld), TemplatePieces.h (TFStructureComponentTemplate, GloamingTemplate /
-// DoubleTemplate / Jigsaw pieces, JigsawRecord), Maze.h (TFMaze), HollowHill.h
+// (GloamingStructureComponent, GloamingStructureDecorator, UtilityPiece, SortablePiece), ComponentOld.h
+// (GloamingStructureComponentOld), TemplatePieces.h (GloamingStructureComponentTemplate, GloamingTemplate /
+// DoubleTemplate / Jigsaw pieces, JigsawRecord), Maze.h (GloamingMaze), HollowHill.h
 // (HollowHillComponent) and Tower.h (the 16 classes of the TowerWing family). Piece-local
 // coordinates follow Java: (x, y, z) inside `bbox`, turned by `orientation` and `mirror`.
 
@@ -73,7 +73,7 @@ public:
     explicit Piece(std::string typeId) : typeId(std::move(typeId)) {}
     virtual ~Piece() = default;
 
-    std::string typeId;          ///< the registered piece type ("gloamingforest:TFHedge")
+    std::string typeId;          ///< the registered piece type ("gloamingforest:GloamingHedge")
     BlockBox    bbox;            ///< world-space bounds
     Orientation orientation = Orientation::North;
     Mirror      mirror      = Mirror::None;
@@ -89,7 +89,7 @@ public:
     [[nodiscard]] virtual Json save() const;
     virtual void               load(Json const& data);
 
-    // ---- helpers in piece-local coordinates (StructurePiece / TFStructureComponentOld) --------
+    // ---- helpers in piece-local coordinates (StructurePiece / GloamingStructureComponentOld) --------
     /// getWorldX / getWorldY / getWorldZ (virtual: a few upstream pieces override them).
     [[nodiscard]] virtual int worldX(int x, int z) const;
     [[nodiscard]] virtual int worldY(int y) const;

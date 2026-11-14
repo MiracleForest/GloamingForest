@@ -14,7 +14,7 @@
 // ProtoChunk#getOrCreateCarvingMask(AIR)). The mask is kept until the chunk is decorated, where
 // the minecraft:carving_mask placement modifier (CarvingMaskPlacement) streams its blocks.
 //
-//     gf::worldgen::registerCarver("gloamingforest:tf_caves", [](Chunk& c, Region& r, RandomSource& random) {
+//     gf::worldgen::registerCarver("gloamingforest:gf_caves", [](Chunk& c, Region& r, RandomSource& random) {
 //         auto& ctx = *gf::worldgen::ext::carverContext();
 //         if (!gf::worldgen::ext::isStartChunk(random, ctx)) return;
 //         ...  // ctx.sourceChunkX / ctx.sourceChunkZ, ctx.config, ctx.mask
@@ -53,7 +53,7 @@ struct CarverContext {
     int                   sourceChunkX = 0; ///< the chunk whose seed started the tunnels (Java's chunkPos argument)
     int                   sourceChunkZ = 0;
     int                   index        = 0; ///< the carver's index in the source biome's list
-    std::string           configuredId;     ///< "gloamingforest:tf_caves"
+    std::string           configuredId;     ///< "gloamingforest:gf_caves"
     nlohmann::json const* config = nullptr; ///< the configured carver's "config" ({} when unknown)
     CarvingMask*          mask   = nullptr; ///< the carving mask of the chunk being carved
 };

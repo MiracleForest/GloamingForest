@@ -33,7 +33,7 @@ The Twilight Forest (assets)
 -------------------------------------------------------------------------------------------------
 The textures, models, blockstates and language files of The Twilight Forest that GloamingForest
 reuses (imported by tools/import into assets/gen/import, hand-edited derivatives under the
-tf-derived/ directories of assets/pack with their sources in tf-derived/SOURCES.json, and the
+upstream-derived/ directories of assets/pack with their sources in upstream-derived/SOURCES.json, and the
 released resource packs) are licensed under Creative Commons Attribution-NonCommercial-ShareAlike
 4.0 International (CC BY-NC-SA 4.0, https://creativecommons.org/licenses/by-nc-sa/4.0/); see
 assets/LICENSE.

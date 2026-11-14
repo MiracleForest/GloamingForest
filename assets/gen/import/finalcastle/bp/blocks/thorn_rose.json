@@ -20,14 +20,14 @@
       "minecraft:tags": ["minecraft:is_hoe_item_destructible"],
       "minecraft:map_color": "#007c00",
       "minecraft:collision_box": false,
-      "minecraft:geometry": "geometry.tf.minecraft.block.cross",
+      "minecraft:geometry": "geometry.gf.minecraft.block.cross",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_thorn_rose",
+          "texture": "gf_block_thorn_rose",
           "render_method": "alpha_test"
         },
         "cross": {
-          "texture": "tf_block_thorn_rose",
+          "texture": "gf_block_thorn_rose",
           "render_method": "alpha_test"
         }
       },
@@ -41,14 +41,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'down'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.cross",
+          "minecraft:geometry": "geometry.gf.minecraft.block.cross",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_thorn_rose",
+              "texture": "gf_block_thorn_rose",
               "render_method": "alpha_test"
             },
             "cross": {
-              "texture": "tf_block_thorn_rose",
+              "texture": "gf_block_thorn_rose",
               "render_method": "alpha_test"
             }
           },
@@ -64,14 +64,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'east'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.cross",
+          "minecraft:geometry": "geometry.gf.minecraft.block.cross",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_thorn_rose",
+              "texture": "gf_block_thorn_rose",
               "render_method": "alpha_test"
             },
             "cross": {
-              "texture": "tf_block_thorn_rose",
+              "texture": "gf_block_thorn_rose",
               "render_method": "alpha_test"
             }
           },
@@ -87,14 +87,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'north'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.cross",
+          "minecraft:geometry": "geometry.gf.minecraft.block.cross",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_thorn_rose",
+              "texture": "gf_block_thorn_rose",
               "render_method": "alpha_test"
             },
             "cross": {
-              "texture": "tf_block_thorn_rose",
+              "texture": "gf_block_thorn_rose",
               "render_method": "alpha_test"
             }
           },
@@ -110,14 +110,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'south'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.cross",
+          "minecraft:geometry": "geometry.gf.minecraft.block.cross",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_thorn_rose",
+              "texture": "gf_block_thorn_rose",
               "render_method": "alpha_test"
             },
             "cross": {
-              "texture": "tf_block_thorn_rose",
+              "texture": "gf_block_thorn_rose",
               "render_method": "alpha_test"
             }
           },
@@ -133,14 +133,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'up'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.cross",
+          "minecraft:geometry": "geometry.gf.minecraft.block.cross",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_thorn_rose",
+              "texture": "gf_block_thorn_rose",
               "render_method": "alpha_test"
             },
             "cross": {
-              "texture": "tf_block_thorn_rose",
+              "texture": "gf_block_thorn_rose",
               "render_method": "alpha_test"
             }
           },
@@ -156,14 +156,14 @@
       {
         "condition": "q.block_state('gloamingforest:facing') == 'west'",
         "components": {
-          "minecraft:geometry": "geometry.tf.minecraft.block.cross",
+          "minecraft:geometry": "geometry.gf.minecraft.block.cross",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_thorn_rose",
+              "texture": "gf_block_thorn_rose",
               "render_method": "alpha_test"
             },
             "cross": {
-              "texture": "tf_block_thorn_rose",
+              "texture": "gf_block_thorn_rose",
               "render_method": "alpha_test"
             }
           },

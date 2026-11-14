@@ -3,7 +3,7 @@
 //   src/main/java/gloamingforest/entity/ITFCharger.java
 //   src/main/java/gloamingforest/entity/IBreathAttacker.java
 //   src/main/java/gloamingforest/entity/ai/control/NoClipMoveControl.java
-//   src/main/java/gloamingforest/init/TFDataSerializers.java
+//   src/main/java/gloamingforest/init/GloamingDataSerializers.java
 // Copyright (c) the upstream authors (see NOTICE).
 // Licensed under the GNU Lesser General Public License v2.1 or later; this translation is part
 // of GloamingForest and distributed under LGPL-3.0-or-later (see COPYING.LESSER and NOTICE).
@@ -86,7 +86,7 @@ void doBreathAttack(Mob& breather, Actor& target, std::string const& damageType)
     gf::combat::hurt(target, 2.0f, damageType, &breather);
 }
 
-// TFDataSerializers.STRING_LIST: EntityDataSerializer.forValueType(STRING_UTF8.apply(list())).
+// GloamingDataSerializers.STRING_LIST: EntityDataSerializer.forValueType(STRING_UTF8.apply(list())).
 void setStringList(Actor& actor, std::string const& key, std::vector<std::string> const& values) {
     auto& v = gf::entity::data(actor, key);
     nlohmann::json list(values);

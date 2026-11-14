@@ -16,7 +16,7 @@
 //   src/main/java/gloamingforest/world/components/structures/lichtower/TowerRoofSlabForwardsComponent.java
 //   src/main/java/gloamingforest/world/components/structures/lichtower/TowerRoofStairsComponent.java
 //   src/main/java/gloamingforest/world/components/structures/lichtower/TowerRoofStairsOverhangComponent.java
-//   src/main/java/gloamingforest/util/TFStructureHelper.java
+//   src/main/java/gloamingforest/util/GloamingStructureHelper.java
 //   src/main/java/gloamingforest/util/entities/EntityUtil.java (getPaintingOfSize)
 //   src/main/java/gloamingforest/util/BoundingBoxUtils.java (getComponentToAddBoundingBox)
 // Copyright (c) the upstream authors (see NOTICE).
@@ -45,7 +45,7 @@ constexpr std::array<Rotation, 4> kRotations{Rotation::None, Rotation::Clockwise
 
 Block const& B(char const* id, Json const& props = Json::object()) { return blocks::java(id, props); }
 
-// TFStructureHelper
+// GloamingStructureHelper
 Block const& stoneSlab() { return B("minecraft:smooth_stone_slab", Json{{"type", "bottom"}}); }
 Block const& stoneSlabTop() { return B("minecraft:smooth_stone_slab", Json{{"type", "top"}}); }
 Block const& stoneSlabDouble() { return B("minecraft:smooth_stone_slab", Json{{"type", "double"}}); }
@@ -53,7 +53,7 @@ Block const& birchSlab() { return B("minecraft:birch_slab", Json{{"type", "botto
 Block const& birchSlabTop() { return B("minecraft:birch_slab", Json{{"type", "top"}}); }
 Block const& birchPlanks() { return B("minecraft:birch_planks"); }
 
-/// TFStructureHelper.randomPlant (the Java id: the plant of a potted_* block lives in the Bedrock
+/// GloamingStructureHelper.randomPlant (the Java id: the plant of a potted_* block lives in the Bedrock
 /// flower pot's block actor, which the id form of placeBlock fills in).
 char const* randomPlant(int i) {
     static char const* const plants[] = {"minecraft:potted_oak_sapling", "minecraft:potted_spruce_sapling", "minecraft:potted_birch_sapling",
@@ -180,7 +180,7 @@ bool TowerWing::makeTowerWing(PieceList& list, RandomSource& rand, int index, in
     Orientation direction = getStructureRelativeRotation(rotation);
     auto        dx        = offsetTowerCoords(x, y, z, wingSize, direction);
     if (rand.nextInt(6) == 0) return makeBridge(list, rand, index, x, y, z, wingSize, wingHeight, rotation);
-    auto   wing      = std::make_unique<TowerWing>("gloamingforest:TFLTWin", index, dx[0], dx[1], dx[2], wingSize, wingHeight, direction);
+    auto   wing      = std::make_unique<TowerWing>("gloamingforest:GloamingLTWin", index, dx[0], dx[1], dx[2], wingSize, wingHeight, direction);
     Piece* intersect = findCollisionPiece(list, wing->bbox);
     if (!intersect || intersect == this) {
         auto* raw = wing.get();
@@ -227,7 +227,7 @@ void TowerWing::makeABeard(Piece& parent, PieceList& list, RandomSource& rand) {
     BlockPos                     loc      = getLocatorPosition();
     std::unique_ptr<TowerBeard> beard;
     if (attached) beard = std::make_unique<TowerBeardAttached>(index + 1, *this, loc.x, loc.y, loc.z);
-    else beard = std::make_unique<TowerBeard>("gloamingforest:TFLTBea", index + 1, *this, loc.x, loc.y, loc.z);
+    else beard = std::make_unique<TowerBeard>("gloamingforest:GloamingLTBea", index + 1, *this, loc.x, loc.y, loc.z);
     auto* raw = beard.get();
     list.push_back(std::move(beard));
     raw->addChildren(*this, list, rand);
@@ -263,7 +263,7 @@ void TowerWing::makeFreestandingRoof(PieceList& list, RandomSource& rand) {
     if (!roofType) tryToFitRoof(list, rand, std::make_unique<TowerRoofStairsOverhang>(index + 1, *this, loc.x, loc.y, loc.z));
     if (!roofType) tryToFitRoof(list, rand, std::make_unique<TowerRoofStairs>(index + 1, *this, loc.x, loc.y, loc.z));
     if (!roofType && rand.nextInt(53) != 0)
-        tryToFitRoof(list, rand, std::make_unique<TowerRoofSlab>("gloamingforest:TFLTRS", index + 1, *this, loc.x, loc.y, loc.z));
+        tryToFitRoof(list, rand, std::make_unique<TowerRoofSlab>("gloamingforest:GloamingLTRS", index + 1, *this, loc.x, loc.y, loc.z));
     if (!roofType) tryToFitRoof(list, rand, std::make_unique<TowerRoofFence>(index + 1, *this, loc.x, loc.y, loc.z));
 }
 
@@ -1207,7 +1207,7 @@ int TowerWing::getGroundLevelDelta() const { return 1; }
 // ==== TowerMainComponent ===================================================================================
 
 TowerMain::TowerMain(RandomSource& rand, int depth, int x, int y, int z)
-: TowerWing("gloamingforest:TFLTMai", depth, x, y + 1, z, 15, 55 + rand.nextInt(32), Orientation::South) {}
+: TowerWing("gloamingforest:GloamingLTMai", depth, x, y + 1, z, 15, 55 + rand.nextInt(32), Orientation::South) {}
 
 void TowerMain::addChildren(Piece& parent, PieceList& list, RandomSource& rand) {
     makeARoof(parent, list, rand);
@@ -1454,7 +1454,7 @@ TerrainAdjustment TowerMain::getTerrainAdjustment() const { return TerrainAdjust
 // ==== TowerBridgeComponent =================================================================================
 
 TowerBridge::TowerBridge(int depth, int x, int y, int z, int pSize, int pHeight, Orientation direction)
-: TowerWing("gloamingforest:TFLTBri", depth, x, y, z, 3, 3, direction),
+: TowerWing("gloamingforest:GloamingLTBri", depth, x, y, z, 3, 3, direction),
   dSize(pSize),
   dHeight(pHeight) {}
 
@@ -1489,7 +1489,7 @@ void TowerBridge::postProcess(Region& region, RandomSource&, BlockBox const& sbb
 // ==== TowerOutbuildingComponent ===========================================================================
 
 TowerOutbuilding::TowerOutbuilding(int depth, int x, int y, int z, int pSize, int pHeight, Orientation direction)
-: TowerWing("gloamingforest:TFLTOut", depth, x, y, z, pSize, pHeight, direction) {}
+: TowerWing("gloamingforest:GloamingLTOut", depth, x, y, z, pSize, pHeight, direction) {}
 
 void TowerOutbuilding::makeABeard(Piece&, PieceList&, RandomSource&) {}
 
@@ -1537,7 +1537,7 @@ void TowerBeard::makePyramidBeard(Region& region, RandomSource& rand, BlockBox c
     }
 }
 
-TowerBeardAttached::TowerBeardAttached(int depth, TowerWing const& wing, int x, int y, int z) : TowerBeard("gloamingforest:TFLTBA", depth, wing, x, y, z) {
+TowerBeardAttached::TowerBeardAttached(int depth, TowerWing const& wing, int x, int y, int z) : TowerBeard("gloamingforest:GloamingLTBA", depth, wing, x, y, z) {
     bbox = BlockBox::of(wing.bbox.minX, wing.bbox.minY - height - 1, wing.bbox.minZ, wing.bbox.maxX, wing.bbox.maxY - 1, wing.bbox.maxZ);
 }
 
@@ -1602,7 +1602,7 @@ void TowerRoof::makeOverhangBB(TowerWing const& wing) {
     bbox          = BlockBox::of(w.minX - 1, w.maxY, w.minZ - 1, w.maxX + 1, w.maxY + height - 1, w.maxZ + 1);
 }
 
-TowerRoofFence::TowerRoofFence(int depth, TowerWing const& wing, int x, int y, int z) : TowerRoof("gloamingforest:TFLTRF", depth, x, y, z) {
+TowerRoofFence::TowerRoofFence(int depth, TowerWing const& wing, int x, int y, int z) : TowerRoof("gloamingforest:GloamingLTRF", depth, x, y, z) {
     setOrientation(wing.getOrientation());
     size   = wing.size;
     height = 0;
@@ -1616,7 +1616,7 @@ void TowerRoofFence::postProcess(Region& region, RandomSource&, BlockBox const& 
             if (x == 0 || x == size - 1 || z == 0 || z == size - 1) placeBlock(region, B("minecraft:oak_fence"), x, y, z, sbb);
 }
 
-TowerRoofGableForwards::TowerRoofGableForwards(int depth, TowerWing const& wing, int x, int y, int z) : TowerRoof("gloamingforest:TFLTRGF", depth, x, y, z) {
+TowerRoofGableForwards::TowerRoofGableForwards(int depth, TowerWing const& wing, int x, int y, int z) : TowerRoof("gloamingforest:GloamingLTRGF", depth, x, y, z) {
     setOrientation(wing.getOrientation());
     size   = wing.size + 2;
     height = size;
@@ -1688,7 +1688,7 @@ void TowerRoofPointy::postProcess(Region& region, RandomSource&, BlockBox const&
 int TowerRoofPointy::slopeChangeForSize() const { return size > 10 ? 3 : size > 6 ? 2 : 1; }
 
 TowerRoofPointyOverhang::TowerRoofPointyOverhang(int depth, TowerWing const& wing, int x, int y, int z)
-: TowerRoofPointy("gloamingforest:TFLTRPO", depth, wing, x, y, z) {
+: TowerRoofPointy("gloamingforest:GloamingLTRPO", depth, wing, x, y, z) {
     setOrientation(wing.getOrientation());
     size   = wing.size + 2;
     height = size;
@@ -1731,14 +1731,14 @@ void TowerRoofSlab::makeConnectedCap(Region& region, Block const& slabType, Bloc
 }
 
 TowerRoofAttachedSlab::TowerRoofAttachedSlab(int depth, TowerWing const& wing, int x, int y, int z)
-: TowerRoofSlab("gloamingforest:TFLTRAS", depth, wing, x, y, z) {}
+: TowerRoofSlab("gloamingforest:GloamingLTRAS", depth, wing, x, y, z) {}
 
 void TowerRoofAttachedSlab::postProcess(Region& region, RandomSource&, BlockBox const& sbb, BlockPos const&) {
     makeConnectedCap(region, B("minecraft:birch_slab"), birchPlanks(), sbb);
 }
 
 TowerRoofSlabForwards::TowerRoofSlabForwards(int depth, TowerWing const& wing, int x, int y, int z)
-: TowerRoofSlab("gloamingforest:TFLTRSF", depth, wing, x, y, z) {
+: TowerRoofSlab("gloamingforest:GloamingLTRSF", depth, wing, x, y, z) {
     setOrientation(wing.getOrientation());
     size   = wing.size + 2;
     height = size / 2;
@@ -1782,7 +1782,7 @@ void stairsRoof(ComponentOld& piece, Region& region, BlockBox const& sbb, int si
 }
 } // namespace
 
-TowerRoofStairs::TowerRoofStairs(int depth, TowerWing const& wing, int x, int y, int z) : TowerRoof("gloamingforest:TFLTRSt", depth, x, y, z) {
+TowerRoofStairs::TowerRoofStairs(int depth, TowerWing const& wing, int x, int y, int z) : TowerRoof("gloamingforest:GloamingLTRSt", depth, x, y, z) {
     setOrientation(Orientation::South);
     size   = wing.size;
     height = size / 2;
@@ -1791,7 +1791,7 @@ TowerRoofStairs::TowerRoofStairs(int depth, TowerWing const& wing, int x, int y,
 
 void TowerRoofStairs::postProcess(Region& region, RandomSource&, BlockBox const& sbb, BlockPos const&) { stairsRoof(*this, region, sbb, size, height); }
 
-TowerRoofStairsOverhang::TowerRoofStairsOverhang(int depth, TowerWing const& wing, int x, int y, int z) : TowerRoof("gloamingforest:TFLTRStO", depth, x, y, z) {
+TowerRoofStairsOverhang::TowerRoofStairsOverhang(int depth, TowerWing const& wing, int x, int y, int z) : TowerRoof("gloamingforest:GloamingLTRStO", depth, x, y, z) {
     setOrientation(Orientation::South);
     size        = wing.size + 2;
     height      = size / 2;

@@ -21,7 +21,7 @@ namespace gf::core::uncraftmaps {
 /// Java's (int) Math.round(double): floor(x + 0.5), saturated to int.
 [[nodiscard]] int javaRound(double x);
 
-/// The config's two id lists (TFConfig): the recipe id list (disableUncraftingRecipes, a blacklist,
+/// The config's two id lists (GloamingConfig): the recipe id list (disableUncraftingRecipes, a blacklist,
 /// a whitelist with flipRecipeList) and the namespace list (blacklistedUncraftingModIds, inverted by
 /// flipIdList). getRecipesFor keeps a recipe when
 /// `flipRecipe == recipeIds.contains(id)` and `flipIds == modIds.contains(namespace)`.

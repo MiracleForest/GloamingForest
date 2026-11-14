@@ -29,7 +29,7 @@
         "explosion_resistance": 15
       },
       "minecraft:geometry": {
-        "identifier": "geometry.tf.gloamingforest.block.rope.multipart",
+        "identifier": "geometry.gf.gloamingforest.block.rope.multipart",
         "bone_visibility": {
           "part0": "q.block_state('gloamingforest:y')",
           "part1": "q.block_state('gloamingforest:x')",
@@ -39,15 +39,15 @@
       },
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_rope",
+          "texture": "gf_block_rope",
           "render_method": "alpha_test"
         },
         "t_gloamingforest_block_rope": {
-          "texture": "tf_block_rope",
+          "texture": "gf_block_rope",
           "render_method": "alpha_test"
         },
         "t_gloamingforest_block_rope_knot": {
-          "texture": "tf_block_rope_knot",
+          "texture": "gf_block_rope_knot",
           "render_method": "alpha_test"
         }
       },

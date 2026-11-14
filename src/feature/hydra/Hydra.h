@@ -122,7 +122,7 @@ void neighborChanged(BlockSource& region, BlockPos const& pos);
 [[nodiscard]] int jetCounter(core::GlobalPos const& pos);
 /// Whether the redstone of the encased block at `pos` is watched (selftests).
 [[nodiscard]] bool encasedWatched(core::GlobalPos const& pos);
-/// Whether the smoker at `pos` ticks (its TFSmokerBlockEntity; selftests).
+/// Whether the smoker at `pos` ticks (its GloamingSmokerBlockEntity; selftests).
 [[nodiscard]] bool smokerTracked(core::GlobalPos const& pos);
 /// The gloamingforest:fire_jet feature (world generation) placed a jet or smoker at block (x, y, z):
 /// its placement is not remembered (the palette scan around the players finds it). Any thread.

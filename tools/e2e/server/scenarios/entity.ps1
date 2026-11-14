@@ -5,7 +5,7 @@
 # conquest of its home (entity.boss_conquest: a real landmark start conquered by the boss's death,
 # structure_cleared within 32 blocks, hurt_boss first, the forced start dropped afterwards); the
 # portal refusal through F4's Gloaming portal (entity.boss_portal), upstream's chests and the fallback
-# of a death container that is no container (entity.boss_tf_chest, entity.boss_chest_fallback),
+# of a death container that is no container (entity.boss_gf_chest, entity.boss_chest_fallback),
 # hurt_boss for a non-boss of the inclusive tag (entity.boss_inclusive); plus behaviour dispatch (die once, only for a real death), entity
 # properties read back through Molang, the goal selector and upstream's goals at work (charge, breath),
 # the pathfinding block rules, the hostile mount (no dismount, no teleport), the projectile and
@@ -28,7 +28,7 @@ foreach ($line in 'boss: gf_test:boss died', 'boss: death chest of gf_test:boss 
                   'did not come back with its chunk, its death goes on without it', 'boss: the death chest of gf_test:boss waits for its chunk',
                   'SELFTEST PASS entity.boss_unload', 'SELFTEST PASS entity.boss_conquest',
                   'boss: gf_test:boss conquered gf_test:landmark_fixture_open',
-                  'SELFTEST PASS entity.boss_portal', 'SELFTEST PASS entity.boss_tf_chest',
+                  'SELFTEST PASS entity.boss_portal', 'SELFTEST PASS entity.boss_gf_chest',
                   'SELFTEST PASS entity.boss_chest_fallback', 'never became a container: ',
                   'SELFTEST PASS entity.boss_inclusive') {
     if (-not (Get-ServerLog | Select-String -SimpleMatch $line -Quiet)) { throw "missing log line: $line" }

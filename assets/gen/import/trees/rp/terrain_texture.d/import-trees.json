@@ -1,80 +1,80 @@
 {
-  "tf_block_canopy_sapling": {
+  "gf_block_canopy_sapling": {
     "textures": "textures/gloamingforest/block/canopy_sapling"
   },
-  "tf_block_darkwood_leaves": {
+  "gf_block_darkwood_leaves": {
     "textures": "textures/gloamingforest/block/darkwood_leaves"
   },
-  "tf_block_darkwood_sapling": {
+  "gf_block_darkwood_sapling": {
     "textures": "textures/gloamingforest/block/darkwood_sapling"
   },
-  "tf_block_gloaming_oak_sapling": {
+  "gf_block_gloaming_oak_sapling": {
     "textures": "textures/gloamingforest/block/gloaming_oak_sapling"
   },
-  "tf_block_hollow_oak_sapling": {
+  "gf_block_hollow_oak_sapling": {
     "textures": "textures/gloamingforest/block/hollow_oak_sapling"
   },
-  "tf_block_mangrove_root": {
+  "gf_block_mangrove_root": {
     "textures": "textures/gloamingforest/block/mangrove_root"
   },
-  "tf_block_mangrove_sapling": {
+  "gf_block_mangrove_sapling": {
     "textures": "textures/gloamingforest/block/mangrove_sapling"
   },
-  "tf_block_mining_leaves": {
+  "gf_block_mining_leaves": {
     "textures": "textures/gloamingforest/block/mining_leaves"
   },
-  "tf_block_mining_log_core": {
+  "gf_block_mining_log_core": {
     "textures": "textures/gloamingforest/block/mining_log_core"
   },
-  "tf_block_mining_log_core_on": {
+  "gf_block_mining_log_core_on": {
     "textures": "textures/gloamingforest/block/mining_log_core_on"
   },
-  "tf_block_mining_sapling": {
+  "gf_block_mining_sapling": {
     "textures": "textures/gloamingforest/block/mining_sapling"
   },
-  "tf_block_rainbow_oak_sapling": {
+  "gf_block_rainbow_oak_sapling": {
     "textures": "textures/gloamingforest/block/rainbow_oak_sapling"
   },
-  "tf_block_sorting_leaves": {
+  "gf_block_sorting_leaves": {
     "textures": "textures/gloamingforest/block/sorting_leaves"
   },
-  "tf_block_sorting_log_core": {
+  "gf_block_sorting_log_core": {
     "textures": "textures/gloamingforest/block/sorting_log_core"
   },
-  "tf_block_sorting_log_core_on": {
+  "gf_block_sorting_log_core_on": {
     "textures": "textures/gloamingforest/block/sorting_log_core_on"
   },
-  "tf_block_sorting_sapling": {
+  "gf_block_sorting_sapling": {
     "textures": "textures/gloamingforest/block/sorting_sapling"
   },
-  "tf_block_time_leaves": {
+  "gf_block_time_leaves": {
     "textures": "textures/gloamingforest/block/time_leaves"
   },
-  "tf_block_time_log_core": {
+  "gf_block_time_log_core": {
     "textures": "textures/gloamingforest/block/time_log_core"
   },
-  "tf_block_time_log_core_on": {
+  "gf_block_time_log_core_on": {
     "textures": "textures/gloamingforest/block/time_log_core_on"
   },
-  "tf_block_time_sapling": {
+  "gf_block_time_sapling": {
     "textures": "textures/gloamingforest/block/time_sapling"
   },
-  "tf_block_transformation_leaves": {
+  "gf_block_transformation_leaves": {
     "textures": "textures/gloamingforest/block/transformation_leaves"
   },
-  "tf_block_transformation_log_core": {
+  "gf_block_transformation_log_core": {
     "textures": "textures/gloamingforest/block/transformation_log_core"
   },
-  "tf_block_transformation_log_core_on": {
+  "gf_block_transformation_log_core_on": {
     "textures": "textures/gloamingforest/block/transformation_log_core_on"
   },
-  "tf_block_transformation_sapling": {
+  "gf_block_transformation_sapling": {
     "textures": "textures/gloamingforest/block/transformation_sapling"
   },
-  "tf_vanilla_block_birch_leaves": {
+  "gf_vanilla_block_birch_leaves": {
     "textures": "textures/blocks/leaves_birch_carried"
   },
-  "tf_vanilla_block_spruce_leaves": {
+  "gf_vanilla_block_spruce_leaves": {
     "textures": "textures/blocks/leaves_spruce_carried"
   }
 }

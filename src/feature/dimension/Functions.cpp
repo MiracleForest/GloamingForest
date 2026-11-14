@@ -93,7 +93,7 @@ void runTp(CommandOrigin const& commandOrigin, CommandOutput& output, bool toGlo
     // Java runs functions at permission level 2
     if (!commands::isAdmin(commandOrigin)) return output.error("You need operator permission.");
     auto* dimension = commandOrigin.getDimension();
-    auto  missing   = [&] { output.error(tr("commands.tffeature.teleport.dimension_missing", "The Gloaming Forest dimension is unavailable.")); };
+    auto  missing   = [&] { output.error(tr("commands.gloamingfeature.teleport.dimension_missing", "The Gloaming Forest dimension is unavailable.")); };
     if (!dimension) return missing();
     // the source position: the origin's (`execute ... at / positioned` set it); a player's own
     // origin reports its eyes, Java's source is the player's position (its feet)

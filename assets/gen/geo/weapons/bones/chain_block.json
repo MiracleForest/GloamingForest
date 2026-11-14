@@ -3,14 +3,14 @@
   "geometry": "geometry.gloamingforest.chain_block",
   "layer": {
     "name": "chain_block",
-    "field": "TFModelLayers.CHAIN_BLOCK",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.CHAIN_BLOCK, SpikeBlockModel::create);"
+    "field": "GloamingModelLayers.CHAIN_BLOCK",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.CHAIN_BLOCK, SpikeBlockModel::create);"
   },
   "texture_size": [32, 16],
   "textures": [
     {
       "bedrock": "textures/gloamingforest/entity/block_and_chain",
-      "tf": "src/main/resources/assets/gloamingforest/textures/entity/block_and_chain.png"
+      "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/block_and_chain.png"
     }
   ],
   "bones": [

@@ -1,5 +1,5 @@
 // Tests of U15's atmosphere maths (src/core/atmosphere): upstream's GloamingForestRenderInfo,
-// TFSkyRenderer, FogHandler, TFWeatherRenderer, IntervalUtils and the aurora shader.
+// GloamingSkyRenderer, FogHandler, GloamingWeatherRenderer, IntervalUtils and the aurora shader.
 
 #include <gtest/gtest.h>
 

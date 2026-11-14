@@ -211,19 +211,19 @@ GF_REGISTER_SELFTEST("artifacts.loyal_zombie", [](Context& ctx) -> ll::coro::Cor
 });
 
 // FortificationShieldAttachment: 5 temporary shields absorb hits (one per invulnerability window),
-// expire after 240 ticks, count tf_shields_broken; /gloamingforest shield; give_3_shields.
+// expire after 240 ticks, count gf_shields_broken; /gloamingforest shield; give_3_shields.
 GF_REGISTER_SELFTEST("artifacts.shields", [](Context& ctx) -> ll::coro::CoroTask<> {
     auto& p = ctx.player();
     setShields(p, 0, true);
     setShields(p, 0, false);
     setShields(p, 5, true);
     ctx.check(shieldsOf(p).left() == 5, "5 temporary shields");
-    long long stat = gf::stats::value(p, "gloamingforest:tf_shields_broken");
+    long long stat = gf::stats::value(p, "gloamingforest:gf_shields_broken");
     int       hp   = p.getHealth();
     bool      ok   = gf::combat::hurt(p, 4.0f, "minecraft:generic");
     ctx.check(!ok && p.getHealth() == hp, "the hit was absorbed");
     ctx.check(shieldsOf(p).left() == 4, "one shield broke (" + std::to_string(shieldsOf(p).left()) + ")");
-    ctx.check(gf::stats::value(p, "gloamingforest:tf_shields_broken") == stat + 1, "tf_shields_broken counted");
+    ctx.check(gf::stats::value(p, "gloamingforest:gf_shields_broken") == stat + 1, "gf_shields_broken counted");
     (void)gf::combat::hurt(p, 4.0f, "minecraft:generic");
     ctx.check(shieldsOf(ctx.player()).left() == 4, "a hit inside the invulnerability window breaks none");
     co_await ctx.ticks(245);

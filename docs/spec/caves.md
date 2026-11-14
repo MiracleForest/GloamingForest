@@ -11,10 +11,10 @@ relative to `src/main/java/gloamingforest/`; data paths to `src/generated/resour
 | Contracts | landmark, structure, features, boss, entity, projectile, client.render |
 | Config | none |
 
-Note on ownership: owners.tsv gives U27 the four cloud piece types (`TFClCa`, `TFCloud`, `TFClTr`, `TFTCloud`, which
+Note on ownership: owners.tsv gives U27 the four cloud piece types (`GloamingClCa`, `GloamingCloud`, `GloamingClTr`, `GloamingTCloud`, which
 live in upstream's `trollcave` package) while the `gloamingforest:giant_house` structure that uses the cloud castle is
 U29's. U27 implements and registers these piece types (F7 `registerPieceType`); U29's structure creates its first
-piece by the string id `gloamingforest:TFClCa` (R2).
+piece by the string id `gloamingforest:GloamingClCa` (R2).
 
 **Tag namespaces.** Tags are written `#<ns>:<path>`. `#gloamingforest:` tags and the `#c:` / `#neoforge:` tags that
 owners.tsv lists (`tag` rows) are upstream data (`data/<ns>/tags/**`) imported by F1; `#minecraft:` tags are vanilla Java
@@ -47,10 +47,10 @@ First piece `TrollCaveMainComponent(0, x, y + 11, z)` (y = sea level 0 + 11).
 
 | Piece id | Class | Summary |
 |---|---|---|
-| `gloamingforest:TFTCMai` | TrollCaveMainComponent | size 30, height 20, box from (-15, -20, -15) (30 x 20 x 30), SOUTH. Children: 4 connecting caves (size 18, height 15) at random openings on each wall (`getValidOpening`: offset = size / 4, x/z along the wall in [offset, size - offset), y for the CW90/CCW90 walls `rand(offset) - rand(offset)`), each added only without collision; a troll vault at the box centre. postProcess: `hollowCaveMiddle` (ellipsoidal hollowing: `dist = sqrt(ex x ey x ez)` with ey doubled from the floor, threshold size / 5; blocks in `#gloamingforest:cannot_troll_cave_hollow` kept; `dist > threshold` -> air, `dist == threshold` 1/4 base stone -> `gloamingforest:trollsteinn`), speleothems over the lattice (stalactites only under solid ceilings, stalagmites from the floor) with `decoRNG = seed + minX x 321534781 ^ minZ x 756839`, 32 uberous soil patches (`gloamingforest:uberous_soil_patch_big`, U29's feature by string) at the surface above random cave points (searching up from sea level + 15 for 15 blocks) |
-| `gloamingforest:TFTCCon` | TrollCaveConnectComponent | connecting cave (size 18 or 20, height 15) with `openingTowards[4]` (saved `openingTowards0..3`). Children (depth < 3): per side, 50 % try a garden cave (size 30, height 15; not within 30 blocks of another garden) else a smaller cave (size 20, height 15). postProcess: hollow, wall decorations on closed sides (1/2 bracket mushrooms: rows every 2 blocks of `huge_mushgloom` 1/3 else brown/red mushroom blocks, width/depth 1-3; else 1/2 two stone formations: 1/8 obsidian, 1/4 trollsteinn, else stone), speleothems, then a treasure crate (obsidian box with a chest of `gloamingforest:troll_garden`) when it has exactly one exit and 1/3, else 1/3 an obsidian monolith (height 7 + rand(8)) |
-| `gloamingforest:TFTCGard` | TrollCaveGardenComponent | garden cave; skipped entirely when its box is outside the highlands / highlands underground biomes; hollow, treasure crate (`troll_garden`), 24 `gloamingforest:troll_cave_dirt` and 16 `gloamingforest:troll_cave_mycelium` blobs, 16 small uberous soil patches (`gloamingforest:uberous_soil_patch_small`) inside and at the surface above, 8 mycelium + `gloamingforest:troll_big_mushglooms`, 16 mycelium + `gloamingforest:troll_huge_brown_mushrooms` / `gloamingforest:troll_huge_red_mushrooms` (50/50), speleothems. No children ("add a cloud" is a no-op in upstream) |
-| `gloamingforest:TFTCVa` | TrollVaultComponent | 12 x 12 x 12 cube of `gloamingforest:giant_obsidian` (U29's block) aligned to multiples of 4 around the main cave centre (x, z rounded down to 4, y to 4; box (-8, 0, -8)), hollow 4..7, cobblestone platform 5..6, two double chests: (5,6,5)-(5,6,6) with `gloamingforest:troll_vault` and `gloamingforest:troll_vault_with_lamp`, and (6,6,5)-(6,6,6) with `gloamingforest:troll_garden`; no controlled spawns |
+| `gloamingforest:GloamingTCMai` | TrollCaveMainComponent | size 30, height 20, box from (-15, -20, -15) (30 x 20 x 30), SOUTH. Children: 4 connecting caves (size 18, height 15) at random openings on each wall (`getValidOpening`: offset = size / 4, x/z along the wall in [offset, size - offset), y for the CW90/CCW90 walls `rand(offset) - rand(offset)`), each added only without collision; a troll vault at the box centre. postProcess: `hollowCaveMiddle` (ellipsoidal hollowing: `dist = sqrt(ex x ey x ez)` with ey doubled from the floor, threshold size / 5; blocks in `#gloamingforest:cannot_troll_cave_hollow` kept; `dist > threshold` -> air, `dist == threshold` 1/4 base stone -> `gloamingforest:trollsteinn`), speleothems over the lattice (stalactites only under solid ceilings, stalagmites from the floor) with `decoRNG = seed + minX x 321534781 ^ minZ x 756839`, 32 uberous soil patches (`gloamingforest:uberous_soil_patch_big`, U29's feature by string) at the surface above random cave points (searching up from sea level + 15 for 15 blocks) |
+| `gloamingforest:GloamingTCCon` | TrollCaveConnectComponent | connecting cave (size 18 or 20, height 15) with `openingTowards[4]` (saved `openingTowards0..3`). Children (depth < 3): per side, 50 % try a garden cave (size 30, height 15; not within 30 blocks of another garden) else a smaller cave (size 20, height 15). postProcess: hollow, wall decorations on closed sides (1/2 bracket mushrooms: rows every 2 blocks of `huge_mushgloom` 1/3 else brown/red mushroom blocks, width/depth 1-3; else 1/2 two stone formations: 1/8 obsidian, 1/4 trollsteinn, else stone), speleothems, then a treasure crate (obsidian box with a chest of `gloamingforest:troll_garden`) when it has exactly one exit and 1/3, else 1/3 an obsidian monolith (height 7 + rand(8)) |
+| `gloamingforest:GloamingTCGard` | TrollCaveGardenComponent | garden cave; skipped entirely when its box is outside the highlands / highlands underground biomes; hollow, treasure crate (`troll_garden`), 24 `gloamingforest:troll_cave_dirt` and 16 `gloamingforest:troll_cave_mycelium` blobs, 16 small uberous soil patches (`gloamingforest:uberous_soil_patch_small`) inside and at the surface above, 8 mycelium + `gloamingforest:troll_big_mushglooms`, 16 mycelium + `gloamingforest:troll_huge_brown_mushrooms` / `gloamingforest:troll_huge_red_mushrooms` (50/50), speleothems. No children ("add a cloud" is a no-op in upstream) |
+| `gloamingforest:GloamingTCVa` | TrollVaultComponent | 12 x 12 x 12 cube of `gloamingforest:giant_obsidian` (U29's block) aligned to multiples of 4 around the main cave centre (x, z rounded down to 4, y to 4; box (-8, 0, -8)), hollow 4..7, cobblestone platform 5..6, two double chests: (5,6,5)-(5,6,6) with `gloamingforest:troll_vault` and `gloamingforest:troll_vault_with_lamp`, and (6,6,5)-(6,6,6) with `gloamingforest:troll_garden`; no controlled spawns |
 
 Golden hash per piece (R19). Strings: `structure.gloamingforest.troll_cave` "Troll Cave".
 
@@ -58,10 +58,10 @@ Golden hash per piece (R19). Strings: `structure.gloamingforest.troll_cave` "Tro
 
 | Piece id | Class | Summary |
 |---|---|---|
-| `gloamingforest:TFClCa` | CloudCastleComponent | coordinates rounded down to multiples of 4, box (-8, -4, -8) size 64 x 16 x 64; children: a `TFCloud` at (minX, minY + 3, minZ) and two cloud trees at y 168: x-tree at (minX + 8 + (rand bool ? 32 : -16), minZ + (rand(5) - rand(5)) x 4), z-tree mirrored. postProcess: fluffy cloud slab (8,0,8)-(23,3,23), giant cobblestone walls (8,4,8)-(23,15,23), giant log roof (8,16,8)-(23,19,23), hollow (12,4,12)-(19,15,19), door (8,4,12)-(12,11,15); spawns one `gloamingforest:giant_miner` at (14,4,14) and one `gloamingforest:armored_giant` at (17,4,17), persistent, finalized STRUCTURE (only when the chunk being generated contains the point) |
-| `gloamingforest:TFCloud` | CloudComponent | box aligned to chunks: min = (center - 32) & ~15, size 96 + 15 horizontally, y maxY - 8..maxY; per generated chunk a procedural cloud: region seed `(rx x 3129871 ^ rz x 116129781)`, `seed = seed^2 x 42317861 + seed x 7`, three blob centres (num0..num3 from seed bits), 4 x 4 cells of 4 x 4 columns with `dist = min(d0/4, d2/3.5, d3/4.5)`, `cv = dist - 7 - r x 3`; top `gloamingforest:fluffy_cloud` in the centre chunk else `gloamingforest:wispy_cloud`, fluffy below to depth 4 (+1 if r > 0.6, +1 if r > 0.9), wispy bottom; fringe wispy only; only replaces air (exact algorithm in upstream) |
-| `gloamingforest:TFClTr` | CloudTreeComponent | coordinates rounded to 4, box (-8, 0, -8) 20 x 28 x 20: giant leaves (0,12,0)-(19,19,19), (4,20,4)-(15,23,15), crosses (8,24,4)-(11,27,15) and (4,24,8)-(15,27,11); giant log trunk (8,0,8)-(11,23,11); fluffy cloud base (8,-4,8)-(11,-1,11) |
-| `gloamingforest:TFTCloud` | TrollCloudComponent | legacy piece (never generated in 4.8, deserialised only): white stained glass box of `size` x 7 x `size` with a quartz core; saved `size`, `height` |
+| `gloamingforest:GloamingClCa` | CloudCastleComponent | coordinates rounded down to multiples of 4, box (-8, -4, -8) size 64 x 16 x 64; children: a `GloamingCloud` at (minX, minY + 3, minZ) and two cloud trees at y 168: x-tree at (minX + 8 + (rand bool ? 32 : -16), minZ + (rand(5) - rand(5)) x 4), z-tree mirrored. postProcess: fluffy cloud slab (8,0,8)-(23,3,23), giant cobblestone walls (8,4,8)-(23,15,23), giant log roof (8,16,8)-(23,19,23), hollow (12,4,12)-(19,15,19), door (8,4,12)-(12,11,15); spawns one `gloamingforest:giant_miner` at (14,4,14) and one `gloamingforest:armored_giant` at (17,4,17), persistent, finalized STRUCTURE (only when the chunk being generated contains the point) |
+| `gloamingforest:GloamingCloud` | CloudComponent | box aligned to chunks: min = (center - 32) & ~15, size 96 + 15 horizontally, y maxY - 8..maxY; per generated chunk a procedural cloud: region seed `(rx x 3129871 ^ rz x 116129781)`, `seed = seed^2 x 42317861 + seed x 7`, three blob centres (num0..num3 from seed bits), 4 x 4 cells of 4 x 4 columns with `dist = min(d0/4, d2/3.5, d3/4.5)`, `cv = dist - 7 - r x 3`; top `gloamingforest:fluffy_cloud` in the centre chunk else `gloamingforest:wispy_cloud`, fluffy below to depth 4 (+1 if r > 0.6, +1 if r > 0.9), wispy bottom; fringe wispy only; only replaces air (exact algorithm in upstream) |
+| `gloamingforest:GloamingClTr` | CloudTreeComponent | coordinates rounded to 4, box (-8, 0, -8) 20 x 28 x 20: giant leaves (0,12,0)-(19,19,19), (4,20,4)-(15,23,15), crosses (8,24,4)-(11,27,15) and (4,24,8)-(15,27,11); giant log trunk (8,0,8)-(11,23,11); fluffy cloud base (8,-4,8)-(11,-1,11) |
+| `gloamingforest:GloamingTCloud` | TrollCloudComponent | legacy piece (never generated in 4.8, deserialised only): white stained glass box of `size` x 7 x `size` with a quartz core; saved `size`, `height` |
 
 ## 2. Structure `gloamingforest:yeti_cave`
 
@@ -80,7 +80,7 @@ Sources: `world/components/structures/type/YetiCaveStructure.java`, `world/compo
 | Map icon | `gloamingforest:yeti_lair` |
 | Speleothems | `gloamingforest:yeti_cave`: lattice spacing 3.5 (x_offset 3.0311449, x_spacing 6.0622897, z_offset 1.7499031, z_spacing 3.5); base stalactites ice, packed ice, blue ice; stalactite chance 1.0, stalagmite chance 0 |
 
-Piece `gloamingforest:TFYeti` (`YetiCaveComponent extends HollowHillComponent`, hill size 2: radius 34, created at
+Piece `gloamingforest:GloamingYeti` (`YetiCaveComponent extends HollowHillComponent`, hill size 2: radius 34, created at
 (x, y + 4, z), box min y lowered by 1 and every local y shifted +1). postProcess: drain water within Chebyshev radius 34
 of the centre down 6 below local y 4 (water -> cave air; dirt / snow block below the first solid -> packed ice); over
 the lattice (from local y 4) within 24 blocks (x and z): stalactites at +`15 - minDelta / 6` and stalagmites at
@@ -99,7 +99,7 @@ Strings: `structure.gloamingforest.yeti_cave` "Yeti Cave".
 ## 3. Blocks
 
 Sources: `block/TrollsteinnBlock.java`, `block/TrollRootBlock.java`, `block/UnripeTorchClusterBlock.java`, vanilla
-`HugeMushroomBlock`, `init/TFBlocks.java`, `client/model/block/` (TrollsteinnModel).
+`HugeMushroomBlock`, `init/GloamingBlocks.java`, `client/model/block/` (TrollsteinnModel).
 
 | Block | Properties | States | Light | Tool / tags |
 |---|---|---|---|---|
@@ -164,7 +164,7 @@ string.
 
 ### 5.1 `gloamingforest:troll` (Troll, RangedAttackMob)
 
-Source: `entity/monster/Troll.java`, `client/model/entity/TrollModel.java`, renderer `TFBipedRenderer` (`troll.png`, shadow 0.625).
+Source: `entity/monster/Troll.java`, `client/model/entity/TrollModel.java`, renderer `GloamingBipedRenderer` (`troll.png`, shadow 0.625).
 
 | Field | Value |
 |---|---|
@@ -196,14 +196,14 @@ above 1 when looting).
 
 ### 5.2 `gloamingforest:thrown_block` (ThrownBlock)
 
-TFThrowable, 1.0 x 1.0, tracking 80, interval 2, fire immune, no egg; carries a block state (default stone; saved
+GloamingThrowable, 1.0 x 1.0, tracking 80, interval 2, fire immune, no egg; carries a block state (default stone; saved
 `BlockState`, sent as the add-entity data id). Hit a living non-troll entity (server): 6 `gloamingforest:thrown_block`
 damage, entity event 3 (20 block particles), discard. Hit a block: event 3, game event BLOCK_DESTROY, discard (the
 rock is lost). Display name = the block's name. Renderer: the block model rotated by yaw - 90, shadow 0.5.
 
 ### 5.3 `gloamingforest:yeti` (Yeti, IHostileMount)
 
-Source: `entity/monster/Yeti.java`, `entity/ai/goal/ThrowRiderGoal.java`, `client/model/entity/YetiModel.java`, renderer `TFBipedRenderer` (`yeti2.png`, shadow 0.625).
+Source: `entity/monster/Yeti.java`, `entity/ai/goal/ThrowRiderGoal.java`, `client/model/entity/YetiModel.java`, renderer `GloamingBipedRenderer` (`yeti2.png`, shadow 0.625).
 
 | Field | Value |
 |---|---|
@@ -250,7 +250,7 @@ motion (`SetActorMotionPacket`).
 ### 5.5 Boss `gloamingforest:alpha_yeti` (AlphaYeti extends BaseTFBoss, RangedAttackMob, IHostileMount)
 
 Source: `entity/boss/AlphaYeti.java`, `entity/ai/goal/{YetiRampageGoal,YetiTiredGoal,ThrowRiderGoal,AttemptToGoHomeGoal}.java`,
-`block/entity/spawner/AlphaYetiSpawnerBlockEntity.java`, `client/model/entity/AlphaYetiModel.java`, renderer `TFBipedRenderer` (`yetialpha.png`, shadow 1.75).
+`block/entity/spawner/AlphaYetiSpawnerBlockEntity.java`, `client/model/entity/AlphaYetiModel.java`, renderer `GloamingBipedRenderer` (`yetialpha.png`, shadow 1.75).
 
 | Field | Value |
 |---|---|

@@ -20,15 +20,15 @@
         "destroy_chance_modifier": 100
       },
       "minecraft:collision_box": false,
-      "minecraft:geometry": "geometry.tf.minecraft.block.cross",
+      "minecraft:geometry": "geometry.gf.minecraft.block.cross",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_fiddlehead",
+          "texture": "gf_block_fiddlehead",
           "render_method": "alpha_test",
           "tint_method": "grass"
         },
         "cross": {
-          "texture": "tf_block_fiddlehead",
+          "texture": "gf_block_fiddlehead",
           "render_method": "alpha_test",
           "tint_method": "grass"
         }

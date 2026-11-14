@@ -10,7 +10,7 @@
         "default": "textures/misc/missing_texture"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.wand_bolt"
+        "default": "geometry.gf.skeleton.wand_bolt"
       },
       "render_controllers": ["controller.render.default"]
     }

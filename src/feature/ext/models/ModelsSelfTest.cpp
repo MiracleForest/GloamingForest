@@ -196,7 +196,7 @@ GF_REGISTER_SELFTEST("models.index", [](Context& ctx) {
     ctx.check(animations >= 1 && attachables >= 1, "base animations and attachables are listed");
     ctx.info("index: " + std::to_string(geometries) + " geometries, " + std::to_string(vanilla) + " vanilla layers, "
              + std::to_string(animations) + " base animations, " + std::to_string(attachables) + " attachables (upstream "
-             + str(idx, "tf", "?") + ")");
+             + str(idx, "upsrc", "?") + ")");
 });
 
 GF_REGISTER_SELFTEST("models.geometry", [](Context& ctx) {

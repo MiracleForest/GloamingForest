@@ -3,8 +3,8 @@
   "geometry": "geometry.gloamingforest.fiery_armor.chestplate",
   "layer": {
     "name": "fiery_armor_outer",
-    "field": "TFModelLayers.FIERY_ARMOR_OUTER",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.FIERY_ARMOR_OUTER, () -> LayerDefinition.create(FieryArmorModel.createMesh(LayerDefinitions.OUTER_ARMOR_DEFORMATION, 0.0F), 64, 32));"
+    "field": "GloamingModelLayers.FIERY_ARMOR_OUTER",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.FIERY_ARMOR_OUTER, () -> LayerDefinition.create(FieryArmorModel.createMesh(LayerDefinitions.OUTER_ARMOR_DEFORMATION, 0.0F), 64, 32));"
   },
   "slot": "chestplate",
   "parts": ["body", "right_arm", "left_arm"],

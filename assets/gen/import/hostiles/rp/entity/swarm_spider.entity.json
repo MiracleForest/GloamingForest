@@ -10,7 +10,7 @@
         "default": "textures/gloamingforest/entity/swarmspider"
       },
       "geometry": {
-        "default": "geometry.tf.skeleton.swarm_spider"
+        "default": "geometry.gf.skeleton.swarm_spider"
       },
       "render_controllers": ["controller.render.default"],
       "spawn_egg": {

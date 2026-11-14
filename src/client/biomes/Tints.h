@@ -34,15 +34,15 @@ namespace gf::client::biomes {
 /// upstream's own blocks drawn with the biome grass colour that are owned by other units (ColorHandler:
 /// the fiddlehead and its potted form), and the textures of their tinted faces (the client gives
 /// those material instances the grass tint method, feature/ext/biomes/VanillaTint.cpp).
-[[nodiscard]] std::span<char const* const> tfGrassBlocks();
-[[nodiscard]] std::span<char const* const> tfGrassTextures();
+[[nodiscard]] std::span<char const* const> gloamingGrassBlocks();
+[[nodiscard]] std::span<char const* const> gloamingGrassTextures();
 
 /// The namespaced id of a biome ("minecraft:plains", "gloamingforest:swamp"), cached per biome object
 /// on this thread. An entry is checked against the biome's name hash on every use, so a biome of
 /// another world (a remote join reuses the address) is looked up again.
 [[nodiscard]] std::string const& biomeIdOf(Biome const& biome);
 /// Whether `biomeId` is one of upstream's 22 biomes.
-[[nodiscard]] bool isTfBiome(std::string_view biomeId);
+[[nodiscard]] bool isGloamingBiome(std::string_view biomeId);
 
 } // namespace gf::client::biomes
 

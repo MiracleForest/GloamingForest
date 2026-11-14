@@ -3,8 +3,8 @@
   "source": "CustomHeadLayer.translateToHead + the item model's 'head' display + ItemRenderer (builtin/entity) + ISTER + TrophyRenderer.render(null, 180, ItemDisplayContext.HEAD) + UrGhastModel.renderTrophy (item form: no y offset) + waveTentacles",
   "layer": {
     "name": "ur_ghast_trophy",
-    "field": "TFModelLayers.UR_GHAST_TROPHY",
-    "supplier": "event.registerLayerDefinition(TFModelLayers.UR_GHAST_TROPHY, UrGhastModel::create);"
+    "field": "GloamingModelLayers.UR_GHAST_TROPHY",
+    "supplier": "event.registerLayerDefinition(GloamingModelLayers.UR_GHAST_TROPHY, UrGhastModel::create);"
   },
   "frame": "head",
   "slot": "head",
@@ -24,7 +24,7 @@
       "identifier": "geometry.gloamingforest.ur_ghast_trophy_worn",
       "texture": {
         "bedrock": "textures/gloamingforest/entity/towerboss",
-        "tf": "src/main/resources/assets/gloamingforest/textures/entity/towerboss.png"
+        "upsrc": "src/main/resources/assets/gloamingforest/textures/entity/towerboss.png"
       },
       "material": "entity_alphatest"
     }

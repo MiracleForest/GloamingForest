@@ -1,11 +1,11 @@
 {
-  "tf_building_item_trophy": {
+  "gf_building_item_trophy": {
     "textures": "textures/gloamingforest/item/trophy"
   },
-  "tf_building_item_trophy_minor": {
+  "gf_building_item_trophy_minor": {
     "textures": "textures/gloamingforest/item/trophy_minor"
   },
-  "tf_building_item_trophy_quest": {
+  "gf_building_item_trophy_quest": {
     "textures": "textures/gloamingforest/item/trophy_quest"
   }
 }

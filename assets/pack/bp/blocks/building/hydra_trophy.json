@@ -42,7 +42,7 @@
       "minecraft:geometry": "geometry.gloamingforest.building.hydra_trophy_r0",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_building_hydra4",
+          "texture": "gf_building_hydra4",
           "render_method": "alpha_test"
         }
       }

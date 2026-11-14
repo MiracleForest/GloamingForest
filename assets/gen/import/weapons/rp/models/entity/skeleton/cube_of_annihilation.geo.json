@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.tf.skeleton.cube_of_annihilation",
+        "identifier": "geometry.gf.skeleton.cube_of_annihilation",
         "texture_width": 64,
         "texture_height": 64,
         "visible_bounds_width": 2,

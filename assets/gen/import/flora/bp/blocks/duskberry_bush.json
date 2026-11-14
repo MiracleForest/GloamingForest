@@ -24,14 +24,14 @@
       "minecraft:destructible_by_explosion": {
         "explosion_resistance": 0
       },
-      "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_small_0",
+      "minecraft:geometry": "geometry.gf.gloamingforest.block.abstract_bush_small_0",
       "minecraft:material_instances": {
         "*": {
-          "texture": "tf_block_duskberry_bush",
+          "texture": "gf_block_duskberry_bush",
           "render_method": "alpha_test"
         },
         "all": {
-          "texture": "tf_block_duskberry_bush",
+          "texture": "gf_block_duskberry_bush",
           "render_method": "alpha_test"
         }
       },
@@ -49,14 +49,14 @@
       {
         "condition": "q.block_state('gloamingforest:age') == 0 && q.block_state('gloamingforest:layers') == 0",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_small_0",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.abstract_bush_small_0",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "all": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             }
           },
@@ -73,18 +73,18 @@
       {
         "condition": "q.block_state('gloamingforest:age') == 0 && q.block_state('gloamingforest:layers') == 1",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_small_1",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.abstract_bush_small_1",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "all": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "snow": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             }
           },
@@ -101,18 +101,18 @@
       {
         "condition": "q.block_state('gloamingforest:age') == 0 && q.block_state('gloamingforest:layers') == 2",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_small_2",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.abstract_bush_small_2",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "all": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "snow": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             }
           },
@@ -129,18 +129,18 @@
       {
         "condition": "q.block_state('gloamingforest:age') == 0 && q.block_state('gloamingforest:layers') == 3",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_small_3",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.abstract_bush_small_3",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "all": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "snow": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             }
           },
@@ -157,14 +157,14 @@
       {
         "condition": "q.block_state('gloamingforest:age') == 0 && q.block_state('gloamingforest:layers') == 4",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_small_4",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.abstract_bush_small_4",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "snow": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             }
           },
@@ -181,14 +181,14 @@
       {
         "condition": "q.block_state('gloamingforest:age') == 0 && q.block_state('gloamingforest:layers') == 5",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_small_5",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.abstract_bush_small_5",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "snow": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             }
           },
@@ -205,14 +205,14 @@
       {
         "condition": "q.block_state('gloamingforest:age') == 0 && q.block_state('gloamingforest:layers') == 6",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_small_6",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.abstract_bush_small_6",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "snow": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             }
           },
@@ -229,14 +229,14 @@
       {
         "condition": "q.block_state('gloamingforest:age') == 0 && q.block_state('gloamingforest:layers') == 7",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_small_7",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.abstract_bush_small_7",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "snow": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             }
           },
@@ -253,14 +253,14 @@
       {
         "condition": "q.block_state('gloamingforest:age') == 0 && q.block_state('gloamingforest:layers') == 8",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_small_8",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.abstract_bush_small_8",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "snow": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             }
           },
@@ -271,14 +271,14 @@
       {
         "condition": "q.block_state('gloamingforest:age') == 1 && q.block_state('gloamingforest:layers') == 0",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_0",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.abstract_bush_0",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "all": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             }
           },
@@ -295,18 +295,18 @@
       {
         "condition": "q.block_state('gloamingforest:age') == 1 && q.block_state('gloamingforest:layers') == 1",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_1",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.abstract_bush_1",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "all": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "snow": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             }
           },
@@ -323,18 +323,18 @@
       {
         "condition": "q.block_state('gloamingforest:age') == 1 && q.block_state('gloamingforest:layers') == 2",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_2",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.abstract_bush_2",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "all": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "snow": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             }
           },
@@ -351,18 +351,18 @@
       {
         "condition": "q.block_state('gloamingforest:age') == 1 && q.block_state('gloamingforest:layers') == 3",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_3",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.abstract_bush_3",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "all": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "snow": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             }
           },
@@ -379,18 +379,18 @@
       {
         "condition": "q.block_state('gloamingforest:age') == 1 && q.block_state('gloamingforest:layers') == 4",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_4",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.abstract_bush_4",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "all": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "snow": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             }
           },
@@ -407,18 +407,18 @@
       {
         "condition": "q.block_state('gloamingforest:age') == 1 && q.block_state('gloamingforest:layers') == 5",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_5",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.abstract_bush_5",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "all": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "snow": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             }
           },
@@ -435,14 +435,14 @@
       {
         "condition": "q.block_state('gloamingforest:age') == 1 && q.block_state('gloamingforest:layers') == 6",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_6",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.abstract_bush_6",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "snow": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             }
           },
@@ -459,14 +459,14 @@
       {
         "condition": "q.block_state('gloamingforest:age') == 1 && q.block_state('gloamingforest:layers') == 7",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_7",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.abstract_bush_7",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "snow": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             }
           },
@@ -483,14 +483,14 @@
       {
         "condition": "q.block_state('gloamingforest:age') == 1 && q.block_state('gloamingforest:layers') == 8",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_8",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.abstract_bush_8",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "snow": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             }
           },
@@ -501,14 +501,14 @@
       {
         "condition": "q.block_state('gloamingforest:age') == 2 && q.block_state('gloamingforest:layers') == 0",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_large_0",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.abstract_bush_large_0",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "all": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             }
           },
@@ -525,18 +525,18 @@
       {
         "condition": "q.block_state('gloamingforest:age') == 2 && q.block_state('gloamingforest:layers') == 1",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_large_1",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.abstract_bush_large_1",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "all": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "snow": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             }
           },
@@ -547,18 +547,18 @@
       {
         "condition": "q.block_state('gloamingforest:age') == 2 && q.block_state('gloamingforest:layers') == 2",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_large_2",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.abstract_bush_large_2",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "all": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "snow": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             }
           },
@@ -569,18 +569,18 @@
       {
         "condition": "q.block_state('gloamingforest:age') == 2 && q.block_state('gloamingforest:layers') == 3",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_large_3",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.abstract_bush_large_3",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "all": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "snow": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             }
           },
@@ -591,18 +591,18 @@
       {
         "condition": "q.block_state('gloamingforest:age') == 2 && q.block_state('gloamingforest:layers') == 4",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_large_4",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.abstract_bush_large_4",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "all": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "snow": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             }
           },
@@ -613,18 +613,18 @@
       {
         "condition": "q.block_state('gloamingforest:age') == 2 && q.block_state('gloamingforest:layers') == 5",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_large_5",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.abstract_bush_large_5",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "all": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "snow": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             }
           },
@@ -635,18 +635,18 @@
       {
         "condition": "q.block_state('gloamingforest:age') == 2 && q.block_state('gloamingforest:layers') == 6",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_large_6",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.abstract_bush_large_6",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "all": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "snow": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             }
           },
@@ -657,18 +657,18 @@
       {
         "condition": "q.block_state('gloamingforest:age') == 2 && q.block_state('gloamingforest:layers') == 7",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_large_7",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.abstract_bush_large_7",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "all": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "snow": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             }
           },
@@ -682,31 +682,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_duskberry_bush",
+              "texture": "gf_block_duskberry_bush",
               "render_method": "alpha_test"
             },
             "up": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             },
             "down": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             },
             "north": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             },
             "south": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             },
             "east": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             },
             "west": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             }
           },
@@ -717,14 +717,14 @@
       {
         "condition": "q.block_state('gloamingforest:age') == 3 && q.block_state('gloamingforest:layers') == 0",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_grown_0",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.abstract_bush_grown_0",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_duskberry_bush_ripe",
+              "texture": "gf_block_duskberry_bush_ripe",
               "render_method": "alpha_test"
             },
             "all": {
-              "texture": "tf_block_duskberry_bush_ripe",
+              "texture": "gf_block_duskberry_bush_ripe",
               "render_method": "alpha_test"
             }
           },
@@ -741,18 +741,18 @@
       {
         "condition": "q.block_state('gloamingforest:age') == 3 && q.block_state('gloamingforest:layers') == 1",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_grown_1",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.abstract_bush_grown_1",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_duskberry_bush_ripe",
+              "texture": "gf_block_duskberry_bush_ripe",
               "render_method": "alpha_test"
             },
             "all": {
-              "texture": "tf_block_duskberry_bush_ripe",
+              "texture": "gf_block_duskberry_bush_ripe",
               "render_method": "alpha_test"
             },
             "snow": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             }
           },
@@ -763,18 +763,18 @@
       {
         "condition": "q.block_state('gloamingforest:age') == 3 && q.block_state('gloamingforest:layers') == 2",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_grown_2",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.abstract_bush_grown_2",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_duskberry_bush_ripe",
+              "texture": "gf_block_duskberry_bush_ripe",
               "render_method": "alpha_test"
             },
             "all": {
-              "texture": "tf_block_duskberry_bush_ripe",
+              "texture": "gf_block_duskberry_bush_ripe",
               "render_method": "alpha_test"
             },
             "snow": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             }
           },
@@ -785,18 +785,18 @@
       {
         "condition": "q.block_state('gloamingforest:age') == 3 && q.block_state('gloamingforest:layers') == 3",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_grown_3",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.abstract_bush_grown_3",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_duskberry_bush_ripe",
+              "texture": "gf_block_duskberry_bush_ripe",
               "render_method": "alpha_test"
             },
             "all": {
-              "texture": "tf_block_duskberry_bush_ripe",
+              "texture": "gf_block_duskberry_bush_ripe",
               "render_method": "alpha_test"
             },
             "snow": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             }
           },
@@ -807,18 +807,18 @@
       {
         "condition": "q.block_state('gloamingforest:age') == 3 && q.block_state('gloamingforest:layers') == 4",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_grown_4",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.abstract_bush_grown_4",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_duskberry_bush_ripe",
+              "texture": "gf_block_duskberry_bush_ripe",
               "render_method": "alpha_test"
             },
             "all": {
-              "texture": "tf_block_duskberry_bush_ripe",
+              "texture": "gf_block_duskberry_bush_ripe",
               "render_method": "alpha_test"
             },
             "snow": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             }
           },
@@ -829,18 +829,18 @@
       {
         "condition": "q.block_state('gloamingforest:age') == 3 && q.block_state('gloamingforest:layers') == 5",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_grown_5",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.abstract_bush_grown_5",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_duskberry_bush_ripe",
+              "texture": "gf_block_duskberry_bush_ripe",
               "render_method": "alpha_test"
             },
             "all": {
-              "texture": "tf_block_duskberry_bush_ripe",
+              "texture": "gf_block_duskberry_bush_ripe",
               "render_method": "alpha_test"
             },
             "snow": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             }
           },
@@ -851,18 +851,18 @@
       {
         "condition": "q.block_state('gloamingforest:age') == 3 && q.block_state('gloamingforest:layers') == 6",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_grown_6",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.abstract_bush_grown_6",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_duskberry_bush_ripe",
+              "texture": "gf_block_duskberry_bush_ripe",
               "render_method": "alpha_test"
             },
             "all": {
-              "texture": "tf_block_duskberry_bush_ripe",
+              "texture": "gf_block_duskberry_bush_ripe",
               "render_method": "alpha_test"
             },
             "snow": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             }
           },
@@ -873,18 +873,18 @@
       {
         "condition": "q.block_state('gloamingforest:age') == 3 && q.block_state('gloamingforest:layers') == 7",
         "components": {
-          "minecraft:geometry": "geometry.tf.gloamingforest.block.abstract_bush_grown_7",
+          "minecraft:geometry": "geometry.gf.gloamingforest.block.abstract_bush_grown_7",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_duskberry_bush_ripe",
+              "texture": "gf_block_duskberry_bush_ripe",
               "render_method": "alpha_test"
             },
             "all": {
-              "texture": "tf_block_duskberry_bush_ripe",
+              "texture": "gf_block_duskberry_bush_ripe",
               "render_method": "alpha_test"
             },
             "snow": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             }
           },
@@ -898,31 +898,31 @@
           "minecraft:geometry": "minecraft:geometry.full_block",
           "minecraft:material_instances": {
             "*": {
-              "texture": "tf_block_duskberry_bush_ripe",
+              "texture": "gf_block_duskberry_bush_ripe",
               "render_method": "alpha_test"
             },
             "up": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             },
             "down": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             },
             "north": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             },
             "south": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             },
             "east": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             },
             "west": {
-              "texture": "tf_vanilla_block_snow",
+              "texture": "gf_vanilla_block_snow",
               "render_method": "alpha_test"
             }
           },

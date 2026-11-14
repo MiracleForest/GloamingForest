@@ -3,7 +3,7 @@
   "minecraft:geometry": [
     {
       "description": {
-        "identifier": "geometry.tf.skeleton.bighorn_sheep",
+        "identifier": "geometry.gf.skeleton.bighorn_sheep",
         "texture_width": 64,
         "texture_height": 32,
         "visible_bounds_width": 2,

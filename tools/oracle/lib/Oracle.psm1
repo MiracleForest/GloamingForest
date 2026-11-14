@@ -79,7 +79,7 @@ function Get-OracleServerArgsFile {
     return Join-Path (Get-OracleServerDir) "libraries/net/neoforged/neoforge/$($pins.neoforge.version)/win_args.txt"
 }
 
-function Get-OracleTfJar {
+function Get-OracleGloamingJar {
     $pins = Get-OraclePins
     return Join-Path (Get-OracleHome) "downloads/upstream-$($pins.upstream.version)-universal.jar"
 }
@@ -119,7 +119,7 @@ function Get-OracleCompileClasspath {
     $mcDir = (Resolve-Path (Join-Path $libs 'net/minecraft/server')).Path
     $rest = @(Get-ChildItem -LiteralPath $libs -Recurse -Filter '*.jar' | Sort-Object FullName | ForEach-Object FullName |
         Where-Object { $_ -ne $patched -and -not $_.StartsWith($mcDir) })
-    return @($patched, $mc[0]) + $rest + @(Get-OracleTfJar)
+    return @($patched, $mc[0]) + $rest + @(Get-OracleGloamingJar)
 }
 
 # Compiles tools/oracle/dumper (javac against the server's libraries and the upstream jar) into
@@ -271,4 +271,4 @@ function Connect-OracleRcon([int]$Port, [string]$Password, [int]$TimeoutMs = 360
 
 Export-ModuleMember -Function Get-OracleRoot, Get-OracleRepoRoot, Get-OracleHome, Get-OraclePins, Get-OracleSha256,
     Get-OracleDownload, Get-OracleJdkDir, Get-OracleJava, Get-OracleJavaProxyArgs, Get-OracleServerDir, Get-OracleServerLockPath, Get-OracleServerArgsFile,
-    Get-OracleTfJar, Get-OracleCompileClasspath, Build-OracleDumper, ConvertTo-OracleUpstreamNames, ConvertFrom-OracleUpstreamNames, Get-OracleFnv1a64, Get-OracleFreePort, Connect-OracleRcon
+    Get-OracleGloamingJar, Get-OracleCompileClasspath, Build-OracleDumper, ConvertTo-OracleUpstreamNames, ConvertFrom-OracleUpstreamNames, Get-OracleFnv1a64, Get-OracleFreePort, Connect-OracleRcon
